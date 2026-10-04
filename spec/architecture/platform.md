@@ -17,8 +17,9 @@ their own behind Access -- see infra's `spec/architecture/host.md`, "One name in
 
 ## One name, many apps: SPA within a scope, MPA across
 
-**A router Worker, `platform`, answers `canmi.app/*` and sends each path on by its first segment.**
-`/` redirects to `canmi.net?ref=app` for now. A scope with an app of its own goes to that app --
+**Planned, not built: a router Worker, `platform`, answers `canmi.app/*` and sends each path on by
+its first segment.** Today the apex is a redirect rule in `rules/canmi.app/`, sending `canmi.app` to
+the site, and no `platform` app exists; what follows is the shape it is to take. A scope with an app of its own goes to that app --
 a Worker by its binding, or an app on the node through the one VPC service, with its label as
 `Host`. Everything else goes to the platform's core app. The table is generated from the scopes'
 `service.toml`s, as the API gateway's is.
@@ -43,9 +44,8 @@ a Worker by its binding, or an app on the node through the one VPC service, with
 
 **The status page is not one of its scopes**: it is served by Vercel alone, at `status.canmi.app`
 and `canmi.vercel.app`, so that a page reporting whether the platform is up does not go down with
-it -- [probe.md](probe.md), "The page: one app, served by Vercel". The core app waits until it has
-something to hold; until then the router sends `/` to `canmi.net?ref=app` and knows the scopes it
-is given.
+it -- [probe.md](probe.md), "The page: one app, served by Vercel". The core app and the router
+wait until there is something to hold; until then the zone's redirect rule stands in for both.
 
 ## Open
 
