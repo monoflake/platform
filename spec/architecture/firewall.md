@@ -29,10 +29,10 @@ Three things hold across every zone, and a new rule keeps to them:
   Cloudflare location, set to catch a flood rather than a reader. A service's own limits -- the
   gateway's, Caddy's -- are the exact ones.
 
-**Every host answers its own security.txt.** `libs/sdk/security` writes it -- RFC 9116's two required
-fields, `Contact` and `Expires`, and the host's own `Canonical` -- with an expiry 180 days out,
-stated per request so it never lapses, and the site, the gateway, the CDN and the alias layer each
-answer `/.well-known/security.txt` from it. Every whitelist lets `/.well-known/` through, which the
+**Every host answers its own security.txt.** `@canmi/me/robots` writes it -- RFC 9116's two
+required fields, `Contact` and `Expires`, and the host's own `Canonical` -- with an expiry 180 days
+out, stated per request so it never lapses, and the gateway answers it for the CDN, the alias layer
+and the API, as the site and the status page answer their own. Every whitelist lets `/.well-known/` through, which the
 gate checks. The address is `security@canmi.net`, forwarded by Cloudflare's Email Routing, so the
 mailbox behind it can change without the file.
 

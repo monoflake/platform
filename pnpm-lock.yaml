@@ -237,6 +237,9 @@ importers:
 
   apps/edge/gateway:
     dependencies:
+      '@canmi/me':
+        specifier: ^2026.1004.5
+        version: 2026.1004.5
       '@canmi/response':
         specifier: ^2.0.0
         version: 2.0.0
@@ -334,6 +337,9 @@ packages:
 
   '@canmi/me@2026.1004.4':
     resolution: {integrity: sha512-INyLjju+m+RNd6Kb7KtuHvckbO4SW3cmSc23eqBmvKrzEmEwrPgMRqpGun8eN6vuaQZEnbLYNySpxRRYgJ4AlA==}
+
+  '@canmi/me@2026.1004.5':
+    resolution: {integrity: sha512-z9lY/1CSKT0q2Nxeymk6D2hqscMWT2c3cGQUMgcMURvJcPmD7AzqyNI4lrmVGHiKojB1IxemGVFSvcTe6SRmbg==}
 
   '@canmi/response@2.0.0':
     resolution: {integrity: sha512-fQh5D0dAcdvccqWLcGQKzpGNa1TbyhZ+4B5kq5/LWPOnacdq5OY8uJoCn7zgdM0MNZMsZiDVsOXSu9fIQEdC4w==}
@@ -2378,6 +2384,8 @@ packages:
 snapshots:
 
   '@canmi/me@2026.1004.4': {}
+
+  '@canmi/me@2026.1004.5': {}
 
   '@canmi/response@2.0.0': {}
 

@@ -27,6 +27,12 @@ import { INFRA, PANEL_PORT } from '@monoflake/urls';
  */
 export const DEPLOY_SOURCES: readonly string[] = ['monoflake/infra', 'monoflake/platform'];
 
+/**
+ * The repository the platform's own hosts are built from, which their robots.txt and security.txt
+ * send an agent to. See the workspace's spec/robots.md.
+ */
+export const PLATFORM_SOURCE = 'https://github.com/monoflake/platform';
+
 export {
 	GITHUB_OWNER,
 	isDevHost,

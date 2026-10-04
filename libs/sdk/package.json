@@ -20,9 +20,6 @@
 		"./cache": "./cache/src/index.ts",
 		"./imgsrc": "./imgsrc/src/index.ts",
 		"./limits": "./limits/src/index.ts",
-		"./robots": "./robots/src/index.ts",
-		"./security": "./security/src/index.ts",
-		"./security/agents": "./security/src/agents.ts",
 		"./store": "./store/src/index.ts",
 		"./symlink": "./symlink/src/index.ts"
 	},
@@ -55,18 +52,6 @@
 			"./limits": {
 				"types": "./dist/limits/src/index.d.ts",
 				"default": "./dist/limits/src/index.js"
-			},
-			"./robots": {
-				"types": "./dist/robots/src/index.d.ts",
-				"default": "./dist/robots/src/index.js"
-			},
-			"./security": {
-				"types": "./dist/security/src/index.d.ts",
-				"default": "./dist/security/src/index.js"
-			},
-			"./security/agents": {
-				"types": "./dist/security/src/agents.d.ts",
-				"default": "./dist/security/src/agents.js"
 			},
 			"./store": {
 				"types": "./dist/store/src/index.d.ts",

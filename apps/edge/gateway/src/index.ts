@@ -5,9 +5,7 @@
  * crawling, limits by address and each host's own files. See spec/architecture/gateway.md.
  */
 import { failure } from '@canmi/response';
-import { robotsTxt } from '@monoflake/sdk/robots';
-import { SECURITY_TXT_PATH, securityResponse } from '@monoflake/sdk/security';
-import type { Service } from '@monoflake/sdk/security/agents';
+import { robotsTxt, SECURITY_TXT_PATH, securityResponse } from '@canmi/me/robots';
 import { followSymlink, symlinkOf } from '@monoflake/sdk/symlink';
 import {
 	type AppName,
@@ -35,6 +33,7 @@ import {
 	whole,
 } from './cache.ts';
 import { GATEWAY_DEFAULTS, type Route } from './declaration.ts';
+import { type Host, noteFor } from './notes.ts';
 import { counted } from '@monoflake/sdk/limits';
 import { type Profile, profileOf, readRequest, type Tuple } from './profile.ts';
 import { SCOPES } from './scopes.ts';
@@ -174,19 +173,17 @@ function corsFor(route: Route): MiddlewareHandler | undefined {
 }
 
 /** Which host a profile is, for the files every host answers: its note, its mark, its `ref`. */
-function hostOf(profile: Profile): Service {
+function hostOf(profile: Profile): Host {
 	if (profile.service === 'cdn') return 'cdn';
 	if (profile.service === 'aka') return 'aka';
 	return 'api';
 }
 
 /** What the site's analytics is told a visitor typing a host's own address came from. */
-const REF: Readonly<Record<Service, string>> = {
+const REF: Readonly<Record<Host, string>> = {
 	api: 'api',
 	cdn: 'cdn',
 	aka: 'alias',
-	site: 'site',
-	status: 'status',
 };
 
 /**
@@ -210,7 +207,8 @@ function publicPath(profile: Profile, service: string, path: string): string | u
  * not".
  */
 function robotsOf(profile: Profile, scopes: Readonly<Record<string, Scope>>): string {
-	if (!profile.crawled) return robotsTxt({ disallow: ['/'], agent: hostOf(profile) });
+	if (!profile.crawled)
+		return robotsTxt({ disallow: ['/'], note: noteFor('robots', hostOf(profile)) });
 	const allow: string[] = [];
 	const disallow: string[] = [];
 	let open = true;
@@ -225,12 +223,12 @@ function robotsOf(profile: Profile, scopes: Readonly<Record<string, Scope>>): st
 			if (path) (route.crawlable ? allow : disallow).push(path);
 		}
 	}
-	const agent = hostOf(profile);
+	const note = noteFor('robots', hostOf(profile));
 	// Everything the host reaches admits crawlers by default: say only what it refuses, and nothing
 	// at all where it refuses nothing. A `Disallow: /` under `Allow` lines shuts out a crawler that
 	// reads no `Allow` -- Twitterbot, fetching a card's picture, is one.
-	if (open) return robotsTxt({ disallow: disallow.length > 0 ? disallow : [''], agent });
-	return robotsTxt({ allow, disallow: [...disallow, '/'], agent });
+	if (open) return robotsTxt({ disallow: disallow.length > 0 ? disallow : [''], note });
+	return robotsTxt({ allow, disallow: [...disallow, '/'], note });
 }
 
 /**
@@ -295,7 +293,8 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		const { pathname } = new URL(c.req.url);
 		if (c.req.method !== 'GET' && c.req.method !== 'HEAD') return next();
 		if (pathname === '/robots.txt') return c.text(robotsOf(profile, scopes));
-		if (pathname === SECURITY_TXT_PATH) return securityResponse(c.req.raw, host);
+		if (pathname === SECURITY_TXT_PATH)
+			return securityResponse(c.req.raw, noteFor('security', host));
 		// The name a browser asks every origin for, followed in one hop. See
 		// spec/architecture/delivery.md, "A page follows the name for the browser".
 		if (pathname === '/favicon.ico') {

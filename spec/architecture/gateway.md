@@ -233,8 +233,8 @@ indexed while the rest of the API is not.
 
 **A consumer is not behind the gateway, and keeps calling the libraries.** The site's routes are
 its own and unlike any API's, so the site, and the status page, still answer their own
-`robots.txt` and `security.txt` from `@monoflake/sdk/robots` and `@monoflake/sdk/security`. That is one entry point
-called twice, not the rules written twice.
+`robots.txt` and `security.txt`, declared in web and built by `@canmi/me/robots` as the gateway's
+are. That is one package called from two repositories, not the rules written twice.
 
 **An answer's lifetime is declared per route, and a success and a failure are declared apart.**
 One lifetime for every answer -- five minutes, success or failure -- is too coarse: some failures
