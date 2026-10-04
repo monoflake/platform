@@ -52,7 +52,7 @@ pub fn routes(state: AppState) -> Router {
 		.with_state(state)
 }
 
-/// `body`, with the caching the route answers under; `lib/pkgs/response`'s envelope wraps `body`.
+/// `body`, with the caching the route answers under; `@canmi/response`'s envelope wraps `body`.
 fn cached(status: StatusCode, body: impl serde::Serialize, control: &'static str) -> Response {
 	let mut answer = response::success(status, body);
 	answer.headers_mut().insert(header::CACHE_CONTROL, HeaderValue::from_static(control));
@@ -411,7 +411,7 @@ mod tests {
 		for code in response::codes_named(include_str!("api.rs")) {
 			assert!(
 				response::message_of(code).is_some(),
-				"`{code}` is not in lib/pkgs/response/codes.json"
+				"`{code}` is not in the response crate's codes.json"
 			);
 		}
 	}

@@ -79,7 +79,7 @@ export const rollups = pgTable(
 ).enableRLS();
 
 // A view is built with its own query-builder rather than a live `db`, since drizzle-kit generate
-// runs against schema.ts alone. See spec/architecture/probe.md, "The page reads PostgREST".
+// runs against schema.ts alone. See web's spec/architecture/status.md, "The page reads PostgREST".
 const qb = new QueryBuilder();
 
 /** Public columns of a declared check -- everything on it is public today. */

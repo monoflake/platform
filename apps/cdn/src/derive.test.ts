@@ -135,7 +135,7 @@ describe('the short spelling of JPEG', () => {
 	/**
 	 * The one that would rot silently, which is why it is written down.
 	 *
-	 * A source is looked up rather than corrected. `services/apps/cms/src/extension.rs` names every
+	 * A source is looked up rather than corrected. web's `apps/local/src/extension.rs` names every
 	 * JPEG this repository writes `jpeg`, so `{cid}.jpg` is a key the bucket cannot hold and the
 	 * ordinary miss is the whole answer. Normalising here too would serve the jpeg's bytes under a
 	 * name that was never stored, and nothing would report it.

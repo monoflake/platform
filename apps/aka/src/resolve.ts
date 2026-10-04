@@ -12,7 +12,7 @@ import { askSite } from './site';
  * The API is asked, never a bucket: this layer holds nothing, and the one place a name can be
  * looked up is the worker that owns the records. One name, since the list of candidates was
  * another site's icon asking for a tone, and an icon is a resource now -- see
- * spec/architecture/resource.md, "The catalogue".
+ * spec/architecture/resource.md, "The catalog".
  */
 export async function resolve(c: Context, name: string): Promise<Response> {
 	const urls = pickUrls(isDevHost(new URL(c.req.url).hostname));

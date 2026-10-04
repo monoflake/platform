@@ -1,7 +1,8 @@
 # What is published, how it is addressed, and what may cache it
 
-The corpus is compiled here and published as objects. The site reads them at request time and
-is rebuilt only when its own code changes. What the objects hold is
+The corpus is compiled and published as objects by the web repository, which holds the site, its
+compiler and `local`. The site reads them at request time and is rebuilt only when its own code
+changes. The shape is the platform's, typed in `@monoflake/sdk/artifacts`. What the objects hold is
 web's `spec/architecture/data.md`; how a reader reaches one is [delivery.md](delivery.md); what a _thing_ is as
 opposed to a run of bytes is [resource.md](resource.md); this file is the shape they are addressed
 by and the rules that fall out of it.
@@ -21,7 +22,7 @@ That is the whole design, and every rule below is a consequence of it:
   touched and of the root; every other object is byte-identical and is not uploaded.
 
 The last of those is inherited rather than invented. web's `spec/i18n/segments.md`
-already hashes a block after normalisation, so a reflow or a restyle changes no id. Hashing the
+already hashes a block after normalization, so a reflow or a restyle changes no id. Hashing the
 compiled view extends that property one level up: reformatting the whole corpus publishes
 nothing.
 
@@ -83,7 +84,7 @@ was as fresh as the `/asset` answer behind it. **It stopped needing an exception
 a name.** An icon is a resource, a link card compiles to its rid, and what a page draws is an
 object address like any other -- so the five minutes now sit on the record that names it and the
 bytes keep the year the shape of their name earns. See [resource.md](resource.md), "The
-catalogue".
+catalog".
 
 ## The mutable root
 
@@ -106,7 +107,7 @@ and what took judgment to produce -- a heading's id, a summary, a translation, e
 person or a model had to be asked for. **What a function of the stored data gives back, every time,
 is worked out where it is used**: a block's anchor is its kind and its place, so the page and the
 compiler each number the blocks themselves, and nothing stores the result. See
-[anchors.md](anchors.md).
+web's `spec/architecture/anchors.md`.
 
 The test is whether working it out needs anything the object does not hold. Storing what does not
 is a second copy of a decision that can fall out of step with the first, and it changes the
@@ -265,7 +266,7 @@ are wrong rather than absent, and wrong silently.
   against the corpus tomorrow.
 
 **The read counter is keyed by the slug**, which is the same decision seen from the other side. It
-used to be keyed by the path, so recategorising an article opened a fresh row at zero and orphaned
+used to be keyed by the path, so recategorizing an article opened a fresh row at zero and orphaned
 everything it had earned -- six rows carried between 340 and 9,795 reads when this was written.
 Identity is what a count should hang from; an address is not.
 
@@ -379,7 +380,7 @@ is what a consumer asks before it knows which exist. A locale that is not a loca
 first is a fact about the corpus, the second is a mistake in the question.
 
 Nothing here is cacheable, and that is the trade. A `POST` is not a cacheable request, so the
-caller memoises what it asked for -- which is what makes a batch a warming path rather than a
+caller memoizes what it asked for -- which is what makes a batch a warming path rather than a
 serving one.
 
 **An answer is grouped, not flat.** `objects`, `locale`, `meta`, `dates`, `metrics`, `preview`:
@@ -403,7 +404,7 @@ and the whole design's latency rests on how often these answers are hits.
 **A fact appears in exactly one answer.** `/article` carries neither the markdown hash nor the
 alternates, though it once carried both: the first has the route above, and the second is already
 inside the `content` object the view names. Two answers holding one fact is the shape
-[the workspace code.md](../../../../spec/code.md) warns about, where the second reader is the one
+the workspace's `spec/code.md` warns about, where the second reader is the one
 that eventually disagrees.
 
 **These shapes are typed in `libs/sdk/artifacts` and are not restated here.** They changed seven times
@@ -463,7 +464,7 @@ works, so the recovery is to use it; without this the failure is a click that do
 **Every answer this API composes arrives in one envelope**, `{ status, data }` or
 `{ status, message }`, so a consumer asks whether the call worked before it asks what it returned
 -- and asks it in one place rather than at every call site. What the envelope carries is not
-standardised: `data` is whatever that route answers with, checked by whoever asked for it. A
+standardized: `data` is whatever that route answers with, checked by whoever asked for it. A
 stored object streamed through this API is not composed by it and is not wrapped. The type and the
 one function that opens it are in `libs/sdk/artifacts`.
 
@@ -493,7 +494,7 @@ direction.** The list names the site's development port and no other, so a site 
 anywhere else has its resource question refused while the API answers `200`, and the page renders
 blank with `CORS error: No 'Access-Control-Allow-Origin' header is present` in the site's log and
 nothing in the API's. Measured on port 26611. It is not a gap to widen:
-[../toolchain.md](../toolchain.md) already says one checkout runs one set on the pinned numbers and
+web's `spec/toolchain.md` already says one checkout runs one set on the pinned numbers and
 that the slot arithmetic for a second is gone, so the one legal origin and the one legal port are
 the same decision written twice. **A browser never meets it**, because in development it reaches
 the API through the site's own proxy, and that proxy answers the CORS question itself -- verified:
@@ -515,7 +516,7 @@ twice".
 ## Validation is heavy where it is free and light where it is not
 
 The builder validates every object completely, in a process with no payload budget
-([the workspace code.md](../../../../spec/code.md) puts local code on the other side of that line). What ships to
+(the workspace's `spec/code.md` puts local code on the other side of that line). What ships to
 an edge is narrow:
 
 - The **API** parses the root with a schema. It is small, it is read once per cache miss, and

@@ -9,7 +9,7 @@ const APPS = join(ROOT, 'apps');
 /**
  * The declarations of apps deployed from another repository that the gateway still routes: the
  * site's API is its own Worker's, and its scope is the gateway's to hold. See
- * web's spec/repository.md, "An app deployed elsewhere asks for its scope here".
+ * spec/repository.md, "An app deployed elsewhere asks for its scope here".
  */
 const ELSEWHERE = join(import.meta.dirname, '../elsewhere');
 const SCOPES = join(import.meta.dirname, '../src/scopes.ts');

@@ -8,7 +8,8 @@ business logic and one declaration the gateway reads.
 
 This file is the arrangement being moved to. Where [services.md](services.md) and
 [delivery.md](delivery.md) describe the hosts as they are today, this file wins; what is left to
-do is listed in web's `spec/todo/gateway.md`.
+do is listed in [../todo/gateway.md](../todo/gateway.md), and the order it is done in is
+[../todo/milestones.md](../todo/milestones.md), E.
 
 ## The gateway is infrastructure, and pages are not
 
@@ -251,6 +252,22 @@ addressed and stored once, so a content id says what the bytes are and nothing a
 them. A route that serves an object to anyone answers `public, immutable`; a route that serves it
 on some condition is kept by that route's own rule. When accounts exist, the condition is a
 credential; until then every route is public.
+
+## The gateway declares its hosts in its `wrangler.jsonc`
+
+Attached in the dashboard,
+`api.ffoni.com` was gone after a deploy that followed its move from the old API Worker -- the DNS
+record went with it, and the first sign was the host not resolving. Declared, every deploy asserts
+them, and a custom domain left out of the list is detached by the deploy, its DNS record with it.
+The other Workers' domains are still the dashboard's, and move the same way if one goes.
+
+**A zone that is the gateway's alone is one wildcard route; an apex is a custom domain.**
+`monoflake.com`, `monoflake.net`, `ixc.one` and `ffoni.com` serve nothing but the gateway below
+their apex, so each is `*.{zone}/*` over a proxied `*` record, and a host the profiles add needs no
+change here or in the dashboard -- one the profiles do not know is refused by the gateway and its
+whitelist. A route matches no apex, so `ill.li` and `symlink.si`, which are their apexes, are
+custom domains. The wildcard record exists before the deploy that drops a custom domain on it,
+since the explicit record goes with the domain and the wildcard is what answers after.
 
 ## Every host's files and firewall are derived
 

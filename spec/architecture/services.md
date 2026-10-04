@@ -32,7 +32,8 @@ reach each other on the tailnet. Each node's host deploys only what is placed on
 A finished build reaches every node through one Worker, `hook`, answering the `hook` scope of the
 public API host. GitHub's webhook for workflow runs calls it when a run ends, signed with a secret
 the two share; it checks the signature, keeps only a successful run of the deploy workflow on
-`main`, and passes the run's number over Workers VPC to each node's host, and to keeper, which
+`main` of a repository in `DEPLOY_SOURCES` -- infra's or this one -- and passes the run's number
+and its repository over Workers VPC to each node's host, and to keeper, which
 alone deploys host. Workers VPC dials the node's Caddy by name and sends the fetch's hostname as the
 `Host`, so one VPC service reaches every name Caddy answers. What the Worker forwards is only a
 hint: each program asks GitHub about the run itself before it runs anything.
@@ -135,11 +136,12 @@ moved to `/site/`, links in mail already sent included, and that was accepted ra
 > Being replaced by [gateway.md](gateway.md), which wins where the two differ.
 
 **CORS and limits by address are the gateway's, per scope, and a service writes neither.** Which
-origins may call a scope and how often one address may call which of its routes is a row in
-`apps/gateway/src/policy.ts`; the service behind it is business logic and nothing else. A preflight
-is answered at the gateway without reaching the service, and a scope with no origin policy gives a
-browser no CORS at all. The policy lives in TypeScript rather than in `service.toml` because it
-names origins, and every URL is declared once in libs/sdk.
+origins may call a scope and how often one address may call which of its routes is the service's
+declaration, compiled into the gateway's `src/scopes.ts` -- see [gateway.md](gateway.md), "What a
+service declares, and what the gateway does with it"; the service behind it is business logic and
+nothing else. A preflight is answered at the gateway without reaching the service, and a scope with
+no origin policy gives a browser no CORS at all. A declaration names origins by their names in
+`@monoflake/sdk`, since every URL is declared once.
 
 **A parameter the public may not send is refused at the gateway.** A policy lists query parameters
 it forbids, and a request carrying one is answered `403 forbidden_parameter` before it is counted
@@ -213,10 +215,10 @@ own routes, which its pages call without the gateway, are rows in the same forma
 same service.
 
 **A limit is a row in one format, wherever it is enforced.** It names methods and a path, so it can
-be as narrow as one route; libs/sdk/limits is the format, its check and the bucket's arithmetic. The
+be as narrow as one route; `@monoflake/sdk/limits` is the format, its check and the bucket's arithmetic. The
 gateway applies it to what reaches a service through the gateway. Routes that only a Worker's own
 pages call never pass the gateway, so that Worker asks `quota` with the same rows itself -- the
-site's are `apps/site/api/src/contract/limits.ts`.
+site's are web's `apps/site/api/src/contract/limits.ts`.
 
 **A limit that is business logic stays with the service.** The read counter's per-article minute
 does not refuse anyone -- the reader still gets the count, only the increment is withheld -- so it
@@ -247,7 +249,7 @@ Every API here, in TypeScript or in Rust, answers in one shape: `{ "status": "su
 or `{ "status": "error", "code": ..., "message": ... }`, from `@canmi/response` and the `response`
 crate. The shape, how a code and a message are written and the four families of code are the
 package's, in the lib repository's `spec/response/envelope.md`; a code this repository needs is
-added to its catalogue there.
+added to its catalog there.
 
 **What faces the public says nothing about the inside.** A message a stranger can read names no
 path, no internal error and no secret; a failure inside is logged in full and answered with its
@@ -323,7 +325,7 @@ the exception: it is root on its machine, so it asks for its token even on the L
 
 ## A Workers placement is deployed by Cloudflare, not by host
 
-Workers are built by Cloudflare's own Git integration: it watches this repository, filtered to the
+Workers are built by Cloudflare's own Git integration: it watches the repository each is in, filtered to the
 paths each Worker and the libraries it imports live under, and deploys on a push that touches them.
 That is already the shape this file wants -- the platform pulls, and GitHub holds no secret -- so
 host does not run `wrangler` and holds no Cloudflare token for it. What a Workers placement adds
@@ -333,86 +335,19 @@ here is the declaration, not a second way to deploy.
 `service.toml` holds the name, the placements and, for an API, the `[api]` table; `[container]` is
 required only of a service a node runs. An image is built for an app whose directory holds a
 `Dockerfile` beside its declaration, so a Worker's declaration never reaches the image build, and no
-host is ever sent one. `site`, `cdn`, `aka` and `hook` are declared this way.
+host is ever sent one. `cdn`, `aka` and `hook` are declared this way; the site's Worker is built
+from the web repository, and its declaration is copied into `apps/gateway/elsewhere/site.toml`.
 
 ## The site's API runs in the site's Worker
 
-The site's pages and its API are one Worker, `site`. The API's routes are a Hono app in
-`apps/site/api`, and the site's `hooks.server.ts` hands it the requests that are its own before
-SvelteKit reads a path as a page's. Two doors reach it:
-
-- **The site's pages ask it on their own origin, under `/api/`.** During server rendering SvelteKit
-  answers a same-origin `fetch` in-process, so rendering a page costs no request at all; in the
-  browser it is the connection the page already has, with no CORS and no preflight. These routes
-  are the site's own and nobody else's contract.
-- **The public routes are the `site` scope of the API host.** The gateway binds the `site` Worker
-  and sends it `/api/{route}` under the API host's name, which a request can carry only by coming
-  through that binding: Cloudflare picks the Worker by the host. The Worker serves those names
-  alone -- `PUBLIC_ROUTES` in `apps/site/api/src/contract/routes.ts`, today `media` and `asset`, which the
-  alias layer reads. The declaration says where it answers with `[api] prefix = "/api"`, which only
-  a Workers placement may carry, since a node's Caddy forwards a scope to a container's root.
-
-**Why one Worker.** The pages and the API they call now build together, so what one expects the
-other is -- an internal route can change shape without a window where a deployed page asks a
-deployed API a question it no longer answers. That is also what lets the internal addresses be
-generated at build time for both at once. And rendering reads the corpus through the API, so a
-subrequest per record was the price of keeping them apart.
-
-**What it costs, accepted.** The code rendering pages holds the database, the records bucket and
-the limits, where a separate Worker kept them from it. The rule data.md's two buckets exist for is
-that no route or catch-all can reach what it should not; here the API is reached only at `/api/`
-and the API host, both decided in one function, and the records bucket is still not the one the CDN
-serves. The site's error reporting covers the API, which had a Sentry project of its own.
-
-**The two runtimes stay apart in the type checker.** The site's program checks against the
-browser's globals, and the API against workerd's, and the two disagree about `Response` and
-streams. So the site imports `@canmi/site-api` through `src/boundary.d.ts`, the one thing it needs --
-something that answers a request -- and the API's own tests hold the real app to that declaration;
-see workspace.md, "A runtime's globals decide which program checks a file".
-
-**It lives in the site, beside `src/` rather than inside it.** `apps/site/api` is the site's own code
-and sits in the site's directory, as a package of its own because its type program is not the
-site's: inside `src/` it would be checked against the browser's globals. Nor is it a SvelteKit
-route -- a `+server.ts` is in `src/` too, and would give up the Hono app, the addresses by contract and
-the limits the API answers through. It was `libs/site-api` for a while, which put the site's API
-among code every app may take, and it is nobody's but the site's.
-
-**It is named `server`, and the SvelteKit app stays at the site's root.** The half with no page is
-the server's; the other half renders on the server as well -- its hooks, its SSR, the dispatch into
-this one -- so calling it `client/` would say something false about it, and moving it would have
-moved every path the site's tooling and its build configuration name for no gain but symmetry.
-
-**In development the records come off the disk.** The API reads the records tree through the
-fetcher the store takes, which `wrangler dev` used to hand over as assets. The site's assets are its
-own build and Vite runs in node, so the site reads the tree itself, in development only.
-
-### The pages ask by contract, not by name
-
-In production a page asks for a route at `/api/{address}`, twelve hex digits of a SHA-256 over the
-route's name and its contract: the schemas its answer and request are read by, taken as data, and a
-revision for whatever of its shape no schema describes. `apps/site/api/src/contract/contracts.ts` holds the
-contracts, and the site's build states every address to the pages and to the Worker in one
-`define`, so the two agree by construction. A route has a shape as well -- `articles/{slug}/reads`,
-`assets/{name*}`, in `SHAPES` beside the routes -- which puts the thing it is about in the path, as
-the workspace's `spec/addresses.md` has every address do; a production page asks at the route's
-address followed by the shape's placeholders, `/api/{address}/{slug}`, and the Worker reads the
-values back into the parameters its handler takes. Development asks at the shape itself, and a
-production Worker answers a shape with a 404.
-
-**The address moves with the contract and with nothing else.** A deploy that leaves a route alone
-leaves its address, and whatever cached it, alone. A deploy that changes it gives it a new address,
-so a tab still open from before asks the old one and is told the route does not exist -- the answer
-a removed route would get -- rather than reading an answer of a shape it no longer understands.
-Hashing the build instead would have cost every open tab every route on every deploy.
-
-**It is not access control.** The addresses are in the page's script for anyone to read. What it
-buys is that the internal routes are nobody's contract: nothing outside the site can come to depend
-on one, so it can change whenever the site does. The public routes keep their names on the API host,
-which is where a promise is made.
-
-This reversed a first arrangement, in which the API was a Worker of its own named `site-api`. Its
-reason was the credential split above, and it was sound until the internal addresses were wanted
-built together with the pages, which two Workers cannot do.
+The site's pages and its API are one Worker, `site`, and how they divide the work is web's
+`spec/architecture/site-api.md`. What the platform holds of it is the `site` scope of the API host:
+the gateway binds the `site` Worker and sends it `/api/{route}` under the API host's name, which a
+request can carry only by coming through that binding, since Cloudflare picks the Worker by the
+host. The Worker serves the public routes alone there, today `media` and `asset`, which the alias
+layer reads. Its declaration, copied to `apps/gateway/elsewhere/site.toml`, says where it answers
+with `[api] prefix = "/api"`, which only a Workers placement may carry, since a node's Caddy
+forwards a scope to a container's root.
 
 ## The order it is built in
 

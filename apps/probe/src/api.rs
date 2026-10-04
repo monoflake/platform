@@ -245,7 +245,7 @@ mod tests {
 		for code in response::codes_named(include_str!("api.rs")) {
 			assert!(
 				response::message_of(code).is_some(),
-				"{code} is not in lib/pkgs/response/codes.json"
+				"{code} is not in the response crate's codes.json"
 			);
 		}
 	}

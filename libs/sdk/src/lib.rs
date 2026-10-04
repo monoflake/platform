@@ -1,5 +1,5 @@
 //! @generated from libs/sdk/src/index.ts by `mise run urls`; do not edit.
-//! One URL map for both languages -- see spec/architecture/workspace.md.
+//! One URL map for both languages -- see web's spec/architecture/workspace.md.
 
 pub const APPS_DEVELOPMENT_SITE: &str = "http://localhost:26511";
 pub const APPS_DEVELOPMENT_API: &str = "http://localhost:26512/v1/site";

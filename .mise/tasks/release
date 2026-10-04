@@ -4,12 +4,12 @@
 day, and the release's number within that day from 0 -- `2026.1004.0`, then `2026.1004.1`. It is
 published whenever its tree changed since its last tag, `<name>@<version>`, or has none yet; npm's
 copy is packed by pnpm, which writes the versions `workspace:` names, and published by npm, which
-reaches the registry's trusted publishing. See web's spec/repository.md, "Publishing".
+reaches the registry's trusted publishing. See spec/repository.md, "Publishing".
 
 `--local` publishes every npm package, changed or not and committed or not, to the registry `mise
 run registry` serves, as the version it would release next with `-local.N` after it: never one
 npm holds, and below the release it precedes. Nothing is tagged and no crate is published, since
-nothing here is a crate. See web's spec/repository.md, "Publishing".
+nothing here is a crate. See spec/repository.md, "Publishing".
 """
 
 import datetime

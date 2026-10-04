@@ -79,7 +79,7 @@ describe('the optimistic table', () => {
 });
 
 /**
- * The account `services/apps/local/src/image/exif.rs` flattens into a photograph and a screenshot
+ * The account web's `apps/local/src/image/exif.rs` flattens into a photograph and a screenshot
  * alike.
  *
  * A layer with no home for a field strips it rather than refusing it, so the two sides drifting

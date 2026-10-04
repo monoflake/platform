@@ -46,8 +46,8 @@ asks, measured and capped as every container is.
 ## The driver is deployed like an app, and is not one
 
 **`apps/objects` is the image, and deploying it upgrades every sidecar.** Its Dockerfile is the
-upstream Versity image at a pinned version with the posix backend's command, per host.md, "An
-upstream image is adopted, not rebuilt"; CI builds it like anything else, and host takes it as the
+upstream Versity image at a pinned version with the posix backend's command, per infra's `spec/architecture/host.md`,
+"An upstream image is adopted, not rebuilt"; CI builds it like anything else, and host takes it as the
 driver's version: it runs no container of its own under that name, and recreates each app's sidecar
 on the new image, one app at a time; if one fails, every sidecar already moved goes back to the
 previous image and the deploy fails. Rolling the driver back is rolling back `objects`. It has no

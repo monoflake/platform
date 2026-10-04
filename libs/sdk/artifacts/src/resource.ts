@@ -115,7 +115,7 @@ export const ImageLayerSchema = v.object({
  * decoding, and `address` is not in the file at all -- it is looked up offline from `location`.
  * See web's spec/architecture/media.md, "Where a photograph was taken is worked out offline".
  *
- * Spread into two layers rather than named as one, because `services/apps/local/src/image/exif.rs`
+ * Spread into two layers rather than named as one, because web's `apps/local/src/image/exif.rs`
  * is flattened into both and a wrapper here would be a key the Rust side never writes.
  */
 const exif = {
@@ -280,7 +280,7 @@ export const VideoLayerSchema = v.object({
 		}),
 	),
 	// A caption track binds here rather than earning a rid: it is a file belonging to one clip and
-	// is reached from nowhere else. See spec/architecture/resource.md, "The catalogue".
+	// is reached from nowhere else. See spec/architecture/resource.md, "The catalog".
 	tracks: v.array(
 		v.object({
 			content: hash,
@@ -308,7 +308,7 @@ export const ClipLayerSchema = v.object({
  *
  * The nine locale bodies are what the document is made of rather than nine things, so they bind
  * here and none of them has a rid. `slug` is the identity and the address is the root's to say.
- * See spec/architecture/resource.md, "The catalogue".
+ * See spec/architecture/resource.md, "The catalog".
  */
 export const DocumentLayerSchema = v.object({
 	...layered,
@@ -399,7 +399,7 @@ export function isLayerName(value: string): value is LayerName {
  *
  * An absolute URL here would bake a hostname into every record, so changing one would mean
  * rewriting all of them. A scheme is expanded by whoever answers, from `@monoflake/sdk`, which is
- * the one place a hostname is declared. `services/libs/fonts` already does this with `__CDN_URL__`.
+ * the one place a hostname is declared. web's `libs/fonts` already does this with `__CDN_URL__`.
  */
 export const CANONICAL_PATTERN = /^(?:cid:[0-9a-f]{32}\.[a-z0-9]+|slug:[a-z0-9][a-z0-9-]*)$/;
 

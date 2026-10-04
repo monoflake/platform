@@ -7,7 +7,7 @@ import { GATEWAY_HOSTS, GATEWAY_NAMES, URLS } from './index.ts';
  * Rust cannot import this library, so every Rust program reads the generated `src/lib.rs`, the
  * `monoflake` crate, committed so a checkout compiles without Node having run. `mise run urls`
  * rewrites it and `rust.test.ts` fails when it no longer matches this render, so the two languages
- * cannot drift past `mise run verify`. See spec/architecture/workspace.md.
+ * cannot drift past `mise run verify`. See web's spec/architecture/workspace.md.
  */
 export function rustUrlMap(): string {
 	const constants = rustConstants(URLS);
@@ -16,7 +16,7 @@ export function rustUrlMap(): string {
 	const { exact, deployments } = GATEWAY_NAMES;
 	return [
 		'//! @generated from libs/sdk/src/index.ts by `mise run urls`; do not edit.',
-		'//! One URL map for both languages -- see spec/architecture/workspace.md.',
+		"//! One URL map for both languages -- see web's spec/architecture/workspace.md.",
 		'',
 		constants,
 		'',

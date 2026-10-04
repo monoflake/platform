@@ -3,7 +3,7 @@
 Everything this site publishes is bytes under a hash. That answers "are these the same bytes"
 and nothing else, and for a long time it was also made to answer "is this the same thing" --
 which it cannot. This file is the separation of those two questions, the record shape that falls
-out of it, and the catalogue of what is a resource here.
+out of it, and the catalog of what is a resource here.
 
 ## Two ids
 
@@ -120,7 +120,7 @@ untinted mark is drawn for light backgrounds. That rule belonged to a worker res
 per request; it is a selector beside the record now, written once on each side.
 
 **`image.thumbhash` is optional for the same reason the tones are two.** Two tones are two
-pictures, and one placeholder painted under both would be the wrong colour under one of them. A
+pictures, and one placeholder painted under both would be the wrong color under one of them. A
 field invented to satisfy a schema is a field a reader will eventually believe.
 
 **The decoded copy is stored beside the hash, and the reason is not size.** The hash is the
@@ -185,7 +185,7 @@ image nobody reports.
 for a thing, and a `302` to wherever that thing currently is. What it redirects to is declared,
 not inferred -- **`canonical` on the record, and a resource declaring none is a `404`.**
 
-Inferring would need a rule per type, and every one of them would be a judgement somebody
+Inferring would need a rule per type, and every one of them would be a judgment somebody
 disagrees with: which size is _the_ picture, which rung is _the_ clip, which tone is _the_ icon.
 Declaring moves that decision to publication, where the answer is known, and leaves the reader a
 lookup.
@@ -199,7 +199,7 @@ lookup.
 
 A URL here would put a hostname in every record, so moving a domain would mean rewriting all of
 them; a scheme is expanded by whoever answers, from the one place a hostname is declared.
-`services/libs/fonts` already publishes stylesheets carrying `__CDN_URL__` for the same reason, which is
+web's `libs/fonts` already publishes stylesheets carrying `__CDN_URL__` for the same reason, which is
 this idea before it had a name. `slug:` needs no lookup either: the site resolves a bare name to
 the article's real path itself, so a moved article keeps its short link.
 
@@ -242,7 +242,7 @@ recompiled for the write to take effect. A pipeline that bakes bytes at compile 
 driven by something that can run the compiler.
 
 **No flexibility is lost, and the one that looks lost is not.** A picture's placeholder and its
-whole ladder arrive in the same answer, so the reader still sees a colour block before a byte of
+whole ladder arrive in the same answer, so the reader still sees a color block before a byte of
 the image is requested, and the browser still chooses its own width from a `srcset` it was handed.
 What moved is when the ladder was written down, not who decides which rung to fetch.
 
@@ -291,7 +291,7 @@ the alternative, which is an `objects` map at the envelope holding entries whose
 deeper layer can explain.
 
 **A layer binds content when the axis that selects between files is its own.** An image's variants
-differ by size, which `image` knows about, so they live there. An icon's two files differ by colour
+differ by size, which `image` knows about, so they live there. An icon's two files differ by color
 scheme, which only `icon` knows about -- so an icon binds its content at `icon` and leaves
 `image.variants` empty. Light and dark are not one picture at two sizes; they are two pictures, and
 putting them in a list that means "the same picture, smaller" would make every consumer of that
@@ -306,7 +306,7 @@ list wrong about one of them.
 
 An image's `origin` is the original file: its cid, its mime, its size. The bytes are not published
 and may no longer exist anywhere; the cid is kept so that the next import of the same file is
-recognised and skipped. It is a **list**, because re-scanning a subject adds an origin to a
+recognized and skipped. It is a **list**, because re-scanning a subject adds an origin to a
 resource rather than making a new one.
 
 A frame's `source` is the clip it was cut from. A clip's `cover` is the frame. **Those point at
@@ -317,7 +317,7 @@ is this a frame of". Replace the cover and the old frame is still a frame of tha
 and fetched whole. Anything that walks references -- a sweep computing what is reachable -- carries
 its own visited set, because the graph has cycles by design.
 
-## The catalogue
+## The catalog
 
 Nine leaf types, two branches. Counts are this corpus at the time of writing.
 
@@ -344,7 +344,7 @@ one place.** A caption track is neither: it is a file belonging to one clip, and
 that clip. The nine locale bodies of an article are the same -- they are what the article is made
 of, not nine things.
 
-**Licence texts are the case that fails the test and looks like it passes.** Four hundred and nine
+**License texts are the case that fails the test and looks like it passes.** Four hundred and nine
 of them are referenced by seven hundred packages, so they are reached from many places, but their
 bytes never change: a cid is already their complete identity and a rid adds a level of indirection
 that answers nothing. They stay plain objects. The aggregate notice is the opposite -- one name,

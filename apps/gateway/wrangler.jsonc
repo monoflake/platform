@@ -7,7 +7,7 @@
 	// Declared here so every deploy asserts them: a host attached in the dashboard was gone after a
 	// deploy and nothing said so. Each is a profile in src/profile.ts. A zone that is the gateway's
 	// alone is one wildcard route over its proxied wildcard record; an apex is a custom domain. See
-	// spec/toolchain.md and spec/architecture/gateway.md.
+	// spec/architecture/gateway.md, "The gateway declares its hosts in its `wrangler.jsonc`".
 	"routes": [
 		{ "pattern": "*.monoflake.com/*", "zone_name": "monoflake.com" },
 		{ "pattern": "*.monoflake.net/*", "zone_name": "monoflake.net" },
@@ -43,7 +43,7 @@
 
 	// Also in libs/sdk as the API's development port, which callers ask; wrangler cannot
 	// read that library. Every interface, so a phone on the same network reaches it. See
-	// spec/toolchain.md.
+	// web's spec/toolchain.md.
 	"dev": {
 		"ip": "*",
 		"port": 26512,

@@ -28,7 +28,7 @@
 	// TypeScript library, so the number is written twice on purpose.
 	"dev": {
 		// Every interface, so a phone on the same network can reach this worker. The port is
-		// still the mutex a second copy collides on; see spec/toolchain.md.
+		// still the mutex a second copy collides on; see web's spec/toolchain.md.
 		"ip": "*",
 		"port": 26514,
 		"inspector_port": 26515,

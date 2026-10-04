@@ -2,7 +2,7 @@
  * The platform's addresses, and the whole map as everything above infra reads it: the platform's
  * own declared here, the author's from `canmi` and infra's from `@monoflake/urls`, composed into
  * one shape so a caller asks one place and the Rust mirror has one source. See
- * spec/architecture/layers.md, "Addresses are split by who owns the name".
+ * web's spec/architecture/layers.md, "Addresses are split by who owns the name".
  */
 import {
 	CONTACT,
@@ -45,7 +45,7 @@ export {
  * Pinned, and bound by exactly one checkout at a time. The gaps are the inspector ports, which
  * wrangler takes as port + 1, and they keep clear of LOCAL_PORT (mise.toml). A second copy of an
  * app collides here rather than drifting to a free port, which is the cheapest mutex there is.
- * See spec/toolchain.md.
+ * See web's spec/toolchain.md.
  */
 export const PINNED_PORTS = {
 	site: SITE_PORT,
@@ -78,7 +78,7 @@ const SITE_SCOPE = 'site';
 /**
  * Where the alias layer and the CDN are reached *from a page* in development: through the site.
  *
- * A page carries no host of its own for either prefix -- see spec/toolchain.md, "They bind
+ * A page carries no host of its own for either prefix -- see web's spec/toolchain.md, "They bind
  * every interface, and the other two are reached through the site", for why that is what
  * makes the site work from a phone on the same network. The site's API needs no proxy: the
  * site's Worker answers it under `/api/` itself.
@@ -138,7 +138,8 @@ const INTERNAL = {
 	shot: `${API.public}/v1/shot`,
 	api: API,
 	// The status page's two names: the one address, and Vercel's own name for it, reached while
-	// Cloudflare's DNS is not. See spec/architecture/probe.md, "The page: one app, served by Vercel".
+	// Cloudflare's DNS is not. See web's spec/architecture/status.md, "The page: one app, served by
+	// Vercel".
 	status: { canonical: 'https://status.canmi.app', mirror: 'https://canmi.vercel.app' },
 } as const;
 

@@ -1,6 +1,6 @@
 # Publishes each dated package whose tree changed, as soon as the change reaches main, or by hand.
 # The npm token is short-lived and asked for here, through trusted publishing. See
-# web's spec/repository.md, "Publishing".
+# spec/repository.md, "Publishing".
 name: Release
 
 on:

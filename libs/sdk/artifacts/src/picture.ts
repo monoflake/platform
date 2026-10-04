@@ -83,7 +83,7 @@ export function best(image: ImageLayer, want: number): ImageVariant | undefined 
  * side: these bytes were encoded by somebody else's server and arrive as SVG or ICO, neither of
  * which a ladder ever produces -- and the ladder's table answers `avif` for anything it does not
  * recognise, which would be an address to a file nobody wrote. The twin of `icon_mime` in
- * services/apps/local/src/extension.rs, held to it by a test here.
+ * web's apps/local/src/extension.rs, held to it by a test here.
  */
 export const ICON_EXTENSION: Record<string, string> = {
 	'image/svg+xml': 'svg',
@@ -111,13 +111,13 @@ export function toned(icon: IconLayer, want?: Tone): ImageVariant | undefined {
  * Beside `ICON_EXTENSION` rather than folded into it, for the reason that table gives: a ladder
  * produces these four and never an SVG or an ICO, and answering `avif` for a mime it does not
  * recognise would be a guess an icon cannot afford. Held to `for_variant` in
- * services/apps/local/src/extension.rs by a test, the two being one fact in two languages.
+ * web's apps/local/src/extension.rs by a test, the two being one fact in two languages.
  */
 export const VARIANT_EXTENSION: Record<string, string> = {
 	'image/avif': 'avif',
 	'image/webp': 'webp',
 	'image/png': 'png',
-	// `jpeg`, matching what services/apps/local names the file. These are object addresses, and
+	// `jpeg`, matching what web's apps/local names the file. These are object addresses, and
 	// `/object` forms a key from the name rather than correcting it -- so a link built here spelling
 	// it `jpg` is a 404, not the hop `/derive` grants a target.
 	'image/jpeg': 'jpeg',

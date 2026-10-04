@@ -1,7 +1,7 @@
 /**
  * No Postgres runs in this workspace's tests, so this holds the one thing that is checked
  * without one: every view's inferred row type carries the columns the page reads. See
- * spec/architecture/probe.md, "The page reads PostgREST".
+ * web's spec/architecture/status.md, "The page reads PostgREST".
  */
 import { getTableColumns, ViewBaseConfig } from 'drizzle-orm';
 import { readFileSync, readdirSync } from 'node:fs';

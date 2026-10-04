@@ -182,7 +182,7 @@ export type Block =
 			/**
 			 * What every sample of this clip is multiplied by, so two clips play at one level.
 			 *
-			 * Computed in the build from the loudness and true peak services/apps/local measured. `1` for
+			 * Computed in the build from the loudness and true peak web's apps/local measured. `1` for
 			 * a clip nothing has measured, which plays as it always did. See `assets.ts`.
 			 */
 			gain?: number;

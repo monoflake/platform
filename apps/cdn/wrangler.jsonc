@@ -21,10 +21,10 @@
 	// The port also appears in libs/sdk as the development CDN URL. wrangler cannot read a
 	// TypeScript library, so the number is written twice on purpose. It is the only pair there
 	// is: one checkout runs one set, and a second copy collides here rather than drifting to a
-	// free port. See spec/toolchain.md.
+	// free port. See web's spec/toolchain.md.
 	"dev": {
 		// Every interface, so a phone on the same network can reach this worker. The port is
-		// still the mutex a second copy collides on; see spec/toolchain.md.
+		// still the mutex a second copy collides on; see web's spec/toolchain.md.
 		"ip": "*",
 		"port": 26516,
 		"inspector_port": 26517,

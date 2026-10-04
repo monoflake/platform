@@ -2,7 +2,7 @@
  * Where a reader can be pointed inside an article: every block a person sees as a thing of its
  * own takes an anchor named for what it is and numbered among its kind, in the order the article
  * has them -- `#diagram-2` is the article's second diagram. Worked out from the blocks wherever
- * they are, never stored. See spec/architecture/anchors.md.
+ * they are, never stored. See web's spec/architecture/anchors.md.
  */
 import type { Block } from './types';
 

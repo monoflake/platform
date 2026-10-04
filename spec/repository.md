@@ -5,8 +5,12 @@ through. The node's apps -- `geo`, `objects`, `postgres`, `ledger`, `cron`, `apt
 `telemetry`, `gemini`, and the `gateway` and `quota` that also run at home -- and the Workers
 Cloudflare builds, `aka`, `cdn`, `gateway`, `hook` and `quota`. `libs/sdk` is what a consumer of
 the platform reads, `libs/probe` the status database's schema, and `libs/ledger` what the node's
-services share. Why the system is cut into this layer, infra's and the services', is
-[architecture/layers.md](architecture/layers.md).
+services share. `rules/` holds
+each zone's firewall rules, which `mise run rules` checks and deploys; see
+[architecture/firewall.md](architecture/firewall.md). Why the system is cut into this layer,
+infra's and the services', is web's `spec/architecture/layers.md`, which the four repositories
+share, as they share its `spec/architecture/workspace.md` and `spec/toolchain.md`: what is here is
+what the platform alone decides.
 
 ## `apps/` is deployed, `libs/` is imported
 
@@ -23,6 +27,13 @@ resolves it in that repository when it is cloned beside this one, so a renamed s
 here. A relative link across a repository resolves only while both are cloned side by side, so a
 spec here never writes one. `mise run rules` reads the site's routes the same way, from the web
 repository cloned beside this one, and says so when it is not.
+
+## The Workers run in development beside the site
+
+`dev-gateway`, `dev-cdn`, `dev-quota` and `dev-aka` run the Workers under `wrangler dev`, each on
+its pinned port, as web's `spec/toolchain.md` has under "Dev ports are pinned"; the base session
+starts them from this checkout, and the site's dev server reaches the alias layer and the CDN
+through its own `/alias`, `/symlink` and `/cdn`.
 
 ## An app deployed elsewhere asks for its scope here
 

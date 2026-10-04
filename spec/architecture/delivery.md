@@ -52,7 +52,7 @@ dynamic import could still move is that file's top-level body -- a class declara
 closures -- against a startup budget of one second.
 
 **Nor is the size itself costing anything.** 5.66 MiB against 64 MiB, nothing charged per
-request, and the eager compile is a baseline Liftoff pass with optimisation tiering up on a
+request, and the eager compile is a baseline Liftoff pass with optimization tiering up on a
 background thread rather than a full compile of 5.2 MiB.
 
 **If startup is ever suspected, measure before changing anything**: `startup_time_ms` from
@@ -65,9 +65,9 @@ worker's startup is moving the codecs behind a service binding, which is the spl
 [limits page](https://developers.cloudflare.com/workers/platform/limits/) names for exactly this.
 That is reasoning from the two rules above rather than something anybody has run.
 
-## Where the syntax colours are resolved
+## Where the syntax colors are resolved
 
-A code block is highlighted while its article is compiled, and the colours are stored in the
+A code block is highlighted while its article is compiled, and the colors are stored in the
 published object. Changing the syntax theme is therefore a recompilation of the corpus, not a
 deploy -- the friction that prompted the measurements below, all of them gzipped, because Shiki's
 output is repetitive enough that raw sizes mislead by a factor of five.
@@ -75,22 +75,22 @@ output is repetitive enough that raw sizes mislead by a factor of five.
 |                                                             | gzipped |
 | ----------------------------------------------------------- | ------- |
 | The heaviest article's code, bare                           | 0.96 KB |
-| The same, with the colours baked in                         | 2.15 KB |
+| The same, with the colors baked in                          | 2.15 KB |
 | The same, as a theme of CSS variables                       | 1.78 KB |
 | The same, as classes naming each token's scope set          | 2.16 KB |
 | Grammars for the ten languages, were they sent to a browser | 63 KB   |
 | The two themes, likewise                                    | 7 KB    |
 
-**Deferring the colour is free, and moving the renderer is not.** The three artifact shapes land
+**Deferring the color is free, and moving the renderer is not.** The three artifact shapes land
 within a fifth of a kilobyte of each other, so the choice between them is about palette fidelity
 rather than bytes. Rendering in the browser instead is a different order of question: one reader
-would fetch more grammar than the entire corpus spends on baked colour, to save 1.5 KB on the
+would fetch more grammar than the entire corpus spends on baked color, to save 1.5 KB on the
 article in front of them. It also cannot be avoided by rendering on the server alone, because
 after hydration this site's articles are rendered by the browser and not by the Worker --
 [artifacts.md](artifacts.md), "Two consumers, and the second one is the browser".
 
 **What deferring would buy is a theme change that is a deploy.** Neither deferred shape needs a
-renderer at the edge or in the page: a colour resolved from a class is a stylesheet's job, so the
+renderer at the edge or in the page: a color resolved from a class is a stylesheet's job, so the
 SSR and CSR paths would stay identical. The cheap shape collapses the palette to about a dozen
 token kinds; the faithful one keys on each token's scope set, which is nearly one key per token
 today -- 448 sets over 697 tokens, a 1.6 KB table for the whole corpus, growing with it. That
@@ -181,7 +181,7 @@ pays one hop once and their browser never asks again.
 
 **The source half needs no rule, which is the point of the first pin.**
 `/derive/{cid}.jpg.webp` looks up `{cid}.jpg`, which writing guarantees is not a key, so it is an
-ordinary `404`. Normalising there too would be worse than redundant: it would serve a JPEG's bytes
+ordinary `404`. Normalizing there too would be worse than redundant: it would serve a JPEG's bytes
 under a key the bucket does not hold, and nothing would report it. `/object` corrects nothing
 either -- the extension is part of the key there, and a key names bytes or it does not.
 
@@ -271,7 +271,7 @@ copy it was confirming. Failures get the five minutes; `2xx` and `304` keep the 
 [artifacts.md](artifacts.md), "The key says what may cache it".
 
 **This shortened three things that were not content-addressed and had been getting a week**:
-another site's icon, the licence aggregate, and the assets no named route claimed. The week was
+another site's icon, the license aggregate, and the assets no named route claimed. The week was
 inherited from the `_headers` era and had never been argued for any of them individually.
 
 Five minutes is the right number for the same reason the API's answers get five minutes: these
@@ -285,7 +285,7 @@ year. An address that names rather than identifies keeps the hour that the middl
 above gives it -- the metadata bucket's root, and anything proxied. What is left on five minutes is
 the refusals, and everything else that is not a settled answer.
 
-### Development keeps no publication delay, and the judgement is made once
+### Development keeps no publication delay, and the judgment is made once
 
 A publication delay is a promise to readers, and a laptop has none: there the five minutes is only
 the distance between a rebuild and seeing it. So `PUBLICATION_DELAY` is zero in a development
@@ -372,12 +372,12 @@ likewise.
 
 Four hosts answer, and three of them are a ladder.
 
-|          | depends on                  | answers with |
-| -------- | --------------------------- | ------------ |
-| `cdn`    | nothing, except on `/proxy` | bytes        |
-| `api`    | the metadata bucket         | records      |
-| `ill.li` | `api`                       | a redirect   |
-| `site`   | `api` + `cdn`               | pages        |
+|          | depends on                   | answers with |
+| -------- | ---------------------------- | ------------ |
+| `cdn`    | nothing, except on `/proxy`  | bytes        |
+| site API | the metadata bucket          | records      |
+| `ill.li` | the site API's public routes | a redirect   |
+| `site`   | its API + `cdn`              | pages        |
 
 **Nothing below reaches upward.** The CDN can serve every byte it holds with the API down, which is
 not a happy accident -- it is what content addressing buys, and asking the CDN to look anything up
@@ -516,7 +516,7 @@ publishing, not by redeploying anything.
 
 ### Every fixed name is a record
 
-**`data/record/symlinks.json` names every scope's fixed names by content id** -- its marks, and any
+**web's `data/record/symlinks.json` names every scope's fixed names by content id** -- its marks, and any
 other file a host answers under a name of its own, such as a sitemap's stylesheet -- and the bytes
 are objects like any other, in the published tree and out of git. A scope is a service's internal name -- `site`,
 `status`, `api`, `cdn`, `aka` -- never a host, since one service may be deployed under several, and

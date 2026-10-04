@@ -32,17 +32,13 @@ private side asks `api.internal.ixc.one/shot/v1/...`, which Caddy takes the scop
   so a picture asked for early is `404 no_such_picture`, said `no-store` so that no cache on the way
   holds it past the moment the picture is made.
 
-- Every route is under `/shot/`, the bare scope included, because the zone's firewall admits a
-  scope's paths by that prefix.
 - **The page is its parts, never one address inside another:** `scheme`, `http` or `https`, and
   `https` when absent; `host`, a name or an address, IPv6 with or without its brackets; `port`, the
   scheme's own when absent; `path` and `hash`, each optional and without the mark that opens it;
-  and the page's own query as its pairs, **`query.<name>=<value>`, one parameter each**, repeated
-  for a name the page takes more than once and written in the order sent. The service writes the
-  page's address and escapes it; a caller escapes only what any query value needs, `&` and the
-  like. A part holding more than itself -- a host with a port or a path, a path with a query -- is
-  refused rather than read, and so is `query` itself, which once held the query whole.
-- **`POST /shot/capture` asks the same in JSON, grouped by what each part is about:**
+  and the page's own query as `query`, each name to its value or the list of them. The service
+  writes the page's address and escapes it. A part holding more than itself -- a host with a port or
+  a path, a path with a query -- is refused rather than read.
+- **`POST /v1/shot/tasks` asks in JSON, grouped by what each part is about:**
 
   ```json
   {
@@ -64,11 +60,11 @@ private side asks `api.internal.ixc.one/shot/v1/...`, which Caddy takes the scop
   Every group and field is optional but `target.host`; numbers and booleans are JSON's own; a
   query value is a string or a list of them, kept in the order written. A field the service does
   not know, at any level, is `400 invalid_body`, since it would otherwise be quietly not what was
-  meant. The same ask by GET and by POST is one capture.
+  meant.
 
-- The rest: `width` and `height`, `full`, `timeout` and `delay`, `insecure` and `internal`, and
-  `javascript`, each below.
-- `width` and `height` are the viewport in CSS pixels; `full=true` captures the whole page rather
+- The rest: the viewport's `width`, `height` and `full`, the timing's `timeout` and `delay`, the
+  access's `insecure` and `internal`, and the browser's `javascript`, each below.
+- `width` and `height` are the viewport in CSS pixels; `full: true` captures the whole page rather
   than what the viewport shows.
 - Every answer but the picture is the envelope, and says `no-store`, but a done task: it may be
   kept until the capture is forgotten, and says so in `max-age`. A task that failed is
@@ -78,9 +74,8 @@ private side asks `api.internal.ixc.one/shot/v1/...`, which Caddy takes the scop
   `<shot>` is the scope's public address in `libs/sdk`, never written into the code, so an answer
   read anywhere -- saved, pasted, passed on -- still reaches the picture. It is the public one
   whichever door the task was asked through, since the pictures are the same behind both.
-  `Location: status?task=<id>` stays relative, which an HTTP client resolves against the address
-  asked. A `status` asked without a `task`, or with one that is not an id, is `404 no_such_task`,
-  as an id never made is.
+  `Location: tasks/<id>` stays relative, which an HTTP client resolves against the address asked. A
+  task asked by something that is not an id is `404 no_such_task`, as an id never made is.
 - **An id is a random UUID**, so a picture cannot be found by guessing what somebody else asked
   for. The same parameters while a capture of them is kept get the same id, and are not captured
   twice.
@@ -131,10 +126,10 @@ on".
 
 - Ours queue ahead of the public's, always, and up to fifty may wait; the public's up to thirty.
   Two captures run at once.
-- **`internal=true` lets a capture reach private addresses, and only ours may send it.** The gateway
+- **`internal: true` lets a capture reach private addresses, and only ours may send it.** The gateway
   refuses it with a 403 -- as a query parameter, or as a key anywhere in a JSON body -- and `shot`
   ignores it on a marked request as well. Without it a capture reaches public addresses alone.
-- The public starts three captures a minute from one address, by GET and POST together, at the
+- The public starts three captures a minute from one address, by POST, at the
   gateway; asking after one and fetching it are not counted. Cloudflare's zone rate rule is the
   floor under that.
 
@@ -142,14 +137,14 @@ on".
 
 **Nothing held in memory is a picture.** Each capture is written beside its id in the service's
 directory, through a temporary file and a rename: its pictures, and what its task says -- the
-record `status?task=<id>` answers with -- as `<id>.json`. The directory is kept across restarts.
+record `tasks/<id>` answers with -- as `<id>.json`. The directory is kept across restarts.
 
 **The store holds four gigabytes, and the oldest capture goes when a new one would pass it.** A
-capture's pictures and its record leave together; until then `status?task=<id>` and `pictures/<id>.png`
+capture's pictures and its record leave together; until then `tasks/<id>` and `pictures/<id>.png`
 answer for it however long ago it was made. A failure keeps its record alone.
 
 **The same page asked again within thirty minutes is the capture already made**; after that it is
-captured again, and the older one stays by its own id until the store rolls it out. **`fresh=true`
+captured again, and the older one stays by its own id until the store rolls it out. **`fresh: true`
 captures anew even so, and only ours may send it**, refused and ignored exactly as `internal` is:
 the probe checks a page every minute, and a check answered from a capture half an hour old checks
 nothing. A fresh capture takes a new id, and the one it passed over keeps its own. It is not part
@@ -196,13 +191,13 @@ the browser at once. A browser that has died is started again for the next captu
   0.1 to 10 seconds when asked and 210 milliseconds when not. Both are seconds to one decimal place,
   and anything else is `400 invalid_timing`. A capture as a whole may take its timeout and delay
   and ten seconds more before it is called failed. Both are part of what makes two asks one.
-- **A certificate is checked unless `insecure=true`**, which accepts one the browser would refuse --
+- **A certificate is checked unless `insecure: true`**, which accepts one the browser would refuse --
   self-signed, expired, for another name -- and only for an https page. It is set on the capture's
   own page and reaches no other, checked with two captures of one bad certificate at once, one of
   them asking; and it is part of what makes two asks one. The proxy's judgment of addresses is not
   touched by it. chromiumoxide overlooks every certificate unless told to respect them, which it
   is.
-- **`javascript=false` captures the page as it is without scripts**: the browser is told to run
+- **`javascript: false` captures the page as it is without scripts**: the browser is told to run
   none on the capture's page before it navigates, so what is taken is the markup and styles alone
   -- the page a crawler or a reader without scripts sees. Not asked, scripts run. It is part of
   what makes two asks one.

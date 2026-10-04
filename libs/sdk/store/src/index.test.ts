@@ -91,7 +91,7 @@ describe('contentTypeFor', () => {
 	});
 
 	/**
-	 * Nothing writes a `.jpg`; `services/apps/local/src/extension.rs` spells every JPEG `jpeg`. The
+	 * Nothing writes a `.jpg`; web's `apps/local/src/extension.rs` spells every JPEG `jpeg`. The
 	 * arm stays for the case this whole function exists for -- an object put in the bucket by hand,
 	 * which is also the only object with no `httpMetadata` to serve instead.
 	 */
@@ -112,7 +112,7 @@ describe('where an object lives', () => {
 	 * fact is written, and the CDN's `/{type}/` is where a reader gets one instead.
 	 *
 	 * The split exists for a filesystem mirror rather than for R2, which has no directories: two
-	 * characters, then two more, then the whole id again -- matching what services/apps/local writes.
+	 * characters, then two more, then the whole id again -- matching what web's apps/local writes.
 	 */
 	it.each([
 		['avif', `44/b6/${CID}.avif`],
@@ -145,7 +145,7 @@ describe('where an object lives', () => {
 		expect(recordKey('k7m2x')).toBe('meta/k7m2x.json');
 	});
 
-	it('accepts an id of the shape services/apps/local writes, and nothing else', () => {
+	it('accepts an id of the shape local writes, and nothing else', () => {
 		expect(isContentId(CID)).toBe(true);
 		expect(isContentId(CID.toUpperCase())).toBe(false);
 		expect(isContentId(CID.slice(0, 31))).toBe(false);
