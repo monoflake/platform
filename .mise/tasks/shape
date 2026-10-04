@@ -155,7 +155,7 @@ def bump() -> int:
 	INDEX.write_text(VERSION.sub(f"export const ARTIFACT_VERSION = {raised};", source, count=1))
 	write(raised, fingerprint())
 	print(f"ARTIFACT_VERSION is {raised}, and {RECORD.relative_to(ROOT)} records the shape it means")
-	print("every published object is now a generation behind: run `mise run publish lattice --live`")
+	print("every published object is now a generation behind: run `mise run publish web --live` in the web repository")
 	return 0
 
 

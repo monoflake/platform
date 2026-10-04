@@ -408,7 +408,7 @@ be true if the worker had never been renamed is about the layer, and says `alias
 Both names say the same thing, which is why neither is wrong and why this is not a half-finished
 rename. The workspace's `naming.md` asks a member to be named in one word for its responsibility,
 and `alias` already satisfies that -- the code had no reason to move. What changed is only the name
-the deployment wears, said in the voice its siblings use: `press`, `still`, `seam`, `lattice`. A
+the deployment wears, said in the voice its siblings use: `press`, `still`, `seam`, `web`. A
 layer whose whole job is one name standing for another is an _also known as_. The workspace's
 `naming.md` already has this shape under "Vendor names stay at the edge" -- a name that differs at
 a boundary, with the edge here on the other side.
