@@ -400,7 +400,7 @@ because every URL is a link.
 `upstream()` returns, every type and import: unchanged, and not pending.
 
 The test for one occurrence is a question. **Does this name a thing that is deployed, or a thing
-that is called?** A directory and a worker are deployed, so `apps/aka`, the `name` in its
+that is called?** A directory and a worker are deployed, so `apps/delivery/aka`, the `name` in its
 `wrangler.jsonc`, the package name, and the `dev-aka` and `deploy-aka` tasks take `aka`. A property
 on a URL map is called, so it stays `alias`. Prose splits the same way: a sentence that would still
 be true if the worker had never been renamed is about the layer, and says `alias`.

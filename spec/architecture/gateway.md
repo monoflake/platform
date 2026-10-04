@@ -88,7 +88,7 @@ A provider is two or three lowercase letters, chosen once when the provider is f
 reused: `int` for our own machines, `cf` for Cloudflare, `vcl` for Vercel. A new provider is a row
 added to the registry before anything is placed on it. The registry is `GATEWAY` in `libs/sdk`, beside
 the hostnames themselves, and the regions are kept in the same place; the gateway reads a
-deployment's hostname against it in `apps/gateway/src/profile.ts`.
+deployment's hostname against it in `apps/edge/gateway/src/profile.ts`.
 
 ### Regions are where a deployment runs
 
@@ -216,7 +216,7 @@ redirected = "1h"
 
 `mise run scopes` reads every `service.toml`, holds each to a schema -- an unknown field, a service
 code nobody declares, a lifetime it cannot read and two routes as specific as each other all fail
-it -- and writes the gateway's table as `apps/gateway/src/scopes.ts`, lifetimes in seconds and
+it -- and writes the gateway's table as `apps/edge/gateway/src/scopes.ts`, lifetimes in seconds and
 routes in the order they are matched. The gateway reads nothing else at run time, and a test holds
 the committed table to the declarations. A Worker cannot read the repository, and a store it read
 at run time would be state that drifts from the code and is checked only once it is live; a change

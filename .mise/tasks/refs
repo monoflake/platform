@@ -69,11 +69,10 @@ CODE_SUFFIXES = {
 	".yaml",
 	".yml",
 }
-# Directories whose files are records or prose rather than code, plus the lockfile. `contents/`
-# is excluded whatever the extension -- a translation sidecar is YAML by format and prose by
-# nature, and asking its links to live in the address packages would be asking an article not to
-# cite anything. `data/` holds curated records, not code, and is excluded the same way.
-SKIP_DIRS = {"data", "contents"}
+# Directories whose files are records or prose rather than code: none here. web's `data/` and
+# `contents/` are, and this list came from there; a name in it is skipped wherever it appears, so
+# `apps/data/` would have been. Plus the lockfile.
+SKIP_DIRS: set[str] = set()
 SKIP_FILES = {"pnpm-lock.yaml"}
 
 SPEC_REF = re.compile(rf"spec/{DOC_TAIL}")

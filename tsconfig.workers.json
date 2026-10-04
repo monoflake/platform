@@ -15,17 +15,17 @@
 	// so checking them elsewhere drags the whole worker into a program with the browser's
 	// globals. Tried, and that is what happened. `scripts/` is the node program and stays out.
 	"include": [
-		"apps/cdn/src/**/*.ts",
-		"apps/cdn/*.d.ts",
-		"apps/aka/src/**/*.ts",
-		"apps/aka/*.d.ts",
-		"apps/hook/src/**/*.ts",
-		"apps/hook/*.d.ts",
-		"apps/gateway/src/**/*.ts",
-		"apps/gateway/scripts/**/*.ts",
-		"apps/gateway/*.d.ts",
-		"apps/quota/src/**/*.ts",
-		"apps/quota/*.d.ts",
+		"apps/delivery/cdn/src/**/*.ts",
+		"apps/delivery/cdn/*.d.ts",
+		"apps/delivery/aka/src/**/*.ts",
+		"apps/delivery/aka/*.d.ts",
+		"apps/edge/hook/src/**/*.ts",
+		"apps/edge/hook/*.d.ts",
+		"apps/edge/gateway/src/**/*.ts",
+		"apps/edge/gateway/scripts/**/*.ts",
+		"apps/edge/gateway/*.d.ts",
+		"apps/edge/quota/src/**/*.ts",
+		"apps/edge/quota/*.d.ts",
 		"libs/sdk/store/src/**/*.ts",
 		// Types, schemas and constants only, so neither carries a runtime global and both are
 		// safe in this program and in the browser one at once.

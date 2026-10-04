@@ -116,7 +116,7 @@ is Caddy on the node. Both are rendered from the one declaration, since two tabl
 are two readings of one format and would come to disagree silently -- the case the workspace's
 `code.md` warns about.
 
-**The public gateway is the Worker `gateway` in `apps/gateway`, on every hostname
+**The public gateway is the Worker `gateway` in `apps/edge/gateway`, on every hostname
 [gateway.md](gateway.md) lists.** Its table is
 `src/scopes.ts`, generated from every `service.toml` by `mise run scopes` and held to them by a
 test, as is the binding list in its `wrangler.jsonc`. A scope on Workers is a service binding named
@@ -336,7 +336,7 @@ here is the declaration, not a second way to deploy.
 required only of a service a node runs. An image is built for an app whose directory holds a
 `Dockerfile` beside its declaration, so a Worker's declaration never reaches the image build, and no
 host is ever sent one. `cdn`, `aka` and `hook` are declared this way; the site's Worker is built
-from the web repository, and its declaration is copied into `apps/gateway/elsewhere/site.toml`.
+from the web repository, and its declaration is copied into `apps/edge/gateway/elsewhere/site.toml`.
 
 ## The site's API runs in the site's Worker
 
@@ -345,7 +345,7 @@ The site's pages and its API are one Worker, `site`, and how they divide the wor
 the gateway binds the `site` Worker and sends it `/api/{route}` under the API host's name, which a
 request can carry only by coming through that binding, since Cloudflare picks the Worker by the
 host. The Worker serves the public routes alone there, today `media` and `asset`, which the alias
-layer reads. Its declaration, copied to `apps/gateway/elsewhere/site.toml`, says where it answers
+layer reads. Its declaration, copied to `apps/edge/gateway/elsewhere/site.toml`, says where it answers
 with `[api] prefix = "/api"`, which only a Workers placement may carry, since a node's Caddy
 forwards a scope to a container's root.
 

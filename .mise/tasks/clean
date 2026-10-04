@@ -30,7 +30,6 @@ candidates() {
 		-o -type d -name .wrangler -prune -print | while read -r dir; do echo "$dir/tmp"; done
 	find . \( -name .git -o -name .jj -o -name target -o -name node_modules \) -prune \
 		-o -type d -name .vercel -prune -print | while read -r dir; do echo "$dir/output"; done
-	echo ./apps/site/.inlang/cache
 }
 
 found=0

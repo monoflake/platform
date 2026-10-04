@@ -40,12 +40,12 @@ run = 'cargo clippy ${RUST_PACKAGES:---workspace} --all-targets ${AUDIT:+-- -D w
 
 [tasks.cf-login]
 description = "Authenticate wrangler with Cloudflare (interactive)"
-dir = "apps/cdn"
+dir = "apps/delivery/cdn"
 run = "pnpm exec wrangler login"
 
 [tasks.deploy-aka]
 description = "Deploy the alias layer's worker, which resolves names and stores nothing"
-dir = "apps/aka"
+dir = "apps/delivery/aka"
 # `--env=""` for the same reason the CDN passes it, even though this worker declares no
 # environment: naming the top level explicitly means a dev environment added later cannot
 # change which one a bare deploy picks.
@@ -53,7 +53,7 @@ run = 'pnpm exec wrangler deploy --env=""'
 
 [tasks.deploy-cdn]
 description = "Deploy the CDN worker"
-dir = "apps/cdn"
+dir = "apps/delivery/cdn"
 # `--env=""` names the top-level environment explicitly. Defining any environment makes wrangler
 # refuse to guess, and here it would be guessing between production and the dev config that
 # mounts the objects tree as assets -- picking wrong uploads every one of those files.
@@ -61,22 +61,22 @@ run = 'pnpm exec wrangler deploy --env=""'
 
 [tasks.dev-gateway]
 description = "Run the API host, which reaches whichever services are running"
-dir = "apps/gateway"
+dir = "apps/edge/gateway"
 run = "pnpm run dev"
 
 [tasks.dev-cdn]
 description = "Run the CDN worker against the local objects tree"
-dir = "apps/cdn"
+dir = "apps/delivery/cdn"
 run = "pnpm run dev"
 
 [tasks.dev-quota]
 description = "Run the buckets every limit is counted in, for a gateway or the site beside it"
-dir = "apps/quota"
+dir = "apps/edge/quota"
 run = "pnpm run dev"
 
 [tasks.dev-aka]
 description = "Run the alias layer's worker, which resolves names and stores nothing"
-dir = "apps/aka"
+dir = "apps/delivery/aka"
 run = "pnpm run dev"
 
 [tasks.check-probe]
@@ -92,12 +92,12 @@ run = ["node libs/sdk/scripts/rust.ts", "cargo fmt -- libs/sdk/src/lib.rs"]
 
 [tasks.check-scopes]
 description = "Fail when the gateway's table no longer matches the services' declarations"
-run = "node apps/gateway/scripts/scopes.ts --check"
+run = "node apps/edge/gateway/scripts/scopes.ts --check"
 
 [tasks.scopes]
 description = "Regenerate the public API host's scope table from every service.toml"
 # Formatted for the reason `urls` is: so the file this writes is the file that gets committed.
-run = ["node apps/gateway/scripts/scopes.ts", "pnpm exec oxfmt apps/gateway/src/scopes.ts"]
+run = ["node apps/edge/gateway/scripts/scopes.ts", "pnpm exec oxfmt apps/edge/gateway/src/scopes.ts"]
 
 [tasks.fmt]
 description = "Format the Rust and the TypeScript, Svelte, JSON and prose, with jj.toml's formatters: `fmt [--dry-run]`"

@@ -13,10 +13,10 @@
 		// Checked by tsconfig.workers.json against workerd's globals instead. Whole directories,
 		// not just `src`: importing the worker is enough to pull it into this program.
 		"libs/sdk/store",
-		"apps/cdn",
-		"apps/aka",
-		"apps/hook",
-		"apps/gateway",
-		"apps/quota"
+		"apps/delivery/cdn",
+		"apps/delivery/aka",
+		"apps/edge/hook",
+		"apps/edge/gateway",
+		"apps/edge/quota"
 	]
 }

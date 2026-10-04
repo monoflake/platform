@@ -73,7 +73,7 @@ pub struct Parent {
 }
 
 /// A `Record` plus the task that asked for it, when one did. `Record` itself keeps the field set
-/// `apps/shot` and `apps/ledger` already construct by struct literal (see this
+/// `apps/compute/shot` and `apps/data/ledger` already construct by struct literal (see this
 /// crate's module docs in the worker report for why); `Task` carries `parent` alongside it,
 /// flattened, so a task with no parent serializes exactly as `Record` does. `Ledger::record` wraps
 /// a bare `Record` into one of these with no parent.

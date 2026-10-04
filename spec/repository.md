@@ -14,10 +14,27 @@ what the platform alone decides.
 
 ## `apps/` is deployed, `libs/` is imported
 
-Every app has a directory under `apps/` with its `service.toml`, and an app host runs has its
-`Dockerfile` beside it; every library one under `libs/`. A crate is listed in `Cargo.toml` by hand
-and a package found by `pnpm-workspace.yaml`'s globs, so a TypeScript-only directory never breaks
-Cargo.
+Every app has a directory under `apps/<group>/` with its `service.toml`, and an app host runs has
+its `Dockerfile` beside it; every library one under `libs/`. A crate is listed in `Cargo.toml` by
+hand and a package found by `pnpm-workspace.yaml`'s globs, so a TypeScript-only directory never
+breaks Cargo.
+
+**The apps are grouped by what each does**, since fifteen are past the four web's
+`spec/architecture/workspace.md` lets a flat `apps/` hold:
+
+| Group      | Apps                      | What they are                                        |
+| ---------- | ------------------------- | ---------------------------------------------------- |
+| `edge`     | gateway, quota, hook      | the door a request comes in by, its limits, and CI's |
+| `delivery` | cdn, aka                  | the bytes, and the names that point at them          |
+| `data`     | objects, postgres, ledger | what holds state                                     |
+| `observe`  | probe, telemetry          | the platform watched, from outside and from inside   |
+| `system`   | cron, apt                 | the platform's own schedule and the machine's own    |
+| `compute`  | geo, shot, gemini         | what a caller asks to be worked out                  |
+
+**A group is a directory and nothing more.** An app's name is still its directory's own and unique
+across the groups: an image, a container, a scope and a `dev-` task are named for the app, never for
+its group, so moving an app between groups changes no name on the node. The tools find an app by
+`apps/*/<name>`, and the groups are whatever directories `apps/` holds.
 
 ## The other repositories are named, never linked
 
@@ -39,7 +56,7 @@ through its own `/alias`, `/symlink` and `/cdn`.
 
 The gateway's scope table is generated from every declaration it routes, and one of them is not
 this repository's: the site answers its API from its own Worker, which the web repository deploys.
-Its declaration is copied into `apps/gateway/elsewhere/`, one file an app, and `mise run scopes`
+Its declaration is copied into `apps/edge/gateway/elsewhere/`, one file an app, and `mise run scopes`
 reads them beside the apps here. A change to such an app's API arrives here as a change to its copy,
 which is the platform granting the scope.
 

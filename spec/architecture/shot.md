@@ -1,6 +1,6 @@
 # `shot`: a page, as a picture
 
-`apps/shot` renders a web page -- or an API, which a browser shows as its JSON -- in Chromium and
+`apps/compute/shot` renders a web page -- or an API, which a browser shows as its JSON -- in Chromium and
 answers with a PNG and a WebP of it. It is for the pictures of each of our services, as a deploy
 dashboard shows them, and for an article's external links, captured as they are cited. It keeps
 nothing: a capture lives five minutes on disk and is gone.

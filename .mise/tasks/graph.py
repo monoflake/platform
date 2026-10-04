@@ -10,11 +10,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# Where a package's manifest sits: `apps/` for what is deployed, `libs/` for what is imported.
-PACKAGE_DIRECTORIES = ("apps/*", "libs/*")
+# Where a package's manifest sits: `apps/<group>/` for what is deployed, `libs/` for what is
+# imported. See spec/repository.md, "`apps/` is deployed, `libs/` is imported".
+PACKAGE_DIRECTORIES = ("apps/*/*", "libs/*")
 
 # Where a deployable app's directory sits.
-APP_ROOTS = ("apps",)
+APP_ROOTS = tuple(str(group.relative_to(ROOT)) for group in sorted((ROOT / "apps").glob("*/")))
 
 
 def app_directories():

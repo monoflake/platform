@@ -50,7 +50,7 @@ def plan(files):
 			all_crates = True
 		crates |= included.get(f, set())
 		crates |= built.get(owner(f, built) or f, set())
-		if (app_of(f) and Path(f).name == DECLARATION) or f.startswith("apps/gateway/elsewhere/"):
+		if (app_of(f) and Path(f).name == DECLARATION) or f.startswith("apps/edge/gateway/elsewhere/"):
 			packages |= DECLARATION_PACKAGES
 		crate = crate_dirs.get(owner(f, crate_dirs) or "")
 		if crate and (suffix == ".rs" or f.endswith("/Cargo.toml")):

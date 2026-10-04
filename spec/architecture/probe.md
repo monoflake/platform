@@ -1,6 +1,6 @@
 # `probe` and `status.canmi.app`: the platform seen from outside
 
-`apps/probe` checks the platform the way a visitor meets it, and `status.canmi.app` shows what it
+`apps/observe/probe` checks the platform the way a visitor meets it, and `status.canmi.app` shows what it
 found. The checking is a Rust service on the node -- later on the VPS too, a second place to look
 from -- because what it checks is more than a request: a name resolving, an API answering what it
 should, a page rendering without an error. The showing is a SvelteKit app on Vercel that reads a
@@ -9,7 +9,7 @@ Cloudflare, so a Cloudflare outage is something the page reports rather than som
 
 ## What is checked, and how often
 
-**Checks are declared in the repository**, `apps/probe/checks.toml`, each a kind, a target, what is
+**Checks are declared in the repository**, `apps/observe/probe/checks.toml`, each a kind, a target, what is
 expected of it, and how often -- set by what the target is and how much it matters, not by one
 beat for everything. They fall into two kinds, and it is the first that finds a fault first.
 

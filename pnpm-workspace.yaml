@@ -2,7 +2,7 @@
 # ignores the rest, so Rust-only libraries under libs/ are simply invisible to it. Cargo
 # has no such tolerance, which is why Cargo.toml lists its members by hand instead.
 packages:
-  - apps/*
+  - apps/*/*
   - libs/*
 
 # An install script runs arbitrary code before anybody reads the package, which is why pnpm

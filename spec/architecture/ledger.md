@@ -1,6 +1,6 @@
 # `ledger`: every task any service was asked to do
 
-`apps/ledger` is the one record of the work the platform's services take on: a capture `shot`
+`apps/data/ledger` is the one record of the work the platform's services take on: a capture `shot`
 queued, and later whatever a scheduled job, a conversion or an import runs. A service keeps what it
 needs to do the work; the ledger keeps that it was asked, by whom, how it went, and keeps it for
 good. It is written to by every service and read by the panel, so a task whose result is long gone

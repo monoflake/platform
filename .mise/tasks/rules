@@ -201,7 +201,7 @@ def check():
 			problems.append(f"{name}: a whitelist that refuses /.well-known/")
 
 	# Every public scope of the API host is let through, and nothing that is not one.
-	scopes_ts = (ROOT / "apps/gateway/src/scopes.ts").read_text()
+	scopes_ts = (ROOT / "apps/edge/gateway/src/scopes.ts").read_text()
 	scopes = set(re.findall(r"^\t(?:'|\")?([a-z0-9-]+)(?:'|\")?: \{", scopes_ts, re.M))
 	allowed = set(re.findall(r'starts_with\(http\.request\.uri\.path, "/([a-z0-9-]+)/"\)', files.get("ffoni.com/api-scopes-only.txt", "")))
 	for scope in sorted(scopes ^ allowed):

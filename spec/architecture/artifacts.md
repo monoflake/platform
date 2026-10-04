@@ -443,7 +443,7 @@ names files that are content-addressed and therefore still there.
 
 The two failures are not the same and are not cached the same. A resource the corpus does not
 publish is a fact about the corpus and keeps the publication delay; an API that could not be
-reached is a fact about this moment and is not stored. That is the asymmetry `apps/aka` already
+reached is a fact about this moment and is not stored. That is the asymmetry `apps/delivery/aka` already
 keeps, arrived at there because every icon on a page came through one host and holding a blip for
 five minutes turned it into an outage.
 
