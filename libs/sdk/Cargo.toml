@@ -1,6 +1,8 @@
 [package]
 name = "monoflake"
 version = "0.0.0"
+description = "The platform's addresses, for Rust."
+keywords = ["monoflake", "urls"]
 edition.workspace = true
 license.workspace = true
 

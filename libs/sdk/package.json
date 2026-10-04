@@ -1,7 +1,13 @@
 {
 	"name": "@monoflake/sdk",
 	"version": "0.0.0",
-	"description": "The platform's addresses, and every client of its services and its policies behind a subpath",
+	"description": "Addresses and clients for the platform.",
+	"keywords": [
+		"cloudflare-workers",
+		"monoflake",
+		"sdk",
+		"urls"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

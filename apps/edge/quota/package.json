@@ -1,6 +1,12 @@
 {
 	"name": "@monoflake/quota",
 	"private": true,
+	"description": "The counter behind every rate limit.",
+	"keywords": [
+		"durable-objects",
+		"quota",
+		"rate-limit"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler dev",

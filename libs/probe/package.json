@@ -1,7 +1,13 @@
 {
 	"name": "@monoflake/probe",
 	"version": "0.0.0",
-	"description": "The status database's schema: the probe's records, as drizzle reads them",
+	"description": "The status database's schema.",
+	"keywords": [
+		"drizzle",
+		"postgres",
+		"schema",
+		"status"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

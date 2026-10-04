@@ -1,6 +1,8 @@
 [package]
 name = "telemetry"
 version = "0.0.0"
+description = "The platform's state, shown to anyone."
+keywords = ["telemetry", "metrics", "status"]
 edition.workspace = true
 license.workspace = true
 

@@ -1,6 +1,8 @@
 [package]
 name = "geo"
 version = "0.0.0"
+description = "Place names and IP lookup, as a service."
+keywords = ["geocoding", "geoip", "geonames"]
 edition.workspace = true
 license.workspace = true
 

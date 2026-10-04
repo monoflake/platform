@@ -1,6 +1,8 @@
 [package]
 name = "ledger"
 version = "0.0.0"
+description = "Task records, sent to the ledger."
+keywords = ["ledger", "tasks", "client"]
 edition.workspace = true
 license.workspace = true
 

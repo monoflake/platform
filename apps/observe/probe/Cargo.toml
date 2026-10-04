@@ -1,6 +1,8 @@
 [package]
 name = "probe"
 version = "0.0.0"
+description = "Checks the platform from outside."
+keywords = ["monitoring", "uptime", "status"]
 edition.workspace = true
 license.workspace = true
 

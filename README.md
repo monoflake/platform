@@ -1,9 +1,9 @@
-# platform
+# Platform
 
-The platform of the author's system: the services every site reads -- names, objects, addresses,
-schedules, captures, the status probe -- and the gateway and Workers they are reached through.
+A tiny self-hosted cloud.  
+Built from scratch. See `mise.toml` for project tasks.
 
-See `mise.toml` for the tasks, and [spec/repository.md](spec/repository.md) for how it is laid out.
+Mostly built for myself, but feel free to browse the code for reference.
 
 ## License
 

@@ -1,6 +1,13 @@
 {
 	"name": "@monoflake/gateway",
 	"private": true,
+	"description": "One entrance for every API.",
+	"keywords": [
+		"api",
+		"cloudflare-workers",
+		"gateway",
+		"hono"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler dev --env dev",

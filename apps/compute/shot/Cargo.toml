@@ -1,6 +1,8 @@
 [package]
 name = "shot"
 version = "0.0.0"
+description = "Web pages, captured as pictures."
+keywords = ["screenshot", "chromium", "capture"]
 edition.workspace = true
 license.workspace = true
 

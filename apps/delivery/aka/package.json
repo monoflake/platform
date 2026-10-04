@@ -1,6 +1,12 @@
 {
 	"name": "@monoflake/aka",
 	"private": true,
+	"description": "Short names that resolve and redirect.",
+	"keywords": [
+		"alias",
+		"redirect",
+		"short-links"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler dev",

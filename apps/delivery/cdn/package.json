@@ -1,6 +1,13 @@
 {
 	"name": "@monoflake/cdn",
 	"private": true,
+	"description": "Bytes and images, served at the edge.",
+	"keywords": [
+		"cdn",
+		"cloudflare-workers",
+		"images",
+		"r2"
+	],
 	"type": "module",
 	"scripts": {
 		"dev": "wrangler dev --env dev",

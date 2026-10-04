@@ -1,6 +1,8 @@
 [package]
 name = "ledger-service"
 version = "0.0.0"
+description = "A record of every task a service takes on."
+keywords = ["ledger", "tasks", "events"]
 edition.workspace = true
 license.workspace = true
 

@@ -1,6 +1,12 @@
 {
 	"name": "@monoflake/hook",
 	"private": true,
+	"description": "GitHub deploy runs, passed on to the node.",
+	"keywords": [
+		"deploy",
+		"github",
+		"webhook"
+	],
 	"type": "module",
 	"scripts": {
 		"deploy": "wrangler deploy --env=\"\"",
