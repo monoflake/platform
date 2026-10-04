@@ -19,7 +19,7 @@ bytes ever coincide. Nothing converts one into the other.
 Only one of these two words may be spelled "content". The confusion this file exists to end was
 `meta/{cid}.json`: a key that ended in a hash, and therefore read as content-addressed, holding a
 record that is rewritten whenever the asset it describes is re-derived. The cache policy read the
-shape and granted a year. See [data.md](data.md), "One bucket holds records and the other holds
+shape and granted a year. See web's `spec/architecture/data.md`, "One bucket holds records and the other holds
 bytes".
 
 ### What the conflation cost
@@ -48,7 +48,7 @@ handed out, so the length is chosen for the address space and for a human readin
 not for a birthday bound. Five is far more than this corpus will use and short enough to read.
 
 The register is the resource table itself, which means allocation reads it and therefore takes the
-lock that table already has. No new machinery. See [../tasks.md](../tasks.md).
+lock that table already has. No new machinery. See web's `spec/tasks.md`.
 
 **Allocation skips ids that read as words.** A rid appears in article source, so a short deny-list
 is consulted at allocation, where it costs one comparison. Changing a rid afterwards is a breaking
@@ -150,7 +150,7 @@ That is ordinary subtyping, spelled in data: the chain declares "I am a media, s
 image, specifically a photograph", and `layers` holds what each of those claims brings with it.
 
 **The chain may be short.** Seventeen pictures in this corpus have no metadata field at all, which
-[media.md](media.md) distinguishes from an empty one: extraction never ran, and the originals are
+web's `spec/architecture/media.md` distinguishes from an empty one: extraction never ran, and the originals are
 outside git and may be gone. They are `media.image` and stop there. A thing that cannot be
 classified is not classified -- a wrong leaf is worse than a missing one, and the leaf can be
 added the day extraction runs.

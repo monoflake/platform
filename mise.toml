@@ -1,99 +1,26 @@
 [env]
-# Read by both the Rust binary that binds it and the Vite config that proxies to it, which is
-# why it lives here rather than in the address packages -- Rust cannot read TypeScript.
-# Pinned, never auto-incremented; see spec/toolchain.md.
-# Shifted in the sandbox, whose own config sets the offset; 26521 everywhere else. See
-# spec/architecture/modes.md.
-LOCAL_PORT = "{{ 26521 + (env.LATTICE_PORT_OFFSET | default(value='0') | int) }}"
-
-# Credentials, decrypted by mise on entering the directory. The file is committed encrypted;
-# only the age private key opens it -- see spec/toolchain.md, "Secrets", for the key setup and
-# for why this is JSON rather than a dotenv.
+# Credentials, decrypted by mise on entering the directory. The file is committed encrypted; only
+# the age private key opens it -- see the workspace's spec/toolchain.md, "Secrets".
 _.file = "secrets.json"
 
-# A local build was publishing source maps for a worker nobody deploys: the Sentry credential
-# is decrypted on every machine with the age key. Here rather than in a dotenv because CI does
-# not read mise.toml. `SENTRY_SKIP_UPLOAD= pnpm run build` uploads once anyway.
-SENTRY_SKIP_UPLOAD = "1"
-
 # oxfmt lives in package.json rather than [tools]: its svelte option resolves `svelte/compiler`
-# through node's module graph, which a mise-installed binary can never reach. This keeps what
-# pnpm carries invocable from the shell and from `jj fix`. See spec/toolchain.md.
+# through node's module graph, which a mise-installed binary can never reach. This keeps what pnpm
+# carries invocable from the shell and from `jj fix`.
 _.path = ["{{config_root}}/node_modules/.bin"]
-
-# rclone is configured entirely through the environment, so there is no rclone.conf holding a
-# second copy of anything. Only the parts that are actually secret live in secrets.json; these
-# three are public facts about which service it is.
-RCLONE_CONFIG_R2_TYPE = "s3"
-RCLONE_CONFIG_R2_PROVIDER = "Cloudflare"
-RCLONE_CONFIG_R2_REGION = "auto"
-
-# One remote per bucket, because there are two and neither holds a credential for the other's.
-# `mise run publish` fails closed if either is unset rather than syncing half a publication.
-# These name the destination only; credentials live in rclone's own config, never here.
-R2_OBJECTS_REMOTE = "r2:objects"
-R2_METADATA_REMOTE = "r2:metadata"
-
-# The interface copy, compiled from the nine JSON files somebody writes into the module the
-# components import. Not in git, because a run rewrites it from the files beside it -- so a
-# fresh clone compiles it before anything that imports it is checked or run.
-[tasks.messages]
-description = "Compile the interface copy into @canmi/messages"
-run = "pnpm --filter @canmi/messages exec paraglide-js compile --project .inlang --outdir src"
 
 [tasks.test]
 description = "Run every test in the workspace"
-depends = ["messages"]
 run = "pnpm exec vitest run"
 
 [tasks.check]
-description = "Type check every workspace package, in each runtime context"
-depends = ["messages"]
+description = "Type check every package, in each runtime context"
 # Three programs, because workerd, the browser and bare node declare different things under the
-# same names. See spec/architecture/workspace.md; each tsconfig says which is which.
+# same names; each tsconfig says which is which.
 run = [
 	"pnpm exec tsc -p tsconfig.json --noEmit",
 	"pnpm exec tsc -p tsconfig.workers.json --noEmit",
 	"pnpm exec tsc -p tsconfig.scripts.json --noEmit",
 ]
-
-[tasks.check-fonts]
-description = "Check the font manifest, published chunks, stylesheets, and splitter runtime"
-run = ".mise/tasks/fonts --check"
-
-[tasks.check-css]
-description = "Build the site and hold the order of the three layers that write its CSS"
-# Runs after check-site rather than beside it. Both write .svelte-kit, and a build regenerating
-# the types while svelte-check is reading them is exactly the race that has already made the
-# secrets scan fail against a cargo temp file that vanished mid-walk.
-wait_for = ["check-site"]
-run = [
-	"pnpm --filter @canmi/site build",
-	"node apps/site/scripts/css-layers.ts",
-]
-
-[tasks.check-css-budget]
-description = "Hold each route category's first-load CSS to the budget in css-budget.json"
-# Reads the build check-css already made rather than making a second one: the two measure
-# different things about the same output, and a build here would only be a slower copy of it.
-wait_for = ["check-css"]
-run = "node apps/site/scripts/css-budget.ts"
-
-# Three gates over the same scan of apps/site/src. Separate tasks rather than one, because each
-# names a different rule and a reader seeing which task went red already knows what to open. They
-# read source rather than the build, so nothing here waits on check-css. See
-# spec/architecture/css/procedure.md.
-[tasks.check-css-extraction]
-description = "Count the components behind every name in the visual layer, and the repetitions with none"
-run = "node apps/site/scripts/css-extraction.ts"
-
-[tasks.check-css-enumeration]
-description = "Hold every StyleX declaration to the layer the enumeration gives its property"
-run = "node apps/site/scripts/css-enumeration.ts"
-
-[tasks.check-css-ramp]
-description = "Count the type ramp values written as a literal rather than read from the ladder"
-run = "node apps/site/scripts/css-ramp.ts"
 
 [tasks.lint]
 description = "Lint the workspace"
@@ -111,12 +38,6 @@ description = "Lint the Rust crates"
 # RUST_PACKAGES is `verify` naming the crates a change reached; run alone, it is every crate.
 run = 'cargo clippy ${RUST_PACKAGES:---workspace} --all-targets ${AUDIT:+-- -D warnings}'
 
-# wrangler is a devDependency of each worker rather than a mise tool, because it participates
-# in the npm resolution model -- so it is never on $PATH and always needs `pnpm exec`. These
-# wrap that, since "which incantation reaches wrangler" is not worth remembering.
-# Everything that writes somewhere off this machine and leaves it there depends on this, and it
-# refuses in the sandbox, whose data is a fork. See spec/architecture/modes.md, "It refuses what
-# leaves the machine and stays there".
 [tasks.outward]
 description = "Refuse in the sandbox; the tasks that publish, deploy or announce depend on it"
 hide = true
@@ -124,21 +45,8 @@ run = 'if [ -n "${LATTICE_SANDBOX:-}" ]; then echo "refusing in the sandbox: thi
 
 [tasks.cf-login]
 description = "Authenticate wrangler with Cloudflare (interactive)"
-dir = "apps/site"
+dir = "apps/cdn"
 run = "pnpm exec wrangler login"
-
-[tasks.deploy-site]
-description = "Build and deploy the site worker"
-dir = "apps/site"
-# Asked before the build, not after: a worker that reads a generation the corpus has not got yet
-# is the failure this exists to name, and naming it live is too late. It never refuses. See
-# spec/architecture/artifacts.md, "A build says how far the live corpus is from it".
-depends = ["outward", "generation"]
-# Two steps because the adapter writes the worker that wrangler then uploads, and the build is
-# also where source maps go to Sentry. The package's deploy applies the API's committed remote D1
-# migrations immediately before upload. Cloudflare runs the same two commands; this is the same
-# path, run from here.
-run = ["pnpm run build", "pnpm run deploy"]
 
 [tasks.deploy-aka]
 description = "Deploy the alias layer's worker, which resolves names and stores nothing"
@@ -158,132 +66,36 @@ dir = "apps/cdn"
 # mounts the objects tree as assets -- picking wrong uploads every one of those files.
 run = 'pnpm exec wrangler deploy --env=""'
 
-# Each dev server binds the number pinned in its own wrangler.jsonc, and the site's Vite config
-# reads the same number from platform/libs/sdk. One checkout runs one set, so the collision is the
-# mutex and the slot arithmetic is gone. See spec/toolchain.md, "Dev ports are pinned". The sandbox
-# hands each worker a shifted number, which platform/libs/sdk/scripts/wrangler-dev.ts prints and
-# prints nothing outside it -- see spec/architecture/modes.md.
 [tasks.dev-gateway]
 description = "Run the API host, which reaches whichever services are running"
 dir = "apps/gateway"
-run = "pnpm run dev $(node ../../platform/libs/sdk/scripts/wrangler-dev.ts api)"
-
-[tasks.dev-site]
-description = "Run the site worker"
-dir = "apps/site"
-run = "pnpm run dev"
-
-# The editor. A Vite dev server and nothing else: it reads `local` over `/collection`, which the
-# server forwards, so the browser only ever talks to its own origin. See architecture/local.md.
-[tasks.dev-cms]
-description = "Run the editor, which reads the collection through local"
-dir = "services/apps/cms"
-run = "pnpm run dev"
-
-[tasks.dev-status]
-description = "Run the status page against the Supabase project"
-dir = "apps/status"
-run = "pnpm run dev"
+run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts api)"
 
 [tasks.dev-cdn]
 description = "Run the CDN worker against the local objects tree"
 dir = "apps/cdn"
-run = "pnpm run dev $(node ../../platform/libs/sdk/scripts/wrangler-dev.ts cdn)"
+run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts cdn)"
 
 [tasks.dev-quota]
 description = "Run the buckets every limit is counted in, for a gateway or the site beside it"
 dir = "apps/quota"
-run = "pnpm run dev $(node ../../platform/libs/sdk/scripts/wrangler-dev.ts quota)"
+run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts quota)"
 
 [tasks.dev-aka]
 description = "Run the alias layer's worker, which resolves names and stores nothing"
 dir = "apps/aka"
-run = "pnpm run dev $(node ../../platform/libs/sdk/scripts/wrangler-dev.ts alias)"
-
-# The HTTP shell and the collection half behind it, on the pinned port. One command because they
-# are one service: the Rust half spawns the other and dies with it. See spec/architecture/local.md.
-[tasks.dev-local]
-description = "Serve the local API, with the collection half behind it"
-run = "cargo run -q -p local -- serve"
-
-# The collection's two SQLite files, created where a fresh clone has neither. Migrating is the
-# only way either is changed: a hand-altered database cannot be migrated afterwards, and neither
-# file is in git. See spec/todo/milestones.md.
-[tasks.collection]
-description = "Bring the collection's databases up to the schema in services/libs/collection"
-run = "node services/libs/collection/src/migrate.ts"
-
-# What an article says about itself, now that it is rows rather than frontmatter. The editor
-# edits the fields it shows and this edits the rest, which is A5's own condition for moving them.
-[tasks.meta]
-description = "Read or set an article's metadata in the collection"
-run = "node services/libs/collection/src/meta.ts"
-
-# What the translation sidecars hold and where it would land. Read-only: the shape it reports is
-# the thing to agree on before anything is written. See spec/todo/milestones.md, A7.
-[tasks.translations]
-description = "Survey the translation sidecars against the collection, writing nothing"
-run = "node services/libs/collection/src/translations.ts"
-
-# What still names a run of bytes, and what has stopped. Reporting is the default; `--collect`
-# takes what the grace period released, and cannot be undone. See spec/todo/milestones.md, A6.
-[tasks.sweep]
-description = "Report what the collection no longer references; --collect takes it"
-run = "node services/libs/collection/src/sweep.ts"
-
-# The corpus, read out of `contents` and written into the collection. Re-runnable because it
-# empties what it wrote last time: the files are the only source until they retire. Ids are
-# granted afresh each run, which is free only while nothing outside names an article by its rid.
-[tasks.articles]
-description = "Import the markdown corpus into the collection, replacing what a previous run wrote"
-run = "node services/libs/collection/src/articles.ts"
-
-[tasks.check-cms]
-description = "Type check the editor, which is a SvelteKit application"
-dir = "services/apps/cms"
-run = 'pnpm run check ${AUDIT:+--fail-on-warnings}'
-
-[tasks.check-panel]
-description = "Type check the panel, host's interface, a SvelteKit application of its own"
-dir = "infra/apps/panel"
-run = 'pnpm run check ${AUDIT:+--fail-on-warnings}'
-
-# The article renderer is a package of Svelte components, and `tsc` does not read `.svelte`. It
-# is checked on its own rather than inside the site's project: a component still reaching for
-# `$lib` or `$app` fails here instead of passing because an application happened to compile it.
-[tasks.check-status]
-description = "Type check the status page, a SvelteKit application of its own"
-dir = "apps/status"
-run = 'pnpm run check ${AUDIT:+--fail-on-warnings}'
+run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts alias)"
 
 [tasks.check-probe]
 description = "Fail when the status schema changed and its migrations were not generated again"
 run = "pnpm --filter @monoflake/probe run check"
 
-[tasks.check-social]
-description = "Type check the social links row, Svelte components in a library"
-dir = "services/libs/social"
-run = 'pnpm exec svelte-check --tsconfig ./tsconfig.json ${AUDIT:+--fail-on-warnings}'
-
-[tasks.check-prose]
-description = "Type check the article renderer, which is Svelte components in a library"
-dir = "services/libs/prose"
-depends = ["messages"]
-run = 'pnpm exec svelte-check --tsconfig ./tsconfig.json ${AUDIT:+--fail-on-warnings}'
-
-[tasks.check-site]
-description = "Type check the site, which needs SvelteKit's generated declarations"
-dir = "apps/site"
-# No `--` before the flag: svelte-check's parser reads that as end-of-options and silently drops
-# what follows, so the strict run would pass. See spec/lint-format.md.
-run = 'pnpm run check ${AUDIT:+--fail-on-warnings}'
-
 [tasks.urls]
-description = "Regenerate the Rust half of platform/libs/sdk; canmi's is the lib repository's"
+description = "Regenerate the Rust half of libs/sdk; canmi's is the lib repository's"
 # Formatted here rather than left for the next `cargo fmt`, so the file this writes is the file
 # that gets committed. The generator emits one constant per line and rustfmt wraps the long ones,
 # so skipping this step means the mirror changes shape after it is generated.
-run = ["node platform/libs/sdk/scripts/rust.ts", "cargo fmt -- platform/libs/sdk/src/lib.rs"]
+run = ["node libs/sdk/scripts/rust.ts", "cargo fmt -- libs/sdk/src/lib.rs"]
 
 [tasks.check-scopes]
 description = "Fail when the gateway's table no longer matches the services' declarations"
@@ -294,63 +106,6 @@ description = "Regenerate the public API host's scope table from every service.t
 # Formatted for the reason `urls` is: so the file this writes is the file that gets committed.
 run = ["node apps/gateway/scripts/scopes.ts", "pnpm exec oxfmt apps/gateway/src/scopes.ts"]
 
-# What `mise run publish lattice` runs. For this project publishing is the corpus rather than a
-# release: compile every view into `data/bucket`, then mirror. Dry by default because `sync` is,
-# and `--live` passes through. See spec/architecture/repos.md.
-[tasks.publish]
-description = "Compile the corpus into publishable objects and mirror them: `publish lattice [--live]`"
-depends = ["outward"]
-# `local segments` first, because the layout it writes is no longer in git -- it rebuilds from the
-# corpus in seconds, and a view spliced from a stale one is wrong in a way nothing reports. See
-# spec/i18n/segments.md.
-run = [
-	".mise/tasks/generation",
-	"cargo run -q -p local -- segments",
-	"node apps/site/scripts/publish.ts",
-	".mise/tasks/sync",
-]
-
-[tasks.host]
-description = "Build an app for the machine at home: `host deploy <name>` hands it to host there"
-# Leaves this machine and stays there, like every other deploy. See spec/architecture/host.md.
-depends = ["outward"]
-run = "node infra/apps/host/scripts/host.ts"
-
-[tasks.infra]
-description = "Read the node over host's API: `infra <what> [app] [path]`, before reaching for SSH"
-# Read-only, so unlike `host` above it never writes off this machine and needs no `outward`. See
-# spec/architecture/inspect.md, "`mise run infra`".
-run = "node infra/apps/host/scripts/infra.ts"
-
-# A browser here is refused the local network, and the panel answers only there. See
-# spec/toolchain.md, "Reaching the LAN from a browser that cannot".
-[tasks.reach]
-description = "Answer on localhost for an interface only the LAN reaches: `reach [name]`, the panel by default"
-run = "node infra/apps/host/scripts/reach.ts"
-
-[tasks.indexnow]
-description = "Submit changed URLs to the IndexNow participants"
-depends = ["outward"]
-# Reads the live sitemap, so it wants a published corpus rather than a dev server -- run it
-# after `publish`, not after a deploy: a deploy no longer moves an article. `--dry` prints what
-# would go and touches nothing. See spec/indexing.md.
-run = "node apps/site/scripts/indexnow.ts"
-
-[tasks.search]
-description = "Align the search index with the corpus"
-depends = ["outward"]
-# Reads the built corpus and diffs it against the index itself, so it needs no deployed site --
-# but the records name live addresses, so it belongs after deploy-site all the same. `--dry`
-# prints what would be written and sends nothing. See spec/search.md.
-run = "node apps/site/scripts/search.ts"
-
-# Inherited from the workspace: node, rust, pnpm, jj, oxlint. Stated here is what only this
-# project needs -- rclone syncs this project's bucket and nothing else uses it.
-[tools]
-rclone = "1"
-
-# The workspace's verbs reach these three; what each owes is in the workspace's repos spec, "What a
-# repository's task owes the verb". `clean` is a file task, .mise/tasks/clean.
 [tasks.fmt]
 description = "Format the Rust and the TypeScript, Svelte, JSON and prose, with jj.toml's formatters: `fmt [--dry-run]`"
 usage = 'flag "-n --dry-run" help="List the files that would change and write nothing"'
@@ -365,8 +120,6 @@ else
 fi
 '''
 
-# Its own [tools] -- rclone -- moves within their pins here, read from this file so the list is
-# not written twice; what it inherits is the workspace's to move.
 [tasks.update]
 description = "Move the crates, the packages and this repository's own tools within their ranges, and name what waits beyond: `update [--dry-run] [--major]`"
 usage = '''
@@ -404,17 +157,3 @@ else
 	echo "$out"
 fi
 '''
-
-[tasks.gc]
-description = "Compact the object stores and list published assets no article references"
-# Run when you want to, not on every commit: these walk the whole repository. The asset sweep
-# only reports here -- compacting an object store loses nothing, while deleting a published
-# variant changes what R2 serves on the next sync.
-run = ["jj util gc", "git gc", "cargo run -q -p local -- gc"]
-
-[tasks.gc-assets]
-description = "Delete the published assets that `gc` listed"
-# Separate because this is the irreversible half. Recoverable in practice -- data/source/image still
-# holds the originals and `local image` rebuilds from a content id -- but only while that is
-# true, which is a fact about this repository rather than a guarantee of the command.
-run = "cargo run -q -p local -- gc --live"

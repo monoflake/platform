@@ -1,0 +1,101 @@
+{
+	"name": "@monoflake/sdk",
+	"version": "0.0.0",
+	"description": "The platform's addresses, and every client of its services and its policies behind a subpath",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/monoflake/platform.git",
+		"directory": "libs/sdk"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./artifacts": "./artifacts/src/index.ts",
+		"./artifacts/types": "./artifacts/src/types.ts",
+		"./artifacts/anchors": "./artifacts/src/anchors.ts",
+		"./cache": "./cache/src/index.ts",
+		"./imgsrc": "./imgsrc/src/index.ts",
+		"./limits": "./limits/src/index.ts",
+		"./robots": "./robots/src/index.ts",
+		"./security": "./security/src/index.ts",
+		"./security/agents": "./security/src/agents.ts",
+		"./store": "./store/src/index.ts",
+		"./symlink": "./symlink/src/index.ts"
+	},
+	"publishConfig": {
+		"exports": {
+			".": {
+				"types": "./dist/src/index.d.ts",
+				"default": "./dist/src/index.js"
+			},
+			"./artifacts": {
+				"types": "./dist/artifacts/src/index.d.ts",
+				"default": "./dist/artifacts/src/index.js"
+			},
+			"./artifacts/types": {
+				"types": "./dist/artifacts/src/types.d.ts",
+				"default": "./dist/artifacts/src/types.js"
+			},
+			"./artifacts/anchors": {
+				"types": "./dist/artifacts/src/anchors.d.ts",
+				"default": "./dist/artifacts/src/anchors.js"
+			},
+			"./cache": {
+				"types": "./dist/cache/src/index.d.ts",
+				"default": "./dist/cache/src/index.js"
+			},
+			"./imgsrc": {
+				"types": "./dist/imgsrc/src/index.d.ts",
+				"default": "./dist/imgsrc/src/index.js"
+			},
+			"./limits": {
+				"types": "./dist/limits/src/index.d.ts",
+				"default": "./dist/limits/src/index.js"
+			},
+			"./robots": {
+				"types": "./dist/robots/src/index.d.ts",
+				"default": "./dist/robots/src/index.js"
+			},
+			"./security": {
+				"types": "./dist/security/src/index.d.ts",
+				"default": "./dist/security/src/index.js"
+			},
+			"./security/agents": {
+				"types": "./dist/security/src/agents.d.ts",
+				"default": "./dist/security/src/agents.js"
+			},
+			"./store": {
+				"types": "./dist/store/src/index.d.ts",
+				"default": "./dist/store/src/index.js"
+			},
+			"./symlink": {
+				"types": "./dist/symlink/src/index.d.ts",
+				"default": "./dist/symlink/src/index.js"
+			}
+		}
+	},
+	"scripts": {
+		"build": "tsdown"
+	},
+	"dependencies": {
+		"@canmi/me": "^2026.1004.1",
+		"@canmi/response": "^2.0.0",
+		"@monoflake/urls": "^2026.1004.0",
+		"valibot": "^1.5.0"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20261004.1"
+	},
+	"peerDependencies": {
+		"@cloudflare/workers-types": "^5.20261004.1"
+	},
+	"peerDependenciesMeta": {
+		"@cloudflare/workers-types": {
+			"optional": true
+		}
+	}
+}

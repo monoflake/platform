@@ -1,9 +1,6 @@
-# Dependencies, runtime build output, caches, and generated code stay out by default.
-# Committed derived records are named explicitly in the data allowlist below.
+# Dependencies, build output and caches stay out.
 
-# CMS runtime state: the run registry, work-item claims and their lock files. Not `data/`,
-# because a process id and a progress count are not records anyone would read a diff of.
-# See spec/tasks.md.
+# Runtime state of the tasks that keep any: `lib-local`'s copies among them.
 .local/
 
 # Written by `mise run lib-local` alone, for a `[patch]` that points at the lib checkout beside
@@ -13,77 +10,28 @@
 # Bytecode cache for the Python mise tasks. Produced whenever one is imported rather than run.
 __pycache__/
 
-# pnpm falls back to a store here when it cannot reach ~/Library/pnpm -- a coding agent
-# confined to the workspace is the case that produced it. Harmless, never wanted in a diff.
+# pnpm falls back to a store here when it cannot reach ~/Library/pnpm -- a coding agent confined to
+# the workspace is the case that produced it.
 .pnpm-store/
 
-# Build output
+node_modules/
 build/
-# This is build-time source code, not generated output.
-!apps/site/src/lib/content/build/
-!apps/site/src/lib/content/build/**
 dist/
 target/
 .svelte-kit/
-.vercel/
-# Compiled from .inlang on every build; settings.json and messages/ are what is authored.
-services/libs/messages/src/
-apps/site/.inlang/cache/
-apps/site/.inlang/.meta.json
-
-# The bytes stay out of git and are mirrored to R2 or backed up separately, the records go
-# in, and the empty skeleton is tracked so a fresh clone has the directories to put things
-# in. See spec/architecture/data.md, "Three ignore lists, no sharing".
-data/**
-!data/**/
-!data/**/.gitkeep
-# An allowlist, not exceptions, and one rule rather than a filename per record -- the list
-# was the thing that drifted, and a record added without a line here silently does not
-# travel until a clone cannot build. See spec/architecture/data.md.
-!data/record/**
-
-# Re-fetchable in principle, but only from a site that may have redrawn or removed its icon
-# since, so a clone without them cannot reproduce what is published -- which is the test.
-# Fifteen small files. See spec/architecture/delivery.md.
-!data/source/favicon/**
-
-# The test here is whether a file regenerates losslessly and for free. These four cannot:
-# three come from a network that may have moved on, and licenses.json is read by the site's
-# own build. See spec/architecture/data.md, "Generated build inputs live under `data/build/`".
-!data/build/crates.json
-!data/build/repos.json
-!data/build/twitter.json
-!data/build/licenses.json
-
-# Dependencies
-node_modules/
-
-# Caches
-.wrangler/
-.turbo/
 *.tsbuildinfo
-
-# Generated sources
-worker-configuration.d.ts
-
-# Test and coverage output
 coverage/
 
-# Environment
+# Secrets: only secrets.json, encrypted, is committed. See the workspace's spec/toolchain.md.
 .env
 .env.*
 !.env.example
-
-# The real age key lives in ~/.config/sops/age; these patterns catch a stray copy before it
-# is committed in the clear. secrets.json is deliberately NOT ignored -- it is committed
-# encrypted. See spec/toolchain.md, "Secrets".
 *.age
 keys.txt
 age-key*.txt
 
-# OS
 .DS_Store
 
-# The editor's SvelteKit output, generated on every dev run and build.
-services/apps/cms/.svelte-kit/
-services/apps/cms/build/
+# Wrangler's local state, and what it generates for a Worker's types.
+.wrangler/
+worker-configuration.d.ts

@@ -3,7 +3,7 @@
 """An app is deployable when its directory holds a `service.toml` and a `Dockerfile`; one with the
 declaration alone is placed on Workers, which Cloudflare builds. It needs a new image when
 anything under that directory changed, when a crate it is built from did, or when the build
-itself did. CI reads the list to decide what to build; see spec/architecture/host.md, "The
+itself did. CI reads the list to decide what to build; see infra's spec/architecture/host.md, "The
 machine pulls; nothing pushes into it"."""
 
 import json

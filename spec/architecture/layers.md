@@ -3,7 +3,7 @@
 This repository holds three layers of one system and the author's shared library under all of
 them. Each becomes a repository of its own later; until then they share this one, laid out the way the
 repositories will be, so that the split is a copy and not a reorganization. The plan, step by step,
-is [../todo/milestones.md](../todo/milestones.md), F.
+is web's `spec/todo/milestones.md`, F.
 
 ## Four places, and which way they lean
 
@@ -27,7 +27,7 @@ built from the site's own libraries, and the probe and the schema it reads stay 
 
 ```
 infra/apps/       infra/libs/
-platform/apps/    platform/libs/
+apps/    libs/
 services/apps/    services/libs/
 ```
 
@@ -134,7 +134,7 @@ split**; each is fixed by the declaration pattern
 `service.toml` already uses -- the layer above says what it is, the one below reads the saying.
 
 1. ~~host knows the platform's apps by name.~~ It knows roles: an app asks for one in its
-   declaration and the node grants it in `GRANTS`. See [host.md](host.md), "A role is asked for by
+   declaration and the node grants it in `GRANTS`. See infra's `spec/architecture/host.md`, "A role is asked for by
    the app and granted by the node".
 2. ~~host renders Caddy's routes and the resolver from the platform's `GATEWAY_*`.~~ The gateway
    claims its names in its declaration's `[edge]`, written there from the sdk by `mise run scopes`,
@@ -145,7 +145,7 @@ split**; each is fixed by the declaration pattern
    their own, the platform's showing its own services, since a layer above may read the one below
    and the reverse is what this list exists to end.
 4. ~~The deploy crate reads `URLS.source`.~~ A node deploys from the repositories its
-   `DEPLOY_SOURCES` lists, and each notice names its own. See [host.md](host.md), "The machine
+   `DEPLOY_SOURCES` lists, and each notice names its own. See infra's `spec/architecture/host.md`, "The machine
    pulls; nothing pushes into it".
 
 ## The repositories it becomes

@@ -18,7 +18,7 @@ export interface Env {
 const SUFFIX = new URL(URLS.internal.app).hostname;
 
 /** Where the notice goes on a node, by label: the panel, which passes it on to host, and keeper.
- * See spec/architecture/host.md, "One name inside, and a domain label outside". */
+ * See infra's spec/architecture/host.md, "One name inside, and a domain label outside". */
 export const RECEIVERS = ['infra', 'keeper'].map((label) => `http://${label}.${SUFFIX}/notice`);
 
 export async function handle(request: Request, env: Env): Promise<Response> {

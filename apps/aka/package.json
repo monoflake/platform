@@ -1,5 +1,5 @@
 {
-	"name": "@canmi/aka",
+	"name": "@monoflake/aka",
 	"private": true,
 	"type": "module",
 	"scripts": {

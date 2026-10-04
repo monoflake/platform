@@ -12,27 +12,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from graph import ROOT, app_of, build_inputs, changed, dependents, node_graph, owner, rust_graph  # noqa: E402
 
 # Whole-tree and cheap, so they run whatever changed.
-ALWAYS = ["secrets", "refs", "comments", "shape", "rules", "check-scopes", "layers"]
+ALWAYS = ["secrets", "refs", "comments", "shape", "rules", "check-scopes"]
 # Whole-program by nature: tsc reads three programs, vitest one suite, oxlint the tree.
 NODE = ["check", "lint", "test"]
 # Gates that belong to one package, run when it or anything it imports changed.
-PACKAGE_GATES = {
-	"@canmi/site": [
-		"check-site",
-		"check-css",
-		"check-css-budget",
-		"check-css-extraction",
-		"check-css-enumeration",
-		"check-css-ramp",
-	],
-	"@canmi/cms": ["check-cms"],
-	"@monoflake/panel": ["check-panel"],
-	"@canmi/prose": ["check-prose"],
-	"@canmi/social": ["check-social"],
-	"@canmi/fonts": ["check-fonts"],
-	"@monoflake/probe": ["check-probe"],
-	"@canmi/status": ["check-status"],
-}
+PACKAGE_GATES = {"@monoflake/probe": ["check-probe"]}
 RUST = ["lint-rust", "test-rust"]
 EVERYTHING = ALWAYS + NODE + [g for gates in PACKAGE_GATES.values() for g in gates] + RUST
 
@@ -41,15 +25,12 @@ NODE_SUFFIXES = {".ts", ".js", ".mjs", ".cjs", ".svelte", ".css", ".json", ".htm
 GATE_FILES = ("mise.toml", ".mise/tasks/")
 NODE_ROOT_FILES = {"package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "vitest.config.ts"}
 RUST_ROOT_FILES = {"Cargo.toml", "Cargo.lock"}
-# Read by the site's build and the corpus tests rather than imported, so no graph reaches them.
-SITE_INPUTS = ("contents/", "data/")
-# Rust files whose only check is a TypeScript test: the generated halves of the address maps.
-NODE_CHECKED_RUST = {"platform/libs/sdk/src/lib.rs"}
-# Every app's declaration is read by the deploy crate's tests and by the gateway's scope table,
-# whichever app it sits in.
+# Rust files whose only check is a TypeScript test: the generated half of the address map.
+NODE_CHECKED_RUST = {"libs/sdk/src/lib.rs"}
+# Every app's declaration is read by the gateway's scope table, whichever app it sits in, and so
+# are the ones registered from elsewhere.
 DECLARATION = "service.toml"
-DECLARATION_READERS = {"deploy"}
-DECLARATION_PACKAGES = {"@canmi/gateway"}
+DECLARATION_PACKAGES = {"@monoflake/gateway"}
 
 
 def plan(files):
@@ -61,7 +42,7 @@ def plan(files):
 	built = build_inputs(crate_dirs)
 	package_dirs, package_edges = node_graph()
 	crates, packages, gates = set(), set(), list(ALWAYS)
-	all_crates = all_packages = site_inputs = False
+	all_crates = all_packages = False
 
 	for f in files:
 		suffix = Path(f).suffix
@@ -69,8 +50,7 @@ def plan(files):
 			all_crates = True
 		crates |= included.get(f, set())
 		crates |= built.get(owner(f, built) or f, set())
-		if app_of(f) and Path(f).name == DECLARATION:
-			crates |= DECLARATION_READERS
+		if (app_of(f) and Path(f).name == DECLARATION) or f.startswith("apps/gateway/elsewhere/"):
 			packages |= DECLARATION_PACKAGES
 		crate = crate_dirs.get(owner(f, crate_dirs) or "")
 		if crate and (suffix == ".rs" or f.endswith("/Cargo.toml")):
@@ -78,17 +58,13 @@ def plan(files):
 
 		if f in NODE_ROOT_FILES or f.startswith("tsconfig"):
 			all_packages = True
-		if f.startswith(SITE_INPUTS):
-			site_inputs = True
 		package = package_dirs.get(owner(f, package_dirs) or "")
 		if package and (suffix in NODE_SUFFIXES or f in NODE_CHECKED_RUST):
 			packages.add(package)
 
 	reached_packages = set(package_dirs.values()) if all_packages else dependents(packages, package_edges)
-	if reached_packages or site_inputs:
+	if reached_packages:
 		gates += NODE
-		if site_inputs:
-			reached_packages.add("@canmi/site")
 		for package, owned in PACKAGE_GATES.items():
 			if package in reached_packages:
 				gates += owned

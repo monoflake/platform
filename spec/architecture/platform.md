@@ -3,7 +3,7 @@
 `canmi.app` is where the platform meets people: an account, a playground, a view of how it is
 built. It is one name with many paths, served mostly from Workers; only what Cloudflare cannot
 hold runs on the node. Its subdomains, `{label}.canmi.app`, are a different thing -- whole apps of
-their own behind Access -- see [host.md](host.md), "One name inside, and a domain label outside".
+their own behind Access -- see infra's `spec/architecture/host.md`, "One name inside, and a domain label outside".
 
 ## A path for what belongs together, a subdomain for what stands alone
 

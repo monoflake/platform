@@ -49,4 +49,4 @@ none of lands nowhere.
 ## The agent view says where each block is
 
 Every block's markdown ends with `> On the page: {article}#{anchor}`, so an agent reading the
-article's view can point a person at the block itself. See [markdown.md](markdown.md).
+article's view can point a person at the block itself. See web's `spec/architecture/markdown.md`.

@@ -1,6 +1,6 @@
 # Builds the images a push changed and leaves them as artifacts of this run. Nothing is published
 # and nothing here reaches a machine: when the run ends, GitHub's webhook tells the node, and the
-# node fetches and checks what was built. See spec/architecture/host.md.
+# node fetches and checks what was built. See infra's spec/architecture/host.md.
 name: Deploy
 
 on:
@@ -66,18 +66,15 @@ jobs:
           repository: canmi21/canmi
       - uses: actions/checkout@v7
         with:
-          path: repos/lattice
+          path: repos/platform
       # The runner's default builder cannot export an image as an archive; a container builder can.
       - uses: docker/setup-buildx-action@v4
       - env:
           APP: ${{ matrix.app }}
         run: |
           mkdir -p "$RUNNER_TEMP/deploy"
-          repos/lattice/.mise/tasks/image "$APP" "$RUNNER_TEMP/deploy/image.tar"
-          for root in apps infra/apps platform/apps services/apps; do
-            [ -d "repos/lattice/$root/$APP" ] && cp "repos/lattice/$root/$APP/service.toml" "$RUNNER_TEMP/deploy/"
-          done
-          [ -f "$RUNNER_TEMP/deploy/service.toml" ]
+          repos/platform/.mise/tasks/image "$APP" "$RUNNER_TEMP/deploy/image.tar"
+          cp "repos/platform/apps/$APP/service.toml" "$RUNNER_TEMP/deploy/"
       # The image layers are compressed already; the node needs it for as long as a deploy takes.
       - uses: actions/upload-artifact@v7
         with:

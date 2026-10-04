@@ -2,7 +2,7 @@
 
 The corpus is compiled here and published as objects. The site reads them at request time and
 is rebuilt only when its own code changes. What the objects hold is
-[data.md](data.md); how a reader reaches one is [delivery.md](delivery.md); what a _thing_ is as
+web's `spec/architecture/data.md`; how a reader reaches one is [delivery.md](delivery.md); what a _thing_ is as
 opposed to a run of bytes is [resource.md](resource.md); this file is the shape they are addressed
 by and the rules that fall out of it.
 
@@ -20,7 +20,7 @@ That is the whole design, and every rule below is a consequence of it:
 - **A republish is incremental by construction.** An edit changes the hash of the object it
   touched and of the root; every other object is byte-identical and is not uploaded.
 
-The last of those is inherited rather than invented. [i18n/segments.md](../i18n/segments.md)
+The last of those is inherited rather than invented. web's `spec/i18n/segments.md`
 already hashes a block after normalisation, so a reflow or a restyle changes no id. Hashing the
 compiled view extends that property one level up: reformatting the whole corpus publishes
 nothing.
@@ -131,7 +131,7 @@ The feed was published for a while and it is the shape a content-addressed store
 a document the size of the whole corpus, rewritten whenever any one article changes. Nine
 locales at a quarter-megabyte each, per edit, immutable and never swept -- a one-line fix to an
 image URL wrote 2.0 MB. What made it look necessary was the belief that a feed says something a
-block does not. It does not: `feedHtml` in platform/libs/sdk/artifacts is the whole difference, and every
+block does not. It does not: `feedHtml` in libs/sdk/artifacts is the whole difference, and every
 field it reads is already in `content/{hash}.json`. `llms.txt` needs no object at all, being a
 projection of the root the homepage answer already carries.
 
@@ -193,7 +193,7 @@ nothing else, so it lives under `data/build/` with the other things a tool can r
 which copied content-addressed objects instead of syncing them so the bucket would keep what the
 local tree had dropped. That protected the same window from the wrong side: the bucket then
 diverged from the local tree permanently, and the sweep still deleted with no delay at all. See
-[data.md](data.md), "Publication is a path, not a rule".
+web's `spec/architecture/data.md`, "Publication is a path, not a rule".
 
 ## Drafts leave the corpus at publication, not at build
 
@@ -324,7 +324,7 @@ rule with no exceptions, and a rule with one exception is a rule nobody can appl
 
 **The locale is a query parameter and never a path segment.** The API spells it `?locale=`, as it
 spells every parameter out -- see services.md, "Names in an API are spelled out". The site's pages
-keep `?lang=`: [locale/addressing.md](../locale/addressing.md) gives it as a reader's first
+keep `?lang=`: web's `spec/locale/addressing.md` gives it as a reader's first
 preference source, `llms.txt` documents it for machines, and it is in every indexed address, so a
 page's spelling is not the API's to change. The two used to be one spelling on purpose; the API's
 names being meaningful was worth more. Absent means `mw`, the same answer a bare URL gives; an
@@ -392,7 +392,7 @@ of it.
 `/article` for an afternoon, which gave one counter nine cached snapshots of itself -- one per locale
 -- that could disagree by five minutes, so a reader changing language watched the number move for
 no reason. A count and a view have different freshness: one is written by every visitor, the other
-changes when somebody publishes. It lives in [engagement.md](../engagement.md)'s API, on a route
+changes when somebody publishes. It lives in web's `spec/engagement.md`'s API, on a route
 of its own, with no locale in it.
 
 `/source` takes no locale, because `<url>.md` serves the source whatever view asked for
@@ -406,7 +406,7 @@ inside the `content` object the view names. Two answers holding one fact is the 
 [the workspace code.md](../../../../spec/code.md) warns about, where the second reader is the one
 that eventually disagrees.
 
-**These shapes are typed in `platform/libs/sdk/artifacts` and are not restated here.** They changed seven times
+**These shapes are typed in `libs/sdk/artifacts` and are not restated here.** They changed seven times
 in one afternoon while two Workers held two hand-written spellings of them, and every disagreement
 was silent until somebody described one out loud. Each route is annotated `satisfies` its shared
 type and each consumer imports the same one, so the next disagreement is a compile error. Three
@@ -465,7 +465,7 @@ works, so the recovery is to use it; without this the failure is a click that do
 -- and asks it in one place rather than at every call site. What the envelope carries is not
 standardised: `data` is whatever that route answers with, checked by whoever asked for it. A
 stored object streamed through this API is not composed by it and is not wrapped. The type and the
-one function that opens it are in `platform/libs/sdk/artifacts`.
+one function that opens it are in `libs/sdk/artifacts`.
 
 **The server's own fetch is a cross-origin request with no `Origin`, and that combination has a
 trap in it.** SvelteKit's universal `load` simulates CORS on the server for a cross-origin
@@ -509,7 +509,7 @@ accepts either spelling on the site's own port, gated on the host the request ar
 production's list is exactly the list.
 
 **Locale is not negotiated twice**, which this arrangement makes newly possible to get wrong and
-does not change. See [locale/addressing.md](../locale/addressing.md), "Locale is not negotiated
+does not change. See web's `spec/locale/addressing.md`, "Locale is not negotiated
 twice".
 
 ## Validation is heavy where it is free and light where it is not
@@ -523,7 +523,7 @@ an edge is narrow:
 - The **site** and the **browser** check an object's envelope -- version, slug, locale, hash --
   and trust the body.
 
-The reasoning is the one [i18n/segments.md](../i18n/segments.md) already gives for the span
+The reasoning is the one web's `spec/i18n/segments.md` already gives for the span
 fingerprint: the check exists to catch drift between a producer and a consumer that were
 deployed at different times, not to resist an adversary. The producer is trusted; the version
 skew is not.
@@ -584,7 +584,7 @@ and a deploy is not the place to discover a missing credential for a check.
 `valibot` is the schema library, chosen over `arktype` and `zod` because the schema ships to a
 browser and an edge runtime, because it is the type's source of truth and therefore has to be a
 file a person can annotate, and because runtime validation speed -- the axis `arktype` is
-strongest on -- is the axis this design spends least on. See [todo.md](../todo/todo.md) for what is
+strongest on -- is the axis this design spends least on. See web's `spec/todo/todo.md` for what is
 still undecided around it.
 
 ## What happens when writing moves online
@@ -598,11 +598,11 @@ through a request rather than to a file.
 **Then `contents/` and the records beside it leave git.** They are in git today because they are
 small, because a rollback of prose matters, and because nothing else backs them up. An online
 write path has to answer backup and history itself, and once it does, the reason to hold them
-here is gone. Until then they stay, which [data.md](data.md) states as the rule and this file
+here is gone. Until then they stay, which web's `spec/architecture/data.md` states as the rule and this file
 states as the condition on it.
 
 **And the API's storage separates from the CDN's.** Metadata would then be written by the cloud
-rather than mirrored to it, which is the line [data.md](data.md) draws between what the author
+rather than mirrored to it, which is the line web's `spec/architecture/data.md` draws between what the author
 produces and what a visitor produces. D1 for one and R2 for the other follows from that line
 moving, not from a preference about databases.
 

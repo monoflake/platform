@@ -16,7 +16,7 @@ import { send, type Target } from './send.ts';
 const token = process.env.INTERNAL_TOKEN ?? '';
 const port = Number(process.env.PORT ?? 26512);
 
-/** Caddy's inside side, and the name it answers there. See spec/architecture/host.md. */
+/** Caddy's inside side, and the name it answers there. See infra's spec/architecture/host.md. */
 const INSIDE: Target = {
 	origin: `http://${process.env.CADDY_INSIDE ?? 'caddy:8080'}`,
 	host: 'api.inside',

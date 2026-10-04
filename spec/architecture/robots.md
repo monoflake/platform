@@ -37,7 +37,7 @@ Content-Usage: search=y, ai-use=y, train-ai=y
   header. An unstated one is unknown rather than either answer.
 
 **All three are yes.** This site wants to be found, quoted in answers, and known to models -- see
-[entities.md](entities.md) -- and a no on any of them would work against the rest.
+web's `spec/architecture/entities.md` -- and a no on any of them would work against the rest.
 
 **A page host's file reads in one order**: the robots reference, the group's rules, Cloudflare's
 terms as a comment -- the three meanings, and the EU reservation of rights a `no` would make --
@@ -47,7 +47,7 @@ kept as written.
 
 **The policy is the repository's, not the edge's.** Cloudflare can write content signals into a
 zone's `robots.txt` itself; that setting stays off, for the reason the security headers came into
-the repository -- see [referrer.md](../referrer.md): a header the edge sets is one nobody can grep
+the repository -- see web's `spec/referrer.md`: a header the edge sets is one nobody can grep
 for.
 
 ## Every page host has a sitemap, styled from its own origin

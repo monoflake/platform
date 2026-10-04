@@ -5,10 +5,13 @@ import { GATEWAY_HOSTS, GATEWAY_NAMES } from '@monoflake/sdk';
 import { renderScopes, scopeTable } from '../src/table.ts';
 
 const ROOT = join(import.meta.dirname, '../../..');
-/** Where an app's directory sits: `apps/` until it moves under its layer. See graph.py. */
-const APP_ROOTS = ['apps', 'infra/apps', 'platform/apps', 'services/apps'].map((root) =>
-	join(ROOT, root),
-);
+const APPS = join(ROOT, 'apps');
+/**
+ * The declarations of apps deployed from another repository that the gateway still routes: the
+ * site's API is its own Worker's, and its scope is the gateway's to hold. See
+ * web's spec/repository.md, "An app deployed elsewhere asks for its scope here".
+ */
+const ELSEWHERE = join(import.meta.dirname, '../elsewhere');
 const SCOPES = join(import.meta.dirname, '../src/scopes.ts');
 const DECLARATION = join(import.meta.dirname, '../service.toml');
 
@@ -19,8 +22,8 @@ const EDGE_MARK =
 /**
  * The names the gateway claims at home, as its declaration states them for host: the hosts Caddy
  * routes to it and certifies, the names the resolver answers exactly, and the zone deployments are
- * spelled under. From the sdk, so a name is still written once. See spec/architecture/host.md, "A
- * role is asked for by the app and granted by the node".
+ * spelled under. From the sdk, so a name is still written once. See infra's
+ * spec/architecture/host.md, "A role is asked for by the app and granted by the node".
  */
 export function renderEdge(): string {
 	const list = (items: readonly string[]) => `[${items.map((item) => `"${item}"`).join(', ')}]`;
@@ -45,17 +48,23 @@ export function withEdge(declaration: string): string {
 
 /** Every app's declaration, as text. Shared with the test that holds the committed table to it. */
 export function declarations(): string[] {
-	const apps = APP_ROOTS.flatMap((root) => {
+	const listed = (directory: string) => {
 		try {
-			return readdirSync(root).map((app) => ({ app, root }));
+			return readdirSync(directory);
 		} catch {
 			return [];
 		}
-	});
-	apps.sort((a, b) => a.app.localeCompare(b.app));
-	return apps.flatMap(({ app, root }) => {
+	};
+	const paths = [
+		...listed(APPS).map((app) => ({ app, path: join(APPS, app, 'service.toml') })),
+		...listed(ELSEWHERE)
+			.filter((file) => file.endsWith('.toml'))
+			.map((file) => ({ app: file.slice(0, -'.toml'.length), path: join(ELSEWHERE, file) })),
+	];
+	paths.sort((a, b) => a.app.localeCompare(b.app));
+	return paths.flatMap(({ path }) => {
 		try {
-			return [readFileSync(join(root, app, 'service.toml'), 'utf8')];
+			return [readFileSync(path, 'utf8')];
 		} catch {
 			return [];
 		}

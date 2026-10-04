@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+#MISE description="Publish each dated package whose tree changed, or every package to the local registry: `release [--dry-run] [--local]`"
+"""A dated package is versioned `YYYY.MDD.N`: the UTC year, the month times a hundred plus the
+day, and the release's number within that day from 0 -- `2026.1004.0`, then `2026.1004.1`. It is
+published whenever its tree changed since its last tag, `<name>@<version>`, or has none yet; npm's
+copy is packed by pnpm, which writes the versions `workspace:` names, and published by npm, which
+reaches the registry's trusted publishing. See web's spec/repository.md, "Publishing".
+
+`--local` publishes every npm package, changed or not and committed or not, to the registry `mise
+run registry` serves, as the version it would release next with `-local.N` after it: never one
+npm holds, and below the release it precedes. Nothing is tagged and no crate is published, since
+nothing here is a crate. See web's spec/repository.md, "Publishing".
+"""
+
+import datetime
+import json
+import pathlib
+import re
+import subprocess
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+OUT = ROOT / "target" / "release-packs"
+LOCAL = "http://localhost:4873"
+
+# Each dated package: its npm directory.
+PACKAGES = [
+	{"name": "@monoflake/sdk", "npm": "libs/sdk"},
+	{"name": "@monoflake/probe", "npm": "libs/probe"},
+]
+# Published by hand to npm, so only `--local` publishes it: as its next patch.
+SEMVER = []
+
+
+def run(*command, check=True, capture=False, cwd=ROOT):
+	print("$", " ".join(command), flush=True)
+	return subprocess.run(command, cwd=cwd, check=check, capture_output=capture, text=True)
+
+
+def day_of(today):
+	"""The year and the day within it, as the first two parts: never zero-padded, which semver
+	forbids, so the fourth of January is `104`."""
+	return f"{today.year}.{today.month * 100 + today.day}"
+
+
+def version_of(name, today):
+	"""The next of today's versions for `name`: one past the highest tagged today, or 0."""
+	day = day_of(today)
+	tags = run("git", "tag", "--list", f"{name}@{day}.*", capture=True).stdout.split()
+	numbers = [int(tag.rsplit(".", 1)[1]) for tag in tags if tag.rsplit(".", 1)[1].isdigit()]
+	return f"{day}.{max(numbers) + 1 if numbers else 0}"
+
+
+def last_tag(name):
+	tags = run("git", "tag", "--list", f"{name}@*", "--sort=-v:refname", capture=True).stdout
+	return next(iter(tags.split()), None)
+
+
+def changed(package):
+	"""Whether the package's tree changed since its last tag, or it has never had one."""
+	tag = last_tag(package["name"])
+	if tag is None:
+		return True
+	paths = [package["npm"], *([package["crate"]] if "crate" in package else [])]
+	return run("git", "diff", "--quiet", tag, "HEAD", "--", *paths, check=False).returncode != 0
+
+
+def published(name, version):
+	answer = run("npm", "view", f"{name}@{version}", "version", check=False, capture=True)
+	return answer.stdout.strip() == version
+
+
+def local_version_of(package, today):
+	"""The version `package` would release next, with `-local.N` one past the registry's highest."""
+	if package in SEMVER:
+		manifest = json.loads((ROOT / package["npm"] / "package.json").read_text())
+		major, minor, patch = manifest["version"].split("-")[0].split(".")
+		base = f"{major}.{minor}.{int(patch) + 1}"
+	else:
+		base = version_of(package["name"], today)
+	answer = run("npm", "view", package["name"], "versions", "--json", "--registry", LOCAL, check=False, capture=True)
+	held = json.loads(answer.stdout or "[]") if answer.returncode == 0 else []
+	held = [held] if isinstance(held, str) else held
+	numbers = [int(v.rsplit(".", 1)[1]) for v in held if v.startswith(f"{base}-local.")]
+	return f"{base}-local.{max(numbers) + 1 if numbers else 0}"
+
+
+def release_local(package, version):
+	"""Build, pack and publish `package` to the local registry, under the `local` tag rather than
+	`latest`, which npm requires of a prerelease."""
+	manifest = ROOT / package["npm"] / "package.json"
+	data = json.loads(manifest.read_text())
+	data["version"] = version
+	manifest.write_text(json.dumps(data, indent="\t") + "\n")
+	run("pnpm", "--filter", package["name"], "run", "build")
+	OUT.mkdir(parents=True, exist_ok=True)
+	packed = run("pnpm", "pack", "--pack-destination", str(OUT), capture=True, cwd=ROOT / package["npm"])
+	tarball = packed.stdout.strip().splitlines()[-1]
+	# Any token will do: the registry lets anybody on this machine publish, and npm will not
+	# publish without one.
+	run("npm", "publish", tarball, "--registry", LOCAL, "--tag", "local", f"--{LOCAL[5:]}/:_authToken=local")
+
+
+def stamp(package, version):
+	"""Write `version` into the package's manifest, and its crate's when it has one."""
+	manifest = ROOT / package["npm"] / "package.json"
+	data = json.loads(manifest.read_text())
+	data["version"] = version
+	manifest.write_text(json.dumps(data, indent="\t") + "\n")
+	if "crate" in package:
+		cargo = ROOT / package["crate"] / "Cargo.toml"
+		text = re.sub(r'(?m)^version = "[^"]*"', f'version = "{version}"', cargo.read_text(), count=1)
+		cargo.write_text(text)
+
+
+def release(package, version, dry):
+	name = package["name"]
+	stamp(package, version)
+	run("pnpm", "--filter", name, "run", "build")
+	OUT.mkdir(parents=True, exist_ok=True)
+	packed = run("pnpm", "pack", "--pack-destination", str(OUT), capture=True, cwd=ROOT / package["npm"])
+	tarball = packed.stdout.strip().splitlines()[-1]
+	run("npm", "publish", tarball, "--access", "public", *(["--dry-run"] if dry else []))
+	tags = [f"{name}@{version}"]
+	if "crate" in package:
+		crate = pathlib.Path(package["crate"]).name
+		run("cargo", "publish", "-p", crate, "--allow-dirty", *(["--dry-run"] if dry else []))
+		# Each registry's package has a tag under its own name, as a semver pair's halves do; the
+		# npm name's is the one changes and numbers are read from.
+		tags.append(f"{crate}@{version}")
+	if not dry:
+		for tag in tags:
+			run("git", "tag", tag)
+		run("git", "push", "origin", *tags)
+
+
+def main_local(today):
+	if run("curl", "-sf", "-o", "/dev/null", f"{LOCAL}/-/ping", check=False).returncode != 0:
+		sys.exit(f"release: nothing answers at {LOCAL}; start it with `mise run registry`")
+	# The release CI made since the last fetch is the one the next version follows.
+	run("git", "fetch", "--tags", "--quiet", "origin", check=False)
+	packages = PACKAGES + SEMVER
+	manifests = [ROOT / package["npm"] / "package.json" for package in packages]
+	originals = {path: path.read_text() for path in manifests}
+	published_now = []
+	try:
+		for package in packages:
+			version = local_version_of(package, today)
+			release_local(package, version)
+			published_now.append(f"{package['name']}@{version}")
+	finally:
+		for path, text in originals.items():
+			path.write_text(text)
+	print("release: published to the local registry:")
+	for line in published_now:
+		print(f"  {line}")
+	return 0
+
+
+def main(argv):
+	dry = "--dry-run" in argv
+	today = datetime.datetime.now(datetime.timezone.utc).date()
+	if "--local" in argv:
+		return main_local(today)
+	print(f"release: {day_of(today)}" + (" (dry run)" if dry else ""))
+	# A dry run leaves every file as it found it; a real one leaves the stamped versions for the
+	# runner to discard, the tag pointing at the commit as it was.
+	stamped = [ROOT / "Cargo.lock"]
+	for package in PACKAGES:
+		stamped.append(ROOT / package["npm"] / "package.json")
+		if "crate" in package:
+			stamped.append(ROOT / package["crate"] / "Cargo.toml")
+	originals = {path: path.read_text() for path in stamped}
+	try:
+		for package in PACKAGES:
+			name = package["name"]
+			if not changed(package):
+				print(f"release: {name} has not changed since {last_tag(name)}")
+				continue
+			version = version_of(name, today)
+			# A tag lost after its publish would hand out a number npm already holds; refuse it.
+			if published(name, version):
+				sys.exit(f"release: {name}@{version} is out already, though no tag says so")
+			release(package, version, dry)
+	finally:
+		if dry:
+			for path, text in originals.items():
+				path.write_text(text)
+	return 0
+
+
+if __name__ == "__main__":
+	sys.exit(main(sys.argv[1:]))

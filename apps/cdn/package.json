@@ -1,5 +1,5 @@
 {
-	"name": "@canmi/cdn",
+	"name": "@monoflake/cdn",
 	"private": true,
 	"type": "module",
 	"scripts": {

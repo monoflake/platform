@@ -9,9 +9,8 @@
 		// nothing here carries those. These scripts do type-import browser modules.
 		"lib": ["es2023", "dom"],
 		"types": ["node"],
-		// pnpm installs @types/node under the member that asked for it, not at this root.
-		"typeRoots": ["apps/site/node_modules/@types", "node_modules/@types"]
+		"typeRoots": ["node_modules/@types"]
 	},
-	"include": ["apps/*/scripts/**/*.ts", "*/apps/*/scripts/**/*.ts"],
+	"include": ["apps/*/scripts/**/*.ts", "libs/*/scripts/**/*.ts"],
 	"exclude": ["**/node_modules", "**/dist", "**/build"]
 }

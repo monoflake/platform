@@ -15,5 +15,5 @@ memory_mb = 64
 [api]
 public = false
 # Its inside door takes any key, so Caddy carries it on the inside side alone. See
-# spec/architecture/host.md, "The inside side answers the internal gateway alone".
+# infra's spec/architecture/host.md, "The inside side answers the internal gateway alone".
 sides = ["inside"]

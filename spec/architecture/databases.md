@@ -2,7 +2,7 @@
 
 Our own services keep SQLite, one file each -- see [services.md](services.md). Some programs we
 adopt rather than write keep nothing but Postgres; umami was why, and is not run any more -- see
-[../analytics.md](../analytics.md) -- and a ClickHouse driver built for OpenPanel went with it. For
+web's `spec/analytics.md` -- and a ClickHouse driver built for OpenPanel went with it. For
 such a program a database is a capability an app declares, run the way
 [objects.md](objects.md) runs Versity: **one driver image, a sidecar per app over the app's own
 directory**. The driver is shared, the data never is.
@@ -40,7 +40,7 @@ The name `postgres` is reserved, and so is every `<app>-postgres`.
 
 ## The drivers
 
-**`platform/apps/postgres` is the official `postgres` image at a pinned major and digest**, adopted rather
+**`apps/postgres` is the official `postgres` image at a pinned major and digest**, adopted rather
 than rebuilt, with settings for a small instance: `shared_buffers` 32 MB, no parallel workers,
 twenty connections. Deploying it recreates each app's sidecar on the new image, one at a time, and
 a failure puts every one back -- as `objects` does. A new major is not a deploy: Postgres needs its

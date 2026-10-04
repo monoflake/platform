@@ -1,6 +1,6 @@
 # `cron`: every scheduled job on a node, in one place
 
-`platform/apps/cron` calls the services on a node when their time comes. It does no work of its own: a job is
+`apps/cron` calls the services on a node when their time comes. It does no work of its own: a job is
 a service's route, and `cron` is what knows when to ask for it, what came of it, and when it last
 did. Workers keep Cloudflare's own cron triggers; this is the node's.
 
@@ -93,6 +93,6 @@ else, on a timeout, or on no answer, with events for each step and the status an
 
 The panel's Schedules page lists every job -- its service, its schedule, when it runs next, how its
 last run went, read from the ledger -- and runs one now. **Pausing a job is the repository's
-change**, as every setting the panel changes is to be ([host.md](host.md), "One name inside, and a
+change**, as every setting the panel changes is to be (infra's `spec/architecture/host.md`, "One name inside, and a
 domain label outside"): until the bot that writes it exists, a pause is `cron`'s own, held until
 `cron` restarts, and shown as such.

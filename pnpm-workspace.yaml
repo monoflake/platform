@@ -2,61 +2,16 @@
 # ignores the rest, so Rust-only libraries under libs/ are simply invisible to it. Cargo
 # has no such tolerance, which is why Cargo.toml lists its members by hand instead.
 packages:
-  - infra/apps/*
-  - infra/libs/*
-  - platform/apps/*
-  - platform/libs/*
-  - services/apps/*
-  - services/libs/*
   - apps/*
-  # The site's API, a package inside the site because its type program is workerd's, not the
-  # browser's; see spec/architecture/services.md.
-  - apps/site/api
-  # Each is a separate repository this workspace ignores; the glob matches nothing when none
-  # are cloned. Membership here is what makes a sub-repo's git dependency resolve to local
-  # source. See spec/architecture/repos.md.
-  - repos/*
-
-# SvelteKit 2 retains cookie 0.6 for compatibility with invalid cookie attributes. Match only
-# that vulnerable edge, so a future upstream range starting at 0.7 or a newer SvelteKit major
-# takes precedence automatically.
-overrides:
-  # drizzle-orm takes better-sqlite3 as an optional peer, and a package that does not declare it was
-  # left on the lockfile's older one while services/libs/collection moved on: two drizzles whose
-  # table types cannot meet, which services/apps/local, holding both, failed to typecheck on. One
-  # version for everybody.
-  'better-sqlite3': ^13.0.3
-  '@types/better-sqlite3': ^9.6.0
-
-  '@sveltejs/kit@2>cookie@<0.7.0': 0.7.2
-
-  # miniflare pins undici exactly and the fix is only on its alpha line. Development-only --
-  # a deployed Worker uses workerd's own fetch -- so this buys a clean alert list rather than
-  # production safety. Drop it once a stable miniflare ships 7.29.
-  'miniflare>undici': ^7.29.0
-
-  # 3.0.4 pins lix 0.15.1, which fails every paraglide compile with "No Lix transaction is
-  # active" -- silently, leaving the last good catalogues on disk, so a message added after
-  # the break does not exist at runtime. Pinned here because the inner pin is exact.
-  '@inlang/sdk': 3.0.2
-
-  # drizzle-kit still pulls the deprecated @esbuild-kit loaders, pinned at ~0.18.20 and so
-  # unable to reach the patched 0.25. The advisory is about esbuild's dev server, which this
-  # chain never starts; the override exists so the alert does not mask a real one later.
-  '@esbuild-kit/core-utils>esbuild': ^0.25.12
+  - libs/*
 
 # An install script runs arbitrary code before anybody reads the package, which is why pnpm
 # blocks it. These are allowed because they cannot work otherwise: each unpacks a
 # platform-specific native binary. Nothing goes in this list to make a warning go away.
 allowBuilds:
-  '@sentry/cli': true
-  # Compiles or unpacks a native binding; a pure-JS SQLite is not what this is.
-  better-sqlite3: true
-  cn-font-split: true
   # Its postinstall only prints a funding message; the runtime modules need no build step.
   core-js: false
   esbuild: true
-  koffi: true
   protobufjs: true
   workerd: true
 
@@ -65,8 +20,9 @@ allowBuilds:
 # resolves only while this project is nested, so it is named rather than linked.
 minimumReleaseAge: 1440
 
-# Exempt only where waiting a day costs more than it protects: toolchain and type packages,
-# read at build time and not shipped. Keep it short -- every entry is an accepted risk.
+# Exempt only where waiting a day costs more than it protects: toolchain and type packages, read
+# at build time and not shipped, and the author's own. Keep it short -- every entry is an
+# accepted risk.
 minimumReleaseAgeExclude:
   - '@cloudflare/workers-types'
   - '@types/node'
@@ -74,6 +30,7 @@ minimumReleaseAgeExclude:
   - wrangler
   - '@cloudflare/unenv-preset@2.16.2'
   - miniflare@5.20260921.0-alpha
-  # The author's own scope, published from the lib repository by the author alone: a day's wait
-  # protects against nobody, and would hold back a change made here and released there.
+  # The author's own scopes, published from their own repositories by the author alone: a day's
+  # wait protects against nobody, and would hold back a change made there and released.
   - '@canmi/*'
+  - '@monoflake/*'

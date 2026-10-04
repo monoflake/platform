@@ -90,12 +90,12 @@ One checkout runs one set, on the pinned numbers. The slot arithmetic that shift
 for a second checkout of this repository is gone with the arrangement it served, and one fixed
 shift came back for a different one: the sandbox binds every number plus 100, from
 `LATTICE_PORT_OFFSET`, which nothing else sets -- see
-[architecture/modes.md](architecture/modes.md); what it
+web's `spec/architecture/modes.md`; what it
 protected still holds, and more simply: `local` is the one process that writes `data/`, and a
 second copy of it collides on `LOCAL_PORT`, which is the mutex doing its job.
 
 A port both a TypeScript tool and a Rust binary need is declared in `mise.toml` under `[env]`,
-not in `platform/libs/sdk`. The single-source rule asks for one place to edit, not one particular
+not in `libs/sdk`. The single-source rule asks for one place to edit, not one particular
 file, and a TypeScript library cannot be read by a Rust process -- putting a cross-language
 fact there would force the duplication the rule exists to prevent. URLs only the TypeScript
 side resolves still belong in [workspace.md](architecture/workspace.md)'s URL map.
@@ -124,7 +124,7 @@ OpenGraph card are rendered into the HTML by the worker before any script runs, 
 at the phone itself. A page served from this machine's address now asks that same address for
 everything.
 
-Two consequences worth stating. `platform/libs/sdk` returns paths rather than origins for those two in
+Two consequences worth stating. `libs/sdk` returns paths rather than origins for those two in
 development, so the Rust mirror does too -- the two languages still give one answer, which is what
 that mirror is for. And `og:image` is a relative URL in development, which is invalid to a crawler
 and reaches none; production is unaffected.
@@ -140,7 +140,7 @@ none, which is how the two were told apart.
 
 Reclaimed rather than prevented, because a leaked process can only be told from a live one once
 its parent is gone -- which is after the run that made it. So
-[`reap-workerd.ts`](../apps/site/scripts/reap-workerd.ts) runs at the start of the next build and
+web's `apps/site/scripts/reap-workerd.ts` runs at the start of the next build and
 of the next test run, and on its own for the same job by hand.
 
 Two are spared. One whose parent is alive belongs to whoever started it, which is every dev server
@@ -153,7 +153,7 @@ may still be reading, and closing it is not a build's business.
 **`mise run reach [name]` answers on `http://localhost:26520` for `<name>.internal.ixc.one`**, host's
 panel when no name is given. macOS asks before a program reaches the local network, and a browser
 an agent drives, like node from mise, is refused; the system's own `ssh` and `curl` never are.
-So [`reach.ts`](../infra/apps/host/scripts/reach.ts) has ssh carry the node's port 443 to a loopback
+So infra's `apps/host/scripts/reach.ts` has ssh carry the node's port 443 to a loopback
 port and speaks to that alone, sending every request as the name would arrive: TLS with the name
 as SNI and as `Host`, so Caddy routes it. Caddy's guard sees the node's own address, which is a
 LAN one; a tunnel to the node's loopback is refused by the same guard, which is why the far end
@@ -179,7 +179,7 @@ them to be started by hand outside the session, where nothing could see or stop 
 everything, on the numbers "Dev ports are pinned" above fixes, so a second checkout starting these
 would collide rather than get a set of its own. The sandbox is the one exception, and runs the
 same session under its own name on the shifted set -- see
-[architecture/modes.md](architecture/modes.md). That collision is the mutex, which is the same
+web's `spec/architecture/modes.md`. That collision is the mutex, which is the same
 arrangement the ports themselves rely on.
 
 tmux is a machine tool rather than a mise one, for the reason the workspace's `toolchain.md`

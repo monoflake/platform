@@ -1,0 +1,11 @@
+{
+	// What tsdown declares the package's types from: every part, the store included, which the
+	// repository's own programs split between the browser's and workerd's checks. The store names
+	// workerd's types by import rather than through globals, so one program holds them all.
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["es2023", "dom"]
+	},
+	"include": ["src/**/*.ts", "*/src/**/*.ts"],
+	"exclude": ["**/*.test.ts", "**/node_modules", "**/dist"]
+}

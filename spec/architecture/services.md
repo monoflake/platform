@@ -1,6 +1,6 @@
 # Services, where they run, and how they are reached
 
-The deployment platform in [host.md](host.md) runs one machine. This file is the arrangement it is
+The deployment platform in infra's `spec/architecture/host.md` runs one machine. This file is the arrangement it is
 one node of: what a service is, where it may be placed, and how a name reaches it. The Workers this
 repository already deploys are services in it like any other.
 
@@ -91,7 +91,7 @@ house. The machine advertises that one address, as a `/32`, as a tailnet route, 
 tailnet reaches it from anywhere under the same name. **The answer DNS gives never changes; what
 changes is whether the address is reachable.** The gateway's names are another matter: they are
 public and answer differently at home, so the house has a resolver of its own for them -- see
-[host.md](host.md), "The resolver answers the gateway's names, and passes the rest on".
+infra's `spec/architecture/host.md`, "The resolver answers the gateway's names, and passes the rest on".
 
 ## One API host, scoped by path
 
@@ -139,7 +139,7 @@ origins may call a scope and how often one address may call which of its routes 
 `apps/gateway/src/policy.ts`; the service behind it is business logic and nothing else. A preflight
 is answered at the gateway without reaching the service, and a scope with no origin policy gives a
 browser no CORS at all. The policy lives in TypeScript rather than in `service.toml` because it
-names origins, and every URL is declared once in platform/libs/sdk.
+names origins, and every URL is declared once in libs/sdk.
 
 **A parameter the public may not send is refused at the gateway.** A policy lists query parameters
 it forbids, and a request carrying one is answered `403 forbidden_parameter` before it is counted
@@ -213,7 +213,7 @@ own routes, which its pages call without the gateway, are rows in the same forma
 same service.
 
 **A limit is a row in one format, wherever it is enforced.** It names methods and a path, so it can
-be as narrow as one route; platform/libs/sdk/limits is the format, its check and the bucket's arithmetic. The
+be as narrow as one route; libs/sdk/limits is the format, its check and the bucket's arithmetic. The
 gateway applies it to what reaches a service through the gateway. Routes that only a Worker's own
 pages call never pass the gateway, so that Worker asks `quota` with the same rows itself -- the
 site's are `apps/site/api/src/contract/limits.ts`.
@@ -294,7 +294,7 @@ held, so the numbers stay distinct without a list anybody has to keep.
 `port` or `socket`, exactly one: `socket` is a file name in the app's own directory, so the
 declaration has to mount one with `[data]`, and it cannot declare `[api]` or `[interface]`, since
 Caddy has no port to reach. host checks its health on that socket. Only the meter is shaped to run
-without a network, see [meter.md](meter.md).
+without a network, see infra's `spec/architecture/meter.md`.
 
 ## One door per node
 
@@ -304,7 +304,7 @@ Caddy and nothing else, so an app that is compromised cannot reach another aroun
 The tunnel reaches Caddy only, and Workers VPC reaches a node through Caddy too.
 
 **The internal gateway reaches Caddy too, on a side of its own**, `inside`, which only a holder of
-`INTERNAL_TOKEN` passes; see [host.md](host.md), "The inside side answers the internal gateway
+`INTERNAL_TOKEN` passes; see infra's `spec/architecture/host.md`, "The inside side answers the internal gateway
 alone".
 
 **A node has one VPC service, `home`, and it points at Caddy.** A Worker binds it as `HOME` and

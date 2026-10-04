@@ -1,5 +1,5 @@
 {
-	"name": "@canmi/quota",
+	"name": "@monoflake/quota",
 	"private": true,
 	"type": "module",
 	"scripts": {

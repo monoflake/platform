@@ -1,0 +1,45 @@
+# Publishes each dated package whose tree changed, as soon as the change reaches main, or by hand.
+# The npm token is short-lived and asked for here, through trusted publishing. See
+# web's spec/repository.md, "Publishing".
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "libs/sdk/**"
+      - "libs/probe/**"
+  workflow_dispatch:
+
+# One at a time, in the order pushed, and never cancelled: a run numbers the day's versions from
+# the tags the one before it pushed, and a release stopped halfway has published without tagging.
+# `queue: max` keeps every waiting run, up to GitHub's hundred, where the default keeps the newest.
+concurrency:
+  group: release
+  cancel-in-progress: false
+  queue: max
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      # The workspace above the project, as it is checked out at home: its mise.toml pins the
+      # tools and its rust-toolchain.toml the compiler.
+      - uses: actions/checkout@v7
+        with:
+          repository: canmi21/canmi
+      - uses: actions/checkout@v7
+        with:
+          path: repos/platform
+          fetch-depth: 0
+      - uses: jdx/mise-action@v5
+      - working-directory: repos/platform
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec vitest run
+      - working-directory: repos/platform
+        run: .mise/tasks/release
