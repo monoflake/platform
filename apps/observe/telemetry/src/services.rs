@@ -16,9 +16,9 @@ pub struct Services {
 	pub apps: Vec<Service>,
 }
 
-/// One service as host told it: an allowlist of what infra's `apps/host/src/telemetry.rs` writes.
-/// The declaration and the history rows are kept as `Value`, since every line of them is already
-/// public and host owns their exact shape.
+/// One service as host told it: an allowlist of what infra's `apps/deploy/host/src/telemetry.rs`
+/// writes. The declaration and the history rows are kept as `Value`, since every line of them is
+/// already public and host owns their exact shape.
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Service {
 	pub name: String,
