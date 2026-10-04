@@ -38,11 +38,6 @@ description = "Lint the Rust crates"
 # RUST_PACKAGES is `verify` naming the crates a change reached; run alone, it is every crate.
 run = 'cargo clippy ${RUST_PACKAGES:---workspace} --all-targets ${AUDIT:+-- -D warnings}'
 
-[tasks.outward]
-description = "Refuse in the sandbox; the tasks that publish, deploy or announce depend on it"
-hide = true
-run = 'if [ -n "${LATTICE_SANDBOX:-}" ]; then echo "refusing in the sandbox: this writes off the machine, and the data here is a fork" >&2; exit 1; fi'
-
 [tasks.cf-login]
 description = "Authenticate wrangler with Cloudflare (interactive)"
 dir = "apps/cdn"
@@ -50,7 +45,6 @@ run = "pnpm exec wrangler login"
 
 [tasks.deploy-aka]
 description = "Deploy the alias layer's worker, which resolves names and stores nothing"
-depends = ["outward"]
 dir = "apps/aka"
 # `--env=""` for the same reason the CDN passes it, even though this worker declares no
 # environment: naming the top level explicitly means a dev environment added later cannot
@@ -59,7 +53,6 @@ run = 'pnpm exec wrangler deploy --env=""'
 
 [tasks.deploy-cdn]
 description = "Deploy the CDN worker"
-depends = ["outward"]
 dir = "apps/cdn"
 # `--env=""` names the top-level environment explicitly. Defining any environment makes wrangler
 # refuse to guess, and here it would be guessing between production and the dev config that
@@ -69,22 +62,22 @@ run = 'pnpm exec wrangler deploy --env=""'
 [tasks.dev-gateway]
 description = "Run the API host, which reaches whichever services are running"
 dir = "apps/gateway"
-run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts api)"
+run = "pnpm run dev"
 
 [tasks.dev-cdn]
 description = "Run the CDN worker against the local objects tree"
 dir = "apps/cdn"
-run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts cdn)"
+run = "pnpm run dev"
 
 [tasks.dev-quota]
 description = "Run the buckets every limit is counted in, for a gateway or the site beside it"
 dir = "apps/quota"
-run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts quota)"
+run = "pnpm run dev"
 
 [tasks.dev-aka]
 description = "Run the alias layer's worker, which resolves names and stores nothing"
 dir = "apps/aka"
-run = "pnpm run dev $(node ../../libs/sdk/scripts/wrangler-dev.ts alias)"
+run = "pnpm run dev"
 
 [tasks.check-probe]
 description = "Fail when the status schema changed and its migrations were not generated again"

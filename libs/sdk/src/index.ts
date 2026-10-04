@@ -8,7 +8,6 @@ import {
 	CONTACT,
 	EXTERNAL,
 	GITHUB_OWNER,
-	PORT_OFFSET,
 	SITE,
 	SITE_PORT,
 	SOURCE,
@@ -35,7 +34,6 @@ export {
 	loopbackUrl,
 	normalizedLocation,
 	normalizePath,
-	PORT_OFFSET,
 	type Normalized,
 };
 
@@ -60,13 +58,10 @@ export const BOUND_PORTS = {
 	quota: 26523,
 } as const;
 
-/** The ports this checkout's servers bind: the pinned ones, shifted in the sandbox. */
-export const DEVELOPMENT_PORTS = Object.fromEntries(
-	Object.entries({ ...PINNED_PORTS, ...BOUND_PORTS }).map(([app, port]) => [
-		app,
-		port + PORT_OFFSET,
-	]),
-) as { readonly [App in keyof typeof PINNED_PORTS | keyof typeof BOUND_PORTS]: number };
+/** The ports this checkout's servers bind: the pinned ones and the bound ones together. */
+export const DEVELOPMENT_PORTS: {
+	readonly [App in keyof typeof PINNED_PORTS | keyof typeof BOUND_PORTS]: number;
+} = { ...PINNED_PORTS, ...BOUND_PORTS };
 
 export type AppName = keyof typeof PINNED_PORTS;
 
