@@ -137,8 +137,8 @@ const INTERNAL = {
 	cron: `${API.private}/cron`,
 	shot: `${API.public}/v1/shot`,
 	api: API,
-	// The status page's doors: the one address, and Vercel's own name for it, reached while
-	// Cloudflare's DNS is not. See spec/architecture/probe.md, "The page: one app, three doors".
+	// The status page's two names: the one address, and Vercel's own name for it, reached while
+	// Cloudflare's DNS is not. See spec/architecture/probe.md, "The page: one app, served by Vercel".
 	status: { canonical: 'https://status.canmi.app', mirror: 'https://canmi.vercel.app' },
 } as const;
 
@@ -241,13 +241,12 @@ export const GATEWAY_NAMES = {
 
 /**
  * Where each consumer's pages are served, by its service code: what a declaration's `cors.origins`
- * names, so no `service.toml` spells an origin. The status page has three doors, the platform's
- * own among them. See spec/architecture/gateway.md, "A route names who may call it by service
- * code".
+ * names, so no `service.toml` spells an origin. The status page has two, both Vercel's. See
+ * spec/architecture/gateway.md, "A route names who may call it by service code".
  */
 export const PAGE_ORIGINS: Readonly<Record<string, readonly string[]>> = {
 	site: [URLS.apps.production.site],
-	status: [INTERNAL.status.canonical, INTERNAL.status.mirror, INTERNAL.app],
+	status: [INTERNAL.status.canonical, INTERNAL.status.mirror],
 };
 
 export type UrlEnvironment = keyof typeof URLS.apps;

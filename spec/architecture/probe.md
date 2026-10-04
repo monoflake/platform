@@ -113,20 +113,19 @@ were not generated again.
   and the page does not change. Drizzle does not run where the page renders; reading needs nothing
   PostgREST cannot say, and the day it does is a view more, or a function.
 
-## The page: one app, three doors
+## The page: one app, served by Vercel
 
-**The status page is one SvelteKit app, built for three places by an environment variable**:
+**The status page is one SvelteKit app, deployed to Vercel alone**, under two names:
 
-| Door                | Served by                                                               | For                                            |
-| ------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
-| `status.canmi.app`  | Vercel                                                                  | the one address, the one a search engine keeps |
-| `canmi.vercel.app`  | Vercel, a second name on the same project                               | reaching it while Cloudflare's DNS is down     |
-| `canmi.app/status/` | Cloudflare, a scope of the platform built with `paths.base = '/status'` | the page inside the platform's own name        |
+| Name               | For                                                                            |
+| ------------------ | ------------------------------------------------------------------------------ |
+| `status.canmi.app` | the one address, the one a search engine keeps                                 |
+| `canmi.vercel.app` | Vercel's own name for the same project, reached while Cloudflare's DNS is down |
 
-Every door renders the same page from Supabase, read-only, and names `status.canmi.app` as its
-canonical address, so three doors are one page to an index. Its bar carries the platform's links on
-every door, so a visitor who arrives at the status page is one click from the rest of `canmi.app`.
-The variable picks the adapter -- Vercel's or Cloudflare's -- the base path and nothing else.
+Both render the same page from Supabase, read-only, and name `status.canmi.app` as its canonical
+address, so the two are one page to an index. Its bar carries the platform's links, so a visitor
+who arrives at the status page is one click from the rest of `canmi.app`. It is not built for
+Cloudflare: a page that reports whether the platform is up is served from outside it.
 
 **It reads the Supabase pair as `SUPABASE_URL` and `SUPABASE_ANON_KEY`, or with a `PUBLIC_`
 prefix, the bare name first.** mise decrypts the pair bare from `secrets.json`, and Vercel sets it

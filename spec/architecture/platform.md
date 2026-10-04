@@ -41,10 +41,11 @@ a Worker by its binding, or an app on the node through the one VPC service, with
 
 **The apex is outside Access**; Access stands in front of `*.canmi.app` alone.
 
-**The first scope is `status`**, the status page, which is one app with doors on `canmi.app/status/`,
-`status.canmi.app` and `canmi.vercel.app` -- [probe.md](probe.md), "The page: one app, three
-doors". The core app waits until it has something to hold; until then the router sends `/` to
-`canmi.net?ref=app` and knows the scopes it is given.
+**The status page is not one of its scopes**: it is served by Vercel alone, at `status.canmi.app`
+and `canmi.vercel.app`, so that a page reporting whether the platform is up does not go down with
+it -- [probe.md](probe.md), "The page: one app, served by Vercel". The core app waits until it has
+something to hold; until then the router sends `/` to `canmi.net?ref=app` and knows the scopes it
+is given.
 
 ## Open
 
