@@ -82,9 +82,9 @@
 		"build": "tsdown"
 	},
 	"dependencies": {
-		"@canmi/me": "^2026.1004.1",
+		"@canmi/me": "^2026.1004.4",
 		"@canmi/response": "^2.0.0",
-		"@monoflake/urls": "^2026.1004.0",
+		"@monoflake/urls": "^2026.1004.3",
 		"valibot": "^1.5.0"
 	},
 	"devDependencies": {

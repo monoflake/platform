@@ -314,14 +314,14 @@ importers:
   libs/sdk:
     dependencies:
       '@canmi/me':
-        specifier: ^2026.1004.1
-        version: 2026.1004.1
+        specifier: ^2026.1004.4
+        version: 2026.1004.4
       '@canmi/response':
         specifier: ^2.0.0
         version: 2.0.0
       '@monoflake/urls':
-        specifier: ^2026.1004.0
-        version: 2026.1004.0
+        specifier: ^2026.1004.3
+        version: 2026.1004.3
       valibot:
         specifier: ^1.5.0
         version: 1.5.0(typescript@7.0.2)
@@ -332,8 +332,8 @@ importers:
 
 packages:
 
-  '@canmi/me@2026.1004.1':
-    resolution: {integrity: sha512-LGgEclVsS6YEuS2E6m+2unXm/6C77uah6UFRR7TdFW87V/fMefHyNwQe8nFUSoCW6YSu900Zws5Csp4X7tD2Cg==}
+  '@canmi/me@2026.1004.4':
+    resolution: {integrity: sha512-INyLjju+m+RNd6Kb7KtuHvckbO4SW3cmSc23eqBmvKrzEmEwrPgMRqpGun8eN6vuaQZEnbLYNySpxRRYgJ4AlA==}
 
   '@canmi/response@2.0.0':
     resolution: {integrity: sha512-fQh5D0dAcdvccqWLcGQKzpGNa1TbyhZ+4B5kq5/LWPOnacdq5OY8uJoCn7zgdM0MNZMsZiDVsOXSu9fIQEdC4w==}
@@ -1195,8 +1195,8 @@ packages:
   '@jsquash/webp@1.5.0':
     resolution: {integrity: sha512-KggLoj2MnRSfIqTeKe1EmbljTX2vuV7mh79k89PCL1pyqiDULcPM1L47twxXt0hkb68F70bXiL31MxsuoZtKFw==}
 
-  '@monoflake/urls@2026.1004.0':
-    resolution: {integrity: sha512-GxcdA0FbfYeG3/whP8HtCcw0+i3qfe6TtfPW2rO6rH1UWoVxcc3BR2jP175HzsgU9JBxaWOmhl8ZCc+1T1RLVw==}
+  '@monoflake/urls@2026.1004.3':
+    resolution: {integrity: sha512-O8Tcb4adO3Qm23a5hHjoMUsWo0eGQf+EFrkwzFn12TlpuntTlVKDRBtYr1OYAs4YexxR4E4a4Bboil71rK+1+w==}
 
   '@oxc-project/types@0.152.0':
     resolution: {integrity: sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==}
@@ -2377,7 +2377,7 @@ packages:
 
 snapshots:
 
-  '@canmi/me@2026.1004.1': {}
+  '@canmi/me@2026.1004.4': {}
 
   '@canmi/response@2.0.0': {}
 
@@ -2863,9 +2863,7 @@ snapshots:
     dependencies:
       wasm-feature-detect: 1.9.0
 
-  '@monoflake/urls@2026.1004.0':
-    dependencies:
-      '@canmi/me': 2026.1004.1
+  '@monoflake/urls@2026.1004.3': {}
 
   '@oxc-project/types@0.152.0': {}
 
