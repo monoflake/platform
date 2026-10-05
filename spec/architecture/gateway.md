@@ -8,7 +8,7 @@ business logic and one declaration the gateway reads.
 
 The move to it is done but for milestones E7 and E13 in
 [../todo/milestones.md](../todo/milestones.md); what is left is listed in
-[../todo/gateway.md](../todo/gateway.md). Where [services.md](services.md) or
+[../issues/gateway.md](../issues/gateway.md). Where [services.md](services.md) or
 [delivery.md](delivery.md) say something else about the hosts, this file wins.
 
 ## The gateway is infrastructure, and pages are not

@@ -47,6 +47,6 @@ and `canmi.vercel.app`, so that a page reporting whether the platform is up does
 it -- web's `spec/architecture/status.md`, \"The page: one app, served by Vercel\". The core app and the router
 wait until there is something to hold; until then the zone's redirect rule stands in for both.
 
-## Open
+## What is still open
 
-- Where the telemetry view goes.
+See [../issues/services.md](../issues/services.md).

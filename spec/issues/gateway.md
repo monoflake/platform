@@ -1,10 +1,9 @@
-# Deferred: the gateway
+# Issues: the gateway
 
 Where the hosts are today against the gateway (platform's `spec/architecture/gateway.md`) they are moving to:
-what has to change, and what is not yet decided. The order the work is done in is a milestone once
-it is agreed, not an entry here.
+what is not yet decided. Once an entry is decided it leaves for [../todo/todo.md](../todo/todo.md).
 
-The rules over an entry are the index's; see web's `spec/todo/todo.md`.
+The rules over an entry are the index's; see [issues.md](issues.md).
 
 ## The CDN and the alias layer still stamp their own lifetimes
 
@@ -14,16 +13,6 @@ declarations. Each still stamps its answers itself as well, in its `cache.ts`: t
 over it, but the CDN keeps derived pictures in its own cache by that stamp, so it is not idle
 there. Whether the CDN's own cache reads its lifetime from the declaration instead, and the alias
 layer's stamps go, is the cleanup pass's to settle.
-
-## An apex answers nothing yet
-
-`monoflake.com`, `monoflake.net`, `ixc.one` and `symlink.si` are service domains, and each apex is
-to answer a page saying so. Until then `monoflake.com`, `monoflake.net` and `ixc.one` have no apex
-record -- `www.ixc.one`'s redirect to its apex leads nowhere, and the redirects to the site already
-in `rules/monoflake.com` and `rules/monoflake.net` wait on one -- and `symlink.si`'s root is the
-gateway's redirect to the site. The pages are web's, a layer above this one, and what is decided
-about them -- which host serves which, and `ill.li`'s at `il.lli.lil.ill.li` -- is web's
-`spec/todo/site.md`, "The service domains answer nothing of their own yet".
 
 ## The whitelists are written by hand, and checked against the table only
 

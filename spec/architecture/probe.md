@@ -106,8 +106,6 @@ were not generated again.
 Cloudflare, since a page that reports whether the platform is up is served from outside it. How it
 reads, listens and reports its errors is web's `spec/architecture/status.md`.
 
-## Open
+## What is still open
 
-- **A second place shares `checks` with the first.** A check's row is keyed by its id alone, so a
-  probe on the VPS declaring the same checks would overwrite the node's; the key gains `place`
-  when the second probe is written.
+See [../issues/services.md](../issues/services.md).

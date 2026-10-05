@@ -217,8 +217,6 @@ the browser at once. A browser that has died is started again for the next captu
 - The image's root is read-only and its `/tmp` small, so `HOME` and `TMPDIR` point inside the
   service's directory, where the browser keeps its profile, cache and shared memory.
 
-## Open
+## What is still open
 
-- **A picture is served at its id, to whoever holds it, for as long as it is kept.** What it lacks is
-  a place that issues a temporary file -- an address signed for a while and then refused -- which
-  `pictures/<id>.png` would give way to. Until one exists the route stays as it is.
+See [../issues/services.md](../issues/services.md).
