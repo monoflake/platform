@@ -13,7 +13,7 @@ file.
 | area                       | entries | what it holds                                         |
 | -------------------------- | ------- | ----------------------------------------------------- |
 | [gateway.md](gateway.md)   | 3       | where the hosts are against the gateway they moved to |
-| [services.md](services.md) | 3       | what the services' own files leave open               |
+| [services.md](services.md) | 4       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
 
@@ -26,3 +26,4 @@ file.
 - Where the telemetry view goes
 - A second place shares `checks` with the first
 - A picture is served at its id, to whoever holds it, for as long as it is kept
+- grok listens only once it is signed in

@@ -73,7 +73,7 @@
 		"build": "tsdown"
 	},
 	"dependencies": {
-		"@canmi/me": "^2026.1004.4",
+		"@canmi/me": "^2026.1005.5",
 		"@canmi/response": "^2.0.0",
 		"@monoflake/urls": "^2026.1004.3",
 		"valibot": "^1.5.0"

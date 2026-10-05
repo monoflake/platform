@@ -1,0 +1,40 @@
+[package]
+name = "grok"
+version = "0.0.0"
+description = "The Grok Build CLI, served as an API."
+edition.workspace = true
+license.workspace = true
+
+# The program keeps its own name: `grok` is the CLI it drives. See
+# spec/architecture/grok/deployment.md, "The app is grok; the program is grok2api".
+[[bin]]
+name = "grok2api"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1"
+monoflake = { path = "../../../libs/sdk" }
+axum = "0.8"
+base64 = "0.23"
+futures-util = "0.3"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-stream = "0.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["json"] }
+
+# End to end against a fake agent. The test binary is the fake agent too, so it brings its own
+# main rather than libtest's; see tests/api/main.rs.
+[[test]]
+name = "api"
+path = "tests/api/main.rs"
+harness = false

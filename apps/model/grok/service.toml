@@ -1,0 +1,16 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "grok"
+# Placed nowhere yet: its API key goes into the node's secret.env first. See
+# spec/architecture/grok/deployment.md, "The app is grok; the program is grok2api".
+placements = []
+
+[container]
+port = 20840
+health = "/health"
+memory_mb = 512
+
+# The CLI's binaries, its signed-in state and grok2api's own, on one volume.
+[data]
+path = "/data"

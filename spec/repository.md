@@ -2,7 +2,7 @@
 
 The platform of the author's system: the services every site reads and the doors they are read
 through. The node's apps -- `geo`, `objects`, `postgres`, `ledger`, `cron`, `apt`, `shot`, `probe`,
-`telemetry`, `gemini`, and the `gateway` and `quota` that also run at home -- and the Workers
+`telemetry`, `gemini` and `grok`, and the `gateway` and `quota` that also run at home -- and the Workers
 Cloudflare builds, `aka`, `cdn`, `gateway`, `hook` and `quota`. `libs/sdk` is what a consumer of
 the platform reads, `libs/probe` the status database's schema, and `libs/ledger` what the node's
 services share. `rules/` holds
@@ -28,7 +28,8 @@ breaks Cargo.
 | `data`     | objects, postgres, ledger | what holds state                                     |
 | `observe`  | probe, telemetry          | the platform watched, from outside and from inside   |
 | `system`   | cron, apt                 | the platform's own schedule and the machine's own    |
-| `compute`  | geo, shot, gemini         | what a caller asks to be worked out                  |
+| `compute`  | geo, shot                 | what a caller asks to be worked out                  |
+| `model`    | gemini, grok              | a model a subscription reaches, served as an API     |
 
 **A group is a directory and nothing more.** An app's name is still its directory's own and unique
 across the groups: an image, a container, a scope and a `dev-` task are named for the app, never for

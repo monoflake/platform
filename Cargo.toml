@@ -8,6 +8,7 @@ members = [
 	"apps/system/apt",
 	"apps/system/cron",
 	"apps/compute/geo",
+	"apps/model/grok",
 	"apps/data/ledger",
 	"apps/observe/probe",
 	"apps/compute/shot",
