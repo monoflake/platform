@@ -25,7 +25,8 @@ reads R2, which has an S3 surface, so it can be placed off Cloudflare as it is.
 
 ## Every node is the same node
 
-The VPS and the machine at home run the same four things: host, keeper, Caddy and the tunnel.
+The VPS and the machine at home run the same node -- what it is made of is infra's
+`spec/architecture/host.md`, "Infra's shape is chosen by name, never by a declaration".
 Neither opens an inbound port; public traffic reaches each through its own tunnel, and the nodes
 reach each other on the tailnet. Each node's host deploys only what is placed on it.
 
@@ -251,12 +252,9 @@ say exactly what went wrong.
 
 ## Names in an API are spelled out
 
-A path segment may be a short word -- `geo`, `cdn`, `aka` -- but a query parameter and a JSON key are
-written in full: `latitude`, not `lat`; `resource`, not `rid`. One concept has one name wherever it
-appears, in a parameter, a body and an answer alike. An identifier this spec defines, `slug` or
-`cid`, is its own full name. `rid` stays the term inside the code and the storage keys, where it is
-defined; outside, it is `resource`. A page's own query is the exception, read by people and short -- `?lang=`,
-`?ref=` -- and a page asks its API with the full names; see the workspace's spec/addresses.md.
+The rule is the workspace's `spec/addresses.md`, "An API spells its names out; a page may be
+short". What it names here: `slug` and `cid` are each their own full name, and `rid` stays the term
+inside the code and the storage keys, where it is defined -- outside, it is `resource`.
 
 ## A service keeps its data in SQLite, in its own directory
 

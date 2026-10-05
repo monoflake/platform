@@ -26,9 +26,9 @@ correctness = "deny"
 suspicious = "deny"
 complexity = "warn"
 
-# Our own crates at 0 so an edit-build cycle stays short, dependencies at 3 and cached --
-# nearly all the work in a dev run is inside rav1e and fast_image_resize. Not "z": a
-# size-optimised AVIF encoder is a slower one, and nobody downloads this. See spec/code.md.
+# Our own crates at 0 so an edit-build cycle stays short, dependencies at 3, built once and
+# cached, so a dev run is not slowed by code nobody here is changing. Not "z": a server pays for
+# speed on every request and for size never.
 [profile.dev]
 opt-level = 0
 

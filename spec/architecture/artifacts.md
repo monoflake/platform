@@ -229,15 +229,18 @@ the CDN by hash and cached for a year.
 five-minute cache by the number of values it takes, and the hit rate on these answers is what
 the whole design's latency rests on.
 
-| Route                        | Answers                                                  |
-| ---------------------------- | -------------------------------------------------------- |
-| `GET /article?slug=&locale=` | one view's metadata and its `content` hash               |
-| `GET /source?slug=`          | the `markdown` hash, for `<url>.md`                      |
-| `GET /homepage?locale=`      | the article list it renders, and its own compiled page   |
-| `GET /sitemap`               | every indexable view's path, date and alternates         |
-| `GET /feed?locale=`          | one locale's entries: metadata and a `content` hash each |
-| `GET /media?resource=`       | what is known about one resource                         |
-| `POST /batch`                | every question asked about many things; see below        |
+| Route                          | Answers                                                  |
+| ------------------------------ | -------------------------------------------------------- |
+| `GET /articles/{slug}?locale=` | one view's metadata and its `content` hash               |
+| `GET /articles/{slug}/source`  | the `markdown` hash, for `<url>.md`                      |
+| `GET /homepage?locale=`        | the article list it renders, and its own compiled page   |
+| `GET /sitemap`                 | every indexable view's path, date and alternates         |
+| `GET /feed?locale=`            | one locale's entries: metadata and a `content` hash each |
+| `GET /media/{resource}`        | what is known about one resource                         |
+| `POST /batch`                  | every question asked about many things; see below        |
+
+The shapes are the site's, in its `api/src/contract/routes.ts`; see web's
+`spec/architecture/site-api.md`.
 
 ### A slug is the identity and the path is the address
 
@@ -245,7 +248,7 @@ the whole design's latency rests on.
 names one article for as long as it exists; `mirror/friends-come-in-phases` is where it currently
 lives. One is what it is, the other is where to find it, and only the second can change.
 
-That is what the API asks with: `?slug=` takes the identity and nothing else. Passing the
+That is what the API asks with: the slug in the address takes the identity and nothing else. Passing the
 directory too would be a second copy of a derivable fact, and the API would then have to decide
 what to do when the two disagree -- a failure mode bought for nothing, since the answer names the
 real path anyway.
@@ -308,15 +311,16 @@ is not 404 says the caller built the question wrong**, so it is left loud: swall
 have hidden every malformed request this site will ever send, to save one guard at the one place
 that could send one.
 
-### A question asks with a query; a list asks with a body
+### A question names its thing in the path; a list asks with a body
 
-**Nothing about a question lives in the path.** A single lookup is a `GET` whose identifiers are
-all query parameters -- the slug as much as the locale -- and asking about many things at once is
-a `POST` carrying a list, because a list does not belong in a URL.
+**A single lookup is a `GET` that names the thing it is about in the path and every refinement in
+the query** -- the slug in the path, the locale in the query -- as the workspace's
+`spec/addresses.md` has every address do. Asking about many things at once is a `POST` carrying a
+list, because a list does not belong in a URL.
 
 It was not that before, and the inconsistency was invisible from inside: the locale had been
-argued into the query while `/view/{slug}` kept the slug in the path, so one question asked two
-ways at once. The rule is worth more than either spelling.
+argued into the query while `/view/{slug}` kept the slug in the path, and then the slug was moved
+into the query too, against the workspace's rule. The rule is worth more than either spelling.
 
 The cost is that a slug carries slashes and arrives percent-encoded --
 `?slug=architecture%2Fcompile-time-rendering` reads worse than a path did. That is the price of a

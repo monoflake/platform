@@ -19,8 +19,8 @@ its `Dockerfile` beside it; every library one under `libs/`. A crate is listed i
 hand and a package found by `pnpm-workspace.yaml`'s globs, so a TypeScript-only directory never
 breaks Cargo.
 
-**The apps are grouped by what each does**, since fifteen are past the four web's
-`spec/architecture/workspace.md` lets a flat `apps/` hold:
+**The apps are grouped by what each does**, since a category of them passed the four members web's
+`spec/architecture/workspace.md`, "Grouping threshold", lets a flat `apps/` hold:
 
 | Group      | Apps                      | What they are                                        |
 | ---------- | ------------------------- | ---------------------------------------------------- |
@@ -38,8 +38,8 @@ its group, so moving an app between groups changes no name on the node. The tool
 
 ## The other repositories are named, never linked
 
-Infra is `monoflake/infra` and the site `canmi21/web`, each cloned beside this one in the
-workspace. A rule of theirs is cited by name -- `infra's spec/architecture/host.md` -- and `refs`
+Infra is `monoflake/infra`, the site `canmi21/web` and the library `canmi21/lib`, each cloned
+beside this one in the workspace. A rule of theirs is cited by name -- `infra's spec/architecture/host.md` -- and `refs`
 resolves it in that repository when it is cloned beside this one, so a renamed section still fails
 here. A relative link across a repository resolves only while both are cloned side by side, so a
 spec here never writes one. `mise run rules` reads the site's routes the same way, from the web
