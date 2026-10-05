@@ -14,7 +14,7 @@ const MINUTES = 'public, max-age=300';
  * The codecs cannot run here, so the conversion is stubbed and the routing is what is held.
  *
  * vitest.config.ts replaces every `.wasm` import with an empty object, which is what makes this
- * module loadable at all; a test that actually encoded would fail inside a codec initialised
+ * module loadable at all; a test that actually encoded would fail inside a codec initialized
  * from nothing rather than honestly. What these tests are about is which of the five rules a
  * request lands on, and that decision is made before a codec is reached.
  */
@@ -137,7 +137,7 @@ describe('the short spelling of JPEG', () => {
 	 *
 	 * A source is looked up rather than corrected. web's `apps/local/src/extension.rs` names every
 	 * JPEG this repository writes `jpeg`, so `{cid}.jpg` is a key the bucket cannot hold and the
-	 * ordinary miss is the whole answer. Normalising here too would serve the jpeg's bytes under a
+	 * ordinary miss is the whole answer. Normalizing here too would serve the jpeg's bytes under a
 	 * name that was never stored, and nothing would report it.
 	 */
 	it('leaves a `jpg` source alone, so it is the plain 404 a missing object is', async () => {

@@ -22,7 +22,7 @@ where the time costs nothing. The first half was measured against the wrong numb
 
 The second half still holds, and `/derive` is now the only route that converts anything, so the
 encoder has nowhere else it could be. `/object` hands back what is stored and refuses what is
-not: a flat-colour original written as PNG has no AVIF to serve, and `/object/{cid}.avif`
+not: a flat-color original written as PNG has no AVIF to serve, and `/object/{cid}.avif`
 answering 404 for it is a fact about the bucket that a caller can act on rather than a conversion
 happening quietly.
 
@@ -143,7 +143,7 @@ input, and a clock in the bytes would make the same request return different arc
 ## The extension asks for a format
 
 **AVIF is the usual storage format, not the only one.** This section said only AVIF is stored
-and that was wrong: `local image` writes a flat-colour original as PNG, because lossy coding is
+and that was wrong: `local image` writes a flat-color original as PNG, because lossy coding is
 the wrong tool for it. An article cannot get this wrong from its side, because a reference names
 a resource id and carries no format at all -- which format the CDN serves is settled at compile
 time from the record. So `/object/{cid}.avif` and
@@ -252,7 +252,7 @@ is one shape, and the year it keeps is the year its name earns.
 
 ### And the policy is derived from the key, not decided per route
 
-That trap generalises, and it is now the worker's one cache rule, which has three rows and no
+That trap generalizes, and it is now the worker's one cache rule, which has three rows and no
 exceptions: **a settled answer -- `2xx` or `3xx` -- keeps a year and `immutable` if its key carries
 a hash and an hour if it does not; anything that is not a settled answer keeps five minutes.**
 Nothing is looked up in a table, so a new object type arrives with the right policy and no decision

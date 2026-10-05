@@ -49,7 +49,7 @@ const layered = { version: v.number() } as const;
  *
  * A list, because re-scanning a subject adds an origin to the resource rather than making a
  * second one. The originals are never published; the cid is kept so the next import of the same
- * file is recognised and skipped. See spec/architecture/resource.md, "`source` and `origin`".
+ * file is recognized and skipped. See spec/architecture/resource.md, "`source` and `origin`".
  */
 export const MediaLayerSchema = v.object({
 	...layered,
@@ -63,7 +63,7 @@ export const SCALABLE_MIMES = new Set(['image/svg+xml']);
  * One published encoding of a picture.
  *
  * `resolution` is absent on a vector for the same reason the layer's is: there are no pixels to
- * report, and a caller that asks and receives nothing has its answer. `quality` is the normalised
+ * report, and a caller that asks and receives nothing has its answer. `quality` is the normalized
  * encoder setting, kept because re-deriving has to reproduce what was published.
  */
 export const ImageVariantSchema = v.object({
@@ -172,7 +172,7 @@ const exif = {
 	),
 	software: v.optional(v.string()),
 	color_space: v.optional(v.string()),
-	/** Read and honoured on the way in: ignoring it turns every derived image. */
+	/** Read and honored on the way in: ignoring it turns every derived image. */
 	orientation: v.optional(v.number()),
 } as const;
 

@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config';
  *
  * `apps/delivery/cdn` imports its codecs' `.wasm` files directly, which wrangler substitutes at
  * bundle time and node does not -- so any test reaching one failed to load. An empty stub is safe
- * because a codec initialises lazily: a path that does not encode or decode never touches it.
+ * because a codec initializes lazily: a path that does not encode or decode never touches it.
  */
 export default defineConfig({
 	plugins: [

@@ -53,7 +53,7 @@ if (typeof globalThis.ImageData === 'undefined') {
 }
 
 /**
- * A codec is initialised once per isolate, and only if something asks for it.
+ * A codec is initialized once per isolate, and only if something asks for it.
  *
  * Instantiating all four at module scope would put the cost on every request, including the
  * overwhelming majority that read a stored AVIF and never transcode anything.
@@ -107,7 +107,7 @@ export const MEDIA_TYPES: Record<Derivable, string> = {
  * Quality for the fallback formats.
  *
  * These are mostly served to a browser that cannot read AVIF, so they are a compatibility path
- * rather than the one being optimised. High enough that the fallback is not visibly worse than
+ * rather than the one being optimized. High enough that the fallback is not visibly worse than
  * the image everyone else gets.
  */
 const QUALITY = 80;

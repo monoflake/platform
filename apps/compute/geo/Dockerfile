@@ -46,7 +46,7 @@ COPY --from=fetch /geo /
 
 FROM scratch
 COPY --from=build /geo /geo
-# Read-only data travelling with the binary, so every copy of the service is whole.
+# Read-only data traveling with the binary, so every copy of the service is whole.
 COPY --from=data / /data
 # Not root: nothing here needs to be, and scratch has no user table, so it is named by number.
 USER 65532:65532

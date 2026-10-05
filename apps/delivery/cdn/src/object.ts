@@ -17,7 +17,7 @@ import { failure } from './respond';
  * Naming an object by its id alone, under no type at all.
  *
  * A pure lookup and nothing else: the id and the extension form the storage key, the bytes go
- * back. Nothing is resolved, nothing is synthesised, and nothing is fetched -- which is what
+ * back. Nothing is resolved, nothing is synthesized, and nothing is fetched -- which is what
  * makes this the one address the rest of the worker can call rather than request. See
  * web's spec/architecture/data.md, "The bucket stores content ids, and so does the address".
  */

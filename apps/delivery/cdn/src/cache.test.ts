@@ -23,7 +23,7 @@ const PROXIED = '/proxy/github/release/rdm/latest/rdm.dmg';
 const MOVED = '/github/release/rdm/latest/rdm.dmg';
 
 describe('isContentAddressed', () => {
-	it('recognises both shapes a hashed address is written in', () => {
+	it('recognizes both shapes a hashed address is written in', () => {
 		expect(isContentAddressed(OBJECT)).toBe(true);
 		// Two extensions and still nothing open: the hash names the source and the pair names
 		// the conversion, so the answer is a function of the address either way.
@@ -33,11 +33,11 @@ describe('isContentAddressed', () => {
 
 	// A request names the id alone; the bucket fans it out. Both spellings end in the hash, which
 	// is why one predicate covers the path and the key it resolves to.
-	it('recognises the fanned-out key as well as the path that asks for it', () => {
+	it('recognizes the fanned-out key as well as the path that asks for it', () => {
 		expect(isContentAddressed(`/${storageKey(HASH, 'avif')}`)).toBe(true);
 	});
 
-	it('does not recognise a name, which is what every other address here is', () => {
+	it('does not recognize a name, which is what every other address here is', () => {
 		expect(isContentAddressed(MOVED)).toBe(false);
 		expect(isContentAddressed(PROXIED)).toBe(false);
 		expect(isContentAddressed('/robots.txt')).toBe(false);

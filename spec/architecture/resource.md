@@ -211,7 +211,7 @@ it can only be a vector and the extension table would name one `.avif`: an addre
 nobody wrote is worse than the refusal.
 
 Measured on this corpus: 45 resources, 40 naming an AVIF, 3 a clip's top rung, 2 a PNG that is
-the whole ladder for a flat-colour original. No resource failed to declare one, and no tie
+the whole ladder for a flat-color original. No resource failed to declare one, and no tie
 occurred, so both tie-breaks exist only under test.
 
 ## A rid is resolved three times, and each stage bakes only what it can know

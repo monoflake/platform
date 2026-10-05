@@ -60,9 +60,9 @@ export const NewsletterAnswerSchema = v.object({
 	subscriber_count: counter,
 });
 
-/** Cancelling. The count is absent when the answer is about a subscription that was not there. */
+/** Canceling. The count is absent when the answer is about a subscription that was not there. */
 export const CancelAnswerSchema = v.object({
-	cancelled: v.optional(v.boolean()),
+	canceled: v.optional(v.boolean()),
 	subscriber_count: v.optional(counter),
 });
 

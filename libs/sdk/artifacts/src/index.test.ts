@@ -49,7 +49,7 @@ describe('the dates a view carries', () => {
 	});
 
 	it('drops a date it has not been told about rather than reporting one', () => {
-		// Not the behaviour being asked for -- the behaviour being guarded against. A fourth date
+		// Not the behavior being asked for -- the behavior being guarded against. A fourth date
 		// added to the publisher and not to the schema disappears exactly like this.
 		const dates = { ...view.dates, retracted: '2026-09-02T00:00:00Z' };
 		expect(v.parse(RootViewSchema, { ...view, dates }).dates).not.toHaveProperty('retracted');

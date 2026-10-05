@@ -15,7 +15,7 @@
 /**
  * Whether this bundle is a development one, asked once for the whole arrangement.
  *
- * The only judgement in this file, and deliberately the only one anywhere: every consumer reads
+ * The only judgment in this file, and deliberately the only one anywhere: every consumer reads
  * a number, never a condition, so no two of them can decide differently. The mode rather than
  * `DEV`, which is also true under vitest -- that spelling left all 22 assertions about the
  * published header exercising this branch and nothing checking the number a reader gets.
@@ -33,7 +33,7 @@ const DEVELOPING = (import.meta as { env?: { MODE?: string } }).env?.MODE === 'd
  */
 export const PUBLICATION_DELAY = DEVELOPING ? 0 : 300;
 
-/** One year, in seconds: the longest a browser honours, and what `immutable` already implies. */
+/** One year, in seconds: the longest a browser honors, and what `immutable` already implies. */
 const UNCHANGING_LIFE = 31_536_000;
 
 /** One hour, in seconds. The middle number, for an address that names rather than identifies. */

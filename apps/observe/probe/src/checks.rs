@@ -314,7 +314,7 @@ mod tests {
 
 		let twice = format!("{one}\n{one}");
 		assert!(parse(&twice).unwrap_err().contains("twice"));
-		let unknown = one.replace("within = 2", "within = 2, colour = 1");
+		let unknown = one.replace("within = 2", "within = 2, color = 1");
 		assert!(parse(&unknown).is_err());
 		let unnamed = one.replace("name = \"Geolocation API\"\n", "");
 		assert!(parse(&unnamed).unwrap_err().contains("name"));

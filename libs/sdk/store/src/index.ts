@@ -193,7 +193,7 @@ async function readFromAssets(
 	if (!response.ok || !response.body) return null;
 	const contentType = response.headers.get('content-type') ?? contentTypeFor(key);
 	// No validator, deliberately. Measured: wrangler's asset fetcher sends no ETag of its own,
-	// and synthesising one here would let a browser hold a file that is being edited on disk.
+	// and synthesizing one here would let a browser hold a file that is being edited on disk.
 	// Development should always answer with what the tree currently says.
 	if (!wanted) return { body: response.body, contentType };
 

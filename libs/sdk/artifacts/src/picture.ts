@@ -82,7 +82,7 @@ export function best(image: ImageLayer, want: number): ImageVariant | undefined 
  * Its own table rather than the variant one, for the reason `for_icon` is its own on the other
  * side: these bytes were encoded by somebody else's server and arrive as SVG or ICO, neither of
  * which a ladder ever produces -- and the ladder's table answers `avif` for anything it does not
- * recognise, which would be an address to a file nobody wrote. The twin of `icon_mime` in
+ * recognize, which would be an address to a file nobody wrote. The twin of `icon_mime` in
  * web's apps/local/src/extension.rs, held to it by a test here.
  */
 export const ICON_EXTENSION: Record<string, string> = {
@@ -110,7 +110,7 @@ export function toned(icon: IconLayer, want?: Tone): ImageVariant | undefined {
  *
  * Beside `ICON_EXTENSION` rather than folded into it, for the reason that table gives: a ladder
  * produces these four and never an SVG or an ICO, and answering `avif` for a mime it does not
- * recognise would be a guess an icon cannot afford. Held to `for_variant` in
+ * recognize would be a guess an icon cannot afford. Held to `for_variant` in
  * web's apps/local/src/extension.rs by a test, the two being one fact in two languages.
  */
 export const VARIANT_EXTENSION: Record<string, string> = {
@@ -156,7 +156,7 @@ export type Picture = {
 	width: number;
 	height: number;
 	ratio: string;
-	/** The colour block painted under it while it arrives. Absent for a record holding no hash. */
+	/** The color block painted under it while it arrives. Absent for a record holding no hash. */
 	placeholder?: string;
 };
 
