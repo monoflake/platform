@@ -26,10 +26,11 @@ that host's trace; the domain waits for the builds out there to update past that
 ## An apex answers nothing yet
 
 `monoflake.com`, `monoflake.net`, `ixc.one` and `symlink.si` are service domains, and each apex is
-to answer a placeholder page saying so. Until then `monoflake.com`, `monoflake.net` and `ixc.one`
-have no apex record -- `www.ixc.one`'s redirect to its apex leads nowhere -- and `symlink.si`'s root
-is the gateway's redirect to the site. `ill.li`'s apex keeps its redirect, so its page is on a host one
-label down, named when it is built. Done in the cleanup pass, once the migration is.
+to answer a page saying so. Until then `monoflake.com`, `monoflake.net` and `ixc.one` have no apex
+record -- `www.ixc.one`'s redirect to its apex leads nowhere -- and `symlink.si`'s root is the
+gateway's redirect to the site. The pages are web's, a layer above this one, and what is decided
+about them -- which host serves which, and `ill.li`'s at `il.lli.lil.ill.li` -- is web's
+`spec/todo/site.md`, "The service domains answer nothing of their own yet".
 
 ## The whitelists are written by hand, and checked against the table only
 
