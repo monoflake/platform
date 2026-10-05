@@ -519,7 +519,9 @@ publishing, not by redeploying anything.
 **web's `data/record/symlinks.json` names every scope's fixed names by content id** -- its marks, and any
 other file a host answers under a name of its own, such as a sitemap's stylesheet -- and the bytes
 are objects like any other, in the published tree and out of git. A scope is a service's internal name -- `site`,
-`status`, `api`, `cdn`, `aka` -- never a host, since one service may be deployed under several, and
+`status`, `api`, `cdn`, `aka`, and `platform` for the page `monoflake.com` and `monoflake.net`
+will answer at their apexes, named before it is built -- never a host, since one service may be
+deployed under several, and
 each of its files points at a content id; the extension is the file's. A service with no page names
 only its `favicon.ico`. The alias layer answers each at `/symlink/{scope}/{file}`, which is what every page asks.
 The site's are also answered bare, `/symlink/favicon.ico`, for the addresses already handed out:
