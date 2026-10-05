@@ -305,17 +305,17 @@ separates the three cases, and wrangler's esbuild defines no `import.meta.env` a
 worker keeps the published numbers, which is right, because the caches it stamps for are real ones
 even when it runs on a laptop.
 
-## The CDN is four route groups and a refusal
+## The CDN is three route groups and a refusal
 
 **It resolves nothing, and that is enforced by what is mounted rather than by what is declared.**
-Four groups reach a handler and everything else is a `400`:
+Three groups reach a handler and everything else is a `400`; the files every host answers -- `/`,
+`/favicon.ico`, `/robots.txt`, `/security.txt` -- are the gateway's, in front of it:
 
-| group                            | what it does                       | outbound |
-| -------------------------------- | ---------------------------------- | -------- |
-| `/object/{cid}.{ext}`            | hands back the bytes at that key   | none     |
-| `/derive/{cid}.{ext}.{ext}`      | every conversion and every archive | none     |
-| `/proxy/{vendor}/**`             | a third party, live                | **yes**  |
-| `/` `/favicon.ico` `/robots.txt` | this host's own three answers      | none     |
+| group                       | what it does                       | outbound |
+| --------------------------- | ---------------------------------- | -------- |
+| `/object/{cid}.{ext}`       | hands back the bytes at that key   | none     |
+| `/derive/{cid}.{ext}.{ext}` | every conversion and every archive | none     |
+| `/proxy/{vendor}/**`        | a third party, live                | **yes**  |
 
 Beside them, `/github/**` answers `308` to `/proxy/github/**`, permanently, because the prefix
 moved and a reader holding the old one should stop holding it.
@@ -326,7 +326,7 @@ moved and a reader holding the old one should stop holding it.
 in the path answered a question the extension already answers, and the bucket never stored one.
 
 **`400` and `404` are not interchangeable here.** A `404` on a hashed name is a fact about the
-bucket and a short-lived one; a path that is not one of the four shapes is a fact about the address
+bucket and a short-lived one; a path that is not one of the three shapes is a fact about the address
 and will never become true. Collapsing them would throw away the only signal that distinguishes a
 sweep from a typo.
 
@@ -338,7 +338,7 @@ lookup.
 
 ### What each lifetime is earned by
 
-One rule over the four groups, and it reads the answer rather than the route:
+One rule over the three groups, and it reads the answer rather than the route:
 
 | answered                           | kept                | because                       |
 | ---------------------------------- | ------------------- | ----------------------------- |
@@ -357,9 +357,7 @@ Everything `public`. **A `3xx` keeps the year here, which no other host grants i
 elsewhere is a fact about this moment, and on `/derive` it is a function of the input and can no
 more change than the bytes can.
 
-Two answers sit outside the rule and say so. `/favicon.ico` keeps a year with no hash in it -- the
-one exception on this host, and it carries a promise: what moves is what the alias layer answers,
-and that keeps its own five minutes. And a `502` from anything that had to reach another host is
+One answer sits outside the rule and says so: a `502` from anything that had to reach another host is
 `no-store`, because status alone cannot tell it from a `400` about a malformed address, and only
 one of the two is worth forgetting immediately.
 
@@ -636,7 +634,7 @@ spelling -- CJK full stops, backslashes, runs of slashes, a trailing slash -- is
 that it is already there; both are the package's, in the lib repository's `spec/me/addresses.md`,
 "Every address has one spelling". Each entry point does the redirecting in its own framework's
 terms, first,
-before any route reads the path -- a Hono middleware on the gateway, the CDN and the alias layer, a
+before any route reads the path -- a Hono middleware on the gateway, in front of the CDN and the alias layer, a
 SvelteKit handle on the site, the status page and the panel, each with `trailingSlash = 'ignore'`
 in its root layout, since SvelteKit's own redirect runs before any handle and would answer first. The CMS is a static build with no
 server to redirect from, so it has none.

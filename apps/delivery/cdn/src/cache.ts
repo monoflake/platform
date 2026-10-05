@@ -49,9 +49,8 @@ export function lifetimeFor(path: string, status: number): string {
  * The floor, so nothing leaves this host without a lifetime.
  *
  * Mounted over everything rather than over each group, because the rule above covers the three
- * of them and a route added beside them is far likelier to want it than not. The two names that
- * sit outside it -- `/favicon.ico` and `/robots.txt` -- say so by stamping their own before this
- * runs, and a route that stores its own response at the edge asks `lifetimeFor` directly, since
+ * of them and a route added beside them is far likelier to want it than not. A route that stores
+ * its own response at the edge asks `lifetimeFor` directly, since
  * the copy it puts there exists before this can reach it.
  */
 export const cacheControl: MiddlewareHandler = async (c, next) => {

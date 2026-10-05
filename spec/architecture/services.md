@@ -46,9 +46,9 @@ is worth to anybody.
 
 ## Cloudflare is the one entrance, and that is accepted
 
-Every public request enters Cloudflare, so failing over between placements happens behind it: a
-service whose first placement is a Worker falls back to the VPS and then to home, and one without a
-Worker placement is fronted by a thin Worker doing the same. What this does not survive is
+Every public request enters Cloudflare, so failing over between placements is to happen behind it:
+a service whose first placement is a Worker falling back to the VPS and then to home. It is not
+built yet -- the gateway routes each scope to its first placement. What this does not survive is
 Cloudflare itself failing. That is accepted rather than engineered around: an outage there takes a
 large share of the web with it, and reaching the VPS around Cloudflare would give up Access and the
 edge in front of everything else.
@@ -57,8 +57,6 @@ What that edge refuses before any Worker runs -- scanners, and every path a host
 is [firewall.md](firewall.md).
 
 ## A domain says who can reach it, not what is behind it
-
-> Being replaced by [gateway.md](gateway.md), which wins where the two differ.
 
 | Name                                                                | Who reaches it                                     | What goes there                      |
 | ------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------ |
@@ -96,8 +94,6 @@ infra's `spec/architecture/host.md`, "The resolver answers the gateway's names, 
 
 ## One API host, scoped by path
 
-> Being replaced by [gateway.md](gateway.md), which wins where the two differ.
-
 Every API is `api.internal.ixc.one/{scope}/...` privately and `api.monoflake.com/v{n}/{scope}/...`
 publicly, the private side kept for what runs on the node -- see [gateway.md](gateway.md), "Where
 a request goes". One path space, of which the public side is a subset. The scope is the service's name, so the site's own
@@ -110,11 +106,12 @@ reaches a service except through the gateway** -- see "One door per node" below.
 on Workers has no route and no `workers.dev` address of its own; the gateway reaches it by a
 binding.
 
-**Two gateways read one table.** The public one is a Worker, which reaches Worker services by
-binding and everything else over Workers VPC, and is where the failover above lives. The private one
-is Caddy on the node. Both are rendered from the one declaration, since two tables written by hand
-are two readings of one format and would come to disagree silently -- the case the workspace's
-`code.md` warns about.
+**Every door reads one table.** The public gateway is a Worker, which reaches Worker services by
+binding and everything else over Workers VPC. The internal gateway is the same program under Node
+on the node -- see [gateway.md](gateway.md), "Inside the house, the same names answer locally" --
+and the private side is Caddy on the node. All are rendered from the one declaration, since two
+tables written by hand are two readings of one format and would come to disagree silently -- the
+case the workspace's `code.md` warns about.
 
 **The public gateway is the Worker `gateway` in `apps/edge/gateway`, on every hostname
 [gateway.md](gateway.md) lists.** Its table is
@@ -132,8 +129,6 @@ gateway sends them to the site with a 301 and `?ref=api` for the analytics. Ther
 moved to `/site/`, links in mail already sent included, and that was accepted rather than carried.
 
 ## The gateway holds what every API would otherwise repeat
-
-> Being replaced by [gateway.md](gateway.md), which wins where the two differ.
 
 **CORS and limits by address are the gateway's, per scope, and a service writes neither.** Which
 origins may call a scope and how often one address may call which of its routes is the service's
@@ -156,14 +151,12 @@ the full address, and looked up before any limit is counted. Only GET is kept, a
 from what GET kept; a request carrying `Authorization` or a cookie, and an answer setting one, are
 never kept.
 
-- **The service's `Cache-Control` is the word when it says anything.** `no-store`, `no-cache` and
-  `private` keep nothing -- `shot`'s answers about a capture say `no-store` -- and a `max-age` or
-  `s-maxage` is kept that long, as `shot`'s pictures are for fifteen minutes.
-- **Otherwise the scope's policy says, and five minutes for a success and a failure alike when it
-  does not.** `geo` keeps a success for a day, since an address changes only with the gazetteer; a
-  scope may keep nothing at all.
-- **The gateway's own failure to reach a service is kept thirty seconds**, so a node back from a
-  restart is not reported down for five minutes more.
+- **The route's declared lifetime is the word, and the service's own `Cache-Control` is replaced,
+  never read.** A lifetime is declared for each of five kinds of answer, and what nobody declares is
+  kept fifteen minutes for a success and five for a failure -- see [gateway.md](gateway.md), "A
+  lifetime is declared for five kinds of answer, named rather than numbered".
+- **A service the gateway cannot reach is a failure like any other**, kept for the route's
+  `faulted` lifetime; a scope that needs it shorter, as the probe's does, declares thirty seconds.
 - Every answer says which it was, `x-gateway-cache: hit` or `miss`. A refusal the gateway makes
   itself -- a forbidden parameter, a limit -- is never kept.
 
@@ -182,7 +175,7 @@ gateway overwrites it. It is the second lock behind a forbidden parameter, not a
 counts anything itself.** A service stays business logic; three layers outside it keep the row, each
 a check on the others:
 
-1. **Cloudflare's WAF**, one rate rule a zone -- [firewall.md](firewall.md), "Rate Cap" -- is the
+1. **Cloudflare's WAF**, one rate rule a zone -- [firewall.md](firewall.md), "Where a rule lives" -- is the
    floor under everything: coarse, by path alone, counted per Cloudflare location, and only ever
    meeting a flood.
 2. **[`quota`](quota.md)** keeps each row exactly, as a bucket -- a burst at once and a steady rate
@@ -232,8 +225,8 @@ entered: the internal one for the LAN, once it answers -- see [quota.md](quota.m
 private side, `api.internal.ixc.one`, counts nothing, and it retires.
 
 **The gateway is written with Hono**, for its CORS middleware and the one error envelope, which
-every service here already answers in. It answers `/robots.txt` itself, keeping the host out of an
-index but for the site's scope -- see [robots.md](robots.md).
+every service here already answers in. It answers `/robots.txt` itself, keeping the host out of every
+index -- see [robots.md](robots.md).
 
 **Development goes through the gateway too.** It binds the API's pinned port, so a caller reaches
 every API at one address with the same CORS it will meet in production. Each service behind it runs
@@ -292,11 +285,12 @@ now and then find its number already taken by one of them.
 A service states its port in `service.toml`, and host refuses a second app declaring one already
 held, so the numbers stay distinct without a list anybody has to keep.
 
-**The one exception has no network at all, and answers on a socket instead.** A container states
-`port` or `socket`, exactly one: `socket` is a file name in the app's own directory, so the
-declaration has to mount one with `[data]`, and it cannot declare `[api]` or `[interface]`, since
-Caddy has no port to reach. host checks its health on that socket. Only the meter is shaped to run
-without a network, see infra's `spec/architecture/meter.md`.
+**A socket replaces the port, not the network.** A container states `port` or `socket`, exactly
+one: `socket` is a file name in the app's own directory, so the declaration has to mount one with
+`[data]`, and it cannot declare `[api]` or `[interface]`, since Caddy has no port to reach. host
+checks its health on that socket. An app on a socket keeps its own network for what it calls out to
+-- apt's tells the ledger -- and only the meter runs with no network at all, see infra's
+`spec/architecture/meter.md`.
 
 ## One door per node
 
@@ -345,7 +339,7 @@ The site's pages and its API are one Worker, `site`, and how they divide the wor
 the gateway binds the `site` Worker and sends it `/api/{route}` under the API host's name, which a
 request can carry only by coming through that binding, since Cloudflare picks the Worker by the
 host. The Worker serves the public routes alone there, today `media` and `asset`, which the alias
-layer reads. Its declaration, copied to `apps/edge/gateway/elsewhere/site.toml`, says where it answers
+layer reads, and `like`. Its declaration, copied to `apps/edge/gateway/elsewhere/site.toml`, says where it answers
 with `[api] prefix = "/api"`, which only a Workers placement may carry, since a node's Caddy
 forwards a scope to a container's root.
 

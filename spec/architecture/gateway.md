@@ -6,10 +6,10 @@ everything a service would otherwise write again: where a request goes, CORS, ho
 is kept, whether a credential is needed, and the files every host answers for. A service is
 business logic and one declaration the gateway reads.
 
-This file is the arrangement being moved to. Where [services.md](services.md) and
-[delivery.md](delivery.md) describe the hosts as they are today, this file wins; what is left to
-do is listed in [../todo/gateway.md](../todo/gateway.md), and the order it is done in is
-[../todo/milestones.md](../todo/milestones.md), E.
+The move to it is done but for milestones E7 and E13 in
+[../todo/milestones.md](../todo/milestones.md); what is left is listed in
+[../todo/gateway.md](../todo/gateway.md). Where [services.md](services.md) or
+[delivery.md](delivery.md) say something else about the hosts, this file wins.
 
 ## The gateway is infrastructure, and pages are not
 
@@ -62,9 +62,9 @@ not". `ixc.one` has no second: a deployment's own host is for pinning, not for p
 
 **A profile is a row in a table, not code.** A new short host, or a new node, is one more row: the
 hostname, what it fixes, the version it pins, and the path it puts in front, if any.
-`symlink.si/{path}` reaches the alias layer as `/v1/symlink/{path}`; `ill.li/symlink/...` is then no
-address at all, and `ill.li` carries short links alone. `ill.li` is pinned at `v1`, where the alias layer
-answers a short link and, still, the old `/symlink/...` a mark was once asked at.
+`symlink.si/{path}` reaches the alias layer as `/v1/symlink/{path}`, and `ill.li` carries short
+links. `ill.li` is pinned at `v1`, where the alias layer answers a short link and, still, the old
+`/symlink/...` a mark was once asked at, for the addresses already handed out.
 
 **The alias layer's code is `aka`**, the name its Worker and its directory have always had: short,
 and what it has been called everywhere it is named.
@@ -185,7 +185,7 @@ rejected = "5m"
 faulted = "none"
 
 [[api.routes]]
-path = "/v1/symlink/*"
+path = "/symlink/*"
 
 [api.routes.cache.success]
 redirected = "1h"
@@ -214,7 +214,7 @@ redirected = "1h"
 
 ### The table is built, not read at run time
 
-`mise run scopes` reads every `service.toml`, holds each to a schema -- an unknown field, a service
+`mise run scopes` reads every `service.toml`, holds each public scope's to a schema -- an unknown field, a service
 code nobody declares, a lifetime it cannot read and two routes as specific as each other all fail
 it -- and writes the gateway's table as `apps/edge/gateway/src/scopes.ts`, lifetimes in seconds and
 routes in the order they are matched. The gateway reads nothing else at run time, and a test holds
@@ -300,12 +300,13 @@ when nothing is -- never `Allow` lines over a `Disallow: /`. Twitterbot reads th
 has no `Allow`, and would see only the refusal: a card's picture on the CDN went unfetched once for
 exactly that.
 
-**The firewall's whitelist is generated from the same set, and synced by the same script.** A
-service-layer zone's rules in `rules/` -- which paths each of its hosts lets through to a Worker at
-all -- are written by `mise run scopes` beside the table, never by hand, so the WAF refuses exactly
-what the gateway would and opens nothing wider. `mise run rules sync` sends them to Cloudflare as it
-does every zone's today. An application-layer zone's rules stay written by hand. See
-[firewall.md](firewall.md).
+**The firewall's whitelist is to be generated from the same set, and synced by the same script.**
+A service-layer zone's rules in `rules/` -- which paths each of its hosts lets through to a Worker
+at all -- are to be written by `mise run scopes` beside the table, never by hand, so the WAF refuses
+exactly what the gateway would and opens nothing wider. That is milestone E7 and not built: today
+`mise run scopes` writes the table and the `[edge]` block, and the whitelists are written by hand.
+`mise run rules sync` sends them to Cloudflare as it does every zone's. An application-layer zone's
+rules stay written by hand. See [firewall.md](firewall.md).
 
 ## Where a request goes
 
@@ -345,8 +346,8 @@ every hostname the profiles read, with certificates by DNS challenge, as it alre
 the private suffix; the internal gateway behind it reads each request into its tuple as the Worker does.
 Caddy sets `Cf-Connecting-Ip` to the LAN address it was asked from, over whatever the caller sent,
 so the internal gateway counts each device as the public one counts each visitor.
-Until the LAN's DNS answers those names with the node, the internal gateway is reached by naming
-the node's address for them, and is checked that way against the public one.
+The LAN's DNS -- infra's resolver -- answers those names with the node, so a device at home
+reaches the internal gateway by name.
 
 **A service on the node is asked on the node; a service on Workers is asked through the public
 gateway.** What runs at home -- a deployment under `ixc.one` placed `rdu-int`, and every service
@@ -367,8 +368,9 @@ call. See [quota.md](quota.md), "Deployed twice, counted where a request enters"
 every cache after it keep what they would from the public one; a store of its own on the node is
 added when a reason is.
 
-**The LAN's DNS answering the names is a step of its own**, after the internal gateway answers
-correctly by address. It is what retires the private side.
+**The LAN's DNS answers the names**, through infra's resolver. The private side,
+`api.internal.ixc.one`, is still what the node's own callers use -- the ledger, cron, the probe's
+private checks -- and retiring it is a step not yet taken.
 
 **Telling our own callers from the public stays as it is until there are accounts.** What a
 service offers only to our own callers is told today by which side reached it. When the account
@@ -387,4 +389,4 @@ quiet, and it is released.
 
 `ffoni.com` left this way. `cdn.ffoni.com` and `api.ffoni.com` were such profiles --
 `api.ffoni.com/geo/ip` read as `/v1/geo/ip` -- until rdm, the last caller, asked
-`cdn.monoflake.com` instead; their rows, the gateway's route and `rules/ffoni.com` were deleted on 2026-10-04, and nothing here names the domain.
+`cdn.monoflake.com` instead; their rows, the gateway's route and `rules/ffoni.com` were deleted on 2026-10-04, and nothing here routes to or calls the domain.

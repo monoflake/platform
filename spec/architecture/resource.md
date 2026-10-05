@@ -232,9 +232,9 @@ moment somebody asks.
 
 ### What this buys, and it is the reason to accept the cost
 
-**A compiled article stops changing when an asset is re-derived.** Today re-encoding one picture
-rewrites the `srcset` inside every content object that names it, so the object's own content id
-moves and the article is republished -- for a change the article did not make. Stopping at the rid
+**A compiled article stops changing when an asset is re-derived.** Re-encoding one picture used to
+rewrite the `srcset` inside every content object that named it, so the object's own content id
+moved and the article was republished -- for a change the article did not make. Stopping at the rid
 severs that: the object changes when the article changes and at no other time.
 
 That is what an editor that runs online needs. It writes a rid, and nothing downstream has to be
@@ -265,8 +265,8 @@ names objects that are all still there and still immutable.
 
 Measured on the corpus as it stands, an article names four resources or none. That is small enough
 that the shape matters more than the cost: a page asks once for everything it needs, through the
-batch entry point that exists for exactly this and today has arms for articles and reads but not
-for resources. See [artifacts.md](artifacts.md), "One batch entry point".
+batch entry point that exists for exactly this, which has an arm for resources beside the ones for
+articles and reads. See [artifacts.md](artifacts.md), "One batch entry point".
 
 **The arm's cap is a limit of the request and not of the page, and the difference is a whole
 failure mode.** Sixty-four rids fit in one question; the heaviest article here names fifteen, and

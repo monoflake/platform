@@ -33,7 +33,8 @@ already does:
 - **The work**, from the ledger's counts, `GET /counts` on its private scope: tasks per service and
   hour, and how they ended; never a task's summary or events. See [ledger.md](ledger.md), "Counted
   for telemetry".
-- **The status**, from the probe's archive, once the probe runs. See [probe.md](probe.md).
+- **The status**, from the probe's archive, which `/status` below is to read; not built yet. See
+  [probe.md](probe.md).
 
 ## `services.json`, what host tells
 
@@ -87,7 +88,7 @@ leaves its part `null` rather than failing the rest.
 | `/services/{name}` | one service: its declaration, its history, its series                     |
 | `/topology`        | the whole arrangement: services, scopes, labels, schedules, how they meet |
 | `/activity`        | tasks per service and hour, and how they ended                            |
-| `/status`          | the probe's latest round and its recent history                           |
+| `/status`          | the probe's latest round and its recent history -- not built yet          |
 
 **What moves is kept five seconds, and the rest a minute**: the gateway keeps an answer as long as
 it says, so however many people look, the node is asked for the machine's latest second at most

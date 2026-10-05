@@ -28,8 +28,8 @@ timeout = 300           # seconds before a run is called failed
   `cron` for that reason alone.
 
 **`cron` answers on its own `[api]` scope, privately**: `GET /schedules` -- every job, its next
-time and its last run -- and `POST /schedules/<service>/<name>/run` to run one now, which the panel
-uses. Times are RFC 3339 in UTC.
+time and its last run -- `POST /schedules/<service>/<name>/run` to run one now, and `.../pause` and `.../resume`, which the
+panel uses. Times are RFC 3339 in UTC.
 
 **host gives `cron` the table**: whenever an app is deployed or removed, host writes every app's
 schedules to `schedules.json` in `cron`'s directory, through a temporary file and a rename, as it

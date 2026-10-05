@@ -4,8 +4,8 @@
 what the apps serve -- see spec/architecture/firewall.md. `sync [zone] [--dry-run]` deploys: each
 zone's rules replace what is live for each phase they use, through Cloudflare's `cf` CLI.
 
-A zone.toml's `[[rules]]`, one per rule in order within a phase, each preceded by a `#` comment
-saying why it is there: `name`, `phase`, `action`, `expression` (a .txt file, the one part that
+A zone.toml's `[[rules]]`, one per rule in order within a phase, with no comment of its own -- a
+rule's name is its reason: `name`, `phase`, `action`, `expression` (a .txt file, the one part that
 grows, and may hold `${NAME}` -- see spec/architecture/firewall.md). A rate limit adds
 `characteristics`, `period`, `requests_per_period`, `mitigation_timeout`. A redirect adds
 `status` and `target`: a raw Rulesets target expression (a TOML literal string, quotes and all)

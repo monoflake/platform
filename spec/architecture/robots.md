@@ -5,21 +5,19 @@ What every host shares -- the opening, content signals, the sitemap, security.tx
 the word to an agent -- is `@canmi/me/robots`, and the rule that each repository declares its own
 hosts is the workspace's `spec/robots.md`. The site and the status page are web's, declared there.
 
-| Host  | Rules                           | Content signals |
-| ----- | ------------------------------- | --------------- |
-| `cdn` | all                             | no              |
-| `aka` | all                             | no              |
-| `api` | only the site's scope, `/site/` | no              |
+| Host  | Rules | Content signals |
+| ----- | ----- | --------------- |
+| `cdn` | all   | no              |
+| `aka` | all   | no              |
+| `api` | none  | no              |
 
 **None says content signals**: a store of bytes, a layer of redirects and an API have rules about
 fetching and nothing to say about how content may be used -- see lib's `spec/me/robots.md`,
 "Content signals are for pages, and say yes to all three".
 
-**The API lets in the one scope a page asks.** A crawler that renders a page -- Google's does -- asks
-the API for what the page fetches after hydration; shut out, it renders a page with nothing in it.
-Every other scope stays out, since its URLs in an index would compete with the pages that call them.
-The gateway writes each host's rules from the routes it reaches -- see
-[gateway.md](gateway.md).
+**The API refuses every crawler, whatever its routes say.** Its URLs in an index would compete with
+the pages that call them. The gateway writes each host's rules from its profile and the routes it
+reaches -- see [gateway.md](gateway.md), "A host admits crawlers or does not".
 
 ## A word to an agent sent to break in
 

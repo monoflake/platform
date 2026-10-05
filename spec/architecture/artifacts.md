@@ -57,9 +57,9 @@ That cuts both ways and it is why publication has an order: a root that names an
 uploaded yet produces a `404` that is then held for five minutes on a key that becomes valid a
 second later. See "Publication is ordered" below.
 
-### There is one exception again, and it carries a promise
+### An exception has to carry a promise, and none does today
 
-This section used to hold one. **Latin font subsets** were served under stable names for a year,
+This section used to hold two. **Latin font subsets** were served under stable names for a year,
 on the promise that re-subsetting would produce a new filename -- and 510 of the 524 published
 chunks never needed it, because the CJK splitter had been naming its output by content hash all
 along. The promise covered fourteen files and explained an exception for all of them.
@@ -69,14 +69,13 @@ keeps is the year the shape of its name earns. Re-subsetting writes a different 
 different address instead of overwriting a promised name, which is what the promise was asking
 everyone to remember not to do.
 
-An exception is a name plus the promise that justifies it, and there is exactly one:
-**`/favicon.ico`**, which keeps a year with no hash in it. The promise is that what moves is not
-that address but what the alias layer answers for the permanent name behind it, and that keeps its
-own five minutes. A browser asks every origin it touches for this name whatever the markup says, so the
-address itself is as fixed as anything here gets.
+An exception would be a name plus the promise that justifies it, and there is none today.
+`/favicon.ico` was the one, keeping a year with no hash in it; it is the gateway's now, a `302` to
+the mark it names, kept for the publication delay -- see [delivery.md](delivery.md), "A page
+follows the name for the browser".
 
-Any other address wanting a long life without a hash has to arrive with its own promise. The list
-is one long and was empty an hour before this was written, which is the rate it should grow at.
+Any address wanting a long life without a hash has to arrive with its own promise, and the list
+is meant to grow at about the rate it has: not at all.
 
 Another site's icon was the standing example of an address that wanted one and was refused: it was
 an alias-layer route rather than a CDN one, so it took that host's default of five minutes, which
@@ -124,7 +123,7 @@ reworked, and are reworked by this rule then rather than piecemeal now.
 | `content`  | One compiled view: meta, toc, blocks, summary, words | article x locale |
 | `markdown` | The article source, served at `<url>.md`             | article          |
 
-**Three types, and a whole-corpus document is not one of them.** `atom.xml`, `llms.txt` and
+**Two types, and a whole-corpus document is not one of them.** `atom.xml`, `llms.txt` and
 `sitemap.xml` are assembled by the site's Worker out of the API's answer and, for the feed, the
 content objects that answer names.
 

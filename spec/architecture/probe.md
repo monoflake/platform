@@ -17,8 +17,9 @@ beat for everything. They fall into two kinds, and it is the first that finds a 
   the cheapest real answer it gives -- as often as every second. This is availability, and it
   catches a fault before a visitor meets it.
 - **Outside**: the whole chain a visitor's request takes, through the public names and Cloudflare,
-  end to end. A route that costs nothing but CPU, `geo`'s, can be asked every second; a page that
-  renders -- every article's -- is asked once a minute, started as a task of `shot`'s private scope,
+  end to end. A route that costs nothing but CPU, `geo`'s, is asked every thirty seconds, which keeps the
+  rounds inside the gateway Worker's free daily allowance; a page that renders -- the homepage -- is
+  asked once a minute, started as a task of `shot`'s private scope,
   `POST /shot/v1/tasks` with `access.fresh` so each round is a capture of its own, which reports the page's errors, failed
   requests, status and title from a real Chromium. The probe holds no browser. Outside checks are the chain working, not availability; they cost more and run slower.
 
@@ -70,7 +71,7 @@ Every result is written three ways:
   through Cloudflare -- **the one route an outside service of ours calls over the public API**,
   since Vercel and Cloudflare share nothing and the status page's history has to come from
   somewhere. When Cloudflare is down, that history is what the page goes without.
-  The scope answers `GET /checks`, every declared check; `GET /results?check=&since=&until=`,
+  The scope answers `GET /checks`, every declared check; `GET /checks/{check}/results?since=&until=`,
   one check's results oldest first, `since` inclusive and `until` exclusive, whole seconds since
   the epoch and at most a day apart, at most ten thousand a page with the next page's `since` said,
   as `{ place, results: [{ at, ok, duration_ms, detail }], next }`; and `/health`. Each is the

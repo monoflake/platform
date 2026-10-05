@@ -72,10 +72,10 @@ export const NAMED = `public, max-age=${NAMED_LIFE}`;
 /**
  * What a key whose bytes cannot change earns.
  *
- * Content addressing is the usual reason -- a hashed name cannot denote different bytes, so a
- * cached copy is correct forever and needs no invalidation. It is not the only one: a Latin font
- * subset keeps the year on a written promise that re-subsetting renames it, which is why this is
- * named for the property rather than for the hash that normally carries it.
+ * Content addressing is the reason -- a hashed name cannot denote different bytes, so a cached
+ * copy is correct forever and needs no invalidation. Named for the property rather than the hash,
+ * since an exception with a promise of its own could earn it too; none does today -- see
+ * spec/architecture/artifacts.md.
  */
 export const UNCHANGING = `public, max-age=${UNCHANGING_LIFE}, immutable`;
 

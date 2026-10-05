@@ -19,7 +19,8 @@ layer's stamps go, is the cleanup pass's to settle.
 
 `monoflake.com`, `monoflake.net`, `ixc.one` and `symlink.si` are service domains, and each apex is
 to answer a page saying so. Until then `monoflake.com`, `monoflake.net` and `ixc.one` have no apex
-record -- `www.ixc.one`'s redirect to its apex leads nowhere -- and `symlink.si`'s root is the
+record -- `www.ixc.one`'s redirect to its apex leads nowhere, and the redirects to the site already
+in `rules/monoflake.com` and `rules/monoflake.net` wait on one -- and `symlink.si`'s root is the
 gateway's redirect to the site. The pages are web's, a layer above this one, and what is decided
 about them -- which host serves which, and `ill.li`'s at `il.lli.lil.ill.li` -- is web's
 `spec/todo/site.md`, "The service domains answer nothing of their own yet".
@@ -27,9 +28,8 @@ about them -- which host serves which, and `ill.li`'s at `il.lli.lil.ill.li` -- 
 ## The whitelists are written by hand, and checked against the table only
 
 `rules/ill.li/alias-paths-only.txt` spells its host's paths out by hand, and nothing checks it
-against the gateway's table. The new zones --
-`monoflake.com`, `ixc.one`, `symlink.si` -- have no rules at all, and `symlink.si` is not yet a
-domain anything answers.
+against the gateway's table. The new zones -- `monoflake.com`, `monoflake.net`, `ixc.one`,
+`symlink.si` -- carry the shared rate cap and their redirects, and no whitelist yet.
 
 A generated whitelist has two limits to fit inside: an expression is at most 4,096 characters, and
 the Free plan allows a zone five custom rules. Every deployment of `ixc.one` is in one zone, so its

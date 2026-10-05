@@ -49,4 +49,4 @@ wait until there is something to hold; until then the zone's redirect rule stand
 
 ## Open
 
-- Where the telemetry view goes, once the telemetry service answers.
+- Where the telemetry view goes.

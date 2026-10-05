@@ -4,7 +4,7 @@ version = 1
 name = "apt"
 placements = ["home"]
 
-# No port and no network: cron reaches this on its socket, host mounts the machine's system bus
+# No port: cron reaches this on its socket, host mounts the machine's system bus
 # socket in and the container runs as root only so systemd lets it start a unit. See
 # spec/architecture/apt.md, "The door".
 [container]
