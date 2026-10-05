@@ -9,7 +9,7 @@ chosen because they are objective rather than stylistic:
 4. No URL the running system resolves is written outside the address packages.
 
 The first three break silently on rename and are shared with the workspace's own gate, which is
-where they live. The fourth is this repository's and enforces web's spec/architecture/workspace.md,
+where they live. The fourth is this repository's and enforces the workspace's spec/addresses.md,
 "Every URL is declared once", prose-only until this existed. Each constant argues what it exempts.
 
 Run with --json to emit the pair graph instead of validating.

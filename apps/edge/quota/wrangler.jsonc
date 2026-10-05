@@ -14,7 +14,8 @@
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["bucket"] }],
 
 	// Also in libs/sdk, whose dev task asks for it; a gateway or the site running beside it finds it
-	// by name through wrangler's registry. See web's spec/toolchain.md, "Dev ports are pinned".
+	// by name through wrangler's registry. See the workspace's spec/toolchain.md, "Dev ports are
+	// pinned".
 	"dev": {
 		"ip": "*",
 		"port": 26523,

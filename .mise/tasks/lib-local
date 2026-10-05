@@ -7,7 +7,7 @@ On, every `@canmi/*` package the lib repository publishes is pinned to the newes
 taken from `../lib` by a `[patch]` in `.cargo/config.toml`, its requirement loosened to the
 version that checkout says. Every file this rewrites is copied to `.local/lib/` first, `--off`
 puts each back, and `verify` refuses to pass while the copies exist, so a local version never
-reaches a commit. See web's spec/architecture/layers.md, "Publishing".
+reaches a commit. See the workspace's spec/architecture/layers.md, "Publishing".
 """
 
 import json

@@ -10,6 +10,7 @@ license.workspace = true
 workspace = true
 
 # The Rust half of @monoflake/sdk: `src/lib.rs` is generated from `src/index.ts` by `mise run
-# urls`, so every Rust program reads the one URL map. See web's spec/architecture/layers.md.
+# urls`, so every Rust program reads the one URL map. See the workspace's
+# spec/architecture/layers.md.
 [lib]
 path = "src/lib.rs"

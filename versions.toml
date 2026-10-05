@@ -1,5 +1,5 @@
 # Packages allowed at more than one major across the workspace at once, each with why. `update
 # --dry-run` lists them without a warning, and `update --major` leaves every one where it is. A
-# package here is a transition somebody chose; once it ends, the line goes. See web's
+# package here is a transition somebody chose; once it ends, the line goes. See the workspace's
 # spec/toolchain.md, "A package at two majors is a warning unless it is allowed".
 [several]

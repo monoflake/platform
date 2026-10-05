@@ -8,8 +8,8 @@ the platform reads, `libs/probe` the status database's schema, and `libs/ledger`
 services share. `rules/` holds
 each zone's firewall rules, which `mise run rules` checks and deploys; see
 [architecture/firewall.md](architecture/firewall.md). Why the system is cut into this layer,
-infra's and the services', is web's `spec/architecture/layers.md`, which the four repositories
-share, as they share its `spec/architecture/workspace.md` and `spec/toolchain.md`: what is here is
+infra's and the services', is the workspace's `spec/architecture/layers.md`, the picture of all
+four repositories; the rules every repository keeps are the workspace's `spec/`, and what is here is
 what the platform alone decides.
 
 ## `apps/` is deployed, `libs/` is imported
@@ -19,8 +19,7 @@ its `Dockerfile` beside it; every library one under `libs/`. A crate is listed i
 hand and a package found by `pnpm-workspace.yaml`'s globs, so a TypeScript-only directory never
 breaks Cargo.
 
-**The apps are grouped by what each does**, since a category of them passed the four members web's
-`spec/architecture/workspace.md`, "Grouping threshold", lets a flat `apps/` hold:
+**The apps are grouped by what each does**, since a category of them passed the four members the workspace's `spec/architecture/repos.md`, "Grouping threshold", lets a flat `apps/` hold:
 
 | Group      | Apps                      | What they are                                        |
 | ---------- | ------------------------- | ---------------------------------------------------- |

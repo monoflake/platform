@@ -61,7 +61,7 @@ def fill(text, env, *, mask):
 
 def urls():
 	"""The generated Rust mirror of libs/sdk, name -> value -- a redirect's `target` names
-	one of these instead of writing a URL, per web's spec/architecture/workspace.md, "Every URL is
+	one of these instead of writing a URL, per the workspace's spec/addresses.md, "Every URL is
 	declared once"."""
 	text = URLS_RS.read_text()
 	return dict(re.findall(r'pub const (\w+): &str =\s*"([^"]*)";', text))

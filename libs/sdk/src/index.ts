@@ -2,7 +2,7 @@
  * The platform's addresses, and the whole map as everything above infra reads it: the platform's
  * own declared here, the author's from `canmi` and infra's from `@monoflake/urls`, composed into
  * one shape so a caller asks one place and the Rust mirror has one source. See
- * web's spec/architecture/layers.md, "Addresses are split by who owns the name".
+ * the workspace's spec/architecture/layers.md, "Addresses are split by who owns the name".
  */
 import {
 	CONTACT,
