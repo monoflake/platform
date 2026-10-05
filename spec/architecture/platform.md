@@ -44,7 +44,7 @@ a Worker by its binding, or an app on the node through the one VPC service, with
 
 **The status page is not one of its scopes**: it is served by Vercel alone, at `status.canmi.app`
 and `canmi.vercel.app`, so that a page reporting whether the platform is up does not go down with
-it -- [probe.md](probe.md), "The page: one app, served by Vercel". The core app and the router
+it -- web's `spec/architecture/status.md`, \"The page: one app, served by Vercel\". The core app and the router
 wait until there is something to hold; until then the zone's redirect rule stands in for both.
 
 ## Open

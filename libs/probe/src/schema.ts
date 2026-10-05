@@ -139,7 +139,8 @@ export const statusHistory = pgView('status_history', {
 
 /**
  * Each check's passed and failed rounds per place and UTC day, from the hourly rollups, for
- * today and the 89 days before it. See spec/architecture/probe.md, "The page draws ninety days".
+ * today and the 89 days before it. See web's spec/architecture/status.md, "The page draws ninety
+ * days".
  * Today holds only the hours already closed; the page adds the broadcasts for the rest.
  */
 export const statusDaily = pgView('status_daily', {

@@ -87,7 +87,7 @@ rather than bytes. Rendering in the browser instead is a different order of ques
 would fetch more grammar than the entire corpus spends on baked color, to save 1.5 KB on the
 article in front of them. It also cannot be avoided by rendering on the server alone, because
 after hydration this site's articles are rendered by the browser and not by the Worker --
-[artifacts.md](artifacts.md), "Two consumers, and the second one is the browser".
+web's `spec/architecture/site-api.md`, "Two consumers, and the second one is the browser".
 
 **What deferring would buy is a theme change that is a deploy.** Neither deferred shape needs a
 renderer at the edge or in the page: a color resolved from a class is a stylesheet's job, so the

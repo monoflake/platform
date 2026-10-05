@@ -80,23 +80,8 @@ Every result is written three ways:
   so the panel shows a failure's full timeline. Passing rounds are counted, not recorded one by one
   -- a second's round is far more than the ledger is for. See [ledger.md](ledger.md).
 
-**The page draws ninety days, a bar a day**, from the `status_daily` view: each check's passed and
-failed rounds summed per UTC day from the hourly rollups, which are kept a year. A day with no rows
-is drawn empty; today's bar grows from what the broadcasts carry. **A bar's color is how long the
-check was down that day, on a line**: its failed rounds times its interval, with green at none,
-amber at an hour and red at twelve, and the color between two stops mixed in proportion. A day with a
-minute's blip is all but green, one with a bad afternoon is plainly amber, and a day lost is red --
-the eye reads how bad, not only whether.
-
-**One switch over the page sets what a bar is: a day, fifteen minutes, or a minute.** The count
-stays -- ninety, sixty or thirty as the window allows -- so days show ninety days, hours twenty-two
-and a half, minutes an hour and a half. A day is read from `status_daily`, fifteen minutes from the
-five-minute rollups three at a time, a minute from the minute rollups; what has not been rolled up
-yet is filled from the broadcasts, counted by the minute. The color stops scale with the bar: a bar
-a sixtieth of a day long turns amber at a sixtieth of an hour. The choice is `?range=` in the address,
-so a link shows what its sender saw, and the server renders it first. The switch sits above the board, at the right
-on a tablet or wider and at the left on a phone; when the database was last heard from sits at the right of the first group's
-heading, beside its name, rather than under the title.
+What the page draws from these views -- its bars, their colors and the switch over them -- is
+web's `spec/architecture/status.md`, "The board draws ninety bars, and a switch says what a bar is".
 
 ## The schema: declared once, in Drizzle, applied by the probe
 
@@ -114,7 +99,7 @@ were not generated again.
   and the page does not change. Drizzle does not run where the page renders; reading needs nothing
   PostgREST cannot say, and the day it does is a view more, or a function.
 
-## The page: one app, served by Vercel
+## The page reads it, and is web's
 
 **The status page is web's**: a SvelteKit app deployed to Vercel alone, at `status.canmi.app` and
 `canmi.vercel.app`, reading what the probe writes through the views above. It is not built for

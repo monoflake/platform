@@ -256,7 +256,7 @@ into an outage.
 - **The API could not be reached** is a fact about this moment and is not stored at all.
 
 The site already renders through a network call and already answers an unreachable API with
-`stale-if-error` over a window measured in hours -- see [artifacts.md](artifacts.md), "The site
+`stale-if-error` over a window measured in hours -- see web's `spec/architecture/site-api.md`, "The site
 keeps serving when the API does not". This adds volume to that dependency rather than a new kind
 of it, and the property that makes it survivable is the same one: a record from three hours ago
 names objects that are all still there and still immutable.
@@ -266,7 +266,7 @@ names objects that are all still there and still immutable.
 Measured on the corpus as it stands, an article names four resources or none. That is small enough
 that the shape matters more than the cost: a page asks once for everything it needs, through the
 batch entry point that exists for exactly this, which has an arm for resources beside the ones for
-articles and reads. See [artifacts.md](artifacts.md), "One batch entry point".
+articles and reads. See web's `spec/architecture/site-api.md`, "One batch entry point".
 
 **The arm's cap is a limit of the request and not of the page, and the difference is a whole
 failure mode.** Sixty-four rids fit in one question; the heaviest article here names fifteen, and

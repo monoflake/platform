@@ -8,7 +8,7 @@
  *
  * So there is one route, `POST /batch`, and the body says which question it is. `type` selects the
  * module that reads the rest; adding a batchable question adds a variant here and a handler there,
- * and no route at all. See spec/architecture/artifacts.md, "One batch entry point".
+ * and no route at all. See web's spec/architecture/site-api.md, "One batch entry point".
  */
 import * as v from 'valibot';
 import { LOCALE_CODES, type LocaleCode } from '@canmi/me/locales';

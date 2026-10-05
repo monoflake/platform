@@ -219,7 +219,7 @@ export type RootView = v.InferOutput<typeof RootViewSchema>;
  * The root's view grouped as it is stored, plus the two things only a request can supply: which
  * article was asked for. No read count: a counter is written by every visitor and a view is not,
  * so carrying it here gave one number nine cached copies of itself. See
- * spec/architecture/artifacts.md, "A read count is not here at all".
+ * web's spec/architecture/site-api.md, "A read count is not here at all".
  */
 export type ViewAnswer = Omit<RootView, 'locale'> & {
 	/** What was asked for: the identity, which is the only thing `?slug=` takes. */
@@ -229,7 +229,7 @@ export type ViewAnswer = Omit<RootView, 'locale'> & {
 	 *
 	 * This is what lets the site tell a canonical address from one that merely reaches the
 	 * article: `/{wrong}/{slug}` and `/{slug}` both resolve, and both are redirected here. See
-	 * spec/architecture/artifacts.md, "Reaching an article by name".
+	 * web's spec/architecture/site-api.md, "Reaching an article by name".
 	 */
 	path: string;
 	url: string;
