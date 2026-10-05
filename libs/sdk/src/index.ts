@@ -122,8 +122,8 @@ const API = {
 } as const;
 
 /**
- * The domains owned here, which the production map below reads rather than spelling twice. `infra`
- * is the retired apex api and cdn hung off; `alias` the alias layer's. `app` is the suffix every
+ * The domains owned here, which the production map below reads rather than spelling twice.
+ * `alias` is the alias layer's. `app` is the suffix every
  * interface is on behind Access, see spec/architecture/services.md; `panel`, `keeper` and `host`
  * are infra's, see infra's spec/architecture/host.md; `ledger` is where every service records its
  * tasks, see ledger.md; `shot` is the public scope a capture's pictures are named under, see
@@ -131,7 +131,6 @@ const API = {
  */
 const INTERNAL = {
 	app: 'https://canmi.app',
-	infra: 'https://ffoni.com',
 	alias: 'https://ill.li',
 	...INFRA,
 	ledger: `${API.private}/ledger`,
@@ -201,18 +200,14 @@ export const GATEWAY = {
 	deployments: 'ixc.one',
 	alias: 'ill.li',
 	symlink: 'symlink.si',
-	// Proxied, never redirected, until nothing here calls them. See spec/architecture/gateway.md,
-	// "A domain leaves without a redirect".
-	retired: { api: 'api.ffoni.com', cdn: 'cdn.ffoni.com' },
 	providers: { int: 'our own machines', cf: 'Cloudflare', vcl: 'Vercel' },
 	regions: { rdu: 'the machine at home, by Raleigh-Durham', glo: 'everywhere, as a Worker runs' },
 } as const;
 
 /**
  * Every hostname the gateway answers at home, as a certificate and a router name them: a wildcard
- * over each zone it owns below the apex, and the two apexes it is. The retired hosts are left out:
- * the house never asks them. See infra's spec/architecture/host.md, "The inside side answers the
- * internal gateway alone".
+ * over each zone it owns below the apex, and the two apexes it is. See infra's
+ * spec/architecture/host.md, "The inside side answers the internal gateway alone".
  */
 export const GATEWAY_HOSTS: readonly string[] = [
 	...GATEWAY.domains.map((domain) => `*.${domain}`),

@@ -237,7 +237,7 @@ describe('the gateway', () => {
 			},
 		};
 		const answer = await gateway(open).fetch(
-			new Request(new URL('/robots.txt', `https://${GATEWAY.retired.cdn}`)),
+			new Request(new URL('/robots.txt', `https://${GATEWAY.cdn}`)),
 			{},
 		);
 		const lines = (await answer.text()).split('\n');
@@ -258,7 +258,7 @@ describe('the gateway', () => {
 			},
 		};
 		const answer = await gateway(cdn).fetch(
-			new Request(new URL('/robots.txt', `https://${GATEWAY.retired.cdn}`)),
+			new Request(new URL('/robots.txt', `https://${GATEWAY.cdn}`)),
 			{},
 		);
 		const text = await answer.text();

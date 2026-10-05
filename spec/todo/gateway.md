@@ -8,20 +8,12 @@ The rules over an entry are the index's; see web's `spec/todo/todo.md`.
 
 ## The CDN and the alias layer still stamp their own lifetimes
 
-Both stand behind the gateway now, which answers their hosts -- `cdn.ffoni.com` and `ill.li` --
+Both stand behind the gateway now, which answers their hosts -- `cdn.monoflake.com` and `ill.li` --
 their CORS, their host files and the path rule, and stamps what leaves them from their
 declarations. Each still stamps its answers itself as well, in its `cache.ts`: the gateway writes
 over it, but the CDN keeps derived pictures in its own cache by that stamp, so it is not idle
 there. Whether the CDN's own cache reads its lifetime from the declaration instead, and the alias
 layer's stamps go, is the cleanup pass's to settle.
-
-## rdm's builds out there ask `cdn.ffoni.com`
-
-rdm, a sibling repository, fetches its updates from `cdn.ffoni.com/github/release/...`, the old
-spelling the CDN still redirects to `/proxy/github/release/...`, and reads Cloudflare's trace at
-`cdn.ffoni.com/cdn-cgi/trace`. Every build already installed keeps asking there, so `ffoni.com` is
-not released while one is in use. rdm now asks `cdn.monoflake.com/proxy/github/release/...` and
-that host's trace; the domain waits for the builds out there to update past that change.
 
 ## An apex answers nothing yet
 
@@ -34,9 +26,8 @@ about them -- which host serves which, and `ill.li`'s at `il.lli.lil.ill.li` -- 
 
 ## The whitelists are written by hand, and checked against the table only
 
-`rules/ill.li/alias-paths-only.txt`, `rules/ffoni.com/api-scopes-only.txt` and
-`rules/ffoni.com/cdn-prefixes-only.txt` spell each host's paths out by hand, and `mise run rules`
-checks only that the API's list and the gateway's scopes name the same scopes. The new zones --
+`rules/ill.li/alias-paths-only.txt` spells its host's paths out by hand, and nothing checks it
+against the gateway's table. The new zones --
 `monoflake.com`, `ixc.one`, `symlink.si` -- have no rules at all, and `symlink.si` is not yet a
 domain anything answers.
 

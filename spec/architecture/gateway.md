@@ -262,7 +262,7 @@ them, and a custom domain left out of the list is detached by the deploy, its DN
 The other Workers' domains are still the dashboard's, and move the same way if one goes.
 
 **A zone that is the gateway's alone is one wildcard route; an apex is a custom domain.**
-`monoflake.com`, `monoflake.net`, `ixc.one` and `ffoni.com` serve nothing but the gateway below
+`monoflake.com`, `monoflake.net` and `ixc.one` serve nothing but the gateway below
 their apex, so each is `*.{zone}/*` over a proxied `*` record, and a host the profiles add needs no
 change here or in the dashboard -- one the profiles do not know is refused by the gateway and its
 whitelist. A route matches no apex, so `ill.li` and `symlink.si`, which are their apexes, are
@@ -377,10 +377,14 @@ then.
 
 ## A domain leaves without a redirect
 
-**A domain being retired is a profile that proxies, not one that redirects.** `cdn.ffoni.com` and
-`api.ffoni.com` stay bound to the gateway, as profiles that read their old addresses into the new
-tuple and answer as the new hosts would. A link to them keeps working, unchanged, with no 301 for
-a client to follow or a cache to remember. A retired host is pinned at the version its old paths
-were spelled for -- `api.ffoni.com/geo/ip` is `/v1/geo/ip` -- so what kept its shape answers there
-still, and a route that changed shape with its first version does not. Once every caller here has moved, the rows are deleted
-and the domain goes quiet; `ffoni.com` is then released.
+**A domain being retired is a profile that proxies, not one that redirects.** Its hosts stay
+bound to the gateway, as profiles that read their old addresses into the new tuple and answer as
+the new hosts would. A link to them keeps working, unchanged, with no 301 for a client to follow
+or a cache to remember. A retired host is pinned at the version its old paths were spelled for, so
+what kept its shape answers there still, and a route that changed shape with its first version
+does not. Once every caller here has moved, the rows and the route are deleted, the domain goes
+quiet, and it is released.
+
+`ffoni.com` left this way. `cdn.ffoni.com` and `api.ffoni.com` were such profiles --
+`api.ffoni.com/geo/ip` read as `/v1/geo/ip` -- until rdm, the last caller, asked
+`cdn.monoflake.com` instead; their rows, the gateway's route and `rules/ffoni.com` were deleted on 2026-10-04, and nothing here names the domain.

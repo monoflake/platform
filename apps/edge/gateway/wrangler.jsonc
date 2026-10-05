@@ -12,7 +12,6 @@
 		{ "pattern": "*.monoflake.com/*", "zone_name": "monoflake.com" },
 		{ "pattern": "*.monoflake.net/*", "zone_name": "monoflake.net" },
 		{ "pattern": "*.ixc.one/*", "zone_name": "ixc.one" },
-		{ "pattern": "*.ffoni.com/*", "zone_name": "ffoni.com" },
 		{ "pattern": "ill.li", "custom_domain": true },
 		{ "pattern": "symlink.si", "custom_domain": true },
 	],

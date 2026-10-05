@@ -132,7 +132,6 @@ fn named(name: &str) -> Option<&'static str> {
 		"APPS_PRODUCTION_CDN" => monoflake::APPS_PRODUCTION_CDN,
 		"APPS_PRODUCTION_PANEL" => monoflake::APPS_PRODUCTION_PANEL,
 		"INTERNAL_APP" => monoflake::INTERNAL_APP,
-		"INTERNAL_INFRA" => monoflake::INTERNAL_INFRA,
 		"INTERNAL_LEDGER" => monoflake::INTERNAL_LEDGER,
 		"INTERNAL_CRON" => monoflake::INTERNAL_CRON,
 		"INTERNAL_SHOT" => monoflake::INTERNAL_SHOT,

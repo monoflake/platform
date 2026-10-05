@@ -17,7 +17,6 @@ describe('URLS', () => {
 		expect(URLS.apps.production).toHaveProperty('api');
 		expect(URLS.apps.production).toHaveProperty('cdn');
 		expect(URLS.internal).toHaveProperty('app');
-		expect(URLS.internal).toHaveProperty('infra');
 		expect(URLS.internal).toHaveProperty('alias');
 		expect(URLS.external.github).toHaveProperty('cdn');
 		expect(URLS.external.google).toHaveProperty('sourcePreferences');
@@ -31,10 +30,12 @@ describe('URLS', () => {
 	});
 
 	it('does not keep retired domains', () => {
-		// canmi.dev is not being renewed, and `prod` was renamed to `infra` because it read
-		// as a sibling of apps.production while meaning something unrelated.
+		// canmi.dev is not being renewed; `prod` was renamed to `infra` because it read as a
+		// sibling of apps.production while meaning something unrelated, and `infra` was ffoni.com,
+		// released once the gateway stopped answering it.
 		expect('dev' in URLS.internal).toBe(false);
 		expect('prod' in URLS.internal).toBe(false);
+		expect('infra' in URLS.internal).toBe(false);
 	});
 });
 

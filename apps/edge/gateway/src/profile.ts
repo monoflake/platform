@@ -64,10 +64,6 @@ const NAMED: Readonly<Record<string, Profile>> = {
 		prefix: '/symlink',
 		crawled: true,
 	},
-	// Read as the hosts that replaced them, at the version their old paths are spelled for. See
-	// spec/architecture/gateway.md, "A domain leaves without a redirect".
-	[GATEWAY.retired.api]: { name: 'retired-api', version: 'v1', crawled: false },
-	[GATEWAY.retired.cdn]: { name: 'retired-cdn', service: 'cdn', version: 'v3', crawled: true },
 };
 
 const VERSION = /^v[1-9]\d*$/;

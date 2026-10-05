@@ -15,7 +15,6 @@ pub const APPS_PRODUCTION_CDN: &str = "https://cdn.monoflake.com";
 pub const APPS_PRODUCTION_PANEL: &str = "https://infra.internal.ixc.one";
 pub const SOURCE: &str = "https://github.com/canmi21/web";
 pub const INTERNAL_APP: &str = "https://canmi.app";
-pub const INTERNAL_INFRA: &str = "https://ffoni.com";
 pub const INTERNAL_ALIAS: &str = "https://ill.li";
 pub const INTERNAL_PANEL: &str = "https://infra.internal.ixc.one";
 pub const INTERNAL_KEEPER: &str = "https://keeper.internal.ixc.one";
