@@ -339,7 +339,8 @@ The site's pages and its API are one Worker, `site`, and how they divide the wor
 the gateway binds the `site` Worker and sends it `/api/{route}` under the API host's name, which a
 request can carry only by coming through that binding, since Cloudflare picks the Worker by the
 host. The Worker serves the public routes alone there, today `media` and `asset`, which the alias
-layer reads, and `like`. Its declaration, copied to `apps/edge/gateway/elsewhere/site.toml`, says where it answers
+layer reads -- `PUBLIC_ROUTES` in the site's `api/src/contract/routes.ts`; the `/like` row in
+its declaration only sets a lifetime. Its declaration, copied to `apps/edge/gateway/elsewhere/site.toml`, says where it answers
 with `[api] prefix = "/api"`, which only a Workers placement may carry, since a node's Caddy
 forwards a scope to a container's root.
 
