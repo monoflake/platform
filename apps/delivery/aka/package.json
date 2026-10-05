@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"@canmi/response": "^2.0.0",
+		"@canmi/web": "^2026.1005.5",
 		"@monoflake/sdk": "workspace:*",
 		"hono": "^4.13.12"
 	},

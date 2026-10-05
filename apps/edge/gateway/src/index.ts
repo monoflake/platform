@@ -4,6 +4,7 @@
  * Workers VPC. On the way it answers what every service would otherwise repeat: CORS, lifetimes,
  * crawling, limits by address and each host's own files. See spec/architecture/gateway.md.
  */
+import { poweredBy } from '@canmi/web/disclose/hono';
 import { failure } from '@canmi/response';
 import { robotsTxt, SECURITY_TXT_PATH, securityResponse } from '@canmi/me/robots';
 import { followSymlink, symlinkOf } from '@monoflake/sdk/symlink';
@@ -276,6 +277,9 @@ function asked(c: Gate): URL {
 export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 	const corsOf = new Map<Route, MiddlewareHandler | undefined>();
 	const app = new Hono<{ Bindings: Env; Variables: { read: Read } }>();
+
+	// First, so every answer says what made it. See lib's spec/web/disclose.md.
+	app.use(poweredBy());
 
 	// One spelling per address: a path that normalizes differently goes where it should.
 	// See spec/architecture/delivery.md, "Every address has one spelling".

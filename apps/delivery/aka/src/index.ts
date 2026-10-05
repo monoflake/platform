@@ -1,3 +1,4 @@
+import { poweredBy } from '@canmi/web/disclose/hono';
 import { Hono } from 'hono';
 import { cacheControl, NEVER } from './cache';
 import { failure } from './respond';
@@ -13,6 +14,9 @@ import { resource } from './resource';
  * somebody else's schedule. See spec/architecture/delivery.md.
  */
 const app = new Hono();
+
+// First, so every answer says what made it. See lib's spec/web/disclose.md.
+app.use(poweredBy());
 
 // CORS, the path's spelling and the files every host answers -- `/`, `favicon.ico`, `robots.txt`,
 // `security.txt` -- are the gateway's, which this layer stands behind. See

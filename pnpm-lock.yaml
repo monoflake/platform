@@ -190,6 +190,9 @@ importers:
       '@canmi/response':
         specifier: ^2.0.0
         version: 2.0.0
+      '@canmi/web':
+        specifier: ^2026.1005.5
+        version: 2026.1005.5(hono@4.13.12)
       '@monoflake/sdk':
         specifier: workspace:*
         version: link:../../../libs/sdk
@@ -209,6 +212,9 @@ importers:
       '@canmi/response':
         specifier: ^2.0.0
         version: 2.0.0
+      '@canmi/web':
+        specifier: ^2026.1005.5
+        version: 2026.1005.5(hono@4.13.12)
       '@jsquash/avif':
         specifier: ^2.1.1
         version: 2.1.1
@@ -243,6 +249,9 @@ importers:
       '@canmi/response':
         specifier: ^2.0.0
         version: 2.0.0
+      '@canmi/web':
+        specifier: ^2026.1005.5
+        version: 2026.1005.5(hono@4.13.12)
       '@hono/node-server':
         specifier: ^2.1.3
         version: 2.1.3(hono@4.13.12)
@@ -343,6 +352,20 @@ packages:
 
   '@canmi/response@2.0.0':
     resolution: {integrity: sha512-fQh5D0dAcdvccqWLcGQKzpGNa1TbyhZ+4B5kq5/LWPOnacdq5OY8uJoCn7zgdM0MNZMsZiDVsOXSu9fIQEdC4w==}
+
+  '@canmi/web@2026.1005.5':
+    resolution: {integrity: sha512-N6NhpbAM2lbGHydBdstIdaNJqC68yisxKfgIyKRMF2MmBwqbhU6JN8Tf1/mu0nFbGafmjhLD4yKljcHmgKX5Ug==}
+    peerDependencies:
+      '@sentry/sveltekit': ^11.4.0
+      '@sveltejs/kit': ^3.0.0
+      hono: ^4.13.12
+    peerDependenciesMeta:
+      '@sentry/sveltekit':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      hono:
+        optional: true
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -1774,6 +1797,9 @@ packages:
     resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
     engines: {node: '>=18'}
 
+  core-js@3.50.0:
+    resolution: {integrity: sha512-BRWgOLKkFeCgRudR6zrs8p9XJZcE14grzKMMssoYrk6krtuEZ7MTKPIY5RzOnqsEKIR9kst7wNzphttraT+Yqw==}
+
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
 
@@ -2388,6 +2414,12 @@ snapshots:
   '@canmi/me@2026.1004.5': {}
 
   '@canmi/response@2.0.0': {}
+
+  '@canmi/web@2026.1005.5(hono@4.13.12)':
+    dependencies:
+      core-js: 3.50.0
+    optionalDependencies:
+      hono: 4.13.12
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 
@@ -3168,6 +3200,8 @@ snapshots:
   chai@6.3.0: {}
 
   cookie@1.1.1: {}
+
+  core-js@3.50.0: {}
 
   defu@6.1.7: {}
 

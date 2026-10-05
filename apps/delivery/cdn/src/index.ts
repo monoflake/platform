@@ -1,3 +1,4 @@
+import { poweredBy } from '@canmi/web/disclose/hono';
 import { Hono } from 'hono';
 import { cacheControl } from './cache';
 import github from './github';
@@ -15,6 +16,9 @@ import { failure } from './respond';
  * thing this host will not do. See spec/architecture/delivery.md.
  */
 const app = new Hono<{ Bindings: Bindings }>();
+
+// First, so every answer says what made it. See lib's spec/web/disclose.md.
+app.use(poweredBy());
 
 // CORS, the path's spelling and the files every host answers -- `/`, `favicon.ico`, `robots.txt`,
 // `security.txt` -- are the gateway's, which this host stands behind. See
