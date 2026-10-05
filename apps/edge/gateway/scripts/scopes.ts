@@ -19,6 +19,20 @@ const DECLARATION = join(import.meta.dirname, '../service.toml');
 const EDGE_MARK =
 	"# Written by `mise run scopes` from @monoflake/sdk's gateway names; do not edit.";
 
+/** A TOML array of strings. */
+function list(items: readonly string[]): string {
+	return `[${items.map((item) => `"${item}"`).join(', ')}]`;
+}
+
+/** A directory's entries, or none when it is not there. */
+function listed(directory: string): string[] {
+	try {
+		return readdirSync(directory);
+	} catch {
+		return [];
+	}
+}
+
 /**
  * The names the gateway claims at home, as its declaration states them for host: the hosts Caddy
  * routes to it and certifies, the names the resolver answers exactly, and the zone deployments are
@@ -26,7 +40,6 @@ const EDGE_MARK =
  * spec/architecture/host.md, "A role is asked for by the app and granted by the node".
  */
 export function renderEdge(): string {
-	const list = (items: readonly string[]) => `[${items.map((item) => `"${item}"`).join(', ')}]`;
 	const { exact, deployments } = GATEWAY_NAMES;
 	return [
 		EDGE_MARK,
@@ -48,13 +61,6 @@ export function withEdge(declaration: string): string {
 
 /** Every app's declaration, as text. Shared with the test that holds the committed table to it. */
 export function declarations(): string[] {
-	const listed = (directory: string) => {
-		try {
-			return readdirSync(directory);
-		} catch {
-			return [];
-		}
-	};
 	const paths = [
 		...listed(APPS).flatMap((group) =>
 			listed(join(APPS, group)).map((app) => ({

@@ -1,6 +1,11 @@
 import { rustConstants } from '@canmi/me/rust';
 import { GATEWAY_HOSTS, GATEWAY_NAMES, URLS } from './index.ts';
 
+/** Each item as a Rust string literal, comma separated. */
+function quoted(list: readonly string[]): string {
+	return list.map((item) => `"${item}"`).join(', ');
+}
+
 /**
  * The Rust mirror of the URL map.
  *
@@ -11,7 +16,6 @@ import { GATEWAY_HOSTS, GATEWAY_NAMES, URLS } from './index.ts';
  */
 export function rustUrlMap(): string {
 	const constants = rustConstants(URLS);
-	const quoted = (list: readonly string[]) => list.map((item) => `"${item}"`).join(', ');
 	const hosts = quoted(GATEWAY_HOSTS);
 	const { exact, deployments } = GATEWAY_NAMES;
 	return [

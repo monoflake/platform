@@ -204,6 +204,23 @@ describe('what a bare resource id means', () => {
 	});
 });
 
+const iconOf = (tones: Record<string, unknown>) =>
+	parseResource({
+		...base,
+		type: 'media.image.icon',
+		layers: {
+			media,
+			image: { version: 1, dimension: { width: 32, height: 32, aspect: '1:1' }, variants: [] },
+			icon: { version: 1, domain: 'a.example', tones },
+		},
+	});
+
+const file = (content: string) => ({
+	content: content.repeat(32),
+	mime: 'image/svg+xml',
+	bytes: 1,
+});
+
 /**
  * The icon layer, which is where a leaf type's own axis lives.
  *
@@ -211,22 +228,6 @@ describe('what a bare resource id means', () => {
  * null. See spec/architecture/resource.md, "Content binds at the layer that has it".
  */
 describe('an icon binds its files by tone', () => {
-	const file = (content: string) => ({
-		content: content.repeat(32),
-		mime: 'image/svg+xml',
-		bytes: 1,
-	});
-	const iconOf = (tones: Record<string, unknown>) =>
-		parseResource({
-			...base,
-			type: 'media.image.icon',
-			layers: {
-				media,
-				image: { version: 1, dimension: { width: 32, height: 32, aspect: '1:1' }, variants: [] },
-				icon: { version: 1, domain: 'a.example', tones },
-			},
-		});
-
 	it('reads a record that names one tone and no null', () => {
 		const parsed = iconOf({ dark: file('d') });
 		const icon = requireSegment(parsed, 'icon');

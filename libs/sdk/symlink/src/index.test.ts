@@ -35,8 +35,10 @@ it('keeps a miss as long as the corpus does', async () => {
 });
 
 it('keeps nothing of a failure', async () => {
-	for (const failed of [new Response(null, { status: 503 }), new Error('down')]) {
-		const res = await followSymlink(NAME, replying(failed));
+	const failures = [new Response(null, { status: 503 }), new Error('down')];
+	for (const res of await Promise.all(
+		failures.map((failed) => followSymlink(NAME, replying(failed))),
+	)) {
 		expect(res.status).toBe(502);
 		expect(res.headers.get('Cache-Control')).toBe('no-store');
 	}

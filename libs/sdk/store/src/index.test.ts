@@ -157,7 +157,7 @@ describe('where an object lives', () => {
 describe('a range request', () => {
 	const BYTES = 'abcdefghij';
 
-	function bucket() {
+	function ranged() {
 		return {
 			STORE: {
 				head: async () => ({ size: BYTES.length }),
@@ -172,7 +172,7 @@ describe('a range request', () => {
 	}
 
 	async function served(range: string | null) {
-		const found = await read(bucket(), 'video/ab/cd/x.mp4', range);
+		const found = await read(ranged(), 'video/ab/cd/x.mp4', range);
 		if (found === null) throw new Error('absent');
 		if (isUnsatisfiable(found)) return { status: 416, total: found.total, body: '' };
 		const response = toResponse(found);
@@ -214,8 +214,10 @@ describe('a range request', () => {
 		// A recipient that does not understand a range request answers with the whole
 		// representation, which is what every one of these is: a unit that is not bytes, the
 		// multipart form nothing here asks for, a backwards range, and plain nonsense.
-		for (const header of ['items=0-1', 'bytes=0-1,5-6', 'bytes=5-2', 'bytes=x-y', 'nonsense']) {
-			expect(await served(header), header).toMatchObject({ status: 200, body: BYTES });
+		const headers = ['items=0-1', 'bytes=0-1,5-6', 'bytes=5-2', 'bytes=x-y', 'nonsense'];
+		const answers = await Promise.all(headers.map((header) => served(header)));
+		for (const [index, header] of headers.entries()) {
+			expect(answers[index], header).toMatchObject({ status: 200, body: BYTES });
 		}
 	});
 
@@ -226,7 +228,7 @@ describe('a range request', () => {
 	it('advertises that it takes them, on every object', async () => {
 		// The header is what tells a client it may ask at all. It goes on whole responses too,
 		// which is where a player reads it before it ever sends a Range.
-		const found = await read(bucket(), 'video/ab/cd/x.mp4');
+		const found = await read(ranged(), 'video/ab/cd/x.mp4');
 		expect(toResponse(found!).headers.get('Accept-Ranges')).toBe('bytes');
 	});
 });

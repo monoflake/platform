@@ -72,6 +72,7 @@ describe('a resource', () => {
 	it('refuses a declaration it cannot expand, rather than redirecting somewhere', async () => {
 		for (const canonical of ['mailto:nobody@example.com', 'cid:notahash.avif', `cid:${CID}`]) {
 			answering(200, { resource: RID, canonical });
+			// oxlint-disable-next-line no-await-in-loop -- each case stubs the one global fetch
 			expect((await ask(`/${RID}`)).status, canonical).toBe(404);
 			vi.restoreAllMocks();
 		}

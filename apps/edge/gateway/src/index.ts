@@ -92,7 +92,7 @@ function serviceOwn(response: Response): boolean {
 function keysOf(value: unknown): string[] {
 	if (Array.isArray(value)) return value.flatMap(keysOf);
 	if (value === null || typeof value !== 'object') return [];
-	return Object.entries(value).flatMap(([key, inner]) => [key, ...keysOf(inner)]);
+	return [...Object.keys(value), ...Object.values(value).flatMap(keysOf)];
 }
 
 /**
@@ -166,7 +166,7 @@ function corsFor(route: Route): MiddlewareHandler | undefined {
 			? null
 			: new Set(declared.origins.flatMap((code) => PAGE_ORIGINS[code] ?? []));
 	return cors({
-		origin: (asked) => (listed ? (listed.has(asked) ? asked : null) : '*'),
+		origin: (origin) => (listed ? (listed.has(origin) ? origin : null) : '*'),
 		allowMethods: [...declared.methods, 'OPTIONS'],
 		allowHeaders: ['Content-Type', ...declared.headers],
 		maxAge: 86_400,

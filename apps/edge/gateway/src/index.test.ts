@@ -65,7 +65,7 @@ describe('the scope table', () => {
 			workers.toSorted((a, b) => a.binding.localeCompare(b.binding)),
 		);
 		const nodes = new Set(config.vpc_services.map((service) => service.binding));
-		for (const scope of Object.values(SCOPES).filter((scope) => scope.placement !== WORKERS)) {
+		for (const scope of Object.values(SCOPES).filter((each) => each.placement !== WORKERS)) {
 			expect(nodes).toContain(scope.binding);
 		}
 	});
@@ -123,22 +123,24 @@ describe('the gateway', () => {
 		app.fetch(new Request(`${HOST}${path}`, init), env);
 
 	it('sends a path in another spelling to its one spelling, the query kept', async () => {
-		for (const [path, status, location] of [
+		const cases = [
 			['//stats', 308, '/stats'],
 			['//', 301, HOST],
 			['//?abc=', 308, '/?abc='],
 			['/geo/address/?latitude=1', 308, '/geo/address?latitude=1'],
-		] as const) {
-			const answer = await ask(path);
-			expect(answer.status, path).toBe(status);
-			expect(answer.headers.get('location')).toBe(location);
+		] as const;
+		const answers = await Promise.all(cases.map(([path]) => ask(path)));
+		for (const [index, [path, status, location]] of cases.entries()) {
+			expect(answers[index]?.status, path).toBe(status);
+			expect(answers[index]?.headers.get('location')).toBe(location);
 		}
 	});
 
 	it('does not know a scope outside its table, or one inherited from Object', async () => {
-		for (const path of ['/v1/nothing/x', '/v1/constructor/x']) {
-			expect((await ask(path)).status).toBe(404);
-		}
+		const unknown = await Promise.all(
+			['/v1/nothing/x', '/v1/constructor/x'].map((path) => ask(path)),
+		);
+		expect(unknown.map((answer) => answer.status)).toEqual([404, 404]);
 		// Not a name a service could have, so the path is malformed rather than its scope unknown.
 		expect((await ask('/v1/__proto__/x')).status).toBe(400);
 	});
@@ -160,10 +162,15 @@ describe('the gateway', () => {
 			fetch: async () =>
 				Response.json({ status: 'error', code: 'service_unavailable' }, { status: 503 }),
 		} as unknown as Fetcher;
-		for (const HOME of [thrown, page]) {
-			const answer = await ask('/v1/geo/address', { HOME });
-			expect(answer.status).toBe(502);
-			expect(await answer.json()).toMatchObject({ code: 'upstream_unavailable' });
+		const failed = await Promise.all(
+			[thrown, page].map(async (HOME) => {
+				const answer = await ask('/v1/geo/address', { HOME });
+				return { status: answer.status, body: await answer.json() };
+			}),
+		);
+		for (const { status, body } of failed) {
+			expect(status).toBe(502);
+			expect(body).toMatchObject({ code: 'upstream_unavailable' });
 		}
 		// A service's own failure is passed on as it said it.
 		const passed = await ask('/v1/geo/address', { HOME: own });
@@ -207,8 +214,7 @@ describe('the gateway', () => {
 	});
 
 	it("sends the host's own address to the site", async () => {
-		for (const path of ['', '/']) {
-			const answer = await ask(path);
+		for (const answer of await Promise.all(['', '/'].map((path) => ask(path)))) {
 			expect(answer.status).toBe(301);
 			expect(answer.headers.get('location')).toBe(`${URLS.apps.production.site}/?ref=api`);
 		}
@@ -478,13 +484,19 @@ describe("shot's declaration", () => {
 		const { fetcher, seen } = binding();
 		const allowing = counters(true);
 		const env = { HOME: fetcher, QUOTA: allowing.counters };
-		for (const query of ['internal=true', 'internal=false', 'internal', 'host=a.test&internal=1']) {
-			const answer = await app.fetch(
-				new Request(`${HOST}/v1/shot/capture?${query}`, { headers }),
-				env,
-			);
-			expect(answer.status, query).toBe(403);
-			expect(await answer.json()).toMatchObject({ code: 'forbidden_parameter' });
+		const queries = ['internal=true', 'internal=false', 'internal', 'host=a.test&internal=1'];
+		const refused = await Promise.all(
+			queries.map(async (query) => {
+				const answer = await app.fetch(
+					new Request(`${HOST}/v1/shot/capture?${query}`, { headers }),
+					env,
+				);
+				return { query, status: answer.status, body: await answer.json() };
+			}),
+		);
+		for (const { query, status, body } of refused) {
+			expect(status, query).toBe(403);
+			expect(body).toMatchObject({ code: 'forbidden_parameter' });
 		}
 		const status = await app.fetch(
 			new Request(`${HOST}/v1/shot/tasks/abc?internal=true`, { headers }),
@@ -507,14 +519,9 @@ describe("shot's declaration", () => {
 				}),
 				env,
 			);
-		for (const body of [
-			'{"internal":true}',
-			'{"access":{"internal":false}}',
-			'[{"a":{"internal":1}}]',
-		]) {
-			const answer = await post(body);
-			expect(answer.status, body).toBe(403);
-		}
+		const bodies = ['{"internal":true}', '{"access":{"internal":false}}', '[{"a":{"internal":1}}]'];
+		const answers = await Promise.all(bodies.map((body) => post(body)));
+		expect(answers.map((answer) => answer.status)).toEqual(bodies.map(() => 403));
 		expect(seen).toHaveLength(0);
 		expect((await post('{"access":{"insecure":true},"target":{"host":"a.test"}}')).status).toBe(
 			200,
@@ -527,13 +534,19 @@ describe("shot's declaration", () => {
 		const { fetcher, seen } = binding();
 		const allowing = counters(true);
 		const env = { HOME: fetcher, QUOTA: allowing.counters };
-		for (const query of ['fresh=true', 'fresh=false', 'fresh', 'host=a.test&fresh=1']) {
-			const answer = await app.fetch(
-				new Request(`${HOST}/v1/shot/capture?${query}`, { headers }),
-				env,
-			);
-			expect(answer.status, query).toBe(403);
-			expect(await answer.json()).toMatchObject({ code: 'forbidden_parameter' });
+		const queries = ['fresh=true', 'fresh=false', 'fresh', 'host=a.test&fresh=1'];
+		const refused = await Promise.all(
+			queries.map(async (query) => {
+				const answer = await app.fetch(
+					new Request(`${HOST}/v1/shot/capture?${query}`, { headers }),
+					env,
+				);
+				return { query, status: answer.status, body: await answer.json() };
+			}),
+		);
+		for (const { query, status, body } of refused) {
+			expect(status, query).toBe(403);
+			expect(body).toMatchObject({ code: 'forbidden_parameter' });
 		}
 		expect(seen).toHaveLength(0);
 		expect(allowing.asked).toHaveLength(0);
@@ -551,10 +564,9 @@ describe("shot's declaration", () => {
 				}),
 				env,
 			);
-		for (const body of ['{"fresh":true}', '{"access":{"fresh":false}}', '[{"a":{"fresh":1}}]']) {
-			const answer = await post(body);
-			expect(answer.status, body).toBe(403);
-		}
+		const bodies = ['{"fresh":true}', '{"access":{"fresh":false}}', '[{"a":{"fresh":1}}]'];
+		const answers = await Promise.all(bodies.map((body) => post(body)));
+		expect(answers.map((answer) => answer.status)).toEqual(bodies.map(() => 403));
 		expect(seen).toHaveLength(0);
 		expect((await post('{"access":{"insecure":true},"target":{"host":"a.test"}}')).status).toBe(
 			200,
@@ -569,13 +581,15 @@ describe("shot's declaration", () => {
 			env,
 		);
 		expect(start.status).toBe(429);
-		for (const path of [
+		const paths = [
 			'/v1/shot/tasks/0e6f',
 			'/v1/shot/pictures/0e6f.png',
 			'/v1/shot/pictures/0e6f.webp',
-		]) {
-			expect((await app.fetch(new Request(`${HOST}${path}`, { headers }), env)).status).toBe(200);
-		}
+		];
+		const answers = await Promise.all(
+			paths.map((path) => app.fetch(new Request(`${HOST}${path}`, { headers }), env)),
+		);
+		expect(answers.map((answer) => answer.status)).toEqual([200, 200, 200]);
 		expect(refused.asked.map((asked) => asked.key)).toEqual(['shot_post_tasks_address-192.0.2.1']);
 	});
 });

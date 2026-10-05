@@ -50,8 +50,8 @@ export const ROOT_KEY = 'state/index.json';
  * either. The type survives as the one thing that decides the extension: a caller asks for a
  * `content` object and the table below says that is spelled `json`.
  */
-export function artifactAddress(type: ArtifactType, hash: string): string {
-	return `object/${hash}.${EXTENSION[type]}`;
+export function artifactAddress(type: ArtifactType, cid: string): string {
+	return `object/${cid}.${EXTENSION[type]}`;
 }
 
 /**
@@ -90,12 +90,12 @@ export function parseArtifactKey(
 ): { type: ArtifactType; hash: string; ext: string } | undefined {
 	const match = /^([a-z]+)\/([0-9a-f]+)\.([a-z0-9]+)$/.exec(key);
 	if (!match) return undefined;
-	const [, type, hash, ext] = match;
-	if (!type || !hash || !ext) return undefined;
-	if (!HASH_PATTERN.test(hash)) return undefined;
+	const [, type, digest, ext] = match;
+	if (!type || !digest || !ext) return undefined;
+	if (!HASH_PATTERN.test(digest)) return undefined;
 	if (!(ARTIFACT_TYPES as readonly string[]).includes(type)) return undefined;
 	if (EXTENSION[type as ArtifactType] !== ext) return undefined;
-	return { type: type as ArtifactType, hash, ext };
+	return { type: type as ArtifactType, hash: digest, ext };
 }
 
 /**

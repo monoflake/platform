@@ -30,37 +30,37 @@ describe('which kind an answer is, and what it is told', () => {
 	});
 });
 
-describe('the cache at the gateway', () => {
-	/** A cache that keeps by address, as a location's does, and remembers what it was given. */
-	function install() {
-		const kept = new Map<string, Response>();
-		const put: string[] = [];
-		const cache = {
-			match: async (request: Request) => kept.get(request.url)?.clone(),
-			put: async (request: Request, response: Response) => {
-				put.push(`${request.url} ${response.headers.get('cache-control')}`);
-				kept.set(request.url, response);
-			},
-		};
-		vi.stubGlobal('caches', { default: cache });
-		return { kept, put };
-	}
+function node(respond: (request: Request) => Response) {
+	const seen: Request[] = [];
+	return {
+		seen,
+		env: {
+			HOME: {
+				fetch: async (request: Request) => (seen.push(request), respond(request)),
+			} as unknown as Fetcher,
+		},
+	};
+}
 
+/** A cache that keeps by address, as a location's does, and remembers what it was given. */
+function install() {
+	const kept = new Map<string, Response>();
+	const put: string[] = [];
+	const cache = {
+		match: async (request: Request) => kept.get(request.url)?.clone(),
+		put: async (request: Request, response: Response) => {
+			put.push(`${request.url} ${response.headers.get('cache-control')}`);
+			kept.set(request.url, response);
+		},
+	};
+	vi.stubGlobal('caches', { default: cache });
+	return { kept, put };
+}
+
+describe('the cache at the gateway', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
 	const table: Record<string, Scope> = { geo: { placement: 'home', binding: 'HOME', routes: [] } };
-
-	function node(respond: (request: Request) => Response) {
-		const seen: Request[] = [];
-		return {
-			seen,
-			env: {
-				HOME: {
-					fetch: async (request: Request) => (seen.push(request), respond(request)),
-				} as unknown as Fetcher,
-			},
-		};
-	}
 
 	it('answers a repeat from the cache without reaching the service, or a limit', async () => {
 		const { put } = install();

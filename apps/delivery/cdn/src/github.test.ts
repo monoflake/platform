@@ -49,6 +49,10 @@ describe('isGitHubHost', () => {
 	});
 });
 
+async function ask(path: string): Promise<Response> {
+	return app.fetch(new Request(`${HOST}/v3${path}`), {} as never);
+}
+
 /**
  * The lifetimes this route used to keep, and no longer does.
  *
@@ -60,10 +64,6 @@ describe('the group as the worker mounts it', () => {
 	afterEach(() => {
 		vi.restoreAllMocks();
 	});
-
-	async function ask(path: string): Promise<Response> {
-		return app.fetch(new Request(`${HOST}/v3${path}`), {} as never);
-	}
 
 	it('keeps a proxied answer for an hour, having no hash to promise more with', async () => {
 		vi.spyOn(globalThis, 'fetch').mockImplementation(

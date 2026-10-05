@@ -72,8 +72,8 @@ function longEdge(file: ImageVariant): number {
 export function best(image: ImageLayer, want: number): ImageVariant | undefined {
 	const vector = image.variants.find((file) => SCALABLE_MIMES.has(file.mime));
 	if (vector) return vector;
-	const rungs = [...image.variants].sort((a, b) => longEdge(a) - longEdge(b));
-	return rungs.find((file) => longEdge(file) >= want) ?? rungs[rungs.length - 1];
+	const ordered = image.variants.toSorted((a, b) => longEdge(a) - longEdge(b));
+	return ordered.find((file) => longEdge(file) >= want) ?? ordered.at(-1);
 }
 
 /**
