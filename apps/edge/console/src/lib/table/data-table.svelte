@@ -61,7 +61,10 @@
 		sort =
 			sort?.key !== column.key
 				? { key: column.key, direction: column.kind === 'number' ? 'descending' : 'ascending' }
-				: { key: column.key, direction: sort.direction === 'ascending' ? 'descending' : 'ascending' };
+				: {
+						key: column.key,
+						direction: sort.direction === 'ascending' ? 'descending' : 'ascending',
+					};
 	}
 
 	function ask(column: Column<Row>, query: string) {
@@ -147,11 +150,13 @@
 									onclick={() => order(column)}
 								>
 									{column.label}
-									{#if sorted === 'ascending'}<ChevronUp size={12} strokeWidth={2.25} />{:else if sorted ===
-										'descending'}<ChevronDown size={12} strokeWidth={2.25} />{:else}<ChevronsUpDown
+									{#if sorted === 'ascending'}<ChevronUp
 											size={12}
-											strokeWidth={2}
-										/>{/if}
+											strokeWidth={2.25}
+										/>{:else if sorted === 'descending'}<ChevronDown
+											size={12}
+											strokeWidth={2.25}
+										/>{:else}<ChevronsUpDown size={12} strokeWidth={2} />{/if}
 								</button>
 							{:else}
 								{column.label}
@@ -187,14 +192,17 @@
 								class="{column.kind === 'number' ? 'text-right' : ''} {stylex.attrs(type.body)
 									.class}"
 							>
+								{#snippet content()}
+									{#if column.cell}{@render column.cell(row)}{:else}{written(column, row)}{/if}
+								{/snippet}
 								{#if index === 0 && link}
 									<a
 										href={link}
 										class="after:absolute after:inset-0 {stylex.attrs(styles.link).class}"
-										>{written(column, row)}</a
+										>{@render content()}</a
 									>
 								{:else}
-									{written(column, row)}
+									{@render content()}
 								{/if}
 							</td>
 						{/each}

@@ -2,6 +2,7 @@
  * A table's rows as the reader asked for them: filtered, sorted, then cut to a page. Pure, so the
  * server's first page is the browser's, and every step is tested apart from the markup.
  */
+import type { Snippet } from 'svelte';
 
 export interface Column<Row> {
 	key: string;
@@ -14,6 +15,12 @@ export interface Column<Row> {
 	kind?: 'text' | 'number';
 	sortable?: boolean;
 	filterable?: boolean;
+	/**
+	 * The cell drawn rather than written: a badge, a chip, a bar. Sorting and filtering still read
+	 * `value` and `text`. Inside a row with a link the whole row is the link, so what it draws is
+	 * read, not clicked.
+	 */
+	cell?: Snippet<[Row]>;
 }
 
 /** The two orders, named as `aria-sort` names them. */

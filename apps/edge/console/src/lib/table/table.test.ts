@@ -69,7 +69,13 @@ describe('pageOf', () => {
 	const rows = Array.from({ length: 23 }, (_, index) => index);
 
 	it('cuts a page and says which rows it holds, from 1', () => {
-		expect(pageOf(rows, 3, 10)).toEqual({ rows: [20, 21, 22], page: 3, pages: 3, from: 21, to: 23 });
+		expect(pageOf(rows, 3, 10)).toEqual({
+			rows: [20, 21, 22],
+			page: 3,
+			pages: 3,
+			from: 21,
+			to: 23,
+		});
 	});
 
 	it('holds the page inside the pages there are, as a filter shrinks them', () => {

@@ -1,3 +1,4 @@
+import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import DataTable from './data-table.svelte';
@@ -51,9 +52,35 @@ describe('data table on the server', () => {
 	});
 
 	it('says plainly when there is nothing, across every column', () => {
-		const { body } = render(DataTable<App>, { props: { ...props, rows: [], empty: 'No apps yet' } });
+		const { body } = render(DataTable<App>, {
+			props: { ...props, rows: [], empty: 'No apps yet' },
+		});
 		expect(body).toContain('colspan="2"');
 		expect(body).toContain('No apps yet');
 		expect(body).toContain('0 rows');
+	});
+
+	it('draws a column with a cell snippet through it, still sorted by its value', () => {
+		const state: Column<App> = {
+			key: 'state',
+			label: 'State',
+			value: (app) => app.cpu,
+			text: (app) => (app.cpu > 1 ? 'Busy' : 'Idle'),
+			cell: createRawSnippet((app: () => App) => ({
+				render: () => `<b class="chip">${app().name} chip</b>`,
+			})),
+		};
+		const { body } = render(DataTable<App>, {
+			props: {
+				...props,
+				columns: [...columns, state],
+				rows: rows.slice(0, 3),
+				sort: { key: 'state', direction: 'descending' },
+			},
+		});
+		expect(body).toContain('<b class="chip">app2 chip</b>');
+		// The text is not written where the snippet draws the cell.
+		expect(body).not.toContain('>Busy<');
+		expect(body.indexOf('app2 chip')).toBeLessThan(body.indexOf('app0 chip'));
 	});
 });
