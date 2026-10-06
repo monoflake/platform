@@ -6,9 +6,15 @@
 	import { sectionOf } from '#lib/sections.js';
 	import Sidebar from '#lib/sidebar.svelte';
 	import TopBar from '#lib/top-bar.svelte';
+	import { RANGES } from '#lib/ui/segmented.svelte';
+	import { setTimeZone } from '#lib/ui/time-zone.js';
 	import '../app.css';
+	import type { LayoutData } from './$types';
 
-	let { children }: { children: Snippet } = $props();
+	let { children, data }: { children: Snippet; data: LayoutData } = $props();
+
+	// Once, from the server's load: every chart and time below writes the reader's zone.
+	setTimeZone(untrack(() => data.zone));
 
 	/**
 	 * The visual layer in development, linked as the panel links it: the layer order first, then the
@@ -41,6 +47,11 @@
 
 	const section = $derived(sectionOf(page.url.pathname));
 	const detail = $derived(page.params.node ?? page.params.run ?? page.params.app);
+	/** A page drawn over a span says so by loading `range`; the top bar then offers the others. */
+	const range = $derived(RANGES.find((one) => one.key === page.data.range)?.key);
+	const title = $derived(
+		typeof page.data.title === 'string' ? page.data.title : (section?.label ?? 'Console'),
+	);
 </script>
 
 <svelte:head>
@@ -50,9 +61,9 @@
 </svelte:head>
 
 <div class="flex min-h-screen">
-	<Sidebar current={section} />
+	<Sidebar current={section} {live} />
 	<main class="min-w-0 flex-1">
-		<TopBar title={section?.label ?? 'Console'} {detail} {live} />
+		<TopBar {title} {section} {detail} {range} query={page.url.search} />
 		<div class="mx-auto flex w-full max-w-[90rem] flex-col gap-6 px-8 py-7">
 			{@render children()}
 		</div>

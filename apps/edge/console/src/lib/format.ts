@@ -1,4 +1,8 @@
-/** Times and sizes as the console says them: relative, and in the reader's own zone on hover. */
+/**
+ * Times and sizes as the console says them: relative, and in the reader's zone on hover -- the one
+ * the layout set, never the runtime's own, so the server and the browser write the same text.
+ */
+import { moment, UTC } from './chart/series.ts';
 
 /** How long ago `stamp` was, as of `now`: `just now`, `12 s ago`, `4 min ago`, `3 days ago`. */
 export function ago(stamp: string, now: number): string {
@@ -14,12 +18,10 @@ export function ago(stamp: string, now: number): string {
 	return `${Math.round(hours / 24)} days ago`;
 }
 
-const local = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium' });
-
-/** `stamp` in the reader's zone, for a title. */
-export function localTime(stamp: string): string {
+/** `stamp` in `zone`, for a title; `ui/time-zone.ts`'s `timeZone()` is the reader's. */
+export function localTime(stamp: string, zone = UTC): string {
 	const at = Date.parse(stamp);
-	return Number.isNaN(at) ? stamp : local.format(at);
+	return Number.isNaN(at) ? stamp : moment(at / 1000, zone);
 }
 
 const UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];

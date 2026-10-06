@@ -47,17 +47,12 @@
 	});
 </script>
 
-<div
-	class="mb-5 flex gap-6 {stylex.attrs(surfaces.bar).class}"
-	role="tablist"
-	aria-label={label}
->
+<div class="mb-5 flex gap-6 {stylex.attrs(surfaces.bar).class}" role="tablist" aria-label={label}>
 	{#each tabs as tab, index (tab.key)}
 		{@const chosen = tab.key === current}
-		{@const shape = `-mb-px inline-flex h-10 items-center px-0.5 ${stylex.attrs(
-			styles.tab,
-			chosen && styles.chosen,
-		).class}`}
+		{@const shape = `-mb-px inline-flex h-10 items-center px-0.5 ${
+			stylex.attrs(styles.tab, chosen && styles.chosen).class
+		}`}
 		{#if tab.href}
 			<a
 				bind:this={buttons[index]}

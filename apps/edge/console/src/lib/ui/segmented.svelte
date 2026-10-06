@@ -76,10 +76,9 @@
 >
 	{#each options as option, index (option.key)}
 		{@const chosen = option.key === value}
-		{@const shape = `inline-flex h-7 items-center px-3 whitespace-nowrap ${stylex.attrs(
-			styles.option,
-			chosen && styles.chosen,
-		).class}`}
+		{@const shape = `inline-flex h-7 items-center px-3 whitespace-nowrap ${
+			stylex.attrs(styles.option, chosen && styles.chosen).class
+		}`}
 		{#if option.href}
 			<a
 				bind:this={elements[index]}

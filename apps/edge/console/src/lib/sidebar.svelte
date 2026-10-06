@@ -1,12 +1,28 @@
 <script lang="ts">
-	/** Where the console goes: its five sections, the one being read marked as the panel marks it. */
+	/**
+	 * Where the console goes: its five sections, the one being read marked as the panel marks it,
+	 * and at the foot whether it is live or polling, through which node, and how many it hears.
+	 */
 	import * as stylex from '@stylexjs/stylex';
 	import Radio from '@lucide/svelte/icons/radio-tower';
 	import { radius, text, weight } from '@canmi/kit/tokens/vocabulary.stylex';
+	import type { Live } from './live.svelte.ts';
+	import { PLACES } from './map/places.ts';
+	import { liveness } from './node.ts';
 	import { SECTIONS, type Section } from './sections.ts';
 	import { surfaces, type } from './style.ts';
+	import Badge from './ui/badge.svelte';
+	import { CONTRACT } from './wire.ts';
 
-	let { current }: { current: Section | undefined } = $props();
+	let { current, live }: { current: Section | undefined; live: Live } = $props();
+
+	const WORD = { connecting: 'Connecting', live: 'Live', polling: 'Polling every 5 s' } as const;
+	const TONE = { connecting: 'quiet', live: 'good', polling: 'warn' } as const;
+	const TOTAL = Object.keys(PLACES).length;
+	const heard = $derived(
+		Object.values(live.view.nodes).filter((held) => liveness(held.heard_at, live.now) === 'live')
+			.length,
+	);
 
 	const styles = stylex.create({
 		brandMark: {
@@ -78,4 +94,26 @@
 			</a>
 		{/each}
 	</nav>
+
+	<footer class="mt-auto flex flex-col gap-2 px-4 py-4 {stylex.attrs(surfaces.rowRule).class}">
+		<div class="flex items-center justify-between gap-2">
+			<Badge tone={TONE[live.mode]}>{WORD[live.mode]}</Badge>
+			<span class={stylex.attrs(type.soft).class}>{heard} of {TOTAL} live</span>
+		</div>
+		{#if live.view.via}
+			<span class={stylex.attrs(type.soft).class}>
+				Through <span class={stylex.attrs(type.mono).class}>{live.view.via}</span>
+			</span>
+		{/if}
+		{#if live.mode === 'polling' && live.failure}
+			<span class="truncate {stylex.attrs(type.soft).class}" title={live.failure}>
+				Last poll failed
+			</span>
+		{/if}
+		{#if live.view.refused !== undefined}
+			<span class={stylex.attrs(type.soft).class}>
+				The relay speaks contract {live.view.refused}; this console reads {CONTRACT}.
+			</span>
+		{/if}
+	</footer>
 </aside>
