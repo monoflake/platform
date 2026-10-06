@@ -28,6 +28,12 @@ chosen by import" -- the same tokens infra's panel reads, so the two read as one
 are drawn as SVG by the app itself with d3's scales and shapes, so the server renders them whole:
 a chart library drawing on a canvas would paint nothing until the browser ran it.
 
+**Every time is written in the reader's zone**, which Cloudflare names on the request, set once in
+the layout and read by every chart, so the server and the browser write the same text and the
+page does not change as it wakes; a zone Intl does not know falls back to UTC. **The world map is
+projected when the console is built**, from the node table, so neither the Worker nor the browser
+carries a projection or a world's topology -- only the paths it drew.
+
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its
 machine, and seven of them in one Worker would make the Worker root on all seven. Restarting,
