@@ -12,3 +12,8 @@ divide the work is the workspace's `spec/planning.md`.
   accepted".
 - **The service domains each answer a page of their own**, with the platform's names laid over them
   where a host carries both.
+- **An app declares what it needs and the platform places it**: N instances and their memory, buckets
+  by copies and failure domains, SQLite or Postgres, shared within a scope and isolated between
+  scopes -- [architecture/scheduling.md](architecture/scheduling.md). The per-app sidecars of
+  [architecture/objects.md](architecture/objects.md) and
+  [architecture/databases.md](architecture/databases.md) give way to it.
