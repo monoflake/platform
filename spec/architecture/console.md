@@ -18,7 +18,7 @@ SvelteKit's server needs.
 and `/nearest` are answered in the server hook before any page: the Worker picks the nearest node
 from where Cloudflare says the reader is and hands the request to that node's relay by its VPC
 binding, the next node when it fails. A response the hook returns itself leaves SvelteKit as it
-was made, which a WebSocket's 101 must. One host because Access sets its cookie per concrete
+was made, which a WebSocket's 101 must, and does: a browser saw the 101 on 2026-10-06. One host because Access sets its cookie per concrete
 hostname and cannot set one ahead for a wildcard application's subdomains, and a WebSocket cannot
 follow Access's redirect to get one: a page on one name could not open a socket on another --
 https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/.
