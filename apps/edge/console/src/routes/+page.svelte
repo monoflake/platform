@@ -1,83 +1,56 @@
 <script lang="ts">
 	import * as stylex from '@stylexjs/stylex';
-	import { onMount } from 'svelte';
-	import Apps from '#lib/apps.svelte';
-	import { listen, type Mode } from '#lib/feed.js';
-	import NodeCard from '#lib/node-card.svelte';
-	import Pipeline from '#lib/pipeline.svelte';
-	import { pipeline } from '#lib/pipeline.js';
+	import Card from '#lib/card.svelte';
+	import AreaChart from '#lib/chart/area-chart.svelte';
 	import { type } from '#lib/style.js';
-	import { EMPTY, merge, mergeCluster } from '#lib/view.js';
-	import { CONTRACT } from '#lib/wire.js';
+	import Unread from '#lib/unread.svelte';
+	import type { PageProps } from './$types';
 
-	/** Replaced whole on every message that holds anything newer; see src/lib/view.ts. */
-	let view = $state.raw(EMPTY);
-	let mode: Mode = $state('connecting');
-	let failure: string | undefined = $state();
-	/** The clock relative times and liveness are read against, a tick a second. */
-	let now = $state(Date.now());
+	let { data }: PageProps = $props();
 
-	// On mount, not in an effect: an effect reruns on what it reads, reopening the socket.
-	onMount(() => {
-		const stop = listen({
-			live: (message) => (view = merge(view, message)),
-			polled: (cluster) => (view = mergeCluster(view, cluster)),
-			mode: (next) => (mode = next),
-			failure: (why) => (failure = why),
-		});
-		const clock = setInterval(() => (now = Date.now()), 1000);
-		return () => {
-			stop();
-			clearInterval(clock);
-		};
-	});
-
-	const nodes = $derived(Object.entries(view.nodes).toSorted(([a], [b]) => a.localeCompare(b)));
-	const names = $derived(nodes.map(([name]) => name));
-	const runs = $derived(pipeline(view.nodes));
-
-	const MODE_WORD: Record<Mode, string> = {
-		connecting: 'Connecting',
-		live: 'Live',
-		polling: 'Polling every 5 s',
-	};
+	const nodes = $derived(data.cluster.ok ? Object.entries(data.cluster.data.nodes) : []);
 </script>
 
-<p class="flex flex-wrap gap-x-3 {stylex.attrs(type.soft).class}">
-	<span>
-		{MODE_WORD[mode]}{#if view.via && mode !== 'connecting'}, through {view.via}{/if}
-	</span>
-	{#if mode === 'polling' && failure}<span title={failure}>Last poll failed</span>{/if}
-	{#if view.refused !== undefined}
-		<span>The relay speaks contract {view.refused}; this console reads {CONTRACT}.</span>
-	{/if}
-</p>
+{#if !data.cluster.ok}
+	<Unread what="The cluster" failure={data.cluster.failure} />
+{:else}
+	<p class={stylex.attrs(type.soft).class}>
+		{nodes.length} nodes held by
+		<span class={stylex.attrs(type.mono).class}>{data.cluster.node}</span>
+	</p>
+{/if}
 
-<section class="flex flex-col gap-3" aria-labelledby="nodes">
-	<h2 id="nodes" class={stylex.attrs(type.heading).class}>Nodes</h2>
-	{#if nodes.length === 0}
-		<p class={stylex.attrs(type.soft).class}>
-			{mode === 'connecting' ? 'Waiting for the first answer.' : 'No node heard yet.'}
-		</p>
-	{:else}
-		<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+{#if data.cpu}
+	<Card title="CPU" description="{data.cpu.node}, the last hour, a point a minute">
+		{#if data.cpu.read.ok}
+			<AreaChart
+				lines={[
+					{ key: 'cpu', label: 'Busy', color: 'var(--color-series-2)', points: data.cpu.read.data },
+				]}
+				since={data.cpu.since}
+				until={data.cpu.until}
+				ceiling={100}
+				format={(value) => `${Math.round(value)}%`}
+			/>
+		{:else}
+			<Unread what="The series" failure={data.cpu.read.failure} />
+		{/if}
+	</Card>
+{/if}
+
+<Card title="Nodes" flush>
+	<table>
+		<thead><tr><th>Node</th><th>Version</th><th>Heard</th><th>Apps</th><th>Events</th></tr></thead>
+		<tbody>
 			{#each nodes as [name, held] (name)}
-				<NodeCard {name} {held} {now} />
+				<tr>
+					<td><a href="/nodes/{name}" class={stylex.attrs(type.mono).class}>{name}</a></td>
+					<td class={stylex.attrs(type.mono).class}>{held.version}</td>
+					<td class={stylex.attrs(type.mono).class}>{held.heard_at}</td>
+					<td>{held.snapshot.apps.length}</td>
+					<td>{held.snapshot.events.length}</td>
+				</tr>
 			{/each}
-		</div>
-	{/if}
-</section>
-
-<section class="flex flex-col gap-3" aria-labelledby="pipeline">
-	<h2 id="pipeline" class={stylex.attrs(type.heading).class}>Pipeline</h2>
-	<Pipeline pipeline={runs} nodes={names} {now} />
-</section>
-
-<section class="flex flex-col gap-3" aria-labelledby="apps">
-	<h2 id="apps" class={stylex.attrs(type.heading).class}>Apps</h2>
-	{#if nodes.length === 0}
-		<p class={stylex.attrs(type.soft).class}>No node heard yet.</p>
-	{:else}
-		<Apps {nodes} {now} />
-	{/if}
-</section>
+		</tbody>
+	</table>
+</Card>

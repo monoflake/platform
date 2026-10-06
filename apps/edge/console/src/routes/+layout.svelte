@@ -1,20 +1,14 @@
 <script lang="ts">
-	import { applyTheme, currentTheme, themeCookie } from '@canmi/kit/theme';
-	import Moon from '@lucide/svelte/icons/moon';
-	import Sun from '@lucide/svelte/icons/sun';
-	import * as stylex from '@stylexjs/stylex';
-	import type { Snippet } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import { dev } from '$app/env';
-	import { type } from '#lib/style.js';
+	import { page } from '$app/state';
+	import { Live, provideLive } from '#lib/live.svelte.js';
+	import { sectionOf } from '#lib/sections.js';
+	import Sidebar from '#lib/sidebar.svelte';
+	import TopBar from '#lib/top-bar.svelte';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
-
-	function toggleTheme() {
-		const next = currentTheme() === 'dark' ? 'light' : 'dark';
-		applyTheme(next);
-		document.cookie = themeCookie(next);
-	}
 
 	/**
 	 * The visual layer in development, linked as the panel links it: the layer order first, then the
@@ -30,26 +24,37 @@
 			void import('virtual:stylex:runtime');
 		});
 	}
+
+	const live = provideLive(new Live());
+
+	/** Every page loads the cluster on the server, and what it read is taken in. */
+	function seed() {
+		const read = page.data.cluster;
+		if (read?.ok) untrack(() => live.seed(read.data));
+	}
+	// Once now, so the server's render already shows it, and again on each load after.
+	seed();
+	$effect.pre(seed);
+
+	// On mount, not in an effect: an effect reruns on what it reads, reopening the socket.
+	onMount(() => live.start());
+
+	const section = $derived(sectionOf(page.url.pathname));
+	const detail = $derived(page.params.node ?? page.params.run ?? page.params.app);
 </script>
 
 <svelte:head>
 	<!-- First in the head on purpose: it declares the order the layers below it take. -->
 	{#if dev}{@html DEV_STYLEX}{/if}
-	<title>Console</title>
+	<title>{section ? `${section.label} · Console` : 'Console'}</title>
 </svelte:head>
 
-<div class="mx-auto flex w-[min(100%,80rem)] flex-col gap-8 px-4 py-6 md:px-6">
-	<nav class="flex items-center justify-between gap-4">
-		<span class={stylex.attrs(type.title).class}>Console</span>
-		<button
-			type="button"
-			onclick={toggleTheme}
-			aria-label="Switch between light and dark"
-			class="focus-ring inline-flex size-8 items-center justify-center rounded-full"
-		>
-			<Moon size={16} aria-hidden="true" class="dark:hidden" />
-			<Sun size={16} aria-hidden="true" class="hidden dark:block" />
-		</button>
-	</nav>
-	{@render children()}
+<div class="flex min-h-screen">
+	<Sidebar current={section} />
+	<main class="min-w-0 flex-1">
+		<TopBar title={section?.label ?? 'Console'} {detail} {live} />
+		<div class="mx-auto flex w-full max-w-[90rem] flex-col gap-6 px-8 py-7">
+			{@render children()}
+		</div>
+	</main>
 </div>

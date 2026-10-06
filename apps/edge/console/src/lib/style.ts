@@ -10,37 +10,51 @@ import {
 } from '@canmi/kit/tokens/vocabulary.stylex';
 
 /**
- * The console's recipes, on the kit's palette and vocabulary: color, type, border and radius here,
- * where a thing sits in the markup. See web's spec/architecture/css/layers.md.
+ * The console's recipes, on the Nord palette's meanings and the kit's vocabulary: color, type,
+ * border and radius here, where a thing sits in the markup. See web's
+ * spec/architecture/css/layers.md.
  */
 export const surfaces = stylex.create({
+	/** The sidebar, a step below the ground. */
+	sidebar: {
+		backgroundColor: 'var(--color-sunken)',
+		borderRightWidth: border.hairlinePx,
+		borderRightStyle: 'solid',
+		borderRightColor: 'var(--color-line)',
+	},
+	/** The top bar, ruled off from the page below it. */
+	bar: {
+		borderBottomWidth: border.hairlinePx,
+		borderBottomStyle: 'solid',
+		borderBottomColor: 'var(--color-line)',
+	},
 	card: {
-		backgroundColor: 'color-mix(in oklch, var(--color-text) 3%, transparent)',
+		backgroundColor: 'var(--color-surface)',
 		borderWidth: border.hairlinePx,
 		borderStyle: 'solid',
-		borderColor: 'var(--color-border)',
+		borderColor: 'var(--color-line)',
 		borderRadius: radius.xl,
 	},
 	/** A slot with nothing in it yet, said plainly rather than filled. */
 	empty: {
 		borderWidth: border.hairlinePx,
 		borderStyle: 'dashed',
-		borderColor: 'var(--color-border-strong)',
+		borderColor: 'var(--color-line-strong)',
 		borderRadius: radius.xl,
 	},
 	rowRule: {
 		borderTopWidth: border.hairlinePx,
 		borderTopStyle: 'solid',
-		borderTopColor: 'var(--color-border)',
+		borderTopColor: 'var(--color-line)',
 	},
 	/** The same rule between the items of a list, and none above the first. */
 	listRule: {
 		borderTopWidth: border.hairlinePx,
 		borderTopStyle: 'solid',
-		borderTopColor: { default: 'var(--color-border)', ':first-child': 'transparent' },
+		borderTopColor: { default: 'var(--color-line)', ':first-child': 'transparent' },
 	},
 	well: {
-		backgroundColor: 'color-mix(in oklch, var(--color-text) 5%, transparent)',
+		backgroundColor: 'var(--color-sunken)',
 		borderRadius: radius.lg,
 	},
 	pill: {
@@ -74,14 +88,14 @@ export const type = stylex.create({
 	},
 	soft: {
 		fontSize: text.px12,
-		color: 'var(--color-text-soft)',
+		color: 'var(--color-text-muted)',
 	},
 	label: {
 		fontSize: text.px11,
 		fontWeight: weight.medium,
 		letterSpacing: tracking.caps,
 		textTransform: 'uppercase',
-		color: 'var(--color-text-soft)',
+		color: 'var(--color-text-faint)',
 	},
 	figure: {
 		fontSize: text.px13,
@@ -96,20 +110,20 @@ export const type = stylex.create({
 
 /** The one color a state is shown in, wherever it is shown. */
 export const tone = stylex.create({
-	good: { color: 'var(--color-green)' },
-	busy: { color: 'var(--color-blue)' },
-	warn: { color: 'var(--color-amber)' },
-	bad: { color: 'var(--color-red)' },
-	quiet: { color: 'var(--color-text-soft)' },
+	good: { color: 'var(--color-good)' },
+	busy: { color: 'var(--color-busy)' },
+	warn: { color: 'var(--color-warn)' },
+	bad: { color: 'var(--color-danger)' },
+	quiet: { color: 'var(--color-text-muted)' },
 });
 
 export type Tone = keyof typeof tone;
 
 /** A state's word washed in its tone. */
 export const wash = stylex.create({
-	good: { backgroundColor: 'color-mix(in oklch, var(--color-green) 14%, transparent)' },
-	busy: { backgroundColor: 'color-mix(in oklch, var(--color-blue) 14%, transparent)' },
-	warn: { backgroundColor: 'color-mix(in oklch, var(--color-amber) 16%, transparent)' },
-	bad: { backgroundColor: 'color-mix(in oklch, var(--color-red) 14%, transparent)' },
-	quiet: { backgroundColor: 'color-mix(in oklch, var(--color-text) 6%, transparent)' },
+	good: { backgroundColor: 'color-mix(in srgb, var(--color-good) 14%, transparent)' },
+	busy: { backgroundColor: 'color-mix(in srgb, var(--color-busy) 14%, transparent)' },
+	warn: { backgroundColor: 'color-mix(in srgb, var(--color-warn) 14%, transparent)' },
+	bad: { backgroundColor: 'color-mix(in srgb, var(--color-danger) 16%, transparent)' },
+	quiet: { backgroundColor: 'var(--color-raised)' },
 });

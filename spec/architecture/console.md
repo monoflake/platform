@@ -6,17 +6,27 @@ down; the console is the view of all of them, and of what CI is building, for ev
 
 ## The UI is at the edge, the data is the nodes'
 
-**The console's UI is static and served by Cloudflare**, behind Access, so it is as near the reader
-as Cloudflare is. It holds no data. What it shows it asks the nodes for, through the gateway, which
-reaches each node's panel by that node's VPC binding.
+**The console is a SvelteKit app rendered on Cloudflare, at the edge**, behind Access, so it is as
+near the reader as Cloudflare is, and it holds no data. A page's first paint is rendered by the
+Worker from what the nodes answer: the cluster from the nearest relay's `/state`, and a node's own
+readings from its host's API, reached through that node's VPC binding at the panel's interface with
+the read token. The Worker reads its bindings from `cloudflare:workers`, since SvelteKit's
+`event.platform` is empty under its Cloudflare adapter, and runs with `nodejs_compat`, which
+SvelteKit's server needs.
 
-**The page and its live socket are one Worker on one host, `console.canmi.app`**: the page from
-static assets, and `/live`, `/state` and `/nearest` from the Worker's script, which picks the
-nearest node from where Cloudflare says the reader is and hands the request to that node's relay
-by its VPC binding, the next node when it fails. One host because Access sets its cookie per
-concrete hostname and cannot set one ahead for a wildcard application's subdomains, and a
-WebSocket cannot follow Access's redirect to get one: a page on one name could not open a socket
-on another -- https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/.
+**The page and its live socket are one Worker on one host, `console.canmi.app`.** `/live`, `/state`
+and `/nearest` are answered in the server hook before any page: the Worker picks the nearest node
+from where Cloudflare says the reader is and hands the request to that node's relay by its VPC
+binding, the next node when it fails. A response the hook returns itself leaves SvelteKit as it
+was made, which a WebSocket's 101 must. One host because Access sets its cookie per concrete
+hostname and cannot set one ahead for a wildcard application's subdomains, and a WebSocket cannot
+follow Access's redirect to get one: a page on one name could not open a socket on another --
+https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/.
+
+**It is dark, on the kit's Nord palette** -- lib's `spec/kit/theme.md`, "Nord is dark only, and
+chosen by import" -- the same tokens infra's panel reads, so the two read as one product. Its charts
+are drawn as SVG by the app itself with d3's scales and shapes, so the server renders them whole:
+a chart library drawing on a canvas would paint nothing until the browser ran it.
 
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its

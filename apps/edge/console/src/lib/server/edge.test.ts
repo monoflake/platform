@@ -1,17 +1,16 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { URLS } from '@monoflake/sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { type Env, RELAY, ROUTES, TRIES, handle, socketOf } from './index';
-import { NODES, type Node, order } from './nodes';
+import { type Env, RELAY, ROUTES, TRIES, handle, isRoute, socketOf } from './edge.ts';
+import { NODES, type Node, order } from './nodes.ts';
 
 /** wrangler.jsonc as data: its comments and trailing commas taken off, strings left alone. */
 function wrangler(): {
 	routes: Array<{ pattern: string; custom_domain?: boolean }>;
-	assets: { run_worker_first: string[] };
 	vpc_services: Array<{ binding: string }>;
 } {
-	const text = readFileSync(join(import.meta.dirname, '../wrangler.jsonc'), 'utf8');
+	const text = readFileSync(join(import.meta.dirname, '../../../wrangler.jsonc'), 'utf8');
 	const bare = text.replace(
 		/("(?:\\.|[^"\\])*")|\/\/[^\n]*/g,
 		(_match: string, string?: string) => string ?? '',
@@ -74,15 +73,21 @@ describe('wrangler.jsonc', () => {
 				.toSorted(),
 		);
 	});
+});
 
-	it('runs the script first for exactly the paths it answers', async () => {
+describe('the routes ahead of the pages', () => {
+	it('answers each of its paths exactly, and no page shares one', async () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {});
-		expect(wrangler().assets.run_worker_first.toSorted()).toEqual([...ROUTES].toSorted());
 		// Nothing bound, so `/state` is a 502 and `/live` a 426: answered, if not well.
 		const { env } = bound({});
 		for (const route of ROUTES) {
+			expect(isRoute(route)).toBe(true);
 			expect((await handle(asked(route), env)).status).not.toBe(404);
 		}
+		expect(['/', '/nodes', '/live/', '/state.json'].some(isRoute)).toBe(false);
+		// A page here would never be reached: src/hooks.server.ts answers its path first.
+		const pages = readdirSync(join(import.meta.dirname, '../../routes'));
+		expect(pages.filter((page) => isRoute(`/${page}`))).toEqual([]);
 	});
 });
 

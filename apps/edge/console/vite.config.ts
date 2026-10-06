@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-static';
+import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
 import stylex from '@stylexjs/unplugin/vite';
@@ -16,8 +16,7 @@ export default defineConfig({
 		sveltekit({
 			preprocess: vitePreprocess(),
 			compilerOptions: { runes: true },
-			// Every page prerendered and served as files: the console holds no data and runs no
-			// server. See spec/architecture/console.md, "The UI is at the edge, the data is the nodes'".
+			// Every page rendered in the Worker, from what the nodes answer through their bindings.
 			adapter: adapter(),
 		}),
 

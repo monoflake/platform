@@ -1,22 +1,23 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "console",
-	"main": "worker/index.ts",
+	// The adapter's Worker, and the client and prerendered files it serves beside the pages it
+	// renders; both written by `vite build`. Access stands in front, so nothing here signs anyone in.
+	// See spec/architecture/console.md, "The UI is at the edge, the data is the nodes'".
+	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-07-29",
+	// SvelteKit keeps each request's event in `node:async_hooks`' AsyncLocalStorage.
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": { "directory": ".svelte-kit/cloudflare", "binding": "ASSETS" },
 
-	// The page is the files `vite build` wrote; the script runs first only for the paths it answers,
-	// which worker/index.test.ts holds to its `ROUTES`. Access stands in front, so nothing here signs
-	// anyone in. See spec/architecture/console.md, "The UI is at the edge, the data is the nodes'".
-	"assets": { "directory": "./build", "run_worker_first": ["/live", "/state", "/nearest"] },
-
-	// `URLS.internal.console` in libs/sdk, which worker/index.test.ts holds this to. A custom domain,
-	// so every deploy asserts it, as the gateway declares its apexes; see
+	// `URLS.internal.console` in libs/sdk, which src/lib/server/edge.test.ts holds this to. A custom
+	// domain, so every deploy asserts it, as the gateway declares its apexes; see
 	// spec/architecture/gateway.md, "The gateway declares its hosts in its `wrangler.jsonc`".
 	"routes": [{ "pattern": "console.canmi.app", "custom_domain": true }],
 
 	// Each node's Caddy, made by infra's `mise run tunnel` and bound by the node's name in capitals:
-	// the list `hook` binds. worker/nodes.ts places each, and worker/index.test.ts holds the two
-	// together.
+	// the list `hook` binds. src/lib/server/nodes.ts places each, and src/lib/server/edge.test.ts
+	// holds the two together.
 	"vpc_services": [
 		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
 		{ "binding": "TYO", "service_id": "01a10f21-8a27-7721-8223-54365d93b27b", "remote": true },

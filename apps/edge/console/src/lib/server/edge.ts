@@ -2,15 +2,19 @@
  * The console's live socket, and its one `/state`, handed to the nearest node's relay. Once the
  * socket is passed on nothing here runs per message. See spec/architecture/console.md, "Live,
  * through the nearest node". No authentication of its own: Access stands in front of every `.app`
- * name, see the same file. The page's own files never reach this script; see wrangler.jsonc.
+ * name, see the same file. Answered from src/hooks.server.ts, ahead of every page.
  */
 import { failure, success } from '@canmi/response';
 import { URLS } from '@monoflake/sdk';
-import { type Node, type Whereabouts, order } from './nodes';
+import { type Node, type Whereabouts, order } from './nodes.ts';
 
-/** Each node's Caddy, through that node's tunnel, bound by its name in capitals; see
- * wrangler.jsonc. */
-export type Env = Readonly<Partial<Record<Uppercase<Node>, Fetcher>>>;
+/**
+ * Each node's Caddy, through that node's tunnel, bound by its name in capitals, and the read-only
+ * token every node's host takes for its `GET` routes; see wrangler.jsonc.
+ */
+export type Env = Readonly<
+	Partial<Record<Uppercase<Node>, Fetcher>> & { HOST_READ_TOKEN?: string }
+>;
 
 /** The relay's interface on a node; VPC sends it as the `Host` Caddy routes on. See
  * spec/architecture/services.md, "One door per node". */
@@ -25,9 +29,14 @@ export const TRIES = 3;
  * spec/architecture/console.md, "Live, through the nearest node".
  */
 export function reach(env: Env, node: Node, path: string, init: RequestInit): Promise<Response> {
-	const binding = env[node.toUpperCase() as Uppercase<Node>];
+	const binding = bindingOf(env, node);
 	if (binding === undefined) return Promise.reject(new Error(`${node} is not bound`));
 	return binding.fetch(`${RELAY}${path}`, init);
+}
+
+/** A node's binding, absent where wrangler.jsonc binds none. */
+export function bindingOf(env: Env, node: Node): Fetcher | undefined {
+	return env[node.toUpperCase() as Uppercase<Node>];
 }
 
 /** The first answer among `nodes` that `taken` accepts, trying `TRIES` of them at most. */
@@ -66,8 +75,12 @@ export async function socketOf(
 	return opened?.answer.webSocket ?? undefined;
 }
 
-/** The paths this script answers, and the only ones wrangler.jsonc runs it first for. */
+/** The paths answered here rather than by a page. */
 export const ROUTES = ['/live', '/state', '/nearest'] as const;
+
+export function isRoute(path: string): path is (typeof ROUTES)[number] {
+	return (ROUTES as readonly string[]).includes(path);
+}
 
 export async function handle(request: Request, env: Env): Promise<Response> {
 	const { pathname } = new URL(request.url);
@@ -97,5 +110,3 @@ export async function handle(request: Request, env: Env): Promise<Response> {
 			return failure(404, 'no_such_route');
 	}
 }
-
-export default { fetch: handle } satisfies ExportedHandler<Env>;
