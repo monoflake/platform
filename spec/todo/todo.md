@@ -30,3 +30,19 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
   -- [../architecture/scheduling.md](../architecture/scheduling.md), "Background work has two
   schedulers". It needs Postgres off the node at home first.
 - **`apk`, Alpine's agent behind the package interface** -- [../architecture/packages.md](../architecture/packages.md).
+
+## The console's depth
+
+What the console's pages draw around today, each waiting on the service that holds the fact --
+[../architecture/console.md](../architecture/console.md):
+
+- **The meter reports a node's architecture** in its machine info; the console reads it from the
+  kernel release meanwhile, and Alpine's `-virt` kernels give none.
+- **The hook keeps every `workflow_run` event**, queued and in progress as well as completed, with
+  the commit message, branch and actor, so the queue shows a run before any node sees it.
+- **Host stamps each stage of a deploy**, not only the last one reached, so a run's timeline has a
+  bar per stage.
+- **Host answers events by run**, so a run older than a node's last 500 events stays in the queue
+  and in the 30-day figures.
+- **One list of the ranges**, `1h` to `30d`, in place of the three the pages carry, and run grouping
+  moved out of `lib/server/` so the live panel stops keeping its own copy.

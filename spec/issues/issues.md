@@ -10,10 +10,17 @@ there. An entry that is decided leaves this list: for the todo if it is work, or
 ordinary file if deciding it was all of it. This file is the index; an entry lives in its area's
 file.
 
-| area                       | entries | what it holds                                         |
-| -------------------------- | ------- | ----------------------------------------------------- |
-| [gateway.md](gateway.md)   | 3       | where the hosts are against the gateway they moved to |
-| [services.md](services.md) | 4       | what the services' own files leave open               |
+| area                           | entries | what it holds                                         |
+| ------------------------------ | ------- | ----------------------------------------------------- |
+| [console.md](console.md)       | 1       | what the console's pages read from elsewhere          |
+| [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
+| [relay.md](relay.md)           | 1       | what the relay leaves open                            |
+| [scheduling.md](scheduling.md) | 2       | what the schedulers and Postgres leave open           |
+| [services.md](services.md)     | 4       | what the services' own files leave open               |
+
+### [console.md](console.md)
+
+- Where the console learns a node's facts
 
 ### [gateway.md](gateway.md)
 
