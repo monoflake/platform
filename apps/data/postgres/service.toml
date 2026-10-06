@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "postgres"
-placements = ["home"]
+placements = ["rdu"]
 
 # Never run under this name: every app's `<app>-postgres` sidecar runs this image, on this port and
 # under this ceiling unless the app names one. Asked by starting a session, so `health` goes unread.

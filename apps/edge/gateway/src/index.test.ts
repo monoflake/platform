@@ -80,11 +80,11 @@ describe('the scope table', () => {
 
 	it('leaves out a scope that is not public', () => {
 		const table = scopeTable([
-			'version = 1\nname = "geo"\nplacements = ["home"]\n[api]\npublic = false\n',
-			'version = 1\nname = "open"\nplacements = ["home"]\n[api]\npublic = true\n',
+			'version = 1\nname = "geo"\nplacements = ["rdu"]\n[api]\npublic = false\n',
+			'version = 1\nname = "open"\nplacements = ["rdu"]\n[api]\npublic = true\n',
 		]);
 		expect(Object.keys(table)).toEqual(['open']);
-		expect(table.open).toMatchObject({ placement: 'home', binding: 'HOME' });
+		expect(table.open).toMatchObject({ placement: 'rdu', binding: 'RDU' });
 	});
 });
 
@@ -115,7 +115,7 @@ describe('the gateway', () => {
 			],
 		},
 		hook: { placement: WORKERS, binding: 'HOOK', worker: 'hook', routes: [] },
-		geo: { placement: 'home', binding: 'HOME', routes: [] },
+		geo: { placement: 'rdu', binding: 'RDU', routes: [] },
 	};
 	const listed = PAGE_ORIGINS.status?.[0] ?? '';
 	const app = gateway(table);
@@ -163,8 +163,8 @@ describe('the gateway', () => {
 				Response.json({ status: 'error', code: 'service_unavailable' }, { status: 503 }),
 		} as unknown as Fetcher;
 		const failed = await Promise.all(
-			[thrown, page].map(async (HOME) => {
-				const answer = await ask('/v1/geo/address', { HOME });
+			[thrown, page].map(async (RDU) => {
+				const answer = await ask('/v1/geo/address', { RDU });
 				return { status: answer.status, body: await answer.json() };
 			}),
 		);
@@ -173,7 +173,7 @@ describe('the gateway', () => {
 			expect(body).toMatchObject({ code: 'upstream_unavailable' });
 		}
 		// A service's own failure is passed on as it said it.
-		const passed = await ask('/v1/geo/address', { HOME: own });
+		const passed = await ask('/v1/geo/address', { RDU: own });
 		expect(passed.status).toBe(503);
 	});
 
@@ -305,7 +305,7 @@ describe('the gateway', () => {
 
 	it("sends a node's scope to its Caddy with the scope left on", async () => {
 		const { fetcher, seen } = binding();
-		await ask('/v1/geo/address?latitude=1&longitude=2', { HOME: fetcher });
+		await ask('/v1/geo/address?latitude=1&longitude=2', { RDU: fetcher });
 		const node = new URL(URLS.internal.app);
 		node.hostname = `api.${node.hostname}`;
 		node.protocol = 'http:';
@@ -406,7 +406,7 @@ describe('the gateway', () => {
 		const relay = binding();
 		const home = binding();
 		const env = {
-			HOME: home.fetcher,
+			RDU: home.fetcher,
 			QUOTA: counters(true).counters,
 			RELAY: relay.fetcher,
 			INTERNAL_TOKEN: 'house',
@@ -426,7 +426,7 @@ describe('the gateway', () => {
 
 	it('marks what it passes on as public, over whatever the caller claimed', async () => {
 		const { fetcher, seen } = binding();
-		await ask('/v1/geo/address', { HOME: fetcher }, { headers: { [MARK.name]: 'internal' } });
+		await ask('/v1/geo/address', { RDU: fetcher }, { headers: { [MARK.name]: 'internal' } });
 		await ask('/v1/site/stats', { SITE: binding().fetcher });
 		expect(seen[0]?.headers.get(MARK.name)).toBe(MARK.value);
 	});
@@ -460,7 +460,7 @@ describe("geo's declaration", () => {
 
 	it('lets any page call it, and limits one address on the lookup alone', async () => {
 		const refused = counters(false);
-		const env = { HOME: binding().fetcher, QUOTA: refused.counters };
+		const env = { RDU: binding().fetcher, QUOTA: refused.counters };
 		const headers = { 'cf-connecting-ip': '192.0.2.1', origin: 'https://anyone.test' };
 		const lookup = await app.fetch(
 			new Request(`${HOST}/v1/geo/address?latitude=1&longitude=2`, { headers }),
@@ -483,7 +483,7 @@ describe("shot's declaration", () => {
 	it('refuses `internal` from the public, whatever its value, before the service or a limit', async () => {
 		const { fetcher, seen } = binding();
 		const allowing = counters(true);
-		const env = { HOME: fetcher, QUOTA: allowing.counters };
+		const env = { RDU: fetcher, QUOTA: allowing.counters };
 		const queries = ['internal=true', 'internal=false', 'internal', 'host=a.test&internal=1'];
 		const refused = await Promise.all(
 			queries.map(async (query) => {
@@ -509,7 +509,7 @@ describe("shot's declaration", () => {
 
 	it('refuses `internal` in a JSON body, however deep, and lets any other body through', async () => {
 		const { fetcher, seen } = binding();
-		const env = { HOME: fetcher, QUOTA: counters(true).counters };
+		const env = { RDU: fetcher, QUOTA: counters(true).counters };
 		const post = (body: string) =>
 			app.fetch(
 				new Request(`${HOST}/v1/shot/capture`, {
@@ -533,7 +533,7 @@ describe("shot's declaration", () => {
 	it('refuses `fresh` from the public, whatever its value, before the service or a limit', async () => {
 		const { fetcher, seen } = binding();
 		const allowing = counters(true);
-		const env = { HOME: fetcher, QUOTA: allowing.counters };
+		const env = { RDU: fetcher, QUOTA: allowing.counters };
 		const queries = ['fresh=true', 'fresh=false', 'fresh', 'host=a.test&fresh=1'];
 		const refused = await Promise.all(
 			queries.map(async (query) => {
@@ -554,7 +554,7 @@ describe("shot's declaration", () => {
 
 	it('refuses `access.fresh` in a JSON body, however deep, and lets any other body through', async () => {
 		const { fetcher, seen } = binding();
-		const env = { HOME: fetcher, QUOTA: counters(true).counters };
+		const env = { RDU: fetcher, QUOTA: counters(true).counters };
 		const post = (body: string) =>
 			app.fetch(
 				new Request(`${HOST}/v1/shot/capture`, {
@@ -575,7 +575,7 @@ describe("shot's declaration", () => {
 
 	it('limits starting a capture, and neither asking after one nor fetching it', async () => {
 		const refused = counters(false);
-		const env = { HOME: binding().fetcher, QUOTA: refused.counters };
+		const env = { RDU: binding().fetcher, QUOTA: refused.counters };
 		const start = await app.fetch(
 			new Request(`${HOST}/v1/shot/tasks`, { method: 'POST', headers, body: '{}' }),
 			env,

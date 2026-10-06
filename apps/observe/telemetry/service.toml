@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "telemetry"
-placements = ["home"]
+placements = ["rdu"]
 
 [container]
 # Sputnik sent the first telemetry in 1957. See spec/architecture/services.md, "A service keeps

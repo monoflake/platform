@@ -120,9 +120,9 @@ mod tests {
 	fn a_failure_opens_a_task_adds_events_and_is_finished_by_a_pass() {
 		let check = check();
 		let mut episodes = Episodes::default();
-		assert!(episodes.observe(&check, "home", &round(1_000, true)).is_empty());
+		assert!(episodes.observe(&check, "rdu", &round(1_000, true)).is_empty());
 
-		let first = episodes.observe(&check, "home", &round(2_000, false));
+		let first = episodes.observe(&check, "rdu", &round(2_000, false));
 		let [Told::Task(opened), Told::Event { task, stage: "failing", .. }] = first.as_slice() else {
 			panic!("a task, then an event: {first:?}")
 		};
@@ -132,10 +132,10 @@ mod tests {
 		assert_eq!(opened.detail.as_deref(), Some("status 502"));
 		assert_eq!(task, &opened.id);
 
-		let second = episodes.observe(&check, "home", &round(3_000, false));
+		let second = episodes.observe(&check, "rdu", &round(3_000, false));
 		assert!(matches!(second.as_slice(), [Told::Event { stage: "failing", .. }]));
 
-		let recovered = episodes.observe(&check, "home", &round(4_000, true));
+		let recovered = episodes.observe(&check, "rdu", &round(4_000, true));
 		let [Told::Event { stage: "done", message, .. }, Told::Task(done)] = recovered.as_slice()
 		else {
 			panic!("an event, then the task: {recovered:?}")
@@ -145,7 +145,7 @@ mod tests {
 		assert_eq!(done.finished_at, Some(Timestamp::from_millisecond(4_000).unwrap()));
 
 		// The next failure is an episode, and a task, of its own.
-		let again = episodes.observe(&check, "home", &round(9_000, false));
+		let again = episodes.observe(&check, "rdu", &round(9_000, false));
 		let [Told::Task(next), ..] = again.as_slice() else { panic!("a new task") };
 		assert_ne!(next.id, opened.id);
 	}

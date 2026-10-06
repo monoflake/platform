@@ -1,6 +1,6 @@
 /**
  * The gateway as deployed at home: the same app, handed over HTTP what the Worker has by binding.
- * `HOME` and `QUOTA` are asked on Caddy's inside side with the token; `RELAY` is the public
+ * `RDU` and `QUOTA` are asked on Caddy's inside side with the token; `RELAY` is the public
  * gateway, its name resolved by public DNS, so a LAN that answers the gateway's names locally
  * never sends it back here. See spec/architecture/gateway.md, "Inside the house, the same names
  * answer locally".
@@ -49,7 +49,7 @@ const publicLookup: LookupFunction = (hostname, options, callback) => {
 const RELAY = {
 	fetch: (request: Request) => send(request, { origin: request.url, lookup: publicLookup }),
 };
-const HOME = { fetch: (request: Request) => send(request, INSIDE) };
+const RDU = { fetch: (request: Request) => send(request, INSIDE) };
 const QUOTA = {
 	async take(checks: readonly Check[]): Promise<Taken> {
 		const asked = new Request(new URL('/quota/take', INSIDE.origin), {
@@ -63,7 +63,7 @@ const QUOTA = {
 	},
 };
 
-const env = { HOME, QUOTA, RELAY, INTERNAL_TOKEN: token };
+const env = { RDU, QUOTA, RELAY, INTERNAL_TOKEN: token };
 const app = gateway();
 
 serve({

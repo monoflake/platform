@@ -93,8 +93,8 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 		],
 	},
 	geo: {
-		placement: 'home',
-		binding: 'HOME',
+		placement: 'rdu',
+		binding: 'RDU',
 		limits: [
 			{
 				methods: ['GET', 'HEAD'],
@@ -153,8 +153,8 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 		],
 	},
 	probe: {
-		placement: 'home',
-		binding: 'HOME',
+		placement: 'rdu',
+		binding: 'RDU',
 		limits: [
 			{
 				methods: ['GET', 'HEAD'],
@@ -187,8 +187,8 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 		],
 	},
 	shot: {
-		placement: 'home',
-		binding: 'HOME',
+		placement: 'rdu',
+		binding: 'RDU',
 		limits: [
 			{
 				methods: ['POST'],
@@ -279,8 +279,8 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 		],
 	},
 	telemetry: {
-		placement: 'home',
-		binding: 'HOME',
+		placement: 'rdu',
+		binding: 'RDU',
 		limits: [
 			{
 				methods: ['GET', 'HEAD'],

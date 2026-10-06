@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "apt"
-placements = ["home"]
+placements = ["rdu"]
 
 # No port: cron reaches this on its socket, host mounts the machine's system bus
 # socket in and the container runs as root only so systemd lets it start a unit. See

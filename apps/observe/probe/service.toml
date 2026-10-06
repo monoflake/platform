@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "probe"
-placements = ["home"]
+placements = ["rdu"]
 
 [container]
 # Voyager 1 left in 1977, the probe furthest out. See spec/architecture/services.md, "A service

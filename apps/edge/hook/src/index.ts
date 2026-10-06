@@ -11,7 +11,7 @@ export interface Env {
 	/** The secret GitHub signs each delivery with, set as a Worker secret. */
 	WEBHOOK_SECRET: string;
 	/** The machine at home's Caddy, through its tunnel. */
-	HOME: Fetcher;
+	RDU: Fetcher;
 }
 
 /** The public suffix Caddy routes the two receivers under; VPC sends it as the `Host`. */
@@ -42,7 +42,7 @@ export async function handle(request: Request, env: Env): Promise<Response> {
 	const notice = JSON.stringify({ run, repository });
 	const answers = await Promise.allSettled(
 		RECEIVERS.map((receiver) =>
-			env.HOME.fetch(receiver, {
+			env.RDU.fetch(receiver, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: notice,

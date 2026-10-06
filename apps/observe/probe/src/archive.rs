@@ -142,9 +142,9 @@ mod tests {
 		let directory = tempfile::tempdir().unwrap();
 		let mut archive = Archive::open(&directory.path().join("probe.db")).unwrap();
 		let rounds = [round("a", 1_000, true), round("b", 1_500, false), round("a", 2_000, false)];
-		archive.keep("home", &rounds).unwrap();
-		archive.keep("home", &rounds[..1]).unwrap();
-		let span = archive.span("home", 1_000, 2_000).unwrap();
+		archive.keep("rdu", &rounds).unwrap();
+		archive.keep("rdu", &rounds[..1]).unwrap();
+		let span = archive.span("rdu", 1_000, 2_000).unwrap();
 		assert_eq!(span.len(), 2);
 		assert!(span.contains(&("b".into(), false, 7)));
 		assert!(archive.span("vps", 0, 10_000).unwrap().is_empty());
@@ -156,18 +156,18 @@ mod tests {
 		let mut archive = Archive::open(&directory.path().join("probe.db")).unwrap();
 		let rounds: Vec<Round> =
 			[10_000, 10_500, 11_000, 11_200, 11_400, 12_000].map(|at| round("a", at, true)).to_vec();
-		archive.keep("home", &rounds).unwrap();
+		archive.keep("rdu", &rounds).unwrap();
 
-		let all = archive.page("a", "home", 10, 13, 10).unwrap();
+		let all = archive.page("a", "rdu", 10, 13, 10).unwrap();
 		assert_eq!((all.rounds.len(), all.next), (6, None));
 		// Four would cut second 11 in two, so the page ends at 11 and says so.
-		let first = archive.page("a", "home", 10, 13, 4).unwrap();
+		let first = archive.page("a", "rdu", 10, 13, 4).unwrap();
 		assert_eq!(first.rounds.iter().map(|round| round.at).collect::<Vec<_>>(), [10_000, 10_500]);
 		assert_eq!(first.next, Some(11));
-		let second = archive.page("a", "home", 11, 13, 4).unwrap();
+		let second = archive.page("a", "rdu", 11, 13, 4).unwrap();
 		assert_eq!((second.rounds.len(), second.next), (4, None));
 		// A page that fits inside one second goes on from the next.
-		let tight = archive.page("a", "home", 11, 13, 2).unwrap();
+		let tight = archive.page("a", "rdu", 11, 13, 2).unwrap();
 		assert_eq!((tight.rounds.len(), tight.next), (2, Some(12)));
 		assert_eq!(first.rounds[0].detail, None);
 	}

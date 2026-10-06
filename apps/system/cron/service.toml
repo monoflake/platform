@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "cron"
-placements = ["home"]
+placements = ["rdu"]
 
 [container]
 # One above ledger's 12010, in the platform's own low block. See spec/architecture/services.md,

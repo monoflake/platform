@@ -20,7 +20,7 @@ describe('the generated table stays truthful without being rewritten', () => {
 		const committed = readFileSync(SCOPES, 'utf8');
 		const table = scopeTable([
 			...declarations(),
-			'version = 1\nname = "extra"\nplacements = ["home"]\n[api]\npublic = true\n',
+			'version = 1\nname = "extra"\nplacements = ["rdu"]\n[api]\npublic = true\n',
 		]);
 		expect(formatted(renderScopes(table))).not.toBe(committed);
 	});

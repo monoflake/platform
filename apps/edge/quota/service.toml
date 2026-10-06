@@ -2,7 +2,7 @@
 # else counts. See spec/architecture/quota.md.
 version = 1
 name = "quota"
-placements = ["workers", "home"]
+placements = ["workers", "rdu"]
 
 [container]
 # The port it has in development, kept inside its container too.

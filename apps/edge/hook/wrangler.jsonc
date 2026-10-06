@@ -9,7 +9,7 @@
 
 	// The Caddy of the machine at home, created in the dashboard; the fetch's hostname is the Host.
 	"vpc_services": [
-		{ "binding": "HOME", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
+		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
 	],
 
 	"observability": { "logs": { "enabled": true } },

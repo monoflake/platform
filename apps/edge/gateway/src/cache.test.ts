@@ -35,7 +35,7 @@ function node(respond: (request: Request) => Response) {
 	return {
 		seen,
 		env: {
-			HOME: {
+			RDU: {
 				fetch: async (request: Request) => (seen.push(request), respond(request)),
 			} as unknown as Fetcher,
 		},
@@ -60,15 +60,15 @@ function install() {
 describe('the cache at the gateway', () => {
 	afterEach(() => vi.unstubAllGlobals());
 
-	const table: Record<string, Scope> = { geo: { placement: 'home', binding: 'HOME', routes: [] } };
+	const table: Record<string, Scope> = { geo: { placement: 'rdu', binding: 'RDU', routes: [] } };
 
 	it('answers a repeat from the cache without reaching the service, or a limit', async () => {
 		const { put } = install();
 		const counted: string[] = [];
 		const app = gateway({
 			geo: {
-				placement: 'home',
-				binding: 'HOME',
+				placement: 'rdu',
+				binding: 'RDU',
 				limits: [{ methods: ['GET'], path: '/address', count: 60, seconds: 60 }],
 				routes: [],
 			},
@@ -134,7 +134,7 @@ describe('the cache at the gateway', () => {
 		const { put } = install();
 		const app = gateway(table);
 		const down = {
-			HOME: { fetch: async () => Promise.reject(new Error('tunnel down')) } as unknown as Fetcher,
+			RDU: { fetch: async () => Promise.reject(new Error('tunnel down')) } as unknown as Fetcher,
 		};
 		const answered = await app.fetch(new Request(`${HOST}/v1/geo/address`), down);
 		expect(answered.status).toBe(502);
@@ -168,8 +168,8 @@ describe('the cache at the gateway', () => {
 		const { put } = install();
 		const app = gateway({
 			geo: {
-				placement: 'home',
-				binding: 'HOME',
+				placement: 'rdu',
+				binding: 'RDU',
 				routes: [
 					{
 						...GATEWAY_DEFAULTS,

@@ -27,7 +27,7 @@ function home(status = 204) {
 			return new Response(null, { status });
 		},
 	} as unknown as Fetcher;
-	return { sent, env: { WEBHOOK_SECRET: SECRET, HOME: binding } satisfies Env };
+	return { sent, env: { WEBHOOK_SECRET: SECRET, RDU: binding } satisfies Env };
 }
 
 const DELIVERY = JSON.stringify({

@@ -337,7 +337,7 @@ is the same code under a Node entry point, in a container beside Caddy, on the n
 rather than its long-term line. CORS, lifetimes, crawling, each host's files, the path rule and,
 later, credentials are one implementation, so a service never knows, and never needs to know, which
 side reached it. The two entry points differ in what they are handed and nothing else: the Worker
-its bindings, the Node entry the same names as HTTP -- `HOME` and `QUOTA` asked on Caddy's inside
+its bindings, the Node entry the same names as HTTP -- `RDU` and `QUOTA` asked on Caddy's inside
 side, `RELAY` and `INTERNAL_TOKEN` from its environment. The deployment at home mirrors the one on
 Workers, so what a caller meets is the same on both.
 

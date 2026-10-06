@@ -301,7 +301,8 @@ The tunnel reaches Caddy only, and Workers VPC reaches a node through Caddy too.
 `INTERNAL_TOKEN` passes; see infra's `spec/architecture/host.md`, "The inside side answers the internal gateway
 alone".
 
-**A node has one VPC service, `home`, and it points at Caddy.** A Worker binds it as `HOME` and
+**A node has one VPC service, and it points at Caddy.** A Worker binds it by the node's name in
+capitals -- `RDU` -- and
 names what it wants as `Host` -- `api.canmi.app` for an API, `gemini.canmi.app` for gemini -- so a
 new service a Worker needs is never a new VPC service in the dashboard. What a Worker can reach is
 decided here rather than there: it is the tunnel's side of Caddy, which host renders from every
@@ -348,6 +349,6 @@ The node at home first, proved end to end on the simplest service there is: `geo
 gazetteer that names where a photograph was taken, read-only and shipped with its data. Then the
 Workers as a placement, with the site, `cdn`, `aka` and `hook` declared in, and the API host scoped
 by path in front of them; then the VPS as a second node, then failover. Workers came before the VPS
-because two placements -- `workers` and `home` -- are enough to prove the declaration, and neither
+because two placements -- `workers` and the node at home -- are enough to prove the declaration, and neither
 needs a machine that does not exist yet. The declaration carries placements from the first service,
 so each step adds an implementation rather than a field.

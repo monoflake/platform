@@ -47,7 +47,7 @@ already does:
 			"image": "…",
 			"deployed_at": "2026-09-28T22:40:00Z",
 			"held": false,
-			"declaration": { "version": 1, "name": "shot", "placements": ["home"], "container": {} },
+			"declaration": { "version": 1, "name": "shot", "placements": ["rdu"], "container": {} },
 			"history": [
 				{
 					"action": "deploy",

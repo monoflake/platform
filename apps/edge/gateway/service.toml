@@ -3,7 +3,7 @@
 # same names answer locally".
 version = 1
 name = "gateway"
-placements = ["workers", "home"]
+placements = ["workers", "rdu"]
 
 [container]
 # The port it has in development, kept inside its container too.

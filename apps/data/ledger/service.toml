@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "ledger"
-placements = ["home"]
+placements = ["rdu"]
 
 [container]
 # One above keeper's 11010 and host's 11011, in the same low block, since ledger is the platform's

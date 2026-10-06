@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "geo"
-placements = ["home"]
+placements = ["rdu"]
 
 [container]
 # The tropics sit at 23.44 degrees; see spec/architecture/services.md, "A service keeps one port".

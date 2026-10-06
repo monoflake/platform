@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "objects"
-placements = ["home"]
+placements = ["rdu"]
 
 # Never run under this name: every app's `<app>-objects` sidecar runs this image, on this port and
 # under this ceiling, and host asks each one this health path. See spec/architecture/objects.md.

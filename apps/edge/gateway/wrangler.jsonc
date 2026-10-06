@@ -37,7 +37,7 @@
 
 	// The Caddy of the machine at home, the same VPC service `hook` notifies through.
 	"vpc_services": [
-		{ "binding": "HOME", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
+		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
 	],
 
 	// Also in libs/sdk as the API's development port, which callers ask; wrangler cannot
