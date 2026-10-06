@@ -11,9 +11,28 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::broadcast::error::RecvError;
 use tokio::time::Instant;
+use url::Url;
 
 /// A browser that has answered no ping through three heartbeats is gone.
 const SILENCE: Duration = Duration::from_secs(90);
+
+/// Whether a socket may open from `origin`: a page on the platform's `.app` or a name under it, or
+/// no page at all -- a client that is not a browser sends no `Origin`. Anything else is a page
+/// elsewhere borrowing the reader's Access cookie.
+pub fn admitted(origin: Option<&str>) -> bool {
+	let Some(origin) = origin else {
+		return true;
+	};
+	let (Ok(origin), Ok(app)) = (Url::parse(origin), Url::parse(monoflake::INTERNAL_APP)) else {
+		return false;
+	};
+	let (Some(host), Some(suffix)) = (origin.host_str(), app.host_str()) else {
+		return false;
+	};
+	let under =
+		host.strip_suffix(suffix).is_some_and(|label| label.is_empty() || label.ends_with('.'));
+	origin.scheme() == app.scheme() && origin.port() == app.port() && under
+}
 
 /// What a browser is sent. A browser keeps, per node, the highest version it has been sent.
 #[derive(Debug, Serialize)]
@@ -59,4 +78,39 @@ pub async fn watch<S: Socket>(relay: Arc<Relay>, mut socket: S) -> Result<(), So
 
 async fn send<S: Socket>(socket: &mut S, live: &Live) -> Result<(), SocketError> {
 	socket.send_text(serde_json::to_string(live).expect("a message is a tree of strings")).await
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn named(host: &str) -> String {
+		let app = Url::parse(monoflake::INTERNAL_APP).unwrap();
+		format!("{}://{host}", app.scheme())
+	}
+
+	#[test]
+	fn a_page_on_the_app_or_under_it_is_admitted() {
+		let suffix = Url::parse(monoflake::INTERNAL_APP).unwrap().host_str().unwrap().to_owned();
+		assert!(admitted(Some(monoflake::INTERNAL_APP)));
+		assert!(admitted(Some(&named(&format!("console.{suffix}")))));
+		assert!(admitted(Some(&named(&format!("relay.{suffix}")))));
+	}
+
+	#[test]
+	fn a_page_elsewhere_is_refused() {
+		let suffix = Url::parse(monoflake::INTERNAL_APP).unwrap().host_str().unwrap().to_owned();
+		for host in ["evil.test".to_owned(), format!("{suffix}.evil.test"), format!("evil{suffix}")] {
+			assert!(!admitted(Some(&named(&host))), "{host}");
+		}
+		// The right name, by plain HTTP or on another port; and an opaque origin.
+		assert!(!admitted(Some(&format!("http://{suffix}"))));
+		assert!(!admitted(Some(&format!("{}:8443", monoflake::INTERNAL_APP))));
+		assert!(!admitted(Some("null")));
+	}
+
+	#[test]
+	fn a_client_that_is_no_browser_is_admitted() {
+		assert!(admitted(None));
+	}
 }

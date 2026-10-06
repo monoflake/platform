@@ -7,6 +7,7 @@ use axum::Router;
 use axum::extract::State;
 use axum::extract::ws::WebSocketUpgrade;
 use axum::extract::ws::rejection::WebSocketUpgradeRejection;
+use axum::http::header::ORIGIN;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
@@ -35,13 +36,19 @@ async fn state(State(relay): State<Arc<Relay>>) -> Response {
 	response::success(StatusCode::OK, relay.state())
 }
 
-/// Open, and read-only: Access stands in front of the public name, and the private one admits the
-/// LAN and the tailnet alone. See spec/architecture/console.md, "It reads, and does not write, at
-/// first".
+/// Read-only, with no token: Access stands in front of the public name, and the private one admits
+/// the LAN and the tailnet alone. See spec/architecture/console.md, "It reads, and does not write,
+/// at first". What Access cannot tell, a page elsewhere opening it with the reader's cookie, the
+/// `Origin` does.
 async fn watched(
 	State(relay): State<Arc<Relay>>,
+	headers: HeaderMap,
 	upgrade: Result<WebSocketUpgrade, WebSocketUpgradeRejection>,
 ) -> Response {
+	let origin = headers.get(ORIGIN).map(|value| value.to_str().unwrap_or_default());
+	if !live::admitted(origin) {
+		return response::failure(StatusCode::FORBIDDEN, "invalid_address");
+	}
 	let Ok(upgrade) = upgrade else {
 		return response::failure(StatusCode::UPGRADE_REQUIRED, "invalid_method");
 	};
@@ -52,7 +59,7 @@ async fn watched(
 	})
 }
 
-/// A neighbor's relay, which carries the mesh's secret.
+/// A neighbor's relay, which carries the mesh's secret; no `Origin` is read, since no page has it.
 async fn neighbor(
 	State(relay): State<Arc<Relay>>,
 	headers: HeaderMap,
@@ -83,9 +90,18 @@ mod tests {
 		path: &str,
 		bearer: Option<&str>,
 	) -> (StatusCode, serde_json::Value) {
+		let bearer = bearer.map(|bearer| ("authorization", format!("Bearer {bearer}")));
+		asked(relay, path, bearer).await
+	}
+
+	async fn asked(
+		relay: &Arc<Relay>,
+		path: &str,
+		header: Option<(&str, String)>,
+	) -> (StatusCode, serde_json::Value) {
 		let mut request = Request::get(path);
-		if let Some(bearer) = bearer {
-			request = request.header("authorization", format!("Bearer {bearer}"));
+		if let Some((name, value)) = header {
+			request = request.header(name, value);
 		}
 		let request = request.body(Body::empty()).unwrap();
 		let response = routes(relay.clone()).oneshot(request).await.unwrap();
@@ -122,6 +138,19 @@ mod tests {
 		assert!(body["data"]["nodes"]["rdu"]["version"].as_u64().is_some());
 		assert!(body["data"]["nodes"]["rdu"]["heard_at"].is_string());
 		assert_eq!(body["data"]["nodes"]["rdu"]["snapshot"]["apps"], serde_json::json!([]));
+	}
+
+	#[tokio::test]
+	async fn a_page_elsewhere_cannot_open_the_live_socket() {
+		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let foreign = Some(("origin", "https://evil.test".to_owned()));
+		let (status, body) = asked(&relay, "/live", foreign).await;
+		assert_eq!((status, &body["code"]), (StatusCode::FORBIDDEN, &"invalid_address".into()));
+		// The app's own page, and no page at all, reach the upgrade.
+		let own = Some(("origin", monoflake::INTERNAL_APP.to_owned()));
+		for header in [own, None] {
+			assert_eq!(asked(&relay, "/live", header).await.0, StatusCode::UPGRADE_REQUIRED);
+		}
 	}
 
 	#[tokio::test]

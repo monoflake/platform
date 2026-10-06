@@ -27,6 +27,7 @@ thiserror = "2.0.21"
 tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "net", "signal", "sync", "time"] }
 # The version axum's `ws` is built on, so the two ends of the mesh share one tungstenite.
 tokio-tungstenite = "0.29"
+url = "2.5.8"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

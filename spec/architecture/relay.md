@@ -55,7 +55,11 @@ thirty seconds and drop a socket silent for ninety, and redial from one second, 
 minute.
 
 **A browser opens `/live` on `relay.canmi.app`**, behind Access, and is sent the whole cluster, then
-every change; `/state` answers the same once, for the console's polling. Each node's entry carries
+every change; `/state` answers the same once, for the console's polling. **`/live` admits a page on `.app`
+alone**, by its `Origin`: Access lets a reader in by a cookie the browser sends on any page's
+WebSocket, so without the check any site the reader visits could open it as them. A request with no
+`Origin` comes from no browser and carries no reader's cookie, and passes; the private mirror's
+pages are refused, since the console is served on `.app`. Each node's entry carries
 `heard_at`, when this relay last took a newer version of it: a live node moves about every three
 seconds, so an old `heard_at` means the node, or every path to it, is down.
 
