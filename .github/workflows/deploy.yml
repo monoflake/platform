@@ -53,11 +53,18 @@ jobs:
   build:
     needs: plan
     if: needs.plan.outputs.apps != '[]'
-    runs-on: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         app: ${{ fromJson(needs.plan.outputs.apps) }}
+        arch: [arm64, amd64]
+        # Each arch builds natively on its own runner; the include entries only attach the runner.
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-24.04
     steps:
       # The workspace above the project, as it is checked out at home: its rust-toolchain.toml is
       # the compiler every image is built with.
@@ -71,6 +78,7 @@ jobs:
       - uses: docker/setup-buildx-action@v4
       - env:
           APP: ${{ matrix.app }}
+          PLATFORM: linux/${{ matrix.arch }}
         run: |
           mkdir -p "$RUNNER_TEMP/deploy"
           repos/platform/.mise/tasks/image "$APP" "$RUNNER_TEMP/deploy/image.tar"
@@ -78,7 +86,7 @@ jobs:
       # The image layers are compressed already; the node needs it for as long as a deploy takes.
       - uses: actions/upload-artifact@v7
         with:
-          name: deploy-${{ matrix.app }}
+          name: deploy-${{ matrix.app }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/deploy/
           compression-level: 0
           retention-days: 7
