@@ -21,6 +21,10 @@ file.
 - The whitelists are written by hand, and checked against the table only
 - A deployment's host is not checked against where the service runs
 
+### [relay.md](relay.md)
+
+- Which consensus and which gossip
+
 ### [services.md](services.md)
 
 - Where the telemetry view goes

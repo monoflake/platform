@@ -17,3 +17,6 @@ divide the work is the workspace's `spec/planning.md`.
   scopes -- [architecture/scheduling.md](architecture/scheduling.md). The per-app sidecars of
   [architecture/objects.md](architecture/objects.md) and
   [architecture/databases.md](architecture/databases.md) give way to it.
+- **Three core nodes decide, and every node passes it on**: the control messages become one ordered,
+  signed log that relays gossip and a returning node catches up on --
+  [architecture/relay.md](architecture/relay.md).
