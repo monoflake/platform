@@ -51,3 +51,55 @@ export interface Point {
 }
 
 export type Grain = 'second' | 'minute' | 'hour';
+
+/** One version of an app: its manifest as far as the console reads it, and the image it runs. */
+export interface Version {
+	manifest: { name: string; container?: { port?: number; socket?: string; memory_mb?: number } };
+	image: string;
+}
+
+/** `/api/apps` and `/api/apps/{name}`: an app as host shows it. */
+export interface AppDetail extends Version {
+	previous: Version | null;
+	deployed_at: string;
+	held: boolean;
+	running: boolean;
+	restorable: boolean;
+	/** host, keeper, Caddy or the tunnel: restarted from there, never stopped. */
+	platform: boolean;
+	/** objects or postgres: no container of its own, so nothing to start or stop. */
+	driver: boolean;
+}
+
+/** A page of events: `before` is an event id on that node, and the next page is the one before. */
+export interface Page {
+	before?: number;
+	limit?: number;
+}
+
+export interface Mount {
+	path: string;
+	total: number;
+	used: number;
+	available: number;
+}
+
+export interface AppUsage {
+	app: string;
+	bytes: number;
+	/** The walk was cut off by its time budget, so `bytes` is a lower bound. */
+	partial: boolean;
+}
+
+export interface DiskSnapshot {
+	name: string;
+	app: string;
+	created: string;
+}
+
+/** `/api/inspect/disk`. */
+export interface Disk {
+	mounts: Mount[];
+	apps: AppUsage[];
+	snapshots: DiskSnapshot[];
+}

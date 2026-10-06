@@ -43,8 +43,17 @@ export async function cluster(edge: Edge): Promise<Read<Cluster>> {
 	return opened<Cluster>(reached.node, reached.answer);
 }
 
-/** A `GET` of `path` under one node's `/api`, as `/node/now` or `/node/series?grain=minute`. */
-export async function node<T>(edge: Edge, name: string, path: `/${string}`): Promise<Read<T>> {
+/**
+ * A `GET` of `path` under one node's `/api`, as `/node/now` or `/node/series?grain=minute`. A
+ * `timeout` in milliseconds gives up on a node that has not answered, whole body included, as
+ * unavailable.
+ */
+export async function node<T>(
+	edge: Edge,
+	name: string,
+	path: `/${string}`,
+	timeout?: number,
+): Promise<Read<T>> {
 	if (!isNode(name)) return failed(404, 'no_such_host', `No node is named ${name}.`);
 	const binding = bindingOf(edge.env, name);
 	const token = edge.env.HOST_READ_TOKEN;
@@ -54,6 +63,7 @@ export async function node<T>(edge: Edge, name: string, path: `/${string}`): Pro
 	try {
 		const answer = await binding.fetch(`${PANEL}/api${path}`, {
 			headers: { authorization: `Bearer ${token}` },
+			signal: timeout === undefined ? undefined : AbortSignal.timeout(timeout),
 		});
 		return await opened<T>(name, answer);
 	} catch (error) {
