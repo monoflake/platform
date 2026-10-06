@@ -38,7 +38,8 @@ opt-level = 3
 
 # What an image ships, and nothing else builds with it. Speed rather than size, since a server's
 # binary is paid for on every request and its bytes never; no debugger reads what it would carry.
-# No target-cpu, so an image runs on any node of its architecture. See infra's spec/architecture/host.md.
+# No target-cpu, so an image runs on any node of its architecture. See infra's
+# spec/architecture/host.md.
 [profile.container]
 inherits = "release"
 opt-level = 3
