@@ -3,24 +3,18 @@
 What [../architecture/scheduling.md](../architecture/scheduling.md) leaves open. The rules over an
 entry are the index's; see [issues.md](issues.md).
 
-## What a bucket declares about losing its data
+## A job that runs once across the platform
 
-Neither of the two obvious answers holds. A durability in nines is a number nobody here can derive:
-a store would carry a figure somebody typed in, and the sum would be as precise as the guess. A
-count of copies has no reference either: three copies on one account are one copy to an account
-that ends, and one copy in a provider's bucket already survives a dead disk.
+`cron` runs a node's jobs on that node -- [../architecture/cron.md](../architecture/cron.md) -- so a
+service placed on three nodes runs each of its jobs three times. Reclaiming, scrubbing and
+reconciling copies must run once, whichever node does it, and so must a job of any service with more
+than one instance. A job could say which it is, and the once-only kind then needs a lease that one
+node takes and the others see, which Postgres could hold. Undecided.
 
-**Proposed: a bucket declares which failures it must survive, and the copies are derived.** The
-failures are few and anybody can name them:
+## `apt` knows Debian alone
 
-| Failure   | Means                                        | Survived by                                                             |
-| --------- | -------------------------------------------- | ----------------------------------------------------------------------- |
-| `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself          |
-| `domain`  | an account ends, or the house goes           | copies in two failure domains                                           |
-| `mistake` | a deletion, or a bug that rewrites good data | history kept for a while -- snapshots or versions, which copies are not |
-
-A store then says two things a person knows: its failure domain, already declared for every node,
-and whether it is redundant by itself -- a provider's bucket and a mirrored pool are, a lone disk is
-not. No figure is typed in anywhere. Derived data, which can be made again, survives nothing and
-keeps one copy. Providers frame their classes the same way: S3's One Zone classes survive a disk
-and not the loss of a zone. Undecided until the author agrees.
+A node is Debian or Alpine -- infra's `spec/architecture/nodes.md` -- and
+[../architecture/apt.md](../architecture/apt.md) starts two systemd units that run `apt-get`.
+Alpine runs neither systemd nor apt: its packages are `apk`'s and its services OpenRC's. Whether
+`apt` grows a second half for Alpine, under a name that is not a Debian tool's, or Alpine nodes keep
+their packages some other way, is undecided.

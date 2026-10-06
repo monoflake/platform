@@ -26,9 +26,7 @@ resource: it is a process on a node whose durable state is objects in a store.
 
 **One store holds many buckets, and one bucket spans many stores.** How many copies a bucket keeps
 follows how much its data matters, not how many disks there are. A store at home is offered as the
-device it is: a copy on it is a copy on that medium, and three copies are three media. A provider's
-store is not counted that way, since what it promises already holds copies of its own -- how the two
-are weighed against each other is [../issues/scheduling.md](../issues/scheduling.md).
+device it is: a copy on it is a copy on that medium, and three copies are three media.
 
 A store is described by what it does, never by what it is made of: two SSDs, or an array of disks and
 a lone one, differ more than a disk and an SSD do, and a provider's medium is not known at all.
@@ -37,6 +35,25 @@ a lone one, differ more than a disk and an SSD do, and a provider's medium is no
 read and how long the first byte may take, never the medium that answers. An article's pictures are
 `standard`; an album's originals, read now and then, are `infrequent`. A store is fit for a class by
 what it is measured to do.
+
+## A bucket declares the failures it must survive, and its copies are derived
+
+**Neither a count of copies nor a durability in nines is declared.** Nines are a figure nobody here
+can derive, so a sum of them is as precise as the guess typed in; and a count has no reference --
+three copies in one account are one copy to an account that ends, while one copy in a provider's
+bucket already survives a dead disk. What anybody can name is the failure:
+
+| Failure   | Means                                        | Survived by                                                    |
+| --------- | -------------------------------------------- | -------------------------------------------------------------- |
+| `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself |
+| `domain`  | an account ends, or the house goes           | copies in two failure domains                                  |
+| `mistake` | a deletion, or a bug that rewrites good data | history kept for a while: snapshots or versions                |
+
+A bucket lists the failures it survives, and the platform derives the copies. A store says two things
+a person knows: its failure domain, and whether it is redundant by itself -- a provider's bucket and
+a mirrored pool are, a lone disk is not. Copies alone never survive a `mistake`, since they copy it.
+Derived data, which can be made again, survives nothing and keeps one copy. S3's own classes are
+framed the same way: its One Zone classes survive a disk and not the loss of a zone.
 
 ## A scope is the boundary, and only the boundary isolates
 
@@ -80,3 +97,38 @@ concern.
   reader signed in, the gateway checks that credential against the object's record and answers or
   refuses. A private answer is never kept in a cache another reader could be served from -- the
   gateway decides what the edge keeps, so it says so on every answer.
+
+## Deleting releases a name, and the bytes go later
+
+**A delete removes a name from the index and nothing else.** The record is kept, marked deleted, and
+can be put back for a while; the bytes stay where they were. A cid becomes garbage only when no name
+in its scope -- live or deleted and still restorable -- points at it, which deduplication makes the
+one safe test: two names may share the bytes.
+
+**Each store says how it lets garbage go**:
+
+- **`lazy`** keeps it until the space is wanted. A disk of our own costs nothing to keep full, so
+  garbage there counts as free space and is evicted, oldest first, only when something new needs
+  room -- and until then it can still be found.
+- **`prompt`** lets it go after a grace period, by a background job, never in the request that
+  deleted it. A provider's store charges for every byte kept.
+
+So every layer has its own way back: a name is restored from the index, bytes from a store that has
+not reclaimed them, and what a bucket keeps for `mistake` beneath both.
+
+## Every copy is checked, and a bad one is replaced
+
+**A copy that is recorded is not a copy that is there.** The worst loss is the one found on the day
+the data is needed, so a scrub reads every copy on a schedule, as ZFS does a pool, and a content
+address makes the check exact: the bytes hash to their cid or they are bad. A bad or missing copy is
+struck from the record and copied again from a good one, onto the same store or another, until the
+bucket survives what it declared. How often a store is read through is its own, since a provider
+charges for the reads.
+
+## Background work is jobs, run by the one timer
+
+Reclaiming garbage, scrubbing copies and bringing copies back in line with what buckets declare are
+jobs, declared and run as every other is -- [cron.md](cron.md) -- beside the jobs that keep each
+node's own system current, [apt.md](apt.md). They are the platform's, not a node's: each must run
+once across the platform rather than once on every node, which `cron` does not yet do --
+[../issues/scheduling.md](../issues/scheduling.md).
