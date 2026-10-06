@@ -1,8 +1,8 @@
 -- Not expressible in Drizzle: no trigger or function API in drizzle-orm/pg-core (checked 0.45.2).
 -- Each insert into "results" -- the probe writes one statement per batch -- is broadcast once on
 -- the public Realtime channel "status", event "results", carrying each check's latest round in the
--- batch and the batch's passed and failed counts for it. See web's spec/architecture/status.md,
--- "The page reads PostgREST with the anon key, from views alone, once; after that it is told".
+-- batch and the batch's passed and failed counts for it. See spec/architecture/probe.md, "The page
+-- reads PostgREST with the anon key, from views alone, once; after that it is told".
 --
 -- `realtime.send` is looked up when the trigger fires, not when this runs: a plain Postgres, as the
 -- probe's own tests use, has no "realtime" schema, and there the insert goes on with nothing sent.
