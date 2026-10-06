@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { type Env, RECEIVERS, handle } from './index';
 import { DEPLOY_SOURCES } from '@monoflake/sdk';
 import { WORKFLOW } from './github';
@@ -18,16 +18,25 @@ async function sign(body: string): Promise<string> {
 	return `sha256=${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** A VPC binding that records what it was sent and answers with `status`. */
+/** VPC bindings, one per node, that record what they were sent; `statuses` is how each answers. */
+function nodes(statuses: Record<string, number> = { RDU: 204 }) {
+	const sent: { node: string; url: string; body: string }[] = [];
+	const bindings = Object.fromEntries(
+		Object.entries(statuses).map(([node, status]) => [
+			node,
+			{
+				fetch: async (url: string, init: RequestInit) => {
+					sent.push({ node, url, body: String(init.body) });
+					return new Response(null, { status });
+				},
+			} as unknown as Fetcher,
+		]),
+	);
+	return { sent, env: { WEBHOOK_SECRET: SECRET, ...bindings } satisfies Env };
+}
+
 function home(status = 204) {
-	const sent: { url: string; body: string }[] = [];
-	const binding = {
-		fetch: async (url: string, init: RequestInit) => {
-			sent.push({ url, body: String(init.body) });
-			return new Response(null, { status });
-		},
-	} as unknown as Fetcher;
-	return { sent, env: { WEBHOOK_SECRET: SECRET, RDU: binding } satisfies Env };
+	return nodes({ RDU: status });
 }
 
 const DELIVERY = JSON.stringify({
@@ -96,6 +105,44 @@ describe('handle', () => {
 		const refused = await handle(await deliver(DELIVERY), env);
 		expect(refused.status).toBe(502);
 		expect(await refused.json()).toMatchObject({ status: 'error', code: 'upstream_unavailable' });
+	});
+
+	it('passes a run to both receivers of every bound node', async () => {
+		const { sent, env } = nodes({ RDU: 204, TYO: 204, BUF: 204 });
+		const response = await handle(await deliver(DELIVERY), env);
+		expect(response.status).toBe(202);
+		for (const node of ['RDU', 'TYO', 'BUF']) {
+			expect(sent.filter((notice) => notice.node === node).map((notice) => notice.url)).toEqual(
+				RECEIVERS,
+			);
+		}
+	});
+
+	it('does not succeed when one node fails, and still tells the others', async () => {
+		const { sent, env } = nodes({ RDU: 204, TYO: 502, BUF: 204 });
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const response = await handle(await deliver(DELIVERY), env);
+		expect(response.status).toBe(502);
+		expect(new Set(sent.map((notice) => notice.node))).toEqual(new Set(['RDU', 'TYO', 'BUF']));
+		expect(sent).toHaveLength(3 * RECEIVERS.length);
+		// One line per receiver that missed, naming the node.
+		expect(log).toHaveBeenCalledTimes(RECEIVERS.length);
+		expect(log.mock.calls.every(([line]) => String(line).includes('TYO'))).toBe(true);
+		log.mockRestore();
+	});
+
+	it('does not stop at a node whose binding throws', async () => {
+		const { sent, env } = nodes({ RDU: 204 });
+		const down = {
+			fetch: async () => {
+				throw new Error('tunnel down');
+			},
+		} as unknown as Fetcher;
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const response = await handle(await deliver(DELIVERY), { ...env, AAA: down });
+		expect(response.status).toBe(502);
+		expect(sent).toHaveLength(RECEIVERS.length);
+		log.mockRestore();
 	});
 
 	it('answers nothing but its own path', async () => {

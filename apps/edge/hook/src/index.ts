@@ -1,17 +1,27 @@
 /**
  * The `hook` scope of the public API host: GitHub's webhook for workflow runs arrives here, and a
- * run worth deploying is passed to the machine at home over Workers VPC -- to host for the apps,
- * and to keeper, which alone deploys host. See spec/architecture/services.md.
+ * run worth deploying is passed to every node over Workers VPC -- to host for the apps, and to
+ * keeper, which alone deploys host. See spec/architecture/services.md, "Every node is the same
+ * node".
  */
 import { failure, success } from '@canmi/response';
 import { URLS } from '@monoflake/sdk';
 import { runToDeploy, signed } from './github';
 
-export interface Env {
+/** Every VPC binding in it is a node's Caddy, through that node's tunnel, named for the node. The
+ * nodes are the `vpc_services` of wrangler.jsonc and nowhere else. */
+export type Env = Readonly<Record<string, unknown>> & {
 	/** The secret GitHub signs each delivery with, set as a Worker secret. */
-	WEBHOOK_SECRET: string;
-	/** The machine at home's Caddy, through its tunnel. */
-	RDU: Fetcher;
+	readonly WEBHOOK_SECRET: string;
+};
+
+function isFetcher(value: unknown): value is Fetcher {
+	return typeof (value as Fetcher | undefined)?.fetch === 'function';
+}
+
+/** The nodes, by binding name. */
+function nodesOf(env: Env): [string, Fetcher][] {
+	return Object.entries(env).filter((entry): entry is [string, Fetcher] => isFetcher(entry[1]));
 }
 
 /** The public suffix Caddy routes the two receivers under; VPC sends it as the `Host`. */
@@ -40,26 +50,35 @@ export async function handle(request: Request, env: Env): Promise<Response> {
 	const { run, repository } = deploy;
 
 	const notice = JSON.stringify({ run, repository });
-	const answers = await Promise.allSettled(
-		RECEIVERS.map((receiver) =>
-			env.RDU.fetch(receiver, {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: notice,
-			}),
-		),
+	const targets = nodesOf(env).flatMap(([node, binding]) =>
+		RECEIVERS.map((receiver) => ({ node, receiver, binding })),
 	);
-	const reached = answers.map((answer, index) => ({
-		receiver: RECEIVERS[index],
-		status: answer.status === 'fulfilled' ? answer.value.status : String(answer.reason),
-	}));
+	const reached = await Promise.all(
+		targets.map(async ({ node, receiver, binding }) => {
+			try {
+				const answer = await binding.fetch(receiver, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: notice,
+				});
+				return { node, receiver, status: answer.status, ok: answer.ok };
+			} catch (error) {
+				return { node, receiver, status: String(error), ok: false };
+			}
+		}),
+	);
+	const missed = reached.filter(({ ok }) => !ok);
+	for (const { node, receiver, status } of missed) {
+		console.error(`run ${run}: ${node} did not take it at ${receiver}: ${status}`);
+	}
 	// A receiver that did not take it fails the delivery, so GitHub shows it and it can be
 	// redelivered.
-	const taken = answers.every((answer) => answer.status === 'fulfilled' && answer.value.ok);
-	if (taken) return success({ run, repository, reached }, { status: 202 });
-	const each = reached.map(({ receiver, status }) => `${receiver} ${status}`);
+	if (missed.length === 0 && reached.length > 0) {
+		return success({ run, repository, reached }, { status: 202 });
+	}
+	const each = missed.map(({ node, receiver, status }) => `${node} ${receiver} ${status}`);
 	return failure(502, 'upstream_unavailable', {
-		message: `The machine at home did not take run ${run}: ${each.join(', ')}`,
+		message: `Run ${run} was not taken by every node: ${each.join(', ') || 'no node is bound'}`,
 	});
 }
 
