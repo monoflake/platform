@@ -24,10 +24,18 @@ describe('stat tile on the server', () => {
 
 	it('carries a direction as an icon as well as a tone, never the tone alone', () => {
 		const worse = render(StatTile, {
-			props: { label: 'Errors', value: '3', delta: { value: 2, period: 'yesterday', good: 'down' } },
+			props: {
+				label: 'Errors',
+				value: '3',
+				delta: { value: 2, period: 'yesterday', good: 'down' },
+			},
 		});
 		const same = render(StatTile, {
-			props: { label: 'Errors', value: '3', delta: { value: 0, period: 'yesterday', good: 'down' } },
+			props: {
+				label: 'Errors',
+				value: '3',
+				delta: { value: 0, period: 'yesterday', good: 'down' },
+			},
 		});
 		expect(worse.body).toContain('lucide-arrow-up');
 		expect(same.body).toContain('lucide-minus');

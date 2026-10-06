@@ -76,9 +76,7 @@
 	);
 	const thick = $derived(shown.length === 1 ? 16 : 10);
 	const row = $derived(Math.max(TARGET, shown.length * thick + (shown.length - 1) * GAP + 12));
-	const total = $derived(
-		vertical ? height : categories.length * row + margin.top + margin.bottom,
-	);
+	const total = $derived(vertical ? height : categories.length * row + margin.top + margin.bottom);
 	const inner = $derived(vertical ? Math.max(1, height - margin.top - margin.bottom) : 0);
 	const slots = $derived(bands(categories));
 
@@ -207,7 +205,8 @@
 						title={category}>{category}</span
 					>
 					{#each shown as one, at (one.key)}
-						{@const offset = index * row + (row - shown.length * thick - (shown.length - 1) * GAP) / 2}
+						{@const offset =
+							index * row + (row - shown.length * thick - (shown.length - 1) * GAP) / 2}
 						<div
 							class="pointer-events-none absolute left-0"
 							style:top="{offset + at * (thick + GAP)}px"

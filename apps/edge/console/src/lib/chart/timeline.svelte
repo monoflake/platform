@@ -68,9 +68,7 @@
 
 	const every = $derived(tracks.flatMap((track) => track.stages));
 	const start = $derived(since ?? Math.min(...every.map((one) => one.start)));
-	const end = $derived(
-		until ?? Math.max(start + 1, ...every.map((one) => one.end ?? one.start)),
-	);
+	const end = $derived(until ?? Math.max(start + 1, ...every.map((one) => one.end ?? one.start)));
 	const x = $derived(
 		scaleUtc()
 			.domain([new Date(start * 1000), new Date(end * 1000)])
@@ -82,9 +80,7 @@
 	const colors = $derived(new Map(stages.map((stage) => [stage.key, stage.color])));
 	const names = $derived(new Map(stages.map((stage) => [stage.key, stage.label])));
 	const drawn = (track: Track) =>
-		track.stages
-			.filter((one) => !hidden.includes(one.stage))
-			.toSorted((a, b) => a.start - b.start);
+		track.stages.filter((one) => !hidden.includes(one.stage)).toSorted((a, b) => a.start - b.start);
 	const crosshair = $derived(
 		hover.at !== undefined && hover.at >= start && hover.at <= end ? at(hover.at) : undefined,
 	);

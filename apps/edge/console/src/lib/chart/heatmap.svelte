@@ -155,7 +155,8 @@
 	<div class="relative size-full" style:padding-left="{NAMES}px">
 		{#each rows as row, index (row.key)}
 			<span
-				class="absolute left-0 truncate pr-3 text-right {stylex.attrs(chart.axis, styles.name).class}"
+				class="absolute left-0 truncate pr-3 text-right {stylex.attrs(chart.axis, styles.name)
+					.class}"
 				style:width="{NAMES}px"
 				style:top="{index * PITCH + PITCH / 2}px"
 				style:transform="translateY(-50%)"
