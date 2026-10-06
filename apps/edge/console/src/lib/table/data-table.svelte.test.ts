@@ -1,0 +1,59 @@
+import { render } from 'svelte/server';
+import { describe, expect, it } from 'vitest';
+import DataTable from './data-table.svelte';
+import type { Column } from './table.ts';
+
+interface App {
+	name: string;
+	cpu: number;
+}
+
+const columns: Column<App>[] = [
+	{ key: 'name', label: 'Name', value: (app) => app.name },
+	{
+		key: 'cpu',
+		label: 'CPU',
+		kind: 'number',
+		value: (app) => app.cpu,
+		text: (app) => `${app.cpu}%`,
+	},
+];
+const rows: App[] = Array.from({ length: 30 }, (_, index) => ({ name: `app${index}`, cpu: index }));
+const props = { columns, key: (app: App) => app.name, label: 'Apps' };
+
+describe('data table on the server', () => {
+	it('renders the first page whole, with a sticky header and a filter per column', () => {
+		const { body } = render(DataTable<App>, { props: { ...props, rows, size: 10 } });
+		expect(body.match(/<tr class=/g)).toHaveLength(10);
+		expect(body).toContain('sticky top-0');
+		expect(body.match(/type="search"/g)).toHaveLength(2);
+		expect(body).toMatch(/placeholder="(?:&gt;|>)10"/);
+		expect(body).toContain('1–10 of 30');
+		expect(body).toContain('Page 1 of 3');
+		expect(body).toMatch(/aria-label="Previous page"[^>]*disabled/);
+	});
+
+	it('sorts the first page on the server when asked, and says so to a reader', () => {
+		const { body } = render(DataTable<App>, {
+			props: { ...props, rows, size: 10, sort: { key: 'cpu', direction: 'descending' } },
+		});
+		expect(body).toContain('aria-sort="descending"');
+		expect(body.indexOf('>29%<')).toBeLessThan(body.indexOf('>28%<'));
+		expect(body).not.toContain('>0%<');
+	});
+
+	it('makes the first cell a link the whole row answers', () => {
+		const { body } = render(DataTable<App>, {
+			props: { ...props, rows: rows.slice(0, 1), href: (app: App) => `/apps/${app.name}` },
+		});
+		expect(body).toContain('href="/apps/app0"');
+		expect(body).toContain('after:absolute after:inset-0');
+	});
+
+	it('says plainly when there is nothing, across every column', () => {
+		const { body } = render(DataTable<App>, { props: { ...props, rows: [], empty: 'No apps yet' } });
+		expect(body).toContain('colspan="2"');
+		expect(body).toContain('No apps yet');
+		expect(body).toContain('0 rows');
+	});
+});
