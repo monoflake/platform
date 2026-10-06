@@ -25,6 +25,12 @@ file.
 
 - Which consensus and which gossip
 
+### [scheduling.md](scheduling.md)
+
+- How the platform deploys an app's Worker
+- How a Worker at the edge reaches Postgres on the nodes
+- The order the site leaves D1
+
 ### [services.md](services.md)
 
 - Where the telemetry view goes
