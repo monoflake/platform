@@ -1,0 +1,36 @@
+import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { fileURLToPath } from 'node:url';
+import stylex from '@stylexjs/unplugin/vite';
+import { sveltekit } from '@sveltejs/kit/vite';
+import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
+
+// The repository root, as the panel sets its own: StyleX hashes a class from the file's path
+// relative to this.
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+
+export default defineConfig({
+	plugins: [
+		tailwindcss(),
+		sveltekit({
+			preprocess: vitePreprocess(),
+			compilerOptions: { runes: true },
+			// Every page prerendered and served as files: the console holds no data and runs no
+			// server. See spec/architecture/console.md, "The UI is at the edge, the data is the nodes'".
+			adapter: adapter(),
+		}),
+
+		{
+			// After the Svelte compiler, not before it; see web's spec/architecture/css/layers.md, "The
+			// build order is the opposite of what StyleX documents".
+			...stylex({
+				useCSSLayers: true,
+				unstable_moduleResolution: { type: 'commonJS', rootDir: ROOT },
+				lightningcssOptions: { minify: true },
+			}),
+			enforce: undefined,
+		},
+	],
+	build: { target: 'es2023', rollupOptions: { output: { hashCharacters: 'hex' } } },
+});

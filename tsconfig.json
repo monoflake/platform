@@ -17,6 +17,9 @@
 		"apps/delivery/aka",
 		"apps/edge/hook",
 		"apps/edge/gateway",
-		"apps/edge/quota"
+		"apps/edge/quota",
+		// The console's Worker only: its page is the browser's, and stays in this program.
+		"apps/edge/console/worker",
+		"apps/edge/console/worker-runtime.d.ts"
 	]
 }

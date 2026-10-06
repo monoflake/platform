@@ -26,6 +26,7 @@ pub const INTERNAL_API_PRIVATE: &str = "https://api.internal.ixc.one";
 pub const INTERNAL_API_PUBLIC: &str = "https://api.monoflake.com";
 pub const INTERNAL_STATUS_CANONICAL: &str = "https://status.canmi.app";
 pub const INTERNAL_STATUS_MIRROR: &str = "https://canmi.vercel.app";
+pub const INTERNAL_CONSOLE: &str = "https://console.canmi.app";
 pub const CONTACT_SECURITY: &str = "mailto:security@canmi.net";
 pub const EXTERNAL_GITHUB_WEB: &str = "https://github.com";
 pub const EXTERNAL_GITHUB_API: &str = "https://api.github.com";

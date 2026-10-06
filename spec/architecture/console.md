@@ -10,6 +10,14 @@ down; the console is the view of all of them, and of what CI is building, for ev
 as Cloudflare is. It holds no data. What it shows it asks the nodes for, through the gateway, which
 reaches each node's panel by that node's VPC binding.
 
+**The page and its live socket are one Worker on one host, `console.canmi.app`**: the page from
+static assets, and `/live`, `/state` and `/nearest` from the Worker's script, which picks the
+nearest node from where Cloudflare says the reader is and hands the request to that node's relay
+by its VPC binding, the next node when it fails. One host because Access sets its cookie per
+concrete hostname and cannot set one ahead for a wildcard application's subdomains, and a
+WebSocket cannot follow Access's redirect to get one: a page on one name could not open a socket
+on another -- https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/.
+
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its
 machine, and seven of them in one Worker would make the Worker root on all seven. Restarting,

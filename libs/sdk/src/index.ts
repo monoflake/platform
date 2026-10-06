@@ -141,6 +141,9 @@ const INTERNAL = {
 	// Cloudflare's DNS is not. See web's spec/architecture/status.md, "The page: one app, served by
 	// Vercel".
 	status: { canonical: 'https://status.canmi.app', mirror: 'https://canmi.vercel.app' },
+	// The console, every node at once, and the live socket it hands to the nearest node's relay.
+	// See spec/architecture/console.md.
+	console: 'https://console.canmi.app',
 } as const;
 
 export const URLS = {
