@@ -1,0 +1,22 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "relay"
+placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf"]
+
+[container]
+# One above cron's 12011, in the platform's own low block. See spec/architecture/services.md,
+# "A service keeps one port".
+port = 12012
+health = "/health"
+# Seven small snapshots and a socket per neighbor and per browser.
+memory_mb = 64
+
+# Its own name on `.app`, where a browser opens `/live`. See spec/architecture/console.md.
+[interface]
+
+# Published on the machine for the other nodes' relays, firewalled to the tailnet, and on host's
+# network to read it. See infra's spec/architecture/host.md, "A role is asked for by the app and
+# granted by the node".
+[shape]
+kind = "peer"

@@ -7,6 +7,7 @@ resolver = "3"
 members = [
 	"apps/system/apt",
 	"apps/system/cron",
+	"apps/system/relay",
 	"apps/compute/geo",
 	"apps/model/grok",
 	"apps/data/ledger",

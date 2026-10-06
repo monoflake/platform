@@ -1,0 +1,349 @@
+//! The relays' mesh: a socket to every other node's relay. Both ends open with the versions they
+//! hold and send each other what the other lacks; after that a relay sends its own node's snapshot
+//! the moment it changes, and every other node's when a neighbor's comparison shows it behind. See
+//! spec/architecture/relay.md.
+
+use crate::cluster::{Carried, Versions};
+use crate::config::Peer;
+use crate::relay::{Relay, Update, VERSION};
+use crate::socket::{Dial, Received, Socket, SocketError};
+use axum::http::HeaderMap;
+use axum::http::header::{AUTHORIZATION, InvalidHeaderValue};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::broadcast::error::RecvError;
+use tokio::time::Instant;
+use tokio_tungstenite::tungstenite;
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
+
+/// Where a relay accepts its neighbors.
+pub const PATH: &str = "/mesh";
+
+/// How often a relay tells a neighbor what it holds, and so the most a snapshot waits at each hop
+/// past its own node. Passing every snapshot on at once would send each one over every socket of a
+/// full mesh, every round, since the machine's sample changes every round.
+pub const COMPARISON: Duration = Duration::from_secs(2);
+
+/// Cloudflare and NATs close a socket idle for long; a ping keeps it from looking idle.
+pub const HEARTBEAT: Duration = Duration::from_secs(30);
+
+/// A neighbor that has sent nothing, not even a pong, through three heartbeats is gone.
+const SILENCE: Duration = Duration::from_secs(90);
+
+/// How long the other end has to say who it is.
+const INTRODUCTION: Duration = Duration::from_secs(10);
+
+const FIRST_RETRY: Duration = Duration::from_secs(1);
+const LAST_RETRY: Duration = Duration::from_secs(60);
+
+/// What one relay sends another.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum Message {
+	/// Sent first by both ends: the contract's version, who it is, and what it holds.
+	Hello { version: u32, node: String, versions: Versions },
+	/// What it holds, every comparison; answered with what it lacks.
+	Versions { versions: Versions },
+	/// A node's snapshot, newer than what the other was last known to hold.
+	Node { node: String, state: Carried },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum MeshError {
+	#[error(transparent)]
+	Socket(#[from] SocketError),
+	#[error("dialing: {0}")]
+	Dial(#[from] tungstenite::Error),
+	#[error("no answer within {0:?}")]
+	Slow(Duration),
+	#[error("a message this relay cannot read: {0}")]
+	Malformed(#[from] serde_json::Error),
+	#[error("it speaks version {0} of the mesh")]
+	Version(u32),
+	#[error("it opened with something other than hello")]
+	Unintroduced,
+	#[error("it says it is `{0}`")]
+	Stranger(String),
+	#[error("nothing heard for {0:?}")]
+	Silent(Duration),
+	#[error("it closed the socket")]
+	Closed,
+}
+
+/// Whether a request carries the mesh's secret, compared in time independent of where the first
+/// difference is.
+pub fn admitted(headers: &HeaderMap, secret: &str) -> bool {
+	let given = headers
+		.get(AUTHORIZATION)
+		.and_then(|value| value.to_str().ok())
+		.and_then(|value| value.strip_prefix("Bearer "))
+		.unwrap_or_default();
+	!secret.is_empty()
+		&& given.len() == secret.len()
+		&& given.bytes().zip(secret.bytes()).fold(0, |acc, (a, b)| acc | (a ^ b)) == 0
+}
+
+/// One of the sockets to a neighbor -- two relays that each dial the other hold two. Only the first
+/// open sends unasked, so nothing goes twice; the other takes over when it closes.
+struct Speaking<'a> {
+	relay: &'a Relay,
+	peer: &'a str,
+	conversation: u64,
+}
+
+impl Speaking<'_> {
+	fn speaks(&self) -> bool {
+		self.relay.speaks(self.peer, self.conversation)
+	}
+}
+
+impl Drop for Speaking<'_> {
+	fn drop(&mut self) {
+		self.relay.hush(self.peer, self.conversation);
+	}
+}
+
+/// One socket to a neighbor, from the introductions until it closes. `expected` is the neighbor
+/// dialed, and none for one that dialed here.
+pub async fn converse<S: Socket>(
+	relay: Arc<Relay>,
+	expected: Option<&str>,
+	mut socket: S,
+) -> Result<(), MeshError> {
+	// Subscribed before saying what is held, so nothing taken meanwhile is missed.
+	let mut updates = relay.subscribe();
+	let hello =
+		Message::Hello { version: VERSION, node: relay.node().to_owned(), versions: relay.versions() };
+	send(&mut socket, &hello).await?;
+
+	let theirs = tokio::time::timeout(INTRODUCTION, introduced(&mut socket))
+		.await
+		.map_err(|_| MeshError::Slow(INTRODUCTION))??;
+	let (peer, versions) = match theirs {
+		Message::Hello { version, .. } if version != VERSION => {
+			return Err(MeshError::Version(version));
+		}
+		Message::Hello { node, versions, .. } => (node, versions),
+		Message::Versions { .. } | Message::Node { .. } => return Err(MeshError::Unintroduced),
+	};
+	if peer == relay.node() || expected.is_some_and(|expected| expected != peer) {
+		return Err(MeshError::Stranger(peer));
+	}
+	behind(&relay, &mut socket, &versions, &peer).await?;
+
+	let speaking = Speaking { relay: &relay, peer: &peer, conversation: relay.conversation() };
+	let mut comparison = tokio::time::interval_at(Instant::now() + COMPARISON, COMPARISON);
+	let mut heartbeat = tokio::time::interval_at(Instant::now() + HEARTBEAT, HEARTBEAT);
+	let mut heard = Instant::now();
+	loop {
+		tokio::select! {
+			received = socket.receive() => {
+				heard = Instant::now();
+				match received? {
+					Received::Text(text) => match serde_json::from_str(&text)? {
+						Message::Node { node, state } => {
+							relay.take(&node, state, Some(&peer));
+						}
+						Message::Versions { versions } => {
+							behind(&relay, &mut socket, &versions, &peer).await?;
+						}
+						Message::Hello { .. } => {}
+					},
+					Received::Closed => return Ok(()),
+					Received::Other => {}
+				}
+			}
+			update = updates.recv() => match update {
+				Ok(Update { node, held }) => {
+					if node == relay.node() && speaking.speaks() {
+						let state = Carried { version: held.version, snapshot: held.snapshot };
+						send(&mut socket, &Message::Node { node, state }).await?;
+					}
+				}
+				// What it missed, the next comparison finds.
+				Err(RecvError::Lagged(_)) => {}
+				Err(RecvError::Closed) => return Ok(()),
+			},
+			_ = comparison.tick() => {
+				if speaking.speaks() {
+					send(&mut socket, &Message::Versions { versions: relay.versions() }).await?;
+				}
+			}
+			_ = heartbeat.tick() => {
+				if heard.elapsed() >= SILENCE {
+					return Err(MeshError::Silent(SILENCE));
+				}
+				socket.ping().await?;
+			}
+		}
+	}
+}
+
+/// Sends `peer`, holding `versions`, what it lacks.
+async fn behind<S: Socket>(
+	relay: &Relay,
+	socket: &mut S,
+	versions: &Versions,
+	peer: &str,
+) -> Result<(), MeshError> {
+	for (node, state) in relay.lacking(versions, peer) {
+		send(socket, &Message::Node { node, state }).await?;
+	}
+	Ok(())
+}
+
+async fn introduced<S: Socket>(socket: &mut S) -> Result<Message, MeshError> {
+	loop {
+		match socket.receive().await? {
+			Received::Text(text) => return Ok(serde_json::from_str(&text)?),
+			Received::Closed => return Err(MeshError::Closed),
+			Received::Other => {}
+		}
+	}
+}
+
+async fn send<S: Socket>(socket: &mut S, message: &Message) -> Result<(), MeshError> {
+	Ok(socket.send_text(serde_json::to_string(message)?).await?)
+}
+
+/// Opens a socket to `peer`'s relay, carrying the secret.
+pub async fn dial(peer: &Peer, secret: &str) -> Result<Dial, MeshError> {
+	let mut request = format!("ws://{}{PATH}", peer.address).into_client_request()?;
+	let bearer = format!("Bearer {secret}")
+		.parse()
+		.map_err(|error: InvalidHeaderValue| tungstenite::Error::HttpFormat(error.into()))?;
+	request.headers_mut().insert(AUTHORIZATION, bearer);
+	let dialing = tokio_tungstenite::connect_async(request);
+	let (socket, _) = tokio::time::timeout(INTRODUCTION, dialing)
+		.await
+		.map_err(|_| MeshError::Slow(INTRODUCTION))??;
+	Ok(socket)
+}
+
+/// Holds a socket to `peer` for as long as the relay runs, dialing again after each loss, waiting
+/// twice as long each time it fails up to a minute. A neighbor down waits alone.
+pub async fn keep(relay: Arc<Relay>, peer: Peer) {
+	let mut wait = FIRST_RETRY;
+	loop {
+		match dial(&peer, relay.secret()).await {
+			Ok(socket) => {
+				eprintln!("relay: holding {}", peer.name);
+				let opened = Instant::now();
+				let ended = converse(relay.clone(), Some(&peer.name), socket).await;
+				match ended {
+					Ok(()) => eprintln!("relay: {} closed", peer.name),
+					Err(error) => eprintln!("relay: lost {}: {error}", peer.name),
+				}
+				if opened.elapsed() >= LAST_RETRY {
+					wait = FIRST_RETRY;
+				}
+			}
+			Err(error) => eprintln!("relay: dialing {} at {}: {error}", peer.name, peer.address),
+		}
+		tokio::time::sleep(wait).await;
+		wait = (wait * 2).min(LAST_RETRY);
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use axum::http::HeaderValue;
+	use std::sync::Mutex;
+	use tokio::sync::mpsc;
+
+	/// A socket whose other end is the test: what it is fed, it receives, and what it sends is kept.
+	struct Fake {
+		incoming: mpsc::UnboundedReceiver<Received>,
+		sent: Arc<Mutex<Vec<Message>>>,
+	}
+
+	impl Socket for Fake {
+		async fn send_text(&mut self, text: String) -> Result<(), SocketError> {
+			self.sent.lock().unwrap().push(serde_json::from_str(&text).unwrap());
+			Ok(())
+		}
+
+		async fn ping(&mut self) -> Result<(), SocketError> {
+			Ok(())
+		}
+
+		async fn receive(&mut self) -> Result<Received, SocketError> {
+			Ok(self.incoming.recv().await.unwrap_or(Received::Closed))
+		}
+	}
+
+	#[tokio::test]
+	async fn meeting_sends_hello_and_then_exactly_what_the_other_lacks() {
+		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let snapshot = Arc::new(serde_json::json!({}));
+		for (node, version) in [("rdu", 9), ("tyo", 4), ("buf", 7), ("gvx", 2)] {
+			relay.take(node, Carried { version, snapshot: snapshot.clone() }, None);
+		}
+		let (feed, incoming) = mpsc::unbounded_channel();
+		let sent = Arc::new(Mutex::new(Vec::new()));
+		let theirs = Versions::from([("tyo".into(), 6), ("buf".into(), 7), ("gvx".into(), 1)]);
+		let hello = Message::Hello { version: VERSION, node: "tyo".into(), versions: theirs };
+		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
+		drop(feed);
+
+		converse(relay.clone(), Some("tyo"), Fake { incoming, sent: sent.clone() }).await.unwrap();
+		let sent = sent.lock().unwrap();
+		assert!(matches!(&sent[0], Message::Hello { node, versions, .. }
+			if node == "rdu" && *versions == relay.versions()));
+		// Not tyo's own, however old it is here, and not buf, which it holds as new.
+		let nodes: Vec<(&str, u64)> = sent[1..]
+			.iter()
+			.map(|message| match message {
+				Message::Node { node, state } => (node.as_str(), state.version),
+				other => panic!("sent {other:?}"),
+			})
+			.collect();
+		assert_eq!(nodes, [("gvx", 2), ("rdu", 9)]);
+	}
+
+	#[tokio::test]
+	async fn a_neighbor_that_is_not_the_one_dialed_is_refused() {
+		let relay = Relay::new("rdu".into(), "s3cret".into());
+		for (said, expected) in [("buf", Some("tyo")), ("rdu", None)] {
+			let (feed, incoming) = mpsc::unbounded_channel();
+			let hello = Message::Hello { version: VERSION, node: said.into(), versions: Versions::new() };
+			feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
+			let fake = Fake { incoming, sent: Arc::default() };
+			let refused = converse(relay.clone(), expected, fake).await;
+			assert!(matches!(refused, Err(MeshError::Stranger(named)) if named == said));
+		}
+	}
+
+	#[test]
+	fn the_secret_admits_and_nothing_else_does() {
+		let with = |value: &str| {
+			let mut headers = HeaderMap::new();
+			headers.insert(AUTHORIZATION, HeaderValue::from_str(value).unwrap());
+			headers
+		};
+		assert!(admitted(&with("Bearer s3cret"), "s3cret"));
+		let wrongs =
+			["Bearer s3cre", "Bearer s3cret!", "Bearer S3cret", "s3cret", "Basic s3cret", "Bearer "];
+		for wrong in wrongs {
+			assert!(!admitted(&with(wrong), "s3cret"), "{wrong}");
+		}
+		assert!(!admitted(&HeaderMap::new(), "s3cret"));
+	}
+
+	#[test]
+	fn the_messages_are_tagged_by_type() {
+		let versions = Versions::from([("tyo".into(), 7)]);
+		let hello = Message::Hello { version: 1, node: "rdu".into(), versions };
+		assert_eq!(
+			serde_json::to_value(&hello).unwrap(),
+			serde_json::json!({ "type": "hello", "version": 1, "node": "rdu", "versions": { "tyo": 7 } })
+		);
+		let node: Message = serde_json::from_str(
+			r#"{ "type": "node", "node": "tyo", "state": { "version": 8, "snapshot": { "apps": [] } } }"#,
+		)
+		.unwrap();
+		assert!(matches!(node, Message::Node { node, state } if node == "tyo" && state.version == 8));
+	}
+}
