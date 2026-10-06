@@ -26,4 +26,9 @@ divide the work is the workspace's `spec/planning.md`.
   platform deploys an app's Worker and hands it every binding, state coming from its own Postgres,
   buckets, scheduler and WebSocket services on the nodes -- the workspace's
   `spec/architecture/layers.md`, "Cloudflare is under the platform, and an app binds only the
-  platform". The site is the first app to move, D1 to Postgres the largest step of it.
+  platform". The site is the first app to move, D1 to Postgres the largest step of it. The
+  platform deploys a Worker as host deploys an image: CI uploads the bundle as an artifact and holds
+  no credential, and a platform service on a core node takes it and deploys it with wrangler and a
+  token of its own, scoped to Workers' scripts and routes -- Cloudflare's Scripts API, free, which
+  covers code, static assets, bindings, custom domains and versions. Rejected: Workers for
+  Platforms, made for running others' untrusted code in namespaces, which none of ours is, and paid.

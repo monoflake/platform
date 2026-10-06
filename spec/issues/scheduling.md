@@ -3,14 +3,6 @@
 What placing apps and their state leaves open. The rules over an entry are the index's; see
 [issues.md](issues.md).
 
-## How the platform deploys an app's Worker
-
-The platform, not Cloudflare's connection to a repository, is to deploy each app's Worker. Either
-it uploads the bundle CI built through Cloudflare's Workers Scripts API with a token of its own --
-free, and the same shape as host taking an image a run built -- or it uses Workers for Platforms,
-made for a platform deploying others' Workers into a namespace it dispatches to, which starts at a
-monthly fee. Undecided.
-
 ## How a Worker at the edge reaches Postgres on the nodes
 
 A stateless Worker in any of Cloudflare's locations asking one Postgres on a node pays the distance

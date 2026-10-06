@@ -27,7 +27,6 @@ file.
 
 ### [scheduling.md](scheduling.md)
 
-- How the platform deploys an app's Worker
 - How a Worker at the edge reaches Postgres on the nodes
 - The order the site leaves D1
 
