@@ -32,9 +32,9 @@ it.
 **A reader's browser holds one WebSocket, to the node nearest it, and the nodes hold connections to
 each other**, so whichever node a reader reached has everything as it happens. That is the relay's
 mesh carrying live state beside its log -- [relay.md](relay.md) -- and it needs what the relay's
-first step needs, a port on the tailnet. Until then the console asks each node in turn, every few
-seconds. How a browser is sent to its nearest node is
-[../issues/relay.md](../issues/relay.md), "How a browser reaches its nearest node".
+first step needs, a port on the tailnet. **Workers VPC carries the WebSocket**: the console's Worker
+hands the upgrade to the nearest node's binding and gets the relay's 101 back, seen from a browser
+on 2026-10-06. While the socket is down the page polls `/state`.
 
 ## The pipeline
 

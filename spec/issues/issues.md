@@ -24,7 +24,6 @@ file.
 ### [relay.md](relay.md)
 
 - Which consensus and which gossip
-- How a browser reaches its nearest node
 
 ### [services.md](services.md)
 

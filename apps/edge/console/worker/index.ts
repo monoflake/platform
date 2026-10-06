@@ -21,9 +21,8 @@ export const RELAY = `http://${INTERFACE}`;
 export const TRIES = 3;
 
 /**
- * How a node is reached: over its VPC binding, to its Caddy. Whether Workers VPC carries a
- * WebSocket is unverified, and a name of each node's own through its tunnel would replace this
- * function alone. See spec/issues/relay.md, "How a browser reaches its nearest node".
+ * How a node is reached: over its VPC binding, to its Caddy, which carries the WebSocket too. See
+ * spec/architecture/console.md, "Live, through the nearest node".
  */
 export function reach(env: Env, node: Node, path: string, init: RequestInit): Promise<Response> {
 	const binding = env[node.toUpperCase() as Uppercase<Node>];
