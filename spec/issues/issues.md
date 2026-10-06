@@ -24,8 +24,8 @@ file.
 
 ### [scheduling.md](scheduling.md)
 
-- Which words describe a store
 - How a copy at home is weighed against a copy at a provider
+- A browser sends no header for what a page embeds
 
 ### [services.md](services.md)
 

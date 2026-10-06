@@ -33,6 +33,11 @@ are weighed against each other is [../issues/scheduling.md](../issues/scheduling
 A store is described by what it does, never by what it is made of: two SSDs, or an array of disks and
 a lone one, differ more than a disk and an SSD do, and a provider's medium is not known at all.
 
+**A bucket's access class is `standard` or `infrequent`**, the words S3 uses: how often its data is
+read and how long the first byte may take, never the medium that answers. An article's pictures are
+`standard`; an album's originals, read now and then, are `infrequent`. A store is fit for a class by
+what it is measured to do.
+
 ## A scope is the boundary, and only the boundary isolates
 
 **Data is shared inside a scope and isolated between scopes.** A scope is a set of apps that belong
@@ -56,3 +61,19 @@ Inside one, the apps share their buckets and their Postgres; across one, nothing
 
 Deduplication happens at content and nowhere else. Copies are reconciled: a store that is lost is
 replaced by another copy, and one whose expiry nears is emptied before it lapses.
+
+## Every object has a record, and access is decided on it
+
+**Content-addressed bytes need a database beside them.** A cid says nothing about where the bytes
+came from, so every object has a record: its scope, the app that wrote it and, once there are
+accounts, the user, with who may read it. Permission is granted on the name and never on the cid,
+since one cid may stand behind two names that are not equally readable.
+
+**The gateway serves a public object by its content address and a private one by its record.**
+
+- **Public** is answered without asking who is reading, and cached at the edge for as long as the
+  bytes exist, since a content address never changes what it names.
+- **Private** carries a credential, the account and its session together in a request header; the
+  gateway checks it against the object's record and answers or refuses. A private answer is never
+  kept in a cache another reader could be served from -- the gateway decides what the edge keeps,
+  so it says so on every answer.
