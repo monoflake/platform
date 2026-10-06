@@ -125,10 +125,14 @@ struck from the record and copied again from a good one, onto the same store or 
 bucket survives what it declared. How often a store is read through is its own, since a provider
 charges for the reads.
 
-## Background work is jobs, run by the one timer
+## Background work has two schedulers
 
-Reclaiming garbage, scrubbing copies and bringing copies back in line with what buckets declare are
-jobs, declared and run as every other is -- [cron.md](cron.md) -- beside the jobs that keep each
-node's own system current, [apt.md](apt.md). They are the platform's, not a node's: each must run
-once across the platform rather than once on every node, which `cron` does not yet do --
-[../issues/scheduling.md](../issues/scheduling.md).
+**A node's scheduler runs what belongs to that node, and the platform's runs what belongs to it
+all.** A job says which it is.
+
+- **The node's is `cron`** -- [cron.md](cron.md): a job runs on every node its service is placed on,
+  once per node. Keeping a node's own system current is one -- [packages.md](packages.md).
+- **The platform's runs a job once, whichever node does it**: reclaiming garbage, scrubbing copies,
+  bringing copies back in line with what buckets declare, and a job of any service with more than
+  one instance. One instance holds a lease the others can see, kept in the platform's Postgres, and
+  runs the job while it holds it. It is not built yet.

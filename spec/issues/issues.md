@@ -10,22 +10,16 @@ there. An entry that is decided leaves this list: for the todo if it is work, or
 ordinary file if deciding it was all of it. This file is the index; an entry lives in its area's
 file.
 
-| area                           | entries | what it holds                                         |
-| ------------------------------ | ------- | ----------------------------------------------------- |
-| [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
-| [scheduling.md](scheduling.md) | 2       | what placing by need leaves open                      |
-| [services.md](services.md)     | 4       | what the services' own files leave open               |
+| area                       | entries | what it holds                                         |
+| -------------------------- | ------- | ----------------------------------------------------- |
+| [gateway.md](gateway.md)   | 3       | where the hosts are against the gateway they moved to |
+| [services.md](services.md) | 4       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
 
 - The CDN and the alias layer still stamp their own lifetimes
 - The whitelists are written by hand, and checked against the table only
 - A deployment's host is not checked against where the service runs
-
-### [scheduling.md](scheduling.md)
-
-- A job that runs once across the platform
-- `apt` knows Debian alone
 
 ### [services.md](services.md)
 

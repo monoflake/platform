@@ -2,7 +2,9 @@
 
 `apps/system/cron` calls the services on a node when their time comes. It does no work of its own: a job is
 a service's route, and `cron` is what knows when to ask for it, what came of it, and when it last
-did. Workers keep Cloudflare's own cron triggers; this is the node's.
+did. Workers keep Cloudflare's own cron triggers; this is the node's. A job that has to run once
+across the platform, whichever node runs it, is the platform's scheduler's, not this --
+[scheduling.md](scheduling.md), "Background work has two schedulers".
 
 ## A job is declared by the service that does it
 

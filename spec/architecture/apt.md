@@ -5,6 +5,8 @@ root, from systemd units on the machine. `apps/system/apt` is how the platform a
 root: a small service that can start two fixed systemd units and read how they went, and nothing
 else. It is the pattern for any privilege the platform needs from the machine -- a proxy that holds
 the privilege, and a door narrow enough that holding the door is not holding the privilege.
+It is Debian's agent behind the interface every node's package manager answers, and Alpine's is
+`apk` -- [packages.md](packages.md).
 
 ## The work stays on the machine, in two units
 

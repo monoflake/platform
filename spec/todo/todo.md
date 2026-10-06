@@ -23,3 +23,10 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
   `rules/monoflake.net` changes its target.
 - **`monoflake.com` and `ixc.one` get their apex records**, so the page each is to answer can be
   reached; `www.ixc.one`'s redirect to its apex leads nowhere until then.
+
+## Background work and packages
+
+- **The platform's scheduler**, which runs a job once across the platform under a lease in Postgres
+  -- [../architecture/scheduling.md](../architecture/scheduling.md), "Background work has two
+  schedulers". It needs Postgres off the node at home first.
+- **`apk`, Alpine's agent behind the package interface** -- [../architecture/packages.md](../architecture/packages.md).
