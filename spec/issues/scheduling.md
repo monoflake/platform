@@ -3,21 +3,24 @@
 What [../architecture/scheduling.md](../architecture/scheduling.md) leaves open. The rules over an
 entry are the index's; see [issues.md](issues.md).
 
-## How a copy at home is weighed against a copy at a provider
+## What a bucket declares about losing its data
 
-A disk at home holds one copy and fails at its disk's rate; a provider's bucket promises eleven nines
-on its own. Counting copies treats the two as equal. Weighing them by durability -- the loss of an
-object being every copy lost within the time a lost copy takes to replace -- does not, but only
-covers losing a medium: an account that ends loses every nine at once, which is what the failure
-domain is for. Providers write durability in nines -- eleven, for S3, R2 and Google's -- and keep availability, the
-share of time an object can be read, as a separate figure; a store at home that is offline has lost
-availability and none of its durability. Whether a bucket declares copies, a durability, or both is
-undecided.
+Neither of the two obvious answers holds. A durability in nines is a number nobody here can derive:
+a store would carry a figure somebody typed in, and the sum would be as precise as the guess. A
+count of copies has no reference either: three copies on one account are one copy to an account
+that ends, and one copy in a provider's bucket already survives a dead disk.
 
-## A browser sends no header for what a page embeds
+**Proposed: a bucket declares which failures it must survive, and the copies are derived.** The
+failures are few and anybody can name them:
 
-A private object is read with a header -- [../architecture/scheduling.md](../architecture/scheduling.md),
-"Every object has a record, and access is decided on it" -- and an `<img>` or a `<video>` cannot set
-one. A page that shows a private picture needs a cookie on the gateway's own domain or an address
-signed for a while; the second is what [services.md](services.md), "A picture is served at its id,
-to whoever holds it, for as long as it is kept", is waiting for. Which, or both, is undecided.
+| Failure   | Means                                        | Survived by                                                             |
+| --------- | -------------------------------------------- | ----------------------------------------------------------------------- |
+| `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself          |
+| `domain`  | an account ends, or the house goes           | copies in two failure domains                                           |
+| `mistake` | a deletion, or a bug that rewrites good data | history kept for a while -- snapshots or versions, which copies are not |
+
+A store then says two things a person knows: its failure domain, already declared for every node,
+and whether it is redundant by itself -- a provider's bucket and a mirrored pool are, a lone disk is
+not. No figure is typed in anywhere. Derived data, which can be made again, survives nothing and
+keeps one copy. Providers frame their classes the same way: S3's One Zone classes survive a disk
+and not the loss of a zone. Undecided until the author agrees.

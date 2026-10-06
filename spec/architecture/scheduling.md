@@ -69,11 +69,14 @@ came from, so every object has a record: its scope, the app that wrote it and, o
 accounts, the user, with who may read it. Permission is granted on the name and never on the cid,
 since one cid may stand behind two names that are not equally readable.
 
-**The gateway serves a public object by its content address and a private one by its record.**
+**The gateway serves a public object by its content address and a private one by its record.** What
+it must do is tell the two apart and judge the second correctly; how somebody signed in is not its
+concern.
 
 - **Public** is answered without asking who is reading, and cached at the edge for as long as the
   bytes exist, since a content address never changes what it names.
-- **Private** carries a credential, the account and its session together in a request header; the
-  gateway checks it against the object's record and answers or refuses. A private answer is never
-  kept in a cache another reader could be served from -- the gateway decides what the edge keeps,
-  so it says so on every answer.
+- **Private** carries a credential -- a header, or a cookie on the gateway's own domain, which is
+  what a page's `<img>` and `<video>` can send -- holding the account and its session. However the
+  reader signed in, the gateway checks that credential against the object's record and answers or
+  refuses. A private answer is never kept in a cache another reader could be served from -- the
+  gateway decides what the edge keeps, so it says so on every answer.

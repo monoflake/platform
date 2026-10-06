@@ -13,7 +13,7 @@ file.
 | area                           | entries | what it holds                                         |
 | ------------------------------ | ------- | ----------------------------------------------------- |
 | [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
-| [scheduling.md](scheduling.md) | 2       | what placing by need leaves open                      |
+| [scheduling.md](scheduling.md) | 1       | what placing by need leaves open                      |
 | [services.md](services.md)     | 4       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
@@ -24,8 +24,7 @@ file.
 
 ### [scheduling.md](scheduling.md)
 
-- How a copy at home is weighed against a copy at a provider
-- A browser sends no header for what a page embeds
+- What a bucket declares about losing its data
 
 ### [services.md](services.md)
 
