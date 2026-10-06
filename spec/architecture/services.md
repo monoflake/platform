@@ -39,6 +39,13 @@ alone deploys host. Workers VPC dials the node's Caddy by name and sends the fet
 `Host`, so one VPC service reaches every name Caddy answers. What the Worker forwards is only a
 hint: each program asks GitHub about the run itself before it runs anything.
 
+**Every node a VPC binding names is told, and each on its own.** The nodes are the hook's
+`vpc_services` and nowhere in its code; one node down does not keep the others from hearing. The
+hook answers GitHub with success only when every node took the run, so a node that missed it shows
+as a failed delivery, which can be sent again -- harmless to the nodes that took it, since each
+takes a run once. A node offline when a run ended still misses it until then -- infra's
+`spec/issues.md`, "A node that was offline misses the runs that ended meanwhile".
+
 **Rejected: a step in the workflow calling the Worker with GitHub's OIDC token.** It holds no secret
 at all, which the webhook does not match. It also fires before the run has ended, so a node would
 have to reason about a run still going, and it puts a step in every build that exists to announce
