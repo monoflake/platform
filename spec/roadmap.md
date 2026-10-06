@@ -20,3 +20,5 @@ divide the work is the workspace's `spec/planning.md`.
 - **Three core nodes decide, and every node passes it on**: the control messages become one ordered,
   signed log that relays gossip and a returning node catches up on --
   [architecture/relay.md](architecture/relay.md).
+- **One console shows every node and the deploy pipeline, served at the edge and live through the
+  nearest node** -- [architecture/console.md](architecture/console.md).
