@@ -69,14 +69,16 @@ page does not change as it wakes; a zone Intl does not know falls back to UTC. *
 projected when the console is built**, flat and as a grid of dots, so neither the Worker nor the
 browser carries a projection or a world's topology -- only the dots it drew. A globe is offered
 beside it and loaded only when asked for, being WebGL the server cannot draw. On both, a node's mark
-says how much it runs and how busy it is: its size and its depth step with the apps running on it,
-three sizes and as many shades from faint to solid, and a halo breathes around it faster as its CPU
+says how much it runs and how busy it is: its size says how much machine stands at its place -- the
+memory of every node there together, up to 2 GiB, under 8, or 8 and more, so one large machine and many
+small ones read alike -- its depth steps with the apps running on it from faint to solid, and a halo breathes around it faster as its CPU
 climbs -- still when the reader asks for reduced motion. A node has two states on the map, and its whole mark takes the state's color: blue when it
 is heard, red when it is gone. Late is not a state but a node between two snapshots, and is drawn
 as heard. The
 smallest step is two of the land's dots across, so a mark reads as part of the same grid. No line is drawn between nodes,
-and no name: a node's code and figures appear in a card on hover. Nodes too close to tell apart
--- Tokyo's three -- are set apart by hand, with no leader line back to where they stand.
+and no name: a node's code and figures appear in a card on hover. **A mark is a place, not a machine**: nodes in one
+place -- Tokyo's three -- are one mark, its depth from the apps they run together, its breath from
+the busiest of them, red if any is gone, and its card listing each node.
 
 **Developing it reads the real nodes.** Each node's binding is declared `remote`, so `vite dev`
 reaches the same VPC services the deployed Worker does, with the read token in a `.dev.vars` written

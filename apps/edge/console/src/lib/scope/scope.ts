@@ -35,6 +35,7 @@ const PLATFORM = new Set([
 	'cdn',
 	'console',
 	'cron',
+	'deployer',
 	'gateway',
 	'gemini',
 	'geo',

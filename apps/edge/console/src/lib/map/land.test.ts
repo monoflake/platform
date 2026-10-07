@@ -3,7 +3,7 @@ import { build, DOT, PITCH, projectionOf } from '../../../scripts/project.ts';
 import { NODES } from '../server/nodes.ts';
 import * as generated from './land.generated.ts';
 import { SIZES } from './marks.ts';
-import { PLACES } from './places.ts';
+import { gather, PLACES } from './places.ts';
 
 describe('the generated map', () => {
 	it('places every node of nodes.ts where the projection puts it', () => {
@@ -55,16 +55,35 @@ describe('the generated map', () => {
 		}
 	});
 
-	it('sets close nodes apart so the largest marks neither touch nor leave the plot', () => {
+	it("keeps every place's largest mark inside the plot and clear of every other", () => {
 		const largest = SIZES[SIZES.length - 1]?.radius ?? 0;
-		const marks = Object.entries(PLACES).map(([code, { offset: [dx, dy] = [0, 0] }]) => {
-			const [x, y] = generated.POINTS[code as keyof typeof PLACES];
-			return [x + dx, y + dy] as const;
-		});
-		for (const [index, [x, y]] of marks.entries()) {
+		const sites = gather(
+			(Object.keys(PLACES) as (keyof typeof PLACES)[]).map((code) => ({
+				code,
+				role: PLACES[code].role,
+				cluster: PLACES[code].cluster,
+				state: 'live' as const,
+				apps: undefined,
+				memory: undefined,
+				used: undefined,
+				cpu: undefined,
+				heard: undefined,
+				point: generated.POINTS[code],
+			})),
+		);
+		for (const [
+			index,
+			{
+				point: [x, y],
+			},
+		] of sites.entries()) {
 			expect(x - largest).toBeGreaterThan(0);
+			expect(x + largest).toBeLessThan(generated.WIDTH);
+			expect(y - largest).toBeGreaterThan(0);
 			expect(y + largest).toBeLessThan(generated.HEIGHT);
-			for (const [ox, oy] of marks.slice(index + 1)) {
+			for (const {
+				point: [ox, oy],
+			} of sites.slice(index + 1)) {
 				expect(Math.hypot(x - ox, y - oy)).toBeGreaterThan(2 * largest);
 			}
 		}

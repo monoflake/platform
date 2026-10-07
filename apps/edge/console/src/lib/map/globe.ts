@@ -6,7 +6,7 @@
 import createGlobe, { type Marker } from 'cobe';
 import type { Shown } from './marks.ts';
 
-/** A node as the globe marks it: where it is, and its mark as the flat map has it (marks.ts). */
+/** A place as the globe marks it: where it is, and its mark as the flat map has it (marks.ts). */
 export interface Spot {
 	readonly location: readonly [number, number];
 	readonly radius: number;
@@ -119,7 +119,7 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 	};
 }
 
-/** A spot as cobe's marker: blue while heard, red when gone, faded toward the sphere when small. */
+/** A place as cobe's marker: blue, or red when gone, faded to the sphere as it runs less. */
 function marks({ location, radius, opacity, state }: Spot): Marker {
 	const color = rgb(state === 'gone' ? 'var(--color-danger)' : 'var(--color-primary)');
 	return { location: [...location], size: radius * PER_RADIUS, color: mix(color, SPHERE, opacity) };

@@ -1,7 +1,7 @@
 /**
- * What a node's mark says: its size and depth how much it runs, its breathing how busy it is now,
- * its color whether it is heard. The globe takes size, depth and color and leaves the breathing
- * out. See spec/architecture/console.md, the paragraph on the world map.
+ * What a node's mark says: its size how much machine stands at its place, its depth how much it
+ * runs, its breathing how busy it is now, its color whether it is heard. The globe takes all but
+ * the breathing. See spec/architecture/console.md, the paragraph on the world map.
  */
 import type { Liveness } from '../node.ts';
 
@@ -13,14 +13,21 @@ export function shown(liveness: Liveness): Shown {
 }
 
 /**
- * Apps running, at most, for each radius in the flat map's viewBox units and each opacity; the
- * last has no top. The smallest spans two of the land's dots, a pitch and a dot
- * (scripts/project.ts).
+ * GiB of memory standing at a place, below which each radius in the flat map's viewBox units
+ * holds, the first step taking its top as well: up to 2, under 8, and 8 or more. The smallest
+ * spans two of the land's dots, a pitch and a dot (scripts/project.ts).
  */
 export const SIZES = [
-	{ apps: 5, radius: 7, opacity: 0.45 },
-	{ apps: 15, radius: 9.5, opacity: 0.72 },
-	{ apps: Infinity, radius: 12, opacity: 1 },
+	{ gib: 2, radius: 7 },
+	{ gib: 8, radius: 9.5 },
+	{ gib: Infinity, radius: 12 },
+] as const;
+
+/** Apps running, at most, for each opacity; the last has no top. */
+export const DEPTHS = [
+	{ apps: 5, opacity: 0.45 },
+	{ apps: 15, opacity: 0.72 },
+	{ apps: Infinity, opacity: 1 },
 ] as const;
 
 /** CPU percent now, below which each breathing period holds, in seconds: the busier, the faster. */
@@ -31,20 +38,20 @@ export const BREATHS = [
 	{ below: Infinity, period: 0.9 },
 ] as const;
 
-/** The step for the apps running on a node; not knowing gives the middle one. */
-function step(apps: number | undefined) {
-	if (apps === undefined || !Number.isFinite(apps)) return SIZES[1];
-	return SIZES.find((size) => apps <= size.apps) ?? SIZES[2];
+const GIB = 2 ** 30;
+
+/** A mark's radius for the bytes of memory at its place; not knowing gives the middle step. */
+export function radius(bytes: number | undefined): number {
+	if (bytes === undefined || !Number.isFinite(bytes)) return SIZES[1].radius;
+	const gib = bytes / GIB;
+	if (gib <= SIZES[0].gib) return SIZES[0].radius;
+	return (SIZES.find((size) => gib < size.gib) ?? SIZES[2]).radius;
 }
 
-/** A mark's radius for the apps running on its node. */
-export function radius(apps: number | undefined): number {
-	return step(apps).radius;
-}
-
-/** A mark's opacity for the apps running on its node. */
+/** A mark's opacity for the apps running on its node; not knowing gives the middle step. */
 export function opacity(apps: number | undefined): number {
-	return step(apps).opacity;
+	if (apps === undefined || !Number.isFinite(apps)) return DEPTHS[1].opacity;
+	return (DEPTHS.find((depth) => apps <= depth.apps) ?? DEPTHS[2]).opacity;
 }
 
 /** A mark's breathing period for its node's CPU percent now; not knowing gives the slowest. */
