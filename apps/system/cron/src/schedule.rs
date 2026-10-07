@@ -3,11 +3,19 @@
 
 use croner::Cron;
 use croner::parser::{CronParser, Seconds, Year};
-use jiff::Timestamp;
 use jiff::tz::TimeZone;
+use jiff::{SignedDuration, Timestamp};
 
 #[derive(Debug, Clone)]
-pub enum Schedule {
+pub struct Schedule {
+	rule: Rule,
+	/// Seconds every due time is moved later by. See spec/architecture/cron.md, "A weekly job is
+	/// spread across the nodes, a day apart".
+	offset: i64,
+}
+
+#[derive(Debug, Clone)]
+enum Rule {
 	/// The five-field form, read in UTC.
 	Cron(Box<Cron>),
 	/// Whole seconds, counted from the Unix epoch, so every multiple is a due time and the one
@@ -18,7 +26,8 @@ pub enum Schedule {
 impl Schedule {
 	pub fn cron(text: &str) -> Result<Self, String> {
 		let parser = CronParser::builder().seconds(Seconds::Disallowed).year(Year::Disallowed).build();
-		parser.parse(text).map(|cron| Self::Cron(Box::new(cron))).map_err(|error| error.to_string())
+		let cron = parser.parse(text).map_err(|error| error.to_string())?;
+		Ok(Self { rule: Rule::Cron(Box::new(cron)), offset: 0 })
 	}
 
 	/// `30s`, `1m`, `6h`: a positive whole number and one unit.
@@ -35,11 +44,31 @@ impl Schedule {
 		if count <= 0 {
 			return Err(refused());
 		}
-		count.checked_mul(scale).map(Self::Every).ok_or_else(refused)
+		let seconds = count.checked_mul(scale).ok_or_else(refused)?;
+		Ok(Self { rule: Rule::Every(seconds), offset: 0 })
+	}
+
+	/// The same schedule with every due time `seconds` later.
+	pub fn offset(self, seconds: u64) -> Result<Self, String> {
+		let offset = i64::try_from(seconds).map_err(|_| format!("an offset of {seconds} seconds"))?;
+		Ok(Self { offset, ..self })
 	}
 
 	/// The first due time strictly after `after`.
 	pub fn next_after(&self, after: Timestamp) -> Option<Timestamp> {
+		let shift = SignedDuration::from_secs(self.offset);
+		self.rule.next_after(after.checked_sub(shift).ok()?)?.checked_add(shift).ok()
+	}
+
+	/// The last due time at or before `at`.
+	pub fn previous(&self, at: Timestamp) -> Option<Timestamp> {
+		let shift = SignedDuration::from_secs(self.offset);
+		self.rule.previous(at.checked_sub(shift).ok()?)?.checked_add(shift).ok()
+	}
+}
+
+impl Rule {
+	fn next_after(&self, after: Timestamp) -> Option<Timestamp> {
 		match self {
 			Self::Cron(cron) => cron
 				.find_next_occurrence(&after.to_zoned(TimeZone::UTC), false)
@@ -52,8 +81,7 @@ impl Schedule {
 		}
 	}
 
-	/// The last due time at or before `at`.
-	pub fn previous(&self, at: Timestamp) -> Option<Timestamp> {
+	fn previous(&self, at: Timestamp) -> Option<Timestamp> {
 		match self {
 			Self::Cron(cron) => cron
 				.find_previous_occurrence(&at.to_zoned(TimeZone::UTC), true)
@@ -118,5 +146,50 @@ mod tests {
 		for text in ["", "m", "0s", "-1m", "1d", "1.5h", "90"] {
 			assert!(Schedule::every(text).is_err(), "{text}");
 		}
+	}
+
+	const DAY: u64 = 86_400;
+
+	/// Sundays at 08:00, the upgrade's expression; 2026-09-28 is a Monday.
+	fn weekly(offset: u64) -> Schedule {
+		Schedule::cron("0 8 * * 0").unwrap().offset(offset).unwrap()
+	}
+
+	#[test]
+	fn no_offset_is_the_expression_itself() {
+		let schedule = weekly(0);
+		assert_eq!(schedule.next_after(at("2026-09-28T12:00:00Z")), Some(at("2026-10-04T08:00:00Z")));
+		assert_eq!(schedule.previous(at("2026-09-28T12:00:00Z")), Some(at("2026-09-27T08:00:00Z")));
+	}
+
+	#[test]
+	fn an_offset_of_a_day_is_monday() {
+		let schedule = weekly(DAY);
+		assert_eq!(schedule.next_after(at("2026-09-28T07:59:59Z")), Some(at("2026-09-28T08:00:00Z")));
+		assert_eq!(schedule.next_after(at("2026-09-28T12:00:00Z")), Some(at("2026-10-05T08:00:00Z")));
+		// What catch-up compares against moves with it: Monday's run, not Sunday's.
+		assert_eq!(schedule.previous(at("2026-09-28T12:00:00Z")), Some(at("2026-09-28T08:00:00Z")));
+		assert_eq!(schedule.previous(at("2026-09-28T07:00:00Z")), Some(at("2026-09-21T08:00:00Z")));
+	}
+
+	#[test]
+	fn an_offset_of_six_days_and_two_hours_is_saturday_at_ten() {
+		let schedule = weekly(6 * DAY + 2 * 3600);
+		assert_eq!(schedule.next_after(at("2026-09-28T12:00:00Z")), Some(at("2026-10-03T10:00:00Z")));
+		assert_eq!(schedule.next_after(at("2026-10-03T10:00:00Z")), Some(at("2026-10-10T10:00:00Z")));
+		assert_eq!(schedule.previous(at("2026-09-28T12:00:00Z")), Some(at("2026-09-26T10:00:00Z")));
+		assert_eq!(schedule.previous(at("2026-10-03T10:00:00Z")), Some(at("2026-10-03T10:00:00Z")));
+	}
+
+	#[test]
+	fn an_offset_moves_every_too() {
+		let schedule = Schedule::every("1h").unwrap().offset(15 * 60).unwrap();
+		assert_eq!(schedule.next_after(at("2026-09-28T12:00:00Z")), Some(at("2026-09-28T12:15:00Z")));
+		assert_eq!(schedule.previous(at("2026-09-28T12:00:00Z")), Some(at("2026-09-28T11:15:00Z")));
+	}
+
+	#[test]
+	fn an_offset_past_what_a_timestamp_holds_is_refused() {
+		assert!(Schedule::every("1m").unwrap().offset(u64::MAX).is_err());
 	}
 }

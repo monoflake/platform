@@ -2,6 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "relay"
+display_name = "Relay"
 placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf"]
 
 [container]

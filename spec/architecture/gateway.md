@@ -358,7 +358,7 @@ Any other scope Caddy hands to the public gateway as `api.monoflake.com/v{n}/{sc
 `INTERNAL_TOKEN`, so a call across nodes is routed by the one gateway, placement order and all.
 
 **The public gateway takes a private scope only with `INTERNAL_TOKEN`.** A scope a service declares
-`public = false` and Caddy carries on its private side -- the ledger, cron -- is in the gateway's
+`public = false` and Caddy carries on its private side -- the ledger -- is in the gateway's
 table for that reason alone: a
 request carrying the token in `x-internal` reaches it, one without is answered as a scope that does
 not exist. The gateway takes the header off before any service sees it, counts the call once where

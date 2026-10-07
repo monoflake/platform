@@ -143,7 +143,6 @@ const INTERNAL = {
 	alias: 'https://ill.li',
 	...INFRA,
 	ledger: `${API.private}/ledger`,
-	cron: `${API.private}/cron`,
 	shot: `${API.public}/v1/shot`,
 	api: API,
 	// The status page's two names: the one address, and Vercel's own name for it, reached while

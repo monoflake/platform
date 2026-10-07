@@ -2,9 +2,10 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "apt"
-placements = ["rdu"]
+display_name = "Package Updates"
+placements = ["rdu", "tyo"]
 
-# No port: cron reaches this on its socket, host mounts the machine's system bus
+# No port: the node's own `cron` reaches this on its socket, host mounts the machine's system bus
 # socket in and the container runs as root only so systemd lets it start a unit. See
 # spec/architecture/apt.md, "The door".
 [container]
@@ -16,7 +17,7 @@ memory_mb = 32
 path = "/data"
 
 # See spec/architecture/cron.md, "A job is declared by the service that does it". Times are UTC:
-# 07:00 is 03:00 New York.
+# 07:00 is 03:00 New York. Each node runs these against its own packages.
 [[schedules]]
 name = "update"
 cron = "0 7 * * *"
@@ -25,6 +26,8 @@ catch_up = "once"
 overlap = "skip"
 timeout = 1800
 
+# Sunday on the first node, a day later on each after it. See spec/architecture/cron.md, "A weekly
+# job is spread across the nodes, a day apart".
 [[schedules]]
 name = "upgrade"
 cron = "0 8 * * 0"
@@ -32,6 +35,7 @@ path = "/jobs/upgrade"
 catch_up = "once"
 overlap = "skip"
 timeout = 7200
+spread = "week"
 
 # The steward: root and the machine's D-Bus socket, where the node grants it. See
 # infra's spec/architecture/host.md, "A role is asked for by the app and granted by the node".

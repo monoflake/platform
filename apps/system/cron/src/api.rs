@@ -1,5 +1,5 @@
-//! What the panel reaches on `cron`'s private scope. See spec/architecture/cron.md, "A job is
-//! declared by the service that does it" and "Seen in the console".
+//! What `cron` answers on its port, with no scope. See spec/architecture/cron.md, "`cron` answers
+//! on its port and has no scope" and "Seen in the console".
 
 use crate::scheduler::Shared;
 use axum::Router;
@@ -226,6 +226,47 @@ mod tests {
 		assert_eq!(calls[0].0, Target::Api);
 		let (_, body) = ask(&cron, "GET", "/schedules").await;
 		assert_eq!(body["data"][1]["last"]["due"], "2026-09-28T04:00:00Z");
+	}
+
+	/// The upgrade spread to slot 1: Sundays at 08:00, a day later. 2026-09-28 is a Monday.
+	const SPREAD: &str = r#"{ "jobs": [
+		{ "service": "apt", "name": "upgrade", "cron": "0 8 * * 0", "every": null,
+			"path": "/jobs/upgrade", "catch_up": "once", "overlap": "skip", "timeout": 7200,
+			"offset": 86400, "reach": { "socket": "/sockets/apt/apt.sock" } }
+	] }"#;
+
+	/// A `cron` whose store last ran the upgrade for `last_due`, loaded at `now`.
+	async fn spread(last_due: &str, now: &str) -> (tempfile::TempDir, Arc<Fake>, Shared) {
+		let directory = tempfile::tempdir().unwrap();
+		let store = Store::open(&directory.path().join(crate::store::FILE)).unwrap();
+		store.set_due("apt", "upgrade", last_due.parse().unwrap()).unwrap();
+		let fake = Arc::new(Fake { calls: Mutex::new(Vec::new()), gate: Arc::new(Semaphore::new(1)) });
+		let cron = Cron::new(
+			store,
+			ledger::Ledger::to(String::new()),
+			fake.clone(),
+			crate::reach::origin().into(),
+		);
+		cron.load(Table::parse(SPREAD).unwrap(), now.parse().unwrap());
+		settle().await;
+		(directory, fake, cron)
+	}
+
+	#[tokio::test]
+	async fn an_offset_moves_the_next_time_and_what_counts_as_missed() {
+		// Last run the Monday before, loaded at noon: this Monday's 08:00 was missed, and runs once.
+		let (_directory, fake, cron) = spread("2026-09-21T08:00:00Z", "2026-09-28T12:00:00Z").await;
+		assert_eq!(fake.calls.lock().unwrap().len(), 1);
+		let (_, body) = ask(&cron, "GET", "/schedules").await;
+		let job = &body["data"][0];
+		assert_eq!(job["offset"], 86_400);
+		assert_eq!(job["next"], "2026-10-05T08:00:00Z");
+		assert_eq!(job["last"]["due"], "2026-09-28T08:00:00Z");
+
+		// Loaded at 07:00 instead, past Sunday's 08:00 but before Monday's: nothing was missed.
+		let (_directory, fake, cron) = spread("2026-09-21T08:00:00Z", "2026-09-28T07:00:00Z").await;
+		assert!(fake.calls.lock().unwrap().is_empty());
+		assert_eq!(ask(&cron, "GET", "/schedules").await.1["data"][0]["next"], "2026-09-28T08:00:00Z");
 	}
 
 	#[test]

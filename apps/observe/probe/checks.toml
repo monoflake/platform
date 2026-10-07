@@ -20,13 +20,6 @@ target = "API_PRIVATE/ledger/health"
 interval = 5
 
 [[check]]
-id = "health.cron"
-name = "Scheduler"
-kind = "health"
-target = "API_PRIVATE/cron/health"
-interval = 5
-
-[[check]]
 id = "health.shot"
 name = "Screenshots"
 kind = "health"

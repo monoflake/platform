@@ -23,7 +23,7 @@ beat for everything. They fall into two kinds, and it is the first that finds a 
   `POST /shot/v1/tasks` with `access.fresh` so each round is a capture of its own, which reports the page's errors, failed
   requests, status and title from a real Chromium. The probe holds no browser. Outside checks are the chain working, not availability; they cost more and run slower.
 
-**A check has a name a reader understands**, `name` in `checks.toml` -- "Scheduler", "Site DNS" --
+**A check has a name a reader understands**, `name` in `checks.toml` -- "Ledger", "Site DNS" --
 beside its id, which stays the probe's and the ledger's. The probe writes it with the rest of the
 check, and the page shows it and never the id or the target.
 

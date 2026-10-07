@@ -20,7 +20,6 @@ pub const INTERNAL_PANEL: &str = "https://infra.internal.ixc.one";
 pub const INTERNAL_KEEPER: &str = "https://keeper.internal.ixc.one";
 pub const INTERNAL_HOST: &str = "http://host:11011";
 pub const INTERNAL_LEDGER: &str = "http://api.internal.ixc.one/ledger";
-pub const INTERNAL_CRON: &str = "http://api.internal.ixc.one/cron";
 pub const INTERNAL_SHOT: &str = "https://api.monoflake.com/v1/shot";
 pub const INTERNAL_API_PRIVATE: &str = "http://api.internal.ixc.one";
 pub const INTERNAL_API_PUBLIC: &str = "https://api.monoflake.com";

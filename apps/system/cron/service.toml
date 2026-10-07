@@ -2,7 +2,8 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "cron"
-placements = ["rdu"]
+display_name = "Scheduler"
+placements = ["rdu", "tyo"]
 
 [container]
 # One above ledger's 12010, in the platform's own low block. See spec/architecture/services.md,
@@ -15,11 +16,6 @@ memory_mb = 64
 # spec/architecture/cron.md.
 [data]
 path = "/data"
-
-# The panel's alone, on the private side. See spec/architecture/cron.md, "A job is declared by the
-# service that does it".
-[api]
-public = false
 
 # The scheduler: the table of every job and each socket service's directory, where the node grants
 # it. See infra's spec/architecture/host.md, "A role is asked for by the app and granted by the

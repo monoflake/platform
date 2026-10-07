@@ -42,17 +42,22 @@ pub struct Job {
 	pub overlap: Overlap,
 	/// Seconds before a run is called failed.
 	pub timeout: u64,
+	/// Seconds every run is moved later by; host works it out from the job's `spread`. See
+	/// spec/architecture/cron.md, "A weekly job is spread across the nodes, a day apart".
+	#[serde(default)]
+	pub offset: u64,
 	pub reach: Reach,
 }
 
 impl Job {
-	/// Exactly one of `cron` and `every`, and a schedule that reads.
+	/// Exactly one of `cron` and `every`, and a schedule that reads, moved by the offset.
 	pub fn schedule(&self) -> Result<Schedule, String> {
-		match (&self.cron, &self.every) {
+		let schedule = match (&self.cron, &self.every) {
 			(Some(cron), None) => Schedule::cron(cron),
 			(None, Some(every)) => Schedule::every(every),
 			_ => Err("a job takes exactly one of `cron` and `every`".into()),
-		}
+		}?;
+		schedule.offset(self.offset)
 	}
 
 	/// What the ledger's summary and the API name the schedule by.
@@ -114,6 +119,7 @@ mod tests {
 				"catch_up": "once",
 				"overlap": "skip",
 				"timeout": 300,
+				"offset": 0,
 				"reach": { "scope": "geo" }
 			},
 			{
@@ -125,6 +131,7 @@ mod tests {
 				"catch_up": "once",
 				"overlap": "skip",
 				"timeout": 1800,
+				"offset": 0,
 				"reach": { "socket": "/sockets/apt/apt.sock" }
 			}
 		]
@@ -138,6 +145,25 @@ mod tests {
 		assert_eq!(table.jobs[1].reach, Reach::Socket("/sockets/apt/apt.sock".into()));
 		assert_eq!(table.jobs[1].catch_up, CatchUp::Once);
 		assert_eq!(table.jobs[1].timeout, 1800);
+		assert_eq!(table.jobs[1].offset, 0);
+	}
+
+	#[test]
+	fn an_offset_is_read_and_moves_the_schedule() {
+		let at = |text: &str| text.parse::<jiff::Timestamp>().unwrap();
+		// Nine hours on a daily 04:00 is 13:00, so the next run is still today's.
+		let nine = EXAMPLE.replacen(r#""offset": 0"#, r#""offset": 32400"#, 1);
+		let job = &Table::parse(&nine).unwrap().jobs[0];
+		assert_eq!(job.offset, 32_400);
+		let next = job.schedule().unwrap().next_after(at("2026-09-28T12:00:00Z"));
+		assert_eq!(next, Some(at("2026-09-28T13:00:00Z")));
+	}
+
+	#[test]
+	fn an_offset_left_out_is_none_and_a_negative_one_is_refused() {
+		let without = EXAMPLE.replace(r#""offset": 0,"#, "");
+		assert!(Table::parse(&without).unwrap().jobs.iter().all(|job| job.offset == 0));
+		assert!(Table::parse(&EXAMPLE.replacen(r#""offset": 0"#, r#""offset": -60"#, 1)).is_err());
 	}
 
 	#[test]

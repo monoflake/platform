@@ -3,6 +3,7 @@
 # spec/architecture/deployer.md, "One deployer, on one node".
 version = 1
 name = "deployer"
+display_name = "Worker Deployer"
 placements = ["tyo"]
 
 [container]

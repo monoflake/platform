@@ -1,6 +1,6 @@
-# Installed on the machine by hand, not by this repository -- see spec/architecture/apt.md,
-# "The work stays on the machine, in two units". apt starts this unit over systemd's D-Bus API;
-# when it runs is cron's, per spec/architecture/cron.md.
+# Installed on the machine by infra's `mise run node`, not by host -- see
+# spec/architecture/apt.md, "The work stays on the machine, in two units". apt starts this unit
+# over systemd's D-Bus API; when it runs is cron's, per spec/architecture/cron.md.
 [Unit]
 Description=apt-get full-upgrade, asked for by apt over D-Bus
 

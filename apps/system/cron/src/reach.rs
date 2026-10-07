@@ -124,6 +124,7 @@ mod tests {
 			catch_up: CatchUp::Once,
 			overlap: Overlap::Skip,
 			timeout: 300,
+			offset: 0,
 			reach,
 		}
 	}
