@@ -35,6 +35,7 @@ impl Reader for Fake {
 				deployed_at: "2026-10-06T12:00:00Z".into(),
 				running: true,
 				held: false,
+				rollout: "beside".into(),
 			};
 			Reading { events: Ok(vec![]), apps: Ok(vec![app]), machine: Ok(serde_json::json!({})) }
 		})

@@ -119,6 +119,7 @@ mod tests {
 			deployed_at: "2026-10-05T08:00:00Z".into(),
 			running: true,
 			held: false,
+			rollout: "replace".into(),
 		}
 	}
 

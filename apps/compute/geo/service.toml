@@ -4,6 +4,10 @@ version = 1
 name = "geo"
 display_name = "Geolocation"
 placements = ["rdu", "tyo", "nrt", "hnd", "buf", "gvx", "bru"]
+# Its data is in its image, so a new version starts beside the old. See infra's
+# spec/architecture/host.md, "An app chooses how it is rolled out, and keeping nothing earns a
+# gapless one".
+rollout = "beside"
 
 [container]
 # The tropics sit at 23.44 degrees; see spec/architecture/services.md, "A service keeps one port".

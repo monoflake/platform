@@ -78,6 +78,9 @@ pub struct App {
 	pub deployed_at: String,
 	pub running: bool,
 	pub held: bool,
+	/// How a new version takes its place, a word of host's: infra's spec/architecture/host.md, "An
+	/// app chooses how it is rolled out, and keeping nothing earns a gapless one".
+	pub rollout: String,
 }
 
 /// An app as host's `/api/apps` lists it.
@@ -90,6 +93,13 @@ struct Shown {
 	running: bool,
 	#[serde(default)]
 	held: bool,
+	/// Absent from a host older than the field, whose every app is replaced.
+	#[serde(default = "replaced")]
+	rollout: String,
+}
+
+fn replaced() -> String {
+	"replace".into()
 }
 
 #[derive(Deserialize)]
@@ -99,8 +109,8 @@ struct Named {
 
 impl From<Shown> for App {
 	fn from(shown: Shown) -> Self {
-		let Shown { manifest, image, deployed_at, running, held } = shown;
-		Self { name: manifest.name, image, deployed_at, running, held }
+		let Shown { manifest, image, deployed_at, running, held, rollout } = shown;
+		Self { name: manifest.name, image, deployed_at, running, held, rollout }
 	}
 }
 
@@ -189,7 +199,7 @@ mod tests {
 			"previous": { "manifest": { "version": 1, "name": "geo", "placements": ["rdu"] },
 				"image": "geo:1b2c3d4" },
 			"deployed_at": "2026-10-05T08:00:00Z", "held": false, "running": true,
-			"restorable": true, "platform": false, "driver": false },
+			"restorable": true, "platform": false, "driver": false, "rollout": "beside" },
 		{ "manifest": { "version": 1, "name": "apt", "placements": ["rdu"] },
 			"image": "apt:1b2c3d4", "previous": null, "deployed_at": "2026-10-01T08:00:00Z",
 			"held": true, "running": false, "restorable": false, "platform": false, "driver": false }
@@ -214,6 +224,7 @@ mod tests {
 		assert!(serde_json::to_value(&events[0]).unwrap().get("snapshot").is_none());
 	}
 
+	/// geo's as host writes it, and apt's as a host older than `rollout` does, which is replaced.
 	#[test]
 	fn reads_each_app_without_its_declaration() {
 		let apps: Vec<App> = opened(APPS.as_bytes()).unwrap();
@@ -226,6 +237,7 @@ mod tests {
 					deployed_at: "2026-10-05T08:00:00Z".into(),
 					running: true,
 					held: false,
+					rollout: "beside".into(),
 				},
 				App {
 					name: "apt".into(),
@@ -233,9 +245,12 @@ mod tests {
 					deployed_at: "2026-10-01T08:00:00Z".into(),
 					running: false,
 					held: true,
+					rollout: "replace".into(),
 				},
 			]
 		);
+		// Passed on to the console as a word.
+		assert_eq!(serde_json::to_value(&apps[0]).unwrap()["rollout"], "beside");
 	}
 
 	#[test]

@@ -23,6 +23,9 @@ REPOS = ROOT.parent
 NODES = REPOS / "infra/nodes/nodes.toml"
 APP = "database"
 SERVICE = ROOT / "apps/data/database/service.toml"
+# Where its image is built, which a deploy by hand names. See spec/architecture/databases.md,
+# "Upgrades are pinned, reported, and rolled by hand".
+REPOSITORY = "monoflake/platform"
 # Named by hand; see spec/architecture/databases.md, "Where it runs, and which one writes".
 DEFAULT_PRIMARY = "tyo"
 PORT = 5432
@@ -196,7 +199,12 @@ def env(arguments, dry):
 			f"database: {MADE['WALG_LIBSODIUM_KEY']} is new: keep a copy beside secrets.json somewhere a"
 			" lost laptop does not take with it, or no backup can be read"
 		)
-	print(f"database: a change applies on the next deploy; `mise run //repos/infra:node redeploy <node> {APP}`")
+	print(
+		f"database: a change applies on the next deploy;"
+		f" `mise run //repos/infra:node redeploy <node> {APP}`. A run deploys none of it,"
+		f" so a node's first, or a new version, is by hand, standbys first:\n"
+		f"  mise run //repos/infra:node deploy <node> --run <run> --repository {REPOSITORY} --app {APP}"
+	)
 
 
 def manifest_of(app):
