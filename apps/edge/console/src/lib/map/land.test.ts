@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { build, projectionOf } from '../../../scripts/project.ts';
+import { build, DOT, PITCH, projectionOf } from '../../../scripts/project.ts';
 import { NODES } from '../server/nodes.ts';
 import * as generated from './land.generated.ts';
 import { PLACES } from './places.ts';
@@ -21,10 +21,44 @@ describe('the generated map', () => {
 		expect(generated.WIDTH).toBe(built.width);
 		expect(generated.HEIGHT).toBe(built.height);
 		expect(generated.PROJECTION).toEqual(built.projection);
-		expect(generated.LAND).toBe(built.land);
-		expect(generated.GRATICULE).toBe(built.graticule);
+		expect(generated.DOT).toBe(DOT);
+		expect(generated.PITCH).toBe(PITCH);
+		expect(generated.DOTS).toBe(built.dots);
+		expect(generated.LOCATIONS).toEqual(built.locations);
 		expect(generated.POINTS).toEqual(built.points);
 		expect(generated.ARCS).toEqual(built.arcs);
+	});
+
+	it('gives the globe each node where nodes.ts has it', () => {
+		expect(generated.LOCATIONS).toEqual(NODES);
+	});
+
+	it('draws land as runs of whole dots on the grid, inside the plot', () => {
+		const runs = [...generated.DOTS.matchAll(/M([\d.]+) ([\d.]+)h(\d+)/g)];
+		expect(runs.length).toBeGreaterThan(100);
+		expect(runs.map((run) => run[0]).join('')).toBe(generated.DOTS);
+		for (const [, x, y, length] of runs) {
+			expect((Number(x) - (PITCH - DOT) / 2) % PITCH).toBe(0);
+			expect((Number(y) - PITCH / 2) % PITCH).toBe(0);
+			expect((Number(length) - DOT) % PITCH).toBe(0);
+			expect(Number(x) + Number(length)).toBeLessThan(generated.WIDTH);
+			expect(Number(y)).toBeLessThan(generated.HEIGHT);
+		}
+	});
+
+	it('keeps every link one curve inside the plot, off the antimeridian', () => {
+		expect(generated.ARCS.length).toBeGreaterThan(0);
+		for (const { from, to, d } of generated.ARCS) {
+			const numbers = d.match(/-?[\d.]+/g)?.map(Number) ?? [];
+			expect(d).toMatch(/^M[\d. ]+Q[\d. ]+$/);
+			expect(numbers).toHaveLength(6);
+			const [x1, , , , x2] = numbers;
+			expect([x1, x2]).toEqual([generated.POINTS[from][0], generated.POINTS[to][0]]);
+			for (const [index, value] of numbers.entries()) {
+				expect(value).toBeGreaterThanOrEqual(0);
+				expect(value).toBeLessThanOrEqual(index % 2 ? generated.HEIGHT : generated.WIDTH);
+			}
+		}
 	});
 
 	it('keeps every node inside the plot', () => {
