@@ -30,7 +30,8 @@ ACTIONS = {"block", "redirect", "skip"}
 ZONES = sorted(p.name for p in RULES.iterdir() if p.is_dir() and p.name != "all")
 # Every `${NAME}` an expression may hold, filled from the environment at sync time: the probe's
 # token -- see spec/architecture/probe.md, "The probe passes the limits it is checking through with
-# a token of its own" -- and the internal gateway's, see spec/architecture/gateway.md.
+# a token of its own" -- and the one a node's private side forwards with, see
+# spec/architecture/gateway.md.
 PLACEHOLDERS = {"PROBE_TOKEN", "INTERNAL_TOKEN"}
 PLACEHOLDER = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
 
