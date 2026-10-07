@@ -31,10 +31,10 @@ whose `placements` names `workers` and whose directory holds a `wrangler.jsonc` 
 `worker-<app>` artifact, built once for every architecture: `wrangler deploy --dry-run --outdir`'s
 bundle, the static assets when it has them, its `service.toml`, and the `wrangler.jsonc` resolved to
 `wrangler.json` with `no_bundle` set and its paths pointed into the artifact. Each repository's
-`.mise/tasks/worker` writes it, the twin of `.mise/tasks/image`, so a local run and CI cannot
-package differently. The deployer runs `wrangler deploy --config wrangler.json` in that directory.
-An app that also has a `Dockerfile` and names nodes gets `deploy-<app>-<arch>` as well; the console
-is the first with both.
+`.mise/tasks/worker` writes it -- the platform's the twin of its `.mise/tasks/image` -- so a local
+run and CI cannot package differently. The deployer runs `wrangler deploy --config wrangler.json` in that directory.
+An app that also has a `Dockerfile` and names nodes gets `deploy-<app>-<arch>` as well, as the
+gateway and `quota` once did.
 
 **wrangler rather than the API**: the API's assets path is a manifest, an upload session, base64
 buckets and a completion token, with custom domains on an endpoint of their own, and the docs do
@@ -93,7 +93,7 @@ Workers it owns.
 **One Worker at a time, never two pipelines live for one.** CI starts emitting its artifact; for the
 console and the gateway the deployer first runs it dry for a push or two, recorded and deploying
 nothing; then the Worker's Git integration is disconnected and its name joins `WORKER_OWNERS`. The
-order: the console, then `aka`, `cdn` and `quota`, then the gateway, and the site last, after its
+order: the console, web's, then `aka`, `cdn` and `quota`, then the gateway, and the site last, after its
 D1 moves to Postgres.
 
 **`hook` stays on Cloudflare's Git integration.** It carries the deployer's own notices, and a hook

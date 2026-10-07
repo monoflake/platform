@@ -17,9 +17,6 @@
 		"apps/delivery/aka",
 		"apps/edge/hook",
 		"apps/edge/gateway",
-		"apps/edge/quota",
-		// SvelteKit's, with its generated `$types` and its Worker's globals: its own svelte-check
-		// checks it, as web's tsconfig.json leaves apps/site to its own.
-		"apps/edge/console"
+		"apps/edge/quota"
 	]
 }

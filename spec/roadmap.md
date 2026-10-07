@@ -21,7 +21,7 @@ divide the work is the workspace's `spec/planning.md`.
   signed log that relays gossip and a returning node catches up on --
   [architecture/relay.md](architecture/relay.md).
 - **One console shows every node and the deploy pipeline, served at the edge and live through the
-  nearest node** -- [architecture/console.md](architecture/console.md).
+  nearest node** -- web's `spec/architecture/console.md`, now that it is a services app there.
 - **Apps are deployed through the platform, Workers carrying only their stateless part**: the
   platform deploys an app's Worker and hands it every binding, state coming from its own Postgres,
   buckets, scheduler and WebSocket services on the nodes -- the workspace's

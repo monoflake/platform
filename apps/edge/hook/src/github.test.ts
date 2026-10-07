@@ -42,7 +42,7 @@ describe('runToDeploy', () => {
 	});
 
 	it('names a successful run of the deploy workflow on main', () => {
-		expect(DEPLOY_SOURCES).toEqual(['monoflake/infra', 'monoflake/platform']);
+		expect(DEPLOY_SOURCES).toEqual(['monoflake/infra', 'monoflake/platform', 'canmi21/web']);
 		const named = { run: 42, repository: 'monoflake/platform' };
 		expect(runToDeploy(run)).toEqual(named);
 		expect(runToDeploy(without({ event: 'schedule' }))).toEqual(named);

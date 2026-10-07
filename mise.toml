@@ -64,11 +64,6 @@ description = "Run the API host, which reaches whichever services are running"
 dir = "apps/edge/gateway"
 run = "pnpm run dev"
 
-[tasks.dev-console]
-description = "Run the console against the real nodes through their remote bindings, writing its read token first if missing"
-dir = "apps/edge/console"
-run = "(test -f .dev.vars || pnpm run vars) && pnpm run dev"
-
 [tasks.dev-cdn]
 description = "Run the CDN worker against the local objects tree"
 dir = "apps/delivery/cdn"

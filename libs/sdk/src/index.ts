@@ -21,11 +21,16 @@ import {
 import { INFRA, PANEL_PORT } from '@monoflake/urls';
 
 /**
- * The repositories whose deploy runs the hook passes to the nodes, as GitHub names them: the two
- * whose apps a node runs. Each node holds its own list too, in `DEPLOY_SOURCES`, and that one
- * decides. See infra's spec/architecture/host.md, "The machine pulls; nothing pushes into it".
+ * The repositories whose deploy runs the hook passes on, as GitHub names them: the two whose apps
+ * a node runs, and web, whose Workers the deployer deploys. Each receiver holds its own list too,
+ * and that one decides. See infra's spec/architecture/host.md, "The machine pulls; nothing pushes
+ * into it", and spec/architecture/deployer.md, "Admitting a repository".
  */
-export const DEPLOY_SOURCES: readonly string[] = ['monoflake/infra', 'monoflake/platform'];
+export const DEPLOY_SOURCES: readonly string[] = [
+	'monoflake/infra',
+	'monoflake/platform',
+	'canmi21/web',
+];
 
 /**
  * The repository the platform's own hosts are built from, which their robots.txt and security.txt
@@ -146,7 +151,7 @@ const INTERNAL = {
 	// Vercel".
 	status: { canonical: 'https://status.canmi.app', mirror: 'https://canmi.vercel.app' },
 	// The console, every node at once, and the live socket it hands to the nearest node's relay.
-	// See spec/architecture/console.md.
+	// See web's spec/architecture/console.md.
 	console: 'https://console.canmi.app',
 } as const;
 
