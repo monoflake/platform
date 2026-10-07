@@ -34,7 +34,9 @@ image carries no copy, so a new node's first minutes ask for one.
 into memory.** GeoLite2 is such a file already. GeoNames is not -- tab-separated text -- so the image
 build turns it into the place index `whereabouts` reads: points sorted along a space-filling curve,
 positions as fixed-point integers in records of one width, names in one table the records point
-into, and the time zones the same way. A lookup touches the few pages around the point it asks for.
+into, and the time zones' polygons the same way, with each polygon's bounds. A lookup touches the
+few pages around the point it asks for. **Nothing large is parsed into the heap, whatever its
+size**: memory a lookup holds for good is a cost every node pays, and a mapped page is not.
 
 **Which pages stay in memory is the kernel's to decide.** A page asked for is read from disk the
 first time and kept while it is asked again; one nobody asks is the first the kernel takes back when
