@@ -85,8 +85,22 @@ region, both short fixed codes; whatever is left is the service, hyphens and all
 ### Providers are short codes, registered here
 
 A provider is two or three lowercase letters, chosen once when the provider is first used and never
-reused: `int` for our own machines, `cf` for Cloudflare, `vcl` for Vercel. A new provider is a row
-added to the registry before anything is placed on it. The registry is `GATEWAY` in `libs/sdk`, beside
+reused, and shown to a person by its name in Title Case, which the registry holds beside it:
+
+| Code  | Name        | Supplies                                                           |
+| ----- | ----------- | ------------------------------------------------------------------ |
+| `int` | Self-hosted | what runs on our nodes, here; as a failure domain, hardware we own |
+| `cf`  | Cloudflare  | Workers and the edge                                               |
+| `vcl` | Vercel      | its deployments                                                    |
+| `oci` | Oracle      | machines in its cloud, as a failure domain                         |
+| `az`  | Azure       | the same                                                           |
+| `rkn` | RackNerd    | the same                                                           |
+
+The same codes name a node's failure domain in infra's `nodes/nodes.toml` -- infra's
+`spec/architecture/nodes.md`, "Three things are declared, and the rest is measured" -- since both
+answer whose an account is. A deployment on a node is `int` whichever account the node is under:
+there the question is who runs the service, and the account is the node's own fact. A new provider
+is a row added to the registry before anything is placed on it. The registry is `GATEWAY` in `libs/sdk`, beside
 the hostnames themselves, and the regions are kept in the same place; the gateway reads a
 deployment's hostname against it in `apps/edge/gateway/src/profile.ts`.
 

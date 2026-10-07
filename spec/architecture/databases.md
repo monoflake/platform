@@ -45,7 +45,10 @@ and `rdu` are its standbys.
   infra's `spec/architecture/host.md`, "A role is asked for by the app and granted by the node". A
   standby reaches the primary there, and so does every app.
 - **Failing over is a command, not a decision the cluster makes**: the operator promotes a standby,
-  names it primary on all three, and the apps' URLs follow. The old primary is stopped first when it
+  names it primary on all three, and the apps' URLs follow. Named no node, the command takes the
+  standbys in their order: while the primary answers, the first that streams and is less than a WAL
+  segment behind; when it does not, the first that has received as much as any other that answers,
+  so nothing one standby holds is lost by promoting another. The old primary is stopped first when it
   can be reached, and the standby has replayed all it wrote before it is promoted, so there is never
   a moment with two primaries taking writes; rehearsed from `tyo` to `buf` and back on 2026-10-07. Each node reads which node is primary
   from its configuration, so a primary that returns after being replaced is told what it now is
@@ -64,6 +67,12 @@ protocol, so the program answers for it:
   backup in the last day and a half. That is reported, never failed on: host reads health only to
   call a deploy good, and a store that is down must not make the database undeployable, so a
   database that answers is `200` whatever its backups are doing.
+- **`/jobs/amcheck`**, which `cron` calls on every node at 14:00 UTC, checks every btree index of
+  every database with `bt_index_check`, on the standbys as on the primary: an index out of order, or
+  a page whose checksum fails, fails the job and names the index, which is how a standby that has
+  gone wrong where the primary has not -- an emulated one first -- is found. An index locked by
+  something else, or in conflict with replay, is passed over and said so, never failed. The
+  extension is made on the primary and reaches the standbys by replication.
 - **The backup job fails while archiving has stopped**, before it takes a base backup, so the run
   `cron` records in the ledger says so -- the one place a failure is already seen.
 - **On a first start** it makes the cluster on the primary, and on a standby copies the primary with
