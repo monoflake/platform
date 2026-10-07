@@ -32,7 +32,7 @@
 </script>
 
 <div class="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-	<Card title="Mounts" description="Each filesystem against its size">
+	<Card title="Mounts">
 		<div class="flex flex-col gap-5">
 			{#each disk.mounts as mount (mount.path)}
 				<Meter label={mount.path} value={mount.used} limit={mount.total} format={bytes} />
@@ -41,12 +41,7 @@
 			{/each}
 		</div>
 	</Card>
-	<Card
-		title="By app"
-		description={partial
-			? `${partial} walks ran out of time, so their figures are at least what is shown`
-			: "Each app's data directory, walked whole"}
-	>
+	<Card title="By app">
 		<BarChart
 			categories={used.map((app) => (app.partial ? `${app.app}, at least` : app.app))}
 			series={[
@@ -64,7 +59,7 @@
 	</Card>
 </div>
 
-<Card title="Snapshots" description="Taken of an app's data, newest first" flush>
+<Card title="Snapshots" flush>
 	<DataTable
 		rows={disk.snapshots}
 		{columns}

@@ -9,6 +9,7 @@
 	import Filters from '#lib/events/filters.svelte';
 	import { search } from '#lib/events/query.js';
 	import { type } from '#lib/style.js';
+	import Silent from '#lib/ui/silent.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
 	import type { PageProps } from './$types';
@@ -45,23 +46,14 @@
 	);
 </script>
 
-<PageHeader title="Events" description="Every event every node has kept, newest first." />
+<PageHeader title="Events" />
 
-{#if failed.length}
-	<div class="mb-4 flex flex-col gap-1 p-4 {stylex.attrs(type.body).class}" role="status">
-		{#each failed as [name, failure] (name)}
-			<p>
-				<span class={stylex.attrs(type.mono).class}>{name}</span> is unreachable and its events are
-				missing: {failure.message}
-			</p>
-		{/each}
-	</div>
-{/if}
+<Silent nodes={failed.map(([node, failure]) => ({ node, message: failure.message }))} />
 
 <div class="mb-4"><Filters query={data.query} nodes={data.nodes} options={data.options} /></div>
 
 <div class="mb-4 grid gap-4 xl:grid-cols-2">
-	<Card title="Events per hour" description="By node, over the last 24 hours, in your time zone.">
+	<Card title="Events per hour">
 		<Heatmap
 			rows={data.nodes.map((node) => ({ key: node, label: node }))}
 			times={data.charts.hours.times}
@@ -71,7 +63,7 @@
 			label="Events per hour per node over the last 24 hours"
 		/>
 	</Card>
-	<Card title="Outcomes per day" description="Over the last 7 days.">
+	<Card title="Outcomes per day">
 		<StackedBar
 			categories={data.charts.days.times.map((at) => dayLabel.format(new Date(at * 1000)))}
 			series={bars}

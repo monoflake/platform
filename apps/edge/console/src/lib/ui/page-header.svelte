@@ -1,57 +1,55 @@
 <script lang="ts">
 	/**
-	 * The top of a page: where it sits, what it is, a line on it, and what can be done from here.
-	 * Modeled on infra's apps/deploy/panel/src/lib/page-header.svelte.
+	 * The top of a page: its title, a state beside it, a line of facts under it, and on the right
+	 * what scopes the page -- the time range first, when the page loaded one.
 	 */
 	import * as stylex from '@stylexjs/stylex';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-	import { duration } from '@canmi/kit/tokens/vocabulary.stylex';
 	import type { Snippet } from 'svelte';
 	import { type } from '../style.ts';
+	import Segmented, { RANGES, type Range } from './segmented.svelte';
 
 	let {
 		title,
 		description,
-		back,
+		range,
+		query = '',
 		meta,
 		actions,
 	}: {
 		title: string;
+		/** Facts about the thing, never a sentence about the page. */
 		description?: string;
-		/** The page this one sits under. */
-		back?: { href: string; label: string };
+		/** The span the page is drawn over, when it is drawn over one: each other span is a link. */
+		range?: Range;
+		/** The page's query, kept as each span's link changes only `range`. */
+		query?: string;
 		/** Beside the title: a state, a count. */
 		meta?: Snippet;
-		/** On the right: the filters that scope the page, a time range first. */
+		/** On the right, after the range. */
 		actions?: Snippet;
 	} = $props();
 
-	const styles = stylex.create({
-		back: {
-			color: { default: 'var(--color-text-muted)', ':hover': 'var(--color-text-strong)' },
-			transitionProperty: 'color',
-			transitionDuration: duration.base,
-		},
-	});
+	const options = $derived(
+		RANGES.map((one) => {
+			const asked = new URLSearchParams(query);
+			asked.set('range', one.key);
+			return { key: one.key, label: one.label, href: `?${asked}` };
+		}),
+	);
 </script>
 
-<header class="mb-6 flex flex-col gap-3">
-	{#if back}
-		<a
-			href={back.href}
-			class="inline-flex w-fit items-center gap-1 {stylex.attrs(type.soft, styles.back).class}"
-		>
-			<ChevronLeft size={14} strokeWidth={2} />{back.label}
-		</a>
-	{/if}
-	<div class="flex flex-wrap items-end justify-between gap-4">
-		<div class="flex min-w-0 flex-col gap-1">
-			<div class="flex flex-wrap items-center gap-3">
-				<h1 class={stylex.attrs(type.title).class}>{title}</h1>
-				{@render meta?.()}
-			</div>
-			{#if description}<p class={stylex.attrs(type.soft).class}>{description}</p>{/if}
+<header class="flex flex-wrap items-center justify-between gap-4 pb-2">
+	<div class="flex min-w-0 flex-col gap-1">
+		<div class="flex flex-wrap items-center gap-3">
+			<h1 class={stylex.attrs(type.title).class}>{title}</h1>
+			{@render meta?.()}
 		</div>
-		{#if actions}<div class="flex flex-wrap items-center gap-2">{@render actions()}</div>{/if}
+		{#if description}<p class={stylex.attrs(type.soft).class}>{description}</p>{/if}
 	</div>
+	{#if range || actions}
+		<div class="flex flex-wrap items-center gap-2">
+			{#if range}<Segmented {options} value={range} label="Time range" />{/if}
+			{@render actions?.()}
+		</div>
+	{/if}
 </header>

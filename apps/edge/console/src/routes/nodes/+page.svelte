@@ -6,7 +6,7 @@
 	import { live } from '#lib/live.svelte.js';
 	import WorldMap from '#lib/map/world-map.svelte';
 	import { Clock } from '#lib/nodes/clock.svelte.js';
-	import { CODES, FACTS } from '#lib/nodes/facts.js';
+	import { CODES } from '#lib/nodes/facts.js';
 	import { nodeRow, type NodeRow } from '#lib/nodes/machine.js';
 	import NodesTable from '#lib/nodes/nodes-table.svelte';
 	import { LIVENESS } from '#lib/nodes/words.js';
@@ -49,11 +49,10 @@
 		const total = read.reduce((sum, one) => sum + (one.total ?? 0), 0);
 		return total ? read.reduce((sum, one) => sum + one.used, 0) / total : undefined;
 	});
-	const domains = new Set(Object.values(FACTS).map((facts) => facts.domain)).size;
 	const unread = $derived(Object.keys(data.failures).length);
 </script>
 
-<PageHeader title="Nodes" description="{CODES.length} machines in {domains} failure domains">
+<PageHeader title="Nodes">
 	{#snippet meta()}
 		{#each counts as { state, count } (state)}
 			{#if count}<Badge tone={LIVENESS[state].tone}>{count} {LIVENESS[state].word}</Badge>{/if}
@@ -66,7 +65,7 @@
 {/if}
 
 <div class="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]">
-	<Card title="Where they are" description="Hover a node for its card; a click opens it">
+	<Card title="Where they are">
 		<WorldMap states={held.view.nodes} now={clock.now} compact />
 	</Card>
 	<div class="grid grid-cols-2 gap-4">
@@ -83,12 +82,9 @@
 	</div>
 </div>
 
-<Card
-	title="Every node"
-	description={unread
-		? `${unread} of ${CODES.length} did not answer the server; their rows hold what the relay does`
-		: 'Live from the relay; CPU over the last hour, a point a minute'}
-	flush
->
+<Card title="Every node" flush>
+	{#snippet aside()}
+		{#if unread}<Badge tone="warn">{unread} of {CODES.length} not answering</Badge>{/if}
+	{/snippet}
 	<NodesTable {rows} trends={data.trends} now={clock.now} />
 </Card>

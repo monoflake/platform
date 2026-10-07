@@ -44,15 +44,17 @@
 
 	const styles = stylex.create({
 		figure: {
-			fontSize: '3rem', // unnamed: the hero step, which the ladder stops below
+			fontSize: '1.875rem', // unnamed: the figure step, which the ladder stops below
 			fontWeight: weight.semibold,
+			letterSpacing: '-0.03em', // unnamed: a display size drawn tight
 			lineHeight: line.none,
+			fontVariantNumeric: 'tabular-nums',
 			color: 'var(--color-text-strong)',
 		},
 	});
 </script>
 
-<div class="flex min-w-0 flex-col gap-3 px-5 pt-4 pb-4 {stylex.attrs(surfaces.card).class}">
+<div class="flex min-w-0 flex-col gap-2 px-5 pt-4 pb-4 {stylex.attrs(surfaces.card).class}">
 	<span class={stylex.attrs(type.label).class}>{label}</span>
 	<div class="flex items-baseline gap-1.5">
 		<span class={stylex.attrs(styles.figure).class}>{shown}</span>

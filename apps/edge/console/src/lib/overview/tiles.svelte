@@ -28,17 +28,17 @@
 
 <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
 	<StatTile label="Nodes live" value={heard} unit="of {TOTAL}" />
-	<StatTile label="Apps running" value={apps.running} unit="of {apps.total}, across every node" />
+	<StatTile label="Apps running" value={apps.running} unit="of {apps.total}" />
 	<StatTile
-		label="Deploys, last 24 h"
+		label="Deploys, 24 h"
 		value={figures.day}
-		unit={figures.rate === null ? 'none finished' : `${percent(figures.rate)} succeeded`}
+		unit={figures.rate === null ? undefined : `${percent(figures.rate)} succeeded`}
 		trend={daily.slice(-14)}
 	/>
 	<StatTile
-		label="Median deploy"
-		value={figures.median === null ? 'None' : seconds(figures.median)}
-		unit={figures.p95 === null ? '30 days' : `p95 ${seconds(figures.p95)}, 30 days`}
+		label="Median deploy, 30 d"
+		value={figures.median === null ? '–' : seconds(figures.median)}
+		unit={figures.p95 === null ? undefined : `p95 ${seconds(figures.p95)}`}
 		trend={figures.durations}
 	/>
 </div>

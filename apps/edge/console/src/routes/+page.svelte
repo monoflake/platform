@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as stylex from '@stylexjs/stylex';
+	import { page } from '$app/state';
 	import Card from '#lib/card.svelte';
 	import BarChart from '#lib/chart/bar-chart.svelte';
 	import Heatmap from '#lib/chart/heatmap.svelte';
@@ -9,11 +10,12 @@
 	import WorldMap from '#lib/map/world-map.svelte';
 	import { liveness, type Liveness } from '#lib/node.js';
 	import FleetCharts from '#lib/overview/fleet-charts.svelte';
-	import MissingNote from '#lib/overview/missing-note.svelte';
 	import NowPanel from '#lib/overview/now-panel.svelte';
 	import Tiles from '#lib/overview/tiles.svelte';
 	import { type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
+	import PageHeader from '#lib/ui/page-header.svelte';
+	import Silent from '#lib/ui/silent.svelte';
 	import Unread from '#lib/unread.svelte';
 	import type { PageProps } from './$types';
 
@@ -40,7 +42,20 @@
 		data.deploys.missing.length === Object.keys(PLACES).length ? 'No node answered.' : undefined,
 	);
 	const percent = (value: number) => `${Math.round(value)}%`;
+	/** Every read's silent nodes, said once at the top rather than under each chart. */
+	const silent = $derived([
+		...new Map(
+			[...data.fleet.missing, ...data.deploys.missing, ...data.heat.missing].map((one) => [
+				one.node,
+				one,
+			]),
+		).values(),
+	]);
 </script>
+
+<PageHeader title="Overview" range={data.range} query={page.url.search} />
+
+<Silent nodes={silent} />
 
 {#if !data.cluster.ok}
 	<Unread what="The cluster" failure={data.cluster.failure} />
@@ -50,19 +65,18 @@
 
 <div class="grid gap-4 xl:grid-cols-3">
 	<div class="flex min-w-0 xl:col-span-2 [&>section]:flex-1">
-		<Card
-			title="Nodes"
-			description="Each by when it was last heard; the lines are the relay's mesh"
-		>
+		<Card title="Nodes">
+			{#snippet aside()}
+				<div class="flex flex-wrap items-center gap-2">
+					{#each STATES as one (one.state)}
+						<Badge tone={one.tone}>{counts[one.state]} {one.word.toLowerCase()}</Badge>
+					{/each}
+				</div>
+			{/snippet}
 			<WorldMap states={live.view.nodes} now={live.now} />
-			<div class="mt-3 flex flex-wrap items-center gap-2">
-				{#each STATES as one (one.state)}
-					<Badge tone={one.tone}>{counts[one.state]} {one.word.toLowerCase()}</Badge>
-				{/each}
-			</div>
 		</Card>
 	</div>
-	<Card title="Now" description="Runs still going, and the latest to fail">
+	<Card title="Now">
 		<NowPanel {live} seed={data.moving} />
 	</Card>
 </div>
@@ -71,8 +85,7 @@
 
 <section class="flex flex-col gap-3">
 	<h2 class={stylex.attrs(type.heading).class}>Deploys</h2>
-	<MissingNote missing={data.deploys.missing} what="Runs" />
-	<Card title="Deploys per day" description="Runs started each day, the last 30 days">
+	<Card title="Deploys per day">
 		<BarChart
 			categories={data.deploys.daily.labels}
 			series={[
@@ -89,7 +102,7 @@
 		/>
 	</Card>
 	<div class="grid gap-4 xl:grid-cols-2">
-		<Card title="Placements by node" description="How each node's placements ended, 30 days">
+		<Card title="Placements by node">
 			<StackedBar
 				categories={outcomes.nodes}
 				orientation="horizontal"
@@ -112,8 +125,7 @@
 				label="Placements per node by outcome, the last 30 days"
 			/>
 		</Card>
-		<Card title="CPU by the hour" description="Each node's average, the last 24 hours">
-			<MissingNote missing={data.heat.missing} what="Hours" />
+		<Card title="CPU by the hour">
 			<Heatmap
 				rows={data.heat.rows}
 				times={data.heat.times}

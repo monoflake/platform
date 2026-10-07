@@ -43,7 +43,7 @@
 			transitionProperty: 'color, border-color',
 			transitionDuration: duration.base,
 		},
-		chosen: { color: 'var(--color-text-strong)', borderBottomColor: 'var(--color-accent)' },
+		chosen: { color: 'var(--color-text-strong)', borderBottomColor: 'var(--color-text-strong)' },
 	});
 </script>
 

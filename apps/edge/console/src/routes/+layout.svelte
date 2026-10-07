@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount, untrack, type Snippet } from 'svelte';
 	import { dev } from '$app/env';
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Live, provideLive } from '#lib/live.svelte.js';
 	import { sectionOf } from '#lib/sections.js';
 	import Sidebar from '#lib/sidebar.svelte';
 	import TopBar from '#lib/top-bar.svelte';
-	import { RANGES } from '#lib/ui/segmented.svelte';
 	import { setTimeZone } from '#lib/ui/time-zone.js';
 	import '../app.css';
 	import type { LayoutData } from './$types';
@@ -45,13 +45,14 @@
 	// On mount, not in an effect: an effect reruns on what it reads, reopening the socket.
 	onMount(() => live.start());
 
+	/** The page scrolls inside `main`, so a new path starts at its top as the window would. */
+	let scroller: HTMLElement | undefined = $state();
+	afterNavigate(({ from, to }) => {
+		if (from?.url.pathname !== to?.url.pathname) scroller?.scrollTo({ top: 0 });
+	});
+
 	const section = $derived(sectionOf(page.url.pathname));
 	const detail = $derived(page.params.node ?? page.params.run ?? page.params.app);
-	/** A page drawn over a span says so by loading `range`; the top bar then offers the others. */
-	const range = $derived(RANGES.find((one) => one.key === page.data.range)?.key);
-	const title = $derived(
-		typeof page.data.title === 'string' ? page.data.title : (section?.label ?? 'Console'),
-	);
 </script>
 
 <svelte:head>
@@ -60,12 +61,14 @@
 	<title>{section ? `${section.label} · Console` : 'Console'}</title>
 </svelte:head>
 
-<div class="flex min-h-screen">
-	<Sidebar current={section} {live} />
-	<main class="min-w-0 flex-1">
-		<TopBar {title} {section} {detail} {range} query={page.url.search} />
-		<div class="mx-auto flex w-full max-w-[90rem] flex-col gap-6 px-8 py-7">
-			{@render children()}
-		</div>
-	</main>
-</div>
+<!-- Three fixed regions, and only the page scrolls. See spec/architecture/console.md. -->
+<Sidebar current={section} />
+<TopBar {section} {detail} {live} />
+<main
+	bind:this={scroller}
+	class="fixed top-14 right-0 bottom-0 left-60 overflow-y-auto overscroll-contain"
+>
+	<div class="mx-auto flex w-full max-w-[90rem] flex-col gap-6 px-8 pt-8 pb-12">
+		{@render children()}
+	</div>
+</main>

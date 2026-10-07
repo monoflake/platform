@@ -70,7 +70,7 @@
 		{/if}
 	{:else if data.view.tab === 'events' && data.events}
 		{#if data.events.read.ok}
-			<Card title="Events" description="Newest first, every app on this node" flush>
+			<Card title="Events" flush>
 				<NodeEvents
 					events={data.events.read.data}
 					newer={data.view.before === undefined

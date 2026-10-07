@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as stylex from '@stylexjs/stylex';
+	import { page } from '$app/state';
 	import { drifts, latest, lines, merge, placements, total } from '#lib/apps/apps.js';
 	import HistoryTable from '#lib/apps/history-table.svelte';
 	import StateBadge from '#lib/apps/state-badge.svelte';
@@ -11,7 +12,6 @@
 	import { surfaces, type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
-	import Segmented, { RANGES } from '#lib/ui/segmented.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
 	import Unread from '#lib/unread.svelte';
 	import type { PageProps } from './$types';
@@ -19,7 +19,6 @@
 	let { data }: PageProps = $props();
 
 	const zone = timeZone();
-	const options = RANGES.map(({ key, label }) => ({ key, label, href: `?range=${key}` }));
 
 	const held = $derived(data.cluster.ok ? placements(data.order, data.cluster.data, data.app) : []);
 	const running = $derived(held.filter((one) => one.state === 'running').length);
@@ -48,7 +47,8 @@
 
 <PageHeader
 	title={data.app}
-	back={{ href: '/apps', label: 'Apps' }}
+	range={data.range}
+	query={page.url.search}
 	description={images.map(shortImage).join(', ')}
 >
 	{#snippet meta()}
@@ -58,9 +58,6 @@
 			</Badge>
 			{#if drift}<Badge tone="warn">Image drift, {images.length} images</Badge>{/if}
 		{/if}
-	{/snippet}
-	{#snippet actions()}
-		<Segmented {options} value={data.range} label="Range" />
 	{/snippet}
 </PageHeader>
 

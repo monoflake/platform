@@ -57,18 +57,16 @@ describe('segmented on the server', () => {
 });
 
 describe('page header on the server', () => {
-	it('writes the title, the way back, and what sits beside them', () => {
+	it('writes the title, its facts, and what sits beside them', () => {
 		const { body } = render(PageHeader, {
 			props: {
 				title: 'web',
 				description: 'The site',
-				back: { href: '/apps', label: 'Apps' },
 				meta: words('Running'),
 				actions: words('Range'),
 			},
 		});
 		expect(body).toContain('<h1');
-		expect(body).toContain('href="/apps"');
 		expect(body).toContain('The site');
 		expect(body).toContain('<span>Running</span>');
 		expect(body).toContain('<span>Range</span>');

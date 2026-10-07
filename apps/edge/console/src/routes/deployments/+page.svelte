@@ -12,6 +12,7 @@
 	import { live } from '#lib/live.svelte.js';
 	import type { Node } from '#lib/server/nodes.js';
 	import { surfaces, type } from '#lib/style.js';
+	import Silent from '#lib/ui/silent.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
 	import Tabs from '#lib/ui/tabs.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
@@ -39,24 +40,9 @@
 	const seconds = (ms: number | null) => (ms === null ? '-' : duration(ms / 1000));
 </script>
 
-<PageHeader
-	title="Deployments"
-	description="Every CI run the nodes hold, and where each node is with it."
-/>
+<PageHeader title="Deployments" />
 
-{#if missing.length}
-	<div
-		class="flex flex-col gap-1 p-4 {stylex.attrs(surfaces.empty, type.body).class}"
-		role="status"
-	>
-		{#each missing as [name, failure] (name)}
-			<p>
-				<span class={stylex.attrs(type.mono).class}>{name}</span> did not answer, so its part of
-				every run is unknown: {failure.message}
-			</p>
-		{/each}
-	</div>
-{/if}
+<Silent nodes={missing.map(([node, failure]) => ({ node, message: failure.message }))} />
 
 <div class="grid grid-cols-2 gap-4 xl:grid-cols-5">
 	<StatTile label="Runs, last 24 h" value={day} />
@@ -69,24 +55,13 @@
 	<StatTile label="Deploying now" value={going} />
 </div>
 
-<Card
-	title="Runs per day"
-	description="The last {data.days} days in your time zone, by how each run ended."
->
+<Card title="Runs per day">
 	<StackedBar
 		categories={bars.categories}
 		series={bars.series}
 		label="Runs per day over the last {data.days} days, by state"
 	/>
 </Card>
-
-<div class="flex flex-col gap-1 p-4 {stylex.attrs(surfaces.empty).class}">
-	<h2 class={stylex.attrs(type.name).class}>Building on GitHub</h2>
-	<p class={stylex.attrs(type.soft).class}>
-		Runs still queued or building on CI are not shown: the hook keeps only a successful completion
-		today, so a run appears here once a node starts on it.
-	</p>
-</div>
 
 <section class="flex min-w-0 flex-col">
 	<Tabs

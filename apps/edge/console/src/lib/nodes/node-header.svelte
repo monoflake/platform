@@ -58,12 +58,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<PageHeader
-		title={row.code}
-		description={line}
-		back={{ href: '/nodes', label: 'Nodes' }}
-		{actions}
-	>
+	<PageHeader title={row.code} description={line} {actions}>
 		{#snippet meta()}
 			<Badge tone={said.tone}>{said.word}</Badge>
 			<Badge tone="quiet">{ROLES[row.role]}</Badge>

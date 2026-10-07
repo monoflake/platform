@@ -3,8 +3,33 @@
 @layer properties, theme, base, components, utilities, priority1, priority2, priority3, priority4, priority5, priority6, priority7, overrides;
 @import 'tailwindcss';
 @import '@canmi/kit/theme/palettes/nord.css';
+@import '@canmi/kit/theme/palettes/mono.css';
 @import '@canmi/kit/tokens/interaction.css';
 @source '.';
+
+/* Black and white for now: mono's dark values under the names the console draws with, Nord keeping
+   the series. Which palette feeds these names is open -- see spec/issues/console.md. */
+[data-theme='dark'] {
+	--color-ground: var(--color-paper);
+	--color-sunken: var(--color-paper);
+	--color-surface: var(--color-page);
+	--color-raised: var(--color-paper-hover);
+	--color-selected: var(--color-native-selected);
+	--color-line: var(--color-border);
+	--color-line-strong: var(--color-border-strong);
+	--color-text-faint: var(--color-text-soft);
+	--color-primary: var(--color-blue);
+	--color-good: var(--color-green);
+	--color-warn: var(--color-amber);
+	--color-danger: var(--color-red);
+	--color-busy: var(--color-blue);
+	--color-note: var(--color-blue-ink);
+}
+
+/* Over mono's own `html` rule: every region is fixed, so the document shows only its ground. */
+html {
+	background-color: var(--color-ground);
+}
 
 @theme {
 	--font-sans: ui-sans-serif, system-ui, sans-serif;
@@ -14,6 +39,13 @@
 /* What carries no class: the document, a selection, the scrollbars, and a table's elements, which
    are too many to class one by one. Written to lose to anything a component says. */
 @layer base {
+	/* The page does not scroll: only the console's main region does. */
+	html,
+	body {
+		overflow: hidden;
+		overscroll-behavior: none;
+	}
+
 	body {
 		background-color: var(--color-ground);
 		color: var(--color-text);
@@ -46,12 +78,10 @@
 	th {
 		padding: 0.625rem 1.25rem;
 		border-bottom: 1px solid var(--color-line);
-		color: var(--color-text-faint);
-		font-size: 0.6875rem;
-		font-weight: 500;
-		letter-spacing: 0.06em;
+		color: var(--color-text-muted);
+		font-size: 0.8125rem;
+		font-weight: 400;
 		text-align: left;
-		text-transform: uppercase;
 		white-space: nowrap;
 	}
 

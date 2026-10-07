@@ -14,6 +14,7 @@
 	import type { Node } from '#lib/server/nodes.js';
 	import { surfaces, tone, type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
+	import Silent from '#lib/ui/silent.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
 	import type { PageProps } from './$types';
@@ -53,22 +54,13 @@
 	const failures = $derived(run?.placements.filter((one) => one.outcome === 'failed') ?? []);
 </script>
 
-<PageHeader
-	title="Run #{data.run}"
-	description={summary}
-	back={{ href: '/deployments', label: 'Deployments' }}
->
+<PageHeader title="Run #{data.run}" description={summary}>
 	{#snippet meta()}
 		{#if state}<Badge tone={TONE[state]}>{said(state)}</Badge>{/if}
 	{/snippet}
 </PageHeader>
 
-{#if missing.length}
-	<p class="p-4 {stylex.attrs(surfaces.empty, type.body).class}" role="status">
-		{missing.join(', ')} did not answer, so {missing.length === 1 ? 'its' : 'their'} part of this run
-		is unknown.
-	</p>
-{/if}
+<Silent nodes={missing.map((node) => ({ node }))} />
 
 {#if !run}
 	<p class="p-4 {stylex.attrs(surfaces.empty, type.soft).class}">
@@ -76,15 +68,11 @@
 		events, so an older run is no longer seen.
 	</p>
 {:else}
-	<Card
-		title="Where each app got to"
-		description="Each app on each node: hover a cell for its reason, click it for the node."
-		flush
-	>
+	<Card title="Where each app got to" flush>
 		<Matrix rows={matrix(run, data.nodes, unknown)} nodes={data.nodes} />
 	</Card>
 
-	<Card title="Timeline" description={SPANS}>
+	<Card title="Timeline">
 		<Timeline
 			tracks={tracks(run, data.nodes)}
 			stages={STAGE_KEYS}
@@ -94,7 +82,7 @@
 	</Card>
 
 	{#if failures.length}
-		<Card title="Failures" description="Where each failed deploy stopped, and why." flush>
+		<Card title="Failures" flush>
 			<ul>
 				{#each failures as one (`${one.node}/${one.app}`)}
 					<li class="flex flex-col gap-1 px-5 py-3 {stylex.attrs(surfaces.listRule).class}">
@@ -112,7 +100,7 @@
 		</Card>
 	{/if}
 
-	<Card title="Events" description="Every event of this run, as each node kept it." flush>
+	<Card title="Events" flush>
 		<Events
 			events={data.events}
 			label="Every event of run #{data.run}, newest first"

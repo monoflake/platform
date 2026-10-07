@@ -1,29 +1,22 @@
 import * as stylex from '@stylexjs/stylex';
-import {
-	border,
-	family,
-	figures,
-	radius,
-	text,
-	tracking,
-	weight,
-} from '@canmi/kit/tokens/vocabulary.stylex';
+import { border, family, figures, radius, text, weight } from '@canmi/kit/tokens/vocabulary.stylex';
 
 /**
- * The console's recipes, on the Nord palette's meanings and the kit's vocabulary: color, type,
+ * The console's recipes, on the palette's semantic names and the kit's vocabulary: color, type,
  * border and radius here, where a thing sits in the markup. See web's
  * spec/architecture/css/layers.md.
  */
 export const surfaces = stylex.create({
-	/** The sidebar, a step below the ground. */
+	/** The sidebar, on the ground and ruled off from the page. */
 	sidebar: {
-		backgroundColor: 'var(--color-sunken)',
+		backgroundColor: 'var(--color-ground)',
 		borderRightWidth: border.hairlinePx,
 		borderRightStyle: 'solid',
 		borderRightColor: 'var(--color-line)',
 	},
 	/** The top bar, ruled off from the page below it. */
 	bar: {
+		backgroundColor: 'var(--color-ground)',
 		borderBottomWidth: border.hairlinePx,
 		borderBottomStyle: 'solid',
 		borderBottomColor: 'var(--color-line)',
@@ -37,9 +30,6 @@ export const surfaces = stylex.create({
 	},
 	/** A slot with nothing in it yet, said plainly rather than filled. */
 	empty: {
-		borderWidth: border.hairlinePx,
-		borderStyle: 'dashed',
-		borderColor: 'var(--color-line-strong)',
 		borderRadius: radius.xl,
 	},
 	rowRule: {
@@ -68,12 +58,13 @@ export const surfaces = stylex.create({
 
 export const type = stylex.create({
 	title: {
-		fontSize: '1.25rem', // unnamed
+		fontSize: '1.5rem', // unnamed
 		fontWeight: weight.semibold,
+		letterSpacing: '-0.02em', // unnamed: a display size drawn tight
 		color: 'var(--color-text-strong)',
 	},
 	heading: {
-		fontSize: text.px15,
+		fontSize: text.px14,
 		fontWeight: weight.semibold,
 		color: 'var(--color-text-strong)',
 	},
@@ -83,19 +74,16 @@ export const type = stylex.create({
 		color: 'var(--color-text-strong)',
 	},
 	body: {
-		fontSize: text.px13,
+		fontSize: text.px14,
 		color: 'var(--color-text)',
 	},
 	soft: {
-		fontSize: text.px12,
+		fontSize: text.px13,
 		color: 'var(--color-text-muted)',
 	},
 	label: {
-		fontSize: text.px11,
-		fontWeight: weight.medium,
-		letterSpacing: tracking.caps,
-		textTransform: 'uppercase',
-		color: 'var(--color-text-faint)',
+		fontSize: text.px13,
+		color: 'var(--color-text-muted)',
 	},
 	figure: {
 		fontSize: text.px13,

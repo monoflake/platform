@@ -43,7 +43,7 @@
 </script>
 
 {#if info}
-	<Card title="Now" description="The meter's latest second, against the machine's totals">
+	<Card title="Now">
 		<div class="grid gap-x-8 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
 			<Meter
 				label="CPU, in cores busy"
@@ -77,11 +77,11 @@
 	{@const drawn = charts.data}
 	<Sync>
 		<div class="grid gap-4 xl:grid-cols-2">
-			<Card title="CPU" description="Percent of all ticks, {grain}">
+			<Card title="CPU">
 				<AreaChart lines={drawn.cpu} ceiling={100} format={share} {...common} />
 			</Card>
 			{#if drawn.cores.rows.length}
-				<Card title="CPU per core" description="Each core's busy share, {grain}">
+				<Card title="CPU per core">
 					<Heatmap
 						rows={drawn.cores.rows}
 						times={drawn.cores.times}
@@ -93,7 +93,7 @@
 					/>
 				</Card>
 			{/if}
-			<Card title="Memory" description="Used and cached apart, swap beside them, {grain}">
+			<Card title="Memory">
 				<AreaChart
 					lines={drawn.memory}
 					bytes
@@ -102,7 +102,7 @@
 					{...common}
 				/>
 			</Card>
-			<Card title="Load" description="Runnable tasks, against the cores there are">
+			<Card title="Load">
 				<AreaChart
 					lines={drawn.load}
 					format={(value) => value.toFixed(2)}
@@ -110,14 +110,14 @@
 					{...common}
 				/>
 			</Card>
-			<Card title="Network" description="Bytes a second through interfaces that leave the machine">
+			<Card title="Network">
 				<AreaChart lines={drawn.network} bytes format={rate} {...common} />
 			</Card>
-			<Card title="Disk" description="Bytes a second read and written, whole disks">
+			<Card title="Disk">
 				<AreaChart lines={drawn.disk} bytes format={rate} {...common} />
 			</Card>
 			{#if drawn.temperature.length}
-				<Card title="Temperature" description="Each thermal zone, the band its lowest to highest">
+				<Card title="Temperature">
 					<AreaChart
 						lines={drawn.temperature}
 						format={(value) => `${value.toFixed(1)} °C`}

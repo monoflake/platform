@@ -1,69 +1,94 @@
 <script lang="ts">
 	/**
-	 * The page's title, or on a detail page the section it sits under and the thing it is about;
-	 * and on the right the time range, when the page loaded one. The range is a link per span, so
-	 * choosing one reloads the page's data before it has even hydrated.
+	 * Where the reader is, the section down to the thing open; and on the right whether the
+	 * console is live, how many nodes it hears and through which one. Fixed right of the sidebar.
 	 */
 	import * as stylex from '@stylexjs/stylex';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
-	import { duration } from '@canmi/kit/tokens/vocabulary.stylex';
+	import { duration, text } from '@canmi/kit/tokens/vocabulary.stylex';
+	import type { Live } from './live.svelte.ts';
+	import { PLACES } from './map/places.ts';
+	import { liveness } from './node.ts';
 	import type { Section } from './sections.ts';
-	import { surfaces, type } from './style.ts';
-	import Segmented, { RANGES, type Range } from './ui/segmented.svelte';
+	import { surfaces, tone, type } from './style.ts';
+	import Badge from './ui/badge.svelte';
+	import { CONTRACT } from './wire.ts';
 
-	let {
-		title,
-		section,
-		detail,
-		range,
-		query,
-	}: {
-		title: string;
-		section?: Section;
-		detail?: string;
-		/** The span the page is drawn over, when it is drawn over one. */
-		range?: Range;
-		/** The page's query, kept as each range's link changes only `range`. */
-		query: string;
-	} = $props();
+	let { section, detail, live }: { section?: Section; detail?: string; live: Live } = $props();
 
-	const options = $derived(
-		RANGES.map((one) => {
-			const asked = new URLSearchParams(query);
-			asked.set('range', one.key);
-			return { key: one.key, label: one.label, href: `?${asked}` };
-		}),
+	const WORD = { connecting: 'Connecting', live: 'Live', polling: 'Polling' } as const;
+	const TONE = { connecting: 'quiet', live: 'good', polling: 'warn' } as const;
+	const TOTAL = Object.keys(PLACES).length;
+	const heard = $derived(
+		Object.values(live.view.nodes).filter((held) => liveness(held.heard_at, live.now) === 'live')
+			.length,
+	);
+	const through = $derived(
+		[
+			live.view.via && `Through ${live.view.via}`,
+			live.mode === 'polling' && 'every 5 s',
+			live.failure && `last poll failed: ${live.failure}`,
+		]
+			.filter(Boolean)
+			.join(', '),
 	);
 
 	const styles = stylex.create({
 		crumb: {
 			color: { default: 'var(--color-text-muted)', ':hover': 'var(--color-text-strong)' },
+			fontSize: text.px14,
 			transitionProperty: 'color',
 			transitionDuration: duration.base,
+		},
+		here: {
+			color: 'var(--color-text-strong)',
+			fontSize: text.px14,
+		},
+		slash: {
+			color: 'var(--color-line-strong)',
 		},
 	});
 </script>
 
+{#snippet slash()}
+	<svg
+		class={stylex.attrs(styles.slash).class}
+		width="16"
+		height="16"
+		viewBox="0 0 16 16"
+		fill="none"
+		aria-hidden="true"
+	>
+		<path d="M10.5 2.5 5.5 13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+	</svg>
+{/snippet}
+
 <header
-	class="sticky top-0 z-20 flex h-14 items-center justify-between gap-4 px-8 backdrop-blur {stylex.attrs(
+	class="fixed top-0 right-0 left-60 z-30 flex h-14 items-center justify-between gap-4 px-8 {stylex.attrs(
 		surfaces.bar,
 	).class}"
 >
-	{#if detail && section}
-		<nav aria-label="Breadcrumb" class="flex min-w-0 items-center gap-1.5">
-			<a href={section.href} class={stylex.attrs(type.title, styles.crumb).class}>{section.label}</a
-			>
-			<span class="inline-flex {stylex.attrs(type.soft).class}" aria-hidden="true"
-				><ChevronRight size={16} strokeWidth={2} /></span
-			>
-			<h1 class="truncate {stylex.attrs(type.mono, type.title).class}" aria-current="page">
-				{detail}
-			</h1>
-		</nav>
-	{:else}
-		<h1 class="truncate {stylex.attrs(type.title).class}">{title}</h1>
-	{/if}
-	{#if range}
-		<Segmented {options} value={range} label="Time range" />
-	{/if}
+	<nav aria-label="Breadcrumb" class="flex min-w-0 items-center gap-2">
+		{#if section}
+			{#if detail}
+				<a href={section.href} class={stylex.attrs(styles.crumb).class}>{section.label}</a>
+				{@render slash()}
+				<span class="truncate {stylex.attrs(styles.here, type.mono).class}" aria-current="page"
+					>{detail}</span
+				>
+			{:else}
+				<span class={stylex.attrs(styles.here).class} aria-current="page">{section.label}</span>
+			{/if}
+		{/if}
+	</nav>
+	<div class="flex items-center gap-3">
+		{#if live.view.refused !== undefined}
+			<Badge tone="warn">Relay contract {live.view.refused}, console {CONTRACT}</Badge>
+		{/if}
+		<span class="inline-flex items-center gap-2 {stylex.attrs(type.soft).class}" title={through}>
+			<span class="size-2 rounded-full bg-current {stylex.attrs(tone[TONE[live.mode]]).class}"
+			></span>
+			{WORD[live.mode]}
+			<span class={stylex.attrs(type.figure).class}>{heard}/{TOTAL}</span>
+		</span>
+	</div>
 </header>

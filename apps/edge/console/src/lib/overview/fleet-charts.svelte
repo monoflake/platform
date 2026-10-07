@@ -11,7 +11,6 @@
 	import { bytes } from '../format.ts';
 	import { type } from '../style.ts';
 	import type { Missing } from './fleet.ts';
-	import MissingNote from './missing-note.svelte';
 
 	let {
 		fleet,
@@ -33,14 +32,6 @@
 		span: string;
 	} = $props();
 
-	const WORDS: Record<string, string> = {
-		'1h': 'the last hour, a point a minute',
-		'6h': 'the last 6 hours, a point an hour',
-		'24h': 'the last 24 hours, a point an hour',
-		'7d': 'the last 7 days, a point an hour',
-		'30d': 'the last 30 days, a point an hour',
-	};
-	const over = $derived(WORDS[span] ?? '');
 	/** Every node failed, which is a failure to read rather than a quiet span. */
 	const unread = $derived(
 		fleet.cpu.length === 0 && fleet.missing.length ? 'No node answered.' : undefined,
@@ -55,15 +46,11 @@
 </script>
 
 <section class="flex flex-col gap-3">
-	<div class="flex flex-wrap items-baseline justify-between gap-2">
-		<h2 class={stylex.attrs(type.heading).class}>Fleet</h2>
-		<p class={stylex.attrs(type.soft).class}>Every node, {over}; marks are runs started</p>
-	</div>
-	<MissingNote missing={fleet.missing} what="Series" />
+	<h2 class={stylex.attrs(type.heading).class}>Fleet</h2>
 	<Sync>
 		<div class="grid gap-4 xl:grid-cols-2">
 			{#each charts as chart (chart.title)}
-				<Card title={chart.title} description={chart.what}>
+				<Card title={chart.title}>
 					<AreaChart
 						lines={chart.lines}
 						{since}

@@ -72,10 +72,7 @@
 	{/if}
 {/snippet}
 
-<PageHeader
-	title="Apps"
-	description="Every app on every node. Memory and processor use are on each app's own page."
-/>
+<PageHeader title="Apps" />
 
 {#if !data.cluster.ok}
 	<Unread what="The cluster" failure={data.cluster.failure} />
