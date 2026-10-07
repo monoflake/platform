@@ -3,7 +3,7 @@
 version = 1
 name = "geo"
 display_name = "IP Geolocation"
-placements = ["rdu", "tyo"]
+placements = ["rdu", "tyo", "nrt", "hnd", "buf"]
 
 [container]
 # The tropics sit at 23.44 degrees; see spec/architecture/services.md, "A service keeps one port".
