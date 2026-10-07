@@ -3,6 +3,7 @@
 	import * as stylex from '@stylexjs/stylex';
 	import { moment } from '../chart/series.ts';
 	import { shortImage } from '../format.ts';
+	import { scoped } from '../scope/context.ts';
 	import { type } from '../style.ts';
 	import DataTable from '../table/data-table.svelte';
 	import type { Column } from '../table/table.ts';
@@ -12,12 +13,14 @@
 
 	let { events }: { events: NodeEvent[] } = $props();
 
+	const { to } = scoped();
+
 	const zone = timeZone();
 	const TONES = { running: 'busy', succeeded: 'good', failed: 'bad', skipped: 'quiet' } as const;
 	const tone = (outcome: string) => TONES[outcome as keyof typeof TONES] ?? 'quiet';
 
 	const runOf = (event: NodeEvent) =>
-		event.source.run === undefined ? undefined : `/deployments/${event.source.run}`;
+		event.source.run === undefined ? undefined : to(`/deployments/${event.source.run}`);
 
 	const columns: Column<NodeEvent>[] = [
 		{

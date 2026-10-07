@@ -9,6 +9,7 @@
 	import StatTile from '#lib/chart/stat-tile.svelte';
 	import { moment } from '#lib/chart/series.js';
 	import { bytes, shortImage } from '#lib/format.js';
+	import { scoped } from '#lib/scope/context.js';
 	import { surfaces, type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
 	import { Landed } from '#lib/ui/landed.svelte.js';
@@ -21,6 +22,7 @@
 	let { data }: PageProps = $props();
 
 	const zone = timeZone();
+	const { node: toNode } = scoped();
 
 	// The cluster kept while another span is read; both dropped for another app.
 	const cluster = new Landed(
@@ -121,7 +123,7 @@
 			{#each held as one (one.node)}
 				<div class="flex flex-col gap-2 px-5 py-4 {stylex.attrs(surfaces.card).class}">
 					<div class="flex items-center justify-between gap-2">
-						<a href="/nodes/{one.node}" class={stylex.attrs(type.name).class}>{one.node}</a>
+						<a href={toNode(one.node)} class={stylex.attrs(type.name).class}>{one.node}</a>
 						<StateBadge state={one.state} />
 					</div>
 					<span class={stylex.attrs(type.mono).class} title={one.app.image}

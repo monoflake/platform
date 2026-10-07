@@ -5,12 +5,15 @@
 	 * away. A node that placed the app nowhere says so; one that did not answer is unknown.
 	 */
 	import * as stylex from '@stylexjs/stylex';
+	import { scoped } from '../scope/context.ts';
 	import type { Node } from '../server/nodes.ts';
 	import { type } from '../style.ts';
 	import Badge from '../ui/badge.svelte';
 	import { said, TONE, type Cell } from './state.ts';
 
 	let { rows, nodes }: { rows: Cell[][]; nodes: Node[] } = $props();
+
+	const { node: toNode } = scoped();
 
 	const hint = (cell: Cell) =>
 		cell.placement?.detail ??
@@ -35,7 +38,7 @@
 						{#if cell.mark === 'absent'}
 							<span class={stylex.attrs(type.soft, styles.none).class}>Not placed</span>
 						{:else}
-							<a href="/nodes/{cell.node}" title={hint(cell)}>
+							<a href={toNode(cell.node)} title={hint(cell)}>
 								<Badge tone={TONE[cell.mark]}>{said(cell.mark, cell.placement?.stage)}</Badge>
 							</a>
 						{/if}

@@ -2,12 +2,15 @@
 	/** The apps one node runs, as its host lists them, each leading to the app's page. */
 	import { ago, bytes, shortImage } from '../format.ts';
 	import type { AppDetail } from '../host.ts';
+	import { scoped } from '../scope/context.ts';
 	import type { Tone } from '../style.ts';
 	import DataTable from '../table/data-table.svelte';
 	import type { Column } from '../table/table.ts';
 	import Badge from '../ui/badge.svelte';
 
 	let { apps, now }: { apps: AppDetail[]; now: number } = $props();
+
+	const { app: toApp } = scoped();
 
 	const name = (app: AppDetail) => app.manifest.name;
 	const STATES: Record<string, { word: string; tone: Tone }> = {
@@ -65,7 +68,7 @@
 	rows={apps}
 	{columns}
 	key={name}
-	href={(app) => `/apps/${encodeURIComponent(name(app))}`}
+	href={(app) => toApp(name(app))}
 	label="Apps on this node"
 	sort={{ key: 'name', direction: 'ascending' }}
 	empty="This node runs no apps"

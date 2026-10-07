@@ -1,5 +1,10 @@
 # Console: every node at once, served at the edge
 
+**It is leaving the platform.** The console is a services app, and it moves to web, where it and
+infra's per-node panel become one app with a build for the edge and a build for each node -- web's
+`spec/roadmap.md`, "One console runs the system, and it is this layer's". What follows holds until
+it has moved, and moves with it.
+
 Where the platform's view of itself is going, and none of it is built. Each node's own panel shows
 that node -- infra's `spec/architecture/host.md` -- and keeps working when everything above it is
 down; the console is the view of all of them, and of what CI is building, for everyday use.
@@ -33,7 +38,17 @@ a chart library drawing on a canvas would paint nothing until the browser ran it
 **The shell is three fixed regions, and only the page scrolls.** The sidebar runs down the whole
 left edge with its rule, the top bar sits right of it alone, and the page between them is the one
 scrolling element; the document itself never scrolls or bounces. Their sizes are in `rem`, so the
-three keep their proportions as the reader's text size changes. Rules come in two levels: the
+three keep their proportions as the reader's text size changes. The top bar carries the scope on its left, the page's
+name at its center and the page's actions on its right -- creating something, and whatever comes
+later -- and nothing else; whether the console is live sits at the foot of the sidebar.
+
+**The console is read whole, or in one of three scopes, the layers the workspace's
+`spec/architecture/layers.md` draws.** `All` is the default and has no segment of its own -- `/`,
+`/nodes`, `/apps` -- and shows everything together; the scopes narrow it: `Infra` -- host, keeper, the panel and what else bootstraps
+a node, and the nodes themselves -- then `Platform`, the services every layer above leans on, and
+`Services`, what the author deploys on top. A scope is the address's first segment, so a link
+keeps it, and every page shows what belongs to the scope it is read in; the nodes are infra's, and
+shown under `Infra` and `All`. An app's scope is the layer whose repository built it. Rules come in two levels: the
 shell's own a step fainter (`--color-line-faint`), the page's cards and tables at `--color-line`. A page says what it is in its
 title and the facts beside it -- never a sentence about the page, under it or under a card. Its
 `<title>` is the one name the page is about and nothing around it -- `Nodes`, `tyo`, `#123`, an

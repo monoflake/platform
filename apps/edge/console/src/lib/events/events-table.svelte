@@ -5,6 +5,7 @@
 	 */
 	import * as stylex from '@stylexjs/stylex';
 	import { moment } from '../chart/series.ts';
+	import { scoped } from '../scope/context.ts';
 	import type { FleetEvent } from '../server/fleet.ts';
 	import { type, type Tone } from '../style.ts';
 	import DataTable from '../table/data-table.svelte';
@@ -14,6 +15,8 @@
 	import { took } from './duration.ts';
 
 	let { events }: { events: FleetEvent[] } = $props();
+
+	const { to } = scoped();
 
 	const zone = timeZone();
 	let open: string[] = $state([]);
@@ -71,8 +74,9 @@
 
 {#snippet sourceCell(event: FleetEvent)}
 	{#if event.source.kind === 'run' && event.source.run !== undefined}
-		<a href="/deployments/{event.source.run}" class={stylex.attrs(styles.link, type.mono).class}
-			>run #{event.source.run}</a
+		<a
+			href={to(`/deployments/${event.source.run}`)}
+			class={stylex.attrs(styles.link, type.mono).class}>run #{event.source.run}</a
 		>
 	{:else}
 		{event.source.kind}

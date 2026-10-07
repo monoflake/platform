@@ -7,6 +7,7 @@
 	import * as stylex from '@stylexjs/stylex';
 	import { duration } from '../chart/numbers.ts';
 	import { moment } from '../chart/series.ts';
+	import { scoped } from '../scope/context.ts';
 	import type { Node } from '../server/nodes.ts';
 	import type { Run } from '../server/runs.ts';
 	import { type } from '../style.ts';
@@ -23,6 +24,8 @@
 		unknown,
 		now,
 	}: { runs: Run[]; nodes: Node[]; unknown: ReadonlySet<Node>; now: number } = $props();
+
+	const { to } = scoped();
 
 	const zone = timeZone();
 	const started = (run: Run) => Date.parse(run.first_start);
@@ -93,7 +96,7 @@
 	rows={runs}
 	{columns}
 	key={(run) => String(run.run)}
-	href={(run) => `/deployments/${run.run}`}
+	href={(run) => to(`/deployments/${run.run}`)}
 	label="Runs the nodes hold, newest first"
 	empty="No node holds an event from a CI run."
 />

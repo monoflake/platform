@@ -5,6 +5,9 @@
 	import { type AppRow, rowsOf } from '#lib/apps/apps.js';
 	import NodeChip from '#lib/apps/node-chip.svelte';
 	import { shortImage } from '#lib/format.js';
+	import Empty from '#lib/scope/empty.svelte';
+	import { scoped } from '#lib/scope/context.js';
+	import { shows } from '#lib/scope/scope.js';
 	import { type } from '#lib/style.js';
 	import DataTable from '#lib/table/data-table.svelte';
 	import type { Column } from '#lib/table/table.js';
@@ -18,6 +21,7 @@
 	let { data }: PageProps = $props();
 
 	const zone = timeZone();
+	const { app: toApp } = scoped();
 	const count = (rows: AppRow[], pick: (row: AppRow) => number) =>
 		rows.reduce((sum, row) => sum + pick(row), 0);
 	const TILES = ['Apps', 'Running instances', 'Held or stopped', 'Drifting'];
@@ -87,25 +91,29 @@
 	{#if !read.ok}
 		<Unread what="The cluster" failure={read.failure} />
 	{:else}
-		{@const rows = rowsOf(data.order, read.data)}
-		<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-			<StatTile label="Apps" value={rows.length} />
-			<StatTile label="Running instances" value={count(rows, (row) => row.running)} />
-			<StatTile
-				label="Held or stopped"
-				value={count(rows, (row) => row.placements.length - row.running)}
-			/>
-			<StatTile label="Drifting" value={rows.filter((row) => row.drift).length} />
-		</div>
+		{@const rows = rowsOf(data.order, read.data).filter((row) => shows(data.view, row.name))}
+		{#if rows.length === 0}
+			<Empty view={data.view} />
+		{:else}
+			<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+				<StatTile label="Apps" value={rows.length} />
+				<StatTile label="Running instances" value={count(rows, (row) => row.running)} />
+				<StatTile
+					label="Held or stopped"
+					value={count(rows, (row) => row.placements.length - row.running)}
+				/>
+				<StatTile label="Drifting" value={rows.filter((row) => row.drift).length} />
+			</div>
 
-		<DataTable
-			{rows}
-			{columns}
-			key={(row) => row.name}
-			href={(row) => `/apps/${encodeURIComponent(row.name)}`}
-			label="Apps across the fleet"
-			sort={{ key: 'name', direction: 'ascending' }}
-			empty="No node runs an app"
-		/>
+			<DataTable
+				{rows}
+				{columns}
+				key={(row) => row.name}
+				href={(row) => toApp(row.name)}
+				label="Apps across the fleet"
+				sort={{ key: 'name', direction: 'ascending' }}
+				empty="No node runs an app"
+			/>
+		{/if}
 	{/if}
 {/await}

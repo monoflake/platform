@@ -1,36 +1,22 @@
 <script lang="ts">
 	/**
-	 * Where the reader is, the section down to the thing open; and on the right whether the
-	 * console is live, how many nodes it hears and through which one. Fixed right of the sidebar.
+	 * The view on the left, the page's name at the center whatever the sides hold, and the page's
+	 * actions on the right. Fixed right of the sidebar; see spec/architecture/console.md.
 	 */
 	import * as stylex from '@stylexjs/stylex';
 	import { duration, text } from '@canmi/kit/tokens/vocabulary.stylex';
-	import type { Live } from './live.svelte.ts';
-	import { PLACES } from './map/places.ts';
-	import { liveness } from './node.ts';
+	import type { Snippet } from 'svelte';
+	import Switcher from './scope/switcher.svelte';
+	import { type View, within } from './scope/scope.ts';
 	import type { Section } from './sections.ts';
-	import { surfaces, tone, type } from './style.ts';
-	import Badge from './ui/badge.svelte';
-	import { CONTRACT } from './wire.ts';
+	import { surfaces, type } from './style.ts';
 
-	let { section, detail, live }: { section?: Section; detail?: string; live: Live } = $props();
-
-	const WORD = { connecting: 'Connecting', live: 'Live', polling: 'Polling' } as const;
-	const TONE = { connecting: 'quiet', live: 'good', polling: 'warn' } as const;
-	const TOTAL = Object.keys(PLACES).length;
-	const heard = $derived(
-		Object.values(live.view.nodes).filter((held) => liveness(held.heard_at, live.now) === 'live')
-			.length,
-	);
-	const through = $derived(
-		[
-			live.view.via && `Through ${live.view.via}`,
-			live.mode === 'polling' && 'every 5 s',
-			live.failure && `last poll failed: ${live.failure}`,
-		]
-			.filter(Boolean)
-			.join(', '),
-	);
+	let {
+		view,
+		section,
+		detail,
+		actions,
+	}: { view: View; section?: Section; detail?: string; actions?: Snippet } = $props();
 
 	const styles = stylex.create({
 		crumb: {
@@ -51,7 +37,7 @@
 
 {#snippet slash()}
 	<svg
-		class={stylex.attrs(styles.slash).class}
+		class="shrink-0 {stylex.attrs(styles.slash).class}"
 		width="16"
 		height="16"
 		viewBox="0 0 16 16"
@@ -63,14 +49,19 @@
 {/snippet}
 
 <header
-	class="fixed top-0 right-0 left-60 z-30 flex h-14 items-center justify-between gap-4 px-8 {stylex.attrs(
+	class="fixed top-0 right-0 left-60 z-30 grid h-14 grid-cols-[1fr_auto_1fr] items-center gap-4 px-8 {stylex.attrs(
 		surfaces.bar,
 	).class}"
 >
-	<nav aria-label="Breadcrumb" class="flex min-w-0 items-center gap-2">
+	<div class="flex min-w-0 items-center justify-self-start">
+		<Switcher {view} {section} />
+	</div>
+	<nav aria-label="Breadcrumb" class="flex max-w-[40vw] min-w-0 items-center gap-2">
 		{#if section}
 			{#if detail}
-				<a href={section.href} class={stylex.attrs(styles.crumb).class}>{section.label}</a>
+				<a href={within(view, section.path)} class="shrink-0 {stylex.attrs(styles.crumb).class}"
+					>{section.label}</a
+				>
 				{@render slash()}
 				<span class="truncate {stylex.attrs(styles.here, type.mono).class}" aria-current="page"
 					>{detail}</span
@@ -80,15 +71,7 @@
 			{/if}
 		{/if}
 	</nav>
-	<div class="flex items-center gap-3">
-		{#if live.view.refused !== undefined}
-			<Badge tone="warn">Relay contract {live.view.refused}, console {CONTRACT}</Badge>
-		{/if}
-		<span class="inline-flex items-center gap-2 {stylex.attrs(type.soft).class}" title={through}>
-			<span class="size-2 rounded-full bg-current {stylex.attrs(tone[TONE[live.mode]]).class}"
-			></span>
-			{WORD[live.mode]}
-			<span class={stylex.attrs(type.figure).class}>{heard}/{TOTAL}</span>
-		</span>
+	<div class="flex min-w-0 items-center gap-2 justify-self-end">
+		{@render actions?.()}
 	</div>
 </header>

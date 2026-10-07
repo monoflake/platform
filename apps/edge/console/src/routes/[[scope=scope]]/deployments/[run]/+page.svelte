@@ -11,6 +11,7 @@
 	import { stirring } from '#lib/deployments/stir.js';
 	import { STAGE_KEYS, tracks } from '#lib/deployments/tracks.js';
 	import { live } from '#lib/live.svelte.js';
+	import { scoped } from '#lib/scope/context.js';
 	import type { Node } from '#lib/server/nodes.js';
 	import { surfaces, tone, type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
@@ -24,6 +25,7 @@
 	let { data }: PageProps = $props();
 
 	const zone = timeZone();
+	const { node: toNode } = scoped();
 	const held = live();
 	// Kept while the next poll's read is on its way, and dropped for another run.
 	const read = new Landed(
@@ -102,7 +104,7 @@
 					<li class="flex flex-col gap-1 px-5 py-3 {stylex.attrs(surfaces.listRule).class}">
 						<span class="flex flex-wrap items-center gap-2 {stylex.attrs(type.name).class}">
 							<span class={stylex.attrs(type.mono).class}>{one.app}</span> on
-							<a href="/nodes/{one.node}" class={stylex.attrs(type.mono).class}>{one.node}</a>
+							<a href={toNode(one.node)} class={stylex.attrs(type.mono).class}>{one.node}</a>
 							<span class={stylex.attrs(tone.bad).class}>{said('failed', one.stage)}</span>
 						</span>
 						<span class="whitespace-pre-wrap {stylex.attrs(type.soft).class}"

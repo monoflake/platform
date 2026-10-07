@@ -9,6 +9,7 @@
 	import { duration, radius, text, weight } from '@canmi/kit/tokens/vocabulary.stylex';
 	import { ago } from '../format.ts';
 	import { liveness, readings, running } from '../node.ts';
+	import { scoped } from '../scope/context.ts';
 	import { tone } from '../style.ts';
 	import Segmented from '../ui/segmented.svelte';
 	import type { Held } from '../wire.ts';
@@ -32,6 +33,8 @@
 		/** A small card: no card on hover and no globe. */
 		compact?: boolean;
 	} = $props();
+
+	const { node: toNode } = scoped();
 
 	/** The node under the pointer or holding focus. */
 	let active: string | undefined = $state();
@@ -216,7 +219,7 @@
 
 		{#each nodes as node (node.code)}
 			<a
-				href="/nodes/{node.code}"
+				href={toNode(node.code)}
 				data-node={node.code}
 				data-state={node.state}
 				data-radius={node.radius}

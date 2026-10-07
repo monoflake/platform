@@ -1,5 +1,6 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
+import { viewedAs } from '../scope/context.ts';
 import Matrix from './matrix.svelte';
 import Progress from './progress.svelte';
 import type { Cell, NodeMark } from './state.ts';
@@ -43,5 +44,10 @@ describe('the matrix', () => {
 		expect(body).toContain('Failed loading');
 		expect(body).toContain('Not placed');
 		expect(body).not.toContain('href="/nodes/bru"');
+		const scoped = render(Matrix, {
+			props: { rows, nodes: ['tyo', 'bru'] },
+			context: viewedAs('platform'),
+		});
+		expect(scoped.body).toContain('href="/infra/nodes/tyo"');
 	});
 });

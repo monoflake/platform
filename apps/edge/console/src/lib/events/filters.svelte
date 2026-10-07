@@ -5,6 +5,7 @@
 	 */
 	import * as stylex from '@stylexjs/stylex';
 	import { border, radius, text } from '@canmi/kit/tokens/vocabulary.stylex';
+	import { scoped } from '../scope/context.ts';
 	import { type } from '../style.ts';
 	import { SIZES, type Query } from './query.ts';
 
@@ -17,6 +18,8 @@
 		nodes: readonly string[];
 		options: Record<'app' | 'action' | 'outcome' | 'stage', string[]>;
 	} = $props();
+
+	const { to } = scoped();
 
 	const selects = $derived([
 		{ name: 'node', label: 'Node', values: nodes },
@@ -78,7 +81,7 @@
 	</label>
 	<button type="submit" class="h-8 px-3 {stylex.attrs(styles.field, type.body).class}">Apply</button
 	>
-	<a href="/events" class="h-8 content-center {stylex.attrs(type.soft, styles.clear).class}"
+	<a href={to('/events')} class="h-8 content-center {stylex.attrs(type.soft, styles.clear).class}"
 		>Clear</a
 	>
 </form>

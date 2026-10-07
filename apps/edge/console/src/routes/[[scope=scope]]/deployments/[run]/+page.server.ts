@@ -1,18 +1,21 @@
 import { error } from '@sveltejs/kit';
+import { LIMIT, inView } from '#lib/scope/runs.js';
+import { viewOf } from '#lib/scope/scope.js';
 import { ALL, fleetEvents } from '#lib/server/fleet.js';
 import { edgeOf } from '#lib/server/platform.js';
 import { cluster } from '#lib/server/read.js';
 import { group } from '#lib/server/runs.js';
 import type { PageServerLoad } from './$types';
 
-/** As `runs()` asks: every node's last 500 events, the most host answers for at once. */
-const LIMIT = 500 * ALL.length;
-
-/** The run's events streamed, so the page stands at once; see spec/architecture/console.md. */
+/**
+ * The run's events streamed, so the page stands at once, and only the apps its view shows; see
+ * spec/architecture/console.md.
+ */
 export const load: PageServerLoad = (event) => {
 	const run = Number(event.params.run);
 	if (!Number.isSafeInteger(run) || run <= 0) error(404, `No run is numbered ${event.params.run}.`);
 	const edge = edgeOf(event);
+	const keep = inView(viewOf(event.params.scope));
 	return {
 		cluster: cluster(edge),
 		run,
@@ -20,7 +23,7 @@ export const load: PageServerLoad = (event) => {
 		now: Date.now(),
 		read: fleetEvents(edge, { limit: LIMIT }).then((read) => {
 			const events = read.events.filter(
-				({ source }) => source.kind === 'run' && source.run === run,
+				(one) => one.source.kind === 'run' && one.source.run === run && keep(one),
 			);
 			return { found: group(events).runs[0], events, failures: read.failures };
 		}),

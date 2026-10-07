@@ -5,6 +5,7 @@
 	import Sparkline from '../chart/sparkline.svelte';
 	import { ago, bytes } from '../format.ts';
 	import { ROLES } from '../map/places.ts';
+	import { scoped } from '../scope/context.ts';
 	import { tone, type } from '../style.ts';
 	import DataTable from '../table/data-table.svelte';
 	import type { Column } from '../table/table.ts';
@@ -22,6 +23,8 @@
 		trends: Partial<Record<string, number[]>>;
 		now: number;
 	} = $props();
+
+	const { node: toNode } = scoped();
 
 	const amount = (of: { used: number; total?: number } | undefined) =>
 		of === undefined
@@ -135,7 +138,7 @@
 	{rows}
 	{columns}
 	key={(row) => row.code}
-	href={(row) => `/nodes/${row.code}`}
+	href={(row) => toNode(row.code)}
 	label="Every node"
 	size={10}
 />

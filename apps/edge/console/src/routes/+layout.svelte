@@ -4,9 +4,12 @@
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { Live, provideLive } from '#lib/live.svelte.js';
-	import { sectionOf } from '#lib/sections.js';
+	import { setView } from '#lib/scope/context.js';
+	import { viewOf } from '#lib/scope/scope.js';
+	import { sectionOf, sectionsIn } from '#lib/sections.js';
 	import Sidebar from '#lib/sidebar.svelte';
 	import TopBar from '#lib/top-bar.svelte';
+	import { provideActions } from '#lib/ui/actions.svelte.js';
 	import { setTimeZone } from '#lib/ui/time-zone.js';
 	import '../app.css';
 	import type { LayoutData } from './$types';
@@ -32,6 +35,11 @@
 	}
 
 	const live = provideLive(new Live());
+	const actions = provideActions();
+
+	/** A scope where the address's first segment names one, All where it does not. */
+	const view = $derived(viewOf(page.params.scope));
+	setView(() => view);
 
 	/**
 	 * Every page streams the cluster from its load, and what it read is taken in when it lands,
@@ -58,7 +66,11 @@
 		if (from?.url.pathname !== to?.url.pathname) scroller?.scrollTo({ top: 0 });
 	});
 
-	const section = $derived(sectionOf(page.url.pathname));
+	/** None for a section the view does not show, as Nodes in Services, whose page is a 404. */
+	const section = $derived.by(() => {
+		const one = sectionOf(page.url.pathname);
+		return one && sectionsIn(view).includes(one) ? one : undefined;
+	});
 	const detail = $derived(page.params.node ?? page.params.run ?? page.params.app);
 	/** The one name the page is about, and nothing around it. See spec/architecture/console.md. */
 	const name = $derived(
@@ -73,8 +85,8 @@
 </svelte:head>
 
 <!-- Three fixed regions, and only the page scrolls. See spec/architecture/console.md. -->
-<Sidebar current={section} />
-<TopBar {section} {detail} {live} />
+<Sidebar {view} current={section} {live} />
+<TopBar {view} {section} {detail} actions={actions.current} />
 <main
 	bind:this={scroller}
 	class="fixed top-14 right-0 bottom-0 left-60 overflow-y-auto overscroll-contain"

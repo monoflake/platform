@@ -19,7 +19,10 @@ interface Pool {
 	full: string[];
 }
 
-async function pool(edge: Edge, before: Cursor): Promise<Pool> {
+/** Which events a page counts at all: the scope's own, as the route says. */
+type Keep = (event: FleetEvent) => boolean;
+
+async function pool(edge: Edge, before: Cursor, keep: Keep): Promise<Pool> {
 	const fleet = await fan((name) => {
 		const at = before[name];
 		return read(
@@ -33,7 +36,8 @@ async function pool(edge: Edge, before: Cursor): Promise<Pool> {
 		const answer = fleet[name];
 		if (!answer.ok) out.failures[name] = answer.failure;
 		else {
-			out.events.push(...answer.data.map((event) => ({ ...event, node: name })));
+			const events = answer.data.map((event) => ({ ...event, node: name }));
+			out.events.push(...events.filter(keep));
 			if (answer.data.length >= PER_NODE) out.full.push(name);
 		}
 	}
@@ -41,17 +45,23 @@ async function pool(edge: Edge, before: Cursor): Promise<Pool> {
 }
 
 /** The query at once, and what the nodes answered streamed; see spec/architecture/console.md. */
-export function load(edge: Edge, params: URLSearchParams, zone: string, now = Date.now()) {
+export function load(
+	edge: Edge,
+	params: URLSearchParams,
+	zone: string,
+	keep: Keep = () => true,
+	now = Date.now(),
+) {
 	const query: Query = parseQuery(params, ALL);
-	return { query, nodes: ALL, now, read: gather(edge, query, zone, now) };
+	return { query, nodes: ALL, now, read: gather(edge, query, zone, now, keep) };
 }
 
-async function gather(edge: Edge, query: Query, zone: string, now: number) {
+async function gather(edge: Edge, query: Query, zone: string, now: number, keep: Keep) {
 	const paged = Object.keys(query.before).length > 0;
 	// Both at once: the charts count the newest, the log shows the page asked for.
 	const [newest, older] = await Promise.all([
-		pool(edge, {}),
-		paged ? pool(edge, query.before) : undefined,
+		pool(edge, {}, keep),
+		paged ? pool(edge, query.before, keep) : undefined,
 	]);
 	const shown = older ?? newest;
 	const page = pageOf(shown.events, query, ALL);
