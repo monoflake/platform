@@ -3,7 +3,7 @@
 version = 1
 name = "shot"
 display_name = "Screenshots"
-placements = ["tyo", "buf", "rdu"]
+placements = ["tyo", "rdu"]
 
 [container]
 # 1920 is the width a screen is most often, and the port ends in the zero every service here does.

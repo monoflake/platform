@@ -216,7 +216,7 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 	shot: {
 		placement: 'tyo',
 		binding: 'TYO',
-		nodes: ['TYO', 'BUF', 'RDU'],
+		nodes: ['TYO', 'RDU'],
 		routing: 'ordered',
 		limits: [
 			{
