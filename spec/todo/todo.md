@@ -30,16 +30,14 @@ In order, while the cluster still holds nothing anybody depends on -- what keeps
 operator practiced comes before the first app moves in --
 [../architecture/databases.md](../architecture/databases.md):
 
-1. **`/health` says when backing up has stopped** -- [../issues/scheduling.md](../issues/scheduling.md),
-   "Health does not say that archiving has stopped".
-2. **A failover rehearsed**: a standby promoted, the old primary rewound behind it, and a backup taken
+1. **A failover rehearsed**: a standby promoted, the old primary rewound behind it, and a backup taken
    after it restored -- the timeline history kept on the way,
    [../issues/scheduling.md](../issues/scheduling.md), "A timeline's history can go with the WAL around
    it".
-3. **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
+2. **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
    `spec/todo.md`, "An app may ask to be deployed by hand".
-4. **`ledger` moves in**, the first of "Toward services that keep nothing", below.
-5. **One address on every node for the database**, before a second app is given one: a proxy each
+3. **`ledger` moves in**, the first of "Toward services that keep nothing", below.
+4. **One address on every node for the database**, before a second app is given one: a proxy each
    node runs, which apps connect to and which passes on to whichever node is primary, so a failover or
    a major's switch rewrites no URL and restarts no app.
 
