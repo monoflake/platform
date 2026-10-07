@@ -1,5 +1,5 @@
 //! What the panel reaches on `cron`'s private scope. See spec/architecture/cron.md, "A job is
-//! declared by the service that does it" and "Seen in the panel".
+//! declared by the service that does it" and "Seen in the console".
 
 use crate::scheduler::Shared;
 use axum::Router;

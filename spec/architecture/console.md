@@ -12,8 +12,8 @@ reached over the tailnet instead, by SSH and a task that speaks host's API.
 **The console is a SvelteKit app rendered on Cloudflare, at the edge**, behind Access, so it is as
 near the reader as Cloudflare is, and it holds no data. A page's first paint is rendered by the
 Worker from what the nodes answer: the cluster from the nearest relay's `/state`, and a node's own
-readings from its host's API, reached through that node's VPC binding at the panel's interface with
-the read token. The Worker reads its bindings from `cloudflare:workers`, since SvelteKit's
+readings from its host's API, reached through that node's VPC binding at Caddy's door to host,
+`infra.<suffix>`, with the read token. The Worker reads its bindings from `cloudflare:workers`, since SvelteKit's
 `event.platform` is empty under its Cloudflare adapter, and runs with `nodejs_compat`, which
 SvelteKit's server needs.
 
@@ -42,7 +42,7 @@ later -- and nothing else; whether the console is live sits at the foot of the s
 
 **The console is read whole, or in one of three scopes, the layers the workspace's
 `spec/architecture/layers.md` draws.** `All` is the default and has no segment of its own -- `/`,
-`/nodes`, `/apps` -- and shows everything together; the scopes narrow it: `Infra` -- host, keeper, the panel and what else bootstraps
+`/nodes`, `/apps` -- and shows everything together; the scopes narrow it: `Infra` -- host, keeper, Caddy and what else bootstraps
 a node, and the nodes themselves -- then `Platform`, the services every layer above leans on, and
 `Services`, what the author deploys on top. A scope is the address's first segment, so a link
 keeps it, and every page shows what belongs to the scope it is read in; the nodes are infra's, and
@@ -88,11 +88,11 @@ nearest relay's socket; none of it is in the build.
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its
 machine, and seven of them in one Worker would make the Worker root on all seven. Restarting,
-deploying and rolling back stay on each node's own panel until writes have a path of their own.
+deploying and rolling back are `mise run node` over the tailnet until writes have a path of their
+own.
 
-**It depends on the platform and the panel does not**, which is the arrangement the workspace's
-`spec/architecture/layers.md` allows: a layer below may lean on one above where it works without
-it.
+**It depends on the platform and a node does not**, which is the arrangement the workspace's
+`spec/architecture/layers.md` allows: a node is reached over the tailnet when the console is not.
 
 ## Live, through the nearest node
 

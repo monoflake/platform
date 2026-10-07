@@ -635,7 +635,7 @@ that it is already there; both are the package's, in the lib repository's `spec/
 "Every address has one spelling". Each entry point does the redirecting in its own framework's
 terms, first,
 before any route reads the path -- a Hono middleware on the gateway, in front of the CDN and the alias layer, a
-SvelteKit handle on the site, the status page, the service domains' pages and the panel, each with `trailingSlash = 'ignore'`
+SvelteKit handle on the site, the status page, the service domains' pages and the console, each with `trailingSlash = 'ignore'`
 in its root layout, since SvelteKit's own redirect runs before any handle and would answer first. The CMS is a static build with no
 server to redirect from, so it has none.
 

@@ -11,7 +11,7 @@ import { type Env, TIMEOUT, bindingOf, first, reach } from './edge.ts';
 import { NODES, type Node, type Whereabouts, order } from './nodes.ts';
 
 /**
- * The panel's interface on a node, which passes `/api/*` to host: its own label on the tunnel's
+ * Caddy's door to host on a node, which passes the console's reads on: its label on the tunnel's
  * side, `.app`, which is the side a VPC binding reaches. VPC sends it as the `Host`.
  */
 const LABEL = new URL(URLS.internal.panel).hostname.split('.')[0];

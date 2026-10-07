@@ -3,7 +3,7 @@
 `apps/data/ledger` is the one record of the work the platform's services take on: a capture `shot`
 queued, and later whatever a scheduled job, a conversion or an import runs. A service keeps what it
 needs to do the work; the ledger keeps that it was asked, by whom, how it went, and keeps it for
-good. It is written to by every service and read by the panel, so a task whose result is long gone
+good. It is written to by every service and read by the console, so a task whose result is long gone
 -- a picture rolled out of `shot`'s store -- is still a row somebody can find.
 
 ## A task, and the events that make it up
@@ -72,12 +72,12 @@ reach it over VPC; it is in the gateway's table as a private scope, so a node's 
 send a write on to it from another node with `INTERNAL_TOKEN`, and the public never reaches it. Nothing asks for a
 token, as nothing on the private side does; host is the exception, and the ledger is not host.
 
-## Read by the panel
+## Read by the console
 
 `GET /tasks` lists tasks newest first, a page at a time -- each item carries its `cursor`, and
 `before=<cursor>` of the last one asks for the next page, `limit` at most 500 -- narrowed by `service`, `state`, `kind`, `caller` or `parent`;
 `GET /tasks/{service}/{id}` is one, with its events in `seq` order and the tasks it is the parent
-of. The panel's Tasks page reads these: a list, and a task as a timeline -- each step, how long it
+of. The console's Tasks page is to read these: a list, and a task as a timeline -- each step, how long it
 took, where it failed, what started it and what it started. The answer is always the envelope. A
 query that does not read is forgiven rather than refused: a cursor that does not parse starts from
 the top, a filter naming no known value matches nothing, and a limit out of range is brought into

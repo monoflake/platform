@@ -29,7 +29,7 @@ already does:
   "Reached through a socket".
 - **The services**, from host, which writes `services.json` into `telemetry`'s directory, as it
   writes `schedules.json` for `cron`: at start, and whenever an app is deployed, rolled back,
-  stopped or started. `telemetry` never asks host's API, which stays the panel's.
+  stopped or started. `telemetry` never asks host's API, which stays an operator's.
 - **The work**, from the ledger's counts, `GET /counts` on its private scope: tasks per service and
   hour, and how they ended; never a task's summary or events. See [ledger.md](ledger.md), "Counted
   for telemetry".

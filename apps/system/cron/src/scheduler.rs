@@ -67,7 +67,7 @@ struct Entry {
 #[derive(Default)]
 struct Jobs {
 	entries: BTreeMap<Key, Entry>,
-	/// Held in memory until restart. See "Seen in the panel".
+	/// Held in memory until restart. See "Seen in the console".
 	paused: HashSet<Key>,
 }
 

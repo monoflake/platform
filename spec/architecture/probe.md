@@ -77,7 +77,7 @@ Every result is written three ways:
   as `{ place, results: [{ at, ok, duration_ms, detail }], next }`; and `/health`. Each is the
   envelope, kept a minute by the gateway; a check not declared is `404 no_such_check`.
 - **To the ledger**, for what fails: a failing check opens a task with each check's events on it,
-  so the panel shows a failure's full timeline. Passing rounds are counted, not recorded one by one
+  so the console can show a failure's full timeline. Passing rounds are counted, not recorded one by one
   -- a second's round is far more than the ledger is for. See [ledger.md](ledger.md).
 
 What the page draws from these views -- its bars, their colors and the switch over them -- is

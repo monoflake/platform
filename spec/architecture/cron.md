@@ -22,7 +22,7 @@ timeout = 300           # seconds before a run is called failed
 ```
 
 - **Every time is UTC.** A cron expression is read in UTC, every instant `cron` keeps or answers is
-  UTC, and the panel shows each in the reader's own zone.
+  UTC, and the console shows each in the reader's own zone.
 - `every` takes seconds, minutes and hours (`30s`, `1m`, `6h`); `cron` takes the five-field form.
   Exactly one of the two.
 - A service with jobs is reached one of two ways: through its `[api]` scope, or -- a service that
@@ -31,12 +31,12 @@ timeout = 300           # seconds before a run is called failed
 
 **`cron` answers on its own `[api]` scope, privately**: `GET /schedules` -- every job, its next
 time and its last run -- `POST /schedules/<service>/<name>/run` to run one now, and `.../pause` and `.../resume`, which the
-panel uses. Times are RFC 3339 in UTC.
+console uses. Times are RFC 3339 in UTC.
 
 **host gives `cron` the table**: whenever an app is deployed or removed, host writes every app's
 schedules to `schedules.json` in `cron`'s directory, through a temporary file and a rename, as it
 tells the meter which container is which. `cron` reads it again when it changes; it asks host for
-nothing, and host's API stays the panel's alone.
+nothing, and host's API stays an operator's alone.
 
 ```json
 {
@@ -91,10 +91,10 @@ else, on a timeout, or on no answer, with events for each step and the status an
 - **Overlap**: a run due while the last is still going is skipped, recorded as a skipped run, or
   queued behind it, as the job says.
 
-## Seen in the panel
+## Seen in the console
 
-The panel's Schedules page lists every job -- its service, its schedule, when it runs next, how its
-last run went, read from the ledger -- and runs one now. **Pausing a job is the repository's
-change**, as every setting the panel changes is to be (infra's `spec/architecture/host.md`, "One name inside, and a
+The console's Schedules page is to list every job -- its service, its schedule, when it runs next, how its
+last run went, read from the ledger -- and run one now; it waits on the console's own todo. **Pausing a job is the repository's
+change**, as every setting the console changes is to be (infra's `spec/architecture/host.md`, "One name inside, and a
 domain label outside"): until the bot that writes it exists, a pause is `cron`'s own, held until
 `cron` restarts, and shown as such.

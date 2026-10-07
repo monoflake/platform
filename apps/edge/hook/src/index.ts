@@ -33,7 +33,7 @@ function noticeAt(label: string): string {
 	return `http://${label}.${SUFFIX}/notice`;
 }
 
-/** Where the notice goes on every node, by label: the panel, which passes it on to host, and
+/** Where the notice goes on every node, by label: host's door, which Caddy passes on to host, and
  * keeper. See infra's spec/architecture/host.md, "One name inside, and a domain label outside". */
 export const RECEIVERS = ['infra', 'keeper'].map(noticeAt);
 

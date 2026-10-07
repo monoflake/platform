@@ -25,7 +25,7 @@ buckets = ["photos", "thumbs"]
 - **The app is handed the binding as its environment**: `S3_ENDPOINT`, `S3_REGION`,
   `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `S3_BUCKETS`. host makes the credentials once, keeps
   them in the app's `secret.env` beside what the app's own secrets are, and gives the same pair to
-  the sidecar as its root account. The panel names them and never shows them, as it does every
+  the sidecar as its root account. An operator sees their names and never their values, as it does every
   secret.
 - **It lives and dies with its app**: started, stopped, restarted, redeployed and rolled back when
   the app is -- started before the app and answering its health path within thirty seconds,
@@ -51,7 +51,7 @@ upstream Versity image at a pinned version with the posix backend's command, per
 driver's version: it runs no container of its own under that name, and recreates each app's sidecar
 on the new image, one app at a time; if one fails, every sidecar already moved goes back to the
 previous image and the deploy fails. Rolling the driver back is rolling back `objects`. It has no
-container to start or stop, so the panel offers it neither. Its
+container to start or stop, so neither is offered. Its
 `service.toml` states the sidecar's port and memory ceiling, which every sidecar takes.
 
 The name `objects` is reserved, and so is every `<app>-objects`: no app may take one.

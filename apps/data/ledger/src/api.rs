@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 
 pub type Shared = Arc<Mutex<Store>>;
 
-/// A page's smallest and largest size; see spec/architecture/ledger.md, "Read by the panel".
+/// A page's smallest and largest size; see spec/architecture/ledger.md, "Read by the console".
 const DEFAULT_LIMIT: usize = 50;
 const MAX_LIMIT: usize = 500;
 
@@ -59,7 +59,7 @@ async fn upsert(
 }
 
 /// The task as `Stored` (parent included), its events in `seq` order and the tasks it is the
-/// parent of, newest first. See spec/architecture/ledger.md, "Read by the panel".
+/// parent of, newest first. See spec/architecture/ledger.md, "Read by the console".
 async fn get_one(
 	Path((service, id)): Path<(String, String)>,
 	State(store): State<Shared>,

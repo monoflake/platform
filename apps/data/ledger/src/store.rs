@@ -32,7 +32,7 @@ impl Cursor {
 /// A task as the ledger stores and answers it: the whole task, `parent` included, plus when the
 /// ledger last took it. What `libs/ledger`'s `Stored` would be, had it wrapped `Task`
 /// rather than `Record`; kept here rather than there since it is this crate's wire shape alone. See
-/// spec/architecture/ledger.md, "Read by the panel".
+/// spec/architecture/ledger.md, "Read by the console".
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StoredTask {
 	#[serde(flatten)]
@@ -51,7 +51,7 @@ pub struct TaskView {
 }
 
 /// How many of a task's children `GET /tasks/{service}/{id}` answers with at most. See
-/// spec/architecture/ledger.md, "Read by the panel".
+/// spec/architecture/ledger.md, "Read by the console".
 const CHILDREN: usize = 100;
 
 /// What `GET /tasks` narrows by, each optional and matched exactly against the column's own word
