@@ -12,6 +12,7 @@ import { type Artifact, type GitHub, Refused } from './github.ts';
 import type { Store } from './store.ts';
 import {
 	type Runner,
+	failureOf,
 	forget,
 	home,
 	invocation,
@@ -163,8 +164,9 @@ export class Deployer {
 			homeDir = await home();
 			const ran = await wrangler(invocation(unpacked, homeDir, dry, config.cloudflare));
 			if (ran.code !== 0) {
-				store.failed(id, `wrangler exited with ${ran.code}`, ran.output);
-				this.log(`${artifact.app} from run ${run} failed in wrangler`);
+				const failure = failureOf(ran, config.cloudflare);
+				store.failed(id, failure.error, failure.output);
+				this.log(`${artifact.app} from run ${run} failed in wrangler:\n${failure.log}`);
 				return;
 			}
 			const version = dry ? null : versionOf(ran.output, await outputFileOf(homeDir));
@@ -188,7 +190,9 @@ export class Deployer {
 			homeDir = await home();
 			const ran = await wrangler(rollbackInvocation(worker, version, homeDir, config.cloudflare));
 			if (ran.code !== 0) {
-				store.failed(id, `wrangler exited with ${ran.code}`, ran.output);
+				const failure = failureOf(ran, config.cloudflare);
+				store.failed(id, failure.error, failure.output);
+				this.log(`${worker} failed to roll back in wrangler:\n${failure.log}`);
 				return;
 			}
 			store.deployed(id, null);

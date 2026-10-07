@@ -67,13 +67,20 @@ async function setup(
 			? options.wrangler(invocation)
 			: { code: 0, output: `Current Version ID: ${ID}` };
 	};
-	const deployer = new Deployer({ config, store, github, wrangler, log: () => {} });
+	const logs: string[] = [];
+	const deployer = new Deployer({
+		config,
+		store,
+		github,
+		wrangler,
+		log: (line) => logs.push(line),
+	});
 	/** Each notice for `canmi21/web`, then wait for all of them. */
 	const deliver = async (...runs: number[]) => {
 		for (const run of runs) deployer.notice({ run, repository: 'canmi21/web' });
 		await deployer.idle();
 	};
-	return { data, store, invoked, homes, deployer, deliver };
+	return { data, store, invoked, homes, logs, deployer, deliver };
 }
 
 describe('the deployer', () => {
@@ -169,17 +176,59 @@ describe('the deployer', () => {
 		expect(store.list()[0]).toMatchObject({ stage: 'failed', failed_in: 'downloading' });
 	});
 
-	it("keeps wrangler's output when it fails", async () => {
-		const { store, deliver } = await setup({
-			wrangler: async () => ({ code: 1, output: 'Authentication error [code: 10000]' }),
+	it("keeps wrangler's output when it fails, in the row and the log, redacted", async () => {
+		const printed = [
+			...Array.from({ length: 60 }, (_, line) => `line ${line}`),
+			'\x1b[31mX\x1b[0m [ERROR] A request to the Cloudflare API (/accounts/acct-42/workers) failed.',
+			'Authentication error [code: 10000] for token tok-secret',
+		].join('\n');
+		const { store, logs, deliver } = await setup({
+			env: { CLOUDFLARE_ACCOUNT_ID: 'acct-42', CLOUDFLARE_WORKERS_TOKEN: 'tok-secret' },
+			wrangler: async () => ({ code: 1, output: printed }),
 		});
 		await deliver(7);
-		expect(store.list()[0]).toMatchObject({
-			stage: 'failed',
-			failed_in: 'uploading',
-			error: 'wrangler exited with 1',
-			output: 'Authentication error [code: 10000]',
+		const [row] = store.list();
+		expect(row).toMatchObject({ stage: 'failed', failed_in: 'uploading' });
+		expect(row!.error).toMatch(/^wrangler exited with 1:\n/);
+		expect(row!.error).toContain('(/accounts/[redacted]/workers) failed.');
+		expect(row!.error).toContain('Authentication error [code: 10000] for token [redacted]');
+		for (const kept of [row!.error!, row!.output!, logs.join('\n')]) {
+			expect(kept).not.toMatch(/tok-secret|acct-42/);
+			expect(kept).not.toContain(String.fromCharCode(27));
+		}
+		const logged = logs.find((line) => line.includes('failed in wrangler'))!;
+		expect(logged.split('\n')).toHaveLength(1 + 40);
+		expect(logged).not.toContain('line 0\n');
+	});
+
+	it("keeps no more than the end of a long output in the row's error", async () => {
+		const { store, deliver } = await setup({
+			wrangler: async () => ({ code: 1, output: `${'x'.repeat(10_000)}\nthe reason` }),
 		});
+		await deliver(7);
+		const { error } = store.list()[0]!;
+		expect(error!.length).toBeLessThan(4200);
+		expect(error).toMatch(/the reason$/);
+	});
+
+	it('says so when a failing wrangler printed nothing', async () => {
+		const { store, deliver } = await setup({ wrangler: async () => ({ code: 1, output: '' }) });
+		await deliver(7);
+		expect(store.list()[0]!.error).toBe('wrangler exited with 1, printing nothing');
+	});
+
+	it("keeps a dry run's and a rollback's output the same way", async () => {
+		const { store, logs, deployer, deliver } = await setup({
+			env: { DRY_WORKERS: 'console', CLOUDFLARE_ACCOUNT_ID: 'acct-42' },
+			wrangler: async () => ({ code: 1, output: 'no such version for acct-42' }),
+		});
+		await deliver(7);
+		deployer.rollback({ worker: 'console', version: ID });
+		await deployer.idle();
+		const [rollback, dry] = store.list();
+		expect(dry!.error).toBe('wrangler exited with 1:\nno such version for [redacted]');
+		expect(rollback!.error).toBe(dry!.error);
+		expect(logs.some((line) => line.includes('failed to roll back'))).toBe(true);
 	});
 
 	it('deploys one Worker at a time, in the order the notices came', async () => {

@@ -156,6 +156,40 @@ export const run: Runner = (asked) =>
 		});
 	});
 
+/** How much of a failed run's output its row's `error` keeps, and how many lines the log does. */
+const ERROR_BYTES = 4096;
+const LOG_LINES = 40;
+
+/** Terminal color and cursor codes, built from the escape so no control character is literal. */
+const COLOR = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*[A-Za-z]`, 'g');
+
+/**
+ * `output` as it may be kept and shown: colors gone, and the token and account id it was run with
+ * replaced wherever they appear, so a row or a log line never carries them.
+ */
+export function redacted(output: string, cloudflare: Cloudflare): string {
+	let plain = output.replaceAll(COLOR, '');
+	for (const secret of [cloudflare.token, cloudflare.account]) {
+		if (secret) plain = plain.replaceAll(secret, '[redacted]');
+	}
+	return plain;
+}
+
+/** A failed run, as its row and the log keep it: the end of what it printed, redacted. */
+export function failureOf(
+	ran: Ran,
+	cloudflare: Cloudflare,
+): { error: string; log: string; output: string } {
+	const output = redacted(ran.output, cloudflare).trimEnd();
+	const end = Buffer.from(output).subarray(-ERROR_BYTES).toString('utf8');
+	const said = end.length < output.length ? `...${end}` : end;
+	return {
+		error: `wrangler exited with ${ran.code}${said ? `:\n${said}` : ', printing nothing'}`,
+		log: output.split('\n').slice(-LOG_LINES).join('\n'),
+		output,
+	};
+}
+
 /**
  * The version a deploy made: from wrangler's output file, its `deploy` entry's `version_id`, or
  * else the `Current Version ID` line it prints. None for a dry run, which makes none.
