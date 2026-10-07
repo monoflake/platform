@@ -1,11 +1,11 @@
 # The repository
 
 The platform of the author's system: the services every site reads and the doors they are read
-through. The node's apps -- `geo`, `objects`, `postgres`, `ledger`, `cron`, `apt`, `shot`, `probe`,
+through. The node's apps -- `geo`, `objects`, `postgres`, `ledger`, `cron`, `apt`, `apk`, `shot`, `probe`,
 `telemetry`, `gemini` and `grok`, and the `gateway` and `quota` that also run at home -- and the Workers
 Cloudflare builds, `aka`, `cdn`, `gateway`, `hook` and `quota`. `libs/sdk` is what a consumer of
-the platform reads, `libs/probe` the status database's schema, and `libs/ledger` what the node's
-services share. `rules/` holds
+the platform reads, `libs/probe` the status database's schema, `libs/ledger` what the node's
+services share, and `libs/packages` what `apt` and `apk` share. `rules/` holds
 each zone's firewall rules, which `mise run rules` checks and deploys; see
 [architecture/firewall.md](architecture/firewall.md). Why the system is cut into this layer,
 infra's and the services', is the workspace's `spec/architecture/layers.md`, the picture of all
@@ -21,15 +21,15 @@ breaks Cargo.
 
 **The apps are grouped by what each does**, since a category of them passed the four members the workspace's `spec/architecture/repos.md`, "Grouping threshold", lets a flat `apps/` hold:
 
-| Group      | Apps                      | What they are                                        |
-| ---------- | ------------------------- | ---------------------------------------------------- |
-| `edge`     | gateway, quota, hook      | the door a request comes in by, its limits, and CI's |
-| `delivery` | cdn, aka                  | the bytes, and the names that point at them          |
-| `data`     | objects, postgres, ledger | what holds state                                     |
-| `observe`  | probe, telemetry          | the platform watched, from outside and from inside   |
-| `system`   | cron, apt                 | the platform's own schedule and the machine's own    |
-| `compute`  | geo, shot                 | what a caller asks to be worked out                  |
-| `model`    | gemini, grok              | a model a subscription reaches, served as an API     |
+| Group      | Apps                            | What they are                                                            |
+| ---------- | ------------------------------- | ------------------------------------------------------------------------ |
+| `edge`     | gateway, quota, hook            | the door a request comes in by, its limits, and CI's                     |
+| `delivery` | cdn, aka                        | the bytes, and the names that point at them                              |
+| `data`     | objects, postgres, ledger       | what holds state                                                         |
+| `observe`  | probe, telemetry                | the platform watched, from outside and from inside                       |
+| `system`   | cron, apt, apk, deployer, relay | the platform's own schedule, deploys and messages, and the machine's own |
+| `compute`  | geo, shot                       | what a caller asks to be worked out                                      |
+| `model`    | gemini, grok                    | a model a subscription reaches, served as an API                         |
 
 **A group is a directory and nothing more.** An app's name is still its directory's own and unique
 across the groups: an image, a container, a scope and a `dev-` task are named for the app, never for

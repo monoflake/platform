@@ -27,7 +27,7 @@ node, infra's `spec/architecture/host.md`, "A role is asked for by the app and g
 - **`apt`** drives two systemd units that run `apt-get` -- [apt.md](apt.md).
 - **`apk`**, for Alpine, drives `apk` under OpenRC on the same terms: the work stays on the machine,
   the agent holds the privilege, and its door is a Unix socket only the scheduler is given. It is not
-  built yet; how it is to be built is below.
+  built yet; how it is built is below.
 
 ## `apk` reaches the machine through a named pipe
 
@@ -43,7 +43,10 @@ a named pipe and running one of two fixed jobs.**
   started and ended, its exit status, whether a reboot waits, and a counter that moves with every
   run. It is written to a temporary file and renamed, so it is never read half-written, and it lives
   on disk, so the last run outlasts a reboot. A state still running when the door starts is
-  rewritten as failed, interrupted.
+  rewritten as failed, interrupted. A state file is `key=value` lines -- `seq`, `running`,
+  `started_at`, `finished_at` in epoch seconds, `exit_status`, `result` (`success`, `failed` or
+  `interrupted`) and `reboot_required` -- and `seq` moves when a run starts, which is how the agent
+  knows its word was taken.
 - **The container holds the pipe's directory, read-only, and nothing else of the machine.** It
   writes a word into the pipe and reads the state files back. The directory, not the files, is
   mounted, so a renamed file shows through. A door that is not reading makes the pipe refuse to
