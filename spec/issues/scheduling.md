@@ -78,16 +78,6 @@ over S3 -- `rdu`'s, in the house, first -- would close it, a copy of the backups
 from the first store each day: WAL-G's own second storage takes over when the first fails rather
 than keeping a copy in both. It waits on those stores existing.
 
-## A timeline's history can go with the WAL around it
-
-WAL-G keeps a permanent base backup whole by keeping the WAL segments its own copying wrote, and
-deletes every other segment before the delete point -- the timeline history files among them, which
-are not numbered segments. A base backup taken after a failover, on timeline two or later, then
-restores only if the history leading to its timeline is still in the store. Every backup proved so
-far was on timeline one. Keeping the history files out of the deletion -- copied beside the backups
-under a prefix WAL-G does not prune, or never deleted at all, since they are a few hundred bytes each
--- would close it, and needs a restore after a real failover to prove.
-
 ## Health does not say that archiving has stopped
 
 On `tyo`'s first start, on 2026-10-07, the image had no CA bundle: WAL-G could not verify the store's
@@ -100,3 +90,17 @@ an unreachable store fail within seconds rather than an hour, so a failure is co
 of it". What is still open is anybody seeing it unasked: the probe cannot reach a socket on a node,
 and the console shows a container's state, not what it answers, so a database that is up and not
 backed up is visible only in the ledger's failed run, a day late at worst.
+
+A base backup can also hang rather than fail: once it has begun, Postgres waits at its end for the
+WAL it needs to be archived, so archiving that stops during a backup holds the job until `cron`'s
+timeout. Seen on `buf` on 2026-10-07; the five minutes before the job refuses to start do not cover it.
+
+## Standbys on another architecture
+
+`tyo` and `rdu` are arm64 and `buf` is x86-64, and the cluster streams between them. Postgres supports
+physical replication between machines of one architecture only; between these two it works because
+both are 64-bit little-endian with the same alignment, and the cluster sorts by Postgres's builtin
+locale, so no collation from the C library can differ. A failover and a restore across them were
+rehearsed on 2026-10-07. Whether to accept that as it is, keep the core to one architecture when
+`buf` is replaced in 2027, or move to logical replication across architectures, is undecided.
+

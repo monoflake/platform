@@ -33,7 +33,9 @@ and `rdu` are its standbys.
   infra's `spec/architecture/host.md`, "A role is asked for by the app and granted by the node". A
   standby reaches the primary there, and so does every app.
 - **Failing over is a command, not a decision the cluster makes**: the operator promotes a standby,
-  names it primary on all three, and the apps' URLs follow. Each node reads which node is primary
+  names it primary on all three, and the apps' URLs follow. The old primary is stopped first when it
+  can be reached, and the standby has replayed all it wrote before it is promoted, so there is never
+  a moment with two primaries taking writes; rehearsed from `tyo` to `buf` and back on 2026-10-07. Each node reads which node is primary
   from its configuration, so a primary that returns after being replaced is told what it now is
   rather than taking writes beside its successor. Failing over by itself needs the three cores to
   agree on who leads -- [relay.md](relay.md) -- and waits for that.
@@ -94,6 +96,11 @@ passes ten gigabytes. Decided on 2026-10-07.
 - **The store is named by its endpoint and credentials alone**, Backblaze B2 today: any
   S3-compatible bucket does, and moving is a change of four values. Its own versioning is off --
   [scheduling.md](scheduling.md), "A bucket is logical, a store is physical".
+- **The store's key must answer a missing object `404`, not `403`.** WAL-G reads a timeline's
+  history file before it pushes one, to refuse overwriting it, and takes a `403` for a failure; S3
+  answers `403` to a key that may not list the bucket. A B2 key with file access alone did so, and on
+  the drill's first failover nothing was archived until it was replaced by one that may read the
+  bucket. History files themselves are never deleted by WAL-G, whatever the tiers let go.
 - **Encrypted with a key the provider never sees**, kept in the repository's secrets and, beside
   them, somewhere a lost laptop does not take with it: a backup that cannot be decrypted is not one.
 - **A backup is proved by restoring it**, not by its upload succeeding.

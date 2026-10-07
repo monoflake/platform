@@ -37,8 +37,8 @@ file.
 - How long an app keeps what it deleted
 - Exports to look at, kept apart from backups
 - Backups are in one failure domain
-- A timeline's history can go with the WAL around it
 - Health does not say that archiving has stopped
+- Standbys on another architecture
 
 ### [services.md](services.md)
 
