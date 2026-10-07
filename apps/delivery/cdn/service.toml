@@ -2,6 +2,7 @@
 # scope of the API host. See spec/architecture/gateway.md and spec/architecture/delivery.md.
 version = 1
 name = "cdn"
+display_name = "CDN"
 placements = ["workers"]
 
 # Everything here is public, so any page may read it; a fact about the bucket holds until the next

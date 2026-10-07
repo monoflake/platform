@@ -3,4 +3,5 @@
 # spec/architecture/gateway.md, "Inside a node, its own services answer locally".
 version = 1
 name = "gateway"
+display_name = "API Gateway"
 placements = ["workers"]

@@ -2,6 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "probe"
+display_name = "Uptime Probe"
 placements = ["rdu"]
 
 [container]

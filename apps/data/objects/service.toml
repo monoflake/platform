@@ -2,6 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "objects"
+display_name = "Object Storage"
 placements = ["rdu"]
 
 # Never run under this name: every app's `<app>-objects` sidecar runs this image, on this port and

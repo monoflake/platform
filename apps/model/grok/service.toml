@@ -2,6 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "grok"
+display_name = "Grok"
 # Placed nowhere yet: its API key goes into the node's secret.env first. See
 # spec/architecture/grok/deployment.md, "The app is grok; the program is grok2api".
 placements = []

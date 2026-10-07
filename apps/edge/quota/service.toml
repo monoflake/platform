@@ -3,4 +3,5 @@
 # spec/architecture/quota.md.
 version = 1
 name = "quota"
+display_name = "Rate Limits"
 placements = ["workers"]

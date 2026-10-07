@@ -2,6 +2,7 @@
 # spec/architecture/services.md, "Every node is the same node".
 version = 1
 name = "hook"
+display_name = "Webhooks"
 placements = ["workers"]
 
 [api]
