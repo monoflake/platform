@@ -72,10 +72,13 @@ read. Secrets survive deploys, so a Worker's secrets are set once by hand until 
 
 ## Credentials
 
-**`CLOUDFLARE_WORKERS_TOKEN`, an account-owned token, is in the platform's sops file and the
+**`CLOUDFLARE_WORKERS_TOKEN`, a token of the author's user, is in the platform's sops file and the
 deployer's `secret.env` on its node, and never in GitHub.** It carries Workers Scripts Edit and
-Connectivity Directory Bind; Workers Routes Edit on the gateway's zones joins it when the gateway
-moves. D1, DNS and anything user-level are never granted. **An artifact of a repository the
+Connectivity Directory Bind and Read; Workers Routes Edit on the gateway's zones joins it when the
+gateway moves. It is the user's and not the account's because binding a VPC service is checked
+against the user behind the token, and an account-owned token has none: its first real deploy, the
+console's on 2026-10-07, was refused with code 10196 until it was replaced. D1 and DNS are never
+granted. **An artifact of a repository the
 monoflake organization does not own is fetched with a token of that owner's** --
 `GITHUB_ACTIONS_TOKEN_CANMI21`, read access to Actions on `canmi21/web` alone -- picked by the
 source's owner, here and in host.
