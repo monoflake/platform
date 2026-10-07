@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type Env, RECEIVERS, handle } from './index';
+import { DEPLOYER, type Env, RECEIVERS, handle, receiversOf } from './index';
+import { DEPLOYER_NODES } from './receivers';
 import { DEPLOY_SOURCES } from '@monoflake/sdk';
 import { WORKFLOW } from './github';
 
@@ -107,15 +108,42 @@ describe('handle', () => {
 		expect(await refused.json()).toMatchObject({ status: 'error', code: 'upstream_unavailable' });
 	});
 
-	it('passes a run to both receivers of every bound node', async () => {
+	it('passes a run to every receiver of every bound node', async () => {
 		const { sent, env } = nodes({ RDU: 204, TYO: 204, BUF: 204 });
 		const response = await handle(await deliver(DELIVERY), env);
 		expect(response.status).toBe(202);
 		for (const node of ['RDU', 'TYO', 'BUF']) {
 			expect(sent.filter((notice) => notice.node === node).map((notice) => notice.url)).toEqual(
-				RECEIVERS,
+				receiversOf(node),
 			);
 		}
+	});
+
+	it('tells the deployer only on the nodes its declaration places it on', async () => {
+		const { sent, env } = nodes({ RDU: 204, TYO: 204, BUF: 204 });
+		await handle(await deliver(DELIVERY), env);
+		const told = sent.filter((notice) => notice.url === DEPLOYER).map((notice) => notice.node);
+		expect(told).toEqual(['TYO']);
+		expect(DEPLOYER_NODES).toEqual(['TYO']);
+		expect(DEPLOYER).toMatch(/^http:\/\/deployer\.[^/]+\/notice$/);
+		expect(receiversOf('RDU')).toEqual(RECEIVERS);
+		expect(receiversOf('TYO')).toEqual([...RECEIVERS, DEPLOYER]);
+	});
+
+	it('fails the delivery when the deployer does not take it', async () => {
+		const sent: string[] = [];
+		const tyo = {
+			fetch: async (url: string) => {
+				sent.push(url);
+				return new Response(null, { status: url === DEPLOYER ? 404 : 204 });
+			},
+		} as unknown as Fetcher;
+		const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const response = await handle(await deliver(DELIVERY), { WEBHOOK_SECRET: SECRET, TYO: tyo });
+		expect(response.status).toBe(502);
+		expect(sent).toEqual([...RECEIVERS, DEPLOYER]);
+		expect(log).toHaveBeenCalledTimes(1);
+		log.mockRestore();
 	});
 
 	it('does not succeed when one node fails, and still tells the others', async () => {
@@ -124,9 +152,10 @@ describe('handle', () => {
 		const response = await handle(await deliver(DELIVERY), env);
 		expect(response.status).toBe(502);
 		expect(new Set(sent.map((notice) => notice.node))).toEqual(new Set(['RDU', 'TYO', 'BUF']));
-		expect(sent).toHaveLength(3 * RECEIVERS.length);
+		const all = ['RDU', 'TYO', 'BUF'].flatMap((node) => receiversOf(node));
+		expect(sent).toHaveLength(all.length);
 		// One line per receiver that missed, naming the node.
-		expect(log).toHaveBeenCalledTimes(RECEIVERS.length);
+		expect(log).toHaveBeenCalledTimes(receiversOf('TYO').length);
 		expect(log.mock.calls.every(([line]) => String(line).includes('TYO'))).toBe(true);
 		log.mockRestore();
 	});

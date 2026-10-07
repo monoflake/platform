@@ -1,12 +1,14 @@
 /**
  * The `hook` scope of the public API host: GitHub's webhook for workflow runs arrives here, and a
  * run worth deploying is passed to every node over Workers VPC -- to host for the apps, and to
- * keeper, which alone deploys host. See spec/architecture/services.md, "Every node is the same
- * node".
+ * keeper, which alone deploys host -- and to the deployer, for the Workers, on the nodes it is
+ * placed on. See spec/architecture/services.md, "Every node is the same node", and
+ * spec/architecture/deployer.md, "One deployer, on one node".
  */
 import { failure, success } from '@canmi/response';
 import { URLS } from '@monoflake/sdk';
 import { runToDeploy, signed } from './github';
+import { DEPLOYER_NODES } from './receivers';
 
 /** Every VPC binding in it is a node's Caddy, through that node's tunnel, named for the node. The
  * nodes are the `vpc_services` of wrangler.jsonc and nowhere else. */
@@ -24,12 +26,24 @@ function nodesOf(env: Env): [string, Fetcher][] {
 	return Object.entries(env).filter((entry): entry is [string, Fetcher] => isFetcher(entry[1]));
 }
 
-/** The public suffix Caddy routes the two receivers under; VPC sends it as the `Host`. */
+/** The public suffix Caddy routes every receiver under; VPC sends it as the `Host`. */
 const SUFFIX = new URL(URLS.internal.app).hostname;
 
-/** Where the notice goes on a node, by label: the panel, which passes it on to host, and keeper.
- * See infra's spec/architecture/host.md, "One name inside, and a domain label outside". */
-export const RECEIVERS = ['infra', 'keeper'].map((label) => `http://${label}.${SUFFIX}/notice`);
+function noticeAt(label: string): string {
+	return `http://${label}.${SUFFIX}/notice`;
+}
+
+/** Where the notice goes on every node, by label: the panel, which passes it on to host, and
+ * keeper. See infra's spec/architecture/host.md, "One name inside, and a domain label outside". */
+export const RECEIVERS = ['infra', 'keeper'].map(noticeAt);
+
+/** The deployer's, asked only on the nodes its declaration places it on; elsewhere it is not. */
+export const DEPLOYER = noticeAt('deployer');
+
+/** Every receiver the notice goes to on `node`, by its binding's name. */
+export function receiversOf(node: string): string[] {
+	return DEPLOYER_NODES.includes(node) ? [...RECEIVERS, DEPLOYER] : RECEIVERS;
+}
 
 export async function handle(request: Request, env: Env): Promise<Response> {
 	const { pathname } = new URL(request.url);
@@ -51,7 +65,7 @@ export async function handle(request: Request, env: Env): Promise<Response> {
 
 	const notice = JSON.stringify({ run, repository });
 	const targets = nodesOf(env).flatMap(([node, binding]) =>
-		RECEIVERS.map((receiver) => ({ node, receiver, binding })),
+		receiversOf(node).map((receiver) => ({ node, receiver, binding })),
 	);
 	const reached = await Promise.all(
 		targets.map(async ({ node, receiver, binding }) => {
