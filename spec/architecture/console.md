@@ -41,16 +41,34 @@ app's name -- with no product name and no separator: the console is behind Acces
 nobody, so a title is for a reader picking out a tab, and the shortest name does that best. Its
 icons are the `console` scope's marks, the API's own, followed for the browser as every page's are.
 
+**Moving between pages never waits for a node.** A page's `load` returns at once: what it reads
+from the nodes it returns as promises SvelteKit streams, and the page awaits each where it is
+drawn, so a click shows the new page's layout, headings and cards in the same frame and each card
+fills as its read lands. The server renders that layout whole -- the first response is the page,
+never an empty shell -- and a chart that cannot be drawn on the server is drawn by the browser
+inside a card the server already placed. A tab is a link like any other and obeys the same rule.
+
 **Every time is written in the reader's zone**, which Cloudflare names on the request, set once in
 the layout and read by every chart, so the server and the browser write the same text and the
 page does not change as it wakes; a zone Intl does not know falls back to UTC. **The world map is
 projected when the console is built**, flat and as a grid of dots, so neither the Worker nor the
 browser carries a projection or a world's topology -- only the dots it drew. A globe is offered
 beside it and loaded only when asked for, being WebGL the server cannot draw. On both, a node's mark
-says two things: its size how much it runs, in three steps by the apps running on it, and its
-opacity how busy it is, in four steps by its CPU now. A node heard in time is one blue; color is
-kept for the exceptions, a late node ringed amber and a gone one hollow in red. No line is drawn between nodes;
-the marks alone carry the map.
+says how much it runs and how busy it is: its size and its depth step with the apps running on it,
+three sizes and as many shades from faint to solid, and a halo breathes around it faster as its CPU
+climbs -- still when the reader asks for reduced motion. A node has two states on the map, and its whole mark takes the state's color: blue when it
+is heard, red when it is gone. Late is not a state but a node between two snapshots, and is drawn
+as heard. The
+smallest step is two of the land's dots across, so a mark reads as part of the same grid. No line is drawn between nodes,
+and no name: a node's code and figures appear in a card on hover. Nodes too close to tell apart
+-- Tokyo's three -- are set apart by hand, with no leader line back to where they stand.
+
+**Developing it reads the real nodes.** Each node's binding is declared `remote`, so `vite dev`
+reaches the same VPC services the deployed Worker does, with the read token in a `.dev.vars` written
+from infra's sops file and never printed -- `mise run //repos/platform:dev-console` writes it when
+missing. Vite keeps every WebSocket upgrade for its own reload, so in development alone a plugin
+takes `/live`, admits only the dev server's own `localhost` origin, and joins the browser to the
+nearest relay's socket; none of it is in the build.
 
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its

@@ -15,6 +15,7 @@
 	"scripts": {
 		"prepare": "svelte-kit sync",
 		"dev": "vite dev",
+		"vars": "umask 077 && sops -d --output-type dotenv ../../../../infra/secrets.json | grep '^HOST_READ_TOKEN=' > .dev.vars",
 		"build": "vite build",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"map": "node scripts/land.ts",
@@ -38,6 +39,7 @@
 		"@types/d3-shape": "^3.2.0",
 		"@types/geojson": "^7946.0.16",
 		"@types/topojson-client": "^3.1.5",
+		"@types/ws": "^8.18.2",
 		"cobe": "^2.0.1",
 		"d3-array": "^3.2.4",
 		"d3-geo": "^3.1.1",
@@ -50,6 +52,7 @@
 		"typescript": "^6.0.3",
 		"vite": "^8.3.2",
 		"world-atlas": "^2.0.2",
-		"wrangler": "^4.147.0"
+		"wrangler": "^4.147.0",
+		"ws": "^8.22.0"
 	}
 }

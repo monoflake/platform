@@ -17,7 +17,10 @@
 
 	// Each node's Caddy, made by infra's `mise run tunnel` and bound by the node's name in capitals:
 	// the list `hook` binds. src/lib/server/nodes.ts places each, and src/lib/server/edge.test.ts
-	// holds the two together.
+	// holds the two together. `remote` is for `vite dev`, which reaches the real nodes through these
+	// same services: https://developers.cloudflare.com/workers-vpc/configuration/vpc-services/. The
+	// read token it sends comes from a gitignored `.dev.vars`, which `pnpm run vars` writes once from
+	// infra's secrets.json; deployed, it is the Worker's secret.
 	"vpc_services": [
 		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
 		{ "binding": "TYO", "service_id": "01a10f21-8a27-7721-8223-54365d93b27b", "remote": true },

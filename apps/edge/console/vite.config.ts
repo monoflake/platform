@@ -30,6 +30,17 @@ export default defineConfig({
 			}),
 			enforce: undefined,
 		},
+
+		{
+			// `/live` while serving, which Vite's own upgrade handling never passes to the hook; see
+			// scripts/live.ts. A build never loads it.
+			name: 'console-live',
+			apply: 'serve',
+			async configureServer(server) {
+				const { live } = await import('./scripts/live.ts');
+				live(server);
+			},
+		},
 	],
 	build: { target: 'es2023', rollupOptions: { output: { hashCharacters: 'hex' } } },
 });
