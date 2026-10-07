@@ -13,7 +13,7 @@ file.
 | area                           | entries | what it holds                                         |
 | ------------------------------ | ------- | ----------------------------------------------------- |
 | [console.md](console.md)       | 2       | what the console's pages read from elsewhere          |
-| [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
+| [gateway.md](gateway.md)       | 4       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
 | [scheduling.md](scheduling.md) | 2       | what the schedulers and Postgres leave open           |
 | [services.md](services.md)     | 5       | what the services' own files leave open               |
@@ -28,6 +28,7 @@ file.
 - The CDN and the alias layer still stamp their own lifetimes
 - The whitelists are written by hand, and checked against the table only
 - A deployment's host is not checked against where the service runs
+- Inside the house, an ordered service is asked on the wrong node
 
 ### [relay.md](relay.md)
 
