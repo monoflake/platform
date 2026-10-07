@@ -1,6 +1,7 @@
-# Builds the images a push changed and leaves them as artifacts of this run. Nothing is published
-# and nothing here reaches a machine: when the run ends, GitHub's webhook tells the node, and the
-# node fetches and checks what was built. See infra's spec/architecture/host.md.
+# Builds the images and the Workers a push changed and leaves them as artifacts of this run. Nothing
+# is published and nothing here reaches a machine or Cloudflare: when the run ends, GitHub's webhook
+# tells the nodes and the deployer, and each fetches and checks what was built. See infra's
+# spec/architecture/host.md and spec/architecture/deployer.md.
 name: Deploy
 
 on:
@@ -28,6 +29,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     outputs:
       apps: ${{ steps.plan.outputs.apps }}
+      workers: ${{ steps.plan.outputs.workers }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -40,15 +42,22 @@ jobs:
         run: |
           if [ "$EVENT" = schedule ]; then
             apps='["geo"]'
+            workers='[]'
           elif [ "$EVENT" = workflow_dispatch ] && [ -n "$ASKED" ]; then
             apps="$(printf '%s\n' $ASKED | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().split()))')"
+            # The asked apps that are Workers; an image-only name asks for no Worker.
+            workers="$(.mise/tasks/deployable --workers --all | python3 -c 'import json,os,sys; asked=os.environ["ASKED"].split(); print(json.dumps([w for w in json.load(sys.stdin) if w in asked]))')"
           elif [ "$EVENT" = workflow_dispatch ] || [ -z "${BEFORE//0/}" ]; then
             apps="$(.mise/tasks/deployable --all)"
+            workers="$(.mise/tasks/deployable --workers --all)"
           else
             apps="$(.mise/tasks/deployable --git "$BEFORE")"
+            workers="$(.mise/tasks/deployable --workers --git "$BEFORE")"
           fi
           echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "workers=$workers" >> "$GITHUB_OUTPUT"
           echo "building: $apps"
+          echo "packaging: $workers"
 
   build:
     needs: plan
@@ -89,5 +98,47 @@ jobs:
           name: deploy-${{ matrix.app }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/deploy/
           compression-level: 0
+          retention-days: 7
+          if-no-files-found: error
+
+  # A Worker is one artifact for every architecture: wrangler's bundle, its assets, its declaration
+  # and its resolved config, packaged without a credential. Nothing deploys it here; until a Worker
+  # is moved onto the deployer, Cloudflare's Git integration still does. See
+  # spec/architecture/deployer.md, "What a Worker artifact is".
+  worker:
+    needs: plan
+    if: needs.plan.outputs.workers != '[]'
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.plan.outputs.workers) }}
+    steps:
+      # The workspace above the project, as for an image: its mise.toml pins the Node it builds on.
+      - uses: actions/checkout@v7
+        with:
+          repository: canmi21/canmi
+      - uses: actions/checkout@v7
+        with:
+          path: repos/platform
+      - id: node
+        run: echo "version=$(sed -n 's/^node = "\(.*\)"/\1/p' mise.toml)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ steps.node.outputs.version }}
+      - working-directory: repos/platform
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          npm install --global "$(node -p "require('./package.json').packageManager")"
+          app="$(find apps -mindepth 2 -maxdepth 2 -type d -name "$APP" | head -n 1)"
+          pnpm install --frozen-lockfile --filter "{./$app}..."
+          .mise/tasks/worker "$APP" "$RUNNER_TEMP/worker"
+      # Hidden files included: SvelteKit's `.assetsignore` keeps its Worker out of the assets.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: worker-${{ matrix.app }}
+          path: ${{ runner.temp }}/worker/
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: error

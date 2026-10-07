@@ -1,0 +1,21 @@
+# The one deployer of Workers: a Worker deploy is global, so it runs on one node. The hook's list
+# of where to send it a notice is generated from `placements` here. See
+# spec/architecture/deployer.md, "One deployer, on one node".
+version = 1
+name = "deployer"
+placements = ["tyo"]
+
+[container]
+# One past relay's 12012, in the platform's own low block, on a ten. See
+# spec/architecture/services.md, "A service keeps one port".
+port = 12020
+health = "/health"
+# Node and one wrangler at a time, which bundles nothing but still loads its whole CLI.
+memory_mb = 512
+
+# `deployer.db`, every deploy and its stages, and the artifacts being deployed.
+[data]
+path = "/data"
+
+# `/notice` for the hook, and `/api/deploys` for the console; `deployer.<suffix>` on both sides.
+[interface]

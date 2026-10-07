@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-#MISE description="The images a change needs rebuilt, as JSON: `deployable [--all] [--since REV | --git BASE] [--files ...]`"
-"""An app is deployable when its directory holds a `service.toml` and a `Dockerfile`; one with the
-declaration alone is placed on Workers, which Cloudflare builds. It needs a new image when
-anything under that directory changed, when a crate it is built from did, or when the build
-itself did. CI reads the list to decide what to build; see infra's spec/architecture/host.md, "The
-machine pulls; nothing pushes into it"."""
+#MISE description="The images, or with --workers the Workers, a change needs rebuilt, as JSON: `deployable [--workers] [--all] [--since REV | --git BASE] [--files ...]`"
+"""An app is deployable when its directory holds a `service.toml` and a `Dockerfile`, and needs a
+new image when anything under that directory changed, a crate it is built from did, or the build
+did. With `--workers`, the apps placed on `workers` with a `wrangler.jsonc` instead, each needing a
+new `worker-` artifact when it, a package it imports, or the packaging changed. CI reads the list
+to decide what to build; see infra's spec/architecture/host.md, "The machine pulls; nothing pushes
+into it", and spec/architecture/deployer.md, "What a Worker artifact is"."""
 
 import json
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from graph import ROOT, app_directories, app_of, build_inputs, changed, dependents, owner, rust_graph  # noqa: E402
+from graph import ROOT, app_directories, app_of, build_inputs, changed, dependents, node_graph, owner, rust_graph  # noqa: E402
 
 # How every image is built: a change here is a change to all of them.
 EVERY_IMAGE = {"Cargo.toml", "Cargo.lock", ".dockerignore", ".mise/tasks/image"}
+# How every Worker is packaged, the same.
+EVERY_WORKER = {"package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".mise/tasks/worker"}
 
 
 def apps():
@@ -32,6 +36,20 @@ def apps():
 				name = line.split('"')[1]
 				break
 		found[declaration.parent.name] = name
+	return found
+
+
+def workers():
+	"""App directory name -> its package's name, for every Workers app with a wrangler.jsonc."""
+	found = {}
+	for name, directory in app_directories().items():
+		declaration = directory / "service.toml"
+		if not declaration.exists() or not (directory / "wrangler.jsonc").exists():
+			continue
+		if "workers" not in tomllib.loads(declaration.read_text()).get("placements", []):
+			continue
+		manifest = directory / "package.json"
+		found[name] = json.loads(manifest.read_text())["name"] if manifest.exists() else None
 	return found
 
 
@@ -62,18 +80,36 @@ def needed(files, declared):
 	return sorted(chosen)
 
 
+def needed_workers(files, declared):
+	if any(f in EVERY_WORKER for f in files):
+		return sorted(declared)
+	package_dirs, package_edges = node_graph()
+	packages, chosen = set(), set()
+	for f in files:
+		if app_of(f) in declared:
+			chosen.add(app_of(f))
+		package = package_dirs.get(owner(f, package_dirs) or "")
+		if package:
+			packages.add(package)
+	reached = dependents(packages, package_edges)
+	chosen |= {app for app, package in declared.items() if package in reached}
+	return sorted(chosen)
+
+
 def main():
 	arguments = sys.argv[1:]
-	declared = apps()
+	worker = "--workers" in arguments
+	declared = workers() if worker else apps()
+	pick = needed_workers if worker else needed
 	if "--all" in arguments:
 		result = sorted(declared)
 	elif "--files" in arguments:
-		result = needed(arguments[arguments.index("--files") + 1 :], declared)
+		result = pick(arguments[arguments.index("--files") + 1 :], declared)
 	elif "--git" in arguments:
-		result = needed(git_changed(arguments[arguments.index("--git") + 1]), declared)
+		result = pick(git_changed(arguments[arguments.index("--git") + 1]), declared)
 	else:
 		since = arguments[arguments.index("--since") + 1] if "--since" in arguments else None
-		result = needed(changed(since), declared)
+		result = pick(changed(since), declared)
 	print(json.dumps(result))
 	return 0
 

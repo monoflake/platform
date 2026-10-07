@@ -41,20 +41,30 @@ buckets and a completion token, with custom domains on an endpoint of their own,
 not name the assets' hash. wrangler does all of it and keeps up with new binding types; the API is
 the fallback if wrangler ever fights an artifact with no source.
 
-**A Worker still names its own bindings in `wrangler.jsonc`, VPC services included.** When a third
-Worker binds the nodes, the deployer writes them from infra's node table instead, from a `[worker]`
-section of `service.toml` -- the workspace's `spec/architecture/layers.md`, "Cloudflare is under the
-platform, and an app binds only the platform".
+**An app's bindings are declared to the platform and written by the deployer.** A `[worker]`
+section of `service.toml` names each binding the app wants by the platform's vocabulary -- a
+Durable Object, a KV namespace, a bucket, the nodes, `geo` -- and the deployer resolves each to
+Cloudflare's product or the platform's service and writes it into the Worker's configuration, so an
+app never names a Cloudflare id. Until that section exists, a Worker names its own bindings in
+`wrangler.jsonc`, VPC services included, and the deployer passes them through.
 
 ## What it refuses
 
 **A Worker's name belongs to one repository, and only that repository's runs deploy it.** The
 deployer's configuration on its node holds `WORKER_OWNERS`, each Worker's name against its
 `owner/repo`, and a name nobody owns is refused -- without it, admitting a repository would hand it
-every Worker on the account. Each owner has the zones its routes and custom domains may be on, and
-every Worker the binding types the layers allow: assets, VPC services, services, plain text,
-version metadata and secrets. D1, KV, R2 and Durable Objects are refused, the site's D1 excepted
-until it moves to Postgres.
+every Worker on the account. Each owner has the zones its routes and custom domains may be on. **No
+binding type is refused by layer**: the platform exports every binding Workers have and its own
+beside them -- the workspace's `spec/architecture/layers.md`, "Cloudflare is under the platform,
+and an app binds only the platform" -- so a Durable Object is as much an app's to ask for as an IP
+lookup. **A resource a binding names belongs to one repository too**: outside the
+home organization, a Worker may bind only the databases, buckets, namespaces, queues, secrets and
+Workers its repository is given in `WORKER_RESOURCES`, or that its repository owns -- the nodes'
+VPC services and the account's AI and browser included, since each reaches past the Worker; only
+what names nothing shared, its own Durable Objects, assets, vars and secrets, passes unlisted. A
+Durable Object class taken from another Worker counts as binding that Worker. Once
+apps declare their bindings to the platform, the platform gives each its own and this list is what
+it gave.
 
 **It records each deploy as host does**: stages -- downloading, admitting, uploading, then deployed
 or failed -- the version Cloudflare returns, and wrangler's output when it fails, for the console to

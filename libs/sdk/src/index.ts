@@ -179,6 +179,9 @@ export const URLS = {
 			cloudflare: 'https://1.1.1.1/dns-query',
 			google: 'https://8.8.8.8/resolve',
 		},
+		// Cloudflare's API, pinned for the wrangler the deployer runs so a file it reads cannot point
+		// it elsewhere. See spec/architecture/deployer.md, "Credentials".
+		cloudflare: { api: 'https://api.cloudflare.com/client/v4' },
 		// GeoLite2, as a mirror republishes it daily without a license key, and whose it is, which
 		// `geo` credits in every answer. See spec/architecture/geo.md.
 		geolite: {
