@@ -13,9 +13,13 @@ It is Debian's agent behind the interface every node's package manager answers, 
 **What runs is two systemd services on the machine, `apt-nightly-update.service` and
 `apt-weekly-upgrade.service`**: the first `apt-get update`; the second `update`, `full-upgrade`,
 `autoremove --purge` and `clean`, then a note when a newer kernel waits for a reboot. Their unit
-files are kept in `apps/system/apt/units/` and installed on the machine by hand, since host has no business
-writing the operating system's configuration. Their timers are gone: when they run is `cron`'s, per
-[cron.md](cron.md).
+files are kept in `apps/system/apt/units/` and installed by infra's `mise run node`, since host has
+no business writing the operating system's configuration. When they run is `cron`'s, per
+[cron.md](cron.md): the update daily, the upgrade weekly and spread across the nodes, a day apart.
+
+**Every Debian node runs `apt`, and nothing else updates it.** The same task stops Debian's own
+`apt-daily` timers and removes `unattended-upgrades` where an image shipped it, so a node's packages
+change only in a run the ledger records.
 
 ## The door
 

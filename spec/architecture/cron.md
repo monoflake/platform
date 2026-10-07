@@ -6,6 +6,10 @@ did. Workers keep Cloudflare's own cron triggers; this is the node's. A job that
 across the platform, whichever node runs it, is the platform's scheduler's, not this --
 [scheduling.md](scheduling.md), "Background work has two schedulers".
 
+**Every node runs a `cron` of its own, and it runs the jobs of the apps on its node alone.** A job
+declared by an app placed on three nodes runs three times, once beside each instance, which is what
+a job about a node's own state -- its packages, its copy of a database -- has to do.
+
 ## A job is declared by the service that does it
 
 **A service lists its jobs in its `service.toml`**, beside what it answers, so a job and its route
@@ -19,6 +23,7 @@ path = "/jobs/refresh"  # asked with POST, under the service's scope
 catch_up = "once"       # a run missed while the node was down: "once" or "skip"
 overlap = "skip"        # a run due while the last is still going: "skip" or "queue"
 timeout = 300           # seconds before a run is called failed
+spread = "week"         # optional: each node's runs shifted by its slot, see below
 ```
 
 - **Every time is UTC.** A cron expression is read in UTC, every instant `cron` keeps or answers is
@@ -29,9 +34,12 @@ timeout = 300           # seconds before a run is called failed
   answers on a Unix socket and on no port, as `apt` does -- on that socket, which host mounts into
   `cron` for that reason alone.
 
-**`cron` answers on its own `[api]` scope, privately**: `GET /schedules` -- every job, its next
-time and its last run -- `POST /schedules/<service>/<name>/run` to run one now, and `.../pause` and `.../resume`, which the
-console uses. Times are RFC 3339 in UTC.
+**`cron` answers on its port and has no scope**: `GET /schedules` -- every job, its next time and
+its last run -- `POST /schedules/<service>/<name>/run` to run one now, and `.../pause` and
+`.../resume`. Times are RFC 3339 in UTC. A scope names one service wherever it runs, and the gateway
+sends it to any of its placements; seven `cron`s are seven tables, so asking one at random answers
+nothing, and a service that is about its node is reached by its node instead -- see "Seen in the
+console" below.
 
 **host gives `cron` the table**: whenever an app is deployed or removed, host writes every app's
 schedules to `schedules.json` in `cron`'s directory, through a temporary file and a rename, as it
@@ -50,6 +58,7 @@ nothing, and host's API stays an operator's alone.
 			"catch_up": "once",
 			"overlap": "skip",
 			"timeout": 300,
+			"offset": 0,
 			"reach": { "scope": "geo" }
 		},
 		{
@@ -61,16 +70,36 @@ nothing, and host's API stays an operator's alone.
 			"catch_up": "once",
 			"overlap": "skip",
 			"timeout": 1800,
+			"offset": 0,
 			"reach": { "socket": "/sockets/apt/apt.sock" }
 		}
 	]
 }
 ```
 
-`reach` is how `cron` asks: a scope through Caddy, or a socket at the path host mounted it at --
+`offset` is seconds every run of the job is moved later by, which host works out from the job's
+`spread` and the node's slot, below; `cron` adds it and knows nothing of either. `reach` is how
+`cron` asks: a scope through Caddy, or a socket at the path host mounted it at --
 each socket service's data directory at `/sockets/<service>` in `cron`'s container. **When that set
 of services changes, host redeploys `cron`** so its mounts follow: a socket service deployed after
 `cron`, in the same CI run or later, is reached without anyone asking.
+
+## A weekly job is spread across the nodes, a day apart
+
+**A job with `spread = "week"` runs on each node at its own time**, so an upgrade that goes wrong
+goes wrong on one node, and a week still sees every node done. Its expression fires once a week, and
+each node's runs are moved by its slot:
+
+- **A node's slot is its position in infra's `nodes/nodes.toml`**, counted from zero, which
+  `mise run node` writes into host's `.env` as `NODE_SLOT`. A node is appended to that file, never
+  inserted, so adding one moves nobody else's day.
+- **The first seven slots are seven days**: slot `n` runs `n` days after the expression's time.
+- **Past seven, a day takes a second node two hours later**: slot `n` is `n mod 7` days and
+  `2 * floor(n / 7)` hours after it. Twelve nodes a day fit before the hours run into the next day,
+  so eighty-four nodes; what comes past that is decided when there are that many.
+
+Decided on 2026-10-07; spreading by a hash of the node's name was rejected, since two names landing
+on one day is exactly what the spread is for.
 
 ## A run is a request, and a task in the ledger
 
@@ -93,8 +122,10 @@ else, on a timeout, or on no answer, with events for each step and the status an
 
 ## Seen in the console
 
-The console's Schedules page is to list every job -- its service, its schedule, when it runs next, how its
-last run went, read from the ledger -- and run one now; it waits on the console's own todo. **Pausing a job is the repository's
+The console's Schedules page is to list every job -- its node, its service, its schedule, when it
+runs next, how its last run went, read from the ledger -- and run one now; it waits on the console's
+own todo. **It reads each node's `cron` through that node's door, as it reads the node's host**,
+infra's `spec/architecture/host.md`, "host has no interface on the node, and a door Caddy keeps". **Pausing a job is the repository's
 change**, as every setting the console changes is to be (infra's `spec/architecture/host.md`, "One name inside, and a
 domain label outside"): until the bot that writes it exists, a pause is `cron`'s own, held until
 `cron` restarts, and shown as such.

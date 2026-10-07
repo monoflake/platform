@@ -6,10 +6,11 @@ is the same node"; a node that was away then never hears of it.
 
 ## Three nodes agree, and the rest pass it on
 
-**Three core nodes, one per failure domain, decide what happened: `tyo`, `buf` and `gvx`.** A
+**Three core nodes, one per failure domain, decide what happened: `rdu`, `buf` and `tyo`.** A
 message is committed once two of the three have confirmed it, and committed messages form one log,
 numbered in order and never rewritten. The nodes and their domains are infra's
-`spec/architecture/nodes.md`; three in three domains survive the loss of any one account.
+`spec/architecture/nodes.md`, "Three nodes are the core, named by the author"; three in three
+domains survive the loss of any one account.
 
 **Every other node is a relay.** It keeps the log, and passes it on to whoever asks. A node does not
 care where it heard a message: it compares how far its log goes with a neighbor's and takes what it

@@ -29,7 +29,12 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 - **The platform's scheduler**, which runs a job once across the platform under a lease in Postgres
   -- [../architecture/scheduling.md](../architecture/scheduling.md), "Background work has two
   schedulers". It needs Postgres off the node at home first.
-- **`apk`, Alpine's agent behind the package interface** -- [../architecture/packages.md](../architecture/packages.md).
+- **`cron` and `apt` on every node, in order**: the weekly spread and `cron` without a scope --
+  [../architecture/cron.md](../architecture/cron.md), "A weekly job is spread across the nodes, a
+  day apart"; then `apt` on `tyo` alone, then on the other Debian nodes, with `cron` on all seven --
+  [../architecture/packages.md](../architecture/packages.md).
+- **`apk`, Alpine's agent behind the package interface**, last, for `nrt` and `hnd` --
+  [../architecture/packages.md](../architecture/packages.md).
 
 ## The deployer
 

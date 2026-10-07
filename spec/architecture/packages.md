@@ -18,8 +18,9 @@ job that updates a node is written once and reaches whichever agent the node run
 | `POST /jobs/upgrade` | installs it, then notes when a newer kernel waits for a reboot             |
 
 The interface is a contract and not a process: nothing stands between the scheduler and the agent,
-and a third package manager is a third agent that answers the same table. A node runs the one agent
-its system has.
+and a third package manager is a third agent that answers the same table. **Every node runs the one
+agent its system has, beside its own `cron`** -- [cron.md](cron.md) -- each granted its role by the
+node, infra's `spec/architecture/host.md`, "A role is asked for by the app and granted by the node".
 
 ## The agents
 
