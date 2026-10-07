@@ -95,6 +95,8 @@ certificate and retried without end, so both the base backup and the archiving o
 `/health` answered healthy throughout -- `pg_stat_archiver` counts a failure only when the archive
 command returns, and this one never did. The bundle is in the image now, and `S3_MAX_RETRIES=3` makes
 an unreachable store fail within seconds rather than an hour, so a failure is counted and logged.
-What is still open is `/health` saying so: answering degraded when the last WAL archived is older
-than a few minutes while there is WAL to archive, or when the last base backup is older than a day,
-and how the probe and the console show a database that is up but not backed up.
+`/health` now says so and the backup job fails on it --
+[../architecture/databases.md](../architecture/databases.md), "The container is Postgres and a keeper
+of it". What is still open is anybody seeing it unasked: the probe cannot reach a socket on a node,
+and the console shows a container's state, not what it answers, so a database that is up and not
+backed up is visible only in the ledger's failed run, a day late at worst.

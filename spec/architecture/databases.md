@@ -45,7 +45,13 @@ HTTP to what it runs -- a health path, and `cron`'s jobs -- and Postgres speaks 
 protocol, so the program answers for it:
 
 - **`/health`** says whether Postgres answers, whether this node is primary or standby, and how far
-  a standby is behind.
+  a standby is behind. On the primary it also says whether backing up has stopped: WAL waiting more
+  than five minutes to be archived -- a `.ready` file in `pg_wal/archive_status` that old -- or no base
+  backup in the last day and a half. That is reported, never failed on: host reads health only to
+  call a deploy good, and a store that is down must not make the database undeployable, so a
+  database that answers is `200` whatever its backups are doing.
+- **The backup job fails while archiving has stopped**, before it takes a base backup, so the run
+  `cron` records in the ledger says so -- the one place a failure is already seen.
 - **On a first start** it makes the cluster on the primary, and on a standby copies the primary with
   `pg_basebackup` and follows it.
 - **`/jobs/backup`**, which `cron` calls once a day, takes a base backup and lets go of what the
