@@ -62,10 +62,10 @@ In order, each deployed and proved before the next -- [../architecture/schedulin
 3. **The platform's identity, first part**: every app given a `service:<app>` credential when it is
    deployed -- [../architecture/scheduling.md](../architecture/scheduling.md), "Who asks is a
    principal, and an issuer vouches for it".
-4. **A store on every node's disk**, S3 over its filesystem, and the backups copied each day to
-   `rdu`'s and `buf`'s: built and drilled in docker, waiting to be deployed and drilled on the
-   nodes -- [../architecture/databases.md](../architecture/databases.md), "Backups are the data,
-   kept off the cluster".
+4. **A store on every node's disk**, S3 over its filesystem. `rdu` and `buf` have theirs, holding
+   the backups' daily mirror since 2026-10-08 --
+   [../architecture/databases.md](../architecture/databases.md), "Backups are the data, kept off
+   the cluster"; the other nodes' follow when a bucket's layout first names them.
 5. **A scope's bucket, first version**: its index in the cluster, put, get, delete and list, laid out
    by `pool` and `mirror`, references, the sweep and the scrub on the scheduler.
 6. **`shot` keeping nothing**: its queue in the cluster, its pictures in a bucket, its browsers on

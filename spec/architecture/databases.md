@@ -147,7 +147,8 @@ reads the backup bucket and nothing more, `BACKUP_MIRROR_S3_*`, written to the s
 - **It restores with nothing but WAL-G**, over S3 from `store-objects`, or with
   `WALG_FILE_PREFIX=/data/apps/store/objects/backups/database` and no store running at all, since
   the sidecar keeps plain files. Both were restored from in a drill on 2026-10-07, before it was
-  deployed.
+  deployed, and on 2026-10-08 `rdu`'s mirror, read as plain files, restored the cluster to the end
+  of its archive on timeline 5, with every database there.
 - **Rejected: WAL-G's own second storage**, which takes over when the first fails rather than
   keeping a copy in both.
 
