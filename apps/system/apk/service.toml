@@ -3,7 +3,7 @@
 version = 1
 name = "apk"
 display_name = "Package Updates"
-placements = ["nrt"]
+placements = ["nrt", "hnd"]
 
 # No port: the node's own `cron` reaches this on its socket, host mounts the machine's door in and
 # the container runs as root only so the door's directory opens. See
