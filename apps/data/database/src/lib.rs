@@ -9,3 +9,4 @@ pub mod keeper;
 pub mod plan;
 pub mod postgres;
 pub mod render;
+pub mod watch;

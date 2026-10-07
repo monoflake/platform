@@ -3,7 +3,7 @@
 //! spec/architecture/databases.md, "The container is Postgres and a keeper of it".
 
 use database::api::{self, SOCKET};
-use database::config::Config;
+use database::config::{Config, Role};
 use database::keeper::{Keeper, Stopped};
 use database::postgres::{self, Layout};
 use std::process::ExitCode;
@@ -36,6 +36,10 @@ async fn main() -> ExitCode {
 	};
 	let routes = api::routes(keeper.clone());
 	tokio::spawn(async move { axum::serve(listener, routes).await });
+	if config.role() == Role::Primary {
+		let seeding = keeper.clone();
+		tokio::spawn(async move { seeding.seed().await });
+	}
 
 	let mut stop = std::pin::pin!(stopped());
 	let up = tokio::select! {
@@ -48,7 +52,12 @@ async fn main() -> ExitCode {
 		up = keeper.bring_up() => up,
 	};
 	let mut child = match up {
-		Ok(child) => child,
+		Ok(child) => {
+			if config.role() == Role::Primary {
+				tokio::spawn(watch(keeper.clone()));
+			}
+			child
+		}
 		Err(Stopped::Refused(reason)) => {
 			keeper.refuse(reason);
 			stop.await;
@@ -84,6 +93,15 @@ fn listen(socket: &std::path::Path) -> std::io::Result<tokio::net::UnixListener>
 	let listener = tokio::net::UnixListener::bind(socket)?;
 	std::fs::set_permissions(socket, std::fs::Permissions::from_mode(0o666))?;
 	Ok(listener)
+}
+
+/// Whether backing up has stopped, asked each minute so a change is logged when it happens rather
+/// than when somebody next asks.
+async fn watch(keeper: Arc<Keeper>) {
+	loop {
+		keeper.watch(jiff::Timestamp::now());
+		tokio::time::sleep(Duration::from_secs(60)).await;
+	}
 }
 
 /// SIGTERM from `docker stop`, or SIGINT, the stop signal the Postgres image it is built on names.

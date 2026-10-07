@@ -30,6 +30,9 @@ pub struct Status {
 	pub lag_seconds: Option<f64>,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub standbys: Option<Vec<Standby>>,
+	/// On the primary: whether backing up has stopped.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub backup: Option<crate::watch::Backup>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -61,6 +64,7 @@ pub fn parse(row: &str, configured: Role) -> Result<Status, Unexpected> {
 		lag_bytes: if standby { Some(bytes.parse().map_err(|_| unexpected())?) } else { None },
 		lag_seconds: if standby { Some(seconds.parse().map_err(|_| unexpected())?) } else { None },
 		standbys: None,
+		backup: None,
 	})
 }
 

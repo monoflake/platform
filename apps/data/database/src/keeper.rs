@@ -6,8 +6,10 @@ use crate::config::{Config, Role};
 use crate::health::{self, Status};
 use crate::plan::{self, Plan};
 use crate::postgres::{self, Layout};
+use crate::watch::{self, Last};
+use jiff::{SignedDuration, Timestamp};
 use serde::Serialize;
-use std::sync::RwLock;
+use std::sync::{Mutex, RwLock};
 use std::time::Duration;
 use tokio::process::Child;
 
@@ -42,6 +44,26 @@ pub struct Keeper {
 	phase: RwLock<Phase>,
 	/// Held while a backup runs, so a second is refused rather than run beside it.
 	pub backing_up: tokio::sync::Mutex<()>,
+	/// The newest base backup in the store: read once at start, then set by each backup job.
+	last: RwLock<Last>,
+	/// The backup state last logged, so a change is logged once.
+	logged: Mutex<Option<watch::State>>,
+	/// `watch::STALLED_AFTER`, shorter only in a test.
+	pub stalled_after: SignedDuration,
+}
+
+/// Why a backup job did not finish.
+#[derive(Debug, thiserror::Error)]
+pub enum Unbacked {
+	#[error(
+		"archiving has stopped: {segment} has waited {seconds} seconds to be archived, so no base \
+		 backup was taken"
+	)]
+	Stalled { segment: String, seconds: i64 },
+	#[error("archive_status could not be read, so no base backup was taken: {0}")]
+	Unreadable(std::io::Error),
+	#[error(transparent)]
+	Failed(#[from] postgres::Error),
 }
 
 /// What one backup did.
@@ -59,7 +81,15 @@ pub struct Report {
 impl Keeper {
 	pub fn new(config: Config, layout: Layout) -> Self {
 		let phase = RwLock::new(Phase::Starting("reading the data directory".into()));
-		Self { config, layout, phase, backing_up: tokio::sync::Mutex::new(()) }
+		Self {
+			config,
+			layout,
+			phase,
+			backing_up: tokio::sync::Mutex::new(()),
+			last: RwLock::new(Last::Unknown),
+			logged: Mutex::new(None),
+			stalled_after: watch::STALLED_AFTER,
+		}
 	}
 
 	pub fn phase(&self) -> Phase {
@@ -135,18 +165,65 @@ impl Keeper {
 		if status.role == Role::Primary {
 			let rows = postgres::query(&self.layout, health::STANDBYS).await?;
 			status.standbys = Some(health::standbys(&rows).map_err(unexpected)?);
+			status.backup = Some(self.watch(Timestamp::now()));
 		}
 		Ok(status)
 	}
 
+	fn last(&self) -> Last {
+		self.last.read().map_or_else(|poisoned| *poisoned.into_inner(), |last| *last)
+	}
+
+	fn set_last(&self, last: Last) {
+		match self.last.write() {
+			Ok(mut held) => *held = last,
+			Err(poisoned) => *poisoned.into_inner() = last,
+		}
+	}
+
+	/// Whether backing up has stopped, logged once each time the answer changes.
+	pub fn watch(&self, now: Timestamp) -> watch::Backup {
+		let read = watch::read_waiting(&self.layout.data).map_err(|_| ());
+		let report = watch::report(read, self.last(), now, self.stalled_after);
+		let mut logged = self.logged.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+		if *logged != Some(report.state) {
+			if logged.is_some() || report.state != watch::State::Unknown {
+				eprintln!("database: backing up is {}: {}", state_name(report.state), explain(&report));
+			}
+			*logged = Some(report.state);
+		}
+		report
+	}
+
+	/// The newest base backup in the store, read once in the background; a failure leaves it
+	/// unknown until the next backup job says.
+	pub async fn seed(&self) {
+		match self.list().await {
+			Ok(backups) => {
+				if self.last() == Last::Unknown {
+					self.set_last(newest(&backups));
+				}
+			}
+			Err(error) => eprintln!("database: the last base backup is unknown: {error}"),
+		}
+	}
+
 	/// A base backup of this primary, then the older ones thinned to the tiers: marked and unmarked
 	/// first, and deleted only once every step before has succeeded.
-	pub async fn backup(&self, now: jiff::Timestamp) -> Result<Report, postgres::Error> {
+	pub async fn backup(&self, now: Timestamp) -> Result<Report, Unbacked> {
+		let waiting = watch::read_waiting(&self.layout.data).map_err(Unbacked::Unreadable)?;
+		if watch::archiving(waiting.as_ref(), now, self.stalled_after) == watch::Archiving::Stalled
+			&& let Some(waiting) = waiting
+		{
+			let seconds = now.duration_since(waiting.since).as_secs();
+			return Err(Unbacked::Stalled { segment: waiting.segment, seconds });
+		}
 		let mut push = postgres::command("wal-g");
 		push.arg("backup-push").arg(&self.layout.data);
 		postgres::output(push, None).await?;
 		let backups = self.list().await?;
-		let newest = backups.iter().max_by_key(|b| b.start_time).map(|b| b.backup_name.clone());
+		self.set_last(newest(&backups));
+		let latest = backups.iter().max_by_key(|b| b.start_time).map(|b| b.backup_name.clone());
 		let changes = backup::changes(&backups, now);
 		for (name, flags) in changes
 			.mark
@@ -165,7 +242,7 @@ impl Keeper {
 		}
 		let left = self.list().await?;
 		Ok(Report {
-			backup: newest,
+			backup: latest,
 			marked: changes.mark,
 			unmarked: changes.unmark,
 			deleted_before: changes.delete_before,
@@ -185,6 +262,31 @@ impl Keeper {
 	}
 }
 
+/// The newest base backup of a listing.
+fn newest(backups: &[backup::Listed]) -> Last {
+	backups.iter().map(|b| b.start_time).max().map_or(Last::None, Last::At)
+}
+
+fn state_name(state: watch::State) -> &'static str {
+	match state {
+		watch::State::Ok => "ok",
+		watch::State::Stopped => "stopped",
+		watch::State::Unknown => "unknown",
+	}
+}
+
+/// What a backup report says, in a line for the log.
+fn explain(report: &watch::Backup) -> String {
+	let waiting = match (&report.oldest_waiting, report.oldest_waiting_seconds) {
+		(Some(segment), Some(seconds)) => format!("{segment} waiting {seconds} seconds to be archived"),
+		_ => "nothing waiting to be archived".into(),
+	};
+	let last = report
+		.last_base_backup
+		.map_or_else(|| "no base backup known".into(), |at| format!("last base backup {at}"));
+	format!("{waiting}, {last}")
+}
+
 /// A phase as a sentence, for the log and for `/health`.
 pub fn describe(phase: &Phase) -> String {
 	match phase {
@@ -192,5 +294,39 @@ pub fn describe(phase: &Phase) -> String {
 		Phase::Waiting(why) => format!("{why}; trying again in {} seconds", RETRY.as_secs()),
 		Phase::Refused(why) => why.clone(),
 		Phase::Running(plan) => format!("running, as {plan:?}"),
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	fn keeper(data: &std::path::Path) -> Keeper {
+		let config = Config {
+			node: "tyo".into(),
+			primary: "tyo".into(),
+			peers: [("tyo".to_owned(), "100.64.0.1".to_owned())].into(),
+			superuser_password: "s".into(),
+			replication_password: "r".into(),
+			data: data.into(),
+		};
+		Keeper::new(config, Layout::new(data.into()))
+	}
+
+	#[tokio::test]
+	async fn the_job_refuses_while_archiving_has_stopped() {
+		let dir = tempfile::tempdir().unwrap();
+		let status = dir.path().join("pg_wal/archive_status");
+		std::fs::create_dir_all(&status).unwrap();
+		std::fs::write(status.join("000000010000000000000003.ready"), "").unwrap();
+		let mut keeper = keeper(dir.path());
+		keeper.stalled_after = SignedDuration::ZERO;
+		let later = Timestamp::now() + SignedDuration::from_secs(5);
+		let error = keeper.backup(later).await.unwrap_err();
+		assert!(
+			matches!(&error, Unbacked::Stalled { segment, .. } if segment == "000000010000000000000003")
+		);
+		assert!(error.to_string().contains("no base backup was taken"));
+		assert_eq!(keeper.watch(later).state, watch::State::Stopped);
 	}
 }
