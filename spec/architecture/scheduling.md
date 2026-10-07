@@ -100,27 +100,32 @@ Decided on 2026-10-07, in place of a bucket that declared the failures it must s
 copies derived: a layout across providers is what its owner reasons about, and the failures remain a
 figure the platform states rather than one anybody types.
 
-## A scope is the boundary, and only the boundary isolates
+## A scope is an organization, and only the boundary isolates
 
-**A scope is a body of data: one bucket, and a Postgres holding the database of each app inside
-it.** Compute keeps nothing, so everything with state is some scope's; an app runs wherever it is
-placed and reaches its scope's bucket and its own database there. Inside a scope the apps share the
-bucket; across scopes nothing is shared. There are three today:
+**A scope is an organization's data: one bucket, and a Postgres holding the database of each app the
+organization runs.** Compute keeps nothing, so everything with state is some organization's; an app
+runs wherever it is placed and reaches its scope's bucket and its own database there. Inside a scope
+the apps share the bucket; across scopes nothing is shared. The organizations are the workspace's
+`spec/architecture/ship-cloud.md`, "Tenancy", and there are two today:
 
-| Scope      | Holds                                                                                         |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| `infra`    | the nodes' own: their configuration, and how work is scheduled across them                    |
-| `platform` | the accounts: every organization on the platform, the system's own and `canmi` the first user |
-| `canmi`    | the author's organization: their sites, and the accounts those sites offer their own users    |
+| Scope      | Holds                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| `platform` | the platform's own: every account and organization, the identities it issues, its services' data |
+| `canmi`    | the author's organization: their sites, their data and files, and the accounts the sites offer   |
 
-Each organization brought to the platform after is a scope of its own -- the workspace's
-`spec/architecture/ship-cloud.md`, "Tenancy".
+Each organization brought to the platform after is a scope of its own.
+
+**Infra is not a scope.** A scope's bucket and database run on infra, so infra's state kept in one
+would be a foundation stored upstairs: the database down, a node would not know how to run. What
+infra knows stays in infra -- git, each node's own disk, and the relay's log on the core. Scheduling
+across the nodes is the platform's, and its leases are in `platform`.
 
 - **Content is deduplicated within a scope, never across one.** A shared store of bytes would tell
   one scope whether another holds a given file, would make deleting in one ask the other, and would
   leave no scope that could be taken away whole. The same bytes in two scopes are kept twice.
 - **The platform's own data is a scope like any other, and no other scope's is the platform's.** The
-  author's sites are in `canmi`, not in `platform` -- the dependency runs one way, as the
+  author's sites are in `canmi`, not in `platform`, and the author operating the platform and the
+  author using it are two members of two organizations -- the dependency runs one way, as the
   workspace's `spec/architecture/layers.md` draws it.
 
 ## Names, content and copies are three layers
@@ -134,13 +139,41 @@ Each organization brought to the platform after is a scope of its own -- the wor
 Deduplication happens at content and nowhere else. Copies are reconciled: a store that is lost is
 replaced by another copy, and one whose expiry nears is emptied before it lapses.
 
+## Who asks is a principal, and an issuer vouches for it
+
+**Everything that reads or writes a scope's data is a principal of one kind**, and a person is only
+one of the kinds:
+
+| Principal       | Is                                                                   | Vouched for by        |
+| --------------- | -------------------------------------------------------------------- | --------------------- |
+| `service:<app>` | an app the platform deployed, given its identity when it is deployed | the platform          |
+| `node:<name>`   | a machine, as infra knows it                                         | the platform          |
+| `member:<id>`   | a platform account, acting as a member of an organization            | the platform          |
+| `user:<id>`     | an account of the scope's own, such as a reader signed in to a site  | the scope's own realm |
+| `group:<name>`  | a set of the above, kept in the scope                                | --                    |
+| `public`        | anyone at all                                                        | --                    |
+
+**There are two kinds of issuer, and neither is the other.** The platform's identity -- its accounts,
+its organizations, the identities of what it deploys -- is data in `platform`, and what it issues
+is honored in every scope. A scope may run accounts of its own, a realm: the readers of the author's
+sites are `canmi`'s, and what that realm issues is honored in `canmi` alone. The two may run the same
+program; they are never one instance, one table or one set of keys, so a flaw in a site's sign-in can
+never become power over the platform, and a friend's users can never become anybody on it. The
+author is two principals, a member of `platform` and possibly a user of `canmi`, linked perhaps and
+never merged.
+
+**So signing in is how a principal gets a credential the layer below accepts.** A reader signed in to
+a site holds a credential of `canmi`'s realm and reads what references let it read, straight from
+the bucket, with no app in between; the bucket knows the kinds and which issuer each scope trusts,
+and never what a site is.
+
 ## Every bucket is private, and a reference is what grants
 
 **Nothing in a bucket is readable by being there**, the site's included: what the site serves today
 is read by its Worker, which answers anyone only because there are no accounts yet.
 
 **A reference is one row in the bucket's Postgres: a holder, a key, a content type and the cid it
-points to.** The holder is a user, a group, or `public`. Whoever holds a reference to a cid may read
+points to.** The holder is a principal of any kind above. Whoever holds a reference to a cid may read
 it, and nobody else. So content held by user A, by user B and by `public` reads for both of them and
 for anyone; once `public`'s reference is revoked, user C reads nothing and A and B still do. The same
 rows are what keeps the bytes alive, below: who may read a thing and what holds it cannot disagree,

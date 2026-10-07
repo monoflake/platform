@@ -24,11 +24,26 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 - **`monoflake.com` and `ixc.one` get their apex records**, so the page each is to answer can be
   reached; `www.ixc.one`'s redirect to its apex leads nowhere until then.
 
+## The database
+
+In order -- [../architecture/databases.md](../architecture/databases.md):
+
+- **The cluster on the core**: the backup store's five `BACKUP_S3_*` secrets, `mise run database
+env`, `database` deployed to `tyo` and then its standbys, a backup taken and restored, and the
+  backup key copied somewhere apart from the secrets.
+- **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
+  `spec/todo.md`, "An app may ask to be deployed by hand".
+- **A newer pinned image is reported**: `outdated` reads the tag and digest every Dockerfile pins and
+  says which have a newer one upstream, the way it reports packages, and moves none of them.
+- **One address on every node for the database**: a proxy each node runs, which apps connect to and
+  which passes on to whichever node is primary, so a failover or a major's switch rewrites no URL and
+  restarts no app.
+
 ## Background work and packages
 
 - **The platform's scheduler**, which runs a job once across the platform under a lease in Postgres
   -- [../architecture/scheduling.md](../architecture/scheduling.md), "Background work has two
-  schedulers". It needs Postgres off the node at home first.
+  schedulers". It needs the cluster below first.
 
 ## The deployer
 

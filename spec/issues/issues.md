@@ -14,7 +14,7 @@ file.
 | ------------------------------ | ------- | ----------------------------------------------------- |
 | [gateway.md](gateway.md)       | 4       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
-| [scheduling.md](scheduling.md) | 5       | what the schedulers and Postgres leave open           |
+| [scheduling.md](scheduling.md) | 9       | what the schedulers and Postgres leave open           |
 | [services.md](services.md)     | 5       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
@@ -35,6 +35,10 @@ file.
 - What runs on one node until the platform's scheduler exists
 - How often geo's data is rebuilt
 - How long an app keeps what it deleted
+- Exports to look at, kept apart from backups
+- Backups are in one failure domain
+- A timeline's history can go with the WAL around it
+- An unreachable backup store holds the job for an hour
 
 ### [services.md](services.md)
 

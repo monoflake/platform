@@ -57,3 +57,42 @@ and unreferenced bytes are reclaimed seven days after. Apps will want their own:
 for a month, a cache's leftovers gone within the hour, and different parts of one app different
 again. Where such a period is declared -- the app's `service.toml`, the bucket's layout, or a row the
 app writes at run time -- and how finely, per app, per key prefix or per reference, is undecided.
+
+## Exports to look at, kept apart from backups
+
+A backup restores, and is kept beside its layer or below it -- the workspace's
+`spec/architecture/layers.md`, "Managed from above, restored from below" -- and reaches three years
+back. A second kind is wanted: an export of the platform's state, whole and readable without
+restoring anything, encrypted to the author's key and kept wherever is convenient -- the author's
+own scope among them -- to read how something was configured after it changed. It is taken by hand,
+when the author asks, never on a schedule, and kept as long as the author keeps it. What it holds,
+which key it is encrypted to and where it lands are undecided.
+
+## Backups are in one failure domain
+
+Every backup of the platform's Postgres goes to one Backblaze B2 account --
+[../architecture/databases.md](../architecture/databases.md), "Backups are the data, kept off the
+cluster" -- so the account ending loses every backup at once, which is the `domain` failure of
+[../architecture/scheduling.md](../architecture/scheduling.md). The stores a node's own disk offers
+over S3 -- `rdu`'s, in the house, first -- would close it, a copy of the backups' ciphertext taken
+from the first store each day: WAL-G's own second storage takes over when the first fails rather
+than keeping a copy in both. It waits on those stores existing.
+
+## A timeline's history can go with the WAL around it
+
+WAL-G keeps a permanent base backup whole by keeping the WAL segments its own copying wrote, and
+deletes every other segment before the delete point -- the timeline history files among them, which
+are not numbered segments. A base backup taken after a failover, on timeline two or later, then
+restores only if the history leading to its timeline is still in the store. Every backup proved so
+far was on timeline one. Keeping the history files out of the deletion -- copied beside the backups
+under a prefix WAL-G does not prune, or never deleted at all, since they are a few hundred bytes each
+-- would close it, and needs a restore after a real failover to prove.
+
+## An unreachable backup store holds the job for an hour
+
+WAL-G retries a store it cannot reach rather than failing, so a backup job against a store that is
+down waits until `cron`'s timeout of an hour and is recorded failed then, not at once. Nothing is
+lost -- the job deletes nothing until every step before has succeeded -- but the failure is an hour
+late and the job holds its slot for it. A shorter timeout of WAL-G's own would answer sooner; what
+it should be, against a base backup that may take minutes once the database is large, is undecided.
+
