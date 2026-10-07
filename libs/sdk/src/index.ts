@@ -190,11 +190,9 @@ export const URLS = {
 		// Cloudflare's API, pinned for the wrangler the deployer runs so a file it reads cannot point
 		// it elsewhere. See spec/architecture/deployer.md, "Credentials".
 		cloudflare: { api: 'https://api.cloudflare.com/client/v4' },
-		// GeoLite2, as a mirror republishes it daily without a license key, and whose it is, which
-		// `geo` credits in every answer. See spec/architecture/geo.md.
+		// Whose GeoLite2 is, which `geo` credits in every answer. The files themselves are fetched by
+		// geo's Dockerfile; see spec/architecture/geo.md, "GeoLite2 is fetched as the image is built".
 		geolite: {
-			city: 'https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-City.mmdb',
-			asn: 'https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-ASN.mmdb',
 			maxmind: 'https://www.maxmind.com',
 		},
 	},

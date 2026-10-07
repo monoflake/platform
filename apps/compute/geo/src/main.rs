@@ -4,9 +4,7 @@
 //! gateway under the `geo` scope, which strips the prefix before a request arrives here -- see
 //! spec/architecture/services.md, "One API host, scoped by path".
 
-mod fetch;
 mod ip;
-mod store;
 
 use axum::Router;
 use axum::extract::rejection::QueryRejection;
@@ -20,6 +18,7 @@ use std::net::{IpAddr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use whereabouts::coordinates::Gazetteer;
+use whereabouts::ip::Databases;
 
 /// musl's allocator is slow under many small allocations, and images are built for speed; see
 /// infra's spec/architecture/host.md, "An image is built for speed, and for any node of its
@@ -31,16 +30,15 @@ static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 /// host, and the test below holds the two together.
 const PORT: u16 = 23440;
 
-/// Empty until the gazetteer is read, which is what `/health` reports on.
-type Loaded = Arc<OnceLock<Gazetteer>>;
-
-/// What both routes need, cloned once per request; each field is its own `Arc`, so cloning this
-/// clones no data.
-#[derive(Clone)]
-struct AppState {
-	gazetteer: Loaded,
-	geo: Arc<store::Store>,
+/// Both lookups' data, mapped from the image's read-only data directory at start.
+struct Data {
+	gazetteer: Gazetteer,
+	databases: Databases,
 }
+
+/// Empty until both are mapped, which is what `/health` reports on. Cloned once per request, which
+/// clones the `Arc` and no data.
+type AppState = Arc<OnceLock<Data>>;
 
 /// Where to look, in degrees. Spelled out; see spec/architecture/services.md, "Names in an API are
 /// spelled out".
@@ -68,35 +66,19 @@ async fn main() -> anyhow::Result<()> {
 		};
 	}
 	let data = PathBuf::from(std::env::var("GEO_DATA").unwrap_or_else(|_| "/data".into()));
-	// Writable, unlike GEO_DATA: GeoLite2 is fetched here at run time, not shipped with the image.
-	// See spec/architecture/geo.md, "geo fetches it itself, at run time, once a day".
-	let state_dir = PathBuf::from(std::env::var("GEO_STATE").unwrap_or_else(|_| "/state".into()));
 	let listen = std::env::var("LISTEN").unwrap_or_else(|_| format!("0.0.0.0:{PORT}"));
 
-	let gazetteer: Loaded = Arc::default();
-	let geo = Arc::new(store::Store::default());
-	let state = AppState { gazetteer: gazetteer.clone(), geo: geo.clone() };
-	let router = routes(state);
+	let state = AppState::default();
+	let router = routes(state.clone());
 	let listener = tokio::net::TcpListener::bind(&listen).await?;
-	eprintln!(
-		"geo: listening on {listen}, reading {}, fetching to {}",
-		data.display(),
-		state_dir.display()
-	);
-
-	// GeoLite2 is fetched independently of the gazetteer: a slow or failing mirror must not hold
-	// up `/address` or `/health`, which is what `refresh_forever` running unawaited here gives.
-	tokio::spawn(fetch::refresh_forever(state_dir, geo));
+	eprintln!("geo: listening on {listen}, reading {}", data.display());
 
 	// Served before the data is read, so a health check sees "not yet" rather than a refused
-	// connection. A missing or unreadable index ends the process: a gazetteer that cannot answer is
-	// a failed deploy, and exiting is what lets the deploy's check see it and put the previous
-	// version back. Only the index is mapped, never the text parsed onto the heap; see
-	// spec/architecture/geo.md, "Both lookups are files laid out for asking".
+	// connection. A missing or unreadable file ends the process: a service that cannot answer is a
+	// failed deploy, and exiting is what lets the deploy's check see it and put the previous
+	// version back.
 	let reading = tokio::task::spawn_blocking(move || {
-		let gazetteer_data = Gazetteer::map(&data)
-			.map_err(|error| anyhow::anyhow!("no place index at {}: {error}", data.display()))?;
-		let _ = gazetteer.set(gazetteer_data);
+		let _ = state.set(load(&data)?);
 		anyhow::Ok(())
 	});
 
@@ -113,6 +95,19 @@ async fn main() -> anyhow::Result<()> {
 		served = &mut serving => return Ok(served??),
 	}
 	Ok(serving.await??)
+}
+
+/// Maps the place index and both GeoLite2 databases in `dir`, every one shipped in the image; see
+/// spec/architecture/geo.md, "GeoLite2 is fetched as the image is built". Only the index is mapped,
+/// never the text parsed onto the heap; see spec/architecture/geo.md, "Both lookups are files laid
+/// out for asking".
+fn load(dir: &Path) -> anyhow::Result<Data> {
+	let gazetteer = Gazetteer::map(dir)
+		.map_err(|error| anyhow::anyhow!("no place index at {}: {error}", dir.display()))?;
+	// SAFETY: the files are read-only in the image and nothing replaces them while they are mapped.
+	let databases = unsafe { Databases::open(dir) }
+		.map_err(|error| anyhow::anyhow!("no GeoLite2 at {}: {error}", dir.display()))?;
+	Ok(Data { gazetteer, databases })
 }
 
 /// Writes the place index for the GeoNames text in `source` into `target`, which the image build
@@ -154,10 +149,10 @@ async fn address(
 	if !in_range {
 		return response::failure(StatusCode::BAD_REQUEST, "invalid_position");
 	}
-	let Some(gazetteer) = state.gazetteer.get() else {
+	let Some(data) = state.get() else {
 		return loading();
 	};
-	match gazetteer.lookup(at.latitude, at.longitude) {
+	match data.gazetteer.lookup(at.latitude, at.longitude) {
 		Some(address) => response::success(StatusCode::OK, address),
 		None => response::failure(StatusCode::NOT_FOUND, "no_such_place"),
 	}
@@ -177,11 +172,10 @@ async fn ip_lookup(
 	let Some(address) = resolve_address(asked.address.as_deref(), &headers, peer) else {
 		return response::failure(StatusCode::BAD_REQUEST, "invalid_address");
 	};
-	let Some(databases) = state.geo.get() else {
-		let message = "GeoLite2 has not been fetched yet";
-		return response::failure_with(StatusCode::SERVICE_UNAVAILABLE, "service_unavailable", message);
+	let Some(data) = state.get() else {
+		return loading();
 	};
-	response::success(StatusCode::OK, ip::lookup(&databases, address))
+	response::success(StatusCode::OK, ip::lookup(&data.databases, address))
 }
 
 /// `given`, when there is one and it parses; otherwise `Cf-Connecting-Ip`, the gateway's own
@@ -196,11 +190,11 @@ fn resolve_address(given: Option<&str>, headers: &HeaderMap, peer: SocketAddr) -
 }
 
 async fn health(State(state): State<AppState>) -> Response {
-	if state.gazetteer.get().is_some() { response::success(StatusCode::OK, ()) } else { loading() }
+	if state.get().is_some() { response::success(StatusCode::OK, ()) } else { loading() }
 }
 
 fn loading() -> Response {
-	let message = "The gazetteer is still loading";
+	let message = "The place index and GeoLite2 are still loading";
 	response::failure_with(StatusCode::SERVICE_UNAVAILABLE, "service_unavailable", message)
 }
 
@@ -231,10 +225,6 @@ mod tests {
 	use http_body_util::BodyExt;
 	use tower::ServiceExt;
 
-	fn state() -> AppState {
-		AppState { gazetteer: Loaded::default(), geo: Arc::new(store::Store::default()) }
-	}
-
 	/// What the service answers `path` with while its data is still loading. `ConnectInfo` is
 	/// set by hand: `oneshot` runs the `Router` directly, not through
 	/// `into_make_service_with_connect_info`, which is what sets it in `main`.
@@ -249,7 +239,7 @@ mod tests {
 		}
 		let mut request = request.body(Body::empty()).unwrap();
 		request.extensions_mut().insert(ConnectInfo(SocketAddr::from(([203, 0, 113, 9], 0))));
-		let answer = routes(state()).oneshot(request).await.unwrap();
+		let answer = routes(AppState::default()).oneshot(request).await.unwrap();
 		let status = answer.status();
 		let body = answer.into_body().collect().await.unwrap().to_bytes();
 		(status, serde_json::from_slice(&body).unwrap())
@@ -283,12 +273,15 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn is_unavailable_rather_than_wrong_before_geolite2_has_landed() {
+	async fn is_unavailable_rather_than_wrong_before_geolite2_is_mapped() {
 		let (status, body) = ask("/v1/ip?address=1.1.1.1").await;
 		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
 		assert_eq!(body["code"], "service_unavailable");
-		// /address and /health answer on their own data, unaffected by geo's still being empty.
-		assert_eq!(ask("/health").await.0, StatusCode::SERVICE_UNAVAILABLE);
+	}
+
+	#[test]
+	fn a_directory_with_nothing_in_it_fails_to_load_rather_than_panics() {
+		assert!(load(Path::new("/nowhere-at-all")).is_err());
 	}
 
 	#[test]

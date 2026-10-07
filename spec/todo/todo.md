@@ -24,14 +24,6 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 - **`monoflake.com` and `ixc.one` get their apex records**, so the page each is to answer can be
   reached; `www.ixc.one`'s redirect to its apex leads nowhere until then.
 
-## geo on the nodes without IPv4
-
-geo runs on every node that has IPv4. **`gvx` and `bru` get it once GeoLite2 reaches them**: geo
-fetches it from GitHub, which answers over IPv4 alone, so either geo asks through the egress proxies
-host and keeper use -- infra's `spec/architecture/nodes.md`, "The nodes" -- or the relay carries the
-file between nodes, [../architecture/relay.md](../architecture/relay.md). Until then a placement
-there would answer `/geo/ip` with `503` to whichever caller the gateway sent to it.
-
 ## Background work and packages
 
 - **The platform's scheduler**, which runs a job once across the platform under a lease in Postgres

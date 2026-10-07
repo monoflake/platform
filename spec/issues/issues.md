@@ -14,7 +14,7 @@ file.
 | ------------------------------ | ------- | ----------------------------------------------------- |
 | [gateway.md](gateway.md)       | 4       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
-| [scheduling.md](scheduling.md) | 2       | what the schedulers and Postgres leave open           |
+| [scheduling.md](scheduling.md) | 4       | what the schedulers and Postgres leave open           |
 | [services.md](services.md)     | 5       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
@@ -32,6 +32,8 @@ file.
 
 - How a Worker at the edge reaches Postgres on the nodes
 - The order the site leaves D1
+- What runs on one node until the platform's scheduler exists
+- How often geo's data is rebuilt
 
 ### [services.md](services.md)
 

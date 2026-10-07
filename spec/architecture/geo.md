@@ -15,18 +15,28 @@ does not know answers with what it does know and nulls for the rest; one that is
 gateway and Caddy both keep -- [services.md](services.md), "A limit is declared once and kept in
 three places".
 
-**The data is GeoLite2 City and ASN, taken daily from a mirror's releases**: the GitHub releases of
+**The data is GeoLite2 City and ASN, taken from a mirror's releases**: the GitHub releases of
 `P3TERX/GeoLite.mmdb`, which republishes MaxMind's files as `.mmdb` without a license key, so no key
 lives anywhere here. The answer credits MaxMind as its license asks.
 
-**geo fetches it itself, at run time, once a day**, into its own data directory: a new file is
-downloaded beside the one in use, opened and read once to prove it whole, and swapped in atomically,
-so a lookup never meets half a file and a failed download leaves yesterday's answering. It is read
-memory-mapped, so the page cache holds what is asked and the heap nothing. A daily image rebuild
-was the other way, and was not taken: it would redeploy a large image every day for one file.
+## GeoLite2 is fetched as the image is built
 
-Until the first file has arrived, `/geo/ip` answers `503` and `/geo/address` is unaffected; the
-image carries no copy, so a new node's first minutes ask for one.
+**Both data sets are fetched by the image build and travel inside the image, read-only; geo asks
+nothing of the network at run time.** GeoLite2 arrives the way GeoNames does, by `ADD` of its
+address in the Dockerfile, and lands in `/data` beside the place index. A copy of geo is whole the
+moment it starts, on any node: one without IPv4 receives the image the way it receives every
+other, through the egress proxies -- infra's `spec/architecture/nodes.md`, "The nodes" -- and never
+reaches GitHub itself. A file that cannot be opened ends the process at start, like a missing place
+index, so the deploy fails and the previous version answers on.
+
+**The data is as new as the last build.** Any push touching geo rebuilds it, and `deploy.yml`
+rebuilds geo alone on the first of each month. How often it should be rebuilt, and by whom, is open
+-- [../issues/scheduling.md](../issues/scheduling.md), "How often geo's data is rebuilt".
+
+Rejected: **geo fetching GeoLite2 itself, once a day, into a data directory of its own**, which was
+how it began. A node without IPv4 could not reach the mirror, so `/geo/ip` answered `503` there,
+and every node's first minutes answered `503` until its first download landed. Decided on
+2026-10-07.
 
 ## Both lookups are files laid out for asking, and the page cache keeps them
 

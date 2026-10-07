@@ -73,8 +73,4 @@ pub const EXTERNAL_TURNSTILE_SITEVERIFY: &str =
 pub const EXTERNAL_DOH_CLOUDFLARE: &str = "https://1.1.1.1/dns-query";
 pub const EXTERNAL_DOH_GOOGLE: &str = "https://8.8.8.8/resolve";
 pub const EXTERNAL_CLOUDFLARE_API: &str = "https://api.cloudflare.com/client/v4";
-pub const EXTERNAL_GEOLITE_CITY: &str =
-	"https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-City.mmdb";
-pub const EXTERNAL_GEOLITE_ASN: &str =
-	"https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-ASN.mmdb";
 pub const EXTERNAL_GEOLITE_MAXMIND: &str = "https://www.maxmind.com";

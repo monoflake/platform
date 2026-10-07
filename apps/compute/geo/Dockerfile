@@ -27,9 +27,10 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 	&& cargo build --profile container --locked --target "$target" -p geo \
 	&& cp "target/$target/container/geo" /geo
 
-# GeoNames, fetched as the image is built, so the data is as new as the build. `ADD` of a URL is
-# cached by the server's ETag, so an unchanged file is not fetched again and a changed one is.
-# web's `mise run geo` exports the data stage for local work, so these addresses are the only copy.
+# GeoNames, fetched as the image is built, as GeoLite2 is below, so the data is as new as the
+# build. `ADD` of a URL is cached by the server's ETag, so an unchanged file is not fetched again
+# and a changed one is. web's `mise run geo` exports the data stage for local work, so these
+# addresses are the only copy.
 FROM debian:trixie-slim AS fetch
 RUN apt-get update \
 	&& apt-get install --yes --no-install-recommends unzip \
@@ -58,6 +59,13 @@ FROM scratch
 COPY --from=build /geo /geo
 # Read-only data traveling with the binary, so every copy of the service is whole.
 COPY --from=index /index /data
+# GeoLite2 beside it, as a mirror republishes MaxMind's files without a license key, so geo asks
+# the network for nothing while it runs. A URL's file arrives mode 600, and the service reads it as
+# 65532. See spec/architecture/geo.md, "GeoLite2 is fetched as the image is built".
+ADD --chmod=0644 \
+	https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-City.mmdb \
+	https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-ASN.mmdb \
+	/data/
 # Not root: nothing here needs to be, and scratch has no user table, so it is named by number.
 USER 65532:65532
 ENTRYPOINT ["/geo"]
