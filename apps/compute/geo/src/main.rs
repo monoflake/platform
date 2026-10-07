@@ -17,7 +17,7 @@ use axum::routing::get;
 use serde::Deserialize;
 use std::future::IntoFuture;
 use std::net::{IpAddr, SocketAddr};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use whereabouts::coordinates::Gazetteer;
 
@@ -58,6 +58,15 @@ struct IpQuery {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+	let mut args = std::env::args().skip(1);
+	if let Some(command) = args.next() {
+		return match (command.as_str(), args.next(), args.next()) {
+			("index", Some(source), Some(target)) => {
+				index(&PathBuf::from(source), &PathBuf::from(target))
+			}
+			_ => Err(anyhow::anyhow!("usage: geo [index <source> <target>]")),
+		};
+	}
 	let data = PathBuf::from(std::env::var("GEO_DATA").unwrap_or_else(|_| "/data".into()));
 	// Writable, unlike GEO_DATA: GeoLite2 is fetched here at run time, not shipped with the image.
 	// See spec/architecture/geo.md, "geo fetches it itself, at run time, once a day".
@@ -80,12 +89,13 @@ async fn main() -> anyhow::Result<()> {
 	tokio::spawn(fetch::refresh_forever(state_dir, geo));
 
 	// Served before the data is read, so a health check sees "not yet" rather than a refused
-	// connection. Missing data ends the process: a gazetteer that cannot answer is a failed deploy,
-	// and exiting is what lets the deploy's check see it and put the previous version back.
+	// connection. A missing or unreadable index ends the process: a gazetteer that cannot answer is
+	// a failed deploy, and exiting is what lets the deploy's check see it and put the previous
+	// version back. Only the index is mapped, never the text parsed onto the heap; see
+	// spec/architecture/geo.md, "Both lookups are files laid out for asking".
 	let reading = tokio::task::spawn_blocking(move || {
-		let gazetteer_data = Gazetteer::open(&data)
-			.ok_or_else(|| anyhow::anyhow!("no gazetteer at {}", data.display()))?;
-		gazetteer_data.preload();
+		let gazetteer_data = Gazetteer::map(&data)
+			.map_err(|error| anyhow::anyhow!("no place index at {}: {error}", data.display()))?;
 		let _ = gazetteer.set(gazetteer_data);
 		anyhow::Ok(())
 	});
@@ -103,6 +113,21 @@ async fn main() -> anyhow::Result<()> {
 		served = &mut serving => return Ok(served??),
 	}
 	Ok(serving.await??)
+}
+
+/// Writes the place index for the GeoNames text in `source` into `target`, which the image build
+/// runs so the image carries the index and not the text. See spec/architecture/geo.md, "Both
+/// lookups are files laid out for asking, and the page cache keeps them".
+fn index(source: &Path, target: &Path) -> anyhow::Result<()> {
+	let started = std::time::Instant::now();
+	Gazetteer::build(source, target)?;
+	eprintln!(
+		"geo: indexed {} into {} in {:?}",
+		source.display(),
+		target.display(),
+		started.elapsed()
+	);
+	Ok(())
 }
 
 /// The lookups at `/v1/`; `/health` is host's and never versioned. See

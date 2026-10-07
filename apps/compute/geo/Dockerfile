@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 
 # GeoNames, fetched as the image is built, so the data is as new as the build. `ADD` of a URL is
 # cached by the server's ETag, so an unchanged file is not fetched again and a changed one is.
-# `mise run geo` exports this stage for local work, so these addresses are the only copy.
+# web's `mise run geo` exports the data stage for local work, so these addresses are the only copy.
 FROM debian:trixie-slim AS fetch
 RUN apt-get update \
 	&& apt-get install --yes --no-install-recommends unzip \
@@ -44,10 +44,17 @@ RUN unzip -q /fetch/cities500.zip -d /geo \
 FROM scratch AS data
 COPY --from=fetch /geo /
 
+# The text turned into the place index geo maps, by geo itself; the text stays behind. See
+# spec/architecture/geo.md, "Both lookups are files laid out for asking, and the page cache keeps
+# them".
+FROM debian:trixie-slim AS index
+COPY --from=build /geo /geo
+RUN --mount=type=bind,from=data,target=/source /geo index /source /index
+
 FROM scratch
 COPY --from=build /geo /geo
 # Read-only data traveling with the binary, so every copy of the service is whole.
-COPY --from=data / /data
+COPY --from=index /index /data
 # Not root: nothing here needs to be, and scratch has no user table, so it is named by number.
 USER 65532:65532
 ENTRYPOINT ["/geo"]

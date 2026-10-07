@@ -78,14 +78,41 @@ impl Client {
 		}
 		let mut file =
 			tokio::fs::File::create(dest).await.with_context(|| dest.display().to_string())?;
+		let mut unsettled = 0;
 		while let Some(frame) = response.body_mut().frame().await {
 			if let Some(data) = frame?.data_ref() {
 				file.write_all(data).await?;
+				unsettled += data.len();
+				if unsettled >= CHUNK {
+					settle(&file).await?;
+					unsettled = 0;
+				}
 			}
 		}
 		file.flush().await?;
+		settle(&file).await?;
 		Ok(())
 	}
+}
+
+/// Pages a container dirties count against its memory ceiling, so a download is written out and
+/// dropped from the cache every few MiB as it lands. See infra's spec/architecture/host.md, "A
+/// large file is written in chunks that leave the page cache as they land".
+const CHUNK: usize = 8 << 20;
+
+async fn settle(file: &tokio::fs::File) -> std::io::Result<()> {
+	file.sync_data().await?;
+	#[cfg(target_os = "linux")]
+	{
+		use std::os::fd::AsRawFd;
+		let advice = libc::POSIX_FADV_DONTNEED;
+		// SAFETY: a plain call on a descriptor `file` keeps open; the kernel touches no memory of ours.
+		match unsafe { libc::posix_fadvise(file.as_raw_fd(), 0, 0, advice) } {
+			0 => {}
+			errno => return Err(std::io::Error::from_raw_os_error(errno)),
+		}
+	}
+	Ok(())
 }
 
 impl Default for Client {
