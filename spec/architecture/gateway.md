@@ -324,13 +324,12 @@ random order, is the default.
 Choosing by load or by distance is the gateway's later, and the reason `monoflake.com` does not name
 one.
 
-**A caller off the node uses the public names; what runs on the node keeps the private side.** A
-device, a page, a third party asks `api.monoflake.com` and the `ixc.one` names, which the house's
-resolver answers with the node at home. A service on the node asking another -- `cron` at a job's
-time, a service pushing to the ledger, the probe's inside checks -- asks the private side
-[services.md](services.md) describes, `api.internal.ixc.one/{scope}/...`, through Caddy, which
-admits the node's own containers and counts no limit; those calls are our own and are given no
-versions. The private suffix moved there from `canmi.icu` when the token Caddy proves certificates
+**A caller off the node uses the public names; what runs on a node keeps the private side.** A
+device, a page, a third party asks `api.monoflake.com` and the `ixc.one` names through Cloudflare,
+wherever it is. A service on a node asking another -- `cron` at a job's time, a service pushing to
+the ledger -- asks the private side, `api.internal.ixc.one/{scope}/...`, through its own node's
+Caddy, which admits the node's own containers; a scope on that node counts no limit, and one
+elsewhere goes on through the gateway as the next section says. The private suffix moved there from `canmi.icu` when the token Caddy proves certificates
 with stopped covering that domain.
 
 **A Worker behind the gateway asks another by binding, never through the gateway's host.** The
@@ -339,47 +338,33 @@ and Cloudflare refuses it; the alias layer asks the site's public routes by the 
 under the API host's name so the site reads it as the public door. The gateway resolves its own
 marks through the alias layer's binding for the same reason.
 
-### Inside the house, the same names answer locally
+### Inside a node, its own services answer locally
 
-**The gateway is one program deployed twice.** On Workers it is the Worker `gateway`; on the node it
-is the same code under a Node entry point, in a container beside Caddy, on the newest stable Node
-rather than its long-term line. CORS, lifetimes, crawling, each host's files, the path rule and,
-later, credentials are one implementation, so a service never knows, and never needs to know, which
-side reached it. The two entry points differ in what they are handed and nothing else: the Worker
-its bindings, the Node entry the same names as HTTP -- `RDU` and `QUOTA` asked on Caddy's inside
-side, `RELAY` and `INTERNAL_TOKEN` from its environment. The deployment at home mirrors the one on
-Workers, so what a caller meets is the same on both.
+**Cloudflare is the entrance, and there is one gateway.** A device at home asks the public names
+through Cloudflare as every other caller does: the LAN's DNS -- infra's resolver -- does not answer
+`api.monoflake.com` or the service domains with the node, since the node at home may go offline
+and the control plane is on `tyo`. So a caller anywhere meets one gateway and one order of
+placements. The gateway that once ran at home for the LAN, the same program under a Node entry, is
+retired with that. Decided on 2026-10-07, when a `shot` task taken through Cloudflare on `tyo` was
+not found from the LAN.
 
-**Caddy answers the gateway's hostnames on the LAN and hands them to it.** Its private side carries
-every hostname the profiles read, with certificates by DNS challenge, as it already has for
-the private suffix; the internal gateway behind it reads each request into its tuple as the Worker does.
-Caddy sets `Cf-Connecting-Ip` to the LAN address it was asked from, over whatever the caller sent,
-so the internal gateway counts each device as the public one counts each visitor.
-The LAN's DNS -- infra's resolver -- answers those names with the node, so a device at home
-reaches the internal gateway by name.
+**A container asks the private side, and the private side is its own node's Caddy.** A service on a
+node asks another as `api.internal.ixc.one/{scope}/...`; that name resolves, inside the node's
+Docker network, to the node's own Caddy, and is plain HTTP there, since the request never leaves
+the node. A scope with a placement on this node is answered without leaving it -- infra's
+`spec/architecture/host.md`, "Every node answers the private API, and sends on what is not its
+own".
+Any other scope Caddy hands to the public gateway as `api.monoflake.com/v{n}/{scope}/...`, carrying
+`INTERNAL_TOKEN`, so a call across nodes is routed by the one gateway, placement order and all.
 
-**A service on the node is asked on the node; a service on Workers is asked through the public
-gateway.** What runs at home -- a deployment under `ixc.one` placed `rdu-int`, and every service
-whose placement is the node -- goes to Caddy's inside side without leaving the house; see
-infra's `spec/architecture/host.md`, "The inside side answers the internal gateway alone". What
-runs on Workers has no copy here, so the request goes on to the public gateway under the API
-host's spelling, `api.monoflake.com/v{n}/{service}/...`, resolved by public DNS rather than the
-LAN's, so a LAN that answers the names locally never sends the gateway to itself.
-
-**What the internal gateway sends out carries `INTERNAL_TOKEN`**, in `x-internal`, a secret in the
-repository's secrets and in both gateways' environments. Each service-layer zone's firewall lets a
-request carrying it past the rate rule, as it does the probe's, and the public gateway takes the
-header off before any service sees it and does not count the call again: it was counted where it
-entered. Everything else -- CORS, lifetimes, credentials -- the public gateway applies as to any
-call. See [quota.md](quota.md), "Deployed twice, counted where a request enters".
-
-**The internal gateway keeps no answers at first.** It states the same lifetimes, so a browser and
-every cache after it keep what they would from the public one; a store of its own on the node is
-added when a reason is.
-
-**The LAN's DNS answers the names**, through infra's resolver. The private side,
-`api.internal.ixc.one`, is still what the node's own callers use -- the ledger, cron, the probe's
-private checks -- and retiring it is a step not yet taken.
+**The public gateway takes a private scope only with `INTERNAL_TOKEN`.** A scope a service declares
+`public = false` and Caddy carries on its private side -- the ledger, cron -- is in the gateway's
+table for that reason alone: a
+request carrying the token in `x-internal` reaches it, one without is answered as a scope that does
+not exist. The gateway takes the header off before any service sees it, counts the call once where
+it entered, and applies CORS, lifetimes and credentials as to any call. `quota` is not one of them:
+it is the gateway's own counter, reached by binding, and no service asks it. A call across nodes
+therefore needs Cloudflare; one within a node does not.
 
 **Telling our own callers from the public stays as it is until there are accounts.** What a
 service offers only to our own callers is told today by which side reached it. When the account

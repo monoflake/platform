@@ -82,33 +82,26 @@ Durable Object request a bucket. Checking every bucket before taking any would c
 bucket and still race between them, since the buckets are separate objects. The address comes first
 so that one device cycling through accounts is stopped there, before it spends any account's room.
 
-## Deployed twice, counted where a request enters
+## One deployment, counted where a request enters
 
-**`quota` is one service with two deployments, as the gateway is.** On Workers its counts are
-Durable Objects, one per key, one class in `quota`'s own Worker: the one place every location
-agrees on, which is why Cloudflare's rate limiting binding, counted per location, is not used --
-an address whose calls land in three locations was allowed three times as much, no closer than the
-firewall's floor. On the node it is a Node container whose counts are memory in one process, which
-is the same single place there, reached as every service at home is: through Caddy, on its inside
-side, which nothing but a holder of `INTERNAL_TOKEN` reaches. Neither writes anything down: a count lost to an evicted object or
-a restarted process is a window started again, which a limit can afford.
-
-**A call is counted once, by the gateway it entered.** The internal gateway counts what the LAN asks
-against the node's `quota`; what it passes on to a service on Workers carries `INTERNAL_TOKEN`, and
-the public gateway does not count it again -- it would see only the node's address, every caller in
-the house in one bucket. See [gateway.md](gateway.md), "Inside the house, the same names answer
+**`quota` is one service on Workers.** Its counts are Durable Objects, one per key, one class in
+`quota`'s own Worker: the one place every location agrees on, which is why Cloudflare's rate
+limiting binding, counted per location, is not used -- an address whose calls land in three
+locations was allowed three times as much, no closer than the firewall's floor. Nothing is written
+down: a count lost to an evicted object is a window started again, which a limit can afford. A copy
+on the node counted what the LAN asked the house's gateway; both retired on 2026-10-07, when the
+house stopped being an entrance -- [gateway.md](gateway.md), "Inside a node, its own services answer
 locally".
 
-**What a deployment counts is its own.** The LAN's subjects never reach the public deployment's
-buckets, nor the public's the node's; there is no sharing between them to keep in step.
+**A call is counted once, by the gateway.** A call that carries `INTERNAL_TOKEN` -- a node's
+private side sending on a scope placed elsewhere -- is not counted at all: it is our own, and the
+gateway would see only the node's address.
 
 ## Two doors: one inside, and one held for later
 
 **The inside door is a binding's.** `quota`'s Worker exports a named entrypoint whose `take` is
 given every key and row of one call, in order, and answers once, `{ allowed, retryAfter }`; a Worker
-reaches it by service binding, which costs nothing beyond the Durable Object requests it makes. On
-the node the same call is `POST /take` with the checks as its body, on Caddy's inside side, and
-`quota` declares that side alone, so neither the LAN's API host nor the tunnel's carries it. The
+reaches it by service binding, which costs nothing beyond the Durable Object requests it makes. The
 inside door takes any key, so nothing outside the platform reaches it.
 
 **The outside door is not open until there are accounts.** `quota` is declared `public = false`, so

@@ -28,7 +28,7 @@ file.
 - The CDN and the alias layer still stamp their own lifetimes
 - The whitelists are written by hand, and checked against the table only
 - A deployment's host is not checked against where the service runs
-- Inside the house, an ordered service is asked on the wrong node
+- A node's private side cannot tell one app from another
 
 ### [relay.md](relay.md)
 

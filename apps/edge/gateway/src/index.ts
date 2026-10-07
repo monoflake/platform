@@ -50,22 +50,15 @@ export type Env = Readonly<Record<string, unknown>> & {
 	 */
 	readonly PROBE_TOKEN?: string;
 	/**
-	 * The internal gateway's token, a secret in both gateways: a request carrying it in `x-internal`
-	 * was counted where it entered, at home, and is not counted again. See
-	 * spec/architecture/gateway.md, "Inside the house, the same names answer locally".
+	 * The token a node's private side sends a call across nodes with, a Worker secret: a request
+	 * carrying it in `x-internal` reaches a private scope, and is counted nowhere, being our own.
+	 * Absent, no private scope is reachable. See spec/architecture/gateway.md, "Inside a node, its
+	 * own services answer locally".
 	 */
 	readonly INTERNAL_TOKEN?: string;
-	/**
-	 * Set only where the gateway runs at home: the way to the public gateway, through which a service
-	 * on Workers is asked, having no copy there. Absent, a service on Workers is asked by binding.
-	 */
-	readonly RELAY?: unknown;
 };
 
-/** Where the internal gateway asks a service on Workers: the public API host. */
-const RELAYED = `https://${GATEWAY.api}`;
-
-/** The header the internal gateway carries `INTERNAL_TOKEN` in, taken off before a service. */
+/** The header a node's private side carries `INTERNAL_TOKEN` in, taken off before a service. */
 export const INTERNAL_HEADER = 'x-internal';
 
 /**
@@ -289,6 +282,8 @@ function robotsOf(profile: Profile, scopes: Readonly<Record<string, Scope>>): st
 	const disallow: string[] = [];
 	let open = true;
 	for (const [service, scope] of Object.entries(scopes)) {
+		// A private scope does not exist to a crawler.
+		if (scope.private) continue;
 		if (profile.service !== undefined && profile.service !== service) continue;
 		const base = scope.routes.at(-1) ?? DEFAULT_ROUTE;
 		open &&= base.crawlable;
@@ -408,6 +403,10 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		if (typeof tuple === 'string') return failure(400, 'invalid_path');
 		if (!Object.hasOwn(scopes, tuple.service)) return failure(404, 'no_such_scope');
 		const target = scopes[tuple.service] as Scope;
+		// A private scope is a node's private side's alone: to anyone else it does not exist.
+		if (target.private && !carries(c.req.raw.headers, INTERNAL_HEADER, c.env.INTERNAL_TOKEN)) {
+			return failure(404, 'no_such_scope');
+		}
 		const route = routeOf(target, tuple.path);
 		// A path the service does not open is no address, before a limit or the service is asked.
 		if (!route.exposed) return failure(404, 'no_such_route');
@@ -475,35 +474,16 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		if (!taken.allowed) {
 			return failure(429, 'rate_limited', { headers: { 'Retry-After': String(taken.retryAfter) } });
 		}
-		// At home a service on Workers has no copy: it is asked through the public gateway under the
-		// API host's spelling, with the token that says it was counted here.
-		if (target.placement === WORKERS && isFetcher(c.env.RELAY)) {
-			const relayed = new Request(
-				new URL(`/${tuple.version}/${tuple.service}${tuple.path}${url.search}`, RELAYED),
-				c.req.raw,
-			);
-			relayed.headers.delete(INTERNAL_HEADER);
-			if (c.env.INTERNAL_TOKEN) relayed.headers.set(INTERNAL_HEADER, c.env.INTERNAL_TOKEN);
-			// Cloudflare's own headers are Cloudflare's to set: a request arriving with one, the
-			// visitor's address that Caddy wrote here among them, is refused at its edge with a 403.
-			const cloudflare = [...relayed.headers.keys()].filter((name) => name.startsWith('cf-'));
-			for (const name of cloudflare) relayed.headers.delete(name);
-			try {
-				return answered(await c.env.RELAY.fetch(relayed));
-			} catch {
-				return answered(failure(502, 'upstream_unavailable'), true);
-			}
-		}
-
+		// A private scope's callers name no version, so its service is sent the path alone.
+		const sent = target.private ? tuple.path : tuple.forward;
 		if (target.placement !== WORKERS) {
-			// Only the nodes bound here: at home that is the node itself, as it always was.
 			const nodes = (target.nodes ?? [target.binding]).map((name) => c.env[name]).filter(isFetcher);
 			if (nodes.length === 0) return failure(502, 'scope_unavailable');
 			// Caddy takes the scope off itself; see spec/architecture/services.md, "One door per node".
 			const forwarded = new URL(url);
 			forwarded.protocol = 'http:';
 			forwarded.host = NODE_API;
-			forwarded.pathname = `/${tuple.service}${tuple.forward}`;
+			forwarded.pathname = `/${tuple.service}${sent}`;
 			// A node can be off, or its tunnel down; every one being so is the service out of reach,
 			// which is what the caller is told, in the envelope, rather than a proxy's page.
 			const order = target.routing === 'ordered' ? nodes : shuffled(nodes);
@@ -514,7 +494,7 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		const binding = destination(c.env[target.binding], target);
 		if (!binding) return failure(502, 'scope_unavailable');
 		let forwarded = new URL(url);
-		forwarded.pathname = `${target.prefix ?? ''}${tuple.forward}`;
+		forwarded.pathname = `${target.prefix ?? ''}${sent}`;
 		if (typeof binding === 'string')
 			forwarded = new URL(`${forwarded.pathname}${url.search}`, binding);
 		const request = marked(new Request(forwarded, c.req.raw));

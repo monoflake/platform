@@ -25,6 +25,12 @@ export interface Scope {
 	readonly worker?: string;
 	/** Where the Worker answers its API, when not at its root; the path goes on after it. */
 	readonly prefix?: string;
+	/**
+	 * Set on a scope declared `public = false`: reached only with `INTERNAL_TOKEN`, and a scope that
+	 * does not exist to anyone else. See spec/architecture/gateway.md, "Inside a node, its own
+	 * services answer locally".
+	 */
+	readonly private?: true;
 	/** Its routes' allowances, when it declares any. */
 	readonly limits?: readonly Allowance[];
 	/**
@@ -45,42 +51,50 @@ export function bindingOf(name: string): string {
 interface Declaration {
 	name: string;
 	placements: string[];
-	api?: { public?: boolean; prefix?: string; routing?: Routing; limits?: Allowance[] } & Record<
-		string,
-		unknown
-	>;
+	api?: {
+		public?: boolean;
+		prefix?: string;
+		routing?: Routing;
+		limits?: Allowance[];
+		sides?: string[];
+	} & Record<string, unknown>;
 }
 
 /**
- * The public scopes among `declarations`: a Worker's by its first placement, a node's on every node
- * it is placed on. A scope that is not public is left out: the public host does not know it exists.
- * See spec/architecture/gateway.md, "Where a request goes".
+ * The scopes among `declarations`: a Worker's by its first placement, a node's on every node it is
+ * placed on. A private one is in, marked `private`, where Caddy carries it on the private side. See
+ * spec/architecture/gateway.md, "Where a request goes".
  */
 export function scopeTable(declarations: readonly string[]): Record<string, Scope> {
 	const table: Record<string, Scope> = {};
 	const read = declarations.map((text) => parse(text) as unknown as Declaration);
 	for (const declaration of read.toSorted((a, b) => a.name.localeCompare(b.name))) {
 		const [placement] = declaration.placements;
-		if (!declaration.api?.public || placement === undefined) continue;
-		const limits = declaration.api.limits?.length ? { limits: declaration.api.limits } : {};
-		const routes = routesOf(declaration.name, declaration.api);
+		const api = declaration.api;
+		if (api === undefined || placement === undefined) continue;
+		if (!api.public && !(api.sides?.includes('private') ?? true)) continue;
+		const access = api.public ? {} : { private: true as const };
+		const limits = api.limits?.length ? { limits: api.limits } : {};
+		const routes = routesOf(declaration.name, api);
 		table[declaration.name] =
 			placement === WORKERS
 				? {
 						placement,
+						...access,
 						binding: bindingOf(declaration.name),
 						worker: declaration.name,
-						...(declaration.api.prefix ? { prefix: declaration.api.prefix } : {}),
+						...(api.prefix ? { prefix: api.prefix } : {}),
 						...limits,
 						routes,
 					}
 				: {
 						placement,
+						...access,
 						binding: bindingOf(placement),
 						nodes: declaration.placements
 							.filter((each) => each !== WORKERS)
 							.map((each) => bindingOf(each)),
-						routing: declaration.api.routing ?? 'any',
+						routing: api.routing ?? 'any',
 						...limits,
 						routes,
 					};

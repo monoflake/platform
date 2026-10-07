@@ -19,10 +19,10 @@ pub const INTERNAL_ALIAS: &str = "https://ill.li";
 pub const INTERNAL_PANEL: &str = "https://infra.internal.ixc.one";
 pub const INTERNAL_KEEPER: &str = "https://keeper.internal.ixc.one";
 pub const INTERNAL_HOST: &str = "http://host:11011";
-pub const INTERNAL_LEDGER: &str = "https://api.internal.ixc.one/ledger";
-pub const INTERNAL_CRON: &str = "https://api.internal.ixc.one/cron";
+pub const INTERNAL_LEDGER: &str = "http://api.internal.ixc.one/ledger";
+pub const INTERNAL_CRON: &str = "http://api.internal.ixc.one/cron";
 pub const INTERNAL_SHOT: &str = "https://api.monoflake.com/v1/shot";
-pub const INTERNAL_API_PRIVATE: &str = "https://api.internal.ixc.one";
+pub const INTERNAL_API_PRIVATE: &str = "http://api.internal.ixc.one";
 pub const INTERNAL_API_PUBLIC: &str = "https://api.monoflake.com";
 pub const INTERNAL_STATUS_CANONICAL: &str = "https://status.canmi.app";
 pub const INTERNAL_STATUS_MIRROR: &str = "https://canmi.vercel.app";
@@ -79,15 +79,3 @@ pub const EXTERNAL_GEOLITE_CITY: &str =
 pub const EXTERNAL_GEOLITE_ASN: &str =
 	"https://github.com/P3TERX/GeoLite.mmdb/releases/latest/download/GeoLite2-ASN.mmdb";
 pub const EXTERNAL_GEOLITE_MAXMIND: &str = "https://www.maxmind.com";
-
-/// Every hostname the gateway answers at home.
-#[rustfmt::skip]
-pub const GATEWAY_HOSTS: [&str; 5] = ["*.monoflake.com", "*.monoflake.net", "*.ixc.one", "ill.li", "symlink.si"];
-/// The names the gateway answers at home exactly, and the zone its deployments are read under.
-#[rustfmt::skip]
-pub const GATEWAY_EXACT: [&str; 6] = ["api.monoflake.com", "cdn.monoflake.com", "api.monoflake.net", "cdn.monoflake.net", "ill.li", "symlink.si"];
-pub const GATEWAY_DEPLOYMENTS: &str = "ixc.one";
-#[rustfmt::skip]
-pub const GATEWAY_REGIONS: [&str; 2] = ["rdu", "glo"];
-#[rustfmt::skip]
-pub const GATEWAY_PROVIDERS: [&str; 3] = ["int", "cf", "vcl"];

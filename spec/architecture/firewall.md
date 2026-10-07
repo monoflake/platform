@@ -52,7 +52,7 @@ comment and a blank line stand anywhere in the file.
 - `matches` (regular expressions) is a Business feature and is not used.
 - An expression holds no comments and at most 4,096 characters. What a rule is for is this file.
 - **A secret in an expression is `${NAME}`**, filled at sync from the environment mise decrypts
-  the repository's secrets into -- the probe's token, `${PROBE_TOKEN}`, and the internal gateway's,
+  the repository's secrets into -- the probe's token, `${PROBE_TOKEN}`, and the private side's,
   `${INTERNAL_TOKEN}`, either of which one rule in every zone lets past its rate rule, since both
   are our own callers and a zone's five custom rules are few. Only a
   name the rules task knows may appear, which the check holds to; a sync refuses a zone whose

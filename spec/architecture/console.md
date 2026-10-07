@@ -1,13 +1,11 @@
 # Console: every node at once, served at the edge
 
-**It is leaving the platform.** The console is a services app, and it moves to web, where it and
-infra's per-node panel become one app with a build for the edge and a build for each node -- web's
-`spec/roadmap.md`, "One console runs the system, and it is this layer's". What follows holds until
-it has moved, and moves with it.
+**It is leaving the platform.** The console is a services app, and it moves to web and stays at the
+edge alone, while infra's per-node panel retires -- web's `spec/roadmap.md`, "One console runs the
+system, and it is this layer's". What follows holds until it has moved, and moves with it.
 
-Where the platform's view of itself is going, and none of it is built. Each node's own panel shows
-that node -- infra's `spec/architecture/host.md` -- and keeps working when everything above it is
-down; the console is the view of all of them, and of what CI is building, for everyday use.
+The platform's view of itself: every node, and what CI is building. When the edge is down, a node is
+reached over the tailnet instead, by SSH and a task that speaks host's API.
 
 ## The UI is at the edge, the data is the nodes'
 

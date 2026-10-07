@@ -1,7 +1,7 @@
 # Gateway
 
 One entrance for every API.  
-A Cloudflare Worker, and a container on the node.
+A Cloudflare Worker.
 
 ## License
 

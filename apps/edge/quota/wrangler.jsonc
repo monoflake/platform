@@ -8,7 +8,7 @@
 	// See spec/architecture/quota.md, "Two doors: one inside, and one held for later".
 
 	// One bucket a key, wherever in the world its calls land. SQLite-backed, the one kind the free
-	// plan has, though it writes nothing. See spec/architecture/quota.md, "Deployed twice, counted
+	// plan has, though it writes nothing. See spec/architecture/quota.md, "One deployment, counted
 	// where a request enters".
 	"durable_objects": { "bindings": [{ "name": "buckets", "class_name": "bucket" }] },
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["bucket"] }],

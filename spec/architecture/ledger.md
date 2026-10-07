@@ -68,7 +68,8 @@ first, trying again with backoff. A ledger that is down costs records, never a c
 **It is reached through Caddy, as a scope that is never public**: services write to
 `api.internal.ixc.one/ledger`, which every container reaches, since Caddy admits Docker's private range
 there. Like every scope it is on `api.canmi.app` too, where Access stands in front and our Workers
-reach it over VPC; it is not in the gateway's table, so the public never does. Nothing asks for a
+reach it over VPC; it is in the gateway's table as a private scope, so a node's private side can
+send a write on to it from another node with `INTERNAL_TOKEN`, and the public never reaches it. Nothing asks for a
 token, as nothing on the private side does; host is the exception, and the ledger is not host.
 
 ## Read by the panel

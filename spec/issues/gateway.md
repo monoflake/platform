@@ -32,14 +32,16 @@ service's declared placements, since every service has one placement today. Refu
 service is not at, and choosing among several where it is, come together with the gateway's choice
 of where a request runs.
 
-## Inside the house, an ordered service is asked on the wrong node
+## A node's private side cannot tell one app from another
 
-The gateway the house's own callers reach -- rdu's, which the resolver answers `api.monoflake.com`
-with -- binds only `RDU` (`apps/edge/gateway/src/node.ts`), so a service declared `ordered` with
-another node first is asked on rdu from the LAN and the tailnet and on its first placement from
-everywhere else. For `shot`, whose tasks stay on the node that took them, a task started from
-outside and asked after from inside is not found. Seen on 2026-10-07: a task taken through
-Cloudflare lived on `tyo`, and the same request from the LAN reached rdu's `shot`. The house's
-gateway could reach the other nodes over the tailnet, hand a scope whose first placement is not
-its own node to the public gateway, or keep answering locally and accept the split; each changes
-"Inside the house, the same names answer locally" in [../architecture/gateway.md](../architecture/gateway.md).
+A container asking `api.internal.ixc.one` for a private scope placed on another node is sent on
+with `INTERNAL_TOKEN` because it is a container on the node, nothing more -- infra's
+`spec/architecture/host.md`, "Every node answers the private API, and sends on what is not its
+own". While every app is the author's that is the whole check; once friends' apps share nodes --
+the workspace's `spec/architecture/ship-cloud.md` -- a tenant's container would reach the
+platform's private scopes the same way. Each app carrying an identity of its own, which the private
+side checks before it lends the platform's, is the direction; how it is issued and what each
+identity may reach are undecided, and wait on accounts. Until then one gap is known: a LAN connection that reaches
+Caddy through Docker's userland proxy arrives from a bridge gateway inside the app range and is
+admitted as a container would be -- narrowing `APP_SOURCES` to a fixed pool for app networks, or
+turning the userland proxy off, would close it.

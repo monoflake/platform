@@ -92,6 +92,29 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 			},
 		],
 	},
+	cron: {
+		placement: 'rdu',
+		private: true,
+		binding: 'RDU',
+		nodes: ['RDU'],
+		routing: 'any',
+		routes: [
+			{
+				path: '/*',
+				cache: {
+					fulfilled: 900,
+					accepted: 0,
+					redirected: 900,
+					rejected: 300,
+					faulted: 300,
+				},
+				crawlable: false,
+				exposed: true,
+				forbidden: [],
+				auth: 'none',
+			},
+		],
+	},
 	geo: {
 		placement: 'rdu',
 		binding: 'RDU',
@@ -137,6 +160,29 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 		placement: 'workers',
 		binding: 'HOOK',
 		worker: 'hook',
+		routes: [
+			{
+				path: '/*',
+				cache: {
+					fulfilled: 900,
+					accepted: 0,
+					redirected: 900,
+					rejected: 300,
+					faulted: 300,
+				},
+				crawlable: false,
+				exposed: true,
+				forbidden: [],
+				auth: 'none',
+			},
+		],
+	},
+	ledger: {
+		placement: 'rdu',
+		private: true,
+		binding: 'RDU',
+		nodes: ['RDU'],
+		routing: 'any',
 		routes: [
 			{
 				path: '/*',

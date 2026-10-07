@@ -1,10 +1,5 @@
 import { rustConstants } from '@canmi/me/rust';
-import { GATEWAY_HOSTS, GATEWAY_NAMES, URLS } from './index.ts';
-
-/** Each item as a Rust string literal, comma separated. */
-function quoted(list: readonly string[]): string {
-	return list.map((item) => `"${item}"`).join(', ');
-}
+import { URLS } from './index.ts';
 
 /**
  * The Rust mirror of the URL map.
@@ -16,25 +11,11 @@ function quoted(list: readonly string[]): string {
  */
 export function rustUrlMap(): string {
 	const constants = rustConstants(URLS);
-	const hosts = quoted(GATEWAY_HOSTS);
-	const { exact, deployments } = GATEWAY_NAMES;
 	return [
 		'//! @generated from libs/sdk/src/index.ts by `mise run urls`; do not edit.',
 		"//! One URL map for both languages -- see web's spec/architecture/workspace.md.",
 		'',
 		constants,
-		'',
-		'/// Every hostname the gateway answers at home.',
-		'#[rustfmt::skip]',
-		`pub const GATEWAY_HOSTS: [&str; ${GATEWAY_HOSTS.length}] = [${hosts}];`,
-		'/// The names the gateway answers at home exactly, and the zone its deployments are read under.',
-		'#[rustfmt::skip]',
-		`pub const GATEWAY_EXACT: [&str; ${exact.length}] = [${quoted(exact)}];`,
-		`pub const GATEWAY_DEPLOYMENTS: &str = "${deployments.zone}";`,
-		'#[rustfmt::skip]',
-		`pub const GATEWAY_REGIONS: [&str; ${deployments.regions.length}] = [${quoted(deployments.regions)}];`,
-		'#[rustfmt::skip]',
-		`pub const GATEWAY_PROVIDERS: [&str; ${deployments.providers.length}] = [${quoted(deployments.providers)}];`,
 		'',
 	].join('\n');
 }

@@ -115,9 +115,13 @@ export function developmentUrls(): DevelopmentUrls {
 
 const development: DevelopmentUrls = developmentUrls();
 
-/** The API host's two sides: private, where every container asks, and public, past the gateway. */
+/**
+ * The API host's two sides: private, where every container asks its own node's Caddy over plain
+ * HTTP, and public, past the gateway. See spec/architecture/gateway.md, "Inside a node, its own
+ * services answer locally".
+ */
 const API = {
-	private: 'https://api.internal.ixc.one',
+	private: 'http://api.internal.ixc.one',
 	public: 'https://api.monoflake.com',
 } as const;
 
@@ -208,38 +212,6 @@ export const GATEWAY = {
 	symlink: 'symlink.si',
 	providers: { int: 'our own machines', cf: 'Cloudflare', vcl: 'Vercel' },
 	regions: { rdu: 'the machine at home, by Raleigh-Durham', glo: 'everywhere, as a Worker runs' },
-} as const;
-
-/**
- * Every hostname the gateway answers at home, as a certificate and a router name them: a wildcard
- * over each zone it owns below the apex, and the two apexes it is. See infra's
- * spec/architecture/host.md, "The inside side answers the internal gateway alone".
- */
-export const GATEWAY_HOSTS: readonly string[] = [
-	...GATEWAY.domains.map((domain) => `*.${domain}`),
-	`*.${GATEWAY.deployments}`,
-	GATEWAY.alias,
-	GATEWAY.symlink,
-];
-
-/**
- * The names the gateway answers at home, exactly, as the house's resolver answers them: the API and
- * CDN hosts of each domain and the two apexes, and a deployment's own name, read as the profiles
- * read it, from the registered regions and providers. Nothing else in those zones is the gateway's,
- * so nothing else is answered with the node. See infra's spec/architecture/host.md, "The resolver
- * answers the gateway's names, and passes the rest on".
- */
-export const GATEWAY_NAMES = {
-	exact: [
-		...GATEWAY.domains.flatMap((domain) => [`api.${domain}`, `cdn.${domain}`]),
-		GATEWAY.alias,
-		GATEWAY.symlink,
-	],
-	deployments: {
-		zone: GATEWAY.deployments,
-		regions: Object.keys(GATEWAY.regions),
-		providers: Object.keys(GATEWAY.providers),
-	},
 } as const;
 
 /**

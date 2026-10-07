@@ -71,6 +71,20 @@ describe('the scope table', () => {
 		}
 	});
 
+	it('marks a private scope, and leaves out one on no private side or with no API', () => {
+		const table = scopeTable([
+			'version = 1\nname = "ledger"\nplacements = ["rdu"]\n[api]\npublic = false\n',
+			'version = 1\nname = "quota"\nplacements = ["workers"]\n',
+			'version = 1\nname = "door"\nplacements = ["rdu"]\n[api]\npublic = false\nsides = ["tunnel"]\n',
+			'version = 1\nname = "geo"\nplacements = ["rdu"]\n[api]\npublic = true\n',
+		]);
+		expect(table.ledger).toMatchObject({ placement: 'rdu', private: true, nodes: ['RDU'] });
+		expect(table.quota).toBeUndefined();
+		expect(table.door).toBeUndefined();
+		expect(table.geo?.private).toBeUndefined();
+		expect(SCOPES.ledger?.private).toBe(true);
+	});
+
 	it('carries every node a scope is placed on, and a Worker its first placement alone', () => {
 		const table = scopeTable([
 			'version = 1\nname = "geo"\nplacements = ["rdu", "tyo"]\n[api]\npublic = true\n',
@@ -97,15 +111,6 @@ describe('the scope table', () => {
 			service: 'quota',
 			entrypoint: 'Internal',
 		});
-	});
-
-	it('leaves out a scope that is not public', () => {
-		const table = scopeTable([
-			'version = 1\nname = "geo"\nplacements = ["rdu"]\n[api]\npublic = false\n',
-			'version = 1\nname = "open"\nplacements = ["rdu"]\n[api]\npublic = true\n',
-		]);
-		expect(Object.keys(table)).toEqual(['open']);
-		expect(table.open).toMatchObject({ placement: 'rdu', binding: 'RDU' });
 	});
 });
 
@@ -423,28 +428,6 @@ describe('the gateway', () => {
 		expect((await ask('/v1/site/like', env, { method: 'PUT', headers: forged })).status).toBe(429);
 	});
 
-	it('at home, asks a service on Workers through the public gateway, and a node service at home', async () => {
-		const relay = binding();
-		const home = binding();
-		const env = {
-			RDU: home.fetcher,
-			QUOTA: counters(true).counters,
-			RELAY: relay.fetcher,
-			INTERNAL_TOKEN: 'house',
-		};
-		await ask('/v1/site/stats?x=1', env, {
-			headers: { [INTERNAL_HEADER]: 'forged', 'cf-connecting-ip': '10.0.0.7' },
-		});
-		await ask('/v1/geo/address', env);
-		const relayed = relay.seen;
-		expect(relayed.map((request) => request.url)).toEqual([
-			`https://${GATEWAY.api}/v1/site/stats?x=1`,
-		]);
-		expect(relayed[0]?.headers.get(INTERNAL_HEADER)).toBe('house');
-		expect(relayed[0]?.headers.has('cf-connecting-ip')).toBe(false);
-		expect(home.seen).toHaveLength(1);
-	});
-
 	it('marks what it passes on as public, over whatever the caller claimed', async () => {
 		const { fetcher, seen } = binding();
 		await ask('/v1/geo/address', { RDU: fetcher }, { headers: { [MARK.name]: 'internal' } });
@@ -473,6 +456,45 @@ describe('the gateway', () => {
 		expect((await ask('/v1/site/like', { SITE: fetcher }, { method: 'PUT', headers })).status).toBe(
 			429,
 		);
+	});
+});
+
+describe('a private scope', () => {
+	const app = gateway({
+		ledger: { placement: 'rdu', private: true, binding: 'RDU', nodes: ['RDU'], routes: [] },
+	});
+	const ask = (env: Env, headers: Record<string, string> = {}) =>
+		app.fetch(new Request(`${HOST}/v1/ledger/events?x=1`, { method: 'POST', headers }), env);
+	const refusing = counters(false);
+
+	it('reaches its service with the token, sent its own path and never the token', async () => {
+		const { fetcher, seen } = binding();
+		const env = { RDU: fetcher, QUOTA: refusing.counters, INTERNAL_TOKEN: 'house' };
+		const answer = await ask(env, { [INTERNAL_HEADER]: 'house', 'cf-connecting-ip': '192.0.2.1' });
+		expect(answer.status).toBe(200);
+		const url = new URL(seen[0]?.url ?? '');
+		expect(`${url.pathname}${url.search}`).toBe('/ledger/events?x=1');
+		expect(seen[0]?.headers.has(INTERNAL_HEADER)).toBe(false);
+		// Counted once, where it entered, which counts nothing of our own.
+		expect(refusing.asked).toHaveLength(0);
+	});
+
+	it('does not exist without the token, a wrong one, or a token unset', async () => {
+		const { fetcher, seen } = binding();
+		const env = { RDU: fetcher, INTERNAL_TOKEN: 'house' };
+		for (const headers of [{}, { [INTERNAL_HEADER]: 'guess' }] as Record<string, string>[]) {
+			const answer = await ask(env, headers);
+			expect(answer.status).toBe(404);
+			expect(((await answer.json()) as { code: string }).code).toBe('no_such_scope');
+		}
+		const unset = await ask({ RDU: fetcher }, { [INTERNAL_HEADER]: '' });
+		expect(unset.status).toBe(404);
+		expect(seen).toHaveLength(0);
+	});
+
+	it('is in no robots.txt', async () => {
+		const robots = await app.fetch(new Request(`${HOST}/robots.txt`), {});
+		expect(await robots.text()).not.toContain('ledger');
 	});
 });
 

@@ -95,12 +95,12 @@ program cannot, which is why an application serving its panel and its API on one
 splitting: on `.app` its API is unusable to anything but the author's browser, and a program the
 author runs reaches the API over `internal.ixc.one`.
 
-`*.internal.ixc.one` resolves in public DNS to the machine's LAN address, which answers nobody outside the
-house. The machine advertises that one address, as a `/32`, as a tailnet route, so a device on the
-tailnet reaches it from anywhere under the same name. **The answer DNS gives never changes; what
-changes is whether the address is reachable.** The gateway's names are another matter: they are
-public and answer differently at home, so the house has a resolver of its own for them -- see
-infra's `spec/architecture/host.md`, "The resolver answers the gateway's names, and passes the rest on".
+`*.internal.ixc.one` resolves in public DNS to the home node's LAN address, which answers nobody
+outside the house; the node advertises that one address, as a `/32`, as a tailnet route, so a
+device on the tailnet reaches it from anywhere under the same name. Inside every node's Docker
+network, `api.internal.ixc.one` is the node's own Caddy instead -- [gateway.md](gateway.md),
+"Inside a node, its own services answer locally". The gateway's names answer the same everywhere,
+through Cloudflare, at home included.
 
 ## One API host, scoped by path
 
@@ -117,9 +117,9 @@ on Workers has no route and no `workers.dev` address of its own; the gateway rea
 binding.
 
 **Every door reads one table.** The public gateway is a Worker, which reaches Worker services by
-binding and everything else over Workers VPC. The internal gateway is the same program under Node
-on the node -- see [gateway.md](gateway.md), "Inside the house, the same names answer locally" --
-and the private side is Caddy on the node. All are rendered from the one declaration, since two
+binding and everything else over Workers VPC, and the private side is Caddy on each node -- see
+[gateway.md](gateway.md), "Inside a node, its own services answer locally". Both are rendered from
+the one declaration, since two
 tables written by hand are two readings of one format and would come to disagree silently -- the
 case the workspace's `code.md` warns about.
 
@@ -174,8 +174,10 @@ never kept.
 
 **Every request the gateway forwards carries `x-gateway: public`, set over whatever the caller
 sent.** The public reaches a node's services through the gateway and nowhere else, so a request
-without the mark came from the LAN, the tailnet or one of our Workers over VPC -- the three callers
-that ask `api.internal.ixc.one` or `api.canmi.app` directly. A service that treats our own calls
+without the mark came from the node's own containers, the tailnet or one of our Workers over VPC --
+the callers that ask `api.internal.ixc.one` or `api.canmi.app` directly. A private call across
+nodes passes the gateway too and carries the mark; it is told from the public by `INTERNAL_TOKEN`,
+which the gateway checked and took off. A service that treats our own calls
 differently reads the mark rather than an address; it cannot be forged from outside, because the
 gateway overwrites it. It is the second lock behind a forbidden parameter, not a replacement for it.
 
@@ -227,12 +229,12 @@ site's are web's `apps/site/api/src/contract/limits.ts`.
 does not refuse anyone -- the reader still gets the count, only the increment is withheld -- so it
 is part of what `/read` means, and it stays in the site's API.
 
-**A free service is limited at every gateway, the house's included.** `geo` is a public scope: any
+**A free service is limited at the gateway.** `geo` is a public scope: any
 page may call `api.monoflake.com/v1/geo/address`, and one address may ask sixty times a minute -- it
 answers from memory, so the limit keeps a crawler off the machine at home rather than paying for an
-answer. Our own callers use the same names and meet the same rows, counted by the gateway they
-entered: the internal one for the LAN, once it answers -- see [quota.md](quota.md). Only the
-private side, `api.internal.ixc.one`, counts nothing, and it retires.
+answer. Our own callers at home use the same names and meet the same rows; a container on a node
+asks the private side, which counts nothing within the node, and a call it sends on to another node
+carries `INTERNAL_TOKEN` and is not counted either -- see [quota.md](quota.md).
 
 **The gateway is written with Hono**, for its CORS middleware and the one error envelope, which
 every service here already answers in. It answers `/robots.txt` itself, keeping the host out of every
@@ -305,10 +307,6 @@ checks its health on that socket. An app on a socket keeps its own network for w
 Each app has a Docker network of its own that it shares with
 Caddy and nothing else, so an app that is compromised cannot reach another around Caddy.
 The tunnel reaches Caddy only, and Workers VPC reaches a node through Caddy too.
-
-**The internal gateway reaches Caddy too, on a side of its own**, `inside`, which only a holder of
-`INTERNAL_TOKEN` passes; see infra's `spec/architecture/host.md`, "The inside side answers the internal gateway
-alone".
 
 **A node has one VPC service, and it points at Caddy.** A Worker binds it by the node's name in
 capitals -- `RDU` -- and
