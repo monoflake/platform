@@ -35,14 +35,22 @@ left edge with its rule, the top bar sits right of it alone, and the page betwee
 scrolling element; the document itself never scrolls or bounces. Their sizes are in `rem`, so the
 three keep their proportions as the reader's text size changes. Rules come in two levels: the
 shell's own a step fainter (`--color-line-faint`), the page's cards and tables at `--color-line`. A page says what it is in its
-title and the facts beside it -- never a sentence about the page, under it or under a card.
+title and the facts beside it -- never a sentence about the page, under it or under a card. Its
+`<title>` is the one name the page is about and nothing around it -- `Nodes`, `tyo`, `#123`, an
+app's name -- with no product name and no separator: the console is behind Access and indexed by
+nobody, so a title is for a reader picking out a tab, and the shortest name does that best. Its
+icons are the `console` scope's marks, the API's own, followed for the browser as every page's are.
 
 **Every time is written in the reader's zone**, which Cloudflare names on the request, set once in
 the layout and read by every chart, so the server and the browser write the same text and the
 page does not change as it wakes; a zone Intl does not know falls back to UTC. **The world map is
 projected when the console is built**, flat and as a grid of dots, so neither the Worker nor the
 browser carries a projection or a world's topology -- only the dots it drew. A globe is offered
-beside it and loaded only when asked for, being WebGL the server cannot draw.
+beside it and loaded only when asked for, being WebGL the server cannot draw. On both, a node's mark
+says two things: its size how much it runs, in three steps by the apps running on it, and its
+opacity how busy it is, in four steps by its CPU now. A node heard in time is one blue; color is
+kept for the exceptions, a late node ringed amber and a gone one hollow in red. No line is drawn between nodes;
+the marks alone carry the map.
 
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its

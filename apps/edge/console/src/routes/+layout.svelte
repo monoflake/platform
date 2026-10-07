@@ -53,12 +53,16 @@
 
 	const section = $derived(sectionOf(page.url.pathname));
 	const detail = $derived(page.params.node ?? page.params.run ?? page.params.app);
+	/** The one name the page is about, and nothing around it. See spec/architecture/console.md. */
+	const name = $derived(
+		page.params.run ? `#${page.params.run}` : (detail ?? section?.label ?? 'Console'),
+	);
 </script>
 
 <svelte:head>
 	<!-- First in the head on purpose: it declares the order the layers below it take. -->
 	{#if dev}{@html DEV_STYLEX}{/if}
-	<title>{section ? `${section.label} · Console` : 'Console'}</title>
+	<title>{name}</title>
 </svelte:head>
 
 <!-- Three fixed regions, and only the page scrolls. See spec/architecture/console.md. -->
