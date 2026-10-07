@@ -32,7 +32,11 @@ operator practiced comes before the first app moves in --
 
 1. **A week of `buf` emulated**, until 2026-10-14: it runs the database as arm64 by emulation since
    2026-10-07, and `amcheck`, which passed on all three that day, runs on every node at 14:00 UTC.
-   Nothing moves in before the week is clean. `tyo` keeps a pgbench database of 150 MB until then,
+   Nothing moves in before the week is clean -- or before the work below is all done, if that is
+   sooner, as the author allowed on 2026-10-07. Meanwhile, in parallel: the backups copied to a
+   store on `rdu`'s and `buf`'s disks ("Toward services that keep nothing", 4), `ledger`'s move
+   written and tested, and the one address on every node; and in infra, a new host reaching one node
+   first, declarations uploaded apart, and host reading a changed `.env`. `tyo` keeps a pgbench database of 150 MB until then,
    so there are indexes of size to check.
 2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
    first a migration runner of the platform's would carry, if one is decided by then --
