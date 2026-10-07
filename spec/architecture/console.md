@@ -33,7 +33,8 @@ a chart library drawing on a canvas would paint nothing until the browser ran it
 **The shell is three fixed regions, and only the page scrolls.** The sidebar runs down the whole
 left edge with its rule, the top bar sits right of it alone, and the page between them is the one
 scrolling element; the document itself never scrolls or bounces. Their sizes are in `rem`, so the
-three keep their proportions as the reader's text size changes. A page says what it is in its
+three keep their proportions as the reader's text size changes. Rules come in two levels: the
+shell's own a step fainter (`--color-line-faint`), the page's cards and tables at `--color-line`. A page says what it is in its
 title and the facts beside it -- never a sentence about the page, under it or under a card.
 
 **Every time is written in the reader's zone**, which Cloudflare names on the request, set once in

@@ -7,19 +7,19 @@ import { border, family, figures, radius, text, weight } from '@canmi/kit/tokens
  * spec/architecture/css/layers.md.
  */
 export const surfaces = stylex.create({
-	/** The sidebar, on the ground and ruled off from the page. */
+	/** The sidebar, on the ground and ruled off from the page a step fainter than a card is. */
 	sidebar: {
 		backgroundColor: 'var(--color-ground)',
 		borderRightWidth: border.hairlinePx,
 		borderRightStyle: 'solid',
-		borderRightColor: 'var(--color-line)',
+		borderRightColor: 'var(--color-line-faint)',
 	},
-	/** The top bar, ruled off from the page below it. */
+	/** The top bar, ruled off as the sidebar is. */
 	bar: {
 		backgroundColor: 'var(--color-ground)',
 		borderBottomWidth: border.hairlinePx,
 		borderBottomStyle: 'solid',
-		borderBottomColor: 'var(--color-line)',
+		borderBottomColor: 'var(--color-line-faint)',
 	},
 	card: {
 		backgroundColor: 'var(--color-surface)',

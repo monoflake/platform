@@ -15,6 +15,7 @@
 	--color-surface: var(--color-page);
 	--color-raised: var(--color-paper-hover);
 	--color-selected: var(--color-native-selected);
+	--color-line-faint: var(--color-paper-hover);
 	--color-line: var(--color-border);
 	--color-line-strong: var(--color-border-strong);
 	--color-text-faint: var(--color-text-soft);
