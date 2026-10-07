@@ -32,9 +32,6 @@ export const LOCATIONS: Record<Node, readonly [number, number]> = ${literal(geom
 
 /** Each node's place on the plot. */
 export const POINTS: Record<Node, readonly [number, number]> = ${literal(geometry.points)};
-
-/** A curve inside the plot between each pair of nodes that do not share a city. */
-export const ARCS: readonly { from: Node; to: Node; d: string }[] = ${literal(geometry.arcs)};
 `;
 
 const target = new URL('../src/lib/map/land.generated.ts', import.meta.url);

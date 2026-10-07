@@ -1,6 +1,6 @@
 /**
- * The world map's geometry: land as a grid of dots, the nodes and the mesh between them, projected
- * once on a Mercator rectangle cut short of Antarctica. `land.ts` writes it to
+ * The world map's geometry: land as a grid of dots and the nodes on it, projected once on a
+ * Mercator rectangle cut short of Antarctica. `land.ts` writes it to
  * `src/lib/map/land.generated.ts`; the map's test builds it again to see the committed module is
  * current. See spec/architecture/console.md.
  */
@@ -31,11 +31,6 @@ function radians(degrees: number): number {
 	return (degrees * Math.PI) / 180;
 }
 
-/** Nodes closer than this share a place on the map, and a link between them would be a speck. */
-const MESH_MIN_KM = 100;
-/** How far a link bows from the straight line, as a share of its length. */
-const BOW = 0.15;
-
 type Atlas = Parameters<typeof feature>[0] & { objects: { land: Parameters<typeof feature>[1] } };
 
 export interface Fit {
@@ -51,7 +46,6 @@ export interface Geometry {
 	/** Each node's latitude and longitude, for a reader that projects them itself. */
 	locations: Record<string, [number, number]>;
 	points: Record<string, [number, number]>;
-	arcs: { from: string; to: string; d: string }[];
 }
 
 /** The projection a fit describes, as the module's reader rebuilds it. */
@@ -87,15 +81,7 @@ export function build(): Geometry {
 		points[code] = [round(x), round(y)];
 	}
 
-	const arcs: Geometry['arcs'] = [];
-	for (const [index, from] of codes.entries()) {
-		for (const to of codes.slice(index + 1)) {
-			if (kilometers(NODES[from], NODES[to]) < MESH_MIN_KM) continue;
-			arcs.push({ from, to, d: link(points[from] ?? [0, 0], points[to] ?? [0, 0]) });
-		}
-	}
-
-	return { width: WIDTH, height: HEIGHT, projection, dots: dots(world), locations, points, arcs };
+	return { width: WIDTH, height: HEIGHT, projection, dots: dots(world), locations, points };
 }
 
 /**
@@ -140,25 +126,4 @@ function dots(world: GeoProjection): string {
 		}
 	}
 	return d;
-}
-
-/**
- * A link as the map draws it: one quadratic curve inside the plot, bowed northward, never a great
- * circle, which would wrap the Pacific's links around the plot's edges.
- */
-function link([x1, y1]: [number, number], [x2, y2]: [number, number]): string {
-	const [dx, dy] = [x2 - x1, y2 - y1];
-	// The normal that points up the plot, or left when the link runs straight up it.
-	const flip = dx > 0 || (dx === 0 && dy > 0) ? 1 : -1;
-	const x = (x1 + x2) / 2 + flip * dy * BOW;
-	const y = (y1 + y2) / 2 - flip * dx * BOW;
-	const inside = (value: number, most: number) => round(Math.min(Math.max(value, 0), most));
-	return `M${x1} ${y1}Q${inside(x, WIDTH)} ${inside(y, HEIGHT)} ${x2} ${y2}`;
-}
-
-function kilometers(a: readonly [number, number], b: readonly [number, number]): number {
-	const half =
-		Math.sin(radians(b[0] - a[0]) / 2) ** 2 +
-		Math.cos(radians(a[0])) * Math.cos(radians(b[0])) * Math.sin(radians(b[1] - a[1]) / 2) ** 2;
-	return 2 * 6371 * Math.asin(Math.sqrt(half));
 }

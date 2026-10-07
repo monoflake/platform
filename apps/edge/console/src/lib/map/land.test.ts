@@ -26,7 +26,6 @@ describe('the generated map', () => {
 		expect(generated.DOTS).toBe(built.dots);
 		expect(generated.LOCATIONS).toEqual(built.locations);
 		expect(generated.POINTS).toEqual(built.points);
-		expect(generated.ARCS).toEqual(built.arcs);
 	});
 
 	it('gives the globe each node where nodes.ts has it', () => {
@@ -43,21 +42,6 @@ describe('the generated map', () => {
 			expect((Number(length) - DOT) % PITCH).toBe(0);
 			expect(Number(x) + Number(length)).toBeLessThan(generated.WIDTH);
 			expect(Number(y)).toBeLessThan(generated.HEIGHT);
-		}
-	});
-
-	it('keeps every link one curve inside the plot, off the antimeridian', () => {
-		expect(generated.ARCS.length).toBeGreaterThan(0);
-		for (const { from, to, d } of generated.ARCS) {
-			const numbers = d.match(/-?[\d.]+/g)?.map(Number) ?? [];
-			expect(d).toMatch(/^M[\d. ]+Q[\d. ]+$/);
-			expect(numbers).toHaveLength(6);
-			const [x1, , , , x2] = numbers;
-			expect([x1, x2]).toEqual([generated.POINTS[from][0], generated.POINTS[to][0]]);
-			for (const [index, value] of numbers.entries()) {
-				expect(value).toBeGreaterThanOrEqual(0);
-				expect(value).toBeLessThanOrEqual(index % 2 ? generated.HEIGHT : generated.WIDTH);
-			}
 		}
 	});
 

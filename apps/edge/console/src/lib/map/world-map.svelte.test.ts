@@ -1,6 +1,6 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import { ARCS, DOTS } from './land.generated.ts';
+import { DOTS } from './land.generated.ts';
 import WorldMap from './world-map.svelte';
 import type { Held } from '../wire.ts';
 
@@ -32,9 +32,7 @@ describe('world map on the server', () => {
 			expect(body).toMatch(new RegExp(`>${code}</span>`));
 		}
 		expect(body.match(/data-node="/g)).toHaveLength(7);
-		for (const arc of ARCS) expect(body).toContain(`d="${arc.d}"`);
-		expect(ARCS.length).toBeGreaterThan(0);
-		expect(body).not.toContain('data-lit');
+		expect(body.match(/<path/g)).toHaveLength(1);
 	});
 
 	it('tones each marker by when it was heard, and says it in words', () => {
@@ -46,10 +44,24 @@ describe('world map on the server', () => {
 		expect(body).toContain('aria-label="gvx, Gävle, late"');
 	});
 
-	it('lights the links of the selected node', () => {
+	it('sizes each mark by its apps running, the middle size where nothing is known', () => {
+		const { body } = render(WorldMap, { props: { states, now: NOW } });
+		expect(body).toMatch(/data-node="tyo"[^>]*data-radius="10"/);
+		expect(body).toMatch(/data-node="rdu"[^>]*data-radius="14"/);
+		expect(body).toContain('width: 2cqw');
+	});
+
+	it('leaves a gone node hollow, and fills the rest', () => {
+		const { body } = render(WorldMap, { props: { states, now: NOW, compact: true } });
+		const marks = body.split('data-node="').slice(1);
+		const filled = marks.filter((mark) => mark.split('</a>')[0]?.includes('style="opacity'));
+		expect(filled).toHaveLength(2);
+	});
+
+	it('draws no links between nodes, a node selected or not', () => {
 		const { body } = render(WorldMap, { props: { states, now: NOW, selected: 'bru' } });
-		const lit = ARCS.filter((arc) => arc.from === 'bru' || arc.to === 'bru');
-		expect(body.match(/data-lit/g)).toHaveLength(lit.length);
+		expect(body).not.toContain('data-lit');
+		expect(body.match(/<path/g)).toHaveLength(1);
 	});
 
 	it('starts flat, the globe offered and not drawn', () => {

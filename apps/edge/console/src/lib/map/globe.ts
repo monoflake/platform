@@ -1,15 +1,17 @@
 /**
- * The nodes on a globe, drawn by cobe in WebGL: a marker per node in its tone, the relay mesh as
- * arcs, turning slowly unless the reader asked for less motion, and turned by dragging. The map
- * imports this module only when the globe is picked, so a page left flat ships no WebGL.
+ * The nodes on a globe, drawn by cobe in WebGL: a mark per node as the flat map draws it, turning
+ * slowly unless the reader asked for less motion, and turned by dragging. The map imports this
+ * module only when the globe is picked, so a page left flat ships no WebGL.
  */
 import createGlobe, { type Marker } from 'cobe';
-import { ARCS, LOCATIONS } from './land.generated.ts';
+import type { Liveness } from '../node.ts';
 
-/** A node as the globe marks it: where it is, and any CSS color, a custom property included. */
+/** A node as the globe marks it: where it is, and its mark as the flat map has it (marks.ts). */
 export interface Spot {
 	readonly location: readonly [number, number];
-	readonly color: string;
+	readonly radius: number;
+	readonly opacity: number;
+	readonly state: Liveness;
 }
 
 export interface Globe {
@@ -25,7 +27,15 @@ const FACING = { latitude: 30, longitude: -30 };
 /** Radians turned per frame, and per pixel dragged. */
 const SPIN = 0.003;
 const DRAG = 0.005;
-const MARKER = 0.04;
+/** cobe's marker size per unit of the flat map's radius, the middle step drawn at 0.04. */
+const PER_RADIUS = 0.04 / 14;
+/** How much wider a ring is than its mark, in cobe's size. */
+const RING = 0.008;
+/**
+ * The sphere's own dark as `dark: 1` paints it: cobe has no marker opacity, so a faint mark is its
+ * color mixed toward this, and a hollow one is this drawn inside a red one.
+ */
+const SPHERE: Rgb = [0.04, 0.04, 0.04];
 /** cobe 2 draws only when updated, and decodes its land texture after the first draw. */
 const SETTLE_FRAMES = 30;
 
@@ -55,11 +65,6 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 		markerColor: rgb('var(--color-text-faint)'),
 		glowColor: [0.08, 0.08, 0.08],
 		markerElevation: 0.01,
-		arcs: ARCS.map(({ from, to }) => ({ from: [...LOCATIONS[from]], to: [...LOCATIONS[to]] })),
-		arcColor: rgb('var(--color-line-strong)'),
-		arcWidth: 0.5,
-		arcHeight: 0.15,
-		scale: 0.9,
 	});
 
 	let frames = SETTLE_FRAMES;
@@ -101,11 +106,7 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 
 	return {
 		mark(spots) {
-			const markers: Marker[] = spots.map(({ location, color }) => ({
-				location: [...location],
-				size: MARKER,
-				color: rgb(color),
-			}));
+			const markers: Marker[] = spots.flatMap(marks);
 			globe.update({ markers });
 			frames = 1;
 		},
@@ -118,6 +119,26 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 			host.replaceChildren();
 		},
 	};
+}
+
+/** A spot as cobe's markers, drawn in order: a ring or a red disc first, the mark over it. */
+function marks({ location, radius, opacity, state }: Spot): Marker[] {
+	const at: [number, number] = [...location];
+	const size = radius * PER_RADIUS;
+	if (state === 'gone') {
+		return [
+			{ location: at, size, color: rgb('var(--color-danger)') },
+			{ location: at, size: size - RING, color: SPHERE },
+		];
+	}
+	const accent = rgb('var(--color-accent)');
+	const fill: Marker = { location: at, size, color: mix(accent, SPHERE, opacity) };
+	if (state === 'live') return [fill];
+	return [{ location: at, size: size + RING, color: rgb('var(--color-warn)') }, fill];
+}
+
+function mix([r, g, b]: Rgb, [r0, g0, b0]: Rgb, share: number): Rgb {
+	return [r0 + (r - r0) * share, g0 + (g - g0) * share, b0 + (b - b0) * share];
 }
 
 /** The globe is round: as wide as the host is tall, or narrower when the host is. */
