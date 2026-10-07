@@ -14,12 +14,15 @@ WORKDIR /src
 COPY Cargo.toml Cargo.lock ./
 COPY apps apps
 COPY libs libs
+# CFLAGS compiles mimalloc with transparent huge pages off; see infra's
+# spec/architecture/host.md, "An image is built for speed, and for any node of its architecture".
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
 	--mount=type=cache,target=/src/target \
 	case "$TARGETARCH" in arm64) arch=aarch64 ;; amd64) arch=x86_64 ;; *) exit 1 ;; esac \
 	&& target="$arch-unknown-linux-musl" \
 	&& rustup target add "$target" \
 	&& export "CC_${arch}_unknown_linux_musl=musl-gcc" \
+	&& export "CFLAGS_${arch}_unknown_linux_musl=-DMI_DEFAULT_ALLOW_THP=0" \
 	&& cargo build --profile container --locked --target "$target" -p telemetry \
 	&& cp "target/$target/container/telemetry" /telemetry
 
