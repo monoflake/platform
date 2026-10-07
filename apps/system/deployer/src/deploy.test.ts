@@ -136,6 +136,21 @@ describe('the deployer', () => {
 		expect(store.list()[0]!.error).toMatch(/\.wrangler/);
 	});
 
+	it('skips a Worker nobody owns, recording why, and fetches nothing', async () => {
+		let downloaded = false;
+		const { store, invoked, deliver } = await setup({
+			artifacts: [{ app: 'hook', id: 2, digest: 'sha256:00' }],
+			download: async () => {
+				downloaded = true;
+			},
+		});
+		await deliver(7);
+		expect([downloaded, invoked]).toEqual([false, []]);
+		expect(store.list()).toMatchObject([{ worker: 'hook', stage: 'skipped', failed_in: null }]);
+		expect(store.list()[0]!.error).toMatch(/no repository owns/);
+		expect(store.list()[0]!.finished_at).not.toBeNull();
+	});
+
 	it("refuses a Worker another repository owns, though the run is a source's", async () => {
 		const { store, invoked, deployer } = await setup();
 		deployer.notice({ run: 8, repository: 'monoflake/platform' });

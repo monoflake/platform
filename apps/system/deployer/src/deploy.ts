@@ -138,6 +138,13 @@ export class Deployer {
 		const unpacked = join(work, 'artifact');
 		let homeDir: string | undefined;
 		try {
+			// A name nobody owns is one this deployer does not deploy -- `hook`, which Cloudflare's Git
+			// integration keeps -- and is skipped, not refused. Owned elsewhere, admit refuses it.
+			if (!config.owners.has(artifact.app)) {
+				store.skipped(id, 'no repository owns this Worker, so another pipeline deploys it');
+				this.log(`${artifact.app} from run ${run} is skipped: nobody owns it here`);
+				return;
+			}
 			// Only forward: a notice naming a run no newer than the last deployed is a replay.
 			const last = store.lastRun(artifact.app);
 			if (last !== null && run <= last) {

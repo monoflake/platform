@@ -84,6 +84,18 @@ describe('the records', () => {
 		expect(store.list()[0]).toMatchObject({ action: 'rollback', run: null, version: 'v0' });
 	});
 
+	it('close a skipped row with its reason, as neither deployed nor failed', () => {
+		const store = new Store(path(), NOW);
+		store.skipped(store.open('hook', 'monoflake/platform', 7, null, false), 'nobody owns it');
+		expect(store.list()[0]).toMatchObject({
+			stage: 'skipped',
+			failed_in: null,
+			error: 'nobody owns it',
+			finished_at: '2026-10-06T12:00:00.000Z',
+		});
+		expect(store.lastRun('hook')).toBeNull();
+	});
+
 	it('page the newest first', () => {
 		const store = new Store(path(), NOW);
 		const ids = [1, 2, 3].map((run) => store.open('hook', 'monoflake/platform', run, null, false));

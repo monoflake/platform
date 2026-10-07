@@ -5,7 +5,14 @@
  */
 import { DatabaseSync } from 'node:sqlite';
 
-export type Stage = 'downloading' | 'admitting' | 'uploading' | 'deployed' | 'failed';
+export type Stage =
+	| 'downloading'
+	| 'admitting'
+	| 'uploading'
+	| 'deployed'
+	| 'failed'
+	// Left alone on purpose, as host's skipped rows are: nothing went wrong, and `error` says why.
+	| 'skipped';
 
 /** A deploy from a run, or a rollback the operator asked for, which has no run. */
 export type Action = 'deploy' | 'rollback';
@@ -25,6 +32,7 @@ export interface Deploy {
 	readonly failed_in: Stage | null;
 	/** The version Cloudflare returned, once deployed; for a rollback, the version asked for. */
 	readonly version: string | null;
+	/** Why it failed, or why it was skipped. */
 	readonly error: string | null;
 	/** wrangler's output, kept when it failed. */
 	readonly output: string | null;
@@ -140,6 +148,13 @@ export class Store {
 					WHERE id = ?`,
 			)
 			.run(version, this.stamp(), id);
+	}
+
+	/** Close a row as left alone, with why: a Worker nobody owns, which is not a refusal. */
+	skipped(id: number, reason: string): void {
+		this.db
+			.prepare(`UPDATE deploys SET stage = 'skipped', error = ?, finished_at = ? WHERE id = ?`)
+			.run(reason, this.stamp(), id);
 	}
 
 	failed(id: number, error: string, output: string | null = null): void {
