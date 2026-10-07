@@ -4,12 +4,23 @@ Where the platform is going, and none of it is built: an app says what it needs,
 decides where that runs and where its data lives. The nodes it decides among, and the axes each is
 declared by, are infra's `spec/architecture/nodes.md`.
 
-## Two resources, and a database made of both
+## Two resources, and two kinds of data
 
 **What the platform places on is compute and storage, and nothing else.** A node is compute; a store
 is storage -- a disk at home, a TrueNAS pool, a provider's bucket. Each is declared by the same axes
-as a node: tier, failure domain and expiry, with its capacity measured. A database is not a third
-resource: it is a process on a node whose durable state is objects in a store.
+as a node: tier, failure domain and expiry, with its capacity measured.
+
+**Data is of two kinds, objects and databases, and an app has state by pairing compute with either
+or both.** The two ask different things of a medium. A database writes small and often and waits on
+every flush, so its live files are on a disk attached to the node it runs on; objects are written
+whole and read from a distance, so any store takes them.
+
+- **A node's disk holds either**: a database's live files, or objects through the store the node
+  runs over it.
+- **A provider's bucket holds objects alone**, a database's backups among them, never its live
+  files. A backup is the data itself, kept like any other object of its class.
+
+Decided on 2026-10-07, in place of a database whose durable state was objects in a store.
 
 ## An app declares its need, and the platform derives the place
 
