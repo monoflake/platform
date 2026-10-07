@@ -3,9 +3,9 @@
 version = 1
 name = "database"
 display_name = "Database"
-# tyo, the primary, alone at first; its standbys buf and rdu join once it is proved. See
-# spec/todo/todo.md, "The database".
-placements = ["tyo"]
+# tyo is the primary and buf and rdu its standbys, named by hand. See
+# spec/architecture/databases.md, "Where it runs, and which one writes".
+placements = ["tyo", "buf", "rdu"]
 
 # The keeper answers on a socket in its directory, which each node's `cron` is handed; Postgres's
 # port is the only one. See spec/architecture/databases.md, "The container is Postgres and a keeper
