@@ -200,8 +200,9 @@ export const URLS = {
 
 /**
  * The service layer's hostnames, every one bound to the gateway, and the codes a deployment's own
- * hostname is spelled from: `{service}-{region}-{provider}` under `deployments`. A provider or a
- * region is added here before anything is placed on it. See spec/architecture/gateway.md.
+ * hostname is spelled from: `{service}-{region}-{provider}` under `deployments`. A provider is its
+ * code and the name a person is shown; it or a region is added here before anything is placed on
+ * it. See spec/architecture/gateway.md, "Providers are short codes, registered here".
  */
 export const GATEWAY = {
 	// Each answers the same, the first the one published and the rest a way round a domain that
@@ -212,7 +213,14 @@ export const GATEWAY = {
 	deployments: 'ixc.one',
 	alias: 'ill.li',
 	symlink: 'symlink.si',
-	providers: { int: 'our own machines', cf: 'Cloudflare', vcl: 'Vercel' },
+	providers: {
+		int: 'Self-hosted',
+		cf: 'Cloudflare',
+		vcl: 'Vercel',
+		oci: 'Oracle',
+		az: 'Azure',
+		rkn: 'RackNerd',
+	},
 	regions: { rdu: 'the machine at home, by Raleigh-Durham', glo: 'everywhere, as a Worker runs' },
 } as const;
 
