@@ -1,0 +1,23 @@
+#!/sbin/openrc-run
+# The machine's half of `apk`: the door its container writes a job's word into. Installed by
+# infra's `mise run node` as /etc/init.d/apk-door, beside /usr/local/libexec/apk-door, which it
+# keeps up. See platform's spec/architecture/packages.md, "`apk` reaches the machine through a
+# named pipe".
+
+name="apk door"
+description="Runs the package updates apk's container asks for through a named pipe"
+supervisor=supervise-daemon
+command=/usr/local/libexec/apk-door
+
+# Before Docker, since Docker refuses to start a container whose mount has no source.
+depend() {
+	need localmount
+	use logger
+	before docker
+}
+
+# Root's alone: the container reaches it as root, and nothing else on the machine needs to.
+start_pre() {
+	checkpath --directory --mode 0700 --owner root:root /var/lib/apk-door &&
+		checkpath --pipe --mode 0600 --owner root:root /var/lib/apk-door/door
+}

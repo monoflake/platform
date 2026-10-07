@@ -74,6 +74,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "apk"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "http-body-util",
+ "jiff",
+ "ledger",
+ "libc",
+ "mimalloc",
+ "packages",
+ "serde_json",
+ "tempfile",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "apt"
 version = "0.0.0"
 dependencies = [
@@ -84,13 +103,12 @@ dependencies = [
  "jiff",
  "ledger",
  "mimalloc",
- "response",
+ "packages",
  "serde",
  "serde_json",
  "tempfile",
  "tokio",
  "tower",
- "uuid",
  "zbus",
 ]
 
@@ -1820,6 +1838,23 @@ checksum = "9aa2b01e1d916879f73a53d01d1d6cee68adbb31d6d9177a8cfce093cced1d50"
 dependencies = [
  "futures-core",
  "pin-project-lite",
+]
+
+[[package]]
+name = "packages"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "http-body-util",
+ "jiff",
+ "ledger",
+ "response",
+ "serde_json",
+ "tokio",
+ "tower",
+ "uuid",
 ]
 
 [[package]]

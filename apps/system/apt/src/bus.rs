@@ -40,8 +40,7 @@ impl Properties {
 	}
 }
 
-/// What the routes and the run-following logic in `run.rs` need from systemd, behind a trait so
-/// both are testable without a bus.
+/// What `units.rs`'s driver needs from systemd, behind a trait so it is testable without a bus.
 #[async_trait]
 pub trait Bus: Send + Sync {
 	async fn start(&self, unit: &str) -> anyhow::Result<()>;
@@ -141,8 +140,8 @@ fn i32_of(map: &HashMap<String, OwnedValue>, key: &str) -> anyhow::Result<i32> {
 		.map_err(Into::into)
 }
 
-/// A bus that never touches a real one, for the routes and the run-following logic. Shared with
-/// `run.rs`'s own tests through `crate::bus::tests`.
+/// A bus that never touches a real one, for the driver. Shared with `units.rs`'s own tests
+/// through `crate::bus::tests`.
 #[cfg(test)]
 pub mod tests {
 	use super::*;

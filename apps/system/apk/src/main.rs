@@ -1,8 +1,7 @@
-//! See spec/architecture/apt.md.
+//! See spec/architecture/packages.md.
 
-use apt::SOCKET;
-use apt::bus::SystemBus;
-use apt::units::Units;
+use apk::SOCKET;
+use apk::door::Door;
 use packages::AppState;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -15,13 +14,17 @@ static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 /// Where this service keeps its socket.
 fn directory() -> PathBuf {
-	std::env::var_os("APT_DATA").map_or_else(|| "/data".into(), PathBuf::from)
+	std::env::var_os("APK_DATA").map_or_else(|| "/data".into(), PathBuf::from)
+}
+
+/// Where host mounts the machine's door, read-only.
+fn door() -> PathBuf {
+	std::env::var_os("APK_DOOR").map_or_else(|| "/door".into(), PathBuf::from)
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let bus = Arc::new(SystemBus::connect().await?);
-	let driver = Arc::new(Units { bus });
+	let driver = Arc::new(Door::at(door()));
 	let ledger = Some(ledger::Ledger::start());
 	packages::serve(AppState { driver, ledger }, &directory(), SOCKET).await
 }
