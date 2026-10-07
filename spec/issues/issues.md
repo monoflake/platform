@@ -14,7 +14,7 @@ file.
 | ------------------------------ | ------- | ----------------------------------------------------- |
 | [gateway.md](gateway.md)       | 4       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
-| [scheduling.md](scheduling.md) | 10      | what the schedulers and Postgres leave open           |
+| [scheduling.md](scheduling.md) | 9       | what the schedulers and Postgres leave open           |
 | [services.md](services.md)     | 5       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
@@ -38,7 +38,6 @@ file.
 - Exports to look at, kept apart from backups
 - Backups are in one failure domain
 - Health does not say that archiving has stopped
-- Standbys on another architecture
 - Schema changes go through the platform
 
 ### [services.md](services.md)

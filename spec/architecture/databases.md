@@ -29,6 +29,18 @@ and `rdu` are its standbys.
 - **Replication is streaming and asynchronous.** A commit waits for no standby: `tyo` to the eastern
   US is about 150 ms, which a synchronous standby would add to every write. A failover can lose the
   last seconds of writes, and that is accepted.
+- **Every node runs it as arm64**, `arch = "arm64"`: `tyo` and `rdu` natively, `buf`, an x86
+  machine, by emulation -- infra's `spec/architecture/nodes.md`, "An x86 node may run arm64 images,
+  emulated, and never the other way". Physical replication is between machines of one
+  architecture, and an emulated arm64 Postgres writes exactly the bytes a native one does, so the
+  cluster stays one cluster as x86 machines join it; one that cannot be had in arm64 is no reason to
+  split it. Decided on 2026-10-07, in place of streaming between architectures, which Postgres does
+  not support, and of a logical subscriber on x86, which would have had every schema change carried
+  across by hand.
+- **The standbys are ordered: `rdu`, then `buf`.** A promote that names no node takes the first in
+  that order that answers and is caught up, and passes over one that is behind rather than lose what
+  it lacks. `rdu` replays natively and holds the most memory; `buf`'s emulated queries run twenty to
+  thirty times slower than `tyo`'s, so it is the primary of last resort.
 - **The port is published to the tailnet alone**, through the `peer` role with the port it names --
   infra's `spec/architecture/host.md`, "A role is asked for by the app and granted by the node". A
   standby reaches the primary there, and so does every app.
