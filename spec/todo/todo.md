@@ -31,7 +31,7 @@ operator practiced comes before the first app moves in --
 [../architecture/databases.md](../architecture/databases.md):
 
 1. **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
-   `spec/todo.md`, "An app may ask to be deployed by hand".
+   `spec/todo.md`, "An app chooses how it is rolled out".
 2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
    first a migration runner of the platform's would carry, if one is decided by then --
    [../issues/scheduling.md](../issues/scheduling.md), "Schema changes go through the platform".
