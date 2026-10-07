@@ -26,15 +26,26 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 
 ## The database
 
-In order -- [../architecture/databases.md](../architecture/databases.md):
+In order, while the cluster still holds nothing anybody depends on -- what keeps data safe and the
+operator practiced comes before the first app moves in --
+[../architecture/databases.md](../architecture/databases.md):
 
-- **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
-  `spec/todo.md`, "An app may ask to be deployed by hand".
-- **A newer pinned image is reported**: `outdated` reads the tag and digest every Dockerfile pins and
-  says which have a newer one upstream, the way it reports packages, and moves none of them.
-- **One address on every node for the database**: a proxy each node runs, which apps connect to and
-  which passes on to whichever node is primary, so a failover or a major's switch rewrites no URL and
-  restarts no app.
+1. **`/health` says when backing up has stopped** -- [../issues/scheduling.md](../issues/scheduling.md),
+   "Health does not say that archiving has stopped".
+2. **A failover rehearsed**: a standby promoted, the old primary rewound behind it, and a backup taken
+   after it restored -- the timeline history kept on the way,
+   [../issues/scheduling.md](../issues/scheduling.md), "A timeline's history can go with the WAL around
+   it".
+3. **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
+   `spec/todo.md`, "An app may ask to be deployed by hand".
+4. **`ledger` moves in**, the first of "Toward services that keep nothing", below.
+5. **One address on every node for the database**, before a second app is given one: a proxy each
+   node runs, which apps connect to and which passes on to whichever node is primary, so a failover or
+   a major's switch rewrites no URL and restarts no app.
+
+Whenever there is room: **a newer pinned image is reported** -- `outdated` reads the tag and digest
+every Dockerfile pins and says which have a newer one upstream, the way it reports packages, and moves
+none of them.
 
 ## Toward services that keep nothing
 
