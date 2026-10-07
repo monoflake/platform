@@ -59,8 +59,13 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 	&& if [ -n "${RUSTC_WRAPPER:-}" ]; then sccache --show-stats || true; fi
 
 # The official image at a pinned major and digest, Debian's, since WAL-G's binaries are glibc's. A
-# new major is a dump and restore, never this line alone. See spec/architecture/databases.md.
+# new major is never this line alone; see spec/architecture/databases.md, "Upgrades are pinned,
+# reported, and rolled by hand".
 FROM postgres:18-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+# The CA bundle WAL-G verifies the backup store's TLS against; the base image has none.
+RUN apt-get update \
+	&& apt-get install --yes --no-install-recommends ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
 # Fails the build here, not a node later, if the binary cannot load on this image's libraries.
 RUN --mount=from=walg,target=/walg \
 	tar -xzf /walg/wal-g.tar.gz -C /usr/local/bin --no-same-owner --transform 's|.*|wal-g|' \
@@ -74,6 +79,10 @@ ENV PGDATA=/var/lib/postgresql/data \
 	PGDATABASE=postgres \
 	WALG_LIBSODIUM_KEY_TRANSFORM=hex \
 	AWS_S3_FORCE_PATH_STYLE=true
+# An unreachable store fails in seconds: Postgres retries archiving by itself, and the backup runs
+# again the next day. See spec/issues/scheduling.md, "Health does not say that archiving has
+# stopped".
+ENV S3_MAX_RETRIES=3
 # The image's `postgres`, by number; host gives the app's directory to this user.
 USER 999:999
 ENTRYPOINT ["/usr/local/bin/database"]
