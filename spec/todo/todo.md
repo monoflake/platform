@@ -30,12 +30,10 @@ In order, while the cluster still holds nothing anybody depends on -- what keeps
 operator practiced comes before the first app moves in --
 [../architecture/databases.md](../architecture/databases.md):
 
-1. **`buf` a standby by emulation**: `arch = "arm64"` for the database once host honors it, and
-   `emulate = ["arm64"]` on `buf` -- infra's `spec/todo.md`, "x86 nodes run arm64 images by
-   emulation"; then a week of it with `amcheck` run on `buf` every day before anything moves in, and
-   a promote that names no node taking the standbys in their order --
-   [../architecture/databases.md](../architecture/databases.md), "Where it runs, and which one
-   writes".
+1. **A week of `buf` emulated**, until 2026-10-14: it runs the database as arm64 by emulation since
+   2026-10-07, and `amcheck`, which passed on all three that day, runs on every node at 14:00 UTC.
+   Nothing moves in before the week is clean. `tyo` keeps a pgbench database of 150 MB until then,
+   so there are indexes of size to check.
 2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
    first a migration runner of the platform's would carry, if one is decided by then --
    [../issues/scheduling.md](../issues/scheduling.md), "Schema changes go through the platform".
