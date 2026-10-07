@@ -19,6 +19,7 @@ pub fn routes(keeper: Arc<Keeper>) -> Router {
 	Router::new()
 		.route("/health", get(health))
 		.route("/jobs/backup", post(backup))
+		.route("/jobs/amcheck", post(amcheck))
 		.fallback(|| async { response::failure(StatusCode::NOT_FOUND, "no_such_route") })
 		.with_state(keeper)
 }
@@ -65,6 +66,25 @@ async fn backup(State(keeper): State<Arc<Keeper>>) -> Response {
 	}
 }
 
+/// The daily index check, on the primary and every standby alike; a broken index, or a database
+/// not checked to the end, fails it with their names. See amcheck.rs.
+async fn amcheck(State(keeper): State<Arc<Keeper>>) -> Response {
+	let phase = keeper.phase();
+	if !matches!(phase, Phase::Running(_)) {
+		return unavailable(describe(&phase));
+	}
+	let Ok(_running) = keeper.checking.try_lock() else {
+		return response::failure(StatusCode::CONFLICT, "job_running");
+	};
+	match keeper.amcheck().await {
+		Ok(report) => match report.failure() {
+			None => response::success(StatusCode::OK, report),
+			Some(failure) => unavailable(failure),
+		},
+		Err(error) => unavailable(error),
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -103,6 +123,9 @@ mod tests {
 		assert_eq!(body["code"], "service_unavailable");
 		keeper.refuse("rewinding failed".into());
 		let (status, body) = ask(keeper.clone(), "POST", "/jobs/backup").await;
+		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+		assert_eq!(body["message"], "rewinding failed");
+		let (status, body) = ask(keeper.clone(), "POST", "/jobs/amcheck").await;
 		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
 		assert_eq!(body["message"], "rewinding failed");
 	}

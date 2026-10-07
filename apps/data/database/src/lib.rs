@@ -1,6 +1,7 @@
 //! `database`: the platform's Postgres, run by a keeper that answers for it. See
 //! spec/architecture/databases.md.
 
+pub mod amcheck;
 pub mod api;
 pub mod backup;
 pub mod config;

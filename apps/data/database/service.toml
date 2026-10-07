@@ -6,6 +6,9 @@ display_name = "Database"
 # tyo is the primary and buf and rdu its standbys, named by hand. See
 # spec/architecture/databases.md, "Where it runs, and which one writes".
 placements = ["tyo", "buf", "rdu"]
+# One cluster replicates between machines of one architecture: arm64 everywhere, buf by emulation.
+# See spec/architecture/databases.md, "Where it runs, and which one writes".
+arch = "arm64"
 # A run deploys nothing of it; standbys first, the primary last. See spec/architecture/databases.md,
 # "Upgrades are pinned, reported, and rolled by hand".
 rollout = "manual"
@@ -31,6 +34,16 @@ path = "/var/lib/postgresql"
 name = "backup"
 cron = "0 10 * * *"
 path = "/jobs/backup"
+catch_up = "once"
+overlap = "skip"
+timeout = 3600
+
+# Every btree index on every node, the emulated standby's above all; 14:00 UTC is clear of apt's
+# hours and the backup's. See src/amcheck.rs.
+[[schedules]]
+name = "amcheck"
+cron = "0 14 * * *"
+path = "/jobs/amcheck"
 catch_up = "once"
 overlap = "skip"
 timeout = 3600

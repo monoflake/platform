@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote <node>`, each with --dry-run"
+#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote [node]`, each with --dry-run"
 """The operator's half of the platform's Postgres. See spec/architecture/databases.md.
 
 `env` writes what the database app reads on each core node, `grant` gives an app its database and
-login and writes its `DATABASE_URL`, and `promote` makes a standby the primary by hand. Values move
-over SSH on stdin, never on a command line, and `--dry-run` touches no machine and prints no secret.
+login and writes its `DATABASE_URL`, and `promote` makes a standby the primary by hand: the one
+named, or the first in order that is caught up. Values move over SSH on stdin, never on a command
+line, and `--dry-run` touches no machine and prints no secret.
 """
 
 import json
@@ -26,8 +27,10 @@ SERVICE = ROOT / "apps/data/database/service.toml"
 # Where its image is built, which a deploy by hand names. See spec/architecture/databases.md,
 # "Upgrades are pinned, reported, and rolled by hand".
 REPOSITORY = "monoflake/platform"
-# Named by hand; see spec/architecture/databases.md, "Where it runs, and which one writes".
-DEFAULT_PRIMARY = "tyo"
+# The primary, then its standbys in the order a promote that names no node tries them, each named by
+# hand; see spec/architecture/databases.md, "Where it runs, and which one writes".
+ORDER = ["tyo", "rdu", "buf"]
+DEFAULT_PRIMARY = ORDER[0]
 PORT = 5432
 # The scopes there are, each an organization. See spec/architecture/scheduling.md, "A scope is an
 # organization, and only the boundary isolates".
@@ -49,6 +52,10 @@ BUCKET = "BACKUP_S3_BUCKET"
 # How long the old primary gets to shut down, and the standby to replay what it wrote.
 STOP_SECONDS = 30
 CATCH_UP_SECONDS = 120
+# How far behind a standby may be and still be promoted unnamed: one WAL segment. Streaming, a
+# standby sits kilobytes behind, so a segment's worth says it is not keeping up; and that much
+# replays well inside CATCH_UP_SECONDS even on buf, emulated twenty to thirty times slower.
+BEHIND_BYTES = 16 * 1024 * 1024
 LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 
 # Runs on the node with KEY=VALUE lines on stdin and the app's directory and the file's name as
@@ -363,14 +370,112 @@ def fence(old, node, dry):
 	)
 
 
+def lsn(text):
+	"""A WAL position, `16/B374D848`, as a number of bytes; None when Postgres had none to give."""
+	high, _, low = text.partition("/")
+	return (int(high, 16) << 32) + int(low, 16) if low else None
+
+
+def mib(count):
+	return f"{count / (1024 * 1024):.1f} MiB"
+
+
+def pick(primary, candidates, streams, standing):
+	"""The first of `candidates` that is a standby and caught up, or None, and why each passed over
+	was. `streams` is the primary's pg_stat_replication, `{node: (state, bytes behind)}`, or None
+	when it did not answer; `standing` is each one's `(recovering, received, replayed)`, absent when
+	it did not answer. With the primary down nothing streams, and caught up is having received all
+	any standby that answers did, so none is promoted to lose what another holds. See
+	spec/architecture/databases.md, "Where it runs, and which one writes"."""
+	answered = {name: state for name, state in standing.items() if state and state[0]}
+	held = [max(received or 0, replayed or 0) for _, received, replayed in answered.values()]
+	furthest = max(held, default=0)
+	passed = []
+	for name in candidates:
+		state = standing.get(name)
+		if state is None:
+			passed.append((name, "did not answer"))
+			continue
+		recovering, received, replayed = state
+		if not recovering:
+			passed.append((name, "is not a standby"))
+			continue
+		if streams is not None:
+			stream, behind = streams.get(name, (None, None))
+			if stream != "streaming":
+				passed.append((name, f"is not streaming from {primary} ({stream or 'not connected'})"))
+			elif behind >= BEHIND_BYTES:
+				passed.append((name, f"has {mib(behind)} of {primary}'s WAL still to replay"))
+			else:
+				return name, passed
+			continue
+		has = max(received or 0, replayed or 0)
+		if has < furthest:
+			passed.append((name, f"has received {furthest - has} bytes less than another standby"))
+		elif has - (replayed or 0) >= BEHIND_BYTES:
+			passed.append((name, f"has {mib(has - (replayed or 0))} it received still to replay"))
+		else:
+			return name, passed
+	return None, passed
+
+
+def choose(old):
+	"""The standby a promote that names none takes, each passed over said with why; stops when none
+	qualifies."""
+	if old is None:
+		fail("the nodes name no primary, so there is no order to take a standby from; name one")
+	candidates = [n for n in ORDER if n != old]
+	rows = in_container(
+		old,
+		"SELECT application_name, state, coalesce(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn),"
+		" 0)::bigint FROM pg_stat_replication",
+	)
+	streams = None
+	if rows is not None:
+		streams = {}
+		for row in rows.splitlines():
+			name, state, behind = row.split("|")
+			streams[name] = (state, int(behind))
+	else:
+		print(f"database: {old}, the primary, did not answer; the standbys are measured by each other")
+	standing = {}
+	for name in candidates:
+		answer = in_container(
+			name, "SELECT pg_is_in_recovery(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn()"
+		)
+		if answer is not None:
+			recovering, received, replayed = answer.split("|")
+			standing[name] = (recovering == "t", lsn(received), lsn(replayed))
+	node, passed = pick(old, candidates, streams, standing)
+	for name, why in passed:
+		print(f"database: {name} passed over: {name} {why}")
+	if node is None:
+		fail("no standby is caught up, so none was promoted; name one to promote it anyway")
+	print(f"database: {node} is the first standby in order that is caught up")
+	return node
+
+
 def promote(arguments, dry):
 	nodes = placements()
+	if sorted(ORDER) != sorted(nodes):
+		fail(f"ORDER names {', '.join(ORDER)} and service.toml places it on {', '.join(nodes)}")
 	names = [a for a in arguments if not a.startswith("-")]
-	if len(names) != 1 or names[0] not in nodes:
-		fail(f"promote takes one of {', '.join(nodes)}")
-	node = names[0]
+	if len(names) > 1 or (names and names[0] not in nodes):
+		fail(f"promote takes one of {', '.join(nodes)}, or none for the first standby in order")
+	node = names[0] if names else None
 	if dry:
-		print(f"database: would check {node} answers and is a standby, and stop if not")
+		if node is None:
+			node = "<the one chosen>"
+			print(
+				f"database: would take the first of {', '.join(ORDER)}, less the primary the nodes'"
+				f" config.env name, that answers as a standby and is caught up: streaming from the"
+				f" primary with less than {mib(BEHIND_BYTES)} of its WAL to replay, or, when the primary"
+				f" does not answer, having received all that any standby that answers did, with less than"
+				f" {mib(BEHIND_BYTES)} of it to replay; each passed over is said with why, and with none"
+				f" caught up nothing is stopped or promoted"
+			)
+		else:
+			print(f"database: would check {node} answers and is a standby, and stop if not")
 		fence("<primary>", node, dry)
 		print(
 			f"database: would, on root@{node}, run SELECT pg_promote() in the {APP} container, then set"
@@ -378,6 +483,8 @@ def promote(arguments, dry):
 		)
 	else:
 		old = primary_named(nodes)
+		if node is None:
+			node = choose(old)
 		recovering = in_container(node, "SELECT pg_is_in_recovery()")
 		if recovering is None:
 			fail(f"{node}'s Postgres did not answer; nothing was stopped or promoted")
@@ -390,7 +497,7 @@ def promote(arguments, dry):
 		unreached = [n for n in nodes if not upsert(n, APP, "config.env", {"DATABASE_PRIMARY": node})]
 		if unreached:
 			print(f"database: {', '.join(unreached)} not told; set DATABASE_PRIMARY={node} there before it starts")
-	others = [n for n in nodes if n != node]
+	others = [n for n in nodes if n != node] if node in nodes else ["<each other node>"]
 	print(
 		f"database: redeploy {node} first, then {' and '.join(others)}; a node that was the primary"
 		f" rewinds onto {node} as it starts:\n"
@@ -408,7 +515,7 @@ def main():
 	rest = [a for a in arguments[1:] if a not in ("--dry-run", "-n")]
 	verbs = {"env": env, "grant": grant, "promote": promote}
 	if not arguments or arguments[0] not in verbs:
-		fail("name one of env, grant <scope> <app> or promote <node>, and --dry-run to only say what")
+		fail("name one of env, grant <scope> <app> or promote [node], and --dry-run to only say what")
 	verbs[arguments[0]](rest, dry)
 
 

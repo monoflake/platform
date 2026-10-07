@@ -239,12 +239,17 @@ pub async fn ready(layout: &Layout, child: &mut Child) -> Result<(), Error> {
 
 /// `sql` run as the superuser over the socket, its rows unaligned: columns split by `|`.
 pub async fn query(layout: &Layout, sql: &str) -> Result<String, Error> {
+	query_in(layout, "postgres", sql).await
+}
+
+/// `query`, in the database named.
+pub async fn query_in(layout: &Layout, database: &str, sql: &str) -> Result<String, Error> {
 	let mut psql = command("psql");
 	psql
 		.args(["--no-psqlrc", "--no-align", "--tuples-only", "--quiet", "--set=ON_ERROR_STOP=1"])
 		.arg("--host")
 		.arg(&layout.run)
-		.args(["--port", &render::PORT.to_string(), "--username", SUPERUSER, "--dbname", "postgres"]);
+		.args(["--port", &render::PORT.to_string(), "--username", SUPERUSER, "--dbname", database]);
 	output(psql, Some(sql)).await
 }
 

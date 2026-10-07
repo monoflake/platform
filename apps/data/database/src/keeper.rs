@@ -1,6 +1,7 @@
 //! The keeper's own state: what it is doing to bring Postgres up, and what it answers with while it
 //! does. See spec/architecture/databases.md, "The container is Postgres and a keeper of it".
 
+use crate::amcheck;
 use crate::backup;
 use crate::config::{Config, Role};
 use crate::health::{self, Status};
@@ -44,6 +45,8 @@ pub struct Keeper {
 	phase: RwLock<Phase>,
 	/// Held while a backup runs, so a second is refused rather than run beside it.
 	pub backing_up: tokio::sync::Mutex<()>,
+	/// Held while the indexes are checked, for the same reason.
+	pub checking: tokio::sync::Mutex<()>,
 	/// The newest base backup in the store: read once at start, then set by each backup job.
 	last: RwLock<Last>,
 	/// The backup state last logged, so a change is logged once.
@@ -86,6 +89,7 @@ impl Keeper {
 			layout,
 			phase,
 			backing_up: tokio::sync::Mutex::new(()),
+			checking: tokio::sync::Mutex::new(()),
 			last: RwLock::new(Last::Unknown),
 			logged: Mutex::new(None),
 			stalled_after: watch::STALLED_AFTER,
@@ -252,6 +256,48 @@ impl Keeper {
 			backups: left.len(),
 			permanent: left.iter().filter(|b| b.is_permanent).count(),
 		})
+	}
+
+	/// Every btree index of every database checked, amcheck installed first where this node is the
+	/// primary. See amcheck.rs.
+	pub async fn amcheck(&self) -> Result<amcheck::Report, postgres::Error> {
+		let role = self.status().await?.role;
+		let names = postgres::query(&self.layout, amcheck::DATABASES).await?;
+		let mut databases = Vec::new();
+		for name in names.lines().map(str::trim).filter(|name| !name.is_empty()) {
+			databases.push(self.amcheck_in(name, role).await);
+		}
+		Ok(amcheck::Report { role, databases })
+	}
+
+	async fn amcheck_in(&self, name: &str, role: Role) -> amcheck::Database {
+		let mut database = amcheck::Database::new(name);
+		let installed = match role {
+			Role::Primary => postgres::query_in(&self.layout, name, amcheck::INSTALL).await.map(|_| true),
+			Role::Standby => postgres::query_in(&self.layout, name, amcheck::INSTALLED)
+				.await
+				.map(|out| out.trim() == "t"),
+		};
+		match installed {
+			Ok(true) => {}
+			Ok(false) => {
+				database.passed_over =
+					Some("amcheck is not installed in it yet; the primary's check installs it".into());
+				return database;
+			}
+			Err(error) => {
+				database.unfinished = Some(error.to_string());
+				return database;
+			}
+		}
+		match postgres::query_in(&self.layout, name, &amcheck::script()).await {
+			Ok(out) => match amcheck::parse(&out) {
+				Ok(checked) => database.record(checked),
+				Err(error) => database.unfinished = Some(format!("its answer was unreadable: {error}")),
+			},
+			Err(error) => database.unfinished = Some(error.to_string()),
+		}
+		database
 	}
 
 	async fn list(&self) -> Result<Vec<backup::Listed>, postgres::Error> {
