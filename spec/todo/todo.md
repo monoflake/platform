@@ -28,9 +28,6 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 
 In order -- [../architecture/databases.md](../architecture/databases.md):
 
-- **The cluster on the core**: the backup store's five `BACKUP_S3_*` secrets, `mise run database
-env`, `database` deployed to `tyo` and then its standbys, a backup taken and restored, and the
-  backup key copied somewhere apart from the secrets.
 - **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
   `spec/todo.md`, "An app may ask to be deployed by hand".
 - **A newer pinned image is reported**: `outdated` reads the tag and digest every Dockerfile pins and
@@ -39,11 +36,32 @@ env`, `database` deployed to `tyo` and then its standbys, a backup taken and res
   which passes on to whichever node is primary, so a failover or a major's switch rewrites no URL and
   restarts no app.
 
+## Toward services that keep nothing
+
+In order, each deployed and proved before the next -- [../architecture/scheduling.md](../architecture/scheduling.md):
+
+1. **`ledger` in the cluster**, in `platform`: its SQLite on `rdu` becomes its database there, and it
+   runs on all three cores. The first app given a database, and so the proof of `database grant`.
+2. **The platform's scheduler**, a lease in the cluster: the deployer on the three cores, and the
+   probe and telemetry off the one node each is on --
+   [../issues/scheduling.md](../issues/scheduling.md), "What runs on one node until the platform's
+   scheduler exists".
+3. **The platform's identity, first part**: every app given a `service:<app>` credential when it is
+   deployed -- [../architecture/scheduling.md](../architecture/scheduling.md), "Who asks is a
+   principal, and an issuer vouches for it".
+4. **A store on every node's disk**, S3 over its filesystem, and the backups copied each day to
+   `rdu`'s -- [../issues/scheduling.md](../issues/scheduling.md), "Backups are in one failure domain".
+5. **A scope's bucket, first version**: its index in the cluster, put, get, delete and list, laid out
+   by `pool` and `mirror`, references, the sweep and the scrub on the scheduler.
+6. **`shot` keeping nothing**: its queue in the cluster, its pictures in a bucket, its browsers on
+   any node.
+7. **`canmi`'s own accounts, and the site's bucket moved onto the platform's.**
+
 ## Background work and packages
 
 - **The platform's scheduler**, which runs a job once across the platform under a lease in Postgres
   -- [../architecture/scheduling.md](../architecture/scheduling.md), "Background work has two
-  schedulers". It needs the cluster below first.
+  schedulers" -- second of "Toward services that keep nothing", below.
 
 ## The deployer
 
