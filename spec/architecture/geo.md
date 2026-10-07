@@ -58,4 +58,3 @@ and rebuilding a tree on a cold request, which made that request wait seconds.
 The raw GeoNames files stay in the build and never reach the image. Decided on 2026-10-07, when the
 parsed GeoNames data held 455 MB of heap on every node running geo, against 63 MB of GeoLite2 pages
 the kernel could reclaim.
-

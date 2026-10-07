@@ -35,6 +35,18 @@ Decided on 2026-10-07, in place of a database whose durable state was objects in
 
 ## A bucket is logical, a store is physical, and either may be many of the other
 
+**A bucket is the platform's, never a provider's: one entrance, holding a scope's names, the
+content they point to and the stores that content is on.** The names are records in Postgres, the
+content is addressed by its BLAKE3 hash -- the cid of [resource.md](resource.md) -- and the bytes are
+on as many stores as the bucket's data asks, self-hosted, a provider's, or both. An app sees the
+entrance and never a store behind it.
+
+**A store is a place bytes are kept, and nothing more.** Whatever a provider offers above that --
+versioning, lifecycle rules, replication of its own -- is left off, versioning above all: the
+platform keeps its own history, in records and in bytes not yet reclaimed, and a provider's versions
+of the same thing would be a second copy of it, billed by the byte and never read. A store is written
+by cid, so an object is never overwritten in it.
+
 **One store holds many buckets, and one bucket spans many stores.** How many copies a bucket keeps
 follows how much its data matters, not how many disks there are. A store at home is offered as the
 device it is: a copy on it is a copy on that medium, and three copies are three media.
@@ -58,7 +70,7 @@ bucket already survives a dead disk. What anybody can name is the failure:
 | --------- | -------------------------------------------- | -------------------------------------------------------------- |
 | `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself |
 | `domain`  | an account ends, or the house goes           | copies in two failure domains                                  |
-| `mistake` | a deletion, or a bug that rewrites good data | history kept for a while: snapshots or versions                |
+| `mistake` | a deletion, or a bug that rewrites good data | the platform's own history: a name restorable, its bytes kept  |
 
 A bucket lists the failures it survives, and the platform derives the copies. A store says two things
 a person knows: its failure domain, and whether it is redundant by itself -- a provider's bucket and
