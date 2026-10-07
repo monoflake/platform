@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { BUSY, opacity, radius, SIZES } from './marks.ts';
+import { DOT, PITCH } from './land.generated.ts';
+import { BREATHS, opacity, period, radius, shown, SIZES } from './marks.ts';
 
 describe('a mark by how much its node runs', () => {
 	it('steps at 5 and 15 apps running', () => {
-		expect(radius(0)).toBe(10);
-		expect(radius(5)).toBe(10);
-		expect(radius(6)).toBe(14);
-		expect(radius(15)).toBe(14);
-		expect(radius(16)).toBe(19);
-		expect(radius(400)).toBe(19);
+		expect(radius(0)).toBe(7);
+		expect(radius(5)).toBe(7);
+		expect(radius(6)).toBe(9.5);
+		expect(radius(15)).toBe(9.5);
+		expect(radius(16)).toBe(12);
+		expect(radius(400)).toBe(12);
+	});
+
+	it('draws the smallest across two of the land dots, a pitch and a dot', () => {
+		expect(2 * SIZES[0].radius).toBe(PITCH + DOT);
 	});
 
 	it('takes the middle step while the count is not known', () => {
@@ -17,25 +22,43 @@ describe('a mark by how much its node runs', () => {
 	});
 });
 
-describe('a mark by how busy its node is', () => {
-	it('steps below 2, 10 and 30 percent, so idle nodes are told apart', () => {
-		expect(opacity(0)).toBe(0.35);
-		expect(opacity(1.99)).toBe(0.35);
-		expect(opacity(2)).toBe(0.55);
-		expect(opacity(9.99)).toBe(0.55);
-		expect(opacity(10)).toBe(0.78);
-		expect(opacity(29.99)).toBe(0.78);
-		expect(opacity(30)).toBe(1);
-		expect(opacity(100)).toBe(1);
+describe('a mark by whether its node is heard', () => {
+	it('draws a late node as heard: two states, never three', () => {
+		expect(shown('live')).toBe('live');
+		expect(shown('late')).toBe('live');
+		expect(shown('gone')).toBe('gone');
+	});
+});
+
+describe('a mark by how deep its node runs', () => {
+	it('steps its opacity with its size, at 5 and 15 apps running', () => {
+		expect(opacity(5)).toBe(0.45);
+		expect(opacity(6)).toBe(0.72);
+		expect(opacity(15)).toBe(0.72);
+		expect(opacity(16)).toBe(1);
+		expect(opacity(undefined)).toBe(0.72);
+	});
+});
+
+describe('a mark breathing by how busy its node is', () => {
+	it('steps its period below 2, 10 and 30 percent, so idle nodes are told apart', () => {
+		expect(period(0)).toBe(4);
+		expect(period(1.99)).toBe(4);
+		expect(period(2)).toBe(2.6);
+		expect(period(9.99)).toBe(2.6);
+		expect(period(10)).toBe(1.6);
+		expect(period(29.99)).toBe(1.6);
+		expect(period(30)).toBe(0.9);
+		expect(period(100)).toBe(0.9);
 	});
 
-	it('is whole while the CPU is not known', () => {
-		expect(opacity(undefined)).toBe(1);
-		expect(opacity(NaN)).toBe(1);
+	it('breathes slowest while the CPU is not known', () => {
+		expect(period(undefined)).toBe(4);
+		expect(period(NaN)).toBe(4);
 	});
 
-	it('only grows with the load', () => {
-		const opacities = BUSY.map((step) => step.opacity);
-		expect(opacities).toEqual(opacities.toSorted((a, b) => a - b));
+	it('only quickens with the load', () => {
+		const periods = BREATHS.map((breath) => breath.period);
+		expect(periods).toEqual(periods.toSorted((a, b) => b - a));
 	});
 });

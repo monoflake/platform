@@ -4,14 +4,14 @@
  * module only when the globe is picked, so a page left flat ships no WebGL.
  */
 import createGlobe, { type Marker } from 'cobe';
-import type { Liveness } from '../node.ts';
+import type { Shown } from './marks.ts';
 
 /** A node as the globe marks it: where it is, and its mark as the flat map has it (marks.ts). */
 export interface Spot {
 	readonly location: readonly [number, number];
 	readonly radius: number;
 	readonly opacity: number;
-	readonly state: Liveness;
+	readonly state: Shown;
 }
 
 export interface Globe {
@@ -27,13 +27,11 @@ const FACING = { latitude: 30, longitude: -30 };
 /** Radians turned per frame, and per pixel dragged. */
 const SPIN = 0.003;
 const DRAG = 0.005;
-/** cobe's marker size per unit of the flat map's radius, the middle step drawn at 0.04. */
-const PER_RADIUS = 0.04 / 14;
-/** How much wider a ring is than its mark, in cobe's size. */
-const RING = 0.008;
+/** cobe's marker size per unit of the flat map's radius, the middle step drawn at 0.03. */
+const PER_RADIUS = 0.03 / 9.5;
 /**
  * The sphere's own dark as `dark: 1` paints it: cobe has no marker opacity, so a faint mark is its
- * color mixed toward this, and a hollow one is this drawn inside a red one.
+ * color mixed toward this.
  */
 const SPHERE: Rgb = [0.04, 0.04, 0.04];
 /** cobe 2 draws only when updated, and decodes its land texture after the first draw. */
@@ -106,7 +104,7 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 
 	return {
 		mark(spots) {
-			const markers: Marker[] = spots.flatMap(marks);
+			const markers: Marker[] = spots.map(marks);
 			globe.update({ markers });
 			frames = 1;
 		},
@@ -121,20 +119,10 @@ export function mount(host: HTMLElement, still: boolean): Globe {
 	};
 }
 
-/** A spot as cobe's markers, drawn in order: a ring or a red disc first, the mark over it. */
-function marks({ location, radius, opacity, state }: Spot): Marker[] {
-	const at: [number, number] = [...location];
-	const size = radius * PER_RADIUS;
-	if (state === 'gone') {
-		return [
-			{ location: at, size, color: rgb('var(--color-danger)') },
-			{ location: at, size: size - RING, color: SPHERE },
-		];
-	}
-	const accent = rgb('var(--color-accent)');
-	const fill: Marker = { location: at, size, color: mix(accent, SPHERE, opacity) };
-	if (state === 'live') return [fill];
-	return [{ location: at, size: size + RING, color: rgb('var(--color-warn)') }, fill];
+/** A spot as cobe's marker: blue while heard, red when gone, faded toward the sphere when small. */
+function marks({ location, radius, opacity, state }: Spot): Marker {
+	const color = rgb(state === 'gone' ? 'var(--color-danger)' : 'var(--color-primary)');
+	return { location: [...location], size: radius * PER_RADIUS, color: mix(color, SPHERE, opacity) };
 }
 
 function mix([r, g, b]: Rgb, [r0, g0, b0]: Rgb, share: number): Rgb {

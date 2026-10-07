@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { build, DOT, PITCH, projectionOf } from '../../../scripts/project.ts';
 import { NODES } from '../server/nodes.ts';
 import * as generated from './land.generated.ts';
+import { SIZES } from './marks.ts';
 import { PLACES } from './places.ts';
 
 describe('the generated map', () => {
@@ -51,6 +52,21 @@ describe('the generated map', () => {
 			expect(x).toBeLessThan(generated.WIDTH);
 			expect(y).toBeGreaterThan(0);
 			expect(y).toBeLessThan(generated.HEIGHT);
+		}
+	});
+
+	it('sets close nodes apart so the largest marks neither touch nor leave the plot', () => {
+		const largest = SIZES[SIZES.length - 1]?.radius ?? 0;
+		const marks = Object.entries(PLACES).map(([code, { offset: [dx, dy] = [0, 0] }]) => {
+			const [x, y] = generated.POINTS[code as keyof typeof PLACES];
+			return [x + dx, y + dy] as const;
+		});
+		for (const [index, [x, y]] of marks.entries()) {
+			expect(x - largest).toBeGreaterThan(0);
+			expect(y + largest).toBeLessThan(generated.HEIGHT);
+			for (const [ox, oy] of marks.slice(index + 1)) {
+				expect(Math.hypot(x - ox, y - oy)).toBeGreaterThan(2 * largest);
+			}
 		}
 	});
 
