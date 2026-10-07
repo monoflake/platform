@@ -3,7 +3,7 @@
 version = 1
 name = "apt"
 display_name = "Package Updates"
-placements = ["rdu", "tyo"]
+placements = ["rdu", "tyo", "gvx", "bru", "buf"]
 
 # No port: the node's own `cron` reaches this on its socket, host mounts the machine's system bus
 # socket in and the container runs as root only so systemd lets it start a unit. See

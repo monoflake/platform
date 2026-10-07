@@ -3,7 +3,7 @@
 version = 1
 name = "cron"
 display_name = "Scheduler"
-placements = ["rdu", "tyo"]
+placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf"]
 
 [container]
 # One above ledger's 12010, in the platform's own low block. See spec/architecture/services.md,
