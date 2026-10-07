@@ -38,7 +38,7 @@ file.
 - Exports to look at, kept apart from backups
 - Backups are in one failure domain
 - A timeline's history can go with the WAL around it
-- An unreachable backup store holds the job for an hour
+- Health does not say that archiving has stopped
 
 ### [services.md](services.md)
 

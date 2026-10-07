@@ -88,11 +88,13 @@ far was on timeline one. Keeping the history files out of the deletion -- copied
 under a prefix WAL-G does not prune, or never deleted at all, since they are a few hundred bytes each
 -- would close it, and needs a restore after a real failover to prove.
 
-## An unreachable backup store holds the job for an hour
+## Health does not say that archiving has stopped
 
-WAL-G retries a store it cannot reach rather than failing, so a backup job against a store that is
-down waits until `cron`'s timeout of an hour and is recorded failed then, not at once. Nothing is
-lost -- the job deletes nothing until every step before has succeeded -- but the failure is an hour
-late and the job holds its slot for it. A shorter timeout of WAL-G's own would answer sooner; what
-it should be, against a base backup that may take minutes once the database is large, is undecided.
-
+On `tyo`'s first start, on 2026-10-07, the image had no CA bundle: WAL-G could not verify the store's
+certificate and retried without end, so both the base backup and the archiving of WAL hung, and
+`/health` answered healthy throughout -- `pg_stat_archiver` counts a failure only when the archive
+command returns, and this one never did. The bundle is in the image now, and `S3_MAX_RETRIES=3` makes
+an unreachable store fail within seconds rather than an hour, so a failure is counted and logged.
+What is still open is `/health` saying so: answering degraded when the last WAL archived is older
+than a few minutes while there is WAL to archive, or when the last base backup is older than a day,
+and how the probe and the console show a database that is up but not backed up.
