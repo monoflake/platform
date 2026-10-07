@@ -24,6 +24,9 @@ export const RELAY = `http://${INTERFACE}`;
 /** How many nodes one request tries before it gives up. */
 export const TRIES = 3;
 
+/** How long one node may take to answer before it counts as unavailable, in milliseconds. */
+export const TIMEOUT = 4000;
+
 /**
  * How a node is reached: over its VPC binding, to its Caddy, which carries the WebSocket too. See
  * spec/architecture/console.md, "Live, through the nearest node".
@@ -82,7 +85,11 @@ export function isRoute(path: string): path is (typeof ROUTES)[number] {
 	return (ROUTES as readonly string[]).includes(path);
 }
 
-export async function handle(request: Request, env: Env): Promise<Response> {
+/**
+ * `timeout` bounds each relay `/state` asks, never the socket `/live` opens: an established socket
+ * outlives any request.
+ */
+export async function handle(request: Request, env: Env, timeout = TIMEOUT): Promise<Response> {
 	const { pathname } = new URL(request.url);
 	if (request.method !== 'GET') return failure(404, 'no_such_route');
 	const nodes = order(request.cf as Whereabouts | undefined);
@@ -99,7 +106,8 @@ export async function handle(request: Request, env: Env): Promise<Response> {
 		case '/state': {
 			const reached = await first(
 				nodes,
-				(node) => reach(env, node, '/state', { method: 'GET' }),
+				(node) =>
+					reach(env, node, '/state', { method: 'GET', signal: AbortSignal.timeout(timeout) }),
 				(answer) => answer.ok,
 			);
 			return reached?.answer ?? failure(502, 'upstream_unavailable');

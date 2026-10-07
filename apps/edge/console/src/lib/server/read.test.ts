@@ -31,6 +31,14 @@ const down = (): Response => {
 	throw new Error('tunnel down');
 };
 
+/** A binding that never answers, until the request's signal gives up on it. */
+const hanging = {
+	fetch: (_url: string, init: RequestInit = {}) =>
+		new Promise<Response>((_, reject) => {
+			init.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+		}),
+} as unknown as Fetcher;
+
 const OSAKA = { latitude: '34.6937', longitude: '135.5023' };
 const NEAREST = order(OSAKA);
 
@@ -51,6 +59,29 @@ describe('cluster', () => {
 		expect(sent.map(({ url }) => url)).toEqual([`${RELAY}/state`, `${RELAY}/state`]);
 		// A relay is asked with nothing of the token's.
 		expect(sent.some(({ headers }) => headers.has('authorization'))).toBe(false);
+	});
+
+	it('gives up on a relay that hangs, for the next', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const [hung, answering] = NEAREST as [string, string];
+		const data = { version: 1, node: answering, nodes: {} };
+		const { sent, env } = bound({ [answering]: envelope({ status: 'success', data }) });
+		const read = await cluster(
+			{ env: { ...env, [hung.toUpperCase()]: hanging }, where: OSAKA },
+			20,
+		);
+		expect(read).toEqual({ ok: true, node: answering, data });
+		expect(sent.map(({ node }) => node)).toEqual([answering]);
+	});
+
+	it('fails as a 502 when every relay it tries hangs', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const env = Object.fromEntries(NEAREST.map((name) => [name.toUpperCase(), hanging])) as Env;
+		const read = await cluster({ env, where: OSAKA }, 20);
+		expect(read).toMatchObject({
+			ok: false,
+			failure: { status: 502, code: 'upstream_unavailable' },
+		});
 	});
 
 	it('fails as a 502 when no relay answers', async () => {

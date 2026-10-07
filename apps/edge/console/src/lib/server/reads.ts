@@ -5,10 +5,8 @@
  */
 import type { AppDetail, Disk, Grain, Now, Page, Point } from '../host.ts';
 import type { Event } from '../wire.ts';
+import { TIMEOUT } from './edge.ts';
 import { type Edge, type Read, node } from './read.ts';
-
-/** How long one node may take to answer before it counts as unavailable, in milliseconds. */
-export const TIMEOUT = 4000;
 
 /** The ranges a chart offers. */
 export type Range = '1h' | '6h' | '24h' | '7d' | '30d';

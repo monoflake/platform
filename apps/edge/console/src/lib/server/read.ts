@@ -7,7 +7,7 @@
 import type { Code } from '@canmi/response';
 import { URLS } from '@monoflake/sdk';
 import type { Cluster } from '../wire.ts';
-import { type Env, bindingOf, first, reach } from './edge.ts';
+import { type Env, TIMEOUT, bindingOf, first, reach } from './edge.ts';
 import { NODES, type Node, type Whereabouts, order } from './nodes.ts';
 
 /**
@@ -32,11 +32,15 @@ export interface Failure {
 /** What a read came back with, and the node that answered it. */
 export type Read<T> = { ok: true; node: Node; data: T } | { ok: false; failure: Failure };
 
-/** Every node as the nearest relay that answers holds them, as `/state` passes it on. */
-export async function cluster(edge: Edge): Promise<Read<Cluster>> {
+/**
+ * Every node as the nearest relay that answers holds them, as `/state` passes it on. A relay that
+ * has not answered in `timeout` milliseconds is given up on for the next.
+ */
+export async function cluster(edge: Edge, timeout = TIMEOUT): Promise<Read<Cluster>> {
 	const reached = await first(
 		order(edge.where),
-		(node) => reach(edge.env, node, '/state', { method: 'GET' }),
+		(node) =>
+			reach(edge.env, node, '/state', { method: 'GET', signal: AbortSignal.timeout(timeout) }),
 		(answer) => answer.ok,
 	);
 	if (reached === undefined) return failed(502, 'upstream_unavailable', 'No relay answered.');

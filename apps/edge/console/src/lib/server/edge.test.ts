@@ -45,6 +45,14 @@ function down(): Response {
 	throw new Error('tunnel down');
 }
 
+/** A binding that never answers, until the request's signal gives up on it. */
+const hanging = {
+	fetch: (_url: string, init: RequestInit = {}) =>
+		new Promise<Response>((_, reject) => {
+			init.signal?.addEventListener('abort', () => reject(init.signal?.reason));
+		}),
+} as unknown as Fetcher;
+
 /** Where Cloudflare places every reader here: Osaka, whose order is Tokyo's three first. */
 const OSAKA = { latitude: '34.6937', longitude: '135.5023' };
 const NEAREST = order(OSAKA);
@@ -105,6 +113,20 @@ describe('the live socket', () => {
 		expect(sent[1]?.headers.get('upgrade')).toBe('websocket');
 	});
 
+	it('opens the socket with no deadline, which would cut it once open', async () => {
+		const signals: (AbortSignal | null | undefined)[] = [];
+		const env = {
+			TYO: {
+				fetch: async (_url: string, init: RequestInit = {}) => {
+					signals.push(init.signal);
+					return OPENED;
+				},
+			} as unknown as Fetcher,
+		} as Env;
+		await socketOf(asked('/live', UPGRADE), env, ['tyo']);
+		expect(signals).toEqual([undefined]);
+	});
+
 	it('takes no answer but an opened socket', async () => {
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 		const refused = () => new Response(null, { status: 403 });
@@ -147,6 +169,17 @@ describe('the state', () => {
 		expect(response.headers.get('content-type')).toBe('application/json');
 		expect(await response.text()).toBe(body);
 		expect(sent.map(({ url }) => url)).toEqual(Array(3).fill(`${RELAY}/state`));
+	});
+
+	it('gives up on a node that hangs, for the next', async () => {
+		vi.spyOn(console, 'error').mockImplementation(() => {});
+		const body = JSON.stringify({ status: 'success', data: { node: 'hnd' } });
+		const [hung, answering] = NEAREST as [Node, Node];
+		const { sent, env } = bound({ [answering]: () => new Response(body) });
+		const response = await handle(asked('/state'), { ...env, [hung.toUpperCase()]: hanging }, 20);
+		expect(response.status).toBe(200);
+		expect(await response.text()).toBe(body);
+		expect(sent.map(({ node }) => node)).toEqual([answering]);
 	});
 });
 
