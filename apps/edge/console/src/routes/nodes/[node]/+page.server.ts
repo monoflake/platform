@@ -10,42 +10,41 @@ import type { PageServerLoad } from './$types';
 const MARKED = 200;
 
 /**
- * The header's reads on every tab, and the open tab's own beside them, all at once. A read that
- * fails comes back as its failure, said in its place on the page.
+ * The header's reads on every tab, and the open tab's own beside them, all streamed so a tab is a
+ * link that switches at once. A read that fails comes back as its failure, said in its place on
+ * the page. See spec/architecture/console.md, "Moving between pages never waits for a node".
  */
-export const load: PageServerLoad = async (event) => {
+export const load: PageServerLoad = (event) => {
 	const name = event.params.node;
 	if (!isNode(name)) error(404, `No node is named ${name}.`);
 	const edge = edgeOf(event);
 	const view = viewOf(event.url.searchParams);
 	const span = range(view.range);
 	const on = <T>(tab: typeof view.tab, read: () => Promise<T>) =>
-		view.tab === tab ? read() : Promise.resolve(undefined);
-
-	const [read, machine, series, recent, listed, page, usage] = await Promise.all([
-		cluster(edge),
-		nodeNow(edge, name),
-		on('overview', () => nodeSeries(edge, name, span)),
-		on('overview', () => events(edge, name, { limit: MARKED })),
-		on('apps', () => apps(edge, name)),
-		on('events', () => events(edge, name, { limit: PAGE, before: view.before })),
-		on('disk', () => disk(edge, name)),
-	]);
+		view.tab === tab ? read() : undefined;
 
 	return {
-		cluster: read,
+		cluster: cluster(edge),
 		name,
 		view,
 		span,
 		now: Date.now(),
-		machine,
-		charts: series && (series.ok ? { ...series, data: nodeCharts(series.data) } : series),
-		marks: recent?.ok ? markers(recent.data, span.since, span.until) : [],
-		apps: listed,
-		events: page && {
-			read: page,
-			older: page.ok ? olderThan(page.data.map((one) => one.id)) : undefined,
-		},
-		disk: usage,
+		machine: nodeNow(edge, name),
+		overview: on('overview', () =>
+			Promise.all([nodeSeries(edge, name, span), events(edge, name, { limit: MARKED })]).then(
+				([series, recent]) => ({
+					charts: series.ok ? { ...series, data: nodeCharts(series.data) } : series,
+					marks: recent.ok ? markers(recent.data, span.since, span.until) : [],
+				}),
+			),
+		),
+		apps: on('apps', () => apps(edge, name)),
+		events: on('events', () =>
+			events(edge, name, { limit: PAGE, before: view.before }).then((page) => ({
+				read: page,
+				older: page.ok ? olderThan(page.data.map((one) => one.id)) : undefined,
+			})),
+		),
+		disk: on('disk', () => disk(edge, name)),
 	};
 };

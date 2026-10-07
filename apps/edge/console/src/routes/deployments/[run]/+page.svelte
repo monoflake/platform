@@ -14,8 +14,10 @@
 	import type { Node } from '#lib/server/nodes.js';
 	import { surfaces, tone, type } from '#lib/style.js';
 	import Badge from '#lib/ui/badge.svelte';
+	import { Landed } from '#lib/ui/landed.svelte.js';
 	import Silent from '#lib/ui/silent.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
+	import Skeleton from '#lib/ui/skeleton.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
 	import type { PageProps } from './$types';
 
@@ -23,16 +25,22 @@
 
 	const zone = timeZone();
 	const held = live();
+	// Kept while the next poll's read is on its way, and dropped for another run.
+	const read = new Landed(
+		() => data.read,
+		() => data.run,
+	);
+	const run = $derived(read.value?.found);
 	const fresh = new Fresh(
 		() => data.now,
 		() =>
-			(data.found?.running ?? 0) > 0 ||
-			stirring(held.view.nodes, data.found ? data.run : data.run - 1, data.run),
+			(run?.running ?? 0) > 0 || stirring(held.view.nodes, run ? data.run : data.run - 1, data.run),
 	);
 
-	const run = $derived(data.found);
-	const unknown = $derived(new Set(Object.keys(data.failures) as Node[]));
-	const missing = $derived(Object.keys(data.failures));
+	const unknown = $derived(new Set(Object.keys(read.value?.failures ?? {}) as Node[]));
+	const missing = $derived(Object.keys(read.value?.failures ?? {}));
+	/** A run's events before the read says how many: a header and eight 44 px rows. */
+	const TABLE = 9 * 44;
 	const state = $derived(run && runState(run));
 	const took = $derived(
 		run && (run.duration ?? Math.max(0, fresh.now - Date.parse(run.first_start))),
@@ -62,7 +70,13 @@
 
 <Silent nodes={missing.map((node) => ({ node }))} />
 
-{#if !run}
+{#if !read.value}
+	<Card title="Where each app got to" flush>
+		<div class="px-5 pb-5"><Skeleton height={(data.nodes.length + 1) * 44} /></div>
+	</Card>
+	<Card title="Timeline"><Skeleton height={200} chart /></Card>
+	<Card title="Events" flush><div class="px-5 pb-5"><Skeleton height={TABLE} /></div></Card>
+{:else if !run}
 	<p class="p-4 {stylex.attrs(surfaces.empty, type.soft).class}">
 		No node that answered holds an event from run #{data.run}. Each node answers with its last 500
 		events, so an older run is no longer seen.
@@ -102,7 +116,7 @@
 
 	<Card title="Events" flush>
 		<Events
-			events={data.events}
+			events={read.value.events}
 			label="Every event of run #{data.run}, newest first"
 			empty="No events."
 		/>

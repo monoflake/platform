@@ -7,21 +7,22 @@
 	import ArrowDown from '@lucide/svelte/icons/arrow-down';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import Minus from '@lucide/svelte/icons/minus';
-	import { line, weight } from '@canmi/kit/tokens/vocabulary.stylex';
+	import { line, radius, weight } from '@canmi/kit/tokens/vocabulary.stylex';
 	import { surfaces, tone, type } from '../style.ts';
 	import { compact, signed } from './numbers.ts';
 	import Sparkline from './sparkline.svelte';
 
 	let {
 		label,
-		value,
+		value = '',
 		unit,
 		delta,
 		trend = [],
+		pending = false,
 	}: {
 		label: string;
 		/** A number is written compact, `12.9K`; a string as it is. */
-		value: number | string;
+		value?: number | string;
 		unit?: string;
 		/** The change against `period`, and which way is good, which decides its tone. */
 		delta?: {
@@ -32,6 +33,11 @@
 		};
 		/** About a dozen recent values, the last of them `value`. */
 		trend?: number[];
+		/**
+		 * The read is on its way: a faint figure in the value's place, and with `'trend'` the
+		 * sparkline's room kept, so the tile does not grow when it lands.
+		 */
+		pending?: boolean | 'trend';
 	} = $props();
 
 	const shown = $derived(typeof value === 'number' ? compact(value) : value);
@@ -51,16 +57,28 @@
 			fontVariantNumeric: 'tabular-nums',
 			color: 'var(--color-text-strong)',
 		},
+		placeholder: {
+			backgroundColor: 'color-mix(in srgb, var(--color-raised) 45%, transparent)',
+			borderRadius: radius.md,
+		},
 	});
 </script>
 
 <div class="flex min-w-0 flex-col gap-2 px-5 pt-4 pb-4 {stylex.attrs(surfaces.card).class}">
 	<span class={stylex.attrs(type.label).class}>{label}</span>
-	<div class="flex items-baseline gap-1.5">
-		<span class={stylex.attrs(styles.figure).class}>{shown}</span>
-		{#if unit}<span class={stylex.attrs(type.soft).class}>{unit}</span>{/if}
-	</div>
-	{#if delta}
+	{#if pending}
+		<span
+			class="h-[1.875rem] w-16 self-start {stylex.attrs(styles.placeholder).class}"
+			aria-busy="true"
+		></span>
+		{#if pending === 'trend'}<span class="h-8"></span>{/if}
+	{:else}
+		<div class="flex items-baseline gap-1.5">
+			<span class={stylex.attrs(styles.figure).class}>{shown}</span>
+			{#if unit}<span class={stylex.attrs(type.soft).class}>{unit}</span>{/if}
+		</div>
+	{/if}
+	{#if delta && !pending}
 		<span class="inline-flex items-center gap-1 {stylex.attrs(type.soft).class}">
 			<span class="inline-flex items-center gap-0.5 {stylex.attrs(tone[verdict]).class}">
 				{#if direction === 'up'}<ArrowUp
@@ -75,5 +93,5 @@
 			vs {delta.period}
 		</span>
 	{/if}
-	{#if trend.length > 1}<Sparkline values={trend} label="{label}, recent trend" />{/if}
+	{#if trend.length > 1 && !pending}<Sparkline values={trend} label="{label}, recent trend" />{/if}
 </div>

@@ -40,26 +40,33 @@ async function pool(edge: Edge, before: Cursor): Promise<Pool> {
 	return out;
 }
 
-export async function load(edge: Edge, params: URLSearchParams, zone: string, now = Date.now()) {
+/** The query at once, and what the nodes answered streamed; see spec/architecture/console.md. */
+export function load(edge: Edge, params: URLSearchParams, zone: string, now = Date.now()) {
 	const query: Query = parseQuery(params, ALL);
-	const newest = await pool(edge, {});
-	const older = Object.keys(query.before).length > 0 ? await pool(edge, query.before) : newest;
-	const page = pageOf(older.events, query, ALL);
+	return { query, nodes: ALL, now, read: gather(edge, query, zone, now) };
+}
+
+async function gather(edge: Edge, query: Query, zone: string, now: number) {
+	const paged = Object.keys(query.before).length > 0;
+	// Both at once: the charts count the newest, the log shows the page asked for.
+	const [newest, older] = await Promise.all([
+		pool(edge, {}),
+		paged ? pool(edge, query.before) : undefined,
+	]);
+	const shown = older ?? newest;
+	const page = pageOf(shown.events, query, ALL);
 	const charted = newest.events.filter((event) => matches(event, query));
 	return {
-		query,
-		nodes: ALL,
 		events: page.events,
 		next: page.next,
-		more: page.more || older.full.length > 0,
-		failures: { ...newest.failures, ...older.failures },
+		more: page.more || shown.full.length > 0,
+		failures: { ...newest.failures, ...shown.failures },
 		options: {
 			app: choices(newest.events, 'app', query.app),
 			action: choices(newest.events, 'action', query.action),
 			outcome: choices(newest.events, 'outcome', query.outcome),
 			stage: choices(newest.events, 'stage', query.stage),
 		},
-		now,
 		charts: {
 			hours: hours(charted, ALL, now),
 			days: days(charted, now, zone),

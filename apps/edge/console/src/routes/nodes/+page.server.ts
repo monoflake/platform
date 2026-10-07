@@ -7,22 +7,26 @@ import { cluster, type Failure } from '#lib/server/read.js';
 import { range } from '#lib/server/reads.js';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => {
+/** Every read streamed, so the page stands at once; see spec/architecture/console.md. */
+export const load: PageServerLoad = (event) => {
 	const edge = edgeOf(event);
-	const [read, machines, cpu] = await Promise.all([
-		cluster(edge),
-		fleetNow(edge),
-		fleetSeries(edge, { ...range('1h'), metrics: ['cpu.usage'] }),
-	]);
-	const known: Partial<Record<Node, Now>> = {};
-	const failures: Partial<Record<Node, Failure>> = {};
-	const trends: Partial<Record<Node, number[]>> = {};
-	for (const name of ALL) {
-		const machine = machines[name];
-		if (machine.ok) known[name] = machine.data;
-		else failures[name] = machine.failure;
-		const series = cpu[name];
-		if (series.ok) trends[name] = metric(series.data, 'cpu.usage').map((point) => point.value);
-	}
-	return { cluster: read, machines: known, failures, trends, now: Date.now() };
+	const machines = fleetNow(edge).then((fleet) => {
+		const known: Partial<Record<Node, Now>> = {};
+		const failures: Partial<Record<Node, Failure>> = {};
+		for (const name of ALL) {
+			const machine = fleet[name];
+			if (machine.ok) known[name] = machine.data;
+			else failures[name] = machine.failure;
+		}
+		return { known, failures };
+	});
+	const trends = fleetSeries(edge, { ...range('1h'), metrics: ['cpu.usage'] }).then((cpu) => {
+		const out: Partial<Record<Node, number[]>> = {};
+		for (const name of ALL) {
+			const series = cpu[name];
+			if (series.ok) out[name] = metric(series.data, 'cpu.usage').map((point) => point.value);
+		}
+		return out;
+	});
+	return { cluster: cluster(edge), machines, trends, now: Date.now() };
 };

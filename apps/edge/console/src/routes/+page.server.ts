@@ -15,8 +15,10 @@ const HOUR = 3600;
 const DAYS = 30;
 
 /**
- * Everything at once: the cluster, the fleet's series over the chosen span and over the last day
- * by the hour, and every node's recent runs. A node that does not answer is a gap and a note.
+ * The span at once; the cluster, the fleet's series over it and over the last day by the hour, and
+ * every node's recent runs streamed, each card filling as its read lands. A node that does not
+ * answer is a gap and a note. See spec/architecture/console.md, "Moving between pages never waits
+ * for a node".
  */
 export const load: PageServerLoad = async (event) => {
 	const edge = edgeOf(event);
@@ -24,38 +26,37 @@ export const load: PageServerLoad = async (event) => {
 	const chosen = (RANGES.find((one) => one.key === asked)?.key ?? '1h') as Range;
 	const span = range(chosen);
 	const day = range('24h', span.until);
+	const { zone } = await event.parent();
 	const series = fleetSeries(edge, { ...span, metrics: METRICS });
-	const [read, fleet, hours, history, { zone }] = await Promise.all([
-		cluster(edge),
-		series,
-		chosen === '24h' ? series : fleetSeries(edge, { ...day, metrics: ['cpu.usage'] }),
-		runs(edge),
-		event.parent(),
-	]);
+	const hours = chosen === '24h' ? series : fleetSeries(edge, { ...day, metrics: ['cpu.usage'] });
+	const history = runs(edge);
 	const now = span.until * 1000;
 	const month = now - DAYS * 86_400_000;
 	return {
-		cluster: read,
+		cluster: cluster(edge),
 		range: chosen,
 		span: { since: span.since, until: span.until },
-		fleet: {
+		fleet: Promise.all([series, history]).then(([fleet, { runs }]) => ({
 			cpu: perNode(fleet, 'cpu.usage'),
 			memory: perNode(fleet, 'memory.used'),
 			received: perNode(fleet, 'network.received'),
 			sent: perNode(fleet, 'network.sent'),
 			missing: missing(fleet),
-			marks: marks(history.runs, span.since, span.until),
-		},
-		heat: { ...heat(hours, 'cpu.usage', { ...day, step: HOUR }), missing: missing(hours) },
-		deploys: {
-			daily: daily(history.runs, now, zone, DAYS),
-			outcomes: byNode(history.runs, ALL, month),
-			figures: figures(history.runs, now, month),
-			missing: Object.entries(history.failures).map(([node, failure]) => ({
+			marks: marks(runs, span.since, span.until),
+		})),
+		heat: hours.then((read) => ({
+			...heat(read, 'cpu.usage', { ...day, step: HOUR }),
+			missing: missing(read),
+		})),
+		deploys: history.then(({ runs, failures }) => ({
+			daily: daily(runs, now, zone, DAYS),
+			outcomes: byNode(runs, ALL, month),
+			figures: figures(runs, now, month),
+			missing: Object.entries(failures).map(([node, failure]) => ({
 				node,
 				message: failure.message,
 			})),
-		},
-		moving: fromRuns(history.runs),
+		})),
+		moving: history.then(({ runs }) => fromRuns(runs)),
 	};
 };

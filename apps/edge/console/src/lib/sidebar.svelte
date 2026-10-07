@@ -44,7 +44,8 @@
 	<a href="/" class="flex h-14 shrink-0 items-center px-6 {stylex.attrs(styles.account).class}"
 		>canmi</a
 	>
-	<nav class="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+	<!-- A section's load starts on hover; see spec/architecture/console.md. -->
+	<nav class="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3" data-sveltekit-preload-data="hover">
 		{#each SECTIONS as section (section.href)}
 			{@const here = section === current}
 			<a

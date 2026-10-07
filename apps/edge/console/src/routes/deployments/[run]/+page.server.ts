@@ -8,19 +8,21 @@ import type { PageServerLoad } from './$types';
 /** As `runs()` asks: every node's last 500 events, the most host answers for at once. */
 const LIMIT = 500 * ALL.length;
 
-export const load: PageServerLoad = async (event) => {
+/** The run's events streamed, so the page stands at once; see spec/architecture/console.md. */
+export const load: PageServerLoad = (event) => {
 	const run = Number(event.params.run);
 	if (!Number.isSafeInteger(run) || run <= 0) error(404, `No run is numbered ${event.params.run}.`);
 	const edge = edgeOf(event);
-	const [read, held] = await Promise.all([fleetEvents(edge, { limit: LIMIT }), cluster(edge)]);
-	const events = read.events.filter(({ source }) => source.kind === 'run' && source.run === run);
 	return {
-		cluster: held,
+		cluster: cluster(edge),
 		run,
-		found: group(events).runs[0],
-		events,
-		failures: read.failures,
 		nodes: ALL,
 		now: Date.now(),
+		read: fleetEvents(edge, { limit: LIMIT }).then((read) => {
+			const events = read.events.filter(
+				({ source }) => source.kind === 'run' && source.run === run,
+			);
+			return { found: group(events).runs[0], events, failures: read.failures };
+		}),
 	};
 };

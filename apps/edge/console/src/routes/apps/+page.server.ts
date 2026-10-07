@@ -3,7 +3,8 @@ import { edgeOf } from '#lib/server/platform.js';
 import { cluster } from '#lib/server/read.js';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event) => ({
-	cluster: await cluster(edgeOf(event)),
+/** The cluster streamed, so the page stands at once; see spec/architecture/console.md. */
+export const load: PageServerLoad = (event) => ({
+	cluster: cluster(edgeOf(event)),
 	order: ALL,
 });

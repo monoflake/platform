@@ -12,8 +12,10 @@
 	import { live } from '#lib/live.svelte.js';
 	import type { Node } from '#lib/server/nodes.js';
 	import { surfaces, type } from '#lib/style.js';
+	import { Landed } from '#lib/ui/landed.svelte.js';
 	import Silent from '#lib/ui/silent.svelte';
 	import PageHeader from '#lib/ui/page-header.svelte';
+	import Skeleton from '#lib/ui/skeleton.svelte';
 	import Tabs from '#lib/ui/tabs.svelte';
 	import { timeZone } from '#lib/ui/time-zone.js';
 	import type { PageProps } from './$types';
@@ -22,22 +24,34 @@
 
 	const zone = timeZone();
 	const held = live();
-	const newest = $derived(
-		data.runs.length ? Math.max(...data.runs.map((run) => run.run)) : undefined,
-	);
+	// Kept while the next poll's read is on its way, so the page does not blank every few seconds.
+	const read = new Landed(() => data.runs);
+	const runs = $derived(read.value?.runs ?? []);
+	const newest = $derived(runs.length ? Math.max(...runs.map((run) => run.run)) : undefined);
 	const fresh = new Fresh(
 		() => data.now,
-		() => data.runs.some((run) => run.running > 0) || stirring(held.view.nodes, newest),
+		() => runs.some((run) => run.running > 0) || stirring(held.view.nodes, newest),
 	);
 
 	let tab: 'runs' | 'apart' = $state('runs');
 
-	const unknown = $derived(new Set(Object.keys(data.failures) as Node[]));
-	const missing = $derived(Object.entries(data.failures));
-	const bars = $derived(daily(data.runs, fresh.now, data.days, zone));
-	const day = $derived(within(data.runs, fresh.now, 24));
-	const going = $derived(data.runs.filter((run) => run.running > 0).length);
+	const unknown = $derived(new Set(Object.keys(read.value?.failures ?? {}) as Node[]));
+	const missing = $derived(Object.entries(read.value?.failures ?? {}));
+	const bars = $derived(daily(runs, fresh.now, data.days, zone));
+	const day = $derived(within(runs, fresh.now, 24));
+	const going = $derived(runs.filter((run) => run.running > 0).length);
 	const seconds = (ms: number | null) => (ms === null ? '-' : duration(ms / 1000));
+	/** Runs per day, by the stacked bar's default height; see src/lib/chart/stacked-bar.svelte. */
+	const BARS = 220;
+	const TILES = $derived([
+		'Runs, last 24 h',
+		`Success rate, ${data.days} days`,
+		'Median duration',
+		'p95 duration',
+		'Deploying now',
+	]);
+	/** The table's header and eight 44 px rows, before the read says how many it holds. */
+	const TABLE = 9 * 44;
 </script>
 
 <PageHeader title="Deployments" />
@@ -45,22 +59,31 @@
 <Silent nodes={missing.map(([node, failure]) => ({ node, message: failure.message }))} />
 
 <div class="grid grid-cols-2 gap-4 xl:grid-cols-5">
-	<StatTile label="Runs, last 24 h" value={day} />
-	<StatTile
-		label="Success rate, {data.days} days"
-		value={data.aggregates.success_rate === null ? '-' : percent(data.aggregates.success_rate)}
-	/>
-	<StatTile label="Median duration" value={seconds(data.aggregates.median)} />
-	<StatTile label="p95 duration" value={seconds(data.aggregates.p95)} />
-	<StatTile label="Deploying now" value={going} />
+	{#if read.value}
+		{@const { aggregates } = read.value}
+		<StatTile label="Runs, last 24 h" value={day} />
+		<StatTile
+			label="Success rate, {data.days} days"
+			value={aggregates.success_rate === null ? '-' : percent(aggregates.success_rate)}
+		/>
+		<StatTile label="Median duration" value={seconds(aggregates.median)} />
+		<StatTile label="p95 duration" value={seconds(aggregates.p95)} />
+		<StatTile label="Deploying now" value={going} />
+	{:else}
+		{#each TILES as label (label)}<StatTile {label} pending />{/each}
+	{/if}
 </div>
 
 <Card title="Runs per day">
-	<StackedBar
-		categories={bars.categories}
-		series={bars.series}
-		label="Runs per day over the last {data.days} days, by state"
-	/>
+	{#if read.value}
+		<StackedBar
+			categories={bars.categories}
+			series={bars.series}
+			label="Runs per day over the last {data.days} days, by state"
+		/>
+	{:else}
+		<Skeleton height={BARS} chart />
+	{/if}
 </Card>
 
 <section class="flex min-w-0 flex-col">
@@ -68,16 +91,21 @@
 		bind:current={tab}
 		label="What the nodes deployed"
 		tabs={[
-			{ key: 'runs', label: `CI runs (${data.runs.length})` },
-			{ key: 'apart', label: `Uploads and panel (${data.apart.length})` },
+			{ key: 'runs', label: read.value ? `CI runs (${runs.length})` : 'CI runs' },
+			{
+				key: 'apart',
+				label: read.value ? `Uploads and panel (${read.value.apart.length})` : 'Uploads and panel',
+			},
 		]}
 	/>
 	<div class="overflow-hidden {stylex.attrs(surfaces.card).class}">
-		{#if tab === 'runs'}
-			<Queue runs={data.runs} nodes={data.nodes} {unknown} now={fresh.now} />
+		{#if !read.value}
+			<div class="p-5"><Skeleton height={TABLE} /></div>
+		{:else if tab === 'runs'}
+			<Queue {runs} nodes={data.nodes} {unknown} now={fresh.now} />
 		{:else}
 			<Events
-				events={data.apart}
+				events={read.value.apart}
 				label="Uploads and panel actions across every node, newest first"
 				empty="No node holds an upload or a panel action."
 			/>

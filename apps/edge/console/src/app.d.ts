@@ -6,8 +6,8 @@ import type { Cluster } from '#lib/wire.ts';
 declare global {
 	namespace App {
 		interface PageData {
-			/** What every page's server load read of the cluster; see src/routes/+layout.svelte. */
-			cluster?: Read<Cluster>;
+			/** What every page's server load streams of the cluster; see src/routes/+layout.svelte. */
+			cluster?: Promise<Read<Cluster>>;
 		}
 	}
 

@@ -7,10 +7,20 @@ import type { PageServerLoad } from './$types';
 /** The span the chart and the tiles read, in days. */
 const DAYS = 30;
 
-export const load: PageServerLoad = async (event) => {
+/** The runs streamed, so the page stands at once; see spec/architecture/console.md. */
+export const load: PageServerLoad = (event) => {
 	const edge = edgeOf(event);
-	const [read, held] = await Promise.all([runs(edge), cluster(edge)]);
 	const now = Date.now();
-	const month = read.runs.filter((run) => now - Date.parse(run.first_start) < DAYS * 86_400_000);
-	return { cluster: held, ...read, nodes: ALL, aggregates: aggregates(month), days: DAYS, now };
+	return {
+		cluster: cluster(edge),
+		nodes: ALL,
+		days: DAYS,
+		now,
+		runs: runs(edge).then((read) => ({
+			...read,
+			aggregates: aggregates(
+				read.runs.filter((run) => now - Date.parse(run.first_start) < DAYS * 86_400_000),
+			),
+		})),
+	};
 };

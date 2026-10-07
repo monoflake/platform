@@ -19,7 +19,9 @@
 	--color-line: var(--color-border);
 	--color-line-strong: var(--color-border-strong);
 	--color-text-faint: var(--color-text-soft);
-	--color-primary: var(--color-blue);
+	--color-primary: oklch(
+		0.576 0.219 258.6
+	); /* Geist blue-700, the deep blue mono keeps for light */
 	--color-good: var(--color-green);
 	--color-warn: var(--color-amber);
 	--color-danger: var(--color-red);

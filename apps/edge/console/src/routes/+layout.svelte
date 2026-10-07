@@ -33,14 +33,21 @@
 
 	const live = provideLive(new Live());
 
-	/** Every page loads the cluster on the server, and what it read is taken in. */
-	function seed() {
+	/**
+	 * Every page streams the cluster from its load, and what it read is taken in when it lands,
+	 * unless a newer load's has replaced it by then; the socket keeps the store after that. See
+	 * spec/architecture/console.md.
+	 */
+	let latest: Promise<unknown> | undefined;
+	async function seed() {
 		const read = page.data.cluster;
-		if (read?.ok) untrack(() => live.seed(read.data));
+		latest = read;
+		const one = await read;
+		if (one?.ok && read === latest) untrack(() => live.seed(one.data));
 	}
-	// Once now, so the server's render already shows it, and again on each load after.
-	seed();
-	$effect.pre(seed);
+	// Once now, and again on each load after.
+	void seed();
+	$effect.pre(() => void seed());
 
 	// On mount, not in an effect: an effect reruns on what it reads, reopening the socket.
 	onMount(() => live.start());
