@@ -59,6 +59,29 @@ jobs:
           echo "building: $apps"
           echo "packaging: $workers"
 
+  # Every declaration the run builds an image for, apart and small, so a node reads where an app
+  # is placed, and in which architecture, before it downloads any image. See infra's
+  # spec/architecture/host.md, "The machine pulls; nothing pushes into it".
+  declare:
+    needs: plan
+    if: needs.plan.outputs.apps != '[]'
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+      - env:
+          APPS: ${{ needs.plan.outputs.apps }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/declarations"
+          for app in $(printf '%s' "$APPS" | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))'); do
+            cp apps/*/"$app"/service.toml "$RUNNER_TEMP/declarations/$app.toml"
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: declarations
+          path: ${{ runner.temp }}/declarations/
+          retention-days: 7
+          if-no-files-found: error
+
   build:
     needs: plan
     if: needs.plan.outputs.apps != '[]'
