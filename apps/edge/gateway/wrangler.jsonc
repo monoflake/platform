@@ -35,9 +35,17 @@
 		{ "tag": "v2", "deleted_classes": ["counter"] },
 	],
 
-	// The Caddy of the machine at home, the same VPC service `hook` notifies through.
+	// Each node's Caddy, the same VPC services `hook` notifies through, bound by the node's name in
+	// capitals: every node, so placing a service on one needs no edit here. src/index.test.ts holds
+	// each node scope's placements to this list.
 	"vpc_services": [
 		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
+		{ "binding": "TYO", "service_id": "01a10f21-8a27-7721-8223-54365d93b27b", "remote": true },
+		{ "binding": "NRT", "service_id": "01a10f29-45f6-72f0-a7bd-1c86e3320a26", "remote": true },
+		{ "binding": "HND", "service_id": "01a10f29-627a-7bf1-964b-4b0a660746d3", "remote": true },
+		{ "binding": "GVX", "service_id": "01a10f29-7d17-7b80-90d1-800d9c078a39", "remote": true },
+		{ "binding": "BRU", "service_id": "01a10f29-9169-7210-be9d-ad0a4de36833", "remote": true },
+		{ "binding": "BUF", "service_id": "01a10f29-a4d0-78f2-b6da-cade48268370", "remote": true },
 	],
 
 	// Also in libs/sdk as the API's development port, which callers ask; wrangler cannot

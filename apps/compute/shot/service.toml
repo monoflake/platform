@@ -2,7 +2,7 @@
 # deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
 version = 1
 name = "shot"
-placements = ["rdu"]
+placements = ["tyo", "rdu"]
 
 [container]
 # 1920 is the width a screen is most often, and the port ends in the zero every service here does.
@@ -19,6 +19,8 @@ path = "/data"
 # limits how often one address asks. See spec/architecture/shot.md.
 [api]
 public = true
+# Asked in placement order; see spec/architecture/gateway.md, "Where a request goes".
+routing = "ordered"
 
 # `internal` reaches the LAN and `fresh` skips the thirty-minute reuse, both ours alone. An answer
 # about a capture is about this moment and is kept nowhere; a done task and a picture are. See

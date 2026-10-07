@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { developmentUrl, GATEWAY, PAGE_ORIGINS, URLS } from '@monoflake/sdk';
 import { describe, expect, it, vi } from 'vitest';
 import { declarations } from '../scripts/scopes.ts';
-import { type Env, gateway, INTERNAL_HEADER, MARK } from './index.ts';
+import { type Env, gateway, INTERNAL_HEADER, MARK, NODE_TIMEOUT_MS } from './index.ts';
 import { type Check, covers } from '@monoflake/sdk/limits';
 import { GATEWAY_DEFAULTS } from './declaration.ts';
 import { SCOPES } from './scopes.ts';
@@ -67,7 +67,28 @@ describe('the scope table', () => {
 		const nodes = new Set(config.vpc_services.map((service) => service.binding));
 		for (const scope of Object.values(SCOPES).filter((each) => each.placement !== WORKERS)) {
 			expect(nodes).toContain(scope.binding);
+			for (const node of scope.nodes ?? []) expect(nodes).toContain(node);
 		}
+	});
+
+	it('carries every node a scope is placed on, and a Worker its first placement alone', () => {
+		const table = scopeTable([
+			'version = 1\nname = "geo"\nplacements = ["rdu", "tyo"]\n[api]\npublic = true\n',
+			'version = 1\nname = "site"\nplacements = ["workers"]\n[api]\npublic = true\n',
+		]);
+		expect(table.geo).toMatchObject({ placement: 'rdu', binding: 'RDU', nodes: ['RDU', 'TYO'] });
+		expect(table.site?.nodes).toBeUndefined();
+	});
+
+	it("carries a node scope's routing, `any` unless it says `ordered`, and nothing else", () => {
+		const declared = (routing: string) =>
+			`version = 1\nname = "shot"\nplacements = ["tyo", "rdu"]\n[api]\npublic = true\n${routing}`;
+		expect(scopeTable([declared('')]).shot?.routing).toBe('any');
+		expect(scopeTable([declared('routing = "ordered"\n')]).shot).toMatchObject({
+			nodes: ['TYO', 'RDU'],
+			routing: 'ordered',
+		});
+		expect(() => scopeTable([declared('routing = "nearest"\n')])).toThrow(/routing/);
 	});
 
 	it("binds quota's inside door, which every limit is counted at", () => {
@@ -452,6 +473,192 @@ describe('the gateway', () => {
 		expect((await ask('/v1/site/like', { SITE: fetcher }, { method: 'PUT', headers })).status).toBe(
 			429,
 		);
+	});
+});
+
+describe('a service placed on several nodes', () => {
+	const app = gateway({
+		geo: { placement: 'rdu', binding: 'RDU', nodes: ['RDU', 'TYO'], routes: [] },
+		shot: { placement: 'rdu', binding: 'RDU', nodes: ['RDU'], routes: [] },
+	});
+	const ask = (path: string, env: Env, init?: RequestInit) =>
+		app.fetch(new Request(`${HOST}${path}`, init), env);
+
+	/** A node that records what it is asked, and answers with `answer`. */
+	function node(name: string, asked: string[], answer: () => Promise<Response>) {
+		const bodies: string[] = [];
+		const fetcher = {
+			fetch: async (request: Request) => {
+				asked.push(name);
+				bodies.push(await request.text());
+				return answer();
+			},
+		} as unknown as Fetcher;
+		return { fetcher, bodies };
+	}
+	const ok = async () => Response.json({ status: 'ok' });
+	const down = async () => Promise.reject(new Error('tunnel down'));
+	/** The declared order kept: the shuffle swaps nothing when every draw is just under one. */
+	const inOrder = () => vi.spyOn(Math, 'random').mockReturnValue(0.999);
+
+	it('asks a node it is placed on, with the scope left on', async () => {
+		const asked: string[] = [];
+		const rdu = binding();
+		const answer = await ask('/v1/geo/address?latitude=1', {
+			RDU: rdu.fetcher,
+			TYO: node('tyo', asked, ok).fetcher,
+		});
+		expect(answer.status).toBe(200);
+		const urls = [...rdu.seen.map((request) => new URL(request.url).pathname), ...asked];
+		expect(urls).toHaveLength(1);
+		expect(['/geo/v1/address', 'tyo']).toContain(urls[0]);
+	});
+
+	it('falls over to the next node when the first fails to answer, the body sent again', async () => {
+		const random = inOrder();
+		const asked: string[] = [];
+		const tyo = node('tyo', asked, ok);
+		const answer = await ask(
+			'/v1/geo/address',
+			{ RDU: node('rdu', asked, down).fetcher, TYO: tyo.fetcher },
+			{ method: 'POST', body: '{"a":1}' },
+		);
+		random.mockRestore();
+		expect(answer.status).toBe(200);
+		expect(asked).toEqual(['rdu', 'tyo']);
+		expect(tyo.bodies).toEqual(['{"a":1}']);
+	});
+
+	it("passes a proxy's page over for the next node, as a node that did not answer", async () => {
+		const random = inOrder();
+		const asked: string[] = [];
+		const page = async () => new Response('<html>Bad gateway</html>', { status: 502 });
+		const answer = await ask('/v1/geo/address', {
+			RDU: node('rdu', asked, page).fetcher,
+			TYO: node('tyo', asked, ok).fetcher,
+		});
+		random.mockRestore();
+		expect(answer.status).toBe(200);
+		expect(asked).toEqual(['rdu', 'tyo']);
+	});
+
+	it('falls over to the next node when the first outlasts its time', async () => {
+		vi.useFakeTimers();
+		const random = inOrder();
+		const asked: string[] = [];
+		const hung = () => new Promise<Response>(() => undefined);
+		const pending = ask('/v1/geo/address', {
+			RDU: node('rdu', asked, hung).fetcher,
+			TYO: node('tyo', asked, ok).fetcher,
+		});
+		await vi.advanceTimersByTimeAsync(NODE_TIMEOUT_MS);
+		const answer = await pending;
+		random.mockRestore();
+		vi.useRealTimers();
+		expect(answer.status).toBe(200);
+		expect(asked).toEqual(['rdu', 'tyo']);
+	});
+
+	it('gives the upstream error once every node has failed', async () => {
+		const asked: string[] = [];
+		const answer = await ask('/v1/geo/address', {
+			RDU: node('rdu', asked, down).fetcher,
+			TYO: node('tyo', asked, down).fetcher,
+		});
+		expect(answer.status).toBe(502);
+		expect(await answer.json()).toMatchObject({ code: 'upstream_unavailable' });
+		expect(asked.toSorted()).toEqual(['rdu', 'tyo']);
+	});
+
+	it("passes a node's own 503 on as it is, without asking another", async () => {
+		const random = inOrder();
+		const asked: string[] = [];
+		const busy = async () =>
+			Response.json({ status: 'error', code: 'service_unavailable' }, { status: 503 });
+		const answer = await ask('/v1/geo/address', {
+			RDU: node('rdu', asked, busy).fetcher,
+			TYO: node('tyo', asked, ok).fetcher,
+		});
+		random.mockRestore();
+		expect(answer.status).toBe(503);
+		expect(await answer.json()).toMatchObject({ code: 'service_unavailable' });
+		expect(asked).toEqual(['rdu']);
+	});
+
+	it('asks the nodes in an order that varies from request to request', async () => {
+		const asked: string[] = [];
+		const env = { RDU: node('rdu', asked, ok).fetcher, TYO: node('tyo', asked, ok).fetcher };
+		await Promise.all(Array.from({ length: 64 }, () => ask('/v1/geo/address', env)));
+		expect(new Set(asked)).toEqual(new Set(['rdu', 'tyo']));
+	});
+
+	it('asks a node bound here alone, as the gateway at home has only its own', async () => {
+		const asked: string[] = [];
+		const answers = await Promise.all(
+			Array.from({ length: 8 }, () =>
+				ask('/v1/geo/address', { RDU: node('rdu', asked, ok).fetcher }),
+			),
+		);
+		expect(answers.map((answer) => answer.status)).toEqual(answers.map(() => 200));
+		expect(new Set(asked)).toEqual(new Set(['rdu']));
+	});
+
+	it('streams a single placement its body as before, and fails it over to nothing', async () => {
+		const { fetcher, seen } = binding();
+		const answer = await ask(
+			'/v1/shot/tasks',
+			{ RDU: fetcher, TYO: binding().fetcher },
+			{ method: 'POST', body: 'x' },
+		);
+		expect(answer.status).toBe(200);
+		expect(await seen[0]?.text()).toBe('x');
+		const asked: string[] = [];
+		const failed = await ask('/v1/shot/tasks', { RDU: node('rdu', asked, down).fetcher });
+		expect(failed.status).toBe(502);
+		expect(asked).toEqual(['rdu']);
+	});
+});
+
+describe('a service routed in order', () => {
+	const app = gateway({
+		shot: {
+			placement: 'tyo',
+			binding: 'TYO',
+			nodes: ['TYO', 'RDU'],
+			routing: 'ordered',
+			routes: [],
+		},
+	});
+	const ask = (env: Env) => app.fetch(new Request(`${HOST}/v1/shot/tasks/abc`), env);
+	const asking = (name: string, asked: string[], answer: () => Promise<Response>) =>
+		({
+			fetch: async () => (asked.push(name), answer()),
+		}) as unknown as Fetcher;
+	const ok = async () => Response.json({ status: 'ok' });
+
+	it('always asks its first placement first, and no other while it answers', async () => {
+		const asked: string[] = [];
+		const env = { TYO: asking('tyo', asked, ok), RDU: asking('rdu', asked, ok) };
+		const answers = await Promise.all(Array.from({ length: 32 }, () => ask(env)));
+		expect(answers.map((answer) => answer.status)).toEqual(answers.map(() => 200));
+		expect(new Set(asked)).toEqual(new Set(['tyo']));
+	});
+
+	it('asks the next placement only when the first fails to answer', async () => {
+		const asked: string[] = [];
+		const down = async () => Promise.reject(new Error('tunnel down'));
+		const answer = await ask({ TYO: asking('tyo', asked, down), RDU: asking('rdu', asked, ok) });
+		expect(answer.status).toBe(200);
+		expect(asked).toEqual(['tyo', 'rdu']);
+	});
+
+	it("passes its first placement's own 503 on, without asking the next", async () => {
+		const asked: string[] = [];
+		const busy = async () =>
+			Response.json({ status: 'error', code: 'service_unavailable' }, { status: 503 });
+		const answer = await ask({ TYO: asking('tyo', asked, busy), RDU: asking('rdu', asked, ok) });
+		expect(answer.status).toBe(503);
+		expect(asked).toEqual(['tyo']);
 	});
 });
 

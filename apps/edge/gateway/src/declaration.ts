@@ -135,9 +135,17 @@ const LimitSchema = v.strictObject({
 	subject: v.optional(v.picklist(['address'])),
 });
 
+/**
+ * How a service on several nodes picks one: `any` in a random order, `ordered` in its placements'.
+ * See spec/architecture/gateway.md, "Where a request goes".
+ */
+export const ROUTINGS = ['any', 'ordered'] as const;
+export type Routing = (typeof ROUTINGS)[number];
+
 export const ApiSchema = v.strictObject({
 	public: v.optional(v.boolean()),
 	prefix: v.optional(v.string()),
+	routing: v.optional(v.picklist(ROUTINGS)),
 	limits: v.optional(v.array(LimitSchema)),
 	defaults: v.optional(v.strictObject(FIELDS)),
 	routes: v.optional(v.array(RouteSchema)),

@@ -312,8 +312,17 @@ rules stay written by hand. See [firewall.md](firewall.md).
 
 **A service runs on Workers or on a node, and the gateway merges them into one set of routes.** A
 service on Workers is reached by binding; a service on a node is reached through Cloudflare Tunnel.
-Choosing among several placements of one service -- by load, by distance -- is the gateway's later,
-and the reason `monoflake.com` does not name one.
+**A service placed on several nodes is asked on any of them.** The gateway takes the nodes its
+`service.toml` places it on, in a random order each request, and asks them one at a time: the first
+that answers is the answer, a node that fails to answer is passed for the next, and only when every
+placement has failed does the caller get the upstream error. A node's own `4xx` and `5xx` are
+answers, passed on as they are; failing to answer is the tunnel or the node not reaching back. A
+service that keeps state on the node that made it -- `shot`'s tasks and pictures -- declares
+`routing = "ordered"` under `[api]` and is asked in the order its `placements` lists, the next only
+when one fails to answer, so its first placement is its primary and the rest stand by; `"any"`, the
+random order, is the default.
+Choosing by load or by distance is the gateway's later, and the reason `monoflake.com` does not name
+one.
 
 **A caller off the node uses the public names; what runs on the node keeps the private side.** A
 device, a page, a third party asks `api.monoflake.com` and the `ixc.one` names, which the house's

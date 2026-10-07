@@ -54,9 +54,11 @@ is worth to anybody.
 
 ## Cloudflare is the one entrance, and that is accepted
 
-Every public request enters Cloudflare, so failing over between placements is to happen behind it:
-a service whose first placement is a Worker falling back to the VPS and then to home. It is not
-built yet -- the gateway routes each scope to its first placement. What this does not survive is
+Every public request enters Cloudflare, so failing over between placements happens behind it. Among
+a service's nodes the gateway does it now -- [gateway.md](gateway.md), "Where a request goes": any
+node in a random order, or the declared order for a service that keeps state per node. A Worker
+falling back to a node is not built yet; a scope whose first placement is `workers` takes that
+alone. What this does not survive is
 Cloudflare itself failing. That is accepted rather than engineered around: an outage there takes a
 large share of the web with it, and reaching the VPS around Cloudflare would give up Access and the
 edge in front of everything else.
@@ -329,7 +331,8 @@ Workers are built by Cloudflare's own Git integration: it watches the repository
 paths each Worker and the libraries it imports live under, and deploys on a push that touches them.
 That is already the shape this file wants -- the platform pulls, and GitHub holds no secret -- so
 host does not run `wrangler` and holds no Cloudflare token for it. What a Workers placement adds
-here is the declaration, not a second way to deploy.
+here is the declaration, not a second way to deploy. Each Worker leaves that integration for the platform's deployer, one at a
+time -- [deployer.md](deployer.md) -- host still running no `wrangler`.
 
 **The placement is named `workers`, and a service placed there alone declares no container.** Its
 `service.toml` holds the name, the placements and, for an API, the `[api]` table; `[container]` is

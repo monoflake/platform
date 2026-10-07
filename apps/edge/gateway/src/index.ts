@@ -88,6 +88,81 @@ function serviceOwn(response: Response): boolean {
 	return response.headers.get('content-type')?.startsWith('application/json') ?? false;
 }
 
+/**
+ * How long a node is waited on while another is left to ask, in milliseconds: geo answers from
+ * memory and shot takes a capture and answers at once, so a node this slow is not answering. The
+ * last node left is waited on as long as it takes, as a single one always was.
+ */
+export const NODE_TIMEOUT_MS = 10_000;
+
+/** `request` with the gateway's mark set and the internal token taken off. */
+function marked(request: Request): Request {
+	request.headers.set(MARK.name, MARK.value);
+	request.headers.delete(INTERNAL_HEADER);
+	return request;
+}
+
+/** `items` in a random order, a new one each call. */
+function shuffled<T>(items: readonly T[]): T[] {
+	const order = [...items];
+	for (let index = order.length - 1; index > 0; index--) {
+		const other = Math.floor(Math.random() * (index + 1));
+		[order[index], order[other]] = [order[other] as T, order[index] as T];
+	}
+	return order;
+}
+
+/** `asking`, or a rejection once `NODE_TIMEOUT_MS` pass, which aborts the request too. */
+function inTime(asking: Promise<Response>, abort: AbortController): Promise<Response> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const late = new Promise<never>((_, reject) => {
+		timer = setTimeout(() => {
+			abort.abort();
+			reject(new Error('node timed out'));
+		}, NODE_TIMEOUT_MS);
+	});
+	// The race's loser may still fail; nobody is waiting on it then.
+	asking.catch(() => undefined);
+	return Promise.race([asking, late]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * The first answer of `nodes`, asked one at a time at `url`, or `undefined` once each has failed
+ * to give one: thrown, timed out while another was left, or answered with a proxy's page. Where a
+ * second node may be asked, the body is read once and sent again from memory, since a stream is
+ * read once. See spec/architecture/gateway.md, "Where a request goes".
+ */
+async function firstAnswer(
+	nodes: readonly Fetcher[],
+	url: URL,
+	asked: Request,
+): Promise<Response | undefined> {
+	const replayed = nodes.length > 1 && asked.body ? await asked.arrayBuffer() : null;
+	for (const [index, node] of nodes.entries()) {
+		const last = index === nodes.length - 1;
+		const abort = last ? undefined : new AbortController();
+		const request = marked(
+			nodes.length === 1
+				? new Request(url, asked)
+				: new Request(url, {
+						method: asked.method,
+						headers: asked.headers,
+						body: replayed,
+						redirect: asked.redirect,
+						...(abort ? { signal: abort.signal } : {}),
+					}),
+		);
+		try {
+			const answer = await (abort ? inTime(node.fetch(request), abort) : node.fetch(request));
+			if (serviceOwn(answer)) return answer;
+			await answer.body?.cancel();
+		} catch {
+			// Not an answer: the next node is asked.
+		}
+	}
+	return undefined;
+}
+
 /** Every key an object holds, however deep, so a nested one cannot slip a forbidden name past. */
 function keysOf(value: unknown): string[] {
 	if (Array.isArray(value)) return value.flatMap(keysOf);
@@ -420,25 +495,29 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 			}
 		}
 
-		const binding = destination(c.env[target.binding], target);
-		if (!binding) return failure(502, 'scope_unavailable');
-
-		let forwarded = new URL(url);
-		if (target.placement === WORKERS) {
-			forwarded.pathname = `${target.prefix ?? ''}${tuple.forward}`;
-			if (typeof binding === 'string')
-				forwarded = new URL(`${forwarded.pathname}${url.search}`, binding);
-		} else {
+		if (target.placement !== WORKERS) {
+			// Only the nodes bound here: at home that is the node itself, as it always was.
+			const nodes = (target.nodes ?? [target.binding]).map((name) => c.env[name]).filter(isFetcher);
+			if (nodes.length === 0) return failure(502, 'scope_unavailable');
 			// Caddy takes the scope off itself; see spec/architecture/services.md, "One door per node".
+			const forwarded = new URL(url);
 			forwarded.protocol = 'http:';
 			forwarded.host = NODE_API;
 			forwarded.pathname = `/${tuple.service}${tuple.forward}`;
+			// A node can be off, or its tunnel down; every one being so is the service out of reach,
+			// which is what the caller is told, in the envelope, rather than a proxy's page.
+			const order = target.routing === 'ordered' ? nodes : shuffled(nodes);
+			const answer = await firstAnswer(order, forwarded, c.req.raw);
+			return answer ? answered(answer) : answered(failure(502, 'upstream_unavailable'), true);
 		}
-		const request = new Request(forwarded, c.req.raw);
-		request.headers.set(MARK.name, MARK.value);
-		request.headers.delete(INTERNAL_HEADER);
-		// The machine at home can be off, or its tunnel down; either is the service being out of
-		// reach, which is what the caller is told, in the envelope, rather than a proxy's page.
+
+		const binding = destination(c.env[target.binding], target);
+		if (!binding) return failure(502, 'scope_unavailable');
+		let forwarded = new URL(url);
+		forwarded.pathname = `${target.prefix ?? ''}${tuple.forward}`;
+		if (typeof binding === 'string')
+			forwarded = new URL(`${forwarded.pathname}${url.search}`, binding);
+		const request = marked(new Request(forwarded, c.req.raw));
 		let answer: Response;
 		try {
 			answer = await (typeof binding === 'string' ? fetch(request) : binding.fetch(request));
