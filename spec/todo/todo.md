@@ -44,5 +44,20 @@ What the console's pages draw around today, each waiting on the service that hol
   bar per stage.
 - **Host answers events by run**, so a run older than a node's last 500 events stays in the queue
   and in the 30-day figures.
+- **Host records the repository an app was built from**, on the app and on each deploy event, so
+  the console's scope of an app is a fact it reads rather than a list of names it keeps beside
+  infra's and the platform's apps.
 - **One list of the ranges**, `1h` to `30d`, in place of the three the pages carry, and run grouping
   moved out of `lib/server/` so the live panel stops keeping its own copy.
+
+## The deployer
+
+In order -- [../architecture/deployer.md](../architecture/deployer.md):
+
+- **The deployer itself**, `apps/system/deployer` on `tyo`, and the hook's third receiver.
+- **Worker artifacts**: `.mise/tasks/worker` in the platform and web, and `deploy.yml` emitting
+  `worker-<app>`.
+- **web admitted**: its `deploy.yml`, its webhook, `DEPLOY_SOURCES`, and the second GitHub token
+  picked by owner in host and the deployer.
+- **The console moved onto it**, dry first, then off Cloudflare's Git integration; then `aka`,
+  `cdn`, `quota`, the gateway, and the site last.

@@ -16,7 +16,7 @@ file.
 | [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
 | [scheduling.md](scheduling.md) | 2       | what the schedulers and Postgres leave open           |
-| [services.md](services.md)     | 4       | what the services' own files leave open               |
+| [services.md](services.md)     | 5       | what the services' own files leave open               |
 
 ### [console.md](console.md)
 
@@ -44,3 +44,4 @@ file.
 - A second place shares `checks` with the first
 - A picture is served at its id, to whoever holds it, for as long as it is kept
 - grok listens only once it is signed in
+- A GitHub bot

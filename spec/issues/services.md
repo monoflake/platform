@@ -29,3 +29,11 @@ so a first deploy of a signed-out app reads as failed, and the sign-in has to co
 sign-in comes before the first deploy". Serving `/health` at once, and answering the API with a
 503 until the agent is ready, would remove the step; it changes what the server promises a caller,
 which is why it is not decided.
+
+## A GitHub bot
+
+Commits, pull requests and runs are answered by hand today: nothing of ours comments on a pull
+request with what a deploy did, labels an issue, or answers a check. A bot -- a GitHub App the
+platform runs, acting on webhooks the hook already receives -- could, once deploys go through the
+platform. What it does first, whether it is a service of its own or part of the deployer, and
+where its key is kept are undecided.
