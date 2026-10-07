@@ -1,0 +1,39 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "database"
+display_name = "Database"
+# tyo, the primary, alone at first; its standbys buf and rdu join once it is proved. See
+# spec/todo/todo.md, "The database".
+placements = ["tyo"]
+
+# The keeper answers on a socket in its directory, which each node's `cron` is handed; Postgres's
+# port is the only one. See spec/architecture/databases.md, "The container is Postgres and a keeper
+# of it".
+[container]
+socket = "database.sock"
+health = "/health"
+# A first start on a standby copies the whole primary before it can answer healthy.
+health_timeout = 900
+# shared_buffers is 128 MB, and fifty connections need room beside it and the keeper.
+memory_mb = 512
+
+# The socket, and the cluster in data/ beside it; the image declares its volume here.
+[data]
+path = "/var/lib/postgresql"
+
+# 10:00 UTC is 06:00 New York, past apt's hour. See spec/architecture/cron.md, "A job is declared
+# by the service that does it".
+[[schedules]]
+name = "backup"
+cron = "0 10 * * *"
+path = "/jobs/backup"
+catch_up = "once"
+overlap = "skip"
+timeout = 3600
+
+# Postgres's port, published to the tailnet. See infra's
+# spec/architecture/host.md, "A role is asked for by the app and granted by the node".
+[shape]
+kind = "peer"
+port = 5432

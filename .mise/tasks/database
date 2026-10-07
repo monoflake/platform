@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote <node>`, each with --dry-run"
+"""The operator's half of the platform's Postgres. See spec/architecture/databases.md.
+
+`env` writes what the database app reads on each core node, `grant` gives an app its database and
+login and writes its `DATABASE_URL`, and `promote` makes a standby the primary by hand. Values move
+over SSH on stdin, never on a command line, and `--dry-run` touches no machine and prints no secret.
+"""
+
+import json
+import os
+import re
+import secrets
+import shlex
+import subprocess
+import sys
+import tomllib
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+REPOS = ROOT.parent
+NODES = REPOS / "infra/nodes/nodes.toml"
+APP = "database"
+SERVICE = ROOT / "apps/data/database/service.toml"
+# Named by hand; see spec/architecture/databases.md, "Where it runs, and which one writes".
+DEFAULT_PRIMARY = "tyo"
+PORT = 5432
+# The scopes there are, each an organization. See spec/architecture/scheduling.md, "A scope is an
+# organization, and only the boundary isolates".
+SCOPES = ("platform", "canmi")
+# secrets.json's name for each value the keeper reads, made once when absent.
+MADE = {
+	"POSTGRES_PASSWORD": "DATABASE_SUPERUSER_PASSWORD",
+	"REPLICATION_PASSWORD": "DATABASE_REPLICATION_PASSWORD",
+	"WALG_LIBSODIUM_KEY": "DATABASE_BACKUP_KEY",
+}
+# The backup store, by secrets.json's names, and the names WAL-G reads them under.
+STORE = {
+	"BACKUP_S3_ENDPOINT": "AWS_ENDPOINT",
+	"BACKUP_S3_REGION": "AWS_REGION",
+	"BACKUP_S3_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID",
+	"BACKUP_S3_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
+}
+BUCKET = "BACKUP_S3_BUCKET"
+LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+
+# Runs on the node with KEY=VALUE lines on stdin and the app's directory and the file's name as
+# arguments: each key is set, every other line kept, the file root's alone. Prints current or
+# changed.
+UPSERT = r"""set -eu
+umask 077
+dir=$1
+file=$dir/$2
+mountpoint -q /data || { echo "/data is not mounted" >&2; exit 1; }
+mkdir -p /data/apps
+[ -d "$dir" ] || btrfs subvolume create "$dir" >/dev/null
+chmod 700 "$dir"
+cp -p "$file" "$file.new" 2>/dev/null || : > "$file.new"
+while IFS= read -r pair; do
+	[ -n "$pair" ] || continue
+	K=${pair%%=*} V=${pair#*=} awk 'BEGIN { k = ENVIRON["K"]; v = ENVIRON["V"] }
+		index($0, k "=") == 1 { if (!d) print k "=" v; d = 1; next }
+		{ print }
+		END { if (!d) print k "=" v }' "$file.new" > "$file.tmp"
+	mv "$file.tmp" "$file.new"
+done
+if [ -f "$file" ] && cmp -s "$file.new" "$file"; then
+	rm -f "$file.new"
+	echo current
+else
+	chown root:root "$file.new"
+	chmod 600 "$file.new"
+	mv "$file.new" "$file"
+	echo changed
+fi
+"""
+
+
+def fail(message):
+	sys.exit(f"database: {message}")
+
+
+def ssh(node, command, stdin=None):
+	"""What the command printed, or None when it failed; its errors go to the terminal."""
+	result = subprocess.run(
+		["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", f"root@{node}", command],
+		input=stdin,
+		text=True,
+		stdout=subprocess.PIPE,
+	)
+	return result.stdout.strip() if result.returncode == 0 else None
+
+
+def upsert(node, app, file, pairs):
+	"""Sets `pairs` in /data/apps/<app>/<file> on `node`; True when it was written or already was."""
+	command = f"sh -c {shlex.quote(UPSERT)} sh {shlex.quote(f'/data/apps/{app}')} {shlex.quote(file)}"
+	answer = ssh(node, command, "".join(f"{key}={value}\n" for key, value in pairs.items()))
+	if answer is None:
+		print(f"database: {node}: writing /data/apps/{app}/{file} failed")
+		return False
+	print(f"database: {node}: /data/apps/{app}/{file} {answer}")
+	return True
+
+
+def tailnet_ipv4(name):
+	found = subprocess.run(["tailscale", "ip", "-4", name], text=True, stdout=subprocess.PIPE)
+	address = found.stdout.split()[0] if found.returncode == 0 and found.stdout.split() else None
+	if address is None:
+		fail(f"tailscale has no IPv4 for {name}")
+	return address
+
+
+def stored_secret(key, dry):
+	"""`key` from secrets.json, made and stored there first when it is not."""
+	if os.environ.get(key):
+		return os.environ[key]
+	if dry:
+		print(f"database: {key} is not in secrets.json; 32 random bytes would be stored there as it")
+		return None
+	value = secrets.token_hex(32)
+	stored = subprocess.run(
+		["sops", "set", "--value-stdin", "secrets.json", json.dumps([key])],
+		input=json.dumps(value),
+		text=True,
+		cwd=ROOT,
+	)
+	if stored.returncode != 0:
+		fail(f"storing {key} in secrets.json failed")
+	print(f"database: {key} was made and stored in secrets.json")
+	return value
+
+
+def placements():
+	"""The core nodes the database runs on, from its service.toml."""
+	return tomllib.loads(SERVICE.read_text())["placements"]
+
+
+def primary_named(nodes):
+	"""The primary every reachable node's config.env names, or None when none names one yet."""
+	named = {}
+	for node in nodes:
+		answer = ssh(node, f"sed -n 's/^DATABASE_PRIMARY=//p' /data/apps/{APP}/config.env 2>/dev/null")
+		if answer:
+			named[node] = answer.splitlines()[-1]
+	if len(set(named.values())) > 1:
+		fail(f"the nodes disagree on the primary: {named}; settle it with `promote`")
+	return next(iter(named.values()), None)
+
+
+def env(arguments, dry):
+	nodes = placements()
+	asked = arguments[arguments.index("--primary") + 1] if "--primary" in arguments else None
+	if asked is not None and asked not in nodes:
+		fail(f"--primary takes one of {', '.join(nodes)}")
+	missing = [key for key in [*STORE, BUCKET] if not os.environ.get(key)]
+	if missing:
+		message = f"secrets.json has no {', '.join(missing)}; add them with sops and run again"
+		if not dry:
+			fail(message)
+		print(f"database: {message} (a real run stops here)")
+
+	peers = " ".join(f"{node}={tailnet_ipv4(node)}" for node in nodes)
+	if dry:
+		primary = asked or f"the one the nodes already name, {DEFAULT_PRIMARY} when none does"
+	else:
+		named = primary_named(nodes)
+		if asked and named and asked != named:
+			fail(f"the nodes name {named} as the primary; changing it is `promote {asked}`")
+		primary = asked or named or DEFAULT_PRIMARY
+	made = {name: stored_secret(key, dry) for name, key in MADE.items()}
+	store = {name: os.environ.get(key) for key, name in STORE.items()}
+	store["WALG_S3_PREFIX"] = f"s3://{os.environ.get(BUCKET, '<bucket>')}/{APP}"
+	config = {"DATABASE_PRIMARY": primary, "DATABASE_PEERS": peers}
+
+	failed = []
+	for node in nodes:
+		if dry:
+			print(
+				f"database: {node}: would, on root@{node}, make /data/apps/{APP} unless it is there, mode"
+				f" 700, and set, keeping every other line, mode 600:\n"
+				f"  config.env: DATABASE_PRIMARY={primary} DATABASE_PEERS='{peers}'\n"
+				f"  secret.env: {' '.join(f'{k}=<redacted>' for k in [*made, *STORE.values()])}"
+				f" WALG_S3_PREFIX={store['WALG_S3_PREFIX']}"
+			)
+			continue
+		if not (upsert(node, APP, "config.env", config) and upsert(node, APP, "secret.env", made | store)):
+			failed.append(node)
+	if failed:
+		fail(f"failed on {', '.join(failed)}")
+	if not os.environ.get(MADE["WALG_LIBSODIUM_KEY"]) and not dry:
+		print(
+			f"database: {MADE['WALG_LIBSODIUM_KEY']} is new: keep a copy beside secrets.json somewhere a"
+			" lost laptop does not take with it, or no backup can be read"
+		)
+	print(f"database: a change applies on the next deploy; `mise run //repos/infra:node redeploy <node> {APP}`")
+
+
+def manifest_of(app):
+	"""The service.toml naming `app`, in any repository beside this one."""
+	for path in sorted(REPOS.glob("*/apps/**/service.toml")):
+		if "node_modules" in path.parts:
+			continue
+		declared = tomllib.loads(path.read_text())
+		if declared.get("name") == app:
+			return declared
+	fail(f"no service.toml in {REPOS} names {app}")
+
+
+def ident(name):
+	return '"' + name.replace('"', '""') + '"'
+
+
+def literal(value):
+	return "'" + value.replace("'", "''") + "'"
+
+
+def grant_sql(scope, login, password):
+	"""The scope's role, the app's login inside it, and its database, which the scope owns and
+	nobody outside it may connect to. Run again it changes nothing but the password, to the one
+	given. See spec/architecture/databases.md, "One cluster, and a scope is a role in it"."""
+	return "\n".join(
+		[
+			f"SELECT format('CREATE ROLE %I NOLOGIN', {literal(scope)}) WHERE NOT EXISTS"
+			f" (SELECT FROM pg_roles WHERE rolname = {literal(scope)})\\gexec",
+			f"SELECT format('CREATE ROLE %I LOGIN', {literal(login)}) WHERE NOT EXISTS"
+			f" (SELECT FROM pg_roles WHERE rolname = {literal(login)})\\gexec",
+			f"ALTER ROLE {ident(login)} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION"
+			f" PASSWORD {literal(password)};",
+			f"GRANT {ident(scope)} TO {ident(login)};",
+			# What the app makes is the scope's, as its database is.
+			f"ALTER ROLE {ident(login)} SET role = {literal(scope)};",
+			f"SELECT format('CREATE DATABASE %I OWNER %I', {literal(login)}, {literal(scope)}) WHERE NOT"
+			f" EXISTS (SELECT FROM pg_database WHERE datname = {literal(login)})\\gexec",
+			f"ALTER DATABASE {ident(login)} OWNER TO {ident(scope)};",
+			f"REVOKE ALL ON DATABASE {ident(login)} FROM PUBLIC;",
+			"",
+		]
+	)
+
+
+def secret_key(scope, app):
+	return f"DATABASE_PASSWORD_{scope}_{app}".upper().replace("-", "_")
+
+
+def grant(arguments, dry):
+	names = [a for a in arguments if not a.startswith("-")]
+	if len(names) != 2 or names[0] not in SCOPES or not LABEL.match(names[1]):
+		fail(f"grant takes a scope, one of {', '.join(SCOPES)}, and an app's name")
+	scope, app = names
+	login = f"{scope}_{app.replace('-', '_')}"
+	known = set(tomllib.loads(NODES.read_text()))
+	where = [node for node in manifest_of(app)["placements"] if node in known]
+	cores = placements()
+	primary = None if dry else primary_named(cores)
+	if not dry and primary is None:
+		fail("no node names a primary yet; run `database env` first")
+	password = stored_secret(secret_key(scope, app), dry)
+
+	if dry:
+		shown = grant_sql(scope, login, "<redacted>")
+		print(
+			f"database: would, on the primary its config.env names ({DEFAULT_PRIMARY} unless promoted),"
+			f" run in the {APP} container, {login}'s password from {secret_key(scope, app)}:\n"
+			f"{shown}"
+			f"database: and set in /data/apps/{app}/secret.env on {', '.join(where) or 'no node'}:\n"
+			f"  DATABASE_URL=postgresql://{login}:<redacted>@<primary's tailnet address>:{PORT}/{login}"
+		)
+		return
+	command = f"docker exec -i {APP} psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1"
+	if ssh(primary, command, grant_sql(scope, login, password)) is None:
+		fail(f"granting on {primary} failed")
+	print(f"database: {primary}: {login} logs in to {login}, owned by {scope}")
+	url = f"postgresql://{login}:{password}@{tailnet_ipv4(primary)}:{PORT}/{login}"
+	failed = [node for node in where if not upsert(node, app, "secret.env", {"DATABASE_URL": url})]
+	if failed:
+		fail(f"writing DATABASE_URL failed on {', '.join(failed)}")
+	print(f"database: {app} reads it on its next deploy")
+
+
+def granted():
+	"""Every scope and app granted so far, read back from secrets.json's names."""
+	found = []
+	for key in sorted(os.environ):
+		for scope in SCOPES:
+			prefix = f"DATABASE_PASSWORD_{scope.upper()}_"
+			if key.startswith(prefix):
+				found.append((scope, key[len(prefix) :].lower().replace("_", "-")))
+	return found
+
+
+def promote(arguments, dry):
+	nodes = placements()
+	names = [a for a in arguments if not a.startswith("-")]
+	if len(names) != 1 or names[0] not in nodes:
+		fail(f"promote takes one of {', '.join(nodes)}")
+	node = names[0]
+	if dry:
+		print(
+			f"database: would, on root@{node}, run SELECT pg_promote() in the {APP} container, then set"
+			f" DATABASE_PRIMARY={node} in /data/apps/{APP}/config.env on {', '.join(nodes)}"
+		)
+	else:
+		recovering = ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc 'SELECT pg_is_in_recovery()'")
+		if recovering is None:
+			fail(f"{node}'s Postgres did not answer")
+		if recovering == "t" and ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc 'SELECT pg_promote()'") != "t":
+			fail(f"promoting {node} failed")
+		print(f"database: {node} is the primary")
+		unreached = [n for n in nodes if not upsert(n, APP, "config.env", {"DATABASE_PRIMARY": node})]
+		if unreached:
+			print(f"database: {', '.join(unreached)} not told; set DATABASE_PRIMARY={node} there before it starts")
+	others = [n for n in nodes if n != node]
+	print(
+		f"database: redeploy {node} first, then {' and '.join(others)}; a node that was the primary"
+		f" rewinds onto {node} as it starts:\n"
+		+ "\n".join(f"  mise run //repos/infra:node redeploy {n} {APP}" for n in [node, *others])
+	)
+	again = granted()
+	if again:
+		print("database: every DATABASE_URL still names the old primary; grant each again:")
+		print("\n".join(f"  mise run database grant {scope} {app}" for scope, app in again))
+
+
+def main():
+	arguments = sys.argv[1:]
+	dry = "--dry-run" in arguments or "-n" in arguments
+	rest = [a for a in arguments[1:] if a not in ("--dry-run", "-n")]
+	verbs = {"env": env, "grant": grant, "promote": promote}
+	if not arguments or arguments[0] not in verbs:
+		fail("name one of env, grant <scope> <app> or promote <node>, and --dry-run to only say what")
+	verbs[arguments[0]](rest, dry)
+
+
+if __name__ == "__main__":
+	main()

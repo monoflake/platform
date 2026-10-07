@@ -12,6 +12,7 @@ members = [
 	"apps/compute/geo",
 	"apps/model/grok",
 	"apps/data/ledger",
+	"apps/data/database",
 	"apps/observe/probe",
 	"apps/compute/shot",
 	"apps/observe/telemetry",
