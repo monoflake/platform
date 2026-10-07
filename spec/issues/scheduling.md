@@ -68,16 +68,6 @@ own scope among them -- to read how something was configured after it changed. I
 when the author asks, never on a schedule, and kept as long as the author keeps it. What it holds,
 which key it is encrypted to and where it lands are undecided.
 
-## Backups are in one failure domain
-
-Every backup of the platform's Postgres goes to one Backblaze B2 account --
-[../architecture/databases.md](../architecture/databases.md), "Backups are the data, kept off the
-cluster" -- so the account ending loses every backup at once, which is the `domain` failure of
-[../architecture/scheduling.md](../architecture/scheduling.md). The stores a node's own disk offers
-over S3 -- `rdu`'s, in the house, first -- would close it, a copy of the backups' ciphertext taken
-from the first store each day: WAL-G's own second storage takes over when the first fails rather
-than keeping a copy in both. It waits on those stores existing.
-
 ## Health does not say that archiving has stopped
 
 On `tyo`'s first start, on 2026-10-07, the image had no CA bundle: WAL-G could not verify the store's

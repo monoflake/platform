@@ -63,12 +63,9 @@ In order, each deployed and proved before the next -- [../architecture/schedulin
    deployed -- [../architecture/scheduling.md](../architecture/scheduling.md), "Who asks is a
    principal, and an issuer vouches for it".
 4. **A store on every node's disk**, S3 over its filesystem, and the backups copied each day to
-   `rdu`'s and `buf`'s -- [../issues/scheduling.md](../issues/scheduling.md), "Backups are in one
-   failure domain". Decided: an app `store` on both, its objects in host's Versity sidecar, whose
-   daily job syncs B2's `database` prefix down with rclone, ciphertext only, deletions included so
-   the tiers hold. Nothing is deleted when listing B2 fails or finds nothing, when B2 holds fewer
-   than half the mirror's objects, or when any error occurs in the run. Its B2 key lists and reads
-   the backup bucket alone.
+   `rdu`'s and `buf`'s: built and drilled in docker, waiting to be deployed and drilled on the
+   nodes -- [../architecture/databases.md](../architecture/databases.md), "Backups are the data,
+   kept off the cluster".
 5. **A scope's bucket, first version**: its index in the cluster, put, get, delete and list, laid out
    by `pool` and `mirror`, references, the sweep and the scrub on the scheduler.
 6. **`shot` keeping nothing**: its queue in the cluster, its pictures in a bucket, its browsers on

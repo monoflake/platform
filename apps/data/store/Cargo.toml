@@ -1,0 +1,23 @@
+[package]
+name = "store"
+version = "0.0.0"
+description = "A node's own store, S3 over its disk, and the mirror of the database's backups kept in it."
+keywords = ["s3", "backup", "mirror"]
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+axum = "0.8.9"
+mimalloc = "0.1.52"
+response = { version = "2.0.0", features = ["axum"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.21"
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "net", "process", "signal", "sync", "fs"] }
+
+[dev-dependencies]
+http-body-util = "0.1.5"
+tower = { version = "0.5", features = ["util"] }

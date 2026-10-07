@@ -1,0 +1,32 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "store"
+display_name = "Node Store"
+# The backups' second failure domain, the house first. See spec/architecture/databases.md,
+# "Backups are the data, kept off the cluster".
+placements = ["rdu", "buf"]
+
+# No port: the node's own `cron` reaches it on its socket.
+[container]
+socket = "store.sock"
+health = "/health"
+memory_mb = 128
+
+# The socket, and nothing else of the store's own.
+[data]
+path = "/data"
+
+# S3 over the node's disk: its `store-objects` sidecar. See spec/architecture/objects.md.
+[objects]
+buckets = ["backups"]
+
+# 12:00 UTC, once the database's 10:00 backup, given an hour, has ended. See
+# spec/architecture/cron.md, "A job is declared by the service that does it".
+[[schedules]]
+name = "mirror"
+cron = "0 12 * * *"
+path = "/jobs/mirror"
+catch_up = "once"
+overlap = "skip"
+timeout = 3600

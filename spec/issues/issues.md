@@ -36,7 +36,6 @@ file.
 - How often geo's data is rebuilt
 - How long an app keeps what it deleted
 - Exports to look at, kept apart from backups
-- Backups are in one failure domain
 - Health does not say that archiving has stopped
 - Schema changes go through the platform
 

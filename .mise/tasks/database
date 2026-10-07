@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote [node]`, each with --dry-run"
+#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote [node]`, `database mirror-env`, each with --dry-run"
 """The operator's half of the platform's Postgres. See spec/architecture/databases.md.
 
 `env` writes what the database app reads on each core node, `grant` gives an app its database and
 login and writes its `DATABASE_URL`, and `promote` makes a standby the primary by hand: the one
-named, or the first in order that is caught up. Values move over SSH on stdin, never on a command
-line, and `--dry-run` touches no machine and prints no secret.
+named, or the first in order that is caught up; `mirror-env` gives each node's `store` the key it
+reads the backups with. Values move over SSH on stdin, never on a command line, and `--dry-run`
+touches no machine and prints no secret.
 """
 
 import json
@@ -49,6 +50,17 @@ STORE = {
 	"BACKUP_S3_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
 }
 BUCKET = "BACKUP_S3_BUCKET"
+# What each node's `store` mirrors the backups with: the store's place, by the same names, and a key
+# that may list and read its bucket and nothing more. See spec/architecture/databases.md, "Backups
+# are the data, kept off the cluster".
+MIRROR = "store"
+MIRRORED = [
+	"BACKUP_S3_ENDPOINT",
+	"BACKUP_S3_REGION",
+	BUCKET,
+	"BACKUP_MIRROR_S3_ACCESS_KEY_ID",
+	"BACKUP_MIRROR_S3_SECRET_ACCESS_KEY",
+]
 # How long the old primary gets to shut down, and the standby to replay what it wrote.
 STOP_SECONDS = 30
 CATCH_UP_SECONDS = 120
@@ -509,13 +521,41 @@ def promote(arguments, dry):
 		print("\n".join(f"  mise run database grant {scope} {app}" for scope, app in again))
 
 
+def mirror_env(arguments, dry):
+	if arguments:
+		fail("mirror-env takes no arguments")
+	known = set(tomllib.loads(NODES.read_text()))
+	where = [node for node in manifest_of(MIRROR)["placements"] if node in known]
+	missing = [key for key in MIRRORED if not os.environ.get(key)]
+	if missing:
+		message = f"secrets.json has no {', '.join(missing)}; add them with `mise run secret`"
+		if not dry:
+			fail(message)
+		print(f"database: {message} (a real run stops here)")
+	for node in where:
+		if dry:
+			print(
+				f"database: {node}: would set, keeping every other line, mode 600, in"
+				f" /data/apps/{MIRROR}/secret.env: {' '.join(f'{key}=<redacted>' for key in MIRRORED)}"
+			)
+		elif not upsert(node, MIRROR, "secret.env", {key: os.environ[key] for key in MIRRORED}):
+			fail(f"writing the mirror's key failed on {node}")
+	print(
+		f"database: {MIRROR} reads it on its next deploy;"
+		f" `mise run //repos/infra:node redeploy <node> {MIRROR}`"
+	)
+
+
 def main():
 	arguments = sys.argv[1:]
 	dry = "--dry-run" in arguments or "-n" in arguments
 	rest = [a for a in arguments[1:] if a not in ("--dry-run", "-n")]
-	verbs = {"env": env, "grant": grant, "promote": promote}
+	verbs = {"env": env, "grant": grant, "promote": promote, "mirror-env": mirror_env}
 	if not arguments or arguments[0] not in verbs:
-		fail("name one of env, grant <scope> <app> or promote [node], and --dry-run to only say what")
+		fail(
+			"name one of env, grant <scope> <app>, promote [node] or mirror-env, and --dry-run to only"
+			" say what"
+		)
 	verbs[arguments[0]](rest, dry)
 
 

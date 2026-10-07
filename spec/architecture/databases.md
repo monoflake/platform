@@ -129,6 +129,28 @@ passes ten gigabytes. Decided on 2026-10-07.
 These backups go to a store directly, not through a bucket of the platform's, whose index is in this
 cluster -- the one thing below the buckets cannot be kept in them.
 
+**A second copy is on the disks of `rdu` and `buf`, a failure domain apart from B2.** `apps/data/store`,
+placed on both, keeps a bucket `backups` in its `store-objects` sidecar, S3 over the node's own
+disk -- [objects.md](objects.md) -- and at 12:00 UTC each day, once the 10:00 backup has had its
+hour, syncs B2's `database` prefix into it with rclone, pinned and checked like WAL-G. It copies
+ciphertext only: no node but the cluster's holds the key that decrypts it. Its B2 key lists and
+reads the backup bucket and nothing more, `BACKUP_MIRROR_S3_*`, written to the store's
+`secret.env` by `mise run database mirror-env`.
+
+- **Deletions are mirrored**, so the tiers hold in the copy as they do in B2.
+- **Nothing is deleted from a source that looks wrong**: when listing B2 fails, when B2 holds
+  nothing under the prefix, or when it holds fewer than half the mirror's objects -- the tiers let
+  go of about a day's WAL a day, never half -- the run fails and touches nothing; and rclone deletes
+  nothing when any error occurs during the run.
+- **A run is checked after it ends**: every object B2 holds must be in the mirror at the same size,
+  and the report gives what was copied, what was deleted, and both sides' counts and bytes.
+- **It restores with nothing but WAL-G**, over S3 from `store-objects`, or with
+  `WALG_FILE_PREFIX=/data/apps/store/objects/backups/database` and no store running at all, since
+  the sidecar keeps plain files. Both were restored from in a drill on 2026-10-07, before it was
+  deployed.
+- **Rejected: WAL-G's own second storage**, which takes over when the first fails rather than
+  keeping a copy in both.
+
 ## Upgrades are pinned, reported, and rolled by hand
 
 **Postgres, WAL-G and every image the cluster runs are pinned by tag and digest**, as every adopted
