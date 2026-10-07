@@ -105,7 +105,6 @@
 	{key}
 	label="Events across every node, newest first"
 	filterable={false}
-	sizes={[Math.max(1, events.length)]}
 	size={Math.max(1, events.length)}
 	empty="No events match the filters."
 />

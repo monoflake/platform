@@ -137,6 +137,5 @@
 	key={(row) => row.code}
 	href={(row) => `/nodes/${row.code}`}
 	label="Every node"
-	sizes={[10, 25]}
 	size={10}
 />

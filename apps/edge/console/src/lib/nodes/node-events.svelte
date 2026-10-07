@@ -86,7 +86,6 @@
 	{columns}
 	key={(event) => String(event.id)}
 	label="Events on this node"
-	sizes={[50]}
 	size={50}
 	empty="No events on this page"
 />

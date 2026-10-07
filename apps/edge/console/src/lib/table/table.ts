@@ -1,5 +1,5 @@
 /**
- * A table's rows as the reader asked for them: filtered, sorted, then cut to a page. Pure, so the
+ * A table's rows as the reader asked for them: searched, sorted, then cut to a page. Pure, so the
  * server's first page is the browser's, and every step is tested apart from the markup.
  */
 import type { Snippet } from 'svelte';
@@ -7,16 +7,17 @@ import type { Snippet } from 'svelte';
 export interface Column<Row> {
 	key: string;
 	label: string;
-	/** What the column sorts by and compares a filter against. */
+	/** What the column sorts by and compares a search against. */
 	value: (row: Row) => string | number;
-	/** The cell as written, which a text filter searches; the value as it is when not given. */
+	/** The cell as written, which the search reads; the value as it is when not given. */
 	text?: (row: Row) => string;
-	/** A number sorts as one, sets right, and takes `>10`, `<=2`, `=0` as a filter. */
+	/** A number sorts as one, sets right, and takes `cpu>10`, `<=2`, `=0` in a search. */
 	kind?: 'text' | 'number';
 	sortable?: boolean;
+	/** Whether the search reads this column. */
 	filterable?: boolean;
 	/**
-	 * The cell drawn rather than written: a badge, a chip, a bar. Sorting and filtering still read
+	 * The cell drawn rather than written: a badge, a chip, a bar. Sorting and the search still read
 	 * `value` and `text`. Inside a row with a link the whole row is the link, so what it draws is
 	 * read, not clicked.
 	 */
@@ -53,14 +54,15 @@ export function sortRows<Row>(rows: Row[], columns: Column<Row>[], sort?: Sort):
 	});
 }
 
-const COMPARISON = /^(>=|<=|>|<|=)\s*(-?\d+(?:\.\d+)?)$/;
+const COMPARISON = /^(>=|<=|>|<|=)(-?\d+(?:\.\d+)?)$/;
+const NAMED = /^([^<>=]+)((?:>=|<=|>|<|=)-?\d+(?:\.\d+)?)$/;
 
 /**
- * Whether a row's cell answers a filter: a comparison for a number column given one, otherwise
- * the written cell containing the query, case aside.
+ * Whether a row's cell answers a term: a comparison for a number column given one, otherwise
+ * the written cell containing the term, case aside.
  */
 export function matches<Row>(column: Column<Row>, row: Row, query: string): boolean {
-	const wanted = query.trim();
+	const wanted = query.trim().replace(/\s+/g, '');
 	if (!wanted) return true;
 	const compared = column.kind === 'number' ? COMPARISON.exec(wanted) : null;
 	if (compared) {
@@ -74,19 +76,39 @@ export function matches<Row>(column: Column<Row>, row: Row, query: string): bool
 		if (operator === '<=') return value <= bound;
 		return value === bound;
 	}
-	return written(column, row).toLowerCase().includes(wanted.toLowerCase());
+	return written(column, row).toLowerCase().includes(query.trim().toLowerCase());
 }
 
-export function filterRows<Row>(
-	rows: Row[],
-	columns: Column<Row>[],
-	queries: Record<string, string>,
-): Row[] {
-	const asked = columns.filter((column) => queries[column.key]?.trim());
-	if (asked.length === 0) return rows;
-	return rows.filter((row) =>
-		asked.every((column) => matches(column, row, queries[column.key] ?? '')),
-	);
+/** A column named by its key or its label, spaces and case aside. */
+function named<Row>(columns: Column<Row>[], name: string): Column<Row> | undefined {
+	const plain = (words: string) => words.replace(/\s+/g, '').toLowerCase();
+	return columns.find((column) => [column.key, column.label].some((one) => plain(one) === name));
+}
+
+/**
+ * Whether a row answers one search term. `cpu>10` compares the number column it names; a bare
+ * `>10` takes any number column; anything else is text any column may contain.
+ */
+function answers<Row>(columns: Column<Row>[], row: Row, term: string): boolean {
+	const [, name, comparison] = NAMED.exec(term) ?? [];
+	const column = name && comparison ? named(columns, name.toLowerCase()) : undefined;
+	if (column?.kind === 'number' && comparison) return matches(column, row, comparison);
+	return columns.some((one) => matches(one, row, term));
+}
+
+/**
+ * The rows answering every term of one search across the columns that take it. An operator
+ * binds to its neighbors, so `cpu > 10` is the one term `cpu>10`.
+ */
+export function filterRows<Row>(rows: Row[], columns: Column<Row>[], query: string): Row[] {
+	const terms = query
+		.trim()
+		.replace(/\s*(>=|<=|>|<|=)\s*/g, '$1')
+		.split(/\s+/)
+		.filter(Boolean);
+	const searched = columns.filter((column) => column.filterable ?? true);
+	if (terms.length === 0 || searched.length === 0) return rows;
+	return rows.filter((row) => terms.every((term) => answers(searched, row, term)));
 }
 
 export interface Page<Row> {

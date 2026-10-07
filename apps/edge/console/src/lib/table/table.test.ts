@@ -40,14 +40,13 @@ describe('sortRows', () => {
 	});
 });
 
-describe('filters', () => {
-	it('searches the written cell, case aside', () => {
-		expect(filterRows(apps, columns, { name: 'WEB' }).map((app) => app.name)).toEqual([
-			'web10',
-			'Web2',
-		]);
+describe('filterRows', () => {
+	const names = (query: string) => filterRows(apps, columns, query).map((app) => app.name);
+
+	it('searches every written cell, case aside', () => {
+		expect(names('WEB')).toEqual(['web10', 'Web2']);
 		// `40%` is what the reader sees, so `%` finds it.
-		expect(filterRows(apps, columns, { cpu: '40%' }).map((app) => app.name)).toEqual(['api']);
+		expect(names('40%')).toEqual(['api']);
 	});
 
 	it('compares a number column given an operator, and an unread cell never matches one', () => {
@@ -57,11 +56,17 @@ describe('filters', () => {
 		expect(matches(cpu, web2, '>0')).toBe(false);
 	});
 
-	it('takes every column asked at once, and blank queries as none', () => {
-		expect(filterRows(apps, columns, { name: 'web', cpu: '>1' }).map((app) => app.name)).toEqual([
-			'web10',
-		]);
-		expect(filterRows(apps, columns, { name: '  ' })).toBe(apps);
+	it('compares the column a term names by key or label, spaces aside', () => {
+		expect(names('cpu>10')).toEqual(['api']);
+		expect(names('CPU <= 4')).toEqual(['web10']);
+		expect(names('>10')).toEqual(['api']);
+	});
+
+	it('takes every term at once, blank as none, and skips a column the search does not read', () => {
+		expect(names('web cpu>1')).toEqual(['web10']);
+		expect(filterRows(apps, columns, '  ')).toBe(apps);
+		const hidden = { ...name, filterable: false };
+		expect(filterRows(apps, [hidden, cpu], 'api')).toEqual([]);
 	});
 });
 

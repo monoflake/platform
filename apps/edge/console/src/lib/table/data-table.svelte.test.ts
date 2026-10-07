@@ -23,15 +23,22 @@ const rows: App[] = Array.from({ length: 30 }, (_, index) => ({ name: `app${inde
 const props = { columns, key: (app: App) => app.name, label: 'Apps' };
 
 describe('data table on the server', () => {
-	it('renders the first page whole, with a sticky header and a filter per column', () => {
+	it('renders the first page whole, with a sticky header and one search above it', () => {
 		const { body } = render(DataTable<App>, { props: { ...props, rows, size: 10 } });
-		expect(body.match(/<tr class=/g)).toHaveLength(10);
+		expect(body.match(/<tr class="h-11/g)).toHaveLength(10);
 		expect(body).toContain('sticky top-0');
-		expect(body.match(/type="search"/g)).toHaveLength(2);
-		expect(body).toMatch(/placeholder="(?:&gt;|>)10"/);
+		expect(body.match(/type="search"/g)).toHaveLength(1);
+		expect(body).toContain('whitespace-nowrap');
 		expect(body).toContain('1–10 of 30');
-		expect(body).toContain('Page 1 of 3');
 		expect(body).toMatch(/aria-label="Previous page"[^>]*disabled/);
+	});
+
+	it('hides the search when asked, and the pages when one holds every row', () => {
+		const { body } = render(DataTable<App>, {
+			props: { ...props, rows: rows.slice(0, 20), filterable: false },
+		});
+		expect(body).not.toContain('type="search"');
+		expect(body).not.toContain('<footer');
 	});
 
 	it('sorts the first page on the server when asked, and says so to a reader', () => {
@@ -49,6 +56,7 @@ describe('data table on the server', () => {
 		});
 		expect(body).toContain('href="/apps/app0"');
 		expect(body).toContain('after:absolute after:inset-0');
+		expect(body).toContain('cursor-pointer');
 	});
 
 	it('says plainly when there is nothing, across every column', () => {
@@ -57,7 +65,6 @@ describe('data table on the server', () => {
 		});
 		expect(body).toContain('colspan="2"');
 		expect(body).toContain('No apps yet');
-		expect(body).toContain('0 rows');
 	});
 
 	it('draws a column with a cell snippet through it, still sorted by its value', () => {
