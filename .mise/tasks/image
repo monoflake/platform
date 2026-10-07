@@ -24,6 +24,21 @@ node="$(sed -n 's/^node = "\(.*\)"/\1/p' "$dir/mise.toml" 2>/dev/null || true)"
 app="$(find "$ROOT/apps" -mindepth 2 -maxdepth 2 -type d -name "$name" | head -n 1)"
 [ -n "$app" ] || { echo "image: no app named $name" >&2; exit 1; }
 
-docker buildx build --platform "${PLATFORM:-linux/arm64}" --file "$app/Dockerfile" \
+# sccache's backend is what this environment names, SCCACHE_GHA_ENABLED in CI, handed in as the
+# secret `sccache` with the credentials it reads; with none, each build caches on a mount of its
+# own. See infra's spec/architecture/host.md, "An image is built for speed, and for any node of its
+# architecture".
+forward=""
+for key in $(compgen -e | grep '^SCCACHE_' | grep -vx SCCACHE_DIR) \
+	ACTIONS_RESULTS_URL ACTIONS_RUNTIME_TOKEN ACTIONS_CACHE_SERVICE_V2; do
+	[ -n "${!key:-}" ] || continue
+	quote="'\\''"
+	forward+="export $key='${!key//\'/$quote}'"$'\n'
+done
+secret=()
+[ -z "$forward" ] || secret=(--secret id=sccache,env=SCCACHE_FORWARD)
+
+SCCACHE_FORWARD="$forward" docker buildx build --platform "${PLATFORM:-linux/arm64}" \
+	--file "$app/Dockerfile" ${secret[@]+"${secret[@]}"} \
 	--build-arg "RUST_VERSION=$version" --build-arg "NODE_VERSION=$node" \
 	--tag "$name:local" --output "type=docker,dest=$archive" "$ROOT"

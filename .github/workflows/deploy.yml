@@ -85,9 +85,14 @@ jobs:
           path: repos/platform
       # The runner's default builder cannot export an image as an archive; a container builder can.
       - uses: docker/setup-buildx-action@v4
+      # The runtime's cache credentials, for sccache, which only an action is handed; see infra's
+      # spec/architecture/host.md, "An image is built for speed, and for any node of its
+      # architecture".
+      - uses: crazy-max/ghaction-github-runtime@v4
       - env:
           APP: ${{ matrix.app }}
           PLATFORM: linux/${{ matrix.arch }}
+          SCCACHE_GHA_ENABLED: "true"
         run: |
           mkdir -p "$RUNNER_TEMP/deploy"
           repos/platform/.mise/tasks/image "$APP" "$RUNNER_TEMP/deploy/image.tar"

@@ -36,7 +36,12 @@ jobs:
         with:
           path: repos/platform
           fetch-depth: 0
+      # Only what the release runs, and uncached: two downloads cost less than a cache keyed to
+      # every edit of a mise.toml, which saved a new copy of the tools on each.
       - uses: jdx/mise-action@v5
+        with:
+          install_args: node pnpm
+          cache: false
       - working-directory: repos/platform
         run: |
           pnpm install --frozen-lockfile
