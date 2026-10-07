@@ -122,6 +122,19 @@ pub async fn prepare(layout: &Layout, config: &Config, follow: Option<&str>) -> 
 	private(&layout.passfile(), &render::pgpass(&passwords)).await
 }
 
+/// Remove the lock a Postgres stopped uncleanly left in the cluster. It names a process in the
+/// container that is gone, whose number a new container often gives to a live one, so Postgres
+/// would refuse to start; and a lock in another container's namespace never protected anything.
+/// Called before the keeper starts anything that reads the cluster.
+pub async fn clear_stale_lock(layout: &Layout) -> Result<bool, Error> {
+	let lock = layout.data.join("postmaster.pid");
+	match tokio::fs::remove_file(&lock).await {
+		Ok(()) => Ok(true),
+		Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+		Err(error) => Err(io(&lock)(error)),
+	}
+}
+
 /// Clear what an interrupted attempt left beside the data directory.
 async fn clear_partial(layout: &Layout) -> Result<(), Error> {
 	let partial = layout.partial();
@@ -259,4 +272,19 @@ pub async fn stop(layout: &Layout) -> Result<(), Error> {
 	let mut pg_ctl = command("pg_ctl");
 	pg_ctl.args(["stop", "--mode=fast", "--no-wait", "--pgdata"]).arg(&layout.data);
 	output(pg_ctl, None).await.map(|_| ())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[tokio::test]
+	async fn a_stale_lock_is_removed_and_none_is_fine() {
+		let dir = tempfile::tempdir().unwrap();
+		let layout = Layout { data: dir.path().into(), run: dir.path().into() };
+		assert!(!clear_stale_lock(&layout).await.unwrap());
+		std::fs::write(dir.path().join("postmaster.pid"), "29\n").unwrap();
+		assert!(clear_stale_lock(&layout).await.unwrap());
+		assert!(!dir.path().join("postmaster.pid").exists());
+	}
 }

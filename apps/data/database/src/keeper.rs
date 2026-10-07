@@ -115,6 +115,9 @@ impl Keeper {
 		let found = plan::found(&layout.data)?;
 		let plan = plan::plan(config.role(), found);
 		let primary = config.primary_address();
+		if found != plan::Found::Empty && postgres::clear_stale_lock(layout).await? {
+			eprintln!("database: removed postmaster.pid, left by a Postgres that did not stop cleanly");
+		}
 		let follow = matches!(plan, Plan::Clone | Plan::Rewind | Plan::Run(Role::Standby));
 		postgres::prepare(layout, config, follow.then_some(primary)).await?;
 		match plan {

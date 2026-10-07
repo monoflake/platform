@@ -14,6 +14,7 @@ import secrets
 import shlex
 import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 
@@ -42,6 +43,9 @@ STORE = {
 	"BACKUP_S3_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY",
 }
 BUCKET = "BACKUP_S3_BUCKET"
+# How long the old primary gets to shut down, and the standby to replay what it wrote.
+STOP_SECONDS = 30
+CATCH_UP_SECONDS = 120
 LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 
 # Runs on the node with KEY=VALUE lines on stdin and the app's directory and the file's name as
@@ -288,6 +292,69 @@ def granted():
 	return found
 
 
+def in_container(node, sql):
+	"""`sql` through psql in the database container on `node`, or None when it did not answer."""
+	return ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc {shlex.quote(sql)}")
+
+
+def final_lsn(node):
+	"""Where the stopped primary on `node` ended: its last checkpoint, read with pg_controldata from
+	its image over its own directory, and whether it shut down cleanly. None when unreadable."""
+	command = (
+		f"image=$(docker inspect -f '{{{{.Image}}}}' {APP}) && docker run --rm --network none"
+		f" --entrypoint pg_controldata -v /data/apps/{APP}/data:/var/lib/postgresql:ro"
+		f' "$image" /var/lib/postgresql/data'
+	)
+	answer = ssh(node, command)
+	fields = dict(
+		line.split(":", 1) for line in (answer or "").splitlines() if ":" in line
+	)
+	lsn = fields.get("Latest checkpoint location", "").strip()
+	return (lsn, fields.get("Database cluster state", "").strip()) if lsn else None
+
+
+def fence(old, node, dry):
+	"""Stops the primary `old` before `node` is promoted, so there are never two, and waits until
+	`node` has replayed everything `old` wrote. See spec/architecture/databases.md, "Where it runs,
+	and which one writes"."""
+	if dry:
+		print(
+			f"database: would fence the primary the nodes' config.env name, if it answers over ssh:\n"
+			f"  docker stop -t {STOP_SECONDS} {APP} there, and confirm it is stopped; its restart policy"
+			f" is unless-stopped, so it stays down\n"
+			f"  read where it ended, its last checkpoint, with pg_controldata over its directory\n"
+			f"  wait up to {CATCH_UP_SECONDS} seconds for {node}'s pg_last_wal_replay_lsn() to reach it,"
+			f" and stop without promoting if it does not\n"
+			f"  a primary that does not answer over ssh is taken to be down already, and not fenced"
+		)
+		return
+	if ssh(old, "true") is None:
+		print(f"database: {old}, the primary, does not answer over ssh; taken to be down, not fenced")
+		return
+	if ssh(old, f"docker stop -t {STOP_SECONDS} {APP} >/dev/null") is None:
+		fail(f"stopping the database on {old} failed; nothing was promoted")
+	if ssh(old, f"docker inspect -f '{{{{.State.Running}}}}' {APP}") != "false":
+		fail(f"the database on {old} is still running; nothing was promoted")
+	print(f"database: {old} stopped")
+	ended = final_lsn(old)
+	if ended is None:
+		fail(f"where {old} ended could not be read; it is stopped, and {node} was not promoted")
+	lsn, state = ended
+	if state != "shut down":
+		print(f"database: {old} did not shut down cleanly ({state}); its last writes may be lost")
+	print(f"database: {old} ended at {lsn}; waiting for {node} to replay it")
+	for _ in range(CATCH_UP_SECONDS // 2):
+		if in_container(node, f"SELECT pg_last_wal_replay_lsn() >= '{lsn}'::pg_lsn") == "t":
+			print(f"database: {node} has replayed everything {old} wrote")
+			return
+		time.sleep(2)
+	replayed = in_container(node, "SELECT pg_last_wal_replay_lsn()")
+	fail(
+		f"{node} replayed to {replayed} and {old} ended at {lsn}; not promoted. {old} is stopped:"
+		f" `docker start {APP}` there puts it back, or promote anyway once the loss is accepted"
+	)
+
+
 def promote(arguments, dry):
 	nodes = placements()
 	names = [a for a in arguments if not a.startswith("-")]
@@ -295,16 +362,22 @@ def promote(arguments, dry):
 		fail(f"promote takes one of {', '.join(nodes)}")
 	node = names[0]
 	if dry:
+		print(f"database: would check {node} answers and is a standby, and stop if not")
+		fence("<primary>", node, dry)
 		print(
 			f"database: would, on root@{node}, run SELECT pg_promote() in the {APP} container, then set"
 			f" DATABASE_PRIMARY={node} in /data/apps/{APP}/config.env on {', '.join(nodes)}"
 		)
 	else:
-		recovering = ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc 'SELECT pg_is_in_recovery()'")
+		old = primary_named(nodes)
+		recovering = in_container(node, "SELECT pg_is_in_recovery()")
 		if recovering is None:
-			fail(f"{node}'s Postgres did not answer")
-		if recovering == "t" and ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc 'SELECT pg_promote()'") != "t":
-			fail(f"promoting {node} failed")
+			fail(f"{node}'s Postgres did not answer; nothing was stopped or promoted")
+		if recovering == "t":
+			if old and old != node:
+				fence(old, node, dry)
+			if in_container(node, "SELECT pg_promote()") != "t":
+				fail(f"promoting {node} failed")
 		print(f"database: {node} is the primary")
 		unreached = [n for n in nodes if not upsert(n, APP, "config.env", {"DATABASE_PRIMARY": node})]
 		if unreached:
