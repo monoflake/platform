@@ -48,3 +48,12 @@ answer can be a month behind. Rebuilding more often redeploys the whole image to
 time, whether or not the data changed. Who triggers it is open too: GitHub's own schedule, as now, or
 the platform's `cron` asking GitHub for a run, which needs a token in `cron` and, since `cron` runs on
 every node, the platform's scheduler to ask once rather than seven times.
+
+## How long an app keeps what it deleted
+
+Every period a bucket has is seven days -- [../architecture/scheduling.md](../architecture/scheduling.md),
+"Deleting releases a name, and the bytes go later": a deleted reference is restorable for seven days,
+and unreferenced bytes are reclaimed seven days after. Apps will want their own: a user's trash kept
+for a month, a cache's leftovers gone within the hour, and different parts of one app different
+again. Where such a period is declared -- the app's `service.toml`, the bucket's layout, or a row the
+app writes at run time -- and how finely, per app, per key prefix or per reference, is undecided.

@@ -24,11 +24,12 @@ Decided on 2026-10-07, in place of a database whose durable state was objects in
 
 ## An app declares its need, and the platform derives the place
 
-- **Compute is N instances and the memory each takes.** CPU is not declared: what is written here is
-  TypeScript and Rust, whose cost is memory. An instance that keeps nothing may run on any tier,
-  `transient` included, and is started elsewhere when its node goes.
-- **Storage is a bucket**, reached through an S3-compatible API, with how many copies it keeps and
-  across how many failure domains. Public content keeps at least one copy where the CDN reads it.
+- **Compute is N instances and the memory each takes, and keeps nothing**, as a Worker keeps
+  nothing: whatever an app must remember is its scope's data. CPU is not declared: what is written
+  here is TypeScript and Rust, whose cost is memory. An instance may run on any tier, `transient`
+  included, and is started elsewhere when its node goes.
+- **Storage is its scope's bucket**, reached through an S3-compatible API that does four things:
+  put, get, delete and list. There are no versions; a key names its newest content.
 - **A database is SQLite or Postgres.** An instance may keep a small SQLite inside itself for its own
   working state, which it can rebuild and which does not move with it; data that must outlive an
   instance, or is shared across apps, is in Postgres, a primary and its replicas.
@@ -44,8 +45,14 @@ entrance and never a store behind it.
 **A store is a place bytes are kept, and nothing more.** Whatever a provider offers above that --
 versioning, lifecycle rules, replication of its own -- is left off, versioning above all: the
 platform keeps its own history, in records and in bytes not yet reclaimed, and a provider's versions
-of the same thing would be a second copy of it, billed by the byte and never read. A store is written
-by cid, so an object is never overwritten in it.
+of the same thing would be a second copy of it, billed by the byte and never read. Backblaze B2's is
+turned off on every bucket held there; R2 has none to turn off.
+
+**An object is kept at `{scope}/{ab}/{cd}/{cid}`, with no extension**, and is never overwritten,
+since its key is its content. What type it is belongs to the reference that names it: the same bytes
+named twice as two types are still one object. The fan-out is for a store that is a filesystem,
+whose directories overflow -- web's `spec/architecture/data.md`, "Assets are addressed by their
+content", where the site's own bucket keeps an extension this one drops.
 
 **One store holds many buckets, and one bucket spans many stores.** How many copies a bucket keeps
 follows how much its data matters, not how many disks there are. A store at home is offered as the
@@ -59,74 +66,115 @@ read and how long the first byte may take, never the medium that answers. An art
 `standard`; an album's originals, read now and then, are `infrequent`. A store is fit for a class by
 what it is measured to do.
 
-## A bucket declares the failures it must survive, and its copies are derived
+## A bucket's stores are laid out by its owner, and what the layout survives is derived
 
-**Neither a count of copies nor a durability in nines is declared.** Nines are a figure nobody here
-can derive, so a sum of them is as precise as the guess typed in; and a count has no reference --
-three copies in one account are one copy to an account that ends, while one copy in a provider's
-bucket already survives a dead disk. What anybody can name is the failure:
+**A layout is a tree of two kinds, written by whoever owns the scope**, its leaves stores:
 
-| Failure   | Means                                        | Survived by                                                    |
-| --------- | -------------------------------------------- | -------------------------------------------------------------- |
-| `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself |
-| `domain`  | an account ends, or the house goes           | copies in two failure domains                                  |
-| `mistake` | a deletion, or a bug that rewrites good data | the platform's own history: a name restorable, its bytes kept  |
+- **`pool`** joins its members into one larger store, as RAID 0 joins disks: an object is on one
+  member, chosen by room, and the pool holds what its members hold together.
+- **`mirror`** keeps an object on every member, and says how many a write waits for. The rest are
+  filled in behind it by the platform's scheduler, so what matters most can wait for two and what
+  can be made again for one.
 
-A bucket lists the failures it survives, and the platform derives the copies. A store says two things
-a person knows: its failure domain, and whether it is redundant by itself -- a provider's bucket and
-a mirrored pool are, a lone disk is not. Copies alone never survive a `mistake`, since they copy it.
-Derived data, which can be made again, survives nothing and keeps one copy. S3's own classes are
-framed the same way: its One Zone classes survive a disk and not the loss of a zone.
+Three providers pooled, the third backed by one or two more, is a `pool` of A, B and a `mirror` of
+C with its backups. Any member may itself be a `pool` or a `mirror`.
+
+**What a layout survives is worked out from it, never typed beside it.** A durability in nines is a
+figure nobody here can derive, and a count of copies has no reference -- three copies in one account
+are one copy to an account that ends, while one copy in a provider's bucket already survives a dead
+disk. What anybody can name is the failure:
+
+| Failure   | Means                                        | Survived by                                                        |
+| --------- | -------------------------------------------- | ------------------------------------------------------------------ |
+| `medium`  | a disk dies                                  | two copies on two media, or one on a store redundant by itself     |
+| `domain`  | an account ends, or the house goes           | copies in two failure domains                                      |
+| `mistake` | a deletion, or a bug that rewrites good data | the platform's own history: a reference restorable, its bytes kept |
+
+A store says two things a person knows: its failure domain, and whether it is redundant by itself --
+a provider's bucket and a mirrored pool are, a lone disk is not. From those the platform reads a
+layout and says which failures each part of it survives; a `pool` survives only what every member
+does. No layout survives a `mistake`, since copies copy it; the platform's history does. S3's own
+classes are framed the same way: its One Zone classes survive a disk and not the loss of a zone.
+
+Decided on 2026-10-07, in place of a bucket that declared the failures it must survive and had its
+copies derived: a layout across providers is what its owner reasons about, and the failures remain a
+figure the platform states rather than one anybody types.
 
 ## A scope is the boundary, and only the boundary isolates
 
-**Data is shared inside a scope and isolated between scopes.** A scope is a set of apps that belong
-together -- the author's own sites are one, a site built for somebody else and its own users another.
-Inside one, the apps share their buckets and their Postgres; across one, nothing is shared.
+**A scope is a body of data: one bucket, and a Postgres holding the database of each app inside
+it.** Compute keeps nothing, so everything with state is some scope's; an app runs wherever it is
+placed and reaches its scope's bucket and its own database there. Inside a scope the apps share the
+bucket; across scopes nothing is shared. There are three today:
+
+| Scope      | Holds                                                                                         |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `infra`    | the nodes' own: their configuration, and how work is scheduled across them                    |
+| `platform` | the accounts: every organization on the platform, the system's own and `canmi` the first user |
+| `canmi`    | the author's organization: their sites, and the accounts those sites offer their own users    |
+
+Each organization brought to the platform after is a scope of its own -- the workspace's
+`spec/architecture/ship-cloud.md`, "Tenancy".
 
 - **Content is deduplicated within a scope, never across one.** A shared store of bytes would tell
   one scope whether another holds a given file, would make deleting in one ask the other, and would
   leave no scope that could be taken away whole. The same bytes in two scopes are kept twice.
-- **The platform is below every scope**, and no scope's data is the platform's. The author's sites
-  are a scope on the platform, not part of it -- the dependency runs one way, as the workspace's
-  `spec/architecture/layers.md` draws it.
+- **The platform's own data is a scope like any other, and no other scope's is the platform's.** The
+  author's sites are in `canmi`, not in `platform` -- the dependency runs one way, as the
+  workspace's `spec/architecture/layers.md` draws it.
 
 ## Names, content and copies are three layers
 
-| Layer       | Answers                             | Is                                                           |
-| ----------- | ----------------------------------- | ------------------------------------------------------------ |
-| **name**    | what this is, whose, and from where | the rid and its record -- [resource.md](resource.md)         |
-| **content** | whether two are the same bytes      | the cid, within a scope                                      |
-| **copies**  | where the bytes are, and how many   | placements on stores, kept matching what the bucket declared |
+| Layer       | Answers                            | Is                                                      |
+| ----------- | ---------------------------------- | ------------------------------------------------------- |
+| **name**    | what this is, whose, and who reads | a reference: a key, its holder and the cid it points to |
+| **content** | whether two are the same bytes     | the cid, within a scope                                 |
+| **copies**  | where the bytes are, and how many  | placements on stores, kept matching the bucket's layout |
 
 Deduplication happens at content and nowhere else. Copies are reconciled: a store that is lost is
 replaced by another copy, and one whose expiry nears is emptied before it lapses.
 
-## Every object has a record, and access is decided on it
+## Every bucket is private, and a reference is what grants
 
-**Content-addressed bytes need a database beside them.** A cid says nothing about where the bytes
-came from, so every object has a record: its scope, the app that wrote it and, once there are
-accounts, the user, with who may read it. Permission is granted on the name and never on the cid,
-since one cid may stand behind two names that are not equally readable.
+**Nothing in a bucket is readable by being there**, the site's included: what the site serves today
+is read by its Worker, which answers anyone only because there are no accounts yet.
 
-**The gateway serves a public object by its content address and a private one by its record.** What
-it must do is tell the two apart and judge the second correctly; how somebody signed in is not its
+**A reference is one row in the bucket's Postgres: a holder, a key, a content type and the cid it
+points to.** The holder is a user, a group, or `public`. Whoever holds a reference to a cid may read
+it, and nobody else. So content held by user A, by user B and by `public` reads for both of them and
+for anyone; once `public`'s reference is revoked, user C reads nothing and A and B still do. The same
+rows are what keeps the bytes alive, below: who may read a thing and what holds it cannot disagree,
+because they are one table.
+
+**Permission inside an app is the app's.** Its groups, its roles and which of its users may see what
+are kept in the app's own database; the bucket knows holders and nothing finer. There are no versions
+either: a key points at its newest cid, and an older one is kept only while something else holds it.
+
+**The gateway serves bytes by the reference it is shown.** How somebody signed in is not its
 concern.
 
-- **Public** is answered without asking who is reading, and cached at the edge for as long as the
-  bytes exist, since a content address never changes what it names.
-- **Private** carries a credential -- a header, or a cookie on the gateway's own domain, which is
+- **A `public` reference** is answered without asking who is reading, and cached at the edge.
+  Revoking one purges that address from the edge too, since a cache that is right forever for a
+  content address is wrong the moment the right to read it ends.
+- **Any other** carries a credential -- a header, or a cookie on the gateway's own domain, which is
   what a page's `<img>` and `<video>` can send -- holding the account and its session. However the
-  reader signed in, the gateway checks that credential against the object's record and answers or
-  refuses. A private answer is never kept in a cache another reader could be served from -- the
+  reader signed in, the gateway checks that credential against the references to the cid and answers
+  or refuses. A private answer is never kept in a cache another reader could be served from -- the
   gateway decides what the edge keeps, so it says so on every answer.
 
 ## Deleting releases a name, and the bytes go later
 
-**A delete removes a name from the index and nothing else.** The record is kept, marked deleted, and
-can be put back for a while; the bytes stay where they were. A cid becomes garbage only when no name
-in its scope -- live or deleted and still restorable -- points at it, which deduplication makes the
-one safe test: two names may share the bytes.
+**A delete removes a reference and nothing else.** The row is kept, marked deleted, and can be put
+back for a while; the bytes stay where they were. A cid becomes garbage only when no reference in its
+scope -- live, or deleted and still restorable -- points at it, which deduplication makes the one
+safe test: two references may share the bytes. They are counted by a table of references, never a
+number kept beside the cid -- web's `spec/todo/milestones.md`, "Deleting removes one thing, and never
+what it pointed at", is why.
+
+**Every period is seven days for now**: a deleted reference can be put back for seven days, and a
+cid nothing references is reclaimed seven days after. A period of its own for an app, or for one
+part of an app, is open -- [../issues/scheduling.md](../issues/scheduling.md), "How long an app keeps
+what it deleted".
 
 **Each store says how it lets garbage go**:
 
@@ -145,7 +193,7 @@ not reclaimed them, and what a bucket keeps for `mistake` beneath both.
 the data is needed, so a scrub reads every copy on a schedule, as ZFS does a pool, and a content
 address makes the check exact: the bytes hash to their cid or they are bad. A bad or missing copy is
 struck from the record and copied again from a good one, onto the same store or another, until the
-bucket survives what it declared. How often a store is read through is its own, since a provider
+bucket matches its layout again. How often a store is read through is its own, since a provider
 charges for the reads.
 
 ## Background work has two schedulers
