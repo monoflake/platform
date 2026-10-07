@@ -32,7 +32,9 @@ operator practiced comes before the first app moves in --
 
 1. **Deployed by hand**: `rollout = "manual"` in its `service.toml` once host honors it -- infra's
    `spec/todo.md`, "An app may ask to be deployed by hand".
-2. **`ledger` moves in**, the first of "Toward services that keep nothing", below.
+2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
+   first a migration runner of the platform's would carry, if one is decided by then --
+   [../issues/scheduling.md](../issues/scheduling.md), "Schema changes go through the platform".
 3. **One address on every node for the database**, before a second app is given one: a proxy each
    node runs, which apps connect to and which passes on to whichever node is primary, so a failover or
    a major's switch rewrites no URL and restarts no app.

@@ -101,6 +101,34 @@ timeout. Seen on `buf` on 2026-10-07; the five minutes before the job refuses to
 physical replication between machines of one architecture only; between these two it works because
 both are 64-bit little-endian with the same alignment, and the cluster sorts by Postgres's builtin
 locale, so no collation from the C library can differ. A failover and a restore across them were
-rehearsed on 2026-10-07. Whether to accept that as it is, keep the core to one architecture when
-`buf` is replaced in 2027, or move to logical replication across architectures, is undecided.
+rehearsed on 2026-10-07. What would go wrong first is an index on text sorted by a collation of the
+C library or of ICU, which the two machines may order differently: after a failover it answers wrong,
+silently.
 
+Three ways were weighed, and none is chosen:
+
+- **As it is, guarded**: only the builtin locale allowed, which `database grant` would refuse to
+  depart from, and `amcheck` run on a standby each week to find an index out of order. The least
+  work; outside what Postgres supports.
+- **`buf` a logical subscriber**, `tyo` and `rdu` streaming physically between themselves. Logical
+  replication carries rows, not pages, and is supported across architectures; Postgres 17's failover
+  slots let the subscription follow a switch between the two arm64 nodes. It carries no schema
+  change, so it waits on "Schema changes go through the platform", below; and a failover onto `buf`
+  turns the topology over, `tyo` subscribing to it and `rdu` streaming from `tyo`.
+- **`buf` a witness**, holding no database: its vote for when failing over becomes automatic, and a
+  copy of the backups' ciphertext. The cluster stays on arm64 alone, two copies online and the
+  backups beside them, and whatever replaces `buf` in 2027 may be any architecture.
+
+## Schema changes go through the platform
+
+Every app's migrations today would run against the primary over its own `DATABASE_URL`, as the app
+pleases. Logical replication does not carry them: a column added on the primary stops a
+subscription that does not have it, and a table created there is never copied. So `buf` as a logical
+subscriber -- "Standbys on another architecture", above -- needs every schema change applied to it as
+well, by something that sees them all. A migration runner of the platform's would: an app hands it
+its migrations, and it applies each to the primary and to every subscriber, in order, and records
+which have run. It would also be where an app's schema version is known, which a major's upgrade and
+the one address on every node -- [../todo/todo.md](../todo/todo.md), "The database" -- would read.
+What an app hands it, how a migration that fails halfway is undone, and whether it is a service or
+a step of deploying an app are undecided. `ledger`, the first app given a database, is where it
+would first be needed.
