@@ -12,7 +12,7 @@ file.
 
 | area                           | entries | what it holds                                         |
 | ------------------------------ | ------- | ----------------------------------------------------- |
-| [console.md](console.md)       | 1       | what the console's pages read from elsewhere          |
+| [console.md](console.md)       | 2       | what the console's pages read from elsewhere          |
 | [gateway.md](gateway.md)       | 3       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
 | [scheduling.md](scheduling.md) | 2       | what the schedulers and Postgres leave open           |
@@ -21,6 +21,7 @@ file.
 ### [console.md](console.md)
 
 - Where the console learns a node's facts
+- Whether the console switches between palettes
 
 ### [gateway.md](gateway.md)
 

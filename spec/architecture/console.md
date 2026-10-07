@@ -23,16 +23,25 @@ hostname and cannot set one ahead for a wildcard application's subdomains, and a
 follow Access's redirect to get one: a page on one name could not open a socket on another --
 https://developers.cloudflare.com/cloudflare-one/identity/authorization-cookie/.
 
-**It is dark, on the kit's Nord palette** -- lib's `spec/kit/theme.md`, "Nord is dark only, and
-chosen by import" -- the same tokens infra's panel reads, so the two read as one product. Its charts
+**It is dark, drawn with semantic names** -- ground, surface, line, text, good, warn, danger and
+the series -- that a palette fills: the kit's Nord defines them, and for now the console points the
+surfaces, lines and states at the kit's black and white `mono.css`, Nord keeping the series, so the
+layout is tuned without color before color comes back. Its charts
 are drawn as SVG by the app itself with d3's scales and shapes, so the server renders them whole:
 a chart library drawing on a canvas would paint nothing until the browser ran it.
+
+**The shell is three fixed regions, and only the page scrolls.** The sidebar runs down the whole
+left edge with its rule, the top bar sits right of it alone, and the page between them is the one
+scrolling element; the document itself never scrolls or bounces. Their sizes are in `rem`, so the
+three keep their proportions as the reader's text size changes. A page says what it is in its
+title and the facts beside it -- never a sentence about the page, under it or under a card.
 
 **Every time is written in the reader's zone**, which Cloudflare names on the request, set once in
 the layout and read by every chart, so the server and the browser write the same text and the
 page does not change as it wakes; a zone Intl does not know falls back to UTC. **The world map is
-projected when the console is built**, from the node table, so neither the Worker nor the browser
-carries a projection or a world's topology -- only the paths it drew.
+projected when the console is built**, flat and as a grid of dots, so neither the Worker nor the
+browser carries a projection or a world's topology -- only the dots it drew. A globe is offered
+beside it and loaded only when asked for, being WebGL the server cannot draw.
 
 **It reads, and does not write, at first.** Each node's host gains a read-only token, good for its
 `GET` routes alone, and that is the token the console's path carries; a host token is root on its
