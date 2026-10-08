@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
-#MISE description="The images, or with --workers the Workers, a change needs rebuilt, as JSON: `deployable [--workers] [--all] [--since REV | --git BASE] [--files ...]`"
+#MISE description="The images, or with --workers the Workers, a change needs rebuilt, as JSON: `deployable [--workers] [--all] [--since REV | --git BASE [--head REV]] [--files ...]`"
 """An app is deployable when its directory holds a `service.toml` and a `Dockerfile`, and needs a
-new image when anything under that directory changed, a crate it is built from did, or the build
-did. With `--workers`, the apps placed on `workers` with a `wrangler.jsonc` instead, each needing a
-new `worker-` artifact when it, a package it imports, or the packaging changed. CI reads the list
-to decide what to build; see infra's spec/architecture/host.md, "The machine pulls; nothing pushes
-into it", and spec/architecture/deployer.md, "What a Worker artifact is"."""
+new image when anything under that directory changed, a crate it is built from did, a package
+Cargo.lock resolves it to did, or the build did. With `--workers`, the apps placed on `workers`
+with a `wrangler.jsonc` instead, each needing a new `worker-` artifact when it, a package it
+imports, or the packaging changed. CI reads the list to decide what to build; see infra's
+spec/architecture/host.md, "The machine pulls; nothing pushes into it", and
+spec/architecture/deployer.md, "What a Worker artifact is"."""
 
+import atexit
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from graph import ROOT, app_directories, app_of, build_inputs, changed, dependents, node_graph, owner, rust_graph  # noqa: E402
+from resolved import lock_moved, manifest_moved, tree_moved  # noqa: E402
 
 # How every image is built: a change here is a change to all of them.
-EVERY_IMAGE = {"Cargo.toml", "Cargo.lock", ".dockerignore", ".mise/tasks/image"}
+EVERY_IMAGE = {".dockerignore", ".mise/tasks/image"}
+# What every image is resolved from, read at both revisions so only the images whose inputs moved
+# are rebuilt; see resolved.py. Given files alone, with no base to read, every image, as above.
+RESOLUTION = {"Cargo.toml", "Cargo.lock"}
 # How every Worker is packaged, the same.
 EVERY_WORKER = {"package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".mise/tasks/worker"}
 
@@ -53,14 +61,86 @@ def workers():
 	return found
 
 
-def git_changed(base):
-	"""Files changed between `base` and HEAD, for CI, where there is git and no jj."""
-	command = ["git", "diff", "--name-only", base, "HEAD"]
+def git_changed(base, head="HEAD"):
+	"""Files changed between `base` and `head`, for CI, where there is git and no jj."""
+	command = ["git", "diff", "--name-only", base, head]
 	output = subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=True).stdout
 	return [line for line in output.splitlines() if line]
 
 
-def needed(files, declared):
+class Revision:
+	"""One side of a comparison: the commit `commit` names, or the files on disk where it is None.
+	Its whole tree is written out once, the first time cargo is asked about it."""
+
+	def __init__(self, commit=None):
+		self.commit, self.written = commit, None
+
+	def read(self, path):
+		if self.commit is None:
+			file = ROOT / path
+			return file.read_text() if file.exists() else None
+		command = ["git", "show", f"{self.commit}:{path}"]
+		answer = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+		return answer.stdout if answer.returncode == 0 else None
+
+	def tree(self):
+		if self.commit is None:
+			return ROOT
+		if self.written is None:
+			self.written = Path(tempfile.mkdtemp(prefix="deployable-"))
+			atexit.register(shutil.rmtree, self.written, True)
+			command = ["git", "archive", self.commit]
+			archive = subprocess.run(command, cwd=ROOT, capture_output=True, check=True).stdout
+			subprocess.run(["tar", "-x", "-C", str(self.written)], input=archive, check=True)
+		return self.written
+
+
+def jj_commit(revision):
+	"""The git commit a jj revision is, in this colocated repository."""
+	command = ["jj", "log", "--no-graph", "-r", revision, "-T", "commit_id"]
+	return subprocess.run(command, cwd=ROOT, capture_output=True, text=True, check=True).stdout
+
+
+def resolution(files, declared, crate_dirs, revisions):
+	"""The crates a change to Cargo.lock or the root Cargo.toml reaches, or None for every image:
+	given no revisions to read, or where either file cannot be read or told apart. A crate the
+	lockfile moves is asked of cargo, and kept where cargo cannot answer."""
+	touched = RESOLUTION & set(files)
+	if not touched:
+		return set()
+	if revisions is None:
+		return None
+	base, head = revisions
+	moved = set()
+	try:
+		if "Cargo.lock" in touched:
+			before, after = base.read("Cargo.lock"), head.read("Cargo.lock")
+			if before is None or after is None:
+				return None
+			candidates = lock_moved(before, after, set(declared.values()))
+			try:
+				moved |= tree_moved(base.tree(), head.tree(), candidates, ROOT) if candidates else set()
+			except (subprocess.CalledProcessError, OSError):
+				moved |= candidates
+		if "Cargo.toml" in touched:
+			before, after = base.read("Cargo.toml"), head.read("Cargo.toml")
+			if before is None or after is None:
+				return None
+			members = {
+				crate: tomllib.loads((ROOT / directory / "Cargo.toml").read_text())
+				for directory, crate in crate_dirs.items()
+			}
+			reached = manifest_moved(before, after, members)
+			if reached is None:
+				return None
+			moved |= reached
+	except (tomllib.TOMLDecodeError, KeyError, OSError):
+		return None
+	return moved
+
+
+def needed(files, declared, revisions=None):
+	"""The apps `files` need rebuilt; `revisions` reads a file before and after, as (base, head)."""
 	if any(f in EVERY_IMAGE for f in files):
 		return sorted(declared)
 	# A file another crate includes is ignored here: every such include today is a test's, which
@@ -75,12 +155,15 @@ def needed(files, declared):
 		crate = crate_dirs.get(owner(f, crate_dirs) or "")
 		if crate and (f.endswith(".rs") or f.endswith("/Cargo.toml")):
 			crates.add(crate)
-	reached = dependents(crates, crate_edges)
+	moved = resolution(files, declared, crate_dirs, revisions)
+	if moved is None:
+		return sorted(declared)
+	reached = dependents(crates | moved, crate_edges)
 	chosen |= {app for app, crate in declared.items() if crate in reached}
 	return sorted(chosen)
 
 
-def needed_workers(files, declared):
+def needed_workers(files, declared, revisions=None):
 	if any(f in EVERY_WORKER for f in files):
 		return sorted(declared)
 	package_dirs, package_edges = node_graph()
@@ -106,10 +189,19 @@ def main():
 	elif "--files" in arguments:
 		result = pick(arguments[arguments.index("--files") + 1 :], declared)
 	elif "--git" in arguments:
-		result = pick(git_changed(arguments[arguments.index("--git") + 1]), declared)
+		base = arguments[arguments.index("--git") + 1]
+		head = arguments[arguments.index("--head") + 1] if "--head" in arguments else "HEAD"
+		# HEAD is what CI checked out, so its tree is the one on disk.
+		after = Revision(None if head == "HEAD" else head)
+		result = pick(git_changed(base, head), declared, (Revision(base), after))
 	else:
 		since = arguments[arguments.index("--since") + 1] if "--since" in arguments else None
-		result = pick(changed(since), declared)
+		files = changed(since)
+		try:
+			before = Revision(jj_commit(since or "@-"))
+		except subprocess.CalledProcessError:
+			before = None
+		result = pick(files, declared, before and (before, Revision()))
 	print(json.dumps(result))
 	return 0
 
