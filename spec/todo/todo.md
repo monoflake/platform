@@ -30,15 +30,7 @@ In order, while the cluster still holds nothing anybody depends on -- what keeps
 operator practiced comes before the first app moves in --
 [../architecture/databases.md](../architecture/databases.md):
 
-1. **A week of `buf` emulated**, until 2026-10-14: it runs the database as arm64 by emulation since
-   2026-10-07, and `amcheck`, which passed on all three that day, runs on every node at 14:00 UTC.
-   Nothing moves in before the week is clean -- or before the work below is all done, if that is
-   sooner, as the author allowed on 2026-10-07. Meanwhile, in parallel: the backups copied to a
-   store on `rdu`'s and `buf`'s disks ("Toward services that keep nothing", 4), `ledger`'s move
-   written and tested; and in infra, a new host reaching one node first, declarations uploaded
-   apart, and host reading a changed `.env` -- all done on 2026-10-08, so `ledger` moves in then. `tyo` keeps a pgbench database of 150 MB until then,
-   so there are indexes of size to check.
-2. **One address on every node for the database**, before a second app is given one: a small layer-4
+1. **One address on every node for the database**, before a second app is given one: a small layer-4
    proxy of the platform's on every node, joined by host to every app's network, which passes each
    connection unaltered to the member Patroni's REST `/primary` answers `200` on, refusing new ones
    while none or two do. No pooling: each app's pool is its own, and pooling is weighed again when the

@@ -70,7 +70,8 @@ core, named by the author".
   architecture, and an emulated arm64 Postgres writes exactly the bytes a native one does, so the
   cluster stays one cluster as x86 machines join it. Decided on 2026-10-07, in place of streaming
   between architectures, which Postgres does not support, and of a logical subscriber on x86, which
-  would have had every schema change carried across by hand.
+  would have had every schema change carried across by hand. A week of watching `buf` emulated before
+  the first app moved in was ended early by the author on 2026-10-08, every step it waited on done.
 - **Postgres's port and Patroni's REST are published to the tailnet alone**, through the `peer`
   role with the ports it names -- infra's `spec/architecture/host.md`, "A role is asked for by the
   app and granted by the node". A standby reaches the primary there, and so does every app.
