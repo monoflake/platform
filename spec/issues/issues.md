@@ -15,7 +15,7 @@ file.
 | [gateway.md](gateway.md)       | 5       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
 | [scheduling.md](scheduling.md) | 10      | what the schedulers and Postgres leave open           |
-| [services.md](services.md)     | 5       | what the services' own files leave open               |
+| [services.md](services.md)     | 6       | what the services' own files leave open               |
 
 ### [gateway.md](gateway.md)
 
@@ -49,3 +49,4 @@ file.
 - A picture is served at its id, to whoever holds it, for as long as it is kept
 - grok listens only once it is signed in
 - A GitHub bot
+- An avatar has no placeholder a page can paint before it arrives
