@@ -76,10 +76,17 @@ core, named by the author".
   role with the ports it names -- infra's `spec/architecture/host.md`, "A role is asked for by the
   app and granted by the node". A standby reaches the primary there, and so does every app.
   Everything on the REST but a read asks `DATABASE_PATRONI_PASSWORD`.
-- **Until the proxy, an app's URL names the three that may lead**, `target_session_attrs=read-write`
-  over their tailnet addresses, written by `database grant`, so a failover reaches the app without a
-  grant; one address on every node replaces it -- [../todo/todo.md](../todo/todo.md), "The
-  database".
+- **An app reaches the database at `primary:5432`, on its own node**: `apps/data/primary`, a small
+  layer-4 proxy on every node, joined by host to every app's network (infra's `proxy` role), passes
+  each connection unaltered to the member whose Patroni answers `200` on `GET /primary`, and refuses
+  new ones while none or two do, so a split is never chosen in. A member counts after three answers
+  in a row and stops after three failures, checked every 2 s, every 1 s while turning; when the
+  primary moves, every session to the old one is closed at once. No pooling: each app's pool is its
+  own, weighed again when the cluster's connections near its `max_connections`. The timings and
+  limits are Pigsty's HAProxy settings, each cited where it is set. `database grant` writes the URL
+  with `target_session_attrs=read-write`, a guard against a pass to a replica. Its `/health` is `200`
+  while it listens, saying where it routes; a database without a primary is the database's to
+  report. A failover or a major's switch rewrites no URL and restarts no app. Since 2026-10-08.
 - **Each member sizes itself.** The keeper reads the lesser of its container's memory ceiling,
   8 GiB, and half the node's memory, since every node runs more than the database, and its cores and
   disk, and sets Postgres from them by Pigsty's formulas: `tyo` is tuned for 8 GiB, `sha` 7.5,

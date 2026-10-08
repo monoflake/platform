@@ -8,7 +8,7 @@ display_name = "Database Primary"
 placements = ["tyo", "nrt", "hnd", "gvx", "bru", "buf", "rdu", "sha"]
 
 # Health here; Postgres's own port, 5432, on every app's network beside it. See
-# spec/todo/todo.md, "The database".
+# spec/architecture/databases.md, "Where it runs, and which one writes".
 [container]
 port = 15432
 health = "/health"

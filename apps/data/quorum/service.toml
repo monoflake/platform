@@ -4,7 +4,7 @@ version = 1
 name = "quorum"
 display_name = "Quorum"
 # Every member of the database, each a voter, so a quorum of three outlives any one region going:
-# Asia, the US, Europe. See spec/todo/todo.md, "The database".
+# Asia, the US, Europe. See spec/architecture/databases.md, "Where it runs, and which one writes".
 placements = ["tyo", "buf", "rdu", "gvx", "sha"]
 # A member at a time: restarted together they leave no quorum, and Patroni's failsafe is all that
 # keeps the primary then.

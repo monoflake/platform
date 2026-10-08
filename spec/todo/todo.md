@@ -26,17 +26,6 @@ What web's `spec/architecture/landing.md` decides, the hosts' half of it:
 
 ## The database
 
-In order, while the cluster still holds nothing anybody depends on -- what keeps data safe and the
-operator practiced comes before the first app moves in --
-[../architecture/databases.md](../architecture/databases.md):
-
-1. **One address on every node for the database**, before a second app is given one: a small layer-4
-   proxy of the platform's on every node, joined by host to every app's network, which passes each
-   connection unaltered to the member Patroni's REST `/primary` answers `200` on, refusing new ones
-   while none or two do. No pooling: each app's pool is its own, and pooling is weighed again when the
-   cluster's connections near its `max_connections`. A failover or a major's switch then rewrites no
-   URL and restarts no app.
-
 Whenever there is room: **a newer pinned image is reported** -- `outdated` reads the tag and digest
 every Dockerfile pins and says which have a newer one upstream, the way it reports packages, and moves
 none of them.

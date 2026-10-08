@@ -58,7 +58,8 @@ MADE = {
 QUORUM_ROOT = "QUORUM_ROOT_PASSWORD"
 # The members of etcd prove themselves to each other by certificate on the peer port: a CA of
 # their own and a certificate for each, kept in secrets.json and written into each member's
-# directory, where the container reads them at /data/tls. See spec/todo/todo.md, "The database".
+# directory, where the container reads them at /data/tls. See spec/architecture/databases.md,
+# "Where it runs, and which one writes".
 QUORUM_CA = ("QUORUM_CA_CERT", "QUORUM_CA_KEY")
 QUORUM_TLS = "data/tls"
 QUORUM_USER = "65532:65532"
@@ -366,7 +367,7 @@ def grant(arguments, dry):
 	print(f"database: {primary}: {login} logs in to {login}, owned by {scope}")
 	# The proxy on the app's own node, which follows the primary, so a failover rewrites no URL;
 	# the attribute still refuses a replica, should the proxy ever pass to one. See
-	# spec/todo/todo.md, "The database".
+	# spec/architecture/databases.md, "Where it runs, and which one writes".
 	url = f"postgresql://{login}:{password}@{PROXY}:{PORT}/{login}?target_session_attrs=read-write"
 	failed = [node for node in where if not upsert(node, app, "secret.env", {"DATABASE_URL": url})]
 	if failed:
@@ -569,7 +570,7 @@ def quorum_auth_steps(root, patroni):
 
 def quorum_auth(arguments, dry):
 	"""etcd's password turned on, once, on the first core: a member that already asks one is left
-	as it is. See spec/todo/todo.md, "The database"."""
+	as it is. See spec/architecture/databases.md, "Where it runs, and which one writes"."""
 	if arguments:
 		fail("quorum-auth takes no arguments")
 	core = manifest_of(QUORUM)["placements"][0]

@@ -1,4 +1,4 @@
-//! See spec/todo/todo.md, "The database".
+//! See spec/architecture/databases.md, "Where it runs, and which one writes".
 
 use primary::check::PIGSTY;
 use primary::config::Config;

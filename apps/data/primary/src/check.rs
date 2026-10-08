@@ -2,7 +2,7 @@
 //! or down by a run of answers, never by one, and the target is the one member up -- none when
 //! none is, and none when two are, since a second primary is a split the proxy must not choose in.
 //! The timings are Pigsty v4.5.0's, each naming the file in that repository it came from. See
-//! spec/todo/todo.md, "The database".
+//! spec/architecture/databases.md, "Where it runs, and which one writes".
 
 use serde::Serialize;
 use std::time::Duration;
