@@ -60,6 +60,6 @@ at `v3`, by one route in the zone. `api.ffoni.com` and `rules/ffoni.com` stay go
 zone still carries on Cloudflare is as the release left it.
 
 **What deciding it would cost.** Once the platform's migration is done and the corpus is
-republished without the domain, the profile, the route, `GATEWAY.retired` and this entry are
-deleted again, as on 2026-10-04 -- after a count of what still asks the host, since an article
+republished without the domain, the profile, the route, `GATEWAY.retired`, `ffoni.com` among the
+platform's zones in the deployer's admission test, and this entry are deleted again, as on 2026-10-04 -- after a count of what still asks the host, since an article
 somebody saved is a caller nobody here can move.

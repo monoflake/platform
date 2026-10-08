@@ -150,7 +150,7 @@ describe("the platform's Workers", () => {
 	const platform: Policy = {
 		owners: new Map(['cdn', 'quota', 'gateway'].map((name) => [name, 'monoflake/platform'])),
 		zones: new Map([
-			['monoflake/platform', ['monoflake.com', 'monoflake.net', 'ixc.one', 'ill.li', 'symlink.si']],
+			['monoflake/platform', ['monoflake.com', 'monoflake.net', 'ixc.one', 'ill.li', 'symlink.si', 'ffoni.com']],
 		]),
 		resources: new Map(),
 	};
