@@ -58,6 +58,11 @@ operator practiced comes before the first app moves in --
      (`maximum_lag_on_failover`), and the last seconds of writes may be lost, as is already accepted.
    - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
      not fail back by itself, so `tyo` is made primary again by a switchover, by hand.
+   - **`sha` is a fourth member that never leads**: an asynchronous standby in Shanghai, x86
+     emulating arm64 as `buf` does, tagged `nofailover`, and no member of etcd, which stays three
+     so its quorum stays odd. It holds the whole cluster in plain text inside mainland China, which
+     the author accepted on 2026-10-08. It joins with Patroni, not before, being cloned from the
+     latest base backup.
    - **A node finds its own way back**: a standby that was away catches up from the primary or the
      archive, an old primary is rewound onto the new one, and one whose rewind fails, or a new node
      on an empty disk, is cloned again -- from WAL-G's latest base backup first, from the primary
