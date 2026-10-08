@@ -38,78 +38,7 @@ operator practiced comes before the first app moves in --
    written and tested; and in infra, a new host reaching one node first, declarations uploaded
    apart, and host reading a changed `.env` -- all done on 2026-10-08, so `ledger` moves in then. `tyo` keeps a pgbench database of 150 MB until then,
    so there are indexes of size to check.
-2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
-   first a migration runner of the platform's would carry, if one is decided by then --
-   [../issues/scheduling.md](../issues/scheduling.md), "Schema changes go through the platform".
-3. **The cluster fails over by itself, with Patroni and etcd**, decided on 2026-10-08 in place of the
-   operator's promote -- [../architecture/databases.md](../architecture/databases.md), "Where it
-   runs, and which one writes":
-   - **etcd on the five members**, `quorum`, a platform app of its own, each member's client and peer
-     ports published to the tailnet, natively in each node's architecture; its heartbeat and
-     election timeouts set for a quorum on three continents, its farthest pair, `gvx` and `sha`,
-     about 380 ms apart: about 500 ms and 5 s. It answers
-     only with a password, Patroni's from the secrets, since every container reaches the tailnet
-     and a key written there moves the primary. Rolled out by hand, a member at a time, like the
-     database.
-   - **Patroni in the database's container**, the keeper's child, and Postgres Patroni's: the keeper
-     renders Patroni's configuration and keeps answering host -- health, backups, `amcheck` -- and
-     Patroni starts, follows, promotes and demotes. Its REST port is published to the tailnet, and
-     everything but a read asks a password, `DATABASE_PATRONI_PASSWORD`.
-   - **Asynchronous, as now**: a standby more than 1 MiB of WAL behind is never promoted
-     (`maximum_lag_on_failover`, Pigsty's), and the last seconds of writes may be lost, as is already
-     accepted. `wal_level` is `logical`, so a major moves by logical replication without a restart.
-   - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
-     not fail back by itself, so `tyo` is made primary again by a switchover, by hand.
-   - **Five members, five voters**, decided on 2026-10-08: `tyo`, `rdu` and `buf` may lead, in that
-     order; `gvx` in Sweden, arm64 natively on 970 MiB, and `sha` in Shanghai, x86 emulating arm64,
-     are asynchronous standbys tagged `nofailover`. All five are etcd's members, so a quorum of three
-     outlives any one region going -- Asia `tyo` and `sha`, the US `rdu` and `buf`, Europe `gvx`.
-     `sha` holds the whole cluster in plain text inside mainland China, which the author accepted.
-     The two join with Patroni, not before, each cloned from the latest base backup, and `gvx`
-     runs Pigsty's smallest tuning.
-   - **A node finds its own way back**: a standby that was away catches up from the primary or the
-     archive, an old primary is rewound onto the new one, and one whose rewind fails, or a new node
-     on an empty disk, is cloned again -- from WAL-G's latest base backup first, from the primary
-     second.
-   - **A primary that loses its lease stops taking writes**, demoted by Patroni when it cannot renew
-     it in etcd. Containers have no watchdog, so the keeper is one: Postgres is stopped at once when
-     Patroni exits, and both are killed when Patroni's REST stops answering for longer than the
-     lease. The lease is 30 s with a loop of 5 and retries of 10, and a primary
-     that does not start within 25 s is failed over, as Pigsty sets them; since a frozen leader may
-     have renewed one loop before freezing, the keeper stops it after about 15 to 18 s of silence,
-     before the lease can pass to another.
-   - **etcd down is not a primary down**: `failsafe_mode` keeps a leader that still reaches every
-     member leading while etcd does not answer, as when all three members restart.
-   - **`database promote` becomes `database switchover [node]`**, Patroni's own, for a planned move.
-   - **Until the proxy, an app's URL names all three**, `target_session_attrs=read-write` over the
-     cores' tailnet addresses, written by `database grant`, so a failover reaches the app without a
-     grant; the proxy's single address replaces it.
-   - **Each member sizes itself**: the keeper reads the smaller of its container's memory limit and
-     half the node's memory, since every node runs more than the database, and its cores and disk,
-     and sets Postgres from them by Pigsty's formulas; the WAL and temporary files sized from the
-     disk are capped -- `min_wal_size` 2 GB, `max_wal_size` 8 GB, `temp_file_limit` 20 GB -- since
-     `/data` is shared, where Pigsty assumes a disk of the database's own.
-   - **Settings are taken from Pigsty where they fit**: Patroni's timings and failover settings,
-     etcd's, Postgres's tuning by the node's memory, and how a router asks Patroni which member is
-     primary, as Pigsty v4.5.0's templates set them, Apache 2.0 -- https://github.com/pgsty/pigsty.
-     Values are copied, not files: each lands in our own rendering, citing the template it came
-     from, and what does not fit -- packages on the host, its monitoring, pgBackRest in place of
-     WAL-G, native x86 Postgres -- is left. Decided on 2026-10-08.
-   - **Built and rehearsed on 2026-10-08**, in docker on the five members' measured round trips by
-     netem, 1% loss on `sha`'s links: ten minutes steady with no election after the first and every
-     write on `tyo`; `gvx` sized as 485 MiB serving 72,000 reads a second beside 3,800 writes on `tyo`
-     with no kill; the primary killed, `rdu` taking writes 28 to 32 s later and the old primary
-     rejoining as a standby; a frozen Patroni of 4.6 s causing no failover. **A partitioned leader is
-     fenced, then restarted by host's restart policy**, finds another leading, rewinds and rejoins --
-     the partition took 31 to 45 s to fail over.
-   - **The running cluster is taken over in place**, a step at a time: `database env`, which also
-     makes etcd's CA and certificates and Patroni's password; `quorum` on the five, a member at a
-     time; `database quorum-auth`; a fresh base backup of `tyo`; the database on `tyo`, whose data
-     directory becomes the first leader's, then `rdu`, `buf`, `gvx` and `sha`, each one healthy before
-     the next; then `database grant platform ledger` again for the URL naming every core, and
-     `ledger` redeployed. Not rehearsed: emulated arm64's speed on `buf` and `sha`, and the WAN beyond
-     netem.
-4. **One address on every node for the database**, before a second app is given one: a small layer-4
+2. **One address on every node for the database**, before a second app is given one: a small layer-4
    proxy of the platform's on every node, joined by host to every app's network, which passes each
    connection unaltered to the member Patroni's REST `/primary` answers `200` on, refusing new ones
    while none or two do. No pooling: each app's pool is its own, and pooling is weighed again when the

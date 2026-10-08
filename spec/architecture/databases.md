@@ -20,41 +20,77 @@ primary by its tailnet address.
 
 ## Where it runs, and which one writes
 
-**`apps/data/database` runs on `tyo`, `buf` and `rdu`, and `tyo` is the primary, named by hand.**
-The cluster cannot be placed by the platform's scheduler, whose leases are kept in it, so it is
-pinned the way the core is -- infra's `spec/architecture/nodes.md`, "Three nodes are the core, named
-by the author". `tyo` because it is a provider's machine held until 2036 with the most memory; `buf`
-and `rdu` are its standbys.
+**`apps/data/database` runs on five members, `tyo`, `rdu`, `buf`, `gvx` and `sha`, and Patroni
+chooses which one writes, its lease kept in etcd on the same five.** Since 2026-10-08; before it,
+`tyo` was named primary by hand and a failover was the operator's command. The cluster cannot be
+placed by the platform's scheduler, whose leases are kept in it, so its members are named in its
+`service.toml`, apart from the core -- infra's `spec/architecture/nodes.md`, "Three nodes are the
+core, named by the author".
 
 - **Replication is streaming and asynchronous.** A commit waits for no standby: `tyo` to the eastern
   US is about 150 ms, which a synchronous standby would add to every write. A failover can lose the
   last seconds of writes, and that is accepted.
-- **Every node runs it as arm64**, `arch = "arm64"`: `tyo` and `rdu` natively, `buf`, an x86
-  machine, by emulation -- infra's `spec/architecture/nodes.md`, "An x86 node may run arm64 images,
-  emulated, and never the other way". Physical replication is between machines of one
+- **Three may lead, in order: `tyo`, then `rdu`, then `buf`**, as Patroni's failover priorities,
+  which `database env` writes. `gvx` in Sweden and `sha` in Shanghai are standbys tagged
+  `nofailover`. `rdu` replays natively and holds the most memory after `tyo`; `buf`'s emulated
+  queries run twenty to thirty times slower than `tyo`'s, so it is the primary of last resort.
+  Patroni does not fail back by itself: `tyo` is made primary again by `database switchover tyo`.
+  `sha` holds the whole cluster in plain text inside mainland China, which the author accepted.
+- **A standby more than 1 MiB of WAL behind is never promoted** (`maximum_lag_on_failover`), so a
+  failover loses at most what the newest standby had not received.
+- **etcd, `apps/data/quorum`, runs on all five, each a voter**, so a quorum of three outlives any one
+  region going -- Asia `tyo` and `sha`, the US `rdu` and `buf`, Europe `gvx`. Its heartbeat and
+  election, 500 ms and 5 s, are set for a quorum on three continents, the farthest pair about
+  380 ms apart. Clients answer only to a password, Patroni's, since every container reaches the
+  tailnet and a key written there moves the primary; `database quorum-auth` turned it on once.
+  Peers prove themselves by certificates of the members' own CA, which `database env` makes and
+  keeps in `secrets.json`; the certificate's name is not matched to the connection's source, which
+  Docker's port publishing rewrites to the bridge's gateway -- a match refused every peer when it
+  was first deployed, on 2026-10-08. Rolled out by hand, a member at a time, like the database.
+- **The lease is 30 s, renewed every 5, retried for 10**, and a primary that does not start within
+  25 s is failed over, as Pigsty's `norm` plan sets them. A primary that cannot renew its lease is
+  demoted by Patroni. Containers have no watchdog device, so the keeper is one: it stops Postgres at
+  once when Patroni exits, and stops both when Patroni's REST has not answered alive for 15 s, which
+  with the time to notice is before a frozen leader's lease can pass to another.
+- **etcd down is not a primary down**: `failsafe_mode` keeps a leader that still reaches every
+  member leading while etcd does not answer, as when all of etcd restarts.
+- **A member finds its own way back.** A standby that was away catches up from the primary or from
+  the archive; an old primary is rewound onto the new one; one whose rewind fails, or a new member
+  on an empty disk, is cloned again, from WAL-G's latest base backup first and from the primary
+  second -- `gvx` and `sha` joined that way, each in under two minutes. A partitioned leader is
+  fenced, restarted by host's restart policy, finds another leading, and rewinds and rejoins.
+- **Rehearsed before it ran**, in docker on the members' measured round trips by netem, 1% loss on
+  `sha`'s links: ten minutes steady with no election after the first; the primary killed and `rdu`
+  taking writes 28 to 32 s later; a partition failing over in 31 to 45 s; a frozen Patroni of
+  4.6 s causing none. The running cluster was then taken over in place, `tyo`'s data directory
+  becoming the first leader's, on timeline 6.
+- **Every member runs it as arm64**, `arch = "arm64"`: `tyo`, `rdu` and `gvx` natively, `buf` and
+  `sha`, x86 machines, by emulation -- infra's `spec/architecture/nodes.md`, "An x86 node may run
+  arm64 images, emulated, and never the other way". Physical replication is between machines of one
   architecture, and an emulated arm64 Postgres writes exactly the bytes a native one does, so the
-  cluster stays one cluster as x86 machines join it; one that cannot be had in arm64 is no reason to
-  split it. Decided on 2026-10-07, in place of streaming between architectures, which Postgres does
-  not support, and of a logical subscriber on x86, which would have had every schema change carried
-  across by hand.
-- **The standbys are ordered: `rdu`, then `buf`.** A promote that names no node takes the first in
-  that order that answers and is caught up, and passes over one that is behind rather than lose what
-  it lacks. `rdu` replays natively and holds the most memory; `buf`'s emulated queries run twenty to
-  thirty times slower than `tyo`'s, so it is the primary of last resort.
-- **The port is published to the tailnet alone**, through the `peer` role with the port it names --
-  infra's `spec/architecture/host.md`, "A role is asked for by the app and granted by the node". A
-  standby reaches the primary there, and so does every app.
-- **Failing over is a command, not a decision the cluster makes**: the operator promotes a standby,
-  names it primary on all three, and the apps' URLs follow. Named no node, the command takes the
-  standbys in their order: while the primary answers, the first that streams and is less than a WAL
-  segment behind; when it does not, the first that has received as much as any other that answers,
-  so nothing one standby holds is lost by promoting another. The old primary is stopped first when it
-  can be reached, and the standby has replayed all it wrote before it is promoted, so there is never
-  a moment with two primaries taking writes; rehearsed from `tyo` to `buf` and back on 2026-10-07. Each node reads which node is primary
-  from its configuration, so a primary that returns after being replaced is told what it now is
-  rather than taking writes beside its successor. Failing over by itself is decided, with Patroni
-  and etcd on the three cores, and not yet built -- [../todo/todo.md](../todo/todo.md), "The
+  cluster stays one cluster as x86 machines join it. Decided on 2026-10-07, in place of streaming
+  between architectures, which Postgres does not support, and of a logical subscriber on x86, which
+  would have had every schema change carried across by hand.
+- **Postgres's port and Patroni's REST are published to the tailnet alone**, through the `peer`
+  role with the ports it names -- infra's `spec/architecture/host.md`, "A role is asked for by the
+  app and granted by the node". A standby reaches the primary there, and so does every app.
+  Everything on the REST but a read asks `DATABASE_PATRONI_PASSWORD`.
+- **Until the proxy, an app's URL names the three that may lead**, `target_session_attrs=read-write`
+  over their tailnet addresses, written by `database grant`, so a failover reaches the app without a
+  grant; one address on every node replaces it -- [../todo/todo.md](../todo/todo.md), "The
   database".
+- **Each member sizes itself.** The keeper reads the lesser of its container's memory ceiling,
+  8 GiB, and half the node's memory, since every node runs more than the database, and its cores and
+  disk, and sets Postgres from them by Pigsty's formulas: `tyo` is tuned for 8 GiB, `sha` 7.5,
+  `rdu` 3.8, `buf` 1.6 and `gvx` 485 MiB. The WAL and temporary files sized from the disk are capped
+  -- `min_wal_size` 2 GB, `max_wal_size` 8 GB, `temp_file_limit` 20 GB -- since `/data` is shared,
+  where Pigsty assumes a disk of the database's own. `max_connections` is 50 on every member, since
+  each app's own pool connects straight to the cluster. `wal_level` is `logical`, so a major moves
+  by logical replication without a restart.
+- **Settings are taken from Pigsty where they fit**, v4.5.0's templates, Apache 2.0 --
+  https://github.com/pgsty/pigsty. Values are copied, not files: each lands in the keeper's own
+  rendering, citing the template it came from, and what does not fit -- packages on the host, its
+  monitoring, pgBackRest in place of WAL-G, native x86 Postgres -- is left. Decided on 2026-10-08.
 
 ## The container is Postgres and a keeper of it
 
@@ -76,14 +112,16 @@ protocol, so the program answers for it:
   extension is made on the primary and reaches the standbys by replication.
 - **The backup job fails while archiving has stopped**, before it takes a base backup, so the run
   `cron` records in the ledger says so -- the one place a failure is already seen.
-- **On a first start** it makes the cluster on the primary, and on a standby copies the primary with
-  `pg_basebackup` and follows it.
+- **Patroni is its child, and Postgres is Patroni's.** The keeper writes Patroni's configuration
+  afresh each start and leaves starting, following, promoting and demoting to it; on the leader it
+  keeps the roles and passwords as the environment gives them, once each tenure. `/health` is `200`
+  while Patroni runs Postgres as a primary or a replica, and says which.
 - **`/jobs/backup`**, which `cron` calls once a day, takes a base backup and lets go of what the
   tiers below no longer keep.
 
 It answers on a socket in its own directory, as `apt` does, so the `cron` of each node reaches the
-keeper of that node and no other -- a backup is the primary's to take and a standby's to skip -- and
-the only port is Postgres's, published to the tailnet. The cluster beside the socket is the
+keeper of that node and no other -- a backup is the leader's to take and a standby's to skip -- and
+the only ports are Postgres's and Patroni's REST, published to the tailnet. The cluster beside the socket is the
 database's user's alone, so the `cron` that is handed the directory reaches the socket and nothing
 else in it.
 
@@ -160,9 +198,11 @@ image is -- infra's `spec/architecture/host.md`, "An upstream image is adopted, 
 one upstream is reported, never taken by itself: moving the database moves every scope's data.
 
 **The cluster is deployed by hand, a node at a time**, `rollout = "manual"` in its `service.toml`:
-a run that builds it deploys nothing until the operator does, standby by standby and the primary
-last, each answering healthy and caught up before the next. Deploying all three at once, as a run
-deploys any other app, would restart the primary and both standbys together.
+a run that builds it deploys nothing until the operator does, standby by standby and the leader
+last -- a switchover first, so its restart fails nothing over -- each answering healthy and caught up
+before the next. Deploying every member at once, as a run deploys any other app, would restart the
+leader and its standbys together. `quorum` is rolled the same way, a member at a time, since
+restarted together they leave no quorum.
 
 **A minor version is a new image and nothing else**: the data on disk is the same format, so it is
 rolled as above, and rolled back the same way.
