@@ -3,7 +3,13 @@
 version = 1
 name = "ledger"
 display_name = "Task Ledger"
+# One node until the platform's scheduler can run it on more; its data is in the cluster, reached by
+# the `DATABASE_URL` that `mise run database grant platform ledger` writes. See
+# spec/todo/todo.md, "Toward services that keep nothing".
 placements = ["rdu"]
+# Deployed by hand until ledger moves into the database: the version a run would deploy needs the
+# `DATABASE_URL` that only `mise run database grant` makes. See spec/todo/todo.md, "The database".
+rollout = "manual"
 
 [container]
 # One above keeper's 11010 and host's 11011, in the same low block, since ledger is the platform's
@@ -12,6 +18,7 @@ port = 12010
 health = "/health"
 memory_mb = 64
 
+# Only the SQLite it kept before, for `ledger import /data/ledger.db`; given up once imported.
 [data]
 path = "/data"
 

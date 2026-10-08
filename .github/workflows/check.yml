@@ -1,0 +1,68 @@
+# Runs the Rust tests a change can break, the SQL ones against the Postgres the cluster runs. Not
+# every gate: the rest are `mise run verify` at home. See apps/data/ledger/src/store.rs, `testing`.
+name: Check
+
+on:
+  push:
+    branches: [main]
+    paths: &rust
+      - "**/*.rs"
+      - "**/Cargo.toml"
+      - "Cargo.lock"
+      # Tests read the declarations they answer for.
+      - "apps/**/service.toml"
+      - ".github/workflows/check.yml"
+  pull_request:
+    paths: *rust
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    runs-on: ubuntu-24.04-arm
+    services:
+      # The image apps/data/database/Dockerfile pins; the two move together.
+      postgres:
+        image: postgres:18-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+        env:
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 5s
+          --health-retries 30
+    steps:
+      # The workspace above the project, as it is checked out at home: its rust-toolchain.toml is
+      # the compiler.
+      - uses: actions/checkout@v7
+        with:
+          repository: canmi21/canmi
+      - uses: actions/checkout@v7
+        with:
+          path: repos/platform
+      # sccache as the images build with it: the release's static binary, checked against its sum,
+      # and the runtime's cache credentials. See infra's spec/architecture/host.md, "An image is
+      # built for speed, and for any node of its architecture".
+      - uses: crazy-max/ghaction-github-runtime@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download v0.18.0 --repo mozilla/sccache --dir "$RUNNER_TEMP" \
+            --pattern sccache-v0.18.0-aarch64-unknown-linux-musl.tar.gz
+          tarball="$RUNNER_TEMP/sccache-v0.18.0-aarch64-unknown-linux-musl.tar.gz"
+          echo "2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a  $tarball" | sha256sum -c -
+          tar -xzf "$tarball" -C "$RUNNER_TEMP" --strip-components=1 --wildcards '*/sccache'
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - working-directory: repos/platform
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          RUSTC_WRAPPER: sccache
+          LEDGER_TEST_DATABASE_URL: postgresql://postgres:test@localhost:5432/postgres
+        run: |
+          cargo test --workspace --locked
+          sccache --show-stats

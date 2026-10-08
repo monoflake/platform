@@ -95,17 +95,33 @@ whole hours and the one under way -- 1 to 168, 24 when absent -- by `asked_at`, 
 nothing of a task but its service, when it was asked and how it stands, which is what `telemetry`
 may publish. See [telemetry.md](telemetry.md).
 
-## Kept for good, in SQLite
+## Kept for good, in the platform's Postgres
 
 **Nothing is ever deleted, tasks or events.** A task is a few hundred bytes and an event less; a
-year of captures at thousands a day, each a handful of events, is some hundreds of megabytes. The
-ledger's SQLite is `ledger.db` in its own directory, WAL mode, a table of tasks keyed by `service`
-and `id` and indexed by `updated_at`, and a table of events keyed by `service`, `task` and `seq`,
-snapshotted with the directory before each deploy as every app's data is.
+year of captures at thousands a day, each a handful of events, is some hundreds of megabytes.
 
-**It is written by one process, in batches**, which is what SQLite does best: every write reaches
-the ledger over HTTP, so there is one writer however many services report, and a batch is one
-transaction. It stays SQLite until writes outrun batching, several ledgers must write one history,
-or questions over the whole history want what PostgreSQL does -- and then the ledger alone gets a
-PostgreSQL of its own, per [services.md](services.md), "A service keeps its data in SQLite, in its
-own directory". No service changes when it does, since none of them sees the ledger's storage.
+**The ledger's history is `platform_ledger` in the platform's cluster**, owned by the `platform`
+role and reached by the `DATABASE_URL` that `mise run database grant platform ledger` writes --
+[databases.md](databases.md), "One cluster, and a scope is a role in it". So it is backed up,
+mirrored and failed over as the cluster is, and the ledger keeps nothing on its node.
+
+- **Two tables on their natural keys**: tasks keyed by `service` and `id`, events by `service`,
+  `task` and `seq`, so no key is ever minted. Times are nanoseconds in a `bigint`, since the cursor
+  and its ties need more than `timestamptz`'s microseconds; a record and an event's data are
+  `jsonb`; the key columns are `COLLATE "C"`, so the order is bytewise whatever the cluster's
+  locale.
+- **Which write wins is decided in SQL**, one `INSERT ... ON CONFLICT DO UPDATE ... WHERE` per task,
+  so it holds however many ledgers write at once; a batch is still one transaction.
+- **Its schema moves by migrations the ledger runs itself**, each at start under one advisory lock,
+  in its own transaction with its row in `ledger_migrations`. A migration is an expand or a
+  contract, and a test refuses an expand that drops, renames, retypes, adds `NOT NULL` or truncates
+  anything; a runner for every app is [../issues/scheduling.md](../issues/scheduling.md), "Schema
+  changes go through the platform".
+- **Its SQL is tested against a real Postgres 18**: a service in CI, and a throwaway one in docker
+  locally; without one the SQL tests say so and pass over themselves, and in CI that is a failure.
+- **The SQLite it was kept in is read once, by `ledger import <path>`**, which copies every task as
+  kept and every event, any schema it ever had, and copies nothing twice when run again.
+
+Until it moves in, the ledger deployed on `rdu` is the SQLite one, `ledger.db` in its own directory,
+and its rollout is by hand so the new one is not deployed before its database exists --
+[../todo/todo.md](../todo/todo.md), "The database".

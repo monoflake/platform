@@ -8,9 +8,9 @@ use axum::http::StatusCode;
 use axum::response::Response;
 use axum::routing::{get, post, put};
 use ledger::{Item, Record};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
-pub type Shared = Arc<Mutex<Store>>;
+pub type Shared = Arc<Store>;
 
 /// A page's smallest and largest size; see spec/architecture/ledger.md, "Read by the console".
 const DEFAULT_LIMIT: usize = 50;
@@ -23,7 +23,7 @@ const MAX_HOURS: u32 = 168;
 
 pub fn routes(store: Shared) -> Router {
 	Router::new()
-		.route("/health", get(|| async { response::success(StatusCode::OK, ()) }))
+		.route("/health", get(health))
 		.route("/tasks", get(list))
 		.route("/tasks/{service}/{id}", put(upsert).get(get_one))
 		.route("/events", post(events))
@@ -32,9 +32,14 @@ pub fn routes(store: Shared) -> Router {
 		.with_state(store)
 }
 
-/// A poisoned lock means a write panicked mid-way; what it holds is still worth reading.
-fn lock(store: &Shared) -> std::sync::MutexGuard<'_, Store> {
-	store.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+/// Healthy while the database answers, since nothing is kept without it.
+async fn health(State(store): State<Shared>) -> Response {
+	match store.answers().await {
+		Ok(()) => response::success(StatusCode::OK, ()),
+		Err(error) => {
+			response::failure_with(StatusCode::SERVICE_UNAVAILABLE, "store_unavailable", error)
+		}
+	}
 }
 
 /// The path's `service` and `id` have to equal the body's, so a caller cannot address one task and
@@ -50,7 +55,7 @@ async fn upsert(
 	if record.service != service || record.id != id {
 		return response::failure(StatusCode::BAD_REQUEST, "invalid_body");
 	}
-	match lock(&store).upsert(record.into()) {
+	match store.upsert(record.into()).await {
 		Ok(stored) => response::success(StatusCode::OK, stored),
 		Err(error) => {
 			response::failure_with(StatusCode::INTERNAL_SERVER_ERROR, "store_unavailable", error)
@@ -64,7 +69,7 @@ async fn get_one(
 	Path((service, id)): Path<(String, String)>,
 	State(store): State<Shared>,
 ) -> Response {
-	match lock(&store).view(&service, &id) {
+	match store.view(&service, &id).await {
 		Ok(Some(view)) => response::success(StatusCode::OK, view),
 		Ok(None) => response::failure(StatusCode::NOT_FOUND, "no_such_task"),
 		Err(error) => {
@@ -126,7 +131,7 @@ async fn list(State(store): State<Shared>, Query(asked): Query<Asked>) -> Respon
 		parent_service: parent.as_ref().map(|(service, _)| service.clone()),
 		parent_id: parent.as_ref().map(|(_, id)| id.clone()),
 	};
-	match lock(&store).list(&filter, before.as_ref(), limit) {
+	match store.list(&filter, before.as_ref(), limit).await {
 		Ok(rows) => {
 			response::success(StatusCode::OK, rows.into_iter().map(Listed::from).collect::<Vec<_>>())
 		}
@@ -152,7 +157,7 @@ fn hours_asked(hours: Option<&str>) -> u32 {
 /// spec/architecture/ledger.md, "Counted for telemetry".
 async fn counts(State(store): State<Shared>, Query(asked): Query<CountsAsked>) -> Response {
 	let hours = hours_asked(asked.hours.as_deref());
-	match lock(&store).counts(hours) {
+	match store.counts(hours).await {
 		Ok(rows) => response::success(StatusCode::OK, rows),
 		Err(error) => {
 			response::failure_with(StatusCode::INTERNAL_SERVER_ERROR, "store_unavailable", error)
@@ -169,7 +174,7 @@ async fn events(
 	let Ok(axum::Json(items)) = body else {
 		return response::failure(StatusCode::BAD_REQUEST, "invalid_body");
 	};
-	match lock(&store).batch(items) {
+	match store.batch(items).await {
 		Ok(taken) => response::success(StatusCode::OK, serde_json::json!({ "taken": taken })),
 		Err(error) => {
 			response::failure_with(StatusCode::INTERNAL_SERVER_ERROR, "store_unavailable", error)
@@ -202,10 +207,8 @@ mod tests {
 		}
 	}
 
-	fn shared() -> (tempfile::TempDir, Shared) {
-		let directory = tempfile::tempdir().unwrap();
-		let store = Store::open(&directory.path().join("ledger.db")).unwrap();
-		(directory, Arc::new(Mutex::new(store)))
+	async fn shared() -> Option<Shared> {
+		Some(Arc::new(crate::store::testing::store().await?))
 	}
 
 	async fn put(router: Router, path: &str, record: &Record) -> (StatusCode, serde_json::Value) {
@@ -238,7 +241,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn upserts_and_reads_back_in_the_envelope() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		let (status, body) = put(router.clone(), "/tasks/shot/a", &record("shot", "a")).await;
 		assert_eq!(status, StatusCode::OK);
@@ -258,7 +261,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn refuses_a_path_and_body_that_disagree() {
-		let (_directory, store) = shared();
+		let store = Arc::new(crate::store::testing::unreached());
 		let router = routes(store);
 		let (status, body) = put(router, "/tasks/shot/a", &record("shot", "b")).await;
 		assert_eq!((status, &body["code"]), (StatusCode::BAD_REQUEST, &"invalid_body".into()));
@@ -266,7 +269,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn lists_newest_first_paged_and_filtered() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		for id in ["a", "b", "c"] {
 			put(router.clone(), &format!("/tasks/shot/{id}"), &record("shot", id)).await;
@@ -309,7 +312,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn a_mixed_batch_is_stored_once_even_posted_twice() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		let items = vec![
 			Item::Task(record("shot", "a").into()),
@@ -329,7 +332,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn events_are_answered_in_seq_order_however_they_arrived() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		post_events(router.clone(), &[Item::Task(record("shot", "a").into())]).await;
 		post_events(
@@ -350,7 +353,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn the_task_view_carries_events_and_children() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		post_events(router.clone(), &[Item::Task(record("shot", "parent").into())]).await;
 		let child = Task {
@@ -369,7 +372,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn the_parent_filter_narrows_the_list() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		post_events(router.clone(), &[Item::Task(record("shot", "parent").into())]).await;
 		let child = Task {
@@ -386,7 +389,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn the_upsert_rule_still_holds_through_events() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		let mut done = record("shot", "a");
 		done.state = TaskState::Done;
@@ -404,15 +407,15 @@ mod tests {
 
 	#[tokio::test]
 	async fn paging_with_the_returned_cursor_walks_every_row_once_even_tied_at_the_millisecond() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store.clone());
 		for id in ["a", "b", "c", "d"] {
 			put(router.clone(), &format!("/tasks/shot/{id}"), &record("shot", id)).await;
 		}
 		// `b` and `c` tie at the same millisecond, so the walk relies on the `id` tiebreaker.
 		let tied = 1_700_000_000_123_000_000i64;
-		lock(&store).force_updated_at("shot", "b", tied);
-		lock(&store).force_updated_at("shot", "c", tied);
+		store.force_updated_at("shot", "b", tied).await;
+		store.force_updated_at("shot", "c", tied).await;
 
 		let mut seen = Vec::new();
 		let mut before: Option<String> = None;
@@ -431,6 +434,16 @@ mod tests {
 		}
 		seen.sort();
 		assert_eq!(seen, vec!["a", "b", "c", "d"]);
+	}
+
+	#[tokio::test]
+	async fn unhealthy_while_the_database_does_not_answer() {
+		let router = routes(Arc::new(crate::store::testing::unreached()));
+		let (status, body) = ask(router, "/health").await;
+		assert_eq!(
+			(status, &body["code"]),
+			(StatusCode::SERVICE_UNAVAILABLE, &"store_unavailable".into())
+		);
 	}
 
 	#[test]
@@ -453,7 +466,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn counts_buckets_by_service_hour_and_state() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		put(router.clone(), "/tasks/shot/a", &record_asked("shot", "a", TaskState::Done, 0)).await;
 		put(router.clone(), "/tasks/shot/b", &record_asked("shot", "b", TaskState::Done, 0)).await;
@@ -473,7 +486,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn counts_window_keeps_hours_plus_the_one_under_way() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		put(router.clone(), "/tasks/shot/now", &record_asked("shot", "now", TaskState::Done, 0)).await;
 		put(router.clone(), "/tasks/shot/one", &record_asked("shot", "one", TaskState::Done, 1)).await;
@@ -501,7 +514,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn counts_is_empty_with_nothing_asked() {
-		let (_directory, store) = shared();
+		let Some(store) = shared().await else { return };
 		let router = routes(store);
 		let (status, body) = ask(router, "/counts").await;
 		assert_eq!(status, StatusCode::OK);

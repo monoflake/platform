@@ -1,8 +1,9 @@
 //! ledger: every task any service was asked to do. See spec/architecture/ledger.md.
 
 use ledger_service::api::{self, Shared};
+use ledger_service::import;
 use ledger_service::store::Store;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 /// musl's allocator is slow under many small allocations, and images are built for speed; see
 /// infra's spec/architecture/host.md, "An image is built for speed, and for any node of its
@@ -14,16 +15,34 @@ static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 /// host, and the test below holds the two together.
 const PORT: u16 = 12010;
 
+/// `ledger` answers; `ledger import <ledger.db>` copies the SQLite it kept before into the
+/// database once, and says what it wrote. Both bring the schema up to date first.
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-	let data = std::env::var("LEDGER_DATA").unwrap_or_else(|_| "/data".into());
+	let url = std::env::var("DATABASE_URL")
+		.map_err(|_| anyhow::anyhow!("DATABASE_URL is not set; `mise run database grant` writes it"))?;
+	let store = Store::connect(&url, None)?;
+	let applied = store.migrate().await?;
+	if !applied.is_empty() {
+		eprintln!("ledger: applied migrations {applied:?}");
+	}
+
+	let arguments: Vec<String> = std::env::args().skip(1).collect();
+	if let [verb, path] = &arguments[..]
+		&& verb == "import"
+	{
+		let imported = import::import(&store, std::path::Path::new(path)).await?;
+		println!("{}", serde_json::to_string(&imported)?);
+		return Ok(());
+	}
+	if !arguments.is_empty() {
+		anyhow::bail!("ledger takes nothing, or `import <ledger.db>`");
+	}
+
 	let listen = std::env::var("LISTEN").unwrap_or_else(|_| format!("0.0.0.0:{PORT}"));
-
-	let store = Store::open(std::path::Path::new(&data).join("ledger.db").as_path())?;
-	let shared: Shared = Arc::new(Mutex::new(store));
-
+	let shared: Shared = Arc::new(store);
 	let listener = tokio::net::TcpListener::bind(&listen).await?;
-	eprintln!("ledger: listening on {listen}, keeping {data}");
+	eprintln!("ledger: listening on {listen}");
 	axum::serve(listener, api::routes(shared)).with_graceful_shutdown(stopped()).await?;
 	Ok(())
 }

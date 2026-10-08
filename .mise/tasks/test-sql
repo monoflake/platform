@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#MISE description="Run the SQL tests against a throwaway Postgres 18 in docker: `test-sql [cargo test args]`"
+set -euo pipefail
+
+# The image the cluster runs, read from the database's own Dockerfile so the two never drift; the
+# container is removed however the tests end. CI starts the same image as a service instead. See
+# apps/data/ledger/src/store.rs, `testing`.
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+image="$(sed -n 's/^FROM \(postgres:[^ ]*\).*/\1/p' "$ROOT/apps/data/database/Dockerfile")"
+[ -n "$image" ] || { echo "test-sql: no postgres image in apps/data/database/Dockerfile" >&2; exit 1; }
+name="test-sql-$$"
+trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+docker run -d --name "$name" -e POSTGRES_PASSWORD=test -p 127.0.0.1::5432 "$image" >/dev/null
+port="$(docker port "$name" 5432/tcp | head -n 1 | sed 's/.*://')"
+for _ in $(seq 1 60); do
+	docker exec "$name" pg_isready -U postgres -h 127.0.0.1 >/dev/null 2>&1 && break
+	sleep 1
+done
+docker exec "$name" pg_isready -U postgres -h 127.0.0.1 >/dev/null || { echo "test-sql: Postgres did not start in 60 seconds" >&2; exit 1; }
+cd "$ROOT"
+LEDGER_TEST_DATABASE_URL="postgresql://postgres:test@127.0.0.1:$port/postgres" \
+	cargo test -p ledger-service "$@"
