@@ -3,20 +3,17 @@
 //! no rule asked -- with what Postgres already holds left alone, so running it twice is harmless.
 //! Every schema the SQLite ever had is read: the stored JSON is the record in all of them.
 
-use crate::store::{Store, StoredTask, insert_event, task_row};
+use crate::store::{
+	EventColumns, IMPORT_EVENTS, IMPORT_TASKS, Store, StoredTask, TaskColumns, task_row,
+};
 use jiff::Timestamp;
 use ledger::{Event, Level};
 use rusqlite::{Connection, OpenFlags, OptionalExtension, params};
 use serde::Serialize;
 use std::path::Path;
 
-/// Rows read and written at once, in one transaction.
+/// Rows read and written at once: one statement, and so one round trip, a page.
 const PAGE: i64 = 500;
-
-const INSERT_TASK: &str = "INSERT INTO tasks
-	(service, id, kind, state, caller, updated_at, finished_at, asked_at, parent_service, parent_id, record)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	ON CONFLICT DO NOTHING";
 
 #[derive(Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Imported {
@@ -101,33 +98,34 @@ pub fn events_after(
 /// Every task and event of the SQLite at `path`, opened read-only, written into `store`.
 pub async fn import(store: &Store, path: &Path) -> anyhow::Result<Imported> {
 	let sqlite = Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
-	let mut client = store.client().await?;
+	let client = store.client().await?;
 	let mut imported = Imported::default();
 
+	let statement = client.prepare_cached(&IMPORT_TASKS).await?;
 	let mut after = None;
 	loop {
 		let page = tasks_after(&sqlite, after.as_ref())?;
 		let Some((service, id, _)) = page.last() else { break };
 		after = Some((service.clone(), id.clone()));
-		let transaction = client.transaction().await?;
+		let mut columns = TaskColumns::default();
 		for (_, _, stored) in &page {
-			let row = task_row(stored)?;
-			imported.tasks_written += transaction.execute(INSERT_TASK, &row.params()).await?;
+			columns.push(task_row(stored)?);
 		}
-		transaction.commit().await?;
+		imported.tasks_written += client.execute(&statement, &columns.params()).await?;
 		imported.tasks_read += page.len() as u64;
 	}
 
+	let statement = client.prepare_cached(&IMPORT_EVENTS).await?;
 	let mut after = None;
 	loop {
 		let page = events_after(&sqlite, after.as_ref())?;
 		let Some(last) = page.last() else { break };
 		after = Some((last.service.clone(), last.task.clone(), i64::try_from(last.seq)?));
-		let transaction = client.transaction().await?;
+		let mut columns = EventColumns::default();
 		for event in &page {
-			imported.events_written += insert_event(&transaction, event).await?;
+			columns.push(event)?;
 		}
-		transaction.commit().await?;
+		imported.events_written += client.execute(&statement, &columns.params()).await?;
 		imported.events_read += page.len() as u64;
 	}
 	Ok(imported)
@@ -179,6 +177,10 @@ mod tests {
 	/// The schema as the ledger last wrote it, with parents, `asked_at` and events: more than a page
 	/// of each, so the paging is walked.
 	fn last_schema(path: &Path) {
+		last_schema_holding(path, PAGE + 7, PAGE + 3);
+	}
+
+	fn last_schema_holding(path: &Path, tasks: i64, events: i64) {
 		let sqlite = Connection::open(path).unwrap();
 		sqlite
 			.execute_batch(
@@ -192,7 +194,7 @@ mod tests {
 			)
 			.unwrap();
 		let at = "2026-10-01T09:30:00.123456789Z";
-		for n in 0..(PAGE + 7) {
+		for n in 0..tasks {
 			let id = format!("t{n:04}");
 			let parent = (n > 0).then_some(("shot", "t0000"));
 			sqlite
@@ -209,7 +211,7 @@ mod tests {
 				)
 				.unwrap();
 		}
-		for seq in 0..(PAGE + 3) {
+		for seq in 0..events {
 			sqlite
 				.execute(
 					"INSERT INTO events VALUES ('shot', 't0000', ?1, ?2, 'storing', 'warn', 'slow', ?3)",
@@ -243,6 +245,25 @@ mod tests {
 		let events = events_after(&sqlite, None).unwrap();
 		assert_eq!(events.len(), PAGE as usize);
 		assert_eq!((events[0].level, events[0].data["ms"].as_i64()), (Level::Warn, Some(12)));
+	}
+
+	#[tokio::test(flavor = "multi_thread")]
+	async fn an_import_crosses_an_ocean_a_page_at_a_time() {
+		let Some(store) =
+			crate::store::testing::store_behind(std::time::Duration::from_millis(25)).await
+		else {
+			return;
+		};
+		let directory = tempfile::tempdir().unwrap();
+		let path = directory.path().join("ledger.db");
+		last_schema_holding(&path, 3000, 3000);
+		let started = std::time::Instant::now();
+		let imported = import(&store, &path).await.unwrap();
+		let took = started.elapsed();
+		eprintln!("6000 rows over 50 ms round trips took {took:?}");
+		assert_eq!((imported.tasks_written, imported.events_written), (3000, 3000));
+		// 50 ms a round trip: a row each would be 6000 of them, five minutes; a page each is twelve.
+		assert!(took < std::time::Duration::from_secs(5), "{took:?}");
 	}
 
 	#[tokio::test]

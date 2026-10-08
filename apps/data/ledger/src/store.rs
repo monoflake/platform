@@ -5,8 +5,10 @@
 use crate::migrations;
 use deadpool_postgres::{GenericClient, Manager, ManagerConfig, Pool, RecyclingMethod};
 use jiff::Timestamp;
-use ledger::{Caller, Event, Item, Level, State, Task};
+use ledger::{Caller, Event, Item, Level, Record, State, Task};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::LazyLock;
 use tokio_postgres::NoTls;
 use tokio_postgres::types::ToSql;
 
@@ -129,14 +131,20 @@ pub(crate) fn nanos(at: Timestamp) -> i64 {
 	i64::try_from(at.as_nanosecond()).unwrap_or(i64::MAX)
 }
 
+/// A task's columns, in the order every statement below writes them.
+const COLUMNS: &str = "(service, id, kind, state, caller, updated_at, finished_at, asked_at, \
+	parent_service, parent_id, record)";
+
+/// Many tasks' columns as arrays, a row each, in `COLUMNS`' order: a page or a batch is then one
+/// statement, and so one round trip to a primary an ocean away.
+const TASK_ARRAYS: &str = "SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], \
+	$5::text[], $6::bigint[], $7::bigint[], $8::bigint[], $9::text[], $10::text[], $11::jsonb[])";
+
 /// The upsert rule spec/architecture/ledger.md states, as the update's own condition so two ledgers
 /// writing one task at once still keep the one the rule picks: a later `asked_at` is the same task
 /// asked again and always replaces what is kept; within one asking, a `finished_at` older than the
-/// one kept does not, and a task with none never replaces one that has it.
-const UPSERT: &str = "INSERT INTO tasks
-	(service, id, kind, state, caller, updated_at, finished_at, asked_at, parent_service, parent_id, record)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-	ON CONFLICT (service, id) DO UPDATE SET
+/// one kept does not, and a task with none never replaces one that has it. `replaces` is the same.
+const RULE: &str = "ON CONFLICT (service, id) DO UPDATE SET
 		kind = excluded.kind, state = excluded.state, caller = excluded.caller,
 		updated_at = excluded.updated_at, finished_at = excluded.finished_at,
 		asked_at = excluded.asked_at,
@@ -144,18 +152,57 @@ const UPSERT: &str = "INSERT INTO tasks
 		record = excluded.record
 	WHERE excluded.asked_at > tasks.asked_at
 		OR (excluded.asked_at = tasks.asked_at AND (tasks.finished_at IS NULL
-			OR (excluded.finished_at IS NOT NULL AND excluded.finished_at >= tasks.finished_at)))
-	RETURNING record";
+			OR (excluded.finished_at IS NOT NULL AND excluded.finished_at >= tasks.finished_at)))";
 
-/// Kept once by `(service, task, seq)`; a duplicate is ignored, per "Pushed to, never asking".
-const EVENT: &str = "INSERT INTO events (service, task, seq, at, stage, level, message, data)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING";
+static UPSERT: LazyLock<String> = LazyLock::new(|| {
+	format!(
+		"INSERT INTO tasks {COLUMNS} VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) {RULE} \
+		 RETURNING record"
+	)
+});
+
+/// Many events, each kept once by `(service, task, seq)` and a duplicate ignored, per "Pushed to,
+/// never asking"; its arrays start at `$1 + from`.
+fn events_into(from: usize) -> String {
+	let at = |n: usize| n + from;
+	format!(
+		"INSERT INTO events (service, task, seq, at, stage, level, message, data) SELECT * FROM \
+		 unnest(${}::text[], ${}::text[], ${}::bigint[], ${}::bigint[], ${}::text[], ${}::text[], \
+		 ${}::text[], ${}::jsonb[]) ON CONFLICT DO NOTHING",
+		at(1),
+		at(2),
+		at(3),
+		at(4),
+		at(5),
+		at(6),
+		at(7),
+		at(8)
+	)
+}
+
+/// A batch as one statement: its tasks upserted by the rule, one per task, and its events kept.
+static BATCH: LazyLock<String> = LazyLock::new(|| {
+	format!(
+		"WITH upserted AS (INSERT INTO tasks {COLUMNS} {TASK_ARRAYS} {RULE} RETURNING 1), \
+		 appended AS ({} RETURNING 1) \
+		 SELECT (SELECT count(*) FROM upserted), (SELECT count(*) FROM appended)",
+		events_into(11)
+	)
+});
+
+/// A page of the old SQLite, written as kept, what Postgres holds already left alone.
+pub(crate) static IMPORT_TASKS: LazyLock<String> =
+	LazyLock::new(|| format!("INSERT INTO tasks {COLUMNS} {TASK_ARRAYS} ON CONFLICT DO NOTHING"));
+pub(crate) static IMPORT_EVENTS: LazyLock<String> = LazyLock::new(|| events_into(0));
 
 impl Store {
 	/// A pool over `url`, `DATABASE_URL` as `mise run database grant` writes it; nothing is connected
 	/// until something is asked. `schema`, in tests alone, is where every table is made and read.
 	pub fn connect(url: &str, schema: Option<&str>) -> anyhow::Result<Self> {
-		let mut config: tokio_postgres::Config = url.parse()?;
+		Self::with(url.parse()?, schema)
+	}
+
+	fn with(mut config: tokio_postgres::Config, schema: Option<&str>) -> anyhow::Result<Self> {
 		if let Some(schema) = schema {
 			config.options(format!("-c search_path={schema}"));
 		}
@@ -314,24 +361,29 @@ impl Store {
 		Ok(counts)
 	}
 
-	/// Applies a batch of items in one transaction: a task item goes through the upsert rule, an
-	/// event item is inserted once by `(service, task, seq)`, a duplicate ignored. Answers how many
-	/// items were taken. See spec/architecture/ledger.md, "Pushed to, never asking".
+	/// Applies a batch of items as one statement, so atomically and in one round trip: its tasks go
+	/// through the upsert rule -- among themselves first, as if sent in turn -- and its events are
+	/// kept once by `(service, task, seq)`, a duplicate ignored. Answers how many items were taken.
+	/// See spec/architecture/ledger.md, "Pushed to, never asking".
 	pub async fn batch(&self, items: Vec<Item>) -> anyhow::Result<usize> {
-		let mut client = self.pool.get().await?;
-		let transaction = client.transaction().await?;
 		let taken = items.len();
+		let (mut tasks, mut events) = (Vec::new(), EventColumns::default());
 		for item in items {
 			match item {
-				Item::Task(task) => {
-					upsert_in(&transaction, task).await?;
-				}
-				Item::Event(event) => {
-					insert_event(&transaction, &event).await?;
-				}
+				Item::Task(task) => tasks.push(task),
+				Item::Event(event) => events.push(&event)?,
 			}
 		}
-		transaction.commit().await?;
+		let now = Timestamp::now();
+		let mut columns = TaskColumns::default();
+		for task in winners(tasks) {
+			columns.push(task_row(&StoredTask { task, updated_at: now })?);
+		}
+		let client = self.pool.get().await?;
+		let statement = client.prepare_cached(&BATCH).await?;
+		let params: Vec<&(dyn ToSql + Sync)> =
+			columns.params().into_iter().chain(events.params()).collect();
+		client.query_one(&statement, &params).await?;
 		Ok(taken)
 	}
 
@@ -408,7 +460,7 @@ async fn upsert_in(client: &impl GenericClient, task: Task) -> anyhow::Result<St
 	let (service, id) = (task.record.service.clone(), task.record.id.clone());
 	let stored = StoredTask { task, updated_at: Timestamp::now() };
 	let row = task_row(&stored)?;
-	if client.query_opt(UPSERT, &row.params()).await?.is_some() {
+	if client.query_opt(UPSERT.as_str(), &row.params()).await?.is_some() {
 		return Ok(stored);
 	}
 	get_in(client, &service, &id)
@@ -416,28 +468,127 @@ async fn upsert_in(client: &impl GenericClient, task: Task) -> anyhow::Result<St
 		.ok_or_else(|| anyhow::anyhow!("{service}/{id} lost the upsert rule and is not kept"))
 }
 
-/// How many it wrote: one, or none for an event already kept.
-pub(crate) async fn insert_event(
-	client: &impl GenericClient,
-	event: &Event,
-) -> anyhow::Result<u64> {
-	Ok(
-		client
-			.execute(
-				EVENT,
-				&[
-					&event.service,
-					&event.task,
-					&i64::try_from(event.seq)?,
-					&nanos(event.at),
-					&event.stage,
-					&level_word(event.level),
-					&event.message,
-					&event.data,
-				],
-			)
-			.await?,
-	)
+/// Whether `new` replaces `kept` by the rule `RULE` states, for tasks of one batch.
+pub(crate) fn replaces(new: &Record, kept: &Record) -> bool {
+	match new.asked_at.cmp(&kept.asked_at) {
+		std::cmp::Ordering::Greater => true,
+		std::cmp::Ordering::Less => false,
+		std::cmp::Ordering::Equal => match (kept.finished_at, new.finished_at) {
+			(None, _) => true,
+			(Some(_), None) => false,
+			(Some(old), Some(new)) => new >= old,
+		},
+	}
+}
+
+/// A batch's tasks, one per task: the one the rule keeps where a task is sent more than once, as if
+/// each had been upserted in turn. One statement may not update a row twice.
+pub(crate) fn winners(tasks: Vec<Task>) -> Vec<Task> {
+	let mut kept: Vec<Task> = Vec::new();
+	let mut at: HashMap<(String, String), usize> = HashMap::new();
+	for task in tasks {
+		let key = (task.record.service.clone(), task.record.id.clone());
+		match at.get(&key) {
+			Some(&index) => {
+				if replaces(&task.record, &kept[index].record) {
+					kept[index] = task;
+				}
+			}
+			None => {
+				at.insert(key, kept.len());
+				kept.push(task);
+			}
+		}
+	}
+	kept
+}
+
+/// Tasks' columns as arrays, for `TASK_ARRAYS`.
+#[derive(Default)]
+pub(crate) struct TaskColumns {
+	service: Vec<String>,
+	id: Vec<String>,
+	kind: Vec<String>,
+	state: Vec<&'static str>,
+	caller: Vec<&'static str>,
+	updated_at: Vec<i64>,
+	finished_at: Vec<Option<i64>>,
+	asked_at: Vec<i64>,
+	parent_service: Vec<Option<String>>,
+	parent_id: Vec<Option<String>>,
+	record: Vec<serde_json::Value>,
+}
+
+impl TaskColumns {
+	pub(crate) fn push(&mut self, row: TaskRow) {
+		self.service.push(row.service);
+		self.id.push(row.id);
+		self.kind.push(row.kind);
+		self.state.push(row.state);
+		self.caller.push(row.caller);
+		self.updated_at.push(row.updated_at);
+		self.finished_at.push(row.finished_at);
+		self.asked_at.push(row.asked_at);
+		self.parent_service.push(row.parent_service);
+		self.parent_id.push(row.parent_id);
+		self.record.push(row.record);
+	}
+
+	pub(crate) fn params(&self) -> [&(dyn ToSql + Sync); 11] {
+		[
+			&self.service,
+			&self.id,
+			&self.kind,
+			&self.state,
+			&self.caller,
+			&self.updated_at,
+			&self.finished_at,
+			&self.asked_at,
+			&self.parent_service,
+			&self.parent_id,
+			&self.record,
+		]
+	}
+}
+
+/// Events' columns as arrays, for `events_into`.
+#[derive(Default)]
+pub(crate) struct EventColumns {
+	service: Vec<String>,
+	task: Vec<String>,
+	seq: Vec<i64>,
+	at: Vec<i64>,
+	stage: Vec<String>,
+	level: Vec<&'static str>,
+	message: Vec<String>,
+	data: Vec<serde_json::Value>,
+}
+
+impl EventColumns {
+	pub(crate) fn push(&mut self, event: &Event) -> anyhow::Result<()> {
+		self.seq.push(i64::try_from(event.seq)?);
+		self.service.push(event.service.clone());
+		self.task.push(event.task.clone());
+		self.at.push(nanos(event.at));
+		self.stage.push(event.stage.clone());
+		self.level.push(level_word(event.level));
+		self.message.push(event.message.clone());
+		self.data.push(event.data.clone());
+		Ok(())
+	}
+
+	pub(crate) fn params(&self) -> [&(dyn ToSql + Sync); 8] {
+		[
+			&self.service,
+			&self.task,
+			&self.seq,
+			&self.at,
+			&self.stage,
+			&self.level,
+			&self.message,
+			&self.data,
+		]
+	}
 }
 
 #[cfg(test)]
@@ -448,10 +599,18 @@ pub(crate) mod testing {
 
 	use super::Store;
 	use std::sync::atomic::{AtomicU32, Ordering};
+	use std::time::Duration;
+	use tokio::io::{AsyncReadExt, AsyncWriteExt};
+	use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
+	use tokio::net::{TcpListener, TcpStream};
+	use tokio::sync::mpsc;
+	use tokio::time::Instant;
+	use tokio_postgres::config::Host;
 
 	static NEXT: AtomicU32 = AtomicU32::new(0);
 
-	pub async fn store() -> Option<Store> {
+	/// A schema of its own in the test database, or None, said so, when there is no database.
+	async fn schema() -> Option<(String, String)> {
 		let Ok(url) = std::env::var("LEDGER_TEST_DATABASE_URL") else {
 			let ci = std::env::var("CI").is_ok_and(|value| !value.is_empty());
 			assert!(!ci, "CI is set and LEDGER_TEST_DATABASE_URL is not: CI runs every SQL test");
@@ -467,9 +626,73 @@ pub(crate) mod testing {
 		let (client, connection) = tokio_postgres::connect(&url, tokio_postgres::NoTls).await.unwrap();
 		tokio::spawn(connection);
 		client.batch_execute(&format!("CREATE SCHEMA {schema}")).await.unwrap();
+		Some((url, schema))
+	}
+
+	pub async fn store() -> Option<Store> {
+		let (url, schema) = schema().await?;
 		let store = Store::connect(&url, Some(&schema)).unwrap();
 		store.migrate().await.unwrap();
 		Some(store)
+	}
+
+	/// A store whose every byte to and from Postgres is held `delay` each way, as a primary an
+	/// ocean away holds it: what costs a round trip per row shows here.
+	pub async fn store_behind(delay: Duration) -> Option<Store> {
+		let (url, schema) = schema().await?;
+		Store::connect(&url, Some(&schema)).unwrap().migrate().await.unwrap();
+		let config: tokio_postgres::Config = url.parse().unwrap();
+		let Host::Tcp(host) = &config.get_hosts()[0] else { panic!("a TCP host, please") };
+		let port = proxy((host.clone(), config.get_ports()[0]), delay).await;
+		let mut near = tokio_postgres::Config::new();
+		near.host("127.0.0.1").port(port).user(config.get_user().unwrap());
+		near.dbname(config.get_dbname().unwrap());
+		if let Some(password) = config.get_password() {
+			near.password(password);
+		}
+		Some(Store::with(near, Some(&schema)).unwrap())
+	}
+
+	async fn proxy(upstream: (String, u16), delay: Duration) -> u16 {
+		let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+		let port = listener.local_addr().unwrap().port();
+		tokio::spawn(async move {
+			while let Ok((client, _)) = listener.accept().await {
+				let upstream = upstream.clone();
+				tokio::spawn(async move {
+					let Ok(server) = TcpStream::connect((upstream.0.as_str(), upstream.1)).await else {
+						return;
+					};
+					let ((client_in, client_out), (server_in, server_out)) =
+						(client.into_split(), server.into_split());
+					tokio::join!(late(client_in, server_out, delay), late(server_in, client_out, delay));
+				});
+			}
+		});
+		port
+	}
+
+	/// `from` copied to `to`, each piece `delay` after it arrived and none held back by another.
+	async fn late(mut from: OwnedReadHalf, mut to: OwnedWriteHalf, delay: Duration) {
+		let (send, mut received) = mpsc::unbounded_channel::<(Instant, Vec<u8>)>();
+		let reading = async move {
+			let mut buffer = vec![0; 64 * 1024];
+			while let Ok(read) = from.read(&mut buffer).await {
+				if read == 0 || send.send((Instant::now() + delay, buffer[..read].to_vec())).is_err() {
+					break;
+				}
+			}
+		};
+		let writing = async move {
+			while let Some((due, bytes)) = received.recv().await {
+				tokio::time::sleep_until(due).await;
+				if to.write_all(&bytes).await.is_err() {
+					break;
+				}
+			}
+			let _ = to.shutdown().await;
+		};
+		tokio::join!(reading, writing);
 	}
 
 	/// A store over a database that is never reached, for what is refused before the store is asked.
@@ -543,6 +766,65 @@ mod tests {
 			message: "starting".into(),
 			data: serde_json::Value::Null,
 		}
+	}
+
+	#[test]
+	fn a_batch_keeps_one_of_each_task_as_the_rule_would_in_turn() {
+		let done = task("a", State::Done, Some("2026-09-28T12:05:00Z"));
+		let late = task("a", State::Running, Some("2026-09-28T12:04:00Z"));
+		let kept = winners(vec![
+			task("a", State::Queued, None),
+			done.clone(),
+			late,
+			task("b", State::Queued, None),
+		]);
+		assert_eq!(kept.len(), 2);
+		assert_eq!((kept[0].record.id.as_str(), kept[0].record.state), ("a", State::Done));
+		assert_eq!(kept[1].record.id, "b");
+		// Asked again later: replaces even a finished one.
+		let again = asked_at("a", State::Queued, "2026-09-28T13:00:00Z", None);
+		assert_eq!(winners(vec![done, again])[0].record.state, State::Queued);
+	}
+
+	#[tokio::test]
+	async fn a_batch_sending_one_task_several_times_keeps_what_the_rule_keeps() {
+		let Some(store) = store().await else { return };
+		let items = vec![
+			Item::Task(task("a", State::Queued, None)),
+			Item::Task(task("a", State::Done, Some("2026-09-28T12:05:00Z"))),
+			Item::Task(task("a", State::Running, Some("2026-09-28T12:04:00Z"))),
+			Item::Event(event("a", 1)),
+			Item::Event(event("a", 1)),
+		];
+		assert_eq!(store.batch(items).await.unwrap(), 5);
+		let view = store.view("shot", "a").await.unwrap().unwrap();
+		assert_eq!(view.task.task.record.state, State::Done);
+		assert_eq!(view.events.len(), 1);
+	}
+
+	#[tokio::test(flavor = "multi_thread")]
+	async fn a_batch_is_one_round_trip_however_many_items_it_carries() {
+		let Some(store) = super::testing::store_behind(std::time::Duration::from_millis(25)).await
+		else {
+			return;
+		};
+		// The connection and its prepared statement first, as a running ledger has them.
+		store.batch(vec![Item::Event(event("warm", 1))]).await.unwrap();
+		let mut items = Vec::new();
+		for n in 0..100 {
+			let id = format!("t{n}");
+			items.push(Item::Task(task(&id, State::Running, None)));
+			items.push(Item::Task(task(&id, State::Done, Some("2026-09-28T12:05:00Z"))));
+			items.push(Item::Event(event(&id, 1)));
+		}
+		let started = std::time::Instant::now();
+		assert_eq!(store.batch(items).await.unwrap(), 300);
+		let took = started.elapsed();
+		eprintln!("a batch of 300 items over 50 ms round trips took {took:?}");
+		// 50 ms a round trip: 300 of them would be 15 s.
+		assert!(took < std::time::Duration::from_millis(500), "{took:?}");
+		let done = Filter { state: Some("done".into()), ..Filter::default() };
+		assert_eq!(store.list(&done, None, 500).await.unwrap().len(), 100);
 	}
 
 	#[test]
