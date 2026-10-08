@@ -34,6 +34,27 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      # cargo, for `deployable` to ask what each image's crate compiles once Cargo.lock moved: the
+      # workspace's compiler at its minimal profile, no target added, since `cargo tree --target`
+      # needs none installed, and the registry it reads, kept between runs. Without them it keeps
+      # the lockfile's answer, which is wider. See .mise/tasks/resolved.py.
+      - uses: actions/checkout@v7
+        with:
+          repository: canmi21/canmi
+          path: .workspace
+          sparse-checkout: rust-toolchain.toml
+          sparse-checkout-cone-mode: false
+      - run: |
+          channel="$(sed -n 's/^channel = "\(.*\)"$/\1/p' .workspace/rust-toolchain.toml)"
+          rustup toolchain install "$channel" --profile minimal
+          echo "RUSTUP_TOOLCHAIN=$channel" >> "$GITHUB_ENV"
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+          key: cargo-registry-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-registry-
       - id: plan
         env:
           EVENT: ${{ github.event_name }}

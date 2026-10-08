@@ -19,7 +19,9 @@ NODE = ["check", "lint", "test"]
 # Gates that belong to one package, run when it or anything it imports changed.
 PACKAGE_GATES = {"@monoflake/probe": ["check-probe"]}
 RUST = ["lint-rust", "test-rust"]
-EVERYTHING = ALWAYS + NODE + [g for gates in PACKAGE_GATES.values() for g in gates] + RUST
+# The tasks' own tests: a change to a task is a change to the gates, which runs everything.
+TASKS = ["test-tasks"]
+EVERYTHING = ALWAYS + NODE + [g for gates in PACKAGE_GATES.values() for g in gates] + RUST + TASKS
 
 NODE_SUFFIXES = {".ts", ".js", ".mjs", ".cjs", ".svelte", ".css", ".json", ".html", ".yaml", ".yml"}
 # The gates themselves: a change to how anything is checked is checked against everything.
