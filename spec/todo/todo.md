@@ -78,6 +78,12 @@ operator practiced comes before the first app moves in --
    - **Until the proxy, an app's URL names all three**, `target_session_attrs=read-write` over the
      cores' tailnet addresses, written by `database grant`, so a failover reaches the app without a
      grant; the proxy's single address replaces it.
+   - **Settings are taken from Pigsty where they fit**: Patroni's timings and failover settings,
+     etcd's, Postgres's tuning by the node's memory, and how a router asks Patroni which member is
+     primary, as Pigsty v4.5.0's templates set them, Apache 2.0 -- https://github.com/pgsty/pigsty.
+     Values are copied, not files: each lands in our own rendering, citing the template it came
+     from, and what does not fit -- packages on the host, its monitoring, pgBackRest in place of
+     WAL-G, native x86 Postgres -- is left. Decided on 2026-10-08.
    - **The running cluster is taken over in place**, `tyo`'s data directory becoming the first
      leader's, the standbys next, rehearsed in docker first, then on the nodes a node at a time.
 4. **One address on every node for the database**, before a second app is given one: a small layer-4
