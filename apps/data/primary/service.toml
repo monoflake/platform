@@ -1,0 +1,20 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "primary"
+display_name = "Database Primary"
+# Every node, so an app anywhere reaches the database as `primary:5432`. It keeps nothing, so a run
+# deploys it like any app; the moment it restarts, connections through it close and reconnect.
+placements = ["tyo", "nrt", "hnd", "gvx", "bru", "buf", "rdu", "sha"]
+
+# Health here; Postgres's own port, 5432, on every app's network beside it. See
+# spec/todo/todo.md, "The database".
+[container]
+port = 15432
+health = "/health"
+memory_mb = 64
+
+# Joined by host to every app's network, publishing nothing. See infra's
+# spec/architecture/host.md, "A role is asked for by the app and granted by the node".
+[shape]
+kind = "proxy"

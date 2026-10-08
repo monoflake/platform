@@ -41,6 +41,8 @@ REST = 8008
 ETCD_CLIENT = 2379
 ETCD_PEER = 2380
 QUORUM = "quorum"
+# The proxy every app reaches the database through, as `primary:5432`, on every node.
+PROXY = "primary"
 REST_USER = "patroni"
 # The scopes there are, each an organization. See spec/architecture/scheduling.md, "A scope is an
 # organization, and only the boundary isolates".
@@ -258,6 +260,14 @@ def env(arguments, dry):
 			and (quorum is None or write_tls(node, certificates[node]))
 		):
 			failed.append(node)
+	# The proxy on every node asks each member's REST which is primary; it needs no password.
+	proxy = {"PRIMARY_MEMBERS": peers, "PRIMARY_REST_PORT": str(REST)}
+	for node in manifest_of(PROXY)["placements"]:
+		if dry:
+			shown_proxy = " ".join(f"{k}={v!r}" for k, v in proxy.items())
+			print(f"database: {node}: would set in /data/apps/{PROXY}/config.env: {shown_proxy}")
+		elif not upsert(node, PROXY, "config.env", proxy):
+			failed.append(node)
 	if failed:
 		fail(f"failed on {', '.join(failed)}")
 	if not os.environ.get(MADE["WALG_LIBSODIUM_KEY"]) and not dry:
@@ -346,18 +356,18 @@ def grant(arguments, dry):
 			f" run in the {APP} container, {login}'s password from {secret_key(scope, app)}:\n"
 			f"{shown}"
 			f"database: and set in /data/apps/{app}/secret.env on {', '.join(where) or 'no node'}:\n"
-			f"  DATABASE_URL=postgresql://{login}:<redacted>@{','.join(f'<{n}>:{PORT}' for n in ORDER)}"
-			f"/{login}?target_session_attrs=read-write"
+			f"  DATABASE_URL=postgresql://{login}:<redacted>@{PROXY}:{PORT}/{login}"
+			"?target_session_attrs=read-write"
 		)
 		return
 	command = f"docker exec -i {APP} psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1"
 	if ssh(primary, command, grant_sql(scope, login, password)) is None:
 		fail(f"granting on {primary} failed")
 	print(f"database: {primary}: {login} logs in to {login}, owned by {scope}")
-	# Every core, the writable one chosen by the driver, so a failover reaches the app without a
-	# grant until the proxy's one address replaces it. See spec/todo/todo.md, "The database".
-	hosts = ",".join(f"{tailnet_ipv4(node)}:{PORT}" for node in ORDER)
-	url = f"postgresql://{login}:{password}@{hosts}/{login}?target_session_attrs=read-write"
+	# The proxy on the app's own node, which follows the primary, so a failover rewrites no URL;
+	# the attribute still refuses a replica, should the proxy ever pass to one. See
+	# spec/todo/todo.md, "The database".
+	url = f"postgresql://{login}:{password}@{PROXY}:{PORT}/{login}?target_session_attrs=read-write"
 	failed = [node for node in where if not upsert(node, app, "secret.env", {"DATABASE_URL": url})]
 	if failed:
 		fail(f"writing DATABASE_URL failed on {', '.join(failed)}")

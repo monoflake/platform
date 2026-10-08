@@ -1942,6 +1942,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2145d14f09d5fc7fe7134b556146599c2929af5b1f1e3a0ecc9d582a9b85e4d"
 
 [[package]]
+name = "primary"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "bytes",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "jiff",
+ "mimalloc",
+ "response",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "probe"
 version = "0.0.0"
 dependencies = [

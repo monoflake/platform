@@ -14,6 +14,7 @@ members = [
 	"apps/data/ledger",
 	"apps/data/database",
 	"apps/data/store",
+	"apps/data/primary",
 	"apps/observe/probe",
 	"apps/compute/shot",
 	"apps/observe/telemetry",
