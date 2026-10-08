@@ -174,6 +174,14 @@ bytes will not change; `"none"` keeps nothing.
 **What nobody declares falls to one default: a success is kept fifteen minutes, a failure five,
 and an accepted request not at all**, since a `202` is never more than a moment's answer.
 
+### Development keeps nothing
+
+**A development session neither keeps an answer nor lets anything after it keep one**: it answers
+`no-store` whatever the route declares. A lifetime is a publication delay, which is what production
+wants and what development is the opposite of -- a mark republished locally went on answering the
+old object for five minutes on 2026-10-08. A session is development by the gateway's own test, a
+binding set to `development` or this machine's host.
+
 ### The declaration
 
 `[api.defaults]` holds what every path of the service gets; each `[[api.routes]]` names a `path`

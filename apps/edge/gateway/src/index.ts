@@ -423,8 +423,11 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		if (await forbids(route.forbidden, url, c.req.raw)) {
 			return failure(403, 'forbidden_parameter');
 		}
-		// A kept answer is given before any limit is counted: it costs the node nothing.
-		const shared = cacheable(c.req.raw);
+		// A kept answer is given before any limit is counted: it costs the node nothing. A
+		// development session keeps nothing, so an edit or a publish shows on the next request. See
+		// spec/architecture/gateway.md, "Development keeps nothing".
+		const dev = developing(c);
+		const shared = cacheable(c.req.raw) && !dev;
 		const shelf = shared ? store() : null;
 		const key = keyOf(url);
 		const hit = shelf ? await shelf.match(key) : undefined;
@@ -447,7 +450,11 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 			const personal = c.req.raw.headers.has('authorization') || c.req.raw.headers.has('cookie');
 			returned.headers.set(
 				'cache-control',
-				personal && c.req.method === 'GET' ? 'private, no-store' : controlOf(lifetime),
+				dev
+					? 'no-store'
+					: personal && c.req.method === 'GET'
+						? 'private, no-store'
+						: controlOf(lifetime),
 			);
 			const seconds = shelf && c.req.method === 'GET' && whole(answer) ? secondsOf(lifetime) : 0;
 			if (shelf && seconds > 0) {

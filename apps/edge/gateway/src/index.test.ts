@@ -239,6 +239,18 @@ describe('the gateway', () => {
 		expect(seen).toEqual([`${developmentUrl('site')}/api/v1/media?resource=a`]);
 	});
 
+	it('keeps nothing in a development session, and tells the browser to keep nothing', async () => {
+		const real = globalThis.fetch;
+		globalThis.fetch = (async () =>
+			new Response('ok', { headers: { 'cache-control': 'max-age=60' } })) as typeof fetch;
+		try {
+			const answer = await ask('/v1/site/media?resource=a', { SITE: 'development' });
+			expect(answer.headers.get('cache-control')).toBe('no-store');
+		} finally {
+			globalThis.fetch = real;
+		}
+	});
+
 	it("sends the host's own address to the site", async () => {
 		for (const answer of await Promise.all(['', '/'].map((path) => ask(path)))) {
 			expect(answer.status).toBe(301);
