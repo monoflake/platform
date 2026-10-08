@@ -26,6 +26,7 @@ import {
 	CACHE_HEADER,
 	cacheable,
 	controlOf,
+	inDevelopment,
 	keyOf,
 	kindOf,
 	secondsOf,
@@ -33,7 +34,7 @@ import {
 	toKeep,
 	whole,
 } from './cache.ts';
-import { GATEWAY_DEFAULTS, type Route } from './declaration.ts';
+import { GATEWAY_DEFAULTS, type Lifetime, type Route } from './declaration.ts';
 import { type Host, noteFor } from './notes.ts';
 import { counted } from '@monoflake/sdk/limits';
 import { type Profile, profileOf, readRequest, type Tuple } from './profile.ts';
@@ -424,10 +425,10 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 			return failure(403, 'forbidden_parameter');
 		}
 		// A kept answer is given before any limit is counted: it costs the node nothing. A
-		// development session keeps nothing, so an edit or a publish shows on the next request. See
-		// spec/architecture/gateway.md, "Development keeps nothing".
-		const dev = developing(c);
-		const shared = cacheable(c.req.raw) && !dev;
+		// development session keeps what production keeps, its longest lifetimes cut to an hour. See
+		// spec/architecture/gateway.md, "Development keeps what production keeps".
+		const lifetimeOf = developing(c) ? inDevelopment : (lifetime: Lifetime) => lifetime;
+		const shared = cacheable(c.req.raw);
 		const shelf = shared ? store() : null;
 		const key = keyOf(url);
 		const hit = shelf ? await shelf.match(key) : undefined;
@@ -435,7 +436,7 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 			// Cloudflare hands a kept answer back under its zone's browser lifetime rather than the one
 			// it was kept with, so the route's is stamped again on the way out.
 			const kept = new Response(c.req.method === 'HEAD' ? null : hit.body, hit);
-			kept.headers.set('cache-control', controlOf(route.cache[kindOf(hit.status)]));
+			kept.headers.set('cache-control', controlOf(lifetimeOf(route.cache[kindOf(hit.status)])));
 			return kept;
 		}
 		/**
@@ -445,16 +446,12 @@ export function gateway(scopes: Readonly<Record<string, Scope>> = SCOPES) {
 		const answered = (answer: Response, unreached = false): Response => {
 			const lifetime = answer.headers.has('set-cookie')
 				? 0
-				: route.cache[kindOf(answer.status, unreached)];
+				: lifetimeOf(route.cache[kindOf(answer.status, unreached)]);
 			const returned = new Response(answer.body, answer);
 			const personal = c.req.raw.headers.has('authorization') || c.req.raw.headers.has('cookie');
 			returned.headers.set(
 				'cache-control',
-				dev
-					? 'no-store'
-					: personal && c.req.method === 'GET'
-						? 'private, no-store'
-						: controlOf(lifetime),
+				personal && c.req.method === 'GET' ? 'private, no-store' : controlOf(lifetime),
 			);
 			const seconds = shelf && c.req.method === 'GET' && whole(answer) ? secondsOf(lifetime) : 0;
 			if (shelf && seconds > 0) {

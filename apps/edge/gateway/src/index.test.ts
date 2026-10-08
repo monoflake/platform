@@ -239,13 +239,14 @@ describe('the gateway', () => {
 		expect(seen).toEqual([`${developmentUrl('site')}/api/v1/media?resource=a`]);
 	});
 
-	it('keeps nothing in a development session, and tells the browser to keep nothing', async () => {
+	it("keeps a development session's answer as production would, at most an hour", async () => {
 		const real = globalThis.fetch;
 		globalThis.fetch = (async () =>
 			new Response('ok', { headers: { 'cache-control': 'max-age=60' } })) as typeof fetch;
 		try {
-			const answer = await ask('/v1/site/media?resource=a', { SITE: 'development' });
-			expect(answer.headers.get('cache-control')).toBe('no-store');
+			// The declared default for a success, fifteen minutes, under the hour's ceiling.
+			const dev = await ask('/v1/site/media?resource=a', { SITE: 'development' });
+			expect(dev.headers.get('cache-control')).toBe('public, max-age=900');
 		} finally {
 			globalThis.fetch = real;
 		}

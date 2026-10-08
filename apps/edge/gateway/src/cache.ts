@@ -38,6 +38,18 @@ export function kindOf(status: number, unreached = false): keyof Lifetimes {
 	return status === 202 ? 'accepted' : 'fulfilled';
 }
 
+/** The longest a development session keeps an answer, or tells a browser to: an hour. */
+export const DEVELOPMENT_CEILING = 3600;
+
+/**
+ * A lifetime as a development session keeps it: as declared, unless it is longer than an hour --
+ * `immutable` included -- when it is an hour, so nothing a browser holds outlives a working session
+ * by much. See spec/architecture/gateway.md, "Development keeps what production keeps".
+ */
+export function inDevelopment(lifetime: Lifetime): Lifetime {
+	return lifetime === 'immutable' ? DEVELOPMENT_CEILING : Math.min(lifetime, DEVELOPMENT_CEILING);
+}
+
 /** Seconds to keep it here, or 0 for none. */
 export function secondsOf(lifetime: Lifetime): number {
 	return lifetime === 'immutable' ? YEAR : lifetime;

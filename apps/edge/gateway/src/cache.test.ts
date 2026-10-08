@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { URLS } from '@monoflake/sdk';
 import { UNCHANGING } from '@monoflake/sdk/cache';
-import { CACHE_HEADER, controlOf, kindOf, secondsOf } from './cache.ts';
+import { CACHE_HEADER, controlOf, DEVELOPMENT_CEILING, inDevelopment, kindOf, secondsOf } from './cache.ts';
 import { GATEWAY_DEFAULTS } from './declaration.ts';
 import { gateway } from './index.ts';
 import type { Scope } from './table.ts';
@@ -184,5 +184,15 @@ describe('the cache at the gateway', () => {
 		await app.fetch(new Request(`${HOST}/v1/geo/d`), env);
 		expect(seen).toHaveLength(2);
 		expect(put).toEqual([]);
+	});
+});
+
+describe('what a development session keeps', () => {
+	it('keeps a lifetime as declared up to an hour, and an hour of anything longer', () => {
+		expect(inDevelopment(0)).toBe(0);
+		expect(inDevelopment(300)).toBe(300);
+		expect(inDevelopment(DEVELOPMENT_CEILING)).toBe(DEVELOPMENT_CEILING);
+		expect(inDevelopment(86_400)).toBe(DEVELOPMENT_CEILING);
+		expect(inDevelopment('immutable')).toBe(DEVELOPMENT_CEILING);
 	});
 });

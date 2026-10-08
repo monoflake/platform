@@ -10,7 +10,7 @@
 	],
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev --env dev",
+		"dev": "node -e \"require('node:fs').rmSync('.wrangler/state/v3/cache', { recursive: true, force: true })\" && wrangler dev --env dev",
 		"deploy": "wrangler deploy --env=\"\"",
 		"build": "wrangler deploy --dry-run --outdir=dist --env=\"\""
 	},

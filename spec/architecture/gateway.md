@@ -174,13 +174,22 @@ bytes will not change; `"none"` keeps nothing.
 **What nobody declares falls to one default: a success is kept fifteen minutes, a failure five,
 and an accepted request not at all**, since a `202` is never more than a moment's answer.
 
-### Development keeps nothing
+### Development keeps what production keeps
 
-**A development session neither keeps an answer nor lets anything after it keep one**: it answers
-`no-store` whatever the route declares. A lifetime is a publication delay, which is what production
-wants and what development is the opposite of -- a mark republished locally went on answering the
-old object for five minutes on 2026-10-08. A session is development by the gateway's own test, a
-binding set to `development` or this machine's host.
+**A development session keeps an answer for the lifetime its route declares, as production does,
+with one ceiling: nothing for longer than an hour.** A lifetime past it -- a day, `immutable`'s year
+-- is kept, and told to the browser, as an hour, because a name that answers for a year in
+production, `/favicon.ico`'s redirect say, would otherwise stay in the browser for a year of
+development too, where what it points at is being changed. Below the ceiling the two agree, so what
+is tried here is what ships.
+
+**To see a change before a lifetime runs out, the gateway is restarted.** Its `dev` script clears
+what the Cache API persisted under `.wrangler/state/v3/cache` before wrangler starts, so a restart
+starts with nothing kept; the rest of `.wrangler/state` is left as it was. A session is development
+by the gateway's own test, a binding set to `development` or this machine's host.
+
+Settled on 2026-10-08, replacing a development session that kept nothing: that one hid every
+lifetime the routes declare from whoever was working on them.
 
 ### The declaration
 
