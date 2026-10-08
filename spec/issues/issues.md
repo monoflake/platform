@@ -38,6 +38,7 @@ file.
 - Exports to look at, kept apart from backups
 - Health does not say that archiving has stopped
 - Schema changes go through the platform
+- A node is added by hand in seven places
 
 ### [services.md](services.md)
 
