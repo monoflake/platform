@@ -1,56 +1,44 @@
-//! The keeper's own state: what it is doing to bring Postgres up, and what it answers with while it
-//! does. See spec/architecture/databases.md, "The container is Postgres and a keeper of it".
+//! The keeper's own state: Patroni's configuration written and Patroni started, what it answers
+//! host and `cron` with, and what it tends on the leader. See spec/architecture/databases.md, "The
+//! container is Postgres and a keeper of it".
 
 use crate::amcheck;
 use crate::backup;
 use crate::config::{Config, Role};
 use crate::health::{self, Status};
-use crate::plan::{self, Plan};
+use crate::patroni::{Rest, View};
 use crate::postgres::{self, Layout};
+use crate::render;
 use crate::watch::{self, Last};
 use jiff::{SignedDuration, Timestamp};
 use serde::Serialize;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, RwLock};
-use std::time::Duration;
 use tokio::process::Child;
-
-/// How long a standby waits before it asks the primary for a copy again.
-const RETRY: Duration = Duration::from_secs(10);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Phase {
-	/// Bringing Postgres up, and how.
+	/// Writing Patroni's configuration, and why it is not running yet.
 	Starting(String),
-	/// A step failed and is tried again.
-	Waiting(String),
-	/// Postgres is not started, and why; nothing but an operator changes that.
-	Refused(String),
-	Running(Plan),
-}
-
-/// What stops a start: a refusal leaves the keeper answering why, anything else ends it.
-#[derive(Debug, thiserror::Error)]
-pub enum Stopped {
-	#[error("{0}")]
-	Refused(String),
-	#[error(transparent)]
-	Failed(#[from] postgres::Error),
-	#[error(transparent)]
-	Unreadable(#[from] plan::Unreadable),
+	/// Patroni runs, and Postgres is its to start, follow, promote and demote.
+	Running,
 }
 
 pub struct Keeper {
 	pub config: Config,
 	pub layout: Layout,
+	pub rest: Rest,
 	phase: RwLock<Phase>,
 	/// Held while a backup runs, so a second is refused rather than run beside it.
 	pub backing_up: tokio::sync::Mutex<()>,
 	/// Held while the indexes are checked, for the same reason.
 	pub checking: tokio::sync::Mutex<()>,
-	/// The newest base backup in the store: read once at start, then set by each backup job.
+	/// The newest base backup in the store: read once a node leads, then set by each backup job.
 	last: RwLock<Last>,
 	/// The backup state last logged, so a change is logged once.
 	logged: Mutex<Option<watch::State>>,
+	/// Whether this node's tenure as leader has had its roles kept and its last backup read.
+	tended: AtomicBool,
 	/// `watch::STALLED_AFTER`, shorter only in a test.
 	pub stalled_after: SignedDuration,
 }
@@ -83,15 +71,17 @@ pub struct Report {
 
 impl Keeper {
 	pub fn new(config: Config, layout: Layout) -> Self {
-		let phase = RwLock::new(Phase::Starting("reading the data directory".into()));
+		let phase = RwLock::new(Phase::Starting("writing Patroni's configuration".into()));
 		Self {
 			config,
 			layout,
+			rest: Rest::new(render::REST),
 			phase,
 			backing_up: tokio::sync::Mutex::new(()),
 			checking: tokio::sync::Mutex::new(()),
 			last: RwLock::new(Last::Unknown),
 			logged: Mutex::new(None),
+			tended: AtomicBool::new(false),
 			stalled_after: watch::STALLED_AFTER,
 		}
 	}
@@ -108,73 +98,93 @@ impl Keeper {
 		}
 	}
 
-	pub fn refuse(&self, reason: String) {
-		self.set(Phase::Refused(reason));
-	}
-
-	/// From whatever the data directory holds to a Postgres accepting connections as this node's
-	/// configuration says, or as near as a start may take it.
-	pub async fn bring_up(&self) -> Result<Child, Stopped> {
-		let (config, layout) = (&self.config, &self.layout);
-		let found = plan::found(&layout.data)?;
-		let plan = plan::plan(config.role(), found);
-		let primary = config.primary_address();
-		if found != plan::Found::Empty && postgres::clear_stale_lock(layout).await? {
+	/// Patroni's configuration written for this start, the directory it writes Postgres's into
+	/// made, and any lock a Postgres of an earlier container left cleared: none runs in this one
+	/// yet, and its number may be a live process's here.
+	pub async fn prepare(&self) -> Result<(), postgres::Error> {
+		let run = self.layout.run.join("postgresql");
+		tokio::fs::create_dir_all(&run)
+			.await
+			.map_err(|source| postgres::Error::Io { path: run.display().to_string(), source })?;
+		// Patroni includes the base beneath what it writes, and would otherwise move a configuration
+		// of initdb's here that does not exist; and its crash recovery in single-user mode, before a
+		// rewind, reads postgresql.conf before Patroni has written one. Both start empty: everything
+		// Postgres runs with is in patroni.yml.
+		for file in ["postgresql.base.conf", "postgresql.conf"] {
+			postgres::private(&run.join(file), "").await?;
+		}
+		let machine = render::Machine::read(&self.layout.data);
+		eprintln!(
+			"database: tuned for {} MiB, {} cores and a disk of {} GiB",
+			machine.memory_mb,
+			machine.cpus,
+			machine.disk_bytes / (1024 * 1024 * 1024)
+		);
+		let rendered = render::patroni(&self.config, machine, &self.layout.data, &self.layout.run);
+		let text = serde_json::to_string_pretty(&rendered).unwrap_or_default();
+		postgres::private(&self.layout.patroni(), &text).await?;
+		if postgres::clear_stale_lock(&self.layout).await? {
 			eprintln!("database: removed postmaster.pid, left by a Postgres that did not stop cleanly");
 		}
-		let follow = matches!(plan, Plan::Clone | Plan::Rewind | Plan::Run(Role::Standby));
-		postgres::prepare(layout, config, follow.then_some(primary)).await?;
-		match plan {
-			Plan::Initialize => {
-				self.set(Phase::Starting("making the cluster".into()));
-				postgres::initialize(layout, config).await?;
-			}
-			Plan::Clone => loop {
-				self.set(Phase::Starting(format!("copying the primary, {}", config.primary)));
-				match postgres::clone(layout, primary).await {
-					Ok(()) => break,
-					Err(error) => {
-						self.set(Phase::Waiting(format!("copying the primary failed: {error}")));
-						tokio::time::sleep(RETRY).await;
-					}
-				}
-			},
-			Plan::Rewind => {
-				self.set(Phase::Starting(format!("rewinding onto the primary, {}", config.primary)));
-				if let Err(error) = postgres::rewind(layout, primary).await {
-					return Err(Stopped::Refused(format!(
-						"{} holds a primary and is configured as a standby, and rewinding it onto {} \
-						 failed, so Postgres is not started: {error}",
-						config.node, config.primary
-					)));
-				}
-			}
-			Plan::Run(_) | Plan::AwaitPromotion => {}
-		}
-		self.set(Phase::Starting("starting Postgres".into()));
-		let mut child = postgres::spawn(layout)?;
-		postgres::ready(layout, &mut child).await?;
-		if matches!(plan, Plan::Initialize | Plan::Run(Role::Primary)) {
-			postgres::ensure_roles(layout, config).await?;
-		}
-		self.set(Phase::Running(plan));
+		Ok(())
+	}
+
+	/// Patroni, in a process group of its own so a signal meant for the keeper never reaches it
+	/// unasked: the keeper stops it, and stops it in order.
+	pub fn spawn(&self) -> Result<Child, postgres::Error> {
+		let child = postgres::command("patroni")
+			.arg(self.layout.patroni())
+			.process_group(0)
+			.stdin(std::process::Stdio::null())
+			.spawn()
+			.map_err(|source| postgres::Error::Spawn { program: "patroni".into(), source })?;
+		self.set(Phase::Running);
 		Ok(child)
 	}
 
-	/// What Postgres says it is, against what this node is configured as.
+	/// Patroni's view of this member, or why there is none.
+	pub async fn view(&self) -> Result<View, String> {
+		self.rest.view().await
+	}
+
+	/// What Postgres says it is, Patroni's view beside it, and on the primary its standbys and
+	/// whether backing up has stopped.
 	pub async fn status(&self) -> Result<Status, postgres::Error> {
 		let row = postgres::query(&self.layout, health::SELF).await?;
 		let unexpected = |error: health::Unexpected| postgres::Error::Failed {
 			program: "psql".into(),
 			detail: error.to_string(),
 		};
-		let mut status = health::parse(&row, self.config.role()).map_err(unexpected)?;
+		let mut status = health::parse(&row).map_err(unexpected)?;
+		status.patroni = self.view().await.ok();
 		if status.role == Role::Primary {
 			let rows = postgres::query(&self.layout, health::STANDBYS).await?;
 			status.standbys = Some(health::standbys(&rows).map_err(unexpected)?);
 			status.backup = Some(self.watch(Timestamp::now()));
 		}
 		Ok(status)
+	}
+
+	/// Asked each minute: on the leader, the roles and passwords kept as the environment gives them
+	/// and the last base backup read once a tenure, and whether backing up has stopped; on a
+	/// standby, nothing but forgetting the tenure, so the next one tends again.
+	pub async fn tend(&self) {
+		let Ok(row) = postgres::query(&self.layout, health::SELF).await else { return };
+		let Ok(status) = health::parse(&row) else { return };
+		if status.role != Role::Primary {
+			self.tended.store(false, Ordering::Relaxed);
+			return;
+		}
+		if !self.tended.load(Ordering::Relaxed) {
+			match postgres::ensure_roles(&self.layout, &self.config).await {
+				Ok(()) => {
+					self.seed().await;
+					self.tended.store(true, Ordering::Relaxed);
+				}
+				Err(error) => eprintln!("database: keeping the roles failed: {error}"),
+			}
+		}
+		self.watch(Timestamp::now());
 	}
 
 	fn last(&self) -> Last {
@@ -340,9 +350,7 @@ fn explain(report: &watch::Backup) -> String {
 pub fn describe(phase: &Phase) -> String {
 	match phase {
 		Phase::Starting(doing) => doing.clone(),
-		Phase::Waiting(why) => format!("{why}; trying again in {} seconds", RETRY.as_secs()),
-		Phase::Refused(why) => why.clone(),
-		Phase::Running(plan) => format!("running, as {plan:?}"),
+		Phase::Running => "Patroni runs".into(),
 	}
 }
 
@@ -353,10 +361,12 @@ mod tests {
 	fn keeper(data: &std::path::Path) -> Keeper {
 		let config = Config {
 			node: "tyo".into(),
-			primary: "tyo".into(),
 			peers: [("tyo".to_owned(), "100.64.0.1".to_owned())].into(),
+			quorum: vec!["100.64.0.1".into()],
+			priority: 3,
 			superuser_password: "s".into(),
 			replication_password: "r".into(),
+			patroni_password: "p".into(),
 			data: data.into(),
 		};
 		Keeper::new(config, Layout::new(data.into()))

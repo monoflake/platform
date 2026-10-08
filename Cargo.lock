@@ -578,8 +578,12 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "axum",
+ "bytes",
  "http-body-util",
+ "hyper",
+ "hyper-util",
  "jiff",
+ "libc",
  "mimalloc",
  "response",
  "serde",

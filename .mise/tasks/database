@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-#MISE description="Run the platform's Postgres: `database env [--primary NODE]`, `database grant <scope> <app>`, `database promote [node]`, `database mirror-env`, each with --dry-run"
+#MISE description="Run the platform's Postgres: `database env`, `database grant <scope> <app>`, `database switchover [node]`, `database quorum-auth`, `database mirror-env`, each with --dry-run"
 """The operator's half of the platform's Postgres. See spec/architecture/databases.md.
 
-`env` writes what the database app reads on each core node, `grant` gives an app its database and
-login and writes its `DATABASE_URL`, and `promote` makes a standby the primary by hand: the one
-named, or the first in order that is caught up; `mirror-env` gives each node's `store` the key it
-reads the backups with. Values move over SSH on stdin, never on a command line, and `--dry-run`
-touches no machine and prints no secret.
+`env` writes what the database and its etcd, `quorum`, read on each node, `grant` gives an app its
+database and login and writes its `DATABASE_URL`, and `switchover` asks Patroni to move the leader,
+to the node named or to the one it chooses; `quorum-auth` turns etcd's password on, once;
+`mirror-env` gives each node's `store` the key it reads the backups with. Values move over SSH on
+stdin, never on a command line, and `--dry-run` touches no machine and prints no secret.
 """
 
+import base64
 import json
 import os
 import re
@@ -16,8 +17,11 @@ import secrets
 import shlex
 import subprocess
 import sys
+import tempfile
 import time
 import tomllib
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,11 +32,16 @@ SERVICE = ROOT / "apps/data/database/service.toml"
 # Where its image is built, which a deploy by hand names. See spec/architecture/databases.md,
 # "Upgrades are pinned, reported, and rolled by hand".
 REPOSITORY = "monoflake/platform"
-# The primary, then its standbys in the order a promote that names no node tries them, each named by
-# hand; see spec/architecture/databases.md, "Where it runs, and which one writes".
+# Patroni's failover priorities, first highest, each named by hand; a member not named here, `gvx`
+# or `sha`, never leads. See spec/architecture/databases.md, "Where it runs, and which one writes".
 ORDER = ["tyo", "rdu", "buf"]
-DEFAULT_PRIMARY = ORDER[0]
 PORT = 5432
+# Patroni's REST on each member, and etcd's client and peer ports on each core.
+REST = 8008
+ETCD_CLIENT = 2379
+ETCD_PEER = 2380
+QUORUM = "quorum"
+REST_USER = "patroni"
 # The scopes there are, each an organization. See spec/architecture/scheduling.md, "A scope is an
 # organization, and only the boundary isolates".
 SCOPES = ("platform", "canmi")
@@ -41,7 +50,17 @@ MADE = {
 	"POSTGRES_PASSWORD": "DATABASE_SUPERUSER_PASSWORD",
 	"REPLICATION_PASSWORD": "DATABASE_REPLICATION_PASSWORD",
 	"WALG_LIBSODIUM_KEY": "DATABASE_BACKUP_KEY",
+	"PATRONI_PASSWORD": "DATABASE_PATRONI_PASSWORD",
 }
+# etcd's own root, which only `quorum-auth` uses.
+QUORUM_ROOT = "QUORUM_ROOT_PASSWORD"
+# The members of etcd prove themselves to each other by certificate on the peer port: a CA of
+# their own and a certificate for each, kept in secrets.json and written into each member's
+# directory, where the container reads them at /data/tls. See spec/todo/todo.md, "The database".
+QUORUM_CA = ("QUORUM_CA_CERT", "QUORUM_CA_KEY")
+QUORUM_TLS = "data/tls"
+QUORUM_USER = "65532:65532"
+CERTIFICATE_DAYS = 3650
 # The backup store, by secrets.json's names, and the names WAL-G reads them under.
 STORE = {
 	"BACKUP_S3_ENDPOINT": "AWS_ENDPOINT",
@@ -61,13 +80,8 @@ MIRRORED = [
 	"BACKUP_MIRROR_S3_ACCESS_KEY_ID",
 	"BACKUP_MIRROR_S3_SECRET_ACCESS_KEY",
 ]
-# How long the old primary gets to shut down, and the standby to replay what it wrote.
-STOP_SECONDS = 30
-CATCH_UP_SECONDS = 120
-# How far behind a standby may be and still be promoted unnamed: one WAL segment. Streaming, a
-# standby sits kilobytes behind, so a segment's worth says it is not keeping up; and that much
-# replays well inside CATCH_UP_SECONDS even on buf, emulated twenty to thirty times slower.
-BEHIND_BYTES = 16 * 1024 * 1024
+# How long a switchover may take to show its new leader running.
+SWITCHING_SECONDS = 60
 LABEL = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 
 # Runs on the node with KEY=VALUE lines on stdin and the app's directory and the file's name as
@@ -161,23 +175,35 @@ def placements():
 	return tomllib.loads(SERVICE.read_text())["placements"]
 
 
-def primary_named(nodes):
-	"""The primary every reachable node's config.env names, or None when none names one yet."""
-	named = {}
-	for node in nodes:
-		answer = ssh(node, f"sed -n 's/^DATABASE_PRIMARY=//p' /data/apps/{APP}/config.env 2>/dev/null")
-		if answer:
-			named[node] = answer.splitlines()[-1]
-	if len(set(named.values())) > 1:
-		fail(f"the nodes disagree on the primary: {named}; settle it with `promote`")
-	return next(iter(named.values()), None)
+def cluster(addresses):
+	"""Patroni's view of the cluster from the first member whose REST answers, or None."""
+	for host in addresses.values():
+		try:
+			with urllib.request.urlopen(f"http://{host}:{REST}/cluster", timeout=5) as answer:
+				return json.load(answer)
+		except (OSError, ValueError):
+			continue
+	return None
+
+
+def leader_of(view):
+	return next((m["name"] for m in view.get("members", []) if m.get("role") == "leader"), None)
+
+
+def shown(view):
+	return "  ".join(
+		f"{m['name']}: {m.get('role')} {m.get('state')} tl{m.get('timeline', '-')}"
+		for m in view.get("members", [])
+	)
 
 
 def env(arguments, dry):
+	if arguments:
+		fail("env takes no arguments")
 	nodes = placements()
-	asked = arguments[arguments.index("--primary") + 1] if "--primary" in arguments else None
-	if asked is not None and asked not in nodes:
-		fail(f"--primary takes one of {', '.join(nodes)}")
+	cores = manifest_of(QUORUM)["placements"]
+	if not set(ORDER) <= set(nodes) or not set(cores) <= set(nodes):
+		fail(f"ORDER, {', '.join(ORDER)}, and {QUORUM}'s members must be among {', '.join(nodes)}")
 	missing = [key for key in [*STORE, BUCKET] if not os.environ.get(key)]
 	if missing:
 		message = f"secrets.json has no {', '.join(missing)}; add them with sops and run again"
@@ -185,31 +211,52 @@ def env(arguments, dry):
 			fail(message)
 		print(f"database: {message} (a real run stops here)")
 
-	peers = " ".join(f"{node}={tailnet_ipv4(node)}" for node in nodes)
-	if dry:
-		primary = asked or f"the one the nodes already name, {DEFAULT_PRIMARY} when none does"
-	else:
-		named = primary_named(nodes)
-		if asked and named and asked != named:
-			fail(f"the nodes name {named} as the primary; changing it is `promote {asked}`")
-		primary = asked or named or DEFAULT_PRIMARY
+	addresses = {node: tailnet_ipv4(node) for node in nodes}
+	peers = " ".join(f"{node}={address}" for node, address in addresses.items())
 	made = {name: stored_secret(key, dry) for name, key in MADE.items()}
+	stored_secret(QUORUM_ROOT, dry)
 	store = {name: os.environ.get(key) for key, name in STORE.items()}
 	store["WALG_S3_PREFIX"] = f"s3://{os.environ.get(BUCKET, '<bucket>')}/{APP}"
-	config = {"DATABASE_PRIMARY": primary, "DATABASE_PEERS": peers}
+	members = ",".join(f"{node}=https://{addresses[node]}:{ETCD_PEER}" for node in cores)
+	certificates = quorum_tls(cores, addresses, dry)
+	quorum_hosts = " ".join(addresses[node] for node in cores)
 
 	failed = []
 	for node in nodes:
+		address = addresses[node]
+		priority = len(ORDER) - ORDER.index(node) if node in ORDER else 0
+		config = {
+			"DATABASE_PEERS": peers,
+			"DATABASE_QUORUM": quorum_hosts,
+			"DATABASE_PRIORITY": str(priority),
+		}
+		quorum = {
+			"ETCD_NAME": node,
+			"ETCD_INITIAL_ADVERTISE_PEER_URLS": f"https://{address}:{ETCD_PEER}",
+			"ETCD_ADVERTISE_CLIENT_URLS": f"http://{address}:{ETCD_CLIENT}",
+			"ETCD_INITIAL_CLUSTER": members,
+		} if node in cores else None
 		if dry:
 			print(
-				f"database: {node}: would, on root@{node}, make /data/apps/{APP} unless it is there, mode"
-				f" 700, and set, keeping every other line, mode 600:\n"
-				f"  config.env: DATABASE_PRIMARY={primary} DATABASE_PEERS='{peers}'\n"
-				f"  secret.env: {' '.join(f'{k}=<redacted>' for k in [*made, *STORE.values()])}"
+				f"database: {node}: would, on root@{node}, make"
+				f" {' and '.join(f'/data/apps/{a}' for a in [APP, QUORUM][: 2 if quorum else 1])}"
+				f" unless there, mode 700, and set, keeping every other line, mode 600:\n"
+				f"  {APP}/config.env: {' '.join(f'{k}={v!r}' for k, v in config.items())}\n"
+				f"  {APP}/secret.env: {' '.join(f'{k}=<redacted>' for k in [*made, *STORE.values()])}"
 				f" WALG_S3_PREFIX={store['WALG_S3_PREFIX']}"
+				+ (
+					f"\n  {QUORUM}/config.env: {' '.join(f'{k}={v}' for k, v in (quorum or {}).items())}"
+					f"\n  {QUORUM}/{QUORUM_TLS}/: ca.crt, peer.crt, peer.key, mode 600, {QUORUM_USER}'s"
+				)
+				* bool(quorum)
 			)
 			continue
-		if not (upsert(node, APP, "config.env", config) and upsert(node, APP, "secret.env", made | store)):
+		if not (
+			upsert(node, APP, "config.env", config)
+			and upsert(node, APP, "secret.env", made | store)
+			and (quorum is None or upsert(node, QUORUM, "config.env", quorum))
+			and (quorum is None or write_tls(node, certificates[node]))
+		):
 			failed.append(node)
 	if failed:
 		fail(f"failed on {', '.join(failed)}")
@@ -219,10 +266,10 @@ def env(arguments, dry):
 			" lost laptop does not take with it, or no backup can be read"
 		)
 	print(
-		f"database: a change applies on the next deploy;"
-		f" `mise run //repos/infra:node redeploy <node> {APP}`. A run deploys none of it,"
-		f" so a node's first, or a new version, is by hand, standbys first:\n"
-		f"  mise run //repos/infra:node deploy <node> --run <run> --repository {REPOSITORY} --app {APP}"
+		f"database: a change applies on the next deploy; `mise run //repos/infra:node redeploy <node>"
+		f" {APP}` or `{QUORUM}`, a member at a time. A run deploys neither, so a new version is by"
+		f" hand:\n"
+		f"  mise run //repos/infra:node deploy <node> --run <run> --repository {REPOSITORY} --app <app>"
 	)
 
 
@@ -251,6 +298,8 @@ def grant_sql(scope, login, password):
 	given. See spec/architecture/databases.md, "One cluster, and a scope is a role in it"."""
 	return "\n".join(
 		[
+			# Its password would be logged by `log_statement = ddl` otherwise.
+			"SET log_statement = 'none';",
 			f"SELECT format('CREATE ROLE %I NOLOGIN', {literal(scope)}) WHERE NOT EXISTS"
 			f" (SELECT FROM pg_roles WHERE rolname = {literal(scope)})\\gexec",
 			f"SELECT format('CREATE ROLE %I LOGIN', {literal(login)}) WHERE NOT EXISTS"
@@ -282,243 +331,259 @@ def grant(arguments, dry):
 	known = set(tomllib.loads(NODES.read_text()))
 	where = [node for node in manifest_of(app)["placements"] if node in known]
 	cores = placements()
-	primary = None if dry else primary_named(cores)
-	if not dry and primary is None:
-		fail("no node names a primary yet; run `database env` first")
+	primary = None
+	if not dry:
+		view = cluster({node: tailnet_ipv4(node) for node in cores})
+		primary = view and leader_of(view)
+		if primary is None:
+			fail("no member's Patroni names a leader now; grant once one leads")
 	password = stored_secret(secret_key(scope, app), dry)
 
 	if dry:
 		shown = grant_sql(scope, login, "<redacted>")
 		print(
-			f"database: would, on the primary its config.env names ({DEFAULT_PRIMARY} unless promoted),"
+			f"database: would, on the leader Patroni names, by its REST on {REST},"
 			f" run in the {APP} container, {login}'s password from {secret_key(scope, app)}:\n"
 			f"{shown}"
 			f"database: and set in /data/apps/{app}/secret.env on {', '.join(where) or 'no node'}:\n"
-			f"  DATABASE_URL=postgresql://{login}:<redacted>@<primary's tailnet address>:{PORT}/{login}"
+			f"  DATABASE_URL=postgresql://{login}:<redacted>@{','.join(f'<{n}>:{PORT}' for n in ORDER)}"
+			f"/{login}?target_session_attrs=read-write"
 		)
 		return
 	command = f"docker exec -i {APP} psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1"
 	if ssh(primary, command, grant_sql(scope, login, password)) is None:
 		fail(f"granting on {primary} failed")
 	print(f"database: {primary}: {login} logs in to {login}, owned by {scope}")
-	url = f"postgresql://{login}:{password}@{tailnet_ipv4(primary)}:{PORT}/{login}"
+	# Every core, the writable one chosen by the driver, so a failover reaches the app without a
+	# grant until the proxy's one address replaces it. See spec/todo/todo.md, "The database".
+	hosts = ",".join(f"{tailnet_ipv4(node)}:{PORT}" for node in ORDER)
+	url = f"postgresql://{login}:{password}@{hosts}/{login}?target_session_attrs=read-write"
 	failed = [node for node in where if not upsert(node, app, "secret.env", {"DATABASE_URL": url})]
 	if failed:
 		fail(f"writing DATABASE_URL failed on {', '.join(failed)}")
 	print(f"database: {app} reads it on its next deploy")
 
 
-def granted():
-	"""Every scope and app granted so far, read back from secrets.json's names."""
-	found = []
-	for key in sorted(os.environ):
-		for scope in SCOPES:
-			prefix = f"DATABASE_PASSWORD_{scope.upper()}_"
-			if key.startswith(prefix):
-				found.append((scope, key[len(prefix) :].lower().replace("_", "-")))
-	return found
-
-
-def in_container(node, sql):
-	"""`sql` through psql in the database container on `node`, or None when it did not answer."""
-	return ssh(node, f"docker exec {APP} psql --no-psqlrc -XAtc {shlex.quote(sql)}")
-
-
-def final_lsn(node):
-	"""Where the stopped primary on `node` ended: its last checkpoint, read with pg_controldata from
-	its image over its own directory, and whether it shut down cleanly. None when unreadable."""
-	command = (
-		f"image=$(docker inspect -f '{{{{.Image}}}}' {APP}) && docker run --rm --network none"
-		f" --entrypoint pg_controldata -v /data/apps/{APP}/data:/var/lib/postgresql:ro"
-		f' "$image" /var/lib/postgresql/data'
-	)
-	answer = ssh(node, command)
-	fields = dict(
-		line.split(":", 1) for line in (answer or "").splitlines() if ":" in line
-	)
-	lsn = fields.get("Latest checkpoint location", "").strip()
-	return (lsn, fields.get("Database cluster state", "").strip()) if lsn else None
-
-
-def fence(old, node, dry):
-	"""Stops the primary `old` before `node` is promoted, so there are never two, and waits until
-	`node` has replayed everything `old` wrote. See spec/architecture/databases.md, "Where it runs,
-	and which one writes"."""
+def switchover_to(addresses, password, node, dry):
+	"""Patroni's switchover from the leader to `node`, or to the member Patroni chooses by its
+	priorities when `node` is None, then waited on until the new leader runs."""
 	if dry:
+		to = f"to {node}" if node else "to the member its priorities choose"
 		print(
-			f"database: would fence the primary the nodes' config.env name, if it answers over ssh:\n"
-			f"  docker stop -t {STOP_SECONDS} {APP} there, and confirm it is stopped; its restart policy"
-			f" is unless-stopped, so it stays down\n"
-			f"  read where it ended, its last checkpoint, with pg_controldata over its directory\n"
-			f"  wait up to {CATCH_UP_SECONDS} seconds for {node}'s pg_last_wal_replay_lsn() to reach it,"
-			f" and stop without promoting if it does not\n"
-			f"  a primary that does not answer over ssh is taken to be down already, and not fenced"
+			f"database: would read the cluster from the first member whose REST on {REST} answers,"
+			f" then ask the leader's to switch over {to}, as {REST_USER}, and wait up to"
+			f" {SWITCHING_SECONDS} seconds for the new leader to run"
 		)
 		return
-	if ssh(old, "true") is None:
-		print(f"database: {old}, the primary, does not answer over ssh; taken to be down, not fenced")
+	view = cluster(addresses)
+	if view is None:
+		fail("no member's Patroni answered")
+	leader = leader_of(view)
+	print(f"database: now {shown(view)}")
+	if leader is None:
+		fail("the cluster has no leader now; Patroni elects one by itself")
+	if node == leader:
+		print(f"database: {node} leads already")
 		return
-	if ssh(old, f"docker stop -t {STOP_SECONDS} {APP} >/dev/null") is None:
-		fail(f"stopping the database on {old} failed; nothing was promoted")
-	if ssh(old, f"docker inspect -f '{{{{.State.Running}}}}' {APP}") != "false":
-		fail(f"the database on {old} is still running; nothing was promoted")
-	print(f"database: {old} stopped")
-	ended = final_lsn(old)
-	if ended is None:
-		fail(f"where {old} ended could not be read; it is stopped, and {node} was not promoted")
-	lsn, state = ended
-	if state != "shut down":
-		print(f"database: {old} did not shut down cleanly ({state}); its last writes may be lost")
-	print(f"database: {old} ended at {lsn}; waiting for {node} to replay it")
-	for _ in range(CATCH_UP_SECONDS // 2):
-		if in_container(node, f"SELECT pg_last_wal_replay_lsn() >= '{lsn}'::pg_lsn") == "t":
-			print(f"database: {node} has replayed everything {old} wrote")
-			return
-		time.sleep(2)
-	replayed = in_container(node, "SELECT pg_last_wal_replay_lsn()")
-	fail(
-		f"{node} replayed to {replayed} and {old} ended at {lsn}; not promoted. {old} is stopped:"
-		f" `docker start {APP}` there puts it back, or promote anyway once the loss is accepted"
+	body = {"leader": leader} | ({"candidate": node} if node else {})
+	token = base64.b64encode(f"{REST_USER}:{password}".encode()).decode()
+	request = urllib.request.Request(
+		f"http://{addresses[leader]}:{REST}/switchover",
+		data=json.dumps(body).encode(),
+		method="POST",
+		headers={"Content-Type": "application/json", "Authorization": f"Basic {token}"},
 	)
+	try:
+		with urllib.request.urlopen(request, timeout=SWITCHING_SECONDS) as answer:
+			print(f"database: {leader}'s Patroni: {answer.read().decode().strip()}")
+	except urllib.error.HTTPError as refused:
+		fail(f"{leader}'s Patroni refused: {refused.code} {refused.read().decode().strip()}")
+	except OSError as error:
+		fail(f"{leader}'s Patroni did not answer: {error}")
+	for _ in range(SWITCHING_SECONDS):
+		view = cluster(addresses) or {}
+		now = leader_of(view)
+		if now and now != leader and (node is None or now == node):
+			if any(m["name"] == now and m.get("state") == "running" for m in view["members"]):
+				print(f"database: {now} leads; {shown(view)}")
+				return
+		time.sleep(1)
+	fail(f"no new leader ran within {SWITCHING_SECONDS}s; `patronictl list` on a member says why")
 
 
-def lsn(text):
-	"""A WAL position, `16/B374D848`, as a number of bytes; None when Postgres had none to give."""
-	high, _, low = text.partition("/")
-	return (int(high, 16) << 32) + int(low, 16) if low else None
-
-
-def mib(count):
-	return f"{count / (1024 * 1024):.1f} MiB"
-
-
-def pick(primary, candidates, streams, standing):
-	"""The first of `candidates` that is a standby and caught up, or None, and why each passed over
-	was. `streams` is the primary's pg_stat_replication, `{node: (state, bytes behind)}`, or None
-	when it did not answer; `standing` is each one's `(recovering, received, replayed)`, absent when
-	it did not answer. With the primary down nothing streams, and caught up is having received all
-	any standby that answers did, so none is promoted to lose what another holds. See
-	spec/architecture/databases.md, "Where it runs, and which one writes"."""
-	answered = {name: state for name, state in standing.items() if state and state[0]}
-	held = [max(received or 0, replayed or 0) for _, received, replayed in answered.values()]
-	furthest = max(held, default=0)
-	passed = []
-	for name in candidates:
-		state = standing.get(name)
-		if state is None:
-			passed.append((name, "did not answer"))
-			continue
-		recovering, received, replayed = state
-		if not recovering:
-			passed.append((name, "is not a standby"))
-			continue
-		if streams is not None:
-			stream, behind = streams.get(name, (None, None))
-			if stream != "streaming":
-				passed.append((name, f"is not streaming from {primary} ({stream or 'not connected'})"))
-			elif behind >= BEHIND_BYTES:
-				passed.append((name, f"has {mib(behind)} of {primary}'s WAL still to replay"))
-			else:
-				return name, passed
-			continue
-		has = max(received or 0, replayed or 0)
-		if has < furthest:
-			passed.append((name, f"has received {furthest - has} bytes less than another standby"))
-		elif has - (replayed or 0) >= BEHIND_BYTES:
-			passed.append((name, f"has {mib(has - (replayed or 0))} it received still to replay"))
-		else:
-			return name, passed
-	return None, passed
-
-
-def choose(old):
-	"""The standby a promote that names none takes, each passed over said with why; stops when none
-	qualifies."""
-	if old is None:
-		fail("the nodes name no primary, so there is no order to take a standby from; name one")
-	candidates = [n for n in ORDER if n != old]
-	rows = in_container(
-		old,
-		"SELECT application_name, state, coalesce(pg_wal_lsn_diff(pg_current_wal_lsn(), replay_lsn),"
-		" 0)::bigint FROM pg_stat_replication",
-	)
-	streams = None
-	if rows is not None:
-		streams = {}
-		for row in rows.splitlines():
-			name, state, behind = row.split("|")
-			streams[name] = (state, int(behind))
-	else:
-		print(f"database: {old}, the primary, did not answer; the standbys are measured by each other")
-	standing = {}
-	for name in candidates:
-		answer = in_container(
-			name, "SELECT pg_is_in_recovery(), pg_last_wal_receive_lsn(), pg_last_wal_replay_lsn()"
-		)
-		if answer is not None:
-			recovering, received, replayed = answer.split("|")
-			standing[name] = (recovering == "t", lsn(received), lsn(replayed))
-	node, passed = pick(old, candidates, streams, standing)
-	for name, why in passed:
-		print(f"database: {name} passed over: {name} {why}")
-	if node is None:
-		fail("no standby is caught up, so none was promoted; name one to promote it anyway")
-	print(f"database: {node} is the first standby in order that is caught up")
-	return node
-
-
-def promote(arguments, dry):
+def switchover(arguments, dry):
 	nodes = placements()
-	if sorted(ORDER) != sorted(nodes):
-		fail(f"ORDER names {', '.join(ORDER)} and service.toml places it on {', '.join(nodes)}")
 	names = [a for a in arguments if not a.startswith("-")]
 	if len(names) > 1 or (names and names[0] not in nodes):
-		fail(f"promote takes one of {', '.join(nodes)}, or none for the first standby in order")
-	node = names[0] if names else None
-	if dry:
-		if node is None:
-			node = "<the one chosen>"
-			print(
-				f"database: would take the first of {', '.join(ORDER)}, less the primary the nodes'"
-				f" config.env name, that answers as a standby and is caught up: streaming from the"
-				f" primary with less than {mib(BEHIND_BYTES)} of its WAL to replay, or, when the primary"
-				f" does not answer, having received all that any standby that answers did, with less than"
-				f" {mib(BEHIND_BYTES)} of it to replay; each passed over is said with why, and with none"
-				f" caught up nothing is stopped or promoted"
-			)
-		else:
-			print(f"database: would check {node} answers and is a standby, and stop if not")
-		fence("<primary>", node, dry)
-		print(
-			f"database: would, on root@{node}, run SELECT pg_promote() in the {APP} container, then set"
-			f" DATABASE_PRIMARY={node} in /data/apps/{APP}/config.env on {', '.join(nodes)}"
+		fail(f"switchover takes one of {', '.join(nodes)}, or none for the one Patroni chooses")
+	password = os.environ.get(MADE["PATRONI_PASSWORD"])
+	if not password and not dry:
+		fail(f"secrets.json has no {MADE['PATRONI_PASSWORD']}; `database env` makes it")
+	addresses = {} if dry else {node: tailnet_ipv4(node) for node in nodes}
+	switchover_to(addresses, password, names[0] if names else None, dry)
+
+
+def openssl(directory, *args):
+	"""openssl in `directory`, every key and certificate a file there, never an argument."""
+	done = subprocess.run(["openssl", *args], cwd=directory, text=True, capture_output=True)
+	if done.returncode != 0:
+		fail(f"openssl {args[0]} failed: {done.stderr.strip()}")
+	return done.stdout
+
+
+GENPKEY = ("genpkey", "-algorithm", "EC", "-pkeyopt", "ec_paramgen_curve:P-256", "-out")
+
+
+def make_ca():
+	"""A CA of etcd's own members, its key and certificate as PEM."""
+	with tempfile.TemporaryDirectory() as directory:
+		Path(directory, "ca.cnf").write_text(
+			"[req]\ndistinguished_name=dn\n[dn]\n[ext]\nbasicConstraints=critical,CA:TRUE\n"
+			"keyUsage=critical,keyCertSign,cRLSign\n"
 		)
-	else:
-		old = primary_named(nodes)
-		if node is None:
-			node = choose(old)
-		recovering = in_container(node, "SELECT pg_is_in_recovery()")
-		if recovering is None:
-			fail(f"{node}'s Postgres did not answer; nothing was stopped or promoted")
-		if recovering == "t":
-			if old and old != node:
-				fence(old, node, dry)
-			if in_container(node, "SELECT pg_promote()") != "t":
-				fail(f"promoting {node} failed")
-		print(f"database: {node} is the primary")
-		unreached = [n for n in nodes if not upsert(n, APP, "config.env", {"DATABASE_PRIMARY": node})]
-		if unreached:
-			print(f"database: {', '.join(unreached)} not told; set DATABASE_PRIMARY={node} there before it starts")
-	others = [n for n in nodes if n != node] if node in nodes else ["<each other node>"]
-	print(
-		f"database: redeploy {node} first, then {' and '.join(others)}; a node that was the primary"
-		f" rewinds onto {node} as it starts:\n"
-		+ "\n".join(f"  mise run //repos/infra:node redeploy {n} {APP}" for n in [node, *others])
+		openssl(directory, *GENPKEY, "ca.key")
+		openssl(
+			directory, "req", "-x509", "-new", "-key", "ca.key", "-subj", f"/CN={QUORUM}-ca",
+			"-days", str(CERTIFICATE_DAYS), "-config", "ca.cnf", "-extensions", "ext", "-out", "ca.crt",
+		)
+		return Path(directory, "ca.crt").read_text(), Path(directory, "ca.key").read_text()
+
+
+def make_peer(ca, node, address):
+	"""A member's key and certificate, signed by `ca`, naming the member and its tailnet address,
+	good for both ends of a peer connection."""
+	with tempfile.TemporaryDirectory() as directory:
+		Path(directory, "ca.crt").write_text(ca[0])
+		Path(directory, "ca.key").write_text(ca[1])
+		Path(directory, "req.cnf").write_text("[req]\ndistinguished_name=dn\n[dn]\n")
+		Path(directory, "peer.ext").write_text(
+			f"subjectAltName=IP:{address},DNS:{node}\nextendedKeyUsage=serverAuth,clientAuth\n"
+			"keyUsage=critical,digitalSignature,keyEncipherment\n"
+		)
+		openssl(directory, *GENPKEY, "peer.key")
+		openssl(
+			directory, "req", "-new", "-key", "peer.key", "-subj", f"/CN={node}", "-config", "req.cnf",
+			"-out", "peer.csr",
+		)
+		openssl(
+			directory, "x509", "-req", "-in", "peer.csr", "-CA", "ca.crt", "-CAkey", "ca.key",
+			"-CAcreateserial", "-days", str(CERTIFICATE_DAYS), "-extfile", "peer.ext", "-out", "peer.crt",
+		)
+		return Path(directory, "peer.crt").read_text(), Path(directory, "peer.key").read_text()
+
+
+def names(certificate):
+	"""The names and addresses a certificate is for."""
+	with tempfile.TemporaryDirectory() as directory:
+		Path(directory, "peer.crt").write_text(certificate)
+		text = openssl(directory, "x509", "-in", "peer.crt", "-noout", "-ext", "subjectAltName")
+	return {part.split(":", 1)[1] for part in re.split(r"[,\s]+", text) if ":" in part} - {""}
+
+
+def store_secret(key, value):
+	stored = subprocess.run(
+		["sops", "set", "--value-stdin", "secrets.json", json.dumps([key])],
+		input=json.dumps(value),
+		text=True,
+		cwd=ROOT,
 	)
-	again = granted()
-	if again:
-		print("database: every DATABASE_URL still names the old primary; grant each again:")
-		print("\n".join(f"  mise run database grant {scope} {app}" for scope, app in again))
+	if stored.returncode != 0:
+		fail(f"storing {key} in secrets.json failed")
+	os.environ[key] = value
+	print(f"database: {key} was made and stored in secrets.json")
+
+
+def quorum_tls(cores, addresses, dry):
+	"""Each member's CA, certificate and key, made once and kept in secrets.json; a member's is made
+	again when its address is no longer one its certificate names."""
+	ca = tuple(os.environ.get(key) for key in QUORUM_CA)
+	if not all(ca):
+		if dry:
+			print(f"database: would make a CA for {QUORUM}'s peers, stored as {' and '.join(QUORUM_CA)}")
+			return {node: None for node in cores}
+		ca = make_ca()
+		for key, value in zip(QUORUM_CA, ca):
+			store_secret(key, value)
+	certificates = {}
+	for node in cores:
+		keys = (f"QUORUM_PEER_CERT_{node.upper()}", f"QUORUM_PEER_KEY_{node.upper()}")
+		peer = tuple(os.environ.get(key) for key in keys)
+		if not all(peer) or addresses[node] not in names(peer[0]):
+			if dry:
+				print(f"database: would make {node}'s peer certificate for {addresses[node]} and store it")
+				certificates[node] = None
+				continue
+			peer = make_peer(ca, node, addresses[node])
+			for key, value in zip(keys, peer):
+				store_secret(key, value)
+		certificates[node] = {"ca.crt": ca[0], "peer.crt": peer[0], "peer.key": peer[1]}
+	return certificates
+
+
+# Writes stdin to a file in the member's directory, its own, mode 600, created whole or not at all.
+WRITE_FILE = r"""set -eu
+umask 077
+dir=$1
+mkdir -p "$dir"
+cat > "$dir/$2.new"
+chown "$3" "$dir" "$dir/$2.new"
+mv "$dir/$2.new" "$dir/$2"
+"""
+
+
+def write_tls(node, files):
+	directory = f"/data/apps/{QUORUM}/{QUORUM_TLS}"
+	for name, content in files.items():
+		command = f"sh -c {shlex.quote(WRITE_FILE)} sh {shlex.quote(directory)} {name} {QUORUM_USER}"
+		if ssh(node, command, content) is None:
+			print(f"database: {node}: writing {directory}/{name} failed")
+			return False
+	print(f"database: {node}: {directory} holds its CA, certificate and key")
+	return True
+
+
+def quorum_auth_steps(root, patroni):
+	"""etcdctl's arguments and what each reads on stdin: a root holding the root role, a role
+	reaching the database's keys alone, Patroni's user in it, then authentication on. Passwords go
+	on stdin alone."""
+	return [
+		(["user", "add", "root", "--interactive=false"], root),
+		(["user", "grant-role", "root", "root"], None),
+		(["role", "add", REST_USER], None),
+		(["role", "grant-permission", REST_USER, "readwrite", "--prefix=true", "/database/"], None),
+		(["user", "add", REST_USER, "--interactive=false"], patroni),
+		(["user", "grant-role", REST_USER, REST_USER], None),
+		(["auth", "enable"], None),
+	]
+
+
+def quorum_auth(arguments, dry):
+	"""etcd's password turned on, once, on the first core: a member that already asks one is left
+	as it is. See spec/todo/todo.md, "The database"."""
+	if arguments:
+		fail("quorum-auth takes no arguments")
+	core = manifest_of(QUORUM)["placements"][0]
+	# Its default endpoint is the member beside it.
+	etcdctl = f"docker exec -i {QUORUM} etcdctl"
+	if dry:
+		print(f"database: would, on root@{core}, unless etcd already asks a password:")
+		for args, stdin in quorum_auth_steps("<redacted>", "<redacted>"):
+			print(f"  {etcdctl} {' '.join(args)}" + (" < password" if stdin else ""))
+		return
+	status = ssh(core, f"{etcdctl} auth status")
+	if status is None:
+		fail(f"etcd on {core} did not answer; deploy {QUORUM} on its members first")
+	if "true" in status.lower():
+		print(f"database: etcd on {core} already asks a password")
+		return
+	root = stored_secret(QUORUM_ROOT, dry)
+	patroni = os.environ.get(MADE["PATRONI_PASSWORD"])
+	if not patroni:
+		fail(f"secrets.json has no {MADE['PATRONI_PASSWORD']}; `database env` makes it")
+	for args, stdin in quorum_auth_steps(root, patroni):
+		if ssh(core, f"{etcdctl} {' '.join(shlex.quote(a) for a in args)}", stdin) is None:
+			fail(f"etcdctl {' '.join(args)} failed on {core}")
+	print(f"database: etcd asks a password now; Patroni signs in as {REST_USER}")
 
 
 def mirror_env(arguments, dry):
@@ -550,11 +615,17 @@ def main():
 	arguments = sys.argv[1:]
 	dry = "--dry-run" in arguments or "-n" in arguments
 	rest = [a for a in arguments[1:] if a not in ("--dry-run", "-n")]
-	verbs = {"env": env, "grant": grant, "promote": promote, "mirror-env": mirror_env}
+	verbs = {
+		"env": env,
+		"grant": grant,
+		"switchover": switchover,
+		"quorum-auth": quorum_auth,
+		"mirror-env": mirror_env,
+	}
 	if not arguments or arguments[0] not in verbs:
 		fail(
-			"name one of env, grant <scope> <app>, promote [node] or mirror-env, and --dry-run to only"
-			" say what"
+			"name one of env, grant <scope> <app>, switchover [node], quorum-auth or mirror-env, and"
+			" --dry-run to only say what"
 		)
 	verbs[arguments[0]](rest, dry)
 

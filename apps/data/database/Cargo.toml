@@ -12,7 +12,12 @@ workspace = true
 [dependencies]
 anyhow = "1.0.104"
 axum = "0.8.9"
+bytes = "1.12.1"
+http-body-util = "0.1.5"
+hyper = { version = "1.11.1", features = ["client", "http1"] }
+hyper-util = { version = "0.1.21", features = ["client-legacy", "http1", "tokio"] }
 jiff = { version = "0.2", features = ["serde"] }
+libc = "0.2.190"
 mimalloc = "0.1.52"
 response = { version = "2.0.0", features = ["axum"] }
 serde = { version = "1.0.229", features = ["derive"] }
@@ -21,6 +26,5 @@ thiserror = "2.0.21"
 tokio = { version = "1.53.2", features = ["rt-multi-thread", "macros", "net", "process", "signal", "sync", "time", "fs", "io-util"] }
 
 [dev-dependencies]
-http-body-util = "0.1.5"
 tempfile = "3.27.0"
 tower = { version = "0.5", features = ["util"] }

@@ -2,7 +2,6 @@
 //! spec/architecture/databases.md, "The container is Postgres and a keeper of it".
 
 use crate::config::Role;
-use crate::health;
 use crate::keeper::{Keeper, Phase, describe};
 use axum::Router;
 use axum::extract::State;
@@ -28,26 +27,31 @@ fn unavailable(reason: impl ToString) -> Response {
 	response::failure_with(StatusCode::SERVICE_UNAVAILABLE, "service_unavailable", reason)
 }
 
-/// Healthy while Postgres answers as the role this node is configured as.
+/// Healthy while Patroni runs Postgres as a primary or a replica and Postgres answers; a member
+/// starting, copying, or with no Patroni answering says which.
 async fn health(State(keeper): State<Arc<Keeper>>) -> Response {
 	let phase = keeper.phase();
-	if !matches!(phase, Phase::Running(_)) {
+	if !matches!(phase, Phase::Running) {
 		return unavailable(describe(&phase));
 	}
+	match keeper.view().await {
+		Ok(view) if view.serving() => {}
+		Ok(view) => {
+			return unavailable(format!("Patroni says this member is {}, as {}", view.state, view.role));
+		}
+		Err(error) => return unavailable(error),
+	}
 	match keeper.status().await {
-		Ok(status) => match health::mismatch(&status, &keeper.config.node) {
-			Some(reason) => unavailable(reason),
-			None => response::success(StatusCode::OK, status),
-		},
+		Ok(status) => response::success(StatusCode::OK, status),
 		Err(error) => unavailable(error),
 	}
 }
 
-/// The daily backup, which only the primary takes; a standby answers that it had nothing to do,
+/// The daily backup, which only the leader takes; a standby answers that it had nothing to do,
 /// which `cron` records as done.
 async fn backup(State(keeper): State<Arc<Keeper>>) -> Response {
 	let phase = keeper.phase();
-	if !matches!(phase, Phase::Running(_)) {
+	if !matches!(phase, Phase::Running) {
 		return unavailable(describe(&phase));
 	}
 	let Ok(_running) = keeper.backing_up.try_lock() else {
@@ -70,7 +74,7 @@ async fn backup(State(keeper): State<Arc<Keeper>>) -> Response {
 /// not checked to the end, fails it with their names. See amcheck.rs.
 async fn amcheck(State(keeper): State<Arc<Keeper>>) -> Response {
 	let phase = keeper.phase();
-	if !matches!(phase, Phase::Running(_)) {
+	if !matches!(phase, Phase::Running) {
 		return unavailable(describe(&phase));
 	}
 	let Ok(_running) = keeper.checking.try_lock() else {
@@ -98,10 +102,12 @@ mod tests {
 	fn keeper() -> Arc<Keeper> {
 		let config = Config {
 			node: "buf".into(),
-			primary: "tyo".into(),
-			peers: [("tyo".to_owned(), "100.64.0.1".to_owned())].into(),
+			peers: [("buf".to_owned(), "100.64.0.2".to_owned())].into(),
+			quorum: vec!["100.64.0.2".into()],
+			priority: 1,
 			superuser_password: "s".into(),
 			replication_password: "r".into(),
+			patroni_password: "p".into(),
 			data: "/nonexistent".into(),
 		};
 		Arc::new(Keeper::new(config, Layout::new("/nonexistent".into())))
@@ -116,18 +122,17 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn says_why_it_is_not_healthy_until_postgres_runs() {
+	async fn says_why_it_is_not_healthy_until_patroni_runs() {
 		let keeper = keeper();
 		let (status, body) = ask(keeper.clone(), "GET", "/health").await;
 		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
 		assert_eq!(body["code"], "service_unavailable");
-		keeper.refuse("rewinding failed".into());
-		let (status, body) = ask(keeper.clone(), "POST", "/jobs/backup").await;
-		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
-		assert_eq!(body["message"], "rewinding failed");
-		let (status, body) = ask(keeper.clone(), "POST", "/jobs/amcheck").await;
-		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
-		assert_eq!(body["message"], "rewinding failed");
+		assert_eq!(body["message"], "writing Patroni's configuration");
+		for job in ["/jobs/backup", "/jobs/amcheck"] {
+			let (status, body) = ask(keeper.clone(), "POST", job).await;
+			assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
+			assert_eq!(body["message"], "writing Patroni's configuration");
+		}
 	}
 
 	#[tokio::test]

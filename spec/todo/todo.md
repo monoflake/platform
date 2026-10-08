@@ -95,8 +95,20 @@ operator practiced comes before the first app moves in --
      Values are copied, not files: each lands in our own rendering, citing the template it came
      from, and what does not fit -- packages on the host, its monitoring, pgBackRest in place of
      WAL-G, native x86 Postgres -- is left. Decided on 2026-10-08.
-   - **The running cluster is taken over in place**, `tyo`'s data directory becoming the first
-     leader's, the standbys next, rehearsed in docker first, then on the nodes a node at a time.
+   - **Built and rehearsed on 2026-10-08**, in docker on the five members' measured round trips by
+     netem, 1% loss on `sha`'s links: ten minutes steady with no election after the first and every
+     write on `tyo`; `gvx` sized as 485 MiB serving 72,000 reads a second beside 3,800 writes on `tyo`
+     with no kill; the primary killed, `rdu` taking writes 28 to 32 s later and the old primary
+     rejoining as a standby; a frozen Patroni of 4.6 s causing no failover. **A partitioned leader is
+     fenced, then restarted by host's restart policy**, finds another leading, rewinds and rejoins --
+     the partition took 31 to 45 s to fail over.
+   - **The running cluster is taken over in place**, a step at a time: `database env`, which also
+     makes etcd's CA and certificates and Patroni's password; `quorum` on the five, a member at a
+     time; `database quorum-auth`; a fresh base backup of `tyo`; the database on `tyo`, whose data
+     directory becomes the first leader's, then `rdu`, `buf`, `gvx` and `sha`, each one healthy before
+     the next; then `database grant platform ledger` again for the URL naming every core, and
+     `ledger` redeployed. Not rehearsed: emulated arm64's speed on `buf` and `sha`, and the WAN beyond
+     netem.
 4. **One address on every node for the database**, before a second app is given one: a small layer-4
    proxy of the platform's on every node, joined by host to every app's network, which passes each
    connection unaltered to the member Patroni's REST `/primary` answers `200` on, refusing new ones

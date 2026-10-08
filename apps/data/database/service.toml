@@ -3,9 +3,9 @@
 version = 1
 name = "database"
 display_name = "Database"
-# tyo is the primary and buf and rdu its standbys, named by hand. See
-# spec/architecture/databases.md, "Where it runs, and which one writes".
-placements = ["tyo", "buf", "rdu"]
+# Patroni's members: tyo, rdu and buf may lead, in that order, and gvx and sha are standbys that
+# never do. See spec/architecture/databases.md, "Where it runs, and which one writes".
+placements = ["tyo", "buf", "rdu", "gvx", "sha"]
 # One cluster replicates between machines of one architecture: arm64 everywhere, buf by emulation.
 # See spec/architecture/databases.md, "Where it runs, and which one writes".
 arch = "arm64"
@@ -14,15 +14,16 @@ arch = "arm64"
 rollout = "manual"
 
 # The keeper answers on a socket in its directory, which each node's `cron` is handed; Postgres's
-# port is the only one. See spec/architecture/databases.md, "The container is Postgres and a keeper
-# of it".
+# port and Patroni's REST are the only ones. See spec/architecture/databases.md, "The container is
+# Postgres and a keeper of it".
 [container]
 socket = "database.sock"
 health = "/health"
-# A first start on a standby copies the whole primary before it can answer healthy.
+# A new member copies a whole base backup, or the primary, before it can answer healthy.
 health_timeout = 900
-# shared_buffers is 128 MB, and fifty connections need room beside it and the keeper.
-memory_mb = 512
+# A ceiling, not a share: the keeper tunes Postgres by the lesser of this and half the node's own
+# memory, the other half the rest of the node's. See src/render.rs.
+memory_mb = 8192
 
 # The socket, and the cluster in data/ beside it; the image declares its volume here.
 [data]
@@ -48,8 +49,8 @@ catch_up = "once"
 overlap = "skip"
 timeout = 3600
 
-# Postgres's port, published to the tailnet. See infra's
+# Postgres's port and Patroni's REST, published to the tailnet. See infra's
 # spec/architecture/host.md, "A role is asked for by the app and granted by the node".
 [shape]
 kind = "peer"
-port = 5432
+ports = [5432, 8008]

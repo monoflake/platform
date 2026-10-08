@@ -62,10 +62,16 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # new major is never this line alone; see spec/architecture/databases.md, "Upgrades are pinned,
 # reported, and rolled by hand".
 FROM postgres:18-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
-# The CA bundle WAL-G verifies the backup store's TLS against; the base image has none.
+# The CA bundle WAL-G verifies the backup store's TLS against, which the base image lacks, and
+# Patroni, from the PostgreSQL project's archive the base image already trusts, pinned by version,
+# its Python and the etcd client its etcd3 store imports with it. A new version is these pins. See
+# spec/architecture/databases.md, "Where it runs, and which one writes".
 RUN apt-get update \
-	&& apt-get install --yes --no-install-recommends ca-certificates \
-	&& rm -rf /var/lib/apt/lists/*
+	&& apt-get install --yes --no-install-recommends ca-certificates patroni=4.1.5-2.pgdg13+1 \
+		python3-etcd=0.4.5-6 \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& patroni --version \
+	&& python3 -c 'import patroni.dcs.etcd3'
 # Fails the build here, not a node later, if the binary cannot load on this image's libraries.
 RUN --mount=from=walg,target=/walg \
 	tar -xzf /walg/wal-g.tar.gz -C /usr/local/bin --no-same-owner --transform 's|.*|wal-g|' \

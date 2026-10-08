@@ -1,0 +1,26 @@
+# What host needs to run this service. The record is read by host on the machine, a program
+# deployed apart from this file, so it carries a version. See infra's spec/architecture/host.md.
+version = 1
+name = "quorum"
+display_name = "Quorum"
+# Every member of the database, each a voter, so a quorum of three outlives any one region going:
+# Asia, the US, Europe. See spec/todo/todo.md, "The database".
+placements = ["tyo", "buf", "rdu", "gvx", "sha"]
+# A member at a time: restarted together they leave no quorum, and Patroni's failsafe is all that
+# keeps the primary then.
+rollout = "manual"
+
+# Health on its metrics listener; clients and peers are on the ports below.
+[container]
+port = 23790
+health = "/livez"
+memory_mb = 128
+
+[data]
+path = "/data"
+
+# Clients and peers, published to the tailnet. See infra's spec/architecture/host.md, "A role is
+# asked for by the app and granted by the node".
+[shape]
+kind = "peer"
+ports = [2379, 2380]
