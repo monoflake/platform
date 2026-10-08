@@ -1,0 +1,7 @@
+# Every app's `[interface]` on `.app`, sent to the node that runs it over Workers VPC, so a name
+# needs no record of its own and the one wildcard reaches every node. A Worker alone; it is no
+# scope of the API host.
+version = 1
+name = "router"
+display_name = "App Router"
+placements = ["workers"]

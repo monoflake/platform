@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "router",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-07-29",
+
+	// A route, never a custom domain: a custom domain issues a certificate naming the host, which
+	// Certificate Transparency then publishes, where the route keeps the edge's wildcard. A Worker's
+	// custom domain on the zone -- console.canmi.app -- is matched before any route and never
+	// reaches this one. Cloudflare Access stands in front of every name here, as before.
+	"routes": [{ "pattern": "*.canmi.app/*", "zone_name": "canmi.app" }],
+
+	// Each node's Caddy, the same VPC services the gateway and `hook` reach, bound by the node's name
+	// in capitals. src/index.test.ts holds this list to the gateway's.
+	"vpc_services": [
+		{ "binding": "RDU", "service_id": "01a0e5b1-1072-72d3-81cf-5b1c69ad7a6e", "remote": true },
+		{ "binding": "TYO", "service_id": "01a10f21-8a27-7721-8223-54365d93b27b", "remote": true },
+		{ "binding": "NRT", "service_id": "01a10f29-45f6-72f0-a7bd-1c86e3320a26", "remote": true },
+		{ "binding": "HND", "service_id": "01a10f29-627a-7bf1-964b-4b0a660746d3", "remote": true },
+		{ "binding": "GVX", "service_id": "01a10f29-7d17-7b80-90d1-800d9c078a39", "remote": true },
+		{ "binding": "BRU", "service_id": "01a10f29-9169-7210-be9d-ad0a4de36833", "remote": true },
+		{ "binding": "BUF", "service_id": "01a10f29-a4d0-78f2-b6da-cade48268370", "remote": true },
+		{ "binding": "SHA", "service_id": "01a118fb-6f57-7973-a88e-db4ca4191206", "remote": true },
+	],
+
+	"observability": { "logs": { "enabled": true } },
+	"workers_dev": false,
+	"preview_urls": false,
+}

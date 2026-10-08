@@ -17,6 +17,7 @@
 		"apps/delivery/aka",
 		"apps/edge/hook",
 		"apps/edge/gateway",
-		"apps/edge/quota"
+		"apps/edge/quota",
+		"apps/edge/router"
 	]
 }

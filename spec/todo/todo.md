@@ -30,6 +30,19 @@ Whenever there is room: **a newer pinned image is reported** -- `outdated` reads
 every Dockerfile pins and says which have a newer one upstream, the way it reports packages, and moves
 none of them.
 
+## Every node's interface is public through one Worker
+
+Decided on 2026-10-08, when `qq` on `sha` answered 404 at `qq.canmi.app`: `*.canmi.app` is one wildcard
+record to `rdu`'s tunnel, so only `rdu`'s apps were public. A Worker on the route `*.canmi.app/*` --
+a route, never a custom domain, which would put the host's name in the certificate logs; the
+edge's `*.canmi.app` wildcard certificate covers every first-level name -- looks up which node runs
+the app a label names and passes the request there over that node's Workers VPC binding, WebSockets
+included, behind Cloudflare Access as now. The table of labels to nodes is kept at runtime, never in
+code, fed by what the relay knows of every node; a label it does not know goes on to the origin,
+`rdu`'s tunnel, as today. No DNS record is made per app. A new node still means the Worker's
+bindings redeployed until one VPC Network binding reaches every node -- [../issues/scheduling.md](../issues/scheduling.md),
+"A node is added by hand in seven places".
+
 ## Toward services that keep nothing
 
 In order, each deployed and proved before the next -- [../architecture/scheduling.md](../architecture/scheduling.md):

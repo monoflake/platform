@@ -120,6 +120,7 @@ mod tests {
 			running: true,
 			held: false,
 			rollout: "replace".into(),
+			label: None,
 		}
 	}
 

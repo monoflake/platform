@@ -81,6 +81,11 @@ pub struct App {
 	/// How a new version takes its place, a word of host's: infra's spec/architecture/host.md, "An
 	/// app chooses how it is rolled out, and keeping nothing earns a gapless one".
 	pub rollout: String,
+	/// The label its `[interface]` answers on under `.app`, its `domain` or else its name, when it
+	/// has one: what `router` sends a public name to this node by. See infra's
+	/// spec/architecture/host.md, "One name inside, and a domain label outside".
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub label: Option<String>,
 }
 
 /// An app as host's `/api/apps` lists it.
@@ -105,12 +110,22 @@ fn replaced() -> String {
 #[derive(Deserialize)]
 struct Named {
 	name: String,
+	#[serde(default)]
+	interface: Option<Interface>,
+}
+
+#[derive(Deserialize)]
+struct Interface {
+	#[serde(default)]
+	domain: Option<String>,
 }
 
 impl From<Shown> for App {
 	fn from(shown: Shown) -> Self {
 		let Shown { manifest, image, deployed_at, running, held, rollout } = shown;
-		Self { name: manifest.name, image, deployed_at, running, held, rollout }
+		let label =
+			manifest.interface.map(|interface| interface.domain.unwrap_or(manifest.name.clone()));
+		Self { name: manifest.name, image, deployed_at, running, held, rollout, label }
 	}
 }
 
@@ -194,7 +209,8 @@ mod tests {
 
 	const APPS: &str = r#"{ "status": "success", "data": [
 		{ "manifest": { "version": 1, "name": "geo", "placements": ["rdu"],
-				"container": { "port": 23440, "health": "/health", "memory_mb": 768 } },
+				"container": { "port": 23440, "health": "/health", "memory_mb": 768 },
+				"interface": { "domain": "where", "lan": true } },
 			"image": "geo:9f1c2ab",
 			"previous": { "manifest": { "version": 1, "name": "geo", "placements": ["rdu"] },
 				"image": "geo:1b2c3d4" },
@@ -238,6 +254,7 @@ mod tests {
 					running: true,
 					held: false,
 					rollout: "beside".into(),
+					label: Some("where".into()),
 				},
 				App {
 					name: "apt".into(),
@@ -246,11 +263,19 @@ mod tests {
 					running: false,
 					held: true,
 					rollout: "replace".into(),
+					label: None,
 				},
 			]
 		);
-		// Passed on to the console as a word.
+		// Passed on to the console as a word, and the label to `router`, absent where there is none.
 		assert_eq!(serde_json::to_value(&apps[0]).unwrap()["rollout"], "beside");
+		assert_eq!(serde_json::to_value(&apps[0]).unwrap()["label"], "where");
+		assert!(serde_json::to_value(&apps[1]).unwrap().get("label").is_none());
+		// An interface with no domain answers on the app's own name.
+		let named = r#"{ "status": "success", "data": [{ "manifest": { "name": "qq",
+			"interface": { "lan": false } }, "image": "qq:1", "deployed_at": "2026-10-08T00:00:00Z" }] }"#;
+		let apps: Vec<App> = opened(named.as_bytes()).unwrap();
+		assert_eq!(apps[0].label.as_deref(), Some("qq"));
 	}
 
 	#[test]
