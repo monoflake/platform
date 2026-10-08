@@ -42,10 +42,21 @@ describe('runToDeploy', () => {
 	});
 
 	it('names a successful run of the deploy workflow on main', () => {
-		expect(DEPLOY_SOURCES).toEqual(['monoflake/infra', 'monoflake/platform', 'canmi21/web']);
+		expect(DEPLOY_SOURCES).toEqual([
+			'monoflake/infra',
+			'monoflake/platform',
+			'canmi21/web',
+			'canmi21/cue',
+		]);
 		const named = { run: 42, repository: 'monoflake/platform' };
 		expect(runToDeploy(run)).toEqual(named);
 		expect(runToDeploy(without({ event: 'schedule' }))).toEqual(named);
+	});
+
+	it("passes on cue's runs as any source's, and a repository off the list never", () => {
+		const cue = { ...run, repository: { full_name: 'canmi21/cue' } };
+		expect(runToDeploy(cue)).toEqual({ run: 42, repository: 'canmi21/cue' });
+		expect(runToDeploy({ ...run, repository: { full_name: 'canmi21/elsewhere' } })).toBeUndefined();
 	});
 
 	it('names nothing for any run that is not that', () => {

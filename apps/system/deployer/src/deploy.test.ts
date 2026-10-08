@@ -115,6 +115,18 @@ describe('the deployer', () => {
 		expect(store.list()).toEqual([]);
 	});
 
+	it('deploys nothing from a source whose run built no Worker, and says so', async () => {
+		const { store, invoked, logs, deployer } = await setup({
+			env: { DEPLOY_SOURCES: 'canmi21/web canmi21/cue' },
+			artifacts: [],
+		});
+		deployer.notice({ run: 9, repository: 'canmi21/cue' });
+		await deployer.idle();
+		expect(store.list()).toEqual([]);
+		expect(invoked).toEqual([]);
+		expect(logs).toEqual(['deployer: run 9 of canmi21/cue built no Worker']);
+	});
+
 	it('runs dry when told, recording it and deploying nothing', async () => {
 		const { store, invoked, deliver } = await setup({ env: { DRY_WORKERS: 'console' } });
 		await deliver(7);

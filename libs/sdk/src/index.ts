@@ -22,14 +22,16 @@ import { INFRA, PANEL_PORT } from '@monoflake/urls';
 
 /**
  * The repositories whose deploy runs the hook passes on, as GitHub names them: the two whose apps
- * a node runs, and web, whose Workers the deployer deploys. Each receiver holds its own list too,
- * and that one decides. See infra's spec/architecture/host.md, "The machine pulls; nothing pushes
- * into it", and spec/architecture/deployer.md, "Admitting a repository".
+ * a node runs, web, whose Workers the deployer deploys, and cue, whose one app, `qq`, runs on sha.
+ * Each receiver holds its own list too, and that one decides. See infra's
+ * spec/architecture/host.md, "The machine pulls; nothing pushes into it", and
+ * spec/architecture/deployer.md, "Admitting a repository".
  */
 export const DEPLOY_SOURCES: readonly string[] = [
 	'monoflake/infra',
 	'monoflake/platform',
 	'canmi21/web',
+	'canmi21/cue',
 ];
 
 /**

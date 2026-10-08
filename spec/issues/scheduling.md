@@ -151,6 +151,7 @@ architecture, a role a node grants -- stays in code. What deciding it involves:
   keeps the last sources and tokens it was given, and deploys from them while the cluster is down.
 - **The hook needs no list**: a run signed with the webhook's secret could be forwarded whatever its
   repository, every node deciding by its own sources, as host already does.
-- **An app keeps the repository it came from** before a second owner's repository is a source --
-  infra's `spec/issues.md`, "An app's name is not tied to the repository that first deployed it".
+- **An app belongs to the scope its source carries**, decided on 2026-10-08 and waiting in infra's
+  `spec/todo.md`, "A deploy belongs to a scope": the scope of each source is part of the same
+  record.
 - **The same layer holds the node list** -- "A node is added by hand in seven places", above.
