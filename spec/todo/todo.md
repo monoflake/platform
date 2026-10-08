@@ -44,9 +44,10 @@ operator practiced comes before the first app moves in --
 3. **The cluster fails over by itself, with Patroni and etcd**, decided on 2026-10-08 in place of the
    operator's promote -- [../architecture/databases.md](../architecture/databases.md), "Where it
    runs, and which one writes":
-   - **etcd on the three cores**, `quorum`, a platform app of its own, each member's client and peer
+   - **etcd on the five members**, `quorum`, a platform app of its own, each member's client and peer
      ports published to the tailnet, natively in each node's architecture; its heartbeat and
-     election timeouts set for a quorum that spans the Pacific, about 500 ms and 5 s. It answers
+     election timeouts set for a quorum on three continents, its farthest pair, `gvx` and `sha`,
+     about 380 ms apart: about 500 ms and 5 s. It answers
      only with a password, Patroni's from the secrets, since every container reaches the tailnet
      and a key written there moves the primary. Rolled out by hand, a member at a time, like the
      database.
@@ -58,11 +59,13 @@ operator practiced comes before the first app moves in --
      (`maximum_lag_on_failover`), and the last seconds of writes may be lost, as is already accepted.
    - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
      not fail back by itself, so `tyo` is made primary again by a switchover, by hand.
-   - **`sha` is a fourth member that never leads**: an asynchronous standby in Shanghai, x86
-     emulating arm64 as `buf` does, tagged `nofailover`, and no member of etcd, which stays three
-     so its quorum stays odd. It holds the whole cluster in plain text inside mainland China, which
-     the author accepted on 2026-10-08. It joins with Patroni, not before, being cloned from the
-     latest base backup.
+   - **Five members, five voters**, decided on 2026-10-08: `tyo`, `rdu` and `buf` may lead, in that
+     order; `gvx` in Sweden, arm64 natively on 970 MiB, and `sha` in Shanghai, x86 emulating arm64,
+     are asynchronous standbys tagged `nofailover`. All five are etcd's members, so a quorum of three
+     outlives any one region going -- Asia `tyo` and `sha`, the US `rdu` and `buf`, Europe `gvx`.
+     `sha` holds the whole cluster in plain text inside mainland China, which the author accepted.
+     The two join with Patroni, not before, each cloned from the latest base backup, and `gvx`
+     runs Pigsty's smallest tuning.
    - **A node finds its own way back**: a standby that was away catches up from the primary or the
      archive, an old primary is rewound onto the new one, and one whose rewind fails, or a new node
      on an empty disk, is cloned again -- from WAL-G's latest base backup first, from the primary
