@@ -44,12 +44,16 @@ operator practiced comes before the first app moves in --
 3. **The cluster fails over by itself, with Patroni and etcd**, decided on 2026-10-08 in place of the
    operator's promote -- [../architecture/databases.md](../architecture/databases.md), "Where it
    runs, and which one writes":
-   - **etcd on the three cores**, a platform app of its own, each member's client and peer ports
-     published to the tailnet, natively in each node's architecture; its heartbeat and election
-     timeouts set for a quorum that spans the Pacific, about 500 ms and 5 s.
+   - **etcd on the three cores**, `quorum`, a platform app of its own, each member's client and peer
+     ports published to the tailnet, natively in each node's architecture; its heartbeat and
+     election timeouts set for a quorum that spans the Pacific, about 500 ms and 5 s. It answers
+     only with a password, Patroni's from the secrets, since every container reaches the tailnet
+     and a key written there moves the primary. Rolled out by hand, a member at a time, like the
+     database.
    - **Patroni in the database's container**, the keeper's child, and Postgres Patroni's: the keeper
      renders Patroni's configuration and keeps answering host -- health, backups, `amcheck` -- and
-     Patroni starts, follows, promotes and demotes. Its REST port is published to the tailnet.
+     Patroni starts, follows, promotes and demotes. Its REST port is published to the tailnet, and
+     everything but a read asks a password, `DATABASE_PATRONI_PASSWORD`.
    - **Asynchronous, as now**: a standby more than one WAL segment behind is never promoted
      (`maximum_lag_on_failover`), and the last seconds of writes may be lost, as is already accepted.
    - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
@@ -59,9 +63,16 @@ operator practiced comes before the first app moves in --
      on an empty disk, is cloned again -- from WAL-G's latest base backup first, from the primary
      second.
    - **A primary that loses its lease stops taking writes**, demoted by Patroni when it cannot renew
-     it in etcd; containers have no watchdog, so that is the fence, and its window is the lease's
-     length.
+     it in etcd. Containers have no watchdog, so the keeper is one: Postgres is stopped at once when
+     Patroni exits, and both are killed when Patroni's REST stops answering for longer than the
+     lease. The lease is Patroni's default, 30 s, with a loop of 10 and retries of 10, and that is
+     the longest a fenced primary may still take writes.
+   - **etcd down is not a primary down**: `failsafe_mode` keeps a leader that still reaches every
+     member leading while etcd does not answer, as when all three members restart.
    - **`database promote` becomes `database switchover [node]`**, Patroni's own, for a planned move.
+   - **Until the proxy, an app's URL names all three**, `target_session_attrs=read-write` over the
+     cores' tailnet addresses, written by `database grant`, so a failover reaches the app without a
+     grant; the proxy's single address replaces it.
    - **The running cluster is taken over in place**, `tyo`'s data directory becoming the first
      leader's, the standbys next, rehearsed in docker first, then on the nodes a node at a time.
 4. **One address on every node for the database**, before a second app is given one: a small layer-4
