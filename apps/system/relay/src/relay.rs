@@ -17,10 +17,10 @@ use tokio::sync::broadcast;
 pub const VERSION: u32 = 1;
 
 /// How long `/health` waits for the first read of host before it answers healthy regardless: a
-/// relay that cannot read its own node still carries the other six.
+/// relay that cannot read its own node still carries every other node.
 pub const GRACE: Duration = Duration::from_secs(30);
 
-/// Seven nodes changing every few seconds; a socket further behind than this is caught up whole.
+/// Every node changing every few seconds; a socket further behind than this is caught up whole.
 const BACKLOG: usize = 256;
 
 /// A node's newer snapshot, taken here.
