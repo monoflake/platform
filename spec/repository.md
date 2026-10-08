@@ -70,5 +70,12 @@ builds, because a consumer's node does not strip types inside `node_modules`. Ea
 was published by hand, as `0.0.0`, since npm attaches a trusted publisher only to a package that
 exists. `@monoflake/urls` is infra's, installed from npm like any other package.
 
+**A release runs the whole repository's tests first, and waits for the next change to the package
+when they fail.** The test step is every suite here, not the package's alone, so a test anywhere
+that fails stops the publish. A fix that does not touch the package does not trigger the workflow,
+so the unpublished change goes out with the next push that changes the package, or by running the
+workflow by hand -- as on 2026-10-08, when the deployer's admission test refused a route the
+gateway gained in the same push as a change to `@monoflake/sdk`.
+
 This repository continues the history of `canmi21/web`, which was `canmi21/lattice`, from the commit
 the three repositories split at; everything before it is shared with the other two.
