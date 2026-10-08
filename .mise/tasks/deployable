@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 #MISE description="The images, or with --workers the Workers, a change needs rebuilt, as JSON: `deployable [--workers] [--all] [--since REV | --git BASE [--head REV]] [--files ...]`"
 """An app is deployable when its directory holds a `service.toml` and a `Dockerfile`, and needs a
-new image when anything under that directory changed, a crate it is built from did, a package
-Cargo.lock resolves it to did, or the build did. With `--workers`, the apps placed on `workers`
-with a `wrangler.jsonc` instead, each needing a new `worker-` artifact when it, a package it
-imports, or the packaging changed. CI reads the list to decide what to build; see infra's
-spec/architecture/host.md, "The machine pulls; nothing pushes into it", and
-spec/architecture/deployer.md, "What a Worker artifact is"."""
+new image when what goes into it changed, each input read as a build reads it (see fingerprint.py):
+a crate it is built from, a file its binary includes, a package Cargo.lock resolves it to, its
+declaration, its Dockerfile, or the build; an app whose Dockerfile copies more than the workspace
+takes every file in its directory. A comment or a reformat rebuilds nothing, so a panic's line and
+`line!()` may lag the source. With `--workers`, the apps placed on `workers` with a `wrangler.jsonc`
+instead, each needing a new `worker-` artifact when it, a package it imports, or the packaging
+changed. CI reads the list to decide what to build; see infra's spec/architecture/host.md, "The
+machine pulls; nothing pushes into it", and spec/architecture/deployer.md, "What a Worker artifact
+is"."""
 
 import atexit
 import json
@@ -18,7 +21,8 @@ import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from graph import ROOT, app_directories, app_of, build_inputs, changed, dependents, node_graph, owner, rust_graph  # noqa: E402
+from fingerprint import ignored, normalized, same  # noqa: E402
+from graph import ROOT, app_directories, app_of, build_inputs, changed, dependents, embedded, node_graph, owner, rust_graph  # noqa: E402
 from resolved import lock_moved, manifest_moved, tree_moved  # noqa: E402
 
 # How every image is built: a change here is a change to all of them.
@@ -26,6 +30,8 @@ EVERY_IMAGE = {".dockerignore", ".mise/tasks/image"}
 # What every image is resolved from, read at both revisions so only the images whose inputs moved
 # are rebuilt; see resolved.py. Given files alone, with no base to read, every image, as above.
 RESOLUTION = {"Cargo.toml", "Cargo.lock"}
+# What a Dockerfile copies from the context when its image is its crate's binary and nothing else.
+WORKSPACE = {"Cargo.toml", "Cargo.lock", "apps", "libs"}
 # How every Worker is packaged, the same.
 EVERY_WORKER = {"package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".mise/tasks/worker"}
 
@@ -139,19 +145,68 @@ def resolution(files, declared, crate_dirs, revisions):
 	return moved
 
 
+def copied(dockerfile):
+	"""What `dockerfile` copies from the build's context, or None where it cannot be told: every
+	source of a `COPY` or `ADD` without `--from`, but an address `ADD` fetches."""
+	sources = set()
+	for line in dockerfile.replace("\\\n", " ").splitlines():
+		words = line.split()
+		if not words or words[0].upper() not in ("COPY", "ADD"):
+			continue
+		if any(word.startswith("[") for word in words):
+			return None
+		if any(word.startswith("--from") for word in words):
+			continue
+		named = [word for word in words[1:] if not word.startswith("--")][:-1]
+		sources |= {word for word in named if "://" not in word}
+	return sources
+
+
+def cargo_built(declared, crate_dirs):
+	"""The apps whose image is their crate's binary alone: a crate of the workspace, with a
+	Dockerfile copying nothing from the context but the workspace."""
+	crates = set(crate_dirs.values())
+	found = set()
+	for app, directory in app_directories().items():
+		if app not in declared or declared[app] not in crates:
+			continue
+		sources = copied((directory / "Dockerfile").read_text())
+		if sources is not None and sources <= WORKSPACE:
+			found.add(app)
+	return found
+
+
+def changes(files, crate_dirs, revisions):
+	"""Those of `files` that change a build: not ignored and, with revisions to read them at, not
+	the same once each is read as a build reads it."""
+	kept = [f for f in files if not ignored(f, crate_dirs)]
+	if revisions is None:
+		return kept
+	base, head = revisions
+	return [f for f in kept if not normalized(f) or not same(f, base.read(f), head.read(f))]
+
+
 def needed(files, declared, revisions=None):
 	"""The apps `files` need rebuilt; `revisions` reads a file before and after, as (base, head)."""
-	if any(f in EVERY_IMAGE for f in files):
-		return sorted(declared)
-	# A file another crate includes is ignored here: every such include today is a test's, which
-	# no image carries. A binary that embedded another crate's file would need it counted.
 	crate_dirs, crate_edges, _included = rust_graph()
+	moving = changes(files, crate_dirs, revisions)
+	if any(f in EVERY_IMAGE for f in moving):
+		return sorted(declared)
 	built = build_inputs(crate_dirs)
+	# A file a binary includes outside its tests is that crate's source, and is in the binary byte
+	# for byte, as is what a build script reads.
+	carried = embedded(crate_dirs)
 	crates, chosen = set(), set()
 	for f in files:
 		crates |= built.get(owner(f, built) or f, set())
-		if app_of(f) in declared:
-			chosen.add(app_of(f))
+		crates |= carried.get(f, set())
+	binary = cargo_built(declared, crate_dirs)
+	# A binary's declaration is read by host, not built into it, and still takes a new image here.
+	inputs = ("/Dockerfile", "/service.toml")
+	for f in moving:
+		app = app_of(f)
+		if app in declared and (app not in binary or f.endswith(inputs)):
+			chosen.add(app)
 		crate = crate_dirs.get(owner(f, crate_dirs) or "")
 		if crate and (f.endswith(".rs") or f.endswith("/Cargo.toml")):
 			crates.add(crate)

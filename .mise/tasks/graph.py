@@ -93,6 +93,23 @@ def rust_graph():
 	return directories, edges, included
 
 
+def embedded(directories):
+	"""Path -> crates whose own code, not a test, includes it with `include_str!` or `include_bytes!`:
+	what a binary carries. An include after a file's first `#[cfg(test)]` is a test's, which is how
+	every test module here is written."""
+	found = {}
+	for directory, crate in directories.items():
+		for source in (ROOT / directory).rglob("*.rs"):
+			if "target" in source.parts or "tests" in source.relative_to(ROOT / directory).parts:
+				continue
+			text = source.read_text().split("#[cfg(test)]", 1)[0]
+			for literal in re.findall(r'include_(?:str|bytes)!\(\s*"([^"]+)"', text):
+				target = (source.parent / literal).resolve()
+				if target.is_relative_to(ROOT):
+					found.setdefault(str(target.relative_to(ROOT)), set()).add(crate)
+	return found
+
+
 def build_inputs(directories):
 	"""Path -> crates whose build script reads it: a relative literal in a `build.rs`, resolved
 	from the crate's directory. What a build script embeds is in the binary as much as its source."""
