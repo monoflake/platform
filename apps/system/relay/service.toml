@@ -3,14 +3,14 @@
 version = 1
 name = "relay"
 display_name = "Relay"
-placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf"]
+placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf", "sha"]
 
 [container]
 # One above cron's 12011, in the platform's own low block. See spec/architecture/services.md,
 # "A service keeps one port".
 port = 12012
 health = "/health"
-# Seven small snapshots and a socket per neighbor and per browser.
+# A small snapshot per node and a socket per neighbor and per browser.
 memory_mb = 64
 
 # Its own name on `.app`, where a browser opens `/live`. See spec/architecture/console.md.

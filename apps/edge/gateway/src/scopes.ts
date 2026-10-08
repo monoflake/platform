@@ -95,7 +95,7 @@ export const SCOPES: Readonly<Record<string, Scope>> = {
 	geo: {
 		placement: 'rdu',
 		binding: 'RDU',
-		nodes: ['RDU', 'TYO', 'NRT', 'HND', 'BUF', 'GVX', 'BRU'],
+		nodes: ['RDU', 'TYO', 'NRT', 'HND', 'BUF', 'GVX', 'BRU', 'SHA'],
 		routing: 'any',
 		limits: [
 			{
