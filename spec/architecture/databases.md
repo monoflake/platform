@@ -52,8 +52,9 @@ and `rdu` are its standbys.
   can be reached, and the standby has replayed all it wrote before it is promoted, so there is never
   a moment with two primaries taking writes; rehearsed from `tyo` to `buf` and back on 2026-10-07. Each node reads which node is primary
   from its configuration, so a primary that returns after being replaced is told what it now is
-  rather than taking writes beside its successor. Failing over by itself needs the three cores to
-  agree on who leads -- [relay.md](relay.md) -- and waits for that.
+  rather than taking writes beside its successor. Failing over by itself is decided, with Patroni
+  and etcd on the three cores, and not yet built -- [../todo/todo.md](../todo/todo.md), "The
+  database".
 
 ## The container is Postgres and a keeper of it
 

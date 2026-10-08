@@ -35,15 +35,41 @@ operator practiced comes before the first app moves in --
    Nothing moves in before the week is clean -- or before the work below is all done, if that is
    sooner, as the author allowed on 2026-10-07. Meanwhile, in parallel: the backups copied to a
    store on `rdu`'s and `buf`'s disks ("Toward services that keep nothing", 4), `ledger`'s move
-   written and tested, and the one address on every node; and in infra, a new host reaching one node
-   first, declarations uploaded apart, and host reading a changed `.env`. `tyo` keeps a pgbench database of 150 MB until then,
+   written and tested; and in infra, a new host reaching one node first, declarations uploaded
+   apart, and host reading a changed `.env` -- all done on 2026-10-08, so `ledger` moves in then. `tyo` keeps a pgbench database of 150 MB until then,
    so there are indexes of size to check.
 2. **`ledger` moves in**, the first of "Toward services that keep nothing", below. Its schema is the
    first a migration runner of the platform's would carry, if one is decided by then --
    [../issues/scheduling.md](../issues/scheduling.md), "Schema changes go through the platform".
-3. **One address on every node for the database**, before a second app is given one: a proxy each
-   node runs, which apps connect to and which passes on to whichever node is primary, so a failover or
-   a major's switch rewrites no URL and restarts no app.
+3. **The cluster fails over by itself, with Patroni and etcd**, decided on 2026-10-08 in place of the
+   operator's promote -- [../architecture/databases.md](../architecture/databases.md), "Where it
+   runs, and which one writes":
+   - **etcd on the three cores**, a platform app of its own, each member's client and peer ports
+     published to the tailnet, natively in each node's architecture; its heartbeat and election
+     timeouts set for a quorum that spans the Pacific, about 500 ms and 5 s.
+   - **Patroni in the database's container**, the keeper's child, and Postgres Patroni's: the keeper
+     renders Patroni's configuration and keeps answering host -- health, backups, `amcheck` -- and
+     Patroni starts, follows, promotes and demotes. Its REST port is published to the tailnet.
+   - **Asynchronous, as now**: a standby more than one WAL segment behind is never promoted
+     (`maximum_lag_on_failover`), and the last seconds of writes may be lost, as is already accepted.
+   - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
+     not fail back by itself, so `tyo` is made primary again by a switchover, by hand.
+   - **A node finds its own way back**: a standby that was away catches up from the primary or the
+     archive, an old primary is rewound onto the new one, and one whose rewind fails, or a new node
+     on an empty disk, is cloned again -- from WAL-G's latest base backup first, from the primary
+     second.
+   - **A primary that loses its lease stops taking writes**, demoted by Patroni when it cannot renew
+     it in etcd; containers have no watchdog, so that is the fence, and its window is the lease's
+     length.
+   - **`database promote` becomes `database switchover [node]`**, Patroni's own, for a planned move.
+   - **The running cluster is taken over in place**, `tyo`'s data directory becoming the first
+     leader's, the standbys next, rehearsed in docker first, then on the nodes a node at a time.
+4. **One address on every node for the database**, before a second app is given one: a small layer-4
+   proxy of the platform's on every node, joined by host to every app's network, which passes each
+   connection unaltered to the member Patroni's REST `/primary` answers `200` on, refusing new ones
+   while none or two do. No pooling: each app's pool is its own, and pooling is weighed again when the
+   cluster's connections near its `max_connections`. A failover or a major's switch then rewrites no
+   URL and restarts no app.
 
 Whenever there is room: **a newer pinned image is reported** -- `outdated` reads the tag and digest
 every Dockerfile pins and says which have a newer one upstream, the way it reports packages, and moves
