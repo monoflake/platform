@@ -55,8 +55,9 @@ operator practiced comes before the first app moves in --
      renders Patroni's configuration and keeps answering host -- health, backups, `amcheck` -- and
      Patroni starts, follows, promotes and demotes. Its REST port is published to the tailnet, and
      everything but a read asks a password, `DATABASE_PATRONI_PASSWORD`.
-   - **Asynchronous, as now**: a standby more than one WAL segment behind is never promoted
-     (`maximum_lag_on_failover`), and the last seconds of writes may be lost, as is already accepted.
+   - **Asynchronous, as now**: a standby more than 1 MiB of WAL behind is never promoted
+     (`maximum_lag_on_failover`, Pigsty's), and the last seconds of writes may be lost, as is already
+     accepted. `wal_level` is `logical`, so a major moves by logical replication without a restart.
    - **The order stays**: `tyo` first, then `rdu`, then `buf`, as failover priorities; Patroni does
      not fail back by itself, so `tyo` is made primary again by a switchover, by hand.
    - **Five members, five voters**, decided on 2026-10-08: `tyo`, `rdu` and `buf` may lead, in that
@@ -73,14 +74,21 @@ operator practiced comes before the first app moves in --
    - **A primary that loses its lease stops taking writes**, demoted by Patroni when it cannot renew
      it in etcd. Containers have no watchdog, so the keeper is one: Postgres is stopped at once when
      Patroni exits, and both are killed when Patroni's REST stops answering for longer than the
-     lease. The lease is Patroni's default, 30 s, with a loop of 10 and retries of 10, and that is
-     the longest a fenced primary may still take writes.
+     lease. The lease is 30 s with a loop of 5 and retries of 10, and a primary
+     that does not start within 25 s is failed over, as Pigsty sets them; since a frozen leader may
+     have renewed one loop before freezing, the keeper stops it after about 15 to 18 s of silence,
+     before the lease can pass to another.
    - **etcd down is not a primary down**: `failsafe_mode` keeps a leader that still reaches every
      member leading while etcd does not answer, as when all three members restart.
    - **`database promote` becomes `database switchover [node]`**, Patroni's own, for a planned move.
    - **Until the proxy, an app's URL names all three**, `target_session_attrs=read-write` over the
      cores' tailnet addresses, written by `database grant`, so a failover reaches the app without a
      grant; the proxy's single address replaces it.
+   - **Each member sizes itself**: the keeper reads the smaller of its container's memory limit and
+     half the node's memory, since every node runs more than the database, and its cores and disk,
+     and sets Postgres from them by Pigsty's formulas; the WAL and temporary files sized from the
+     disk are capped -- `min_wal_size` 2 GB, `max_wal_size` 8 GB, `temp_file_limit` 20 GB -- since
+     `/data` is shared, where Pigsty assumes a disk of the database's own.
    - **Settings are taken from Pigsty where they fit**: Patroni's timings and failover settings,
      etcd's, Postgres's tuning by the node's memory, and how a router asks Patroni which member is
      primary, as Pigsty v4.5.0's templates set them, Apache 2.0 -- https://github.com/pgsty/pigsty.
