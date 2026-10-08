@@ -23,7 +23,7 @@ describe('a hostname read as a profile', () => {
 	});
 
 	it('admits crawlers everywhere but an API host and a deployment of its own', () => {
-		for (const host of [GATEWAY.cdn, GATEWAY.alias, GATEWAY.symlink]) {
+		for (const host of [GATEWAY.cdn, GATEWAY.alias, GATEWAY.symlink, GATEWAY.retired.cdn]) {
 			expect(profileOf(host)?.crawled, host).toBe(true);
 		}
 		for (const host of [GATEWAY.api, deployed('cdn-glo-cf')]) {
@@ -92,6 +92,13 @@ describe('a request read into its tuple', () => {
 			service: 'site',
 			placement: { region: 'glo', provider: 'cf' },
 			forward: '/v1/stats',
+		});
+	});
+
+	it("reads the retired CDN host's old path as the version it was spelled for", () => {
+		expect(read(GATEWAY.retired.cdn, '/object/abc.avif')).toMatchObject({
+			service: 'cdn',
+			forward: '/v3/object/abc.avif',
 		});
 	});
 

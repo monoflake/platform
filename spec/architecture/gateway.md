@@ -405,4 +405,7 @@ quiet, and it is released.
 
 `ffoni.com` left this way. `cdn.ffoni.com` and `api.ffoni.com` were such profiles --
 `api.ffoni.com/geo/ip` read as `/v1/geo/ip` -- until rdm, the last caller, asked
-`cdn.monoflake.com` instead; their rows, the gateway's route and `rules/ffoni.com` were deleted on 2026-10-04, and nothing here routes to or calls the domain.
+`cdn.monoflake.com` instead; their rows, the gateway's route and `rules/ffoni.com` were deleted on 2026-10-04. `cdn.ffoni.com`
+was bound back on 2026-10-08, as the same profile, because the live corpus still names it --
+[../issues/gateway.md](../issues/gateway.md), "cdn.ffoni.com is bound back until the corpus stops
+naming it".

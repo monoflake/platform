@@ -64,6 +64,9 @@ const NAMED: Readonly<Record<string, Profile>> = {
 		prefix: '/symlink',
 		crawled: true,
 	},
+	// Read as the host that replaced it, at the version its old paths are spelled for. See
+	// spec/architecture/gateway.md, "A domain leaves without a redirect".
+	[GATEWAY.retired.cdn]: { name: 'retired-cdn', service: 'cdn', version: 'v3', crawled: true },
 };
 
 const VERSION = /^v[1-9]\d*$/;

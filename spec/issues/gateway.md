@@ -45,3 +45,21 @@ identity may reach are undecided, and wait on accounts. Until then one gap is kn
 Caddy through Docker's userland proxy arrives from a bridge gateway inside the app range and is
 admitted as a container would be -- narrowing `APP_SOURCES` to a fixed pool for app networks, or
 turning the userland proxy off, would close it.
+
+## cdn.ffoni.com is bound back until the corpus stops naming it
+
+`ffoni.com` was released on 2026-10-04 once rdm had moved, and the gateway stopped answering
+`cdn.ffoni.com`; its proxied record stayed, so the host answered `522`. The site's live root,
+published 2026-10-01, still names it: 30 of the objects its articles point at carry
+`cdn.ffoni.com` addresses, and the same articles compiled today carry none. Nothing republishes the
+root until the CMS's migration closes the gap, and that migration waits on the platform -- web's
+`spec/issues/cms.md`, "A new mark waits for a root the corpus cannot be published under yet".
+
+So on 2026-10-08 the host was bound back as it was before, a profile read as `cdn.monoflake.com`
+at `v3`, by one route in the zone. `api.ffoni.com` and `rules/ffoni.com` stay gone; whatever the
+zone still carries on Cloudflare is as the release left it.
+
+**What deciding it would cost.** Once the platform's migration is done and the corpus is
+republished without the domain, the profile, the route, `GATEWAY.retired` and this entry are
+deleted again, as on 2026-10-04 -- after a count of what still asks the host, since an article
+somebody saved is a caller nobody here can move.

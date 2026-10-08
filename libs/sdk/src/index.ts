@@ -215,6 +215,9 @@ export const GATEWAY = {
 	deployments: 'ixc.one',
 	alias: 'ill.li',
 	symlink: 'symlink.si',
+	// Proxied, never redirected, while the live corpus still names it. See spec/issues/gateway.md,
+	// "cdn.ffoni.com is bound back until the corpus stops naming it".
+	retired: { cdn: 'cdn.ffoni.com' },
 	providers: {
 		int: 'Self-hosted',
 		cf: 'Cloudflare',

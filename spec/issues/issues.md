@@ -12,7 +12,7 @@ file.
 
 | area                           | entries | what it holds                                         |
 | ------------------------------ | ------- | ----------------------------------------------------- |
-| [gateway.md](gateway.md)       | 4       | where the hosts are against the gateway they moved to |
+| [gateway.md](gateway.md)       | 5       | where the hosts are against the gateway they moved to |
 | [relay.md](relay.md)           | 1       | what the relay leaves open                            |
 | [scheduling.md](scheduling.md) | 10      | what the schedulers and Postgres leave open           |
 | [services.md](services.md)     | 5       | what the services' own files leave open               |
@@ -23,6 +23,7 @@ file.
 - The whitelists are written by hand, and checked against the table only
 - A deployment's host is not checked against where the service runs
 - A node's private side cannot tell one app from another
+- cdn.ffoni.com is bound back until the corpus stops naming it
 
 ### [relay.md](relay.md)
 
