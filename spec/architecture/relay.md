@@ -64,6 +64,17 @@ pages are refused, since the console is served on `.app`. Each node's entry carr
 `heard_at`, when this relay last took a newer version of it: a live node moves about every three
 seconds, so an old `heard_at` means the node, or every path to it, is down.
 
+## The console asks, and the relay answers from memory
+
+**Every read the console's server makes of a relay is answered at once, from what the relay already
+holds.** The console's server is a stateless front end that draws and never waits -- web's
+`spec/architecture/console.md`, "The console's server never waits on data; it only draws" -- and the
+relay of the node nearest it is its backend: `/state` is the whole cluster as held, with no read of
+host or of a neighbor on the way. A read the console needs that the relay cannot yet answer that way
+is held by the relay before the console reads it, never gathered while the console waits; what is
+still gathered in the console is listed in web's `spec/todo/todo.md`, "The console's reads move to
+the backend". Decided with the author on 2026-10-09.
+
 ## The round trip to each neighbor
 
 **A relay times its own pings on `/mesh`, and its snapshot carries the latest per neighbor as
