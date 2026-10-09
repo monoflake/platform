@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { URLS } from '@monoflake/sdk';
 import { UNCHANGING } from '@monoflake/sdk/cache';
-import { CACHE_HEADER, controlOf, DEVELOPMENT_CEILING, inDevelopment, kindOf, secondsOf } from './cache.ts';
+import {
+	CACHE_HEADER,
+	controlOf,
+	DEVELOPMENT_CEILING,
+	inDevelopment,
+	kindOf,
+	secondsOf,
+} from './cache.ts';
 import { GATEWAY_DEFAULTS } from './declaration.ts';
 import { gateway } from './index.ts';
 import type { Scope } from './table.ts';
