@@ -15,8 +15,8 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
 
-/// The newest page of host's events, as many as its panel shows.
-const EVENTS: &str = "/api/events?limit=50";
+/// A page of host's events, as many as its panel shows; a round reads the newest.
+pub const PAGE: usize = 50;
 const APPS: &str = "/api/apps";
 const MACHINE: &str = "/api/node/now";
 
@@ -141,6 +141,12 @@ pub struct Reading {
 /// What a round reads from; a fake one in the tests.
 pub trait Reader: Send + Sync + 'static {
 	fn read(&self) -> Pin<Box<dyn Future<Output = Reading> + Send + '_>>;
+
+	/// A page of events, newest first: the newest, or those before the row `before`.
+	fn page(
+		&self,
+		before: Option<i64>,
+	) -> Pin<Box<dyn Future<Output = Result<Vec<Event>, ReadError>> + Send + '_>>;
 }
 
 pub struct Host {
@@ -172,10 +178,26 @@ impl Host {
 impl Reader for Host {
 	fn read(&self) -> Pin<Box<dyn Future<Output = Reading> + Send + '_>> {
 		Box::pin(async {
+			let newest = events(None);
 			let (events, apps, machine) =
-				tokio::join!(self.get(EVENTS), self.get(APPS), self.get(MACHINE));
+				tokio::join!(self.get(&newest), self.get(APPS), self.get(MACHINE));
 			Reading { events, apps, machine }
 		})
+	}
+
+	fn page(
+		&self,
+		before: Option<i64>,
+	) -> Pin<Box<dyn Future<Output = Result<Vec<Event>, ReadError>> + Send + '_>> {
+		Box::pin(async move { self.get(&events(before)).await })
+	}
+}
+
+/// Host's own paging, by the oldest row of the page before.
+fn events(before: Option<i64>) -> String {
+	match before {
+		Some(id) => format!("/api/events?limit={PAGE}&before={id}"),
+		None => format!("/api/events?limit={PAGE}"),
 	}
 }
 

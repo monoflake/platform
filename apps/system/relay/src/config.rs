@@ -1,7 +1,8 @@
 //! What a relay is told by its environment: which node it is, which relays it holds a socket to,
-//! the secret they share, and the token that reads its own host.
+//! the secret they share, the token that reads its own host, and where its runs' file is.
 
 use std::collections::BTreeSet;
+use std::path::PathBuf;
 
 /// This service's port, inside its container and published on the machine. `service.toml` states
 /// it for host, and a test in `main.rs` holds the two together.
@@ -32,6 +33,8 @@ pub struct Config {
 	pub secret: String,
 	pub read_token: String,
 	pub listen: String,
+	/// The directory `[data]` in `service.toml` mounts, or another for a run off the node.
+	pub data: PathBuf,
 }
 
 impl Config {
@@ -46,6 +49,7 @@ impl Config {
 			secret: required("RELAY_SECRET")?,
 			read_token: required("HOST_READ_TOKEN")?,
 			listen: std::env::var("LISTEN").unwrap_or_else(|_| format!("0.0.0.0:{PORT}")),
+			data: std::env::var("RELAY_DATA").unwrap_or_else(|_| "/data".into()).into(),
 			node,
 		})
 	}

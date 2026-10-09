@@ -1,9 +1,10 @@
-//! One relay's state: what it holds of every node, its own node's snapshot, and the stream every
-//! socket -- a neighbor's or a browser's -- is fed from.
+//! One relay's state: what it holds of every node, its own node's snapshot, the runs mirrored,
+//! and the stream every socket -- a neighbor's or a browser's -- is fed from.
 
 use crate::cluster::{Carried, Cluster, Held, Versions};
-use crate::host::Reading;
+use crate::host::{PAGE, Reader, Reading};
 use crate::own::{Own, Part, RoundTrips};
+use crate::runs::{Batch, Mirror, Shown, Store, StoreError};
 use jiff::Timestamp;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -42,12 +43,24 @@ pub struct State {
 	pub nodes: BTreeMap<String, Held>,
 }
 
+/// Every node's runs of the last 30 days, newest first: what `/runs` answers.
+#[derive(Debug, Serialize)]
+pub struct Runs {
+	pub version: u32,
+	/// The node whose relay answered.
+	pub node: String,
+	pub runs: Vec<Shown>,
+}
+
 pub struct Relay {
 	node: String,
 	secret: String,
 	cluster: Mutex<Cluster>,
 	own: Mutex<Own>,
 	updates: broadcast::Sender<Update>,
+	runs: Mirror,
+	/// This node's own rows as each round finds them new or changed, for the mesh to push.
+	batches: broadcast::Sender<Batch>,
 	started: Instant,
 	/// Which socket to each neighbor sends unasked; see `mesh::Speaking`.
 	speakers: Mutex<BTreeMap<String, u64>>,
@@ -61,18 +74,21 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Relay {
-	pub fn new(node: String, secret: String) -> Arc<Self> {
-		Arc::new(Self {
+	/// A relay over its runs' file, read before anything else is.
+	pub fn new(node: String, secret: String, store: Store) -> Result<Arc<Self>, StoreError> {
+		Ok(Arc::new(Self {
+			runs: Mirror::open(node.clone(), store)?,
 			node,
 			secret,
 			cluster: Mutex::default(),
 			own: Mutex::default(),
 			updates: broadcast::channel(BACKLOG).0,
+			batches: broadcast::channel(BACKLOG).0,
 			started: Instant::now(),
 			speakers: Mutex::default(),
 			conversations: AtomicU64::new(0),
 			timed: Mutex::default(),
-		})
+		}))
 	}
 
 	pub fn node(&self) -> &str {
@@ -104,9 +120,13 @@ impl Relay {
 		true
 	}
 
-	/// One round of reading host, taken in as this node's snapshot with its round trips.
+	/// One round of reading host, taken in as this node's snapshot with its round trips, and its
+	/// events into the runs.
 	pub fn observe(&self, reading: Reading) {
 		let now = Timestamp::now();
+		if let Ok(events) = &reading.events {
+			self.events_read(events, now);
+		}
 		let round_trips = self.round_trips();
 		let changed = {
 			let mut own = lock(&self.own);
@@ -128,8 +148,47 @@ impl Relay {
 		}
 	}
 
+	/// This node's own events, as a round or the reading back reads them, into the runs; what is
+	/// new or changed is pushed to the neighbors.
+	fn events_read(&self, events: &[crate::host::Event], now: Timestamp) {
+		if let Some(batch) = self.runs.observe(events, now) {
+			let _ = self.batches.send(batch);
+		}
+	}
+
 	pub fn versions(&self) -> Versions {
 		lock(&self.cluster).versions()
+	}
+
+	/// Takes a neighbor's batch of runs; whether it did. Never this node's own, as `take`.
+	pub fn take_runs(&self, batch: Batch) -> bool {
+		self.runs.merge(batch)
+	}
+
+	pub fn run_versions(&self) -> Versions {
+		self.runs.versions()
+	}
+
+	pub async fn lacking_runs(
+		&self,
+		theirs: &Versions,
+		peer: &str,
+	) -> Result<Vec<Batch>, StoreError> {
+		self.runs.lacking(theirs, peer).await
+	}
+
+	pub fn subscribe_runs(&self) -> broadcast::Receiver<Batch> {
+		self.batches.subscribe()
+	}
+
+	/// The window written, and what is past keeping dropped. See `runs::Mirror::write`.
+	pub async fn write_runs(&self) -> Result<(), StoreError> {
+		self.runs.write(Timestamp::now()).await
+	}
+
+	pub async fn runs(&self) -> Result<Runs, StoreError> {
+		let runs = self.runs.listed(Timestamp::now()).await?;
+		Ok(Runs { version: VERSION, node: self.node.clone(), runs })
 	}
 
 	pub fn lacking(&self, theirs: &Versions, peer: &str) -> Vec<(String, Carried)> {
@@ -198,13 +257,61 @@ pub async fn watch(relay: Arc<Relay>, source: Arc<dyn crate::host::Reader>, ever
 	}
 }
 
+/// Reads this node's host back to the oldest row kept, a page at a time, into the runs: once, as
+/// the relay starts, beside its rounds. A page host does not answer is asked again after a write's
+/// wait. See spec/architecture/relay.md, "The runs, mirrored on every relay's disk".
+pub async fn recall(relay: Arc<Relay>, source: Arc<dyn Reader>) {
+	let mut before = None;
+	let mut read = 0;
+	loop {
+		let page = match source.page(before).await {
+			Ok(page) => page,
+			Err(error) => {
+				eprintln!("relay: reading host's earlier events: {error}");
+				tokio::time::sleep(crate::runs::WRITE).await;
+				continue;
+			}
+		};
+		let now = Timestamp::now();
+		relay.events_read(&page, now);
+		read += page.len();
+		let cutoff = now - crate::runs::KEPT;
+		let past = page
+			.iter()
+			.any(|event| event.started_at.parse::<Timestamp>().is_ok_and(|started| started < cutoff));
+		match page.iter().map(|event| event.id).min() {
+			Some(oldest) if page.len() >= PAGE && read < crate::runs::MOST && !past => {
+				before = Some(oldest);
+			}
+			_ => return,
+		}
+	}
+}
+
+/// Writes the runs every `every`, for as long as the relay runs. A refusal is logged and loses
+/// nothing: the rows stay for the next.
+pub async fn write(relay: Arc<Relay>, every: Duration) {
+	let mut ticks = tokio::time::interval_at(tokio::time::Instant::now() + every, every);
+	ticks.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+	loop {
+		ticks.tick().await;
+		if let Err(error) = relay.write_runs().await {
+			eprintln!("relay: writing the runs: {error}");
+		}
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
 
+	fn relay(node: &str) -> Arc<Relay> {
+		Relay::new(node.into(), "s3cret".into(), Store::memory().unwrap()).unwrap()
+	}
+
 	#[test]
 	fn one_socket_to_a_neighbor_speaks_until_it_is_hushed() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		let (first, second) = (relay.conversation(), relay.conversation());
 		assert!(relay.speaks("tyo", first));
 		assert!(!relay.speaks("tyo", second));
@@ -231,7 +338,7 @@ mod tests {
 
 	#[test]
 	fn the_latest_round_trip_replaces_the_last() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		assert!(relay.round_trips().is_empty());
 		relay.timed("tyo", Duration::from_millis(150));
 		relay.timed("tyo", Duration::from_millis(149));
@@ -240,7 +347,7 @@ mod tests {
 
 	#[test]
 	fn a_neighbors_word_on_this_node_is_not_taken() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		let carried = Carried { version: 9, snapshot: Arc::new(serde_json::json!({})) };
 		assert!(!relay.take("rdu", carried.clone(), Some("tyo")));
 		assert!(relay.take("tyo", carried, Some("tyo")));

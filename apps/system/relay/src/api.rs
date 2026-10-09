@@ -1,5 +1,5 @@
-//! What a relay answers: its health, every node at once, a browser's live socket and its
-//! neighbors' sockets.
+//! What a relay answers: its health, every node at once, every node's runs, a browser's live
+//! socket and its neighbors' sockets.
 
 use crate::relay::Relay;
 use crate::{live, mesh};
@@ -17,6 +17,7 @@ pub fn routes(relay: Arc<Relay>) -> Router {
 	Router::new()
 		.route("/health", get(health))
 		.route("/state", get(state))
+		.route("/runs", get(runs))
 		.route("/live", get(watched))
 		.route(mesh::PATH, get(neighbor))
 		.fallback(|| async { response::failure(StatusCode::NOT_FOUND, "no_such_route") })
@@ -34,6 +35,19 @@ async fn health(State(relay): State<Arc<Relay>>) -> Response {
 
 async fn state(State(relay): State<Arc<Relay>>) -> Response {
 	response::success(StatusCode::OK, relay.state())
+}
+
+/// Read-only and with no token, as `/state` is; answered from the file and the window, never by
+/// asking host or a neighbor. See spec/architecture/relay.md, "The runs, mirrored on every relay's
+/// disk".
+async fn runs(State(relay): State<Arc<Relay>>) -> Response {
+	match relay.runs().await {
+		Ok(runs) => response::success(StatusCode::OK, runs),
+		Err(error) => {
+			eprintln!("relay: reading the runs: {error}");
+			response::failure(StatusCode::SERVICE_UNAVAILABLE, "store_unavailable")
+		}
+	}
 }
 
 /// Read-only, with no token: Access stands in front of the public name, and the private one admits
@@ -85,6 +99,10 @@ mod tests {
 	use axum::http::Request;
 	use tower::ServiceExt;
 
+	fn relay(node: &str) -> Arc<Relay> {
+		Relay::new(node.into(), "s3cret".into(), crate::runs::Store::memory().unwrap()).unwrap()
+	}
+
 	async fn ask(
 		relay: &Arc<Relay>,
 		path: &str,
@@ -112,7 +130,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn the_mesh_asks_for_the_secret_before_anything_else() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		for bearer in [None, Some("wrong")] {
 			let (status, body) = ask(&relay, mesh::PATH, bearer).await;
 			assert_eq!((status, &body["code"]), (StatusCode::UNAUTHORIZED, &"invalid_token".into()));
@@ -124,7 +142,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn health_waits_for_host_and_state_answers_every_node() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		let (status, body) = ask(&relay, "/health", None).await;
 		assert_eq!(status, StatusCode::SERVICE_UNAVAILABLE);
 		assert_eq!(body["code"], "upstream_unavailable");
@@ -141,8 +159,39 @@ mod tests {
 	}
 
 	#[tokio::test]
+	async fn runs_answers_every_nodes_rows_with_their_node() {
+		let relay = relay("rdu");
+		let (status, body) = ask(&relay, "/runs", None).await;
+		assert_eq!(status, StatusCode::OK);
+		assert_eq!(body["data"], serde_json::json!({ "version": 1, "node": "rdu", "runs": [] }));
+
+		let started_at = jiff::Timestamp::now().to_string();
+		let event = crate::host::Event {
+			id: 42,
+			app: "geo".into(),
+			action: "deploy".into(),
+			source: crate::host::Source { kind: "panel".into(), run: None, commit: None },
+			image: None,
+			outcome: "running".into(),
+			stage: Some("loading".into()),
+			detail: None,
+			started_at: started_at.clone(),
+			finished_at: None,
+		};
+		let machine = Ok(serde_json::json!({}));
+		relay.observe(crate::host::Reading { events: Ok(vec![event]), apps: Ok(vec![]), machine });
+		let (_, body) = ask(&relay, "/runs", None).await;
+		assert_eq!(
+			body["data"]["runs"],
+			serde_json::json!([{ "node": "rdu", "id": 42, "app": "geo", "action": "deploy",
+				"source": { "kind": "panel" }, "outcome": "running", "stage": "loading",
+				"started_at": started_at }])
+		);
+	}
+
+	#[tokio::test]
 	async fn a_page_elsewhere_cannot_open_the_live_socket() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		let foreign = Some(("origin", "https://evil.test".to_owned()));
 		let (status, body) = asked(&relay, "/live", foreign).await;
 		assert_eq!((status, &body["code"]), (StatusCode::FORBIDDEN, &"invalid_address".into()));
@@ -155,7 +204,7 @@ mod tests {
 
 	#[tokio::test]
 	async fn anything_else_is_no_route() {
-		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let relay = relay("rdu");
 		assert_eq!(ask(&relay, "/", None).await.0, StatusCode::NOT_FOUND);
 	}
 

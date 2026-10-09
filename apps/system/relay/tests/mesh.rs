@@ -1,10 +1,17 @@
 //! Relays on loopback ports, each reading a fake host, holding sockets to each other as they do
 //! across the tailnet.
 
+use bytes::Bytes;
 use futures_util::StreamExt;
+use http_body_util::{BodyExt, Empty};
+use hyper::body::Incoming;
+use hyper_util::client::legacy::Client;
+use hyper_util::client::legacy::connect::HttpConnector;
+use hyper_util::rt::TokioExecutor;
 use relay::config::Peer;
-use relay::host::{App, Reader, Reading};
-use relay::relay::{Relay, watch};
+use relay::host::{App, Event, PAGE, ReadError, Reader, Reading, Source};
+use relay::relay::{Relay, recall, watch};
+use relay::runs::Store;
 use std::future::{Future, IntoFuture};
 use std::net::SocketAddr;
 use std::pin::Pin;
@@ -16,18 +23,48 @@ const SECRET: &str = "s3cret";
 const ROUND: Duration = Duration::from_millis(20);
 const PATIENCE: Duration = Duration::from_secs(10);
 
-/// A host running one app, `geo`, at an image the test changes.
-struct Fake(Mutex<String>);
+/// A host running one app, `geo`, at an image the test changes, and the events the test writes.
+struct Fake {
+	image: Mutex<String>,
+	events: Mutex<Vec<Event>>,
+}
 
 impl Fake {
 	fn deploy(&self, image: &str) {
-		*self.0.lock().unwrap() = image.to_owned();
+		*self.image.lock().unwrap() = image.to_owned();
+	}
+
+	/// An event of `id` written, or rewritten with its outcome moved on.
+	fn record(&self, id: i64, outcome: &str) {
+		let event = Event {
+			id,
+			app: "geo".into(),
+			action: "deploy".into(),
+			source: Source { kind: "panel".into(), run: None, commit: None },
+			image: None,
+			outcome: outcome.into(),
+			stage: None,
+			detail: None,
+			started_at: jiff::Timestamp::now().to_string(),
+			finished_at: None,
+		};
+		let mut events = self.events.lock().unwrap();
+		events.retain(|written| written.id != id);
+		events.push(event);
+		events.sort_by_key(|event| -event.id);
+	}
+
+	fn before(&self, before: Option<i64>) -> Vec<Event> {
+		let events = self.events.lock().unwrap();
+		let older = events.iter().filter(|event| before.is_none_or(|before| event.id < before));
+		older.take(PAGE).cloned().collect()
 	}
 }
 
 impl Reader for Fake {
 	fn read(&self) -> Pin<Box<dyn Future<Output = Reading> + Send + '_>> {
-		let image = self.0.lock().unwrap().clone();
+		let image = self.image.lock().unwrap().clone();
+		let events = self.before(None);
 		Box::pin(async move {
 			let app = App {
 				name: "geo".into(),
@@ -38,8 +75,16 @@ impl Reader for Fake {
 				rollout: "beside".into(),
 				label: None,
 			};
-			Reading { events: Ok(vec![]), apps: Ok(vec![app]), machine: Ok(serde_json::json!({})) }
+			Reading { events: Ok(events), apps: Ok(vec![app]), machine: Ok(serde_json::json!({})) }
 		})
+	}
+
+	fn page(
+		&self,
+		before: Option<i64>,
+	) -> Pin<Box<dyn Future<Output = Result<Vec<Event>, ReadError>> + Send + '_>> {
+		let events = self.before(before);
+		Box::pin(async move { Ok(events) })
 	}
 }
 
@@ -52,10 +97,11 @@ struct Started {
 async fn start(node: &str, image: &str) -> Started {
 	let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
 	let address = listener.local_addr().unwrap();
-	let relay = Relay::new(node.into(), SECRET.into());
-	let host = Arc::new(Fake(Mutex::new(image.into())));
+	let relay = Relay::new(node.into(), SECRET.into(), Store::memory().unwrap()).unwrap();
+	let host = Arc::new(Fake { image: Mutex::new(image.into()), events: Mutex::default() });
 	tokio::spawn(axum::serve(listener, relay::api::routes(relay.clone())).into_future());
 	tokio::spawn(watch(relay.clone(), host.clone(), ROUND));
+	tokio::spawn(recall(relay.clone(), host.clone()));
 	Started { relay, host, address }
 }
 
@@ -102,10 +148,11 @@ async fn two_relays_converge_after_one_changes() {
 
 	tyo.host.deploy("geo:8");
 	until("rdu hears tyo's change", || image(&rdu.relay, "tyo").as_deref() == Some("geo:8")).await;
+	// tyo's round trips change its snapshot too, so one sent before the deploy may come first.
 	loop {
 		let next = text(&mut browser).await;
-		if next["type"] == "node" && next["node"] == "tyo" {
-			assert_eq!(next["state"]["snapshot"]["apps"][0]["image"], "geo:8");
+		let image = &next["state"]["snapshot"]["apps"][0]["image"];
+		if next["type"] == "node" && next["node"] == "tyo" && image == "geo:8" {
 			assert!(next["state"]["version"].as_u64().unwrap() > before);
 			break;
 		}
@@ -144,6 +191,47 @@ async fn each_relay_times_the_other_and_its_snapshot_carries_it_to_the_other() {
 	let round_trip = carried(&tyo.relay, "rdu", "tyo").unwrap();
 	assert!((0.0..1.0).contains(&round_trip), "{round_trip}");
 	assert_eq!(rdu.relay.state().nodes["rdu"].snapshot["round_trip"].as_object().unwrap().len(), 1);
+}
+
+/// The outcome the relay at `address` holds of `node`'s run `id`, as `/runs` answers it.
+async fn outcome(address: SocketAddr, node: &str, id: i64) -> Option<String> {
+	let client: Client<HttpConnector, Empty<Bytes>> =
+		Client::builder(TokioExecutor::new()).build(HttpConnector::new());
+	let answer: hyper::Response<Incoming> =
+		client.get(format!("http://{address}/runs").parse().ok()?).await.ok()?;
+	let body = answer.into_body().collect().await.ok()?.to_bytes();
+	let runs: serde_json::Value = relay::host::opened(&body).ok()?;
+	let run = runs["runs"].as_array()?.iter().find(|run| run["node"] == node && run["id"] == id)?;
+	run["outcome"].as_str().map(str::to_owned)
+}
+
+#[tokio::test]
+async fn a_run_reaches_the_other_relay_and_so_does_its_change() {
+	let rdu = start("rdu", "geo:1").await;
+	let tyo = start("tyo", "geo:2").await;
+	// Written before either meets the other: the reading back carries it, then the window.
+	tyo.host.record(7, "running");
+	hold(&rdu, &tyo);
+	hold(&tyo, &rdu);
+	let held = || async { outcome(rdu.address, "tyo", 7).await };
+	let waited = async {
+		while held().await.as_deref() != Some("running") {
+			tokio::time::sleep(ROUND).await;
+		}
+	};
+	tokio::time::timeout(PATIENCE, waited).await.expect("rdu hears tyo's run");
+
+	tyo.host.record(7, "succeeded");
+	tyo.host.record(8, "running");
+	let waited = async {
+		while held().await.as_deref() != Some("succeeded")
+			|| outcome(rdu.address, "tyo", 8).await.is_none()
+		{
+			tokio::time::sleep(ROUND).await;
+		}
+	};
+	tokio::time::timeout(PATIENCE, waited).await.expect("rdu hears tyo's run change");
+	assert_eq!(outcome(tyo.address, "tyo", 8).await.as_deref(), Some("running"));
 }
 
 #[tokio::test]

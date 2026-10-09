@@ -2,7 +2,8 @@
 
 use relay::config::Config;
 use relay::host::Host;
-use relay::relay::{Relay, watch};
+use relay::relay::{Relay, recall, watch, write};
+use relay::runs::Store;
 use std::sync::Arc;
 
 /// musl's allocator is slow under many small allocations, and images are built for speed; see
@@ -14,10 +15,13 @@ static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
 	let config = Config::from_env()?;
-	let relay = Relay::new(config.node.clone(), config.secret.clone());
+	let store = Store::open(&config.data.join(relay::runs::FILE))?;
+	let relay = Relay::new(config.node.clone(), config.secret.clone(), store)?;
 
 	let host = Arc::new(Host::new(monoflake::INTERNAL_HOST, config.read_token.clone()));
-	tokio::spawn(watch(relay.clone(), host, relay::own::EVERY));
+	tokio::spawn(watch(relay.clone(), host.clone(), relay::own::EVERY));
+	tokio::spawn(recall(relay.clone(), host));
+	tokio::spawn(write(relay.clone(), relay::runs::WRITE));
 	for peer in config.peers.iter().cloned() {
 		tokio::spawn(relay::mesh::keep(relay.clone(), peer));
 	}
@@ -25,7 +29,12 @@ async fn main() -> anyhow::Result<()> {
 	let listener = tokio::net::TcpListener::bind(&config.listen).await?;
 	let named: Vec<&str> = config.peers.iter().map(|peer| peer.name.as_str()).collect();
 	eprintln!("relay: {} listening on {}, holding {}", config.node, config.listen, named.join(" "));
-	axum::serve(listener, relay::api::routes(relay)).with_graceful_shutdown(stopped()).await?;
+	let routes = relay::api::routes(relay.clone());
+	axum::serve(listener, routes).with_graceful_shutdown(stopped()).await?;
+	// What the window holds unwritten, so a deploy does not ask the neighbors for it again.
+	if let Err(error) = relay.write_runs().await {
+		eprintln!("relay: writing the runs: {error}");
+	}
 	Ok(())
 }
 

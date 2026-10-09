@@ -99,9 +99,14 @@ backed up. Decided with the author on 2026-10-09.
   loses nothing, and a refusal is logged with the part, as a host read's is.
 - **Rows older than 30 days are dropped, and at most 5,000 a node are kept**, the oldest going
   first; the drop runs with a write.
-- **On start a relay reads its file, then its host's rows back to 30 days** by host's own paging,
-  `/api/events?limit=50&before=<id>`, then asks its neighbors for every origin above the version its
-  file holds.
+- **On start a relay reads its file, then its host's rows back to 30 days** by host's own
+  paging, `/api/events?limit=50&before=<id>`, stopping at a row past 30 days, a short page or 5,000
+  rows, and asks its neighbors for every origin above the version its file holds; the live half
+  waits on neither, since no neighbor is ever asked for a relay's own rows. A page host does not
+  answer is asked again 30 seconds later.
+- **A file that cannot be opened is moved aside, never mended**: renamed with the time beside it,
+  logged, and a fresh one opened, which host and the neighbors refill; the relay stops only where
+  even that fails.
 - **`/runs` answers the mirror and the window together**, every node's rows of the last 30 days,
   newest first, each with its node; the console groups them into runs for display -- web's
   `spec/architecture/console.md`, "The console's server never waits on data; it only draws".

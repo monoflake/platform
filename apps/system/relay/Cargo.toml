@@ -21,6 +21,7 @@ jiff = { version = "0.2", features = ["serde"] }
 mimalloc = "0.1.52"
 monoflake = { path = "../../../libs/sdk" }
 response = { version = "2.0.0", features = ["axum"] }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
 serde = { version = "1.0.229", features = ["derive", "rc"] }
 serde_json = "1.0.151"
 thiserror = "2.0.21"
@@ -30,4 +31,5 @@ tokio-tungstenite = "0.29"
 url = "2.5.8"
 
 [dev-dependencies]
+tempfile = "3.27.0"
 tower = { version = "0.5", features = ["util"] }

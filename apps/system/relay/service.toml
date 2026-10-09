@@ -10,8 +10,14 @@ placements = ["rdu", "tyo", "nrt", "hnd", "gvx", "bru", "buf", "sha"]
 # "A service keeps one port".
 port = 12012
 health = "/health"
-# A small snapshot per node and a socket per neighbor and per browser.
-memory_mb = 64
+# A small snapshot per node, a socket per neighbor and per browser, and the runs mirror catching
+# up whole at the cap of 5,000 rows a node, some 30 MB for a moment.
+memory_mb = 96
+
+# `runs.db`, every node's runs of the last 30 days. See spec/architecture/relay.md, "The runs,
+# mirrored on every relay's disk".
+[data]
+path = "/data"
 
 # Its own name on `.app`, where a browser opens `/live`. See spec/architecture/console.md.
 [interface]
