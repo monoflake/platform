@@ -75,6 +75,40 @@ is held by the relay before the console reads it, never gathered while the conso
 still gathered in the console is listed in web's `spec/todo/todo.md`, "The console's reads move to
 the backend". Decided with the author on 2026-10-09.
 
+## The runs, mirrored on every relay's disk
+
+**Every relay keeps a mirror of every node's deploy rows of the last 30 days, in a SQLite file of
+its own**, so the console's runs -- the overview's deploys, what happened, what failed, Deployments
+-- are one read of the nearest relay, answered from its disk. A row is host's event row as
+`host.rs`'s `Event` carries it, tagged with the node it happened on. Rows have one writer each: a
+node's rows are its host's, read by its own relay and by no other, so the mirror needs no leader and
+no agreement -- each origin's rows are compared by version and the newer kept, as a snapshot is. The
+mirror is never the record: host's `history.db` is, keeps every row and is what a backup takes. A
+mirror lost or corrupted is rebuilt from the relay's own host and from its neighbors, so it is never
+backed up. Decided with the author on 2026-10-09.
+
+- **A row's version is its origin relay's clock, in milliseconds**, given when that relay first
+  reads the row or reads it changed -- a deploy moves through its stages -- and one past the
+  origin's last where the clock has not moved, as a snapshot's version is.
+- **What changed in the last three minutes is held in memory, the window**, and spread on the mesh
+  as snapshots are: pushed by its origin, compared and passed on by the rest. A neighbor behind by
+  more than the window is answered from the disk, by origin and above the version it holds.
+- **The window is written to disk every 30 seconds, six chances a row inside it**: a write that
+  succeeds marks what it took as written and the next chances leave it be; a row leaves memory once
+  it is written and older than the window, never before, so a disk that refuses five writes in a row
+  loses nothing, and a refusal is logged with the part, as a host read's is.
+- **Rows older than 30 days are dropped, and at most 5,000 a node are kept**, the oldest going
+  first; the drop runs with a write.
+- **On start a relay reads its file, then its host's rows back to 30 days** by host's own paging,
+  `/api/events?limit=50&before=<id>`, then asks its neighbors for every origin above the version its
+  file holds.
+- **`/runs` answers the mirror and the window together**, every node's rows of the last 30 days,
+  newest first, each with its node; the console groups them into runs for display -- web's
+  `spec/architecture/console.md`, "The console's server never waits on data; it only draws".
+- **The file is `/data/runs.db`**, `[data]` in `service.toml`, so the relay is rolled out as an app
+  with state on its node is -- infra's `spec/architecture/host.md`, "An app chooses how it is rolled
+  out, and keeping nothing earns a gapless one".
+
 ## The round trip to each neighbor
 
 **A relay times its own pings on `/mesh`, and its snapshot carries the latest per neighbor as
