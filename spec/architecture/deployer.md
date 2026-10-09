@@ -70,6 +70,16 @@ it gave.
 or failed -- the version Cloudflare returns, and wrangler's output when it fails, for the console to
 read. Secrets survive deploys, so a Worker's secrets are set once by hand until they come from sops.
 
+**A run GitHub would not give is a failed deploy, recorded, never a line in the log alone.** A
+refused token, a run gone, a GitHub that cannot be reached or a storage that will not serve the
+artifact each close a row as failed in `downloading`, with a reason naming the run, the repository,
+what was answered and, for a token, the variable it is read from -- never the token. A run that is
+read before its Workers are known names none, and its row in `/api/deploys` carries no `worker`, as
+the workspace's `spec/json.md` has an absent field. A run GitHub gave and the deployer refused --
+another workflow's, one still running -- is not a deploy, and stays in the log as host leaves it.
+Found on 2026-10-09, when a stale `GITHUB_ACTIONS_TOKEN_CANMI21` on `tyo` held the console back
+with nothing but a log line to say so.
+
 ## Credentials
 
 **`CLOUDFLARE_WORKERS_TOKEN`, a token of the author's user, is in the platform's sops file and the

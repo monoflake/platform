@@ -95,13 +95,19 @@ export function isDry(config: Config, worker: string): boolean {
 export const HOME_OWNER = 'monoflake';
 
 /**
- * The token a repository's artifacts are fetched with, picked by its owner: the monoflake
- * organization's own, or that owner's `GITHUB_ACTIONS_TOKEN_<OWNER>` -- `_CANMI21` for
+ * The variable a repository's artifacts are fetched with the token in, picked by its owner: the
+ * monoflake organization's own, or that owner's `GITHUB_ACTIONS_TOKEN_<OWNER>` -- `_CANMI21` for
  * `canmi21/web`. See spec/architecture/deployer.md, "Credentials".
  */
-export function tokenFor(repository: string, env: Env): string | undefined {
+export function tokenVariable(repository: string): string | undefined {
 	const [owner = ''] = repository.split('/');
-	if (owner === HOME_OWNER) return value(env, 'GITHUB_ACTIONS_TOKEN');
+	if (owner === HOME_OWNER) return 'GITHUB_ACTIONS_TOKEN';
 	if (!/^[\w-]+$/.test(owner)) return undefined;
-	return value(env, `GITHUB_ACTIONS_TOKEN_${owner.toUpperCase().replaceAll('-', '_')}`);
+	return `GITHUB_ACTIONS_TOKEN_${owner.toUpperCase().replaceAll('-', '_')}`;
+}
+
+/** The token a repository's artifacts are fetched with, from its `tokenVariable`. */
+export function tokenFor(repository: string, env: Env): string | undefined {
+	const variable = tokenVariable(repository);
+	return variable === undefined ? undefined : value(env, variable);
 }

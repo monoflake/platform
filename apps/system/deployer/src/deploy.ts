@@ -113,11 +113,21 @@ export class Deployer {
 
 	/** Every Worker `notice`'s run built, once the run is one of its sources' to deploy. */
 	private async take({ run, repository }: Notice): Promise<void> {
-		if (!this.parts.config.sources.includes(repository)) {
+		const { config, github, store } = this.parts;
+		if (!config.sources.includes(repository)) {
 			this.log(`run ${run}: ${repository} is not a repository it deploys from`);
 			return;
 		}
-		const { commit, artifacts } = await this.parts.github.artifacts(repository, run);
+		let built: Awaited<ReturnType<typeof github.artifacts>>;
+		try {
+			built = await github.artifacts(repository, run);
+		} catch (error) {
+			// A run it could not read is a failed deploy, recorded as one; a run GitHub gave and the
+			// check refused is not one to deploy, and is left to the log as host leaves it.
+			if (!(error instanceof Refused)) store.unread(repository, run, config.dry, messageOf(error));
+			throw error;
+		}
+		const { commit, artifacts } = built;
 		if (artifacts.length === 0) this.log(`run ${run} of ${repository} built no Worker`);
 		for (const artifact of artifacts) {
 			// oxlint-disable-next-line no-await-in-loop -- one deploy at a time, by design
@@ -154,7 +164,7 @@ export class Deployer {
 			}
 			await mkdir(work, { recursive: true });
 			const zip = join(work, 'artifact.zip');
-			await github.download(repository, artifact, zip);
+			await github.download(repository, run, artifact, zip);
 
 			store.advance(id, 'admitting');
 			await (this.parts.unpack ?? unpackZip)(zip, unpacked);

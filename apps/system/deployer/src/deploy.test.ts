@@ -1,12 +1,13 @@
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { configOf } from './config.ts';
-import { Deployer } from './deploy.ts';
+import { configOf, tokenFor } from './config.ts';
+import { Deployer, type Parts } from './deploy.ts';
 import { type Item, PACKAGED, zipOf } from './fixtures.ts';
-import { type Artifact, Refused } from './github.ts';
+import { type Artifact, GitHub, Refused, WORKFLOW } from './github.ts';
 import { Store } from './store.ts';
 import type { Invocation, Runner } from './wrangler.ts';
 
@@ -37,6 +38,8 @@ async function setup(
 		wrangler?: Runner;
 		zip?: Buffer;
 		download?: () => Promise<void>;
+		/** GitHub itself, in place of the run that built the console. */
+		github?: Parts['github'];
 	} = {},
 ) {
 	const data = await mkdtemp(join(tmpdir(), 'deployer-'));
@@ -52,11 +55,11 @@ async function setup(
 	const store = new Store(join(data, 'deployer.db'));
 	const invoked: Invocation[] = [];
 	const homes: boolean[] = [];
-	const github = {
+	const github = options.github ?? {
 		artifacts: async () => ({ commit: 'abc', artifacts: options.artifacts ?? [ARTIFACT] }),
 		download:
 			options.download ??
-			(async (_repository: string, _artifact: Artifact, zip: string) => {
+			(async (_repository: string, _run: number, _artifact: Artifact, zip: string) => {
 				await writeFile(zip, options.zip ?? artifactOf());
 			}),
 	};
@@ -321,5 +324,146 @@ describe('a rollback', () => {
 			version: ID,
 		});
 		expect(store.lastRun('console')).toBe(9);
+	});
+});
+
+const STORAGE = 'https://storage.example/zip';
+const STALE = 'stale-token';
+
+/**
+ * GitHub with `canmi21/web`'s token, `GITHUB_ACTIONS_TOKEN_CANMI21`: every run it is asked for
+ * built the console, unless `refuse` answers a request in its place or throws as fetch does.
+ */
+function gitHub(refuse: (url: string) => Response | undefined = () => undefined) {
+	const zip = artifactOf();
+	const digest = `sha256:${createHash('sha256').update(zip).digest('hex')}`;
+	const fetch = async (url: string) => {
+		const refused = refuse(url);
+		if (refused) return refused;
+		if (url === STORAGE) return new Response(new Uint8Array(zip));
+		if (url.endsWith('/zip')) {
+			return new Response(null, { status: 302, headers: { location: STORAGE } });
+		}
+		if (url.endsWith('/artifacts?per_page=100')) {
+			const artifact = { id: 1, name: 'worker-console', expired: false, digest };
+			return Response.json({ artifacts: [artifact] });
+		}
+		return Response.json({
+			repository: { full_name: 'canmi21/web' },
+			path: WORKFLOW,
+			head_branch: 'main',
+			event: 'push',
+			status: 'completed',
+			conclusion: 'success',
+			head_sha: 'abc',
+		});
+	};
+	const env = { GITHUB_ACTIONS_TOKEN_CANMI21: STALE };
+	return new GitHub((repository) => tokenFor(repository, env), fetch);
+}
+
+const REFUSED = 'GITHUB_ACTIONS_TOKEN_CANMI21, the token for canmi21, was refused';
+
+describe('a run GitHub does not give', () => {
+	/** Run 7 answered by `refuse`, then run 8 as GitHub answers it; the rows newest first. */
+	async function seven(refuse: (url: string) => Response | undefined) {
+		const github = gitHub((url) => (url.includes('/7') ? refuse(url) : undefined));
+		const at = await setup({ github });
+		await at.deliver(7, 8);
+		const rows = at.store.list();
+		// Ready for the next run: run 8 deployed as any run does.
+		expect(rows[0]).toMatchObject({ worker: 'console', run: 8, stage: 'deployed' });
+		expect(at.invoked).toHaveLength(1);
+		return { ...at, rows };
+	}
+
+	/** The one row run 7 left, failed at downloading with `error`, logged and naming no token. */
+	function failed(at: Awaited<ReturnType<typeof seven>>, error: string, worker?: string) {
+		expect(at.rows).toHaveLength(2);
+		const [, row] = at.rows;
+		expect(row).toMatchObject({ action: 'deploy', repository: 'canmi21/web', run: 7 });
+		expect(row).toMatchObject({ stage: 'failed', failed_in: 'downloading', error });
+		expect(row!.worker).toBe(worker);
+		expect(row!.finished_at).not.toBeNull();
+		expect(at.logs.some((line) => line.endsWith(error))).toBe(true);
+		expect(JSON.stringify(at.rows) + at.logs.join('\n')).not.toContain(STALE);
+	}
+
+	it('records a refused token on the run as a failed deploy of the run', async () => {
+		const at = await seven((url) =>
+			url.endsWith('/runs/7') ? new Response(null, { status: 401 }) : undefined,
+		);
+		const error = `GitHub answered 401 for run 7 of canmi21/web: ${REFUSED}`;
+		failed(at, error);
+		expect(at.logs).toContain(`deployer: run 7: ${error}`);
+	});
+
+	it('records a refused token on the artifacts the same way', async () => {
+		const at = await seven((url) =>
+			url.endsWith('/artifacts?per_page=100') ? new Response(null, { status: 401 }) : undefined,
+		);
+		failed(at, `GitHub answered 401 for the artifacts of run 7 of canmi21/web: ${REFUSED}`);
+	});
+
+	it("records a failed download on the Worker's own row", async () => {
+		let first = true;
+		const { store, logs, deliver } = await setup({
+			github: gitHub((url) => {
+				if (!url.endsWith('/zip') || !first) return undefined;
+				first = false;
+				return new Response(null, { status: 401 });
+			}),
+		});
+		await deliver(7, 8);
+		const of = 'artifact worker-console of run 7 of canmi21/web';
+		const error = `GitHub answered 401 for ${of}: ${REFUSED}`;
+		expect(store.list()).toMatchObject([
+			{ worker: 'console', run: 8, stage: 'deployed' },
+			{ worker: 'console', run: 7, stage: 'failed', failed_in: 'downloading', error },
+		]);
+		expect(logs.some((line) => line.endsWith(error))).toBe(true);
+	});
+
+	it('records a GitHub it could not reach', async () => {
+		const at = await seven(() => {
+			const cause = new Error('connect ECONNREFUSED 140.82.112.6:443');
+			throw new TypeError('fetch failed', { cause });
+		});
+		const why = 'fetch failed: connect ECONNREFUSED 140.82.112.6:443';
+		failed(at, `GitHub could not be reached for run 7 of canmi21/web: ${why}`);
+	});
+
+	it('records a source it holds no token for', async () => {
+		const github = new GitHub((repository) => tokenFor(repository, {}));
+		const { store, deliver } = await setup({ github });
+		await deliver(7);
+		expect(store.list()).toMatchObject([
+			{
+				run: 7,
+				stage: 'failed',
+				error: 'no GitHub token reads canmi21/web: GITHUB_ACTIONS_TOKEN_CANMI21 is not set',
+			},
+		]);
+	});
+
+	it('leaves a run that is not one to deploy to the log, recording nothing', async () => {
+		const record = { repository: { full_name: 'canmi21/web' }, path: '.github/workflows/ci.yml' };
+		const { store, logs, deliver } = await setup({
+			github: gitHub((url) => (url.endsWith('/runs/7') ? Response.json(record) : undefined)),
+		});
+		await deliver(7);
+		expect(store.list()).toEqual([]);
+		expect(logs).toEqual([
+			'deployer: run 7: run 7 is not one to deploy: it ran .github/workflows/ci.yml',
+		]);
+	});
+
+	it('records a run GitHub gives as it always has', async () => {
+		const { store, deliver } = await setup({ github: gitHub() });
+		await deliver(7);
+		expect(store.list()).toMatchObject([
+			{ action: 'deploy', worker: 'console', run: 7, commit: 'abc', stage: 'deployed' },
+		]);
+		expect(store.list()[0]!.error).toBeNull();
 	});
 });

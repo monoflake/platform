@@ -21,7 +21,8 @@ export type Action = 'deploy' | 'rollback';
 export interface Deploy {
 	readonly id: number;
 	readonly action: Action;
-	readonly worker: string;
+	/** Absent on a run GitHub never gave, whose Workers were never known. */
+	readonly worker?: string;
 	readonly repository: string;
 	readonly run: number | null;
 	readonly commit: string | null;
@@ -112,6 +113,22 @@ export class Store {
 		return Number(result.lastInsertRowid);
 	}
 
+	/**
+	 * A run whose record or artifacts GitHub did not give, closed as failed where it was fetching:
+	 * no Worker is known, so it names none and stores the empty name.
+	 */
+	unread(repository: string, run: number, dry: boolean, error: string): number {
+		const now = this.stamp();
+		const result = this.db
+			.prepare(
+				`INSERT INTO deploys (action, worker, repository, run, dry, stage, failed_in, error,
+					started_at, finished_at)
+					VALUES ('deploy', '', ?, ?, ?, 'failed', 'downloading', ?, ?, ?)`,
+			)
+			.run(repository, run, dry ? 1 : 0, error, now, now);
+		return Number(result.lastInsertRowid);
+	}
+
 	/** A new rollback of `worker` to `version`, at `uploading` since there is nothing to fetch. */
 	openRollback(worker: string, repository: string, version: string) {
 		const result = this.db
@@ -174,7 +191,7 @@ export class Store {
 		return rows.map((row) => ({
 			id: row.id,
 			action: row.action,
-			worker: row.worker,
+			...(row.worker ? { worker: row.worker } : {}),
 			repository: row.repository,
 			run: row.run,
 			commit: row.commit_sha,

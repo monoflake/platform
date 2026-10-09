@@ -155,3 +155,25 @@ architecture, a role a node grants -- stays in code. What deciding it involves:
   `spec/todo.md`, "A deploy belongs to a scope": the scope of each source is part of the same
   record.
 - **The same layer holds the node list** -- "A node is added by hand in seven places", above.
+
+## The console reads no record the deployer keeps
+
+The deployer records every Worker's deploy, a failed one included -- [../architecture/deployer.md](../architecture/deployer.md),
+"What it refuses" -- and only `GET /api/deploys` serves those rows. The console builds Now, the
+latest failures and the events from host's per-node `/events` alone, keyed by node and app, so a
+Worker's deploy, failed or not, never reaches the page the operator watches. Found on 2026-10-09,
+when a run the deployer could not read showed nowhere. What deciding it involves:
+
+- **Where the rows go**: the console reads `/api/deploys` beside host's events, or the deployer's
+  rows reach host's events or the relay, so the console keeps one source.
+- **A placement with no node**: the console's `Placement` is a node's app; a Worker runs on none,
+  and a run that failed before its Workers were known names no Worker either.
+- **host has the same gap for images**: infra's `apps/deploy/host/src/rollout/run.rs` logs a run
+  whose artifacts it could not fetch and records nothing.
+
+## The deployer waits on GitHub without a deadline
+
+The deployer's fetches to GitHub and to the storage it redirects to carry no timeout, and it
+deploys one run at a time, so a GitHub that hangs holds every run queued behind it. Found on
+2026-10-09. Deciding it is a deadline per request, and whether a run that ran out of it is retried
+or closed as failed like any other unread run.

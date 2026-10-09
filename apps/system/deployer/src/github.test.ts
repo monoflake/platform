@@ -3,7 +3,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { GitHub, Refused, type Run, WORKFLOW, appOf, check } from './github.ts';
+import { tokenFor } from './config.ts';
+import { GitHub, Refused, type Run, Unread, WORKFLOW, appOf, check } from './github.ts';
 
 function run(overrides: Partial<Run> = {}): Run {
 	return {
@@ -109,12 +110,53 @@ describe('GitHub', () => {
 			'/zip': () => new Response(zip),
 		});
 		const path = join(mkdtempSync(join(tmpdir(), 'deployer-')), 'a.zip');
-		await client.download('monoflake/platform', { app: 'console', id: 1, digest }, path);
+		await client.download('monoflake/platform', 7, { app: 'console', id: 1, digest }, path);
 		expect(readFileSync(path)).toEqual(zip);
 		expect(asked[0]!.authorization).toBe('Bearer secret');
 		expect(asked[1]).toEqual({ url: storage, authorization: null });
 
 		const wrong = { app: 'console', id: 1, digest: `sha256:${'0'.repeat(64)}` };
-		await expect(client.download('monoflake/platform', wrong, path)).rejects.toThrow(/digest/);
+		await expect(client.download('monoflake/platform', 7, wrong, path)).rejects.toThrow(/digest/);
+	});
+
+	it('names what it asked for, what GitHub answered, and where a refused token is', async () => {
+		const env = { GITHUB_ACTIONS_TOKEN: 't' };
+		const reason = async (answer: Response) => {
+			const fetch = async () => answer;
+			const client = new GitHub((repository) => tokenFor(repository, env), fetch);
+			const failed = client.artifacts('monoflake/platform', 7);
+			await expect(failed).rejects.toThrow(Unread);
+			return failed.catch((error: Error) => error.message);
+		};
+		const of = 'GitHub answered 403 for run 7 of monoflake/platform';
+		expect(await reason(new Response(null, { status: 403 }))).toBe(
+			`${of}: GITHUB_ACTIONS_TOKEN, the token for monoflake, was refused`,
+		);
+		const spent = { status: 403, headers: { 'x-ratelimit-remaining': '0' } };
+		expect(await reason(new Response(null, spent))).toBe(
+			`${of}: the rate limit of GITHUB_ACTIONS_TOKEN is spent`,
+		);
+		expect(await reason(new Response(null, { status: 404 }))).toBe(
+			`${of.replace('403', '404')}: it is gone, or GITHUB_ACTIONS_TOKEN may not read it`,
+		);
+		expect(await reason(new Response(null, { status: 502 }))).toBe(
+			'GitHub answered 502 for run 7 of monoflake/platform',
+		);
+		expect(await reason(new Response('<html>'))).toMatch(
+			/^GitHub's answer for run 7 of monoflake\/platform could not be read: /,
+		);
+	});
+
+	it('names the storage that failed a download', async () => {
+		const { client } = github({
+			'/actions/artifacts/1/zip': () =>
+				new Response(null, { status: 302, headers: { location: 'https://storage.example/zip' } }),
+			'/zip': () => new Response(null, { status: 503 }),
+		});
+		const artifact = { app: 'console', id: 1, digest };
+		const failed = client.download('monoflake/platform', 7, artifact, '/x');
+		await expect(failed).rejects.toThrow(
+			'storage answered 503 for artifact worker-console of run 7 of monoflake/platform',
+		);
 	});
 });
