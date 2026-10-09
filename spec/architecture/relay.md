@@ -52,8 +52,8 @@ reach a third directly still hears it through a neighbor.
 relays share, `RELAY_SECRET`. The peers are one value every node is given alike, `RELAY_PEERS`,
 `name=address:port` by tailnet address, a relay skipping its own. Each stream's first message
 carries the contract's version, and a neighbor speaking another is dropped. Both ends ping every
-thirty seconds and drop a socket silent for ninety, and redial from one second, doubling to a
-minute.
+three seconds -- the round trip below -- and drop a socket silent for ninety, and redial from one
+second, doubling to a minute. A browser's socket is pinged every thirty.
 
 **A browser opens `/live` on `relay.canmi.app`**, behind Access, and is sent the whole cluster, then
 every change; `/state` answers the same once, for the console's polling. **`/live` admits a page on `.app`
@@ -63,6 +63,34 @@ WebSocket, so without the check any site the reader visits could open it as them
 pages are refused, since the console is served on `.app`. Each node's entry carries
 `heard_at`, when this relay last took a newer version of it: a live node moves about every three
 seconds, so an old `heard_at` means the node, or every path to it, is down.
+
+## The round trip to each neighbor
+
+**A relay times its own pings on `/mesh`, and its snapshot carries the latest per neighbor as
+`round_trip_ms`**: `{ "tyo": 151.2, "buf": 18.4 }`, by node, in milliseconds to a tenth. It travels
+as the rest of the snapshot does, to every relay and to `/live` and `/state`, so a page reads each
+node's round trip to every other from that node's own entry. Asked for on 2026-10-09, for the
+console's row of each node's round trip to the database's primary.
+
+- **The WebSocket's own ping is timed, not a message of the mesh's.** The other end's socket
+  answers it beneath the relay with a pong carrying the ping's payload back, and the payload is
+  when the ping was sent, so nothing is kept per ping and a late pong still times its own. A
+  relay of an older build answers it the same, and the mesh's messages and contract are untouched.
+  What it measures is the relays' own path over the tailnet, a busy peer's queue included; an
+  app's connection to another node's port takes the same path but not the same queue.
+- **Every three seconds, on every socket, the first as the socket opens** -- the same `own::EVERY`
+  the snapshot is taken at, since a faster ping times a figure no snapshot carries and a slower one
+  leaves the figure a round behind. A ping and its pong are two frames of a few bytes, beside the
+  kilobytes of snapshot each socket carries every round. Both sockets between two relays time it,
+  and the latest of either stands.
+- **A neighbor not timed within three pings is absent**, never `null` or a last figure held on --
+  the workspace's `spec/json.md`, "Absent, not null" -- and with none timed the key itself is
+  absent, as `stale` is. A relay never times itself, so a node's own name is never a key.
+- **Milliseconds, not the seconds `spec/json.md` asks of a duration**, because the unit is in the
+  key, as probe's `duration_ms` is, and the figure is read as milliseconds. A changed round trip is
+  a changed snapshot, a new version, as a changed machine sample already is every round.
+- **No contract bump**: an added optional key is not a schema change -- `spec/json.md`, "An optional
+  key is not a schema change" -- and a relay carries a snapshot as the JSON its node wrote.
 
 ## The order it is built in
 

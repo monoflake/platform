@@ -1,7 +1,7 @@
 //! The relays' mesh: a socket to every other node's relay. Both ends open with the versions they
 //! hold and send each other what the other lacks; after that a relay sends its own node's snapshot
-//! the moment it changes, and every other node's when a neighbor's comparison shows it behind. See
-//! spec/architecture/relay.md.
+//! the moment it changes, and every other node's when a neighbor's comparison shows it behind. Its
+//! pings, timed, are the round trips its own snapshot carries. See spec/architecture/relay.md.
 
 use crate::cluster::{Carried, Versions};
 use crate::config::Peer;
@@ -9,6 +9,7 @@ use crate::relay::{Relay, Update, VERSION};
 use crate::socket::{Dial, Received, Socket, SocketError};
 use axum::http::HeaderMap;
 use axum::http::header::{AUTHORIZATION, InvalidHeaderValue};
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Duration;
@@ -25,10 +26,17 @@ pub const PATH: &str = "/mesh";
 /// full mesh, every round, since the machine's sample changes every round.
 pub const COMPARISON: Duration = Duration::from_secs(2);
 
-/// Cloudflare and NATs close a socket idle for long; a ping keeps it from looking idle.
+/// Cloudflare and NATs close a socket idle for long; a ping keeps it from looking idle. A browser's
+/// socket is pinged this often; a neighbor's, every `PING`.
 pub const HEARTBEAT: Duration = Duration::from_secs(30);
 
-/// A neighbor that has sent nothing, not even a pong, through three heartbeats is gone.
+/// How often a relay pings each neighbor and times the pong, the first ping as the socket opens.
+/// Its own snapshot is taken every `own::EVERY`, so a faster ping times a figure no round carries;
+/// a slower one leaves the figure a round behind. Two ten-byte frames a socket, beside snapshots of
+/// kilobytes every round. See spec/architecture/relay.md, "The round trip to each neighbor".
+pub const PING: Duration = crate::own::EVERY;
+
+/// A neighbor that has sent nothing, not even a pong, for ninety seconds is gone.
 const SILENCE: Duration = Duration::from_secs(90);
 
 /// How long the other end has to say who it is.
@@ -134,7 +142,8 @@ pub async fn converse<S: Socket>(
 
 	let speaking = Speaking { relay: &relay, peer: &peer, conversation: relay.conversation() };
 	let mut comparison = tokio::time::interval_at(Instant::now() + COMPARISON, COMPARISON);
-	let mut heartbeat = tokio::time::interval_at(Instant::now() + HEARTBEAT, HEARTBEAT);
+	let mut ping = tokio::time::interval(PING);
+	let origin = Instant::now();
 	let mut heard = Instant::now();
 	loop {
 		tokio::select! {
@@ -150,6 +159,11 @@ pub async fn converse<S: Socket>(
 						}
 						Message::Hello { .. } => {}
 					},
+					Received::Pong(payload) => {
+						if let Some(round_trip) = round_trip(origin, &payload, Instant::now()) {
+							relay.timed(&peer, round_trip);
+						}
+					}
 					Received::Closed => return Ok(()),
 					Received::Other => {}
 				}
@@ -170,14 +184,30 @@ pub async fn converse<S: Socket>(
 					send(&mut socket, &Message::Versions { versions: relay.versions() }).await?;
 				}
 			}
-			_ = heartbeat.tick() => {
+			_ = ping.tick() => {
 				if heard.elapsed() >= SILENCE {
 					return Err(MeshError::Silent(SILENCE));
 				}
-				socket.ping().await?;
+				socket.ping(stamp(origin, Instant::now())).await?;
 			}
 		}
 	}
+}
+
+/// A ping's payload: when it was sent, in microseconds since the socket's `origin`. The pong
+/// carries it back, so nothing is kept per ping, and a pong later than the next ping still times
+/// its own.
+fn stamp(origin: Instant, now: Instant) -> Bytes {
+	let sent = u64::try_from(now.duration_since(origin).as_micros()).unwrap_or(u64::MAX);
+	Bytes::copy_from_slice(&sent.to_be_bytes())
+}
+
+/// The round trip a pong closes, or none for a pong to no ping of this socket's: another shape, or
+/// sent later than `now`.
+fn round_trip(origin: Instant, payload: &[u8], now: Instant) -> Option<Duration> {
+	let sent = u64::from_be_bytes(payload.try_into().ok()?);
+	let elapsed = now.duration_since(origin);
+	elapsed.checked_sub(Duration::from_micros(sent))
 }
 
 /// Sends `peer`, holding `versions`, what it lacks.
@@ -198,7 +228,7 @@ async fn introduced<S: Socket>(socket: &mut S) -> Result<Message, MeshError> {
 		match socket.receive().await? {
 			Received::Text(text) => return Ok(serde_json::from_str(&text)?),
 			Received::Closed => return Err(MeshError::Closed),
-			Received::Other => {}
+			Received::Pong(_) | Received::Other => {}
 		}
 	}
 }
@@ -254,9 +284,11 @@ mod tests {
 	use tokio::sync::mpsc;
 
 	/// A socket whose other end is the test: what it is fed, it receives, and what it sends is kept.
+	/// Given an `echo`, it answers its own pings, as the other end's socket does beneath.
 	struct Fake {
 		incoming: mpsc::UnboundedReceiver<Received>,
 		sent: Arc<Mutex<Vec<Message>>>,
+		echo: Option<mpsc::UnboundedSender<Received>>,
 	}
 
 	impl Socket for Fake {
@@ -265,7 +297,10 @@ mod tests {
 			Ok(())
 		}
 
-		async fn ping(&mut self) -> Result<(), SocketError> {
+		async fn ping(&mut self, payload: Bytes) -> Result<(), SocketError> {
+			if let Some(echo) = &self.echo {
+				let _ = echo.send(Received::Pong(payload));
+			}
 			Ok(())
 		}
 
@@ -288,7 +323,9 @@ mod tests {
 		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
 		drop(feed);
 
-		converse(relay.clone(), Some("tyo"), Fake { incoming, sent: sent.clone() }).await.unwrap();
+		converse(relay.clone(), Some("tyo"), Fake { incoming, sent: sent.clone(), echo: None })
+			.await
+			.unwrap();
 		let sent = sent.lock().unwrap();
 		assert!(matches!(&sent[0], Message::Hello { node, versions, .. }
 			if node == "rdu" && *versions == relay.versions()));
@@ -310,10 +347,43 @@ mod tests {
 			let (feed, incoming) = mpsc::unbounded_channel();
 			let hello = Message::Hello { version: VERSION, node: said.into(), versions: Versions::new() };
 			feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
-			let fake = Fake { incoming, sent: Arc::default() };
+			let fake = Fake { incoming, sent: Arc::default(), echo: None };
 			let refused = converse(relay.clone(), expected, fake).await;
 			assert!(matches!(refused, Err(MeshError::Stranger(named)) if named == said));
 		}
+	}
+
+	#[tokio::test]
+	async fn a_pong_times_the_round_trip_to_the_neighbor_that_sent_it() {
+		let relay = Relay::new("rdu".into(), "s3cret".into());
+		let (feed, incoming) = mpsc::unbounded_channel();
+		let hello = Message::Hello { version: VERSION, node: "tyo".into(), versions: Versions::new() };
+		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
+		let fake = Fake { incoming, sent: Arc::default(), echo: Some(feed) };
+		let conversing = tokio::spawn(converse(relay.clone(), Some("tyo"), fake));
+		let timed = async {
+			while relay.round_trips().is_empty() {
+				tokio::time::sleep(Duration::from_millis(5)).await;
+			}
+		};
+		tokio::time::timeout(Duration::from_secs(5), timed).await.expect("the first ping, timed");
+		conversing.abort();
+		let round_trips = relay.round_trips();
+		assert_eq!(round_trips.keys().collect::<Vec<_>>(), ["tyo"]);
+		assert!((0.0..1000.0).contains(&round_trips["tyo"]));
+	}
+
+	#[test]
+	fn a_pong_carries_back_when_its_ping_was_sent() {
+		let origin = Instant::now();
+		let sent = origin + Duration::from_millis(40);
+		let payload = stamp(origin, sent);
+		let answered = sent + Duration::from_micros(151_250);
+		assert_eq!(round_trip(origin, &payload, answered), Some(Duration::from_micros(151_250)));
+		// One stamped later than now, and one this socket never sent, time nothing.
+		assert_eq!(round_trip(origin, &payload, origin), None);
+		assert_eq!(round_trip(origin, b"", answered), None);
+		assert_eq!(round_trip(origin, b"four", answered), None);
 	}
 
 	#[test]

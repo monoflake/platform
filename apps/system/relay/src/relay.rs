@@ -3,7 +3,7 @@
 
 use crate::cluster::{Carried, Cluster, Held, Versions};
 use crate::host::Reading;
-use crate::own::{Own, Part};
+use crate::own::{Own, Part, RoundTrips};
 use jiff::Timestamp;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -22,6 +22,9 @@ pub const GRACE: Duration = Duration::from_secs(30);
 
 /// Every node changing every few seconds; a socket further behind than this is caught up whole.
 const BACKLOG: usize = 256;
+
+/// A round trip not timed again within three pings is no longer current, and is left out.
+const CURRENT: Duration = Duration::from_secs(3 * crate::mesh::PING.as_secs());
 
 /// A node's newer snapshot, taken here.
 #[derive(Debug, Clone)]
@@ -49,6 +52,8 @@ pub struct Relay {
 	/// Which socket to each neighbor sends unasked; see `mesh::Speaking`.
 	speakers: Mutex<BTreeMap<String, u64>>,
 	conversations: AtomicU64,
+	/// Each neighbor's latest round trip, and when it was timed.
+	timed: Mutex<BTreeMap<String, (Duration, Instant)>>,
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -66,6 +71,7 @@ impl Relay {
 			started: Instant::now(),
 			speakers: Mutex::default(),
 			conversations: AtomicU64::new(0),
+			timed: Mutex::default(),
 		})
 	}
 
@@ -98,13 +104,14 @@ impl Relay {
 		true
 	}
 
-	/// One round of reading host, taken in as this node's snapshot.
+	/// One round of reading host, taken in as this node's snapshot with its round trips.
 	pub fn observe(&self, reading: Reading) {
 		let now = Timestamp::now();
+		let round_trips = self.round_trips();
 		let changed = {
 			let mut own = lock(&self.own);
 			let before: BTreeSet<Part> = own.stale().clone();
-			let (changed, failed) = own.observe(reading, now);
+			let (changed, failed) = own.observe(reading, round_trips, now);
 			for (part, error) in &failed {
 				if !before.contains(part) {
 					eprintln!("relay: reading host's {part}: {error}");
@@ -152,10 +159,32 @@ impl Relay {
 		}
 	}
 
+	/// A round trip to `peer` just timed, on either socket to it; the latest replaces the last.
+	pub fn timed(&self, peer: &str, round_trip: Duration) {
+		lock(&self.timed).insert(peer.to_owned(), (round_trip, Instant::now()));
+	}
+
+	/// Each neighbor's latest round trip, a neighbor not timed lately left out.
+	pub fn round_trips(&self) -> RoundTrips {
+		current(&lock(&self.timed), Instant::now())
+	}
+
 	/// Once host has been read, or the grace is over.
 	pub fn healthy(&self) -> bool {
 		lock(&self.own).read() || self.started.elapsed() >= GRACE
 	}
+}
+
+/// The round trips timed within `CURRENT` of `now`, in milliseconds to a tenth: a neighbor in the
+/// same place answers in under one.
+fn current(timed: &BTreeMap<String, (Duration, Instant)>, now: Instant) -> RoundTrips {
+	timed
+		.iter()
+		.filter(|(_, (_, at))| now.saturating_duration_since(*at) < CURRENT)
+		.map(|(peer, (round_trip, _))| {
+			(peer.clone(), (round_trip.as_secs_f64() * 10_000.0).round() / 10.0)
+		})
+		.collect()
 }
 
 /// Reads host every `every`, for as long as the relay runs.
@@ -183,6 +212,29 @@ mod tests {
 		assert!(relay.speaks("tyo", first));
 		relay.hush("tyo", first);
 		assert!(relay.speaks("tyo", second));
+	}
+
+	#[test]
+	fn a_round_trip_is_in_milliseconds_and_left_out_once_it_is_old() {
+		let now = Instant::now();
+		let timed = BTreeMap::from([
+			("tyo".into(), (Duration::from_micros(151_234), now - Duration::from_secs(1))),
+			("buf".into(), (Duration::from_micros(460), now)),
+			("gvx".into(), (Duration::from_millis(90), now - CURRENT)),
+		]);
+		assert_eq!(
+			current(&timed, now),
+			RoundTrips::from([("tyo".into(), 151.2), ("buf".into(), 0.5)])
+		);
+	}
+
+	#[test]
+	fn the_latest_round_trip_replaces_the_last() {
+		let relay = Relay::new("rdu".into(), "s3cret".into());
+		assert!(relay.round_trips().is_empty());
+		relay.timed("tyo", Duration::from_millis(150));
+		relay.timed("tyo", Duration::from_millis(149));
+		assert_eq!(relay.round_trips(), RoundTrips::from([("tyo".into(), 149.0)]));
 	}
 
 	#[test]

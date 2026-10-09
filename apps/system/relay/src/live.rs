@@ -70,7 +70,7 @@ pub async fn watch<S: Socket>(relay: Arc<Relay>, mut socket: S) -> Result<(), So
 				if heard.elapsed() >= SILENCE {
 					return Ok(());
 				}
-				socket.ping().await?;
+				socket.ping(bytes::Bytes::new()).await?;
 			}
 		}
 	}

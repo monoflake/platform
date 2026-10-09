@@ -130,6 +130,26 @@ async fn a_node_reaches_a_third_through_a_neighbor() {
 }
 
 #[tokio::test]
+async fn each_relay_times_the_other_and_its_snapshot_carries_it_to_the_other() {
+	let rdu = start("rdu", "geo:1").await;
+	let tyo = start("tyo", "geo:2").await;
+	hold(&rdu, &tyo);
+	// Held by tyo, as rdu's snapshot travels: rdu's own figure, never tyo's of rdu.
+	let carried = |relay: &Relay, node: &str, peer: &str| {
+		let state = relay.state();
+		state.nodes.get(node)?.snapshot["round_trip_ms"][peer].as_f64()
+	};
+	until("tyo holds rdu's round trip to it", || carried(&tyo.relay, "rdu", "tyo").is_some()).await;
+	until("rdu holds tyo's round trip to it", || carried(&rdu.relay, "tyo", "rdu").is_some()).await;
+	let round_trip = carried(&tyo.relay, "rdu", "tyo").unwrap();
+	assert!((0.0..1000.0).contains(&round_trip), "{round_trip}");
+	assert_eq!(
+		rdu.relay.state().nodes["rdu"].snapshot["round_trip_ms"].as_object().unwrap().len(),
+		1
+	);
+}
+
+#[tokio::test]
 async fn a_relay_without_the_secret_is_refused() {
 	let rdu = start("rdu", "geo:1").await;
 	let stranger = Peer { name: "rdu".into(), address: rdu.address.to_string() };
