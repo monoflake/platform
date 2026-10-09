@@ -175,14 +175,15 @@ impl Relay {
 	}
 }
 
-/// The round trips timed within `CURRENT` of `now`, in milliseconds to a tenth: a neighbor in the
-/// same place answers in under one.
+/// The round trips timed within `CURRENT` of `now`, in seconds to a ten-thousandth -- a tenth of a
+/// millisecond, since a neighbor in the same place answers in under one; workspace spec/json.md,
+/// "Keys are stable; values are cheap", has durations in seconds.
 fn current(timed: &BTreeMap<String, (Duration, Instant)>, now: Instant) -> RoundTrips {
 	timed
 		.iter()
 		.filter(|(_, (_, at))| now.saturating_duration_since(*at) < CURRENT)
 		.map(|(peer, (round_trip, _))| {
-			(peer.clone(), (round_trip.as_secs_f64() * 10_000.0).round() / 10.0)
+			(peer.clone(), (round_trip.as_secs_f64() * 10_000.0).round() / 10_000.0)
 		})
 		.collect()
 }
@@ -224,7 +225,7 @@ mod tests {
 		]);
 		assert_eq!(
 			current(&timed, now),
-			RoundTrips::from([("tyo".into(), 151.2), ("buf".into(), 0.5)])
+			RoundTrips::from([("tyo".into(), 0.1512), ("buf".into(), 0.0005)])
 		);
 	}
 
@@ -234,7 +235,7 @@ mod tests {
 		assert!(relay.round_trips().is_empty());
 		relay.timed("tyo", Duration::from_millis(150));
 		relay.timed("tyo", Duration::from_millis(149));
-		assert_eq!(relay.round_trips(), RoundTrips::from([("tyo".into(), 149.0)]));
+		assert_eq!(relay.round_trips(), RoundTrips::from([("tyo".into(), 0.149)]));
 	}
 
 	#[test]

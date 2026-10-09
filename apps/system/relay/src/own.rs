@@ -38,7 +38,7 @@ pub struct Content {
 	/// Not host's but this relay's own. See spec/architecture/relay.md, "The round trip to each
 	/// neighbor".
 	#[serde(skip_serializing_if = "BTreeMap::is_empty")]
-	pub round_trip_ms: RoundTrips,
+	pub round_trip: RoundTrips,
 	/// The parts the last round failed to read, each held at what was read before.
 	#[serde(skip_serializing_if = "BTreeSet::is_empty")]
 	pub stale: BTreeSet<Part>,
@@ -52,7 +52,7 @@ pub struct Snapshot {
 	pub content: Content,
 }
 
-/// This relay's round trip to each neighbor, in milliseconds, by neighbor.
+/// This relay's round trip to each neighbor, in seconds, by neighbor.
 pub type RoundTrips = BTreeMap<String, f64>;
 
 /// The parts a round failed to read, each with why.
@@ -77,7 +77,7 @@ impl Own {
 	) -> (Option<(u64, Snapshot)>, Failures) {
 		let Reading { events, apps, machine } = reading;
 		let mut next = self.content.clone();
-		next.round_trip_ms = round_trips;
+		next.round_trip = round_trips;
 		let mut failed = Vec::new();
 		kept(Part::Events, events, &mut next.events, &mut failed);
 		kept(Part::Apps, apps, &mut next.apps, &mut failed);
@@ -186,11 +186,11 @@ mod tests {
 	fn the_round_trips_are_carried_and_absent_while_there_are_none() {
 		let mut own = Own::default();
 		let (_, snapshot) = own.observe(reading("geo:1"), RoundTrips::new(), at(0)).0.unwrap();
-		assert!(serde_json::to_value(&snapshot).unwrap().get("round_trip_ms").is_none());
+		assert!(serde_json::to_value(&snapshot).unwrap().get("round_trip").is_none());
 		let timed = RoundTrips::from([("tyo".into(), 151.2), ("buf".into(), 18.0)]);
 		let (_, snapshot) = own.observe(reading("geo:1"), timed, at(3000)).0.unwrap();
 		let written = serde_json::to_value(&snapshot).unwrap();
-		assert_eq!(written["round_trip_ms"], json!({ "buf": 18.0, "tyo": 151.2 }));
+		assert_eq!(written["round_trip"], json!({ "buf": 18.0, "tyo": 151.2 }));
 	}
 
 	#[test]

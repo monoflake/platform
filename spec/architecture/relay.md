@@ -67,7 +67,7 @@ seconds, so an old `heard_at` means the node, or every path to it, is down.
 ## The round trip to each neighbor
 
 **A relay times its own pings on `/mesh`, and its snapshot carries the latest per neighbor as
-`round_trip_ms`**: `{ "tyo": 151.2, "buf": 18.4 }`, by node, in milliseconds to a tenth. It travels
+`round_trip`**: `{ "tyo": 0.1512, "buf": 0.0184 }`, by node, in seconds to a tenth of a millisecond. It travels
 as the rest of the snapshot does, to every relay and to `/live` and `/state`, so a page reads each
 node's round trip to every other from that node's own entry. Asked for on 2026-10-09, for the
 console's row of each node's round trip to the database's primary.
@@ -86,8 +86,10 @@ console's row of each node's round trip to the database's primary.
 - **A neighbor not timed within three pings is absent**, never `null` or a last figure held on --
   the workspace's `spec/json.md`, "Absent, not null" -- and with none timed the key itself is
   absent, as `stale` is. A relay never times itself, so a node's own name is never a key.
-- **Milliseconds, not the seconds `spec/json.md` asks of a duration**, because the unit is in the
-  key, as probe's `duration_ms` is, and the figure is read as milliseconds. A changed round trip is
+- **Seconds, as the workspace's `spec/json.md` has every duration**, and the page says them in
+  milliseconds: what is written for a machine follows the one rule, and what is shown to a reader
+  is the page's own wrapping of it, as a node's code is wrapped in its city. It was `round_trip_ms`
+  for its first hours on 2026-10-09 and was renamed before anything but the console read it. A changed round trip is
   a changed snapshot, a new version, as a changed machine sample already is every round.
 - **No contract bump**: an added optional key is not a schema change -- `spec/json.md`, "An optional
   key is not a schema change" -- and a relay carries a snapshot as the JSON its node wrote.
