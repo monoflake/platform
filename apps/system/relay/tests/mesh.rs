@@ -10,6 +10,7 @@ use hyper_util::client::legacy::connect::HttpConnector;
 use hyper_util::rt::TokioExecutor;
 use relay::config::Peer;
 use relay::host::{App, Event, PAGE, ReadError, Reader, Reading, Source};
+use relay::presence::{Presence, sweep};
 use relay::relay::{Relay, recall, watch};
 use relay::runs::Store;
 use std::future::{Future, IntoFuture};
@@ -36,9 +37,18 @@ impl Fake {
 
 	/// An event of `id` written, or rewritten with its outcome moved on.
 	fn record(&self, id: i64, outcome: &str) {
+		self.write(id, "geo", outcome);
+	}
+
+	/// A deploy of the relay itself, under way.
+	fn upgrading(&self) {
+		self.write(1000, relay::leaving::APP, "running");
+	}
+
+	fn write(&self, id: i64, app: &str, outcome: &str) {
 		let event = Event {
 			id,
-			app: "geo".into(),
+			app: app.into(),
 			action: "deploy".into(),
 			source: Source { kind: "panel".into(), run: None, commit: None },
 			image: None,
@@ -97,11 +107,13 @@ struct Started {
 async fn start(node: &str, image: &str) -> Started {
 	let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
 	let address = listener.local_addr().unwrap();
-	let relay = Relay::new(node.into(), SECRET.into(), Store::memory().unwrap()).unwrap();
+	let relay =
+		Relay::new(node.into(), SECRET.into(), Default::default(), Store::memory().unwrap()).unwrap();
 	let host = Arc::new(Fake { image: Mutex::new(image.into()), events: Mutex::default() });
 	tokio::spawn(axum::serve(listener, relay::api::routes(relay.clone())).into_future());
 	tokio::spawn(watch(relay.clone(), host.clone(), ROUND));
 	tokio::spawn(recall(relay.clone(), host.clone()));
+	tokio::spawn(sweep(relay.clone(), ROUND));
 	Started { relay, host, address }
 }
 
@@ -113,7 +125,7 @@ fn hold(from: &Started, to: &Started) {
 /// The image `relay` holds for `node`'s one app.
 fn image(relay: &Relay, node: &str) -> Option<String> {
 	let state = relay.state();
-	let snapshot = &state.nodes.get(node)?.snapshot;
+	let snapshot = &state.nodes.get(node)?.held.as_ref()?.snapshot;
 	snapshot["apps"][0]["image"].as_str().map(str::to_owned)
 }
 
@@ -184,13 +196,14 @@ async fn each_relay_times_the_other_and_its_snapshot_carries_it_to_the_other() {
 	// Held by tyo, as rdu's snapshot travels: rdu's own figure, never tyo's of rdu.
 	let carried = |relay: &Relay, node: &str, peer: &str| {
 		let state = relay.state();
-		state.nodes.get(node)?.snapshot["round_trip"][peer].as_f64()
+		state.nodes.get(node)?.held.as_ref()?.snapshot["round_trip"][peer].as_f64()
 	};
 	until("tyo holds rdu's round trip to it", || carried(&tyo.relay, "rdu", "tyo").is_some()).await;
 	until("rdu holds tyo's round trip to it", || carried(&rdu.relay, "tyo", "rdu").is_some()).await;
 	let round_trip = carried(&tyo.relay, "rdu", "tyo").unwrap();
 	assert!((0.0..1.0).contains(&round_trip), "{round_trip}");
-	assert_eq!(rdu.relay.state().nodes["rdu"].snapshot["round_trip"].as_object().unwrap().len(), 1);
+	let own = &rdu.relay.state().nodes["rdu"];
+	assert_eq!(own.held.as_ref().unwrap().snapshot["round_trip"].as_object().unwrap().len(), 1);
 }
 
 /// The outcome the relay at `address` holds of `node`'s run `id`, as `/runs` answers it.
@@ -232,6 +245,35 @@ async fn a_run_reaches_the_other_relay_and_so_does_its_change() {
 	};
 	tokio::time::timeout(PATIENCE, waited).await.expect("rdu hears tyo's run change");
 	assert_eq!(outcome(tyo.address, "tyo", 8).await.as_deref(), Some("running"));
+}
+
+#[tokio::test]
+async fn a_relay_stopping_tells_its_neighbor_why_before_it_goes() {
+	let rdu = start("rdu", "geo:1").await;
+	let tyo = start("tyo", "geo:2").await;
+	hold(&rdu, &tyo);
+	hold(&tyo, &rdu);
+	until("each holds the other", || image(&rdu.relay, "tyo").is_some()).await;
+	until("tyo speaks to rdu", || tyo.relay.speaking().contains("rdu")).await;
+	assert_eq!(rdu.relay.state().nodes["tyo"].state, Presence::Live);
+	let (mut browser, _) =
+		tokio_tungstenite::connect_async(format!("ws://{}/live", rdu.address)).await.unwrap();
+
+	tyo.host.upgrading();
+	assert!(relay::leaving::leave(&tyo.relay, &*tyo.host).await, "rdu told in time");
+	until("rdu shows tyo upgrading", || rdu.relay.state().nodes["tyo"].state == Presence::Upgrading)
+		.await;
+	let state = rdu.relay.state();
+	let leaving = &state.nodes["tyo"].held.as_ref().unwrap().snapshot["leaving"];
+	assert_eq!(*leaving, serde_json::json!({ "reason": "upgrade", "within": 180 }));
+	// A browser is sent it as a node's state, beside the snapshot that says why.
+	loop {
+		let next = text(&mut browser).await;
+		if next["type"] == "node" && next["node"] == "tyo" && next["state"]["state"] == "upgrading" {
+			assert_eq!(next["state"]["snapshot"]["leaving"]["reason"], "upgrade");
+			break;
+		}
+	}
 }
 
 #[tokio::test]

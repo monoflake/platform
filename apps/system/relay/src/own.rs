@@ -1,7 +1,8 @@
 //! This node's own snapshot, of which this relay is the one source: read from host every round,
-//! and given a new version whenever what it says changes.
+//! and given a new version every round, so a node is heard because it spoke.
 
 use crate::host::{App, Event, ReadError, Reading};
+use crate::presence::Leaving;
 use jiff::Timestamp;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -27,7 +28,7 @@ impl std::fmt::Display for Part {
 	}
 }
 
-/// What a snapshot says; two that say the same are one version, whenever each was read.
+/// What a snapshot says.
 #[derive(Debug, Clone, Default, PartialEq, Serialize)]
 pub struct Content {
 	pub events: Vec<Event>,
@@ -42,6 +43,10 @@ pub struct Content {
 	/// The parts the last round failed to read, each held at what was read before.
 	#[serde(skip_serializing_if = "BTreeSet::is_empty")]
 	pub stale: BTreeSet<Part>,
+	/// Said once the relay is stopping, and in every snapshot after: a newer one without it is the
+	/// node back.
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub leaving: Option<Leaving>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -67,14 +72,15 @@ pub struct Own {
 }
 
 impl Own {
-	/// One round taken in, with the round trips as they stand: a new version and its snapshot when
-	/// what it says changed. A failure is given back beside it with its part, for whoever logs.
+	/// One round taken in, with the round trips as they stand: a new version and its snapshot,
+	/// whether or not what it says changed -- a heartbeat; see spec/architecture/relay.md, "A node
+	/// says it is leaving before it goes". A failure is given back beside it with its part.
 	pub fn observe(
 		&mut self,
 		reading: Reading,
 		round_trips: RoundTrips,
 		now: Timestamp,
-	) -> (Option<(u64, Snapshot)>, Failures) {
+	) -> ((u64, Snapshot), Failures) {
 		let Reading { events, apps, machine } = reading;
 		let mut next = self.content.clone();
 		next.round_trip = round_trips;
@@ -84,13 +90,19 @@ impl Own {
 		kept(Part::Machine, machine.map(Some), &mut next.machine, &mut failed);
 		next.stale = failed.iter().map(|(part, _)| *part).collect();
 		self.read |= !next.stale.contains(&Part::Events) && !next.stale.contains(&Part::Apps);
-
-		if next == self.content && self.version != 0 {
-			return (None, failed);
-		}
 		self.content = next;
+		(self.versioned(now), failed)
+	}
+
+	/// The last snapshot, saying the node is leaving; the rounds after it say so too.
+	pub fn leave(&mut self, leaving: Leaving, now: Timestamp) -> (u64, Snapshot) {
+		self.content.leaving = Some(leaving);
+		self.versioned(now)
+	}
+
+	fn versioned(&mut self, now: Timestamp) -> (u64, Snapshot) {
 		self.version = version_after(self.version, now);
-		(Some((self.version, Snapshot { taken_at: now, content: self.content.clone() })), failed)
+		(self.version, Snapshot { taken_at: now, content: self.content.clone() })
 	}
 
 	pub fn read(&self) -> bool {
@@ -143,16 +155,30 @@ mod tests {
 	}
 
 	#[test]
-	fn a_version_moves_only_when_what_it_says_changes() {
+	fn a_version_moves_every_round_whether_or_not_what_it_says_changed() {
 		let mut own = Own::default();
-		let (first, _) = own.observe(reading("geo:1"), RoundTrips::new(), at(0));
-		let (first, snapshot) = first.unwrap();
+		let ((first, snapshot), _) = own.observe(reading("geo:1"), RoundTrips::new(), at(0));
 		assert_eq!(first, 1_790_000_000_000);
 		assert_eq!(snapshot.taken_at, at(0));
-		assert!(own.observe(reading("geo:1"), RoundTrips::new(), at(3000)).0.is_none());
-		let (second, snapshot) = own.observe(reading("geo:2"), RoundTrips::new(), at(6000)).0.unwrap();
+		let ((same, unchanged), _) = own.observe(reading("geo:1"), RoundTrips::new(), at(3000));
+		assert_eq!((same, &unchanged.content), (first + 3000, &snapshot.content));
+		let ((second, snapshot), _) = own.observe(reading("geo:2"), RoundTrips::new(), at(6000));
 		assert_eq!(second, first + 6000);
 		assert_eq!(snapshot.content.apps[0].image, "geo:2");
+	}
+
+	#[test]
+	fn leaving_is_said_in_the_last_snapshot_and_every_round_after() {
+		let mut own = Own::default();
+		own.observe(reading("geo:1"), RoundTrips::new(), at(0));
+		let leaving = Leaving { reason: crate::presence::Reason::Upgrade, within: 180 };
+		let (version, snapshot) = own.leave(leaving, at(1000));
+		assert_eq!(version, 1_790_000_001_000);
+		let written = serde_json::to_value(&snapshot).unwrap();
+		assert_eq!(written["leaving"], json!({ "reason": "upgrade", "within": 180 }));
+		// A round already under way as the relay stops does not say the node is back.
+		let ((_, after), _) = own.observe(reading("geo:1"), RoundTrips::new(), at(1000));
+		assert_eq!(after.content.leaving, Some(leaving));
 	}
 
 	#[test]
@@ -171,8 +197,7 @@ mod tests {
 			apps: Err(ReadError::Slow(std::time::Duration::from_secs(5))),
 			machine: Ok(json!({ "sample": 1 })),
 		};
-		let (changed, failed) = own.observe(failing, RoundTrips::new(), at(3000));
-		let (_, snapshot) = changed.unwrap();
+		let ((_, snapshot), failed) = own.observe(failing, RoundTrips::new(), at(3000));
 		assert_eq!(snapshot.content.apps, [app("geo:1")]);
 		assert_eq!(snapshot.content.stale, BTreeSet::from([Part::Apps]));
 		assert_eq!(failed.len(), 1);
@@ -185,10 +210,10 @@ mod tests {
 	#[test]
 	fn the_round_trips_are_carried_and_absent_while_there_are_none() {
 		let mut own = Own::default();
-		let (_, snapshot) = own.observe(reading("geo:1"), RoundTrips::new(), at(0)).0.unwrap();
+		let ((_, snapshot), _) = own.observe(reading("geo:1"), RoundTrips::new(), at(0));
 		assert!(serde_json::to_value(&snapshot).unwrap().get("round_trip").is_none());
 		let timed = RoundTrips::from([("tyo".into(), 151.2), ("buf".into(), 18.0)]);
-		let (_, snapshot) = own.observe(reading("geo:1"), timed, at(3000)).0.unwrap();
+		let ((_, snapshot), _) = own.observe(reading("geo:1"), timed, at(3000));
 		let written = serde_json::to_value(&snapshot).unwrap();
 		assert_eq!(written["round_trip"], json!({ "buf": 18.0, "tyo": 151.2 }));
 	}

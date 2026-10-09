@@ -42,11 +42,11 @@ never taken.
 clock has not moved, so a relay that restarts starts above whatever its neighbors still hold and
 keeps nothing on disk. Comparing versions is the whole of "is this behind".
 
-**A relay pushes its own snapshot when it changes, and passes the others on by comparison.** Every
-two seconds each tells its neighbors which versions it holds, and each answers with what the other
-lacks. Flooding every snapshot on arrival would carry each about seventy times across a full mesh
-of seven every three seconds; comparing costs a hop up to two seconds instead. A node that cannot
-reach a third directly still hears it through a neighbor.
+**A relay pushes its own snapshot every round, a new version each time, and passes the others on by
+comparison.** Every two seconds each tells its neighbors which versions it holds, and each answers
+with what the other lacks. Flooding every snapshot on arrival would carry each about seventy times
+across a full mesh of seven every three seconds; comparing costs a hop up to two seconds instead. A
+node that cannot reach a third directly still hears it through a neighbor.
 
 **The mesh is `/mesh`, a WebSocket each relay dials on every other**, admitted by a secret the
 relays share, `RELAY_SECRET`. The peers are one value every node is given alike, `RELAY_PEERS`,
@@ -56,13 +56,15 @@ three seconds -- the round trip below -- and drop a socket silent for ninety, an
 second, doubling to a minute. A browser's socket is pinged every thirty.
 
 **A browser opens `/live` on `relay.canmi.app`**, behind Access, and is sent the whole cluster, then
-every change; `/state` answers the same once, for the console's polling. **`/live` admits a page on `.app`
-alone**, by its `Origin`: Access lets a reader in by a cookie the browser sends on any page's
+every change; `/state` answers the same once, for the console's polling. **`/live` admits a page on
+`.app` alone**, by its `Origin`: Access lets a reader in by a cookie the browser sends on any page's
 WebSocket, so without the check any site the reader visits could open it as them. A request with no
 `Origin` comes from no browser and carries no reader's cookie, and passes; the private mirror's
-pages are refused, since the console is served on `.app`. Each node's entry carries
-`heard_at`, when this relay last took a newer version of it: a live node moves about every three
-seconds, so an old `heard_at` means the node, or every path to it, is down.
+pages are refused, since the console is served on `.app`. Each node's entry carries `heard_at`, when
+its origin took the version held, never later than this relay's clock, and `state`; a peer in
+`RELAY_PEERS` never heard is an entry carrying `state` alone. A state that time alone changes is
+sent again on `/live` at the same version, so a reader keeps dropping an older version but takes the
+same one with another `state`.
 
 ## The console asks, and the relay answers from memory
 
@@ -84,29 +86,28 @@ every container with the same signal. A crash says nothing, and its node goes la
 before.
 
 - **`"leaving": { "reason": "upgrade" | "restart", "within": 180 }`**, in seconds. The reason is
-  read from the relay's host once, within a second: `upgrade` while host's row for the relay is a
-  deploy or a rollback still running, `restart` otherwise, a reboot and a stop by hand included,
-  which the relay cannot tell apart. 180 seconds covers a cloud machine's reboot, `/data` mounted
-  and the health check passed.
-- **The relay waits up to two seconds for the snapshot to be sent to each neighbor, then stops**,
-  inside the twenty seconds every container is given -- infra's `spec/architecture/host.md`, "The
-  control plane going down is not an outage". The snapshot is versioned and gossiped like any other,
-  so a neighbor that missed the push takes it by comparison, after its origin has gone.
-- **Each node's entry carries `state`, the relay's own reading of it**, which the console draws and
-  never computes: `live` heard within 10 seconds, `late` within 60, `upgrading` or `restarting`
-  while an announced `leaving` is within its `within` of `heard_at`, `waiting` for a peer in
-  `RELAY_PEERS` not yet heard in the relay's first 60 seconds, and `gone` otherwise. A newer version
-  without `leaving` is the node back. A state that time alone changes is sent again on `/live`, by a
-  sweep every second.
-- **A node's own snapshot is a new version every round**, whether or not what it says changed, so a
-  node is heard because it spoke and not because its readings happened to move.
-- **`heard_at` is when its origin took the version, never later than this relay's clock**: a version
-  is the origin's clock in milliseconds, so a relay that starts and is handed a neighbor's snapshot
-  five minutes old holds it as five minutes old, not as heard now. Clocks on the tailnet agree
-  within a second, against thresholds of ten and sixty.
-- **The relay reaches the canary first**, as host, keeper and Caddy do -- infra's
-  `spec/architecture/host.md`, "A new host, keeper or Caddy reaches the canary first" -- so a run
-  that rebuilt it restarts nrt's alone, and the rest announce their leaving to a relay already back.
+  read from the relay's host once, within a second: `upgrade` while host's newest row for the relay
+  is a deploy, a rollback or a rollback with its data still running, `restart` otherwise, a reboot
+  and a stop by hand included, which the relay cannot tell apart. 180 seconds covers a cloud
+  machine's reboot, `/data` mounted and the health check passed. - **The relay waits up to two
+  seconds for the snapshot to be sent to each neighbor, then stops**, inside the twenty seconds
+  every container is given -- infra's `spec/architecture/host.md`, "The control plane going down is
+  not an outage". The snapshot is versioned and gossiped like any other, so a neighbor that missed
+  the push takes it by comparison, after its origin has gone. - **Each node's entry carries `state`,
+  the relay's own reading of it**, which the console draws and never computes: `live` heard within
+  10 seconds, `late` within 60, `upgrading` or `restarting` while an announced `leaving` is within
+  its `within` of `heard_at`, `waiting` for a peer in `RELAY_PEERS` not yet heard in the relay's
+  first 60 seconds, and `gone` otherwise. A newer version without `leaving` is the node back. A
+  state that time alone changes is sent again on `/live`, by a sweep every second. - **A node's own
+  snapshot is a new version every round**, whether or not what it says changed, so a node is heard
+  because it spoke and not because its readings happened to move. - **`heard_at` is when its origin
+  took the version, never later than this relay's clock**: a version is the origin's clock in
+  milliseconds, so a relay that starts and is handed a neighbor's snapshot five minutes old holds it
+  as five minutes old, not as heard now. Clocks on the tailnet agree within a second, against
+  thresholds of ten and sixty. - **The relay reaches the canary first**, as host, keeper and Caddy
+  do -- infra's `spec/architecture/host.md`, "A new host, keeper or Caddy reaches the canary first"
+  -- so a run that rebuilt it restarts nrt's alone, and the rest announce their leaving to a relay
+  already back.
 
 Decided with the author on 2026-10-09.
 

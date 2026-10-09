@@ -2,6 +2,7 @@
 
 use relay::config::Config;
 use relay::host::Host;
+use relay::presence::sweep;
 use relay::relay::{Relay, recall, watch, write};
 use relay::runs::Store;
 use std::sync::Arc;
@@ -16,12 +17,14 @@ static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 async fn main() -> anyhow::Result<()> {
 	let config = Config::from_env()?;
 	let store = Store::open(&config.data.join(relay::runs::FILE))?;
-	let relay = Relay::new(config.node.clone(), config.secret.clone(), store)?;
+	let peers = config.peers.iter().map(|peer| peer.name.clone()).collect();
+	let relay = Relay::new(config.node.clone(), config.secret.clone(), peers, store)?;
 
 	let host = Arc::new(Host::new(monoflake::INTERNAL_HOST, config.read_token.clone()));
 	tokio::spawn(watch(relay.clone(), host.clone(), relay::own::EVERY));
-	tokio::spawn(recall(relay.clone(), host));
+	tokio::spawn(recall(relay.clone(), host.clone()));
 	tokio::spawn(write(relay.clone(), relay::runs::WRITE));
+	tokio::spawn(sweep(relay.clone(), relay::presence::SWEEP));
 	for peer in config.peers.iter().cloned() {
 		tokio::spawn(relay::mesh::keep(relay.clone(), peer));
 	}
@@ -30,7 +33,16 @@ async fn main() -> anyhow::Result<()> {
 	let named: Vec<&str> = config.peers.iter().map(|peer| peer.name.as_str()).collect();
 	eprintln!("relay: {} listening on {}, holding {}", config.node, config.listen, named.join(" "));
 	let routes = relay::api::routes(relay.clone());
-	axum::serve(listener, routes).with_graceful_shutdown(stopped()).await?;
+	// Said while the mesh and the routes still run; see spec/architecture/relay.md, "A node says
+	// it is leaving before it goes".
+	let leaving = {
+		let relay = relay.clone();
+		async move {
+			stopped().await;
+			relay::leaving::leave(&relay, &*host).await;
+		}
+	};
+	axum::serve(listener, routes).with_graceful_shutdown(leaving).await?;
 	// What the window holds unwritten, so a deploy does not ask the neighbors for it again.
 	if let Err(error) = relay.write_runs().await {
 		eprintln!("relay: writing the runs: {error}");

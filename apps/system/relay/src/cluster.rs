@@ -12,7 +12,9 @@ use std::sync::Arc;
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Held {
 	pub version: u64,
-	/// When this relay took this version, from whichever neighbor brought it.
+	/// When its origin took this version, never later than this relay's clock: a version five
+	/// minutes old is held as five minutes old, however it arrived. See spec/architecture/relay.md,
+	/// "A node says it is leaving before it goes".
 	pub heard_at: Timestamp,
 	pub snapshot: Arc<Value>,
 }
@@ -39,7 +41,8 @@ impl Cluster {
 		if self.nodes.get(node).is_some_and(|held| held.version >= carried.version) {
 			return false;
 		}
-		let held = Held { version: carried.version, heard_at: now, snapshot: carried.snapshot };
+		let heard_at = heard(carried.version, now);
+		let held = Held { version: carried.version, heard_at, snapshot: carried.snapshot };
 		self.nodes.insert(node.to_owned(), held);
 		true
 	}
@@ -68,6 +71,12 @@ impl Cluster {
 	}
 }
 
+/// When a version was taken by its origin, whose clock in milliseconds it is, capped at `now`.
+fn heard(version: u64, now: Timestamp) -> Timestamp {
+	let taken = i64::try_from(version).ok().and_then(|ms| Timestamp::from_millisecond(ms).ok());
+	taken.map_or(now, |taken| taken.min(now))
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -81,22 +90,38 @@ mod tests {
 		Timestamp::from_second(1_790_000_000 + seconds).unwrap()
 	}
 
+	/// The version a node's clock gives at `seconds`.
+	fn taken(seconds: i64) -> u64 {
+		u64::try_from(at(seconds).as_millisecond()).unwrap()
+	}
+
 	#[test]
 	fn a_newer_version_replaces_an_older_one() {
 		let mut cluster = Cluster::default();
-		assert!(cluster.merge("rdu", carried(5, "old"), at(0)));
-		assert!(cluster.merge("rdu", carried(9, "new"), at(3)));
+		assert!(cluster.merge("rdu", carried(taken(0), "old"), at(0)));
+		assert!(cluster.merge("rdu", carried(taken(3), "new"), at(3)));
 		let held = &cluster.nodes()["rdu"];
-		assert_eq!((held.version, held.heard_at), (9, at(3)));
+		assert_eq!((held.version, held.heard_at), (taken(3), at(3)));
 		assert_eq!(held.snapshot["said"], "new");
+	}
+
+	#[test]
+	fn a_version_is_heard_when_its_origin_took_it_never_later_than_now() {
+		let mut cluster = Cluster::default();
+		// Handed on start by a neighbor still holding it: five minutes old, not heard now.
+		cluster.merge("rdu", carried(taken(0), "stale"), at(300));
+		assert_eq!(cluster.nodes()["rdu"].heard_at, at(0));
+		// From a clock ahead of this one, heard now rather than in the future.
+		cluster.merge("tyo", carried(taken(2), "ahead"), at(1));
+		assert_eq!(cluster.nodes()["tyo"].heard_at, at(1));
 	}
 
 	#[test]
 	fn an_older_or_equal_version_is_ignored() {
 		let mut cluster = Cluster::default();
-		cluster.merge("rdu", carried(9, "new"), at(0));
-		assert!(!cluster.merge("rdu", carried(5, "old"), at(3)));
-		assert!(!cluster.merge("rdu", carried(9, "again"), at(6)));
+		cluster.merge("rdu", carried(taken(0), "new"), at(0));
+		assert!(!cluster.merge("rdu", carried(taken(0) - 1, "old"), at(3)));
+		assert!(!cluster.merge("rdu", carried(taken(0), "again"), at(6)));
 		let held = &cluster.nodes()["rdu"];
 		assert_eq!((held.heard_at, held.snapshot["said"].as_str()), (at(0), Some("new")));
 	}

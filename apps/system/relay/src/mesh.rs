@@ -206,6 +206,7 @@ pub async fn converse<S: Socket>(
 					if node == relay.node() && speaking.speaks() {
 						let state = Carried { version: held.version, snapshot: held.snapshot };
 						send(&mut socket, &Message::Node { node, state }).await?;
+						relay.told(&peer, held.version);
 					}
 				}
 				// What it missed, the next comparison finds.
@@ -261,7 +262,11 @@ async fn behind<S: Socket>(
 	peer: &str,
 ) -> Result<(), MeshError> {
 	for (node, state) in relay.lacking(versions, peer) {
+		let own = (node == relay.node()).then_some(state.version);
 		send(socket, &Message::Node { node, state }).await?;
+		if let Some(version) = own {
+			relay.told(peer, version);
+		}
 	}
 	Ok(())
 }
@@ -346,7 +351,13 @@ mod tests {
 	use tokio::sync::mpsc;
 
 	fn relay(node: &str) -> Arc<Relay> {
-		Relay::new(node.into(), "s3cret".into(), crate::runs::Store::memory().unwrap()).unwrap()
+		Relay::new(
+			node.into(),
+			"s3cret".into(),
+			Default::default(),
+			crate::runs::Store::memory().unwrap(),
+		)
+		.unwrap()
 	}
 
 	/// A socket whose other end is the test: what it is fed, it receives, and what it sends is kept.

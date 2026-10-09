@@ -1,10 +1,11 @@
-//! A browser's socket: every node at once, then each newer snapshot as this relay takes it.
+//! A browser's socket: every node at once, then each newer snapshot as this relay takes it, and
+//! each state time alone changed.
 //! Nothing a browser sends is acted on. See spec/architecture/console.md, "Live, through the
 //! nearest node".
 
-use crate::cluster::Held;
 use crate::mesh::HEARTBEAT;
-use crate::relay::{Relay, State, Update};
+use crate::presence::Entry;
+use crate::relay::{Change, Relay, State};
 use crate::socket::{Received, Socket, SocketError};
 use serde::Serialize;
 use std::sync::Arc;
@@ -42,12 +43,12 @@ pub enum Live {
 	Cluster(State),
 	Node {
 		node: String,
-		state: Held,
+		state: Entry,
 	},
 }
 
 pub async fn watch<S: Socket>(relay: Arc<Relay>, mut socket: S) -> Result<(), SocketError> {
-	let mut updates = relay.subscribe();
+	let mut changes = relay.subscribe_changes();
 	send(&mut socket, &Live::Cluster(relay.state())).await?;
 	let mut heartbeat = tokio::time::interval_at(Instant::now() + HEARTBEAT, HEARTBEAT);
 	let mut heard = Instant::now();
@@ -59,9 +60,9 @@ pub async fn watch<S: Socket>(relay: Arc<Relay>, mut socket: S) -> Result<(), So
 					return Ok(());
 				}
 			}
-			update = updates.recv() => match update {
-				Ok(Update { node, held, .. }) => {
-					send(&mut socket, &Live::Node { node, state: held }).await?;
+			change = changes.recv() => match change {
+				Ok(Change { node, entry }) => {
+					send(&mut socket, &Live::Node { node, state: entry }).await?;
 				}
 				Err(RecvError::Lagged(_)) => send(&mut socket, &Live::Cluster(relay.state())).await?,
 				Err(RecvError::Closed) => return Ok(()),

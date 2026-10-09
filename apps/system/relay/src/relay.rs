@@ -4,6 +4,7 @@
 use crate::cluster::{Carried, Cluster, Held, Versions};
 use crate::host::{PAGE, Reader, Reading};
 use crate::own::{Own, Part, RoundTrips};
+use crate::presence::{Entry, Leaving, Presence, presence};
 use crate::runs::{Batch, Mirror, Shown, Store, StoreError};
 use jiff::Timestamp;
 use serde::Serialize;
@@ -11,7 +12,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, watch as told};
 
 /// The version of what the mesh and a browser are sent, read first by either. See the workspace's
 /// spec/json.md, "A contract has a version, and it is the first thing read".
@@ -34,13 +35,20 @@ pub struct Update {
 	pub held: Held,
 }
 
+/// A node's entry as a browser is sent it: a newer snapshot taken, or a state time alone changed.
+#[derive(Debug, Clone)]
+pub struct Change {
+	pub node: String,
+	pub entry: Entry,
+}
+
 /// Every node at once: what `/state` answers and a browser's socket opens with.
 #[derive(Debug, Serialize)]
 pub struct State {
 	pub version: u32,
 	/// The node whose relay answered.
 	pub node: String,
-	pub nodes: BTreeMap<String, Held>,
+	pub nodes: BTreeMap<String, Entry>,
 }
 
 /// Every node's runs of the last 30 days, newest first: what `/runs` answers.
@@ -52,12 +60,23 @@ pub struct Runs {
 	pub runs: Vec<Shown>,
 }
 
+/// What is held of every node, and the state each was last shown in, kept under one lock so a
+/// browser is sent one node's changes in the order they happened.
+#[derive(Debug, Default)]
+struct Holding {
+	cluster: Cluster,
+	shown: BTreeMap<String, Presence>,
+}
+
 pub struct Relay {
 	node: String,
 	secret: String,
-	cluster: Mutex<Cluster>,
+	/// The neighbors named in `RELAY_PEERS`, shown as waiting until they are heard.
+	peers: BTreeSet<String>,
+	holding: Mutex<Holding>,
 	own: Mutex<Own>,
 	updates: broadcast::Sender<Update>,
+	changes: broadcast::Sender<Change>,
 	runs: Mirror,
 	/// This node's own rows as each round finds them new or changed, for the mesh to push.
 	batches: broadcast::Sender<Batch>,
@@ -67,6 +86,8 @@ pub struct Relay {
 	conversations: AtomicU64,
 	/// Each neighbor's latest round trip, and when it was timed.
 	timed: Mutex<BTreeMap<String, (Duration, Instant)>>,
+	/// The newest of this node's own versions sent to each neighbor, for a relay leaving to wait on.
+	told: told::Sender<Versions>,
 }
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
@@ -75,19 +96,28 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 
 impl Relay {
 	/// A relay over its runs' file, read before anything else is.
-	pub fn new(node: String, secret: String, store: Store) -> Result<Arc<Self>, StoreError> {
+	pub fn new(
+		node: String,
+		secret: String,
+		peers: BTreeSet<String>,
+		store: Store,
+	) -> Result<Arc<Self>, StoreError> {
+		let shown = peers.iter().map(|peer| (peer.clone(), Presence::Waiting)).collect();
 		Ok(Arc::new(Self {
 			runs: Mirror::open(node.clone(), store)?,
 			node,
 			secret,
-			cluster: Mutex::default(),
+			peers,
+			holding: Mutex::new(Holding { cluster: Cluster::default(), shown }),
 			own: Mutex::default(),
 			updates: broadcast::channel(BACKLOG).0,
+			changes: broadcast::channel(BACKLOG).0,
 			batches: broadcast::channel(BACKLOG).0,
 			started: Instant::now(),
 			speakers: Mutex::default(),
 			conversations: AtomicU64::new(0),
 			timed: Mutex::default(),
+			told: told::Sender::new(Versions::new()),
 		}))
 	}
 
@@ -103,6 +133,10 @@ impl Relay {
 		self.updates.subscribe()
 	}
 
+	pub fn subscribe_changes(&self) -> broadcast::Receiver<Change> {
+		self.changes.subscribe()
+	}
+
 	/// Takes a snapshot of `node` when it is newer than what is held, and passes it on; whether it
 	/// did. `via` is the neighbor it came from, whose word on this node is never taken: this relay is
 	/// its one source.
@@ -110,13 +144,18 @@ impl Relay {
 		if via.is_some() && node == self.node {
 			return false;
 		}
-		let mut cluster = lock(&self.cluster);
-		if !cluster.merge(node, carried, Timestamp::now()) {
+		let now = Timestamp::now();
+		let mut holding = lock(&self.holding);
+		if !holding.cluster.merge(node, carried, now) {
 			return false;
 		}
 		// Sent under the lock, so every socket sees one node's versions in the order taken.
-		let held = cluster.nodes()[node].clone();
+		let held = holding.cluster.nodes()[node].clone();
+		let state = presence(Some(&held), now, self.started.elapsed());
+		holding.shown.insert(node.to_owned(), state);
+		let entry = Entry { held: Some(held.clone()), state };
 		let _ = self.updates.send(Update { node: node.to_owned(), held });
+		let _ = self.changes.send(Change { node: node.to_owned(), entry });
 		true
 	}
 
@@ -142,10 +181,21 @@ impl Relay {
 			}
 			changed
 		};
-		if let Some((version, snapshot)) = changed {
-			let snapshot = serde_json::to_value(snapshot).expect("a snapshot is a tree of strings");
-			self.take(&self.node, Carried { version, snapshot: Arc::new(snapshot) }, None);
-		}
+		self.take_own(changed);
+	}
+
+	/// The last snapshot of this node, saying it is leaving, taken and so pushed to the neighbors;
+	/// its version.
+	pub fn leave(&self, leaving: Leaving) -> u64 {
+		let last = lock(&self.own).leave(leaving, Timestamp::now());
+		let version = last.0;
+		self.take_own(last);
+		version
+	}
+
+	fn take_own(&self, (version, snapshot): (u64, crate::own::Snapshot)) {
+		let snapshot = serde_json::to_value(snapshot).expect("a snapshot is a tree of strings");
+		self.take(&self.node, Carried { version, snapshot: Arc::new(snapshot) }, None);
 	}
 
 	/// This node's own events, as a round or the reading back reads them, into the runs; what is
@@ -157,7 +207,7 @@ impl Relay {
 	}
 
 	pub fn versions(&self) -> Versions {
-		lock(&self.cluster).versions()
+		lock(&self.holding).cluster.versions()
 	}
 
 	/// Takes a neighbor's batch of runs; whether it did. Never this node's own, as `take`.
@@ -192,12 +242,46 @@ impl Relay {
 	}
 
 	pub fn lacking(&self, theirs: &Versions, peer: &str) -> Vec<(String, Carried)> {
-		lock(&self.cluster).lacking(theirs, peer)
+		lock(&self.holding).cluster.lacking(theirs, peer)
 	}
 
 	pub fn state(&self) -> State {
-		let nodes = lock(&self.cluster).nodes().clone();
+		let nodes =
+			self.entries(&lock(&self.holding).cluster, Timestamp::now(), self.started.elapsed());
 		State { version: VERSION, node: self.node.clone(), nodes }
+	}
+
+	/// Every node held, and every peer not yet heard, with its state at `now`.
+	fn entries(
+		&self,
+		cluster: &Cluster,
+		now: Timestamp,
+		uptime: Duration,
+	) -> BTreeMap<String, Entry> {
+		let held = cluster.nodes().iter().map(|(node, held)| (node, Some(held)));
+		let unheard = self.peers.iter().filter(|peer| !cluster.nodes().contains_key(*peer));
+		held
+			.chain(unheard.map(|peer| (peer, None)))
+			.map(|(node, held)| {
+				let state = presence(held, now, uptime);
+				(node.clone(), Entry { held: held.cloned(), state })
+			})
+			.collect()
+	}
+
+	/// Every node whose state time alone has changed since it was last shown, sent again.
+	pub fn sweep(&self) {
+		self.swept(Timestamp::now(), self.started.elapsed());
+	}
+
+	fn swept(&self, now: Timestamp, uptime: Duration) {
+		let mut holding = lock(&self.holding);
+		for (node, entry) in self.entries(&holding.cluster, now, uptime) {
+			if holding.shown.get(&node) != Some(&entry.state) {
+				holding.shown.insert(node.clone(), entry.state);
+				let _ = self.changes.send(Change { node, entry });
+			}
+		}
 	}
 
 	/// A number for a socket to a neighbor, its own among them.
@@ -216,6 +300,28 @@ impl Relay {
 		if speakers.get(peer) == Some(&conversation) {
 			speakers.remove(peer);
 		}
+	}
+
+	/// The neighbors a socket is open to and speaking.
+	pub fn speaking(&self) -> BTreeSet<String> {
+		lock(&self.speakers).keys().cloned().collect()
+	}
+
+	/// This node's own `version` sent to `peer`.
+	pub fn told(&self, peer: &str, version: u64) {
+		self.told.send_modify(|told| {
+			let sent = told.entry(peer.to_owned()).or_default();
+			*sent = (*sent).max(version);
+		});
+	}
+
+	/// Once every one of `neighbors` has been sent this node's own `version` or a newer one.
+	pub async fn told_of(&self, neighbors: &BTreeSet<String>, version: u64) {
+		let mut told = self.told.subscribe();
+		let every =
+			|told: &Versions| neighbors.iter().all(|peer| told.get(peer).is_some_and(|v| *v >= version));
+		// The sender lives as long as the relay, which outlives this wait.
+		let _ = told.wait_for(every).await;
 	}
 
 	/// A round trip to `peer` just timed, on either socket to it; the latest replaces the last.
@@ -306,7 +412,7 @@ mod tests {
 	use super::*;
 
 	fn relay(node: &str) -> Arc<Relay> {
-		Relay::new(node.into(), "s3cret".into(), Store::memory().unwrap()).unwrap()
+		Relay::new(node.into(), "s3cret".into(), BTreeSet::new(), Store::memory().unwrap()).unwrap()
 	}
 
 	#[test]
@@ -352,5 +458,35 @@ mod tests {
 		assert!(!relay.take("rdu", carried.clone(), Some("tyo")));
 		assert!(relay.take("tyo", carried, Some("tyo")));
 		assert_eq!(relay.versions(), Versions::from([("tyo".into(), 9)]));
+	}
+
+	#[test]
+	fn a_peer_not_heard_is_shown_waiting_with_nothing_held() {
+		let peers = BTreeSet::from(["tyo".to_owned()]);
+		let relay = Relay::new("rdu".into(), "s3cret".into(), peers, Store::memory().unwrap()).unwrap();
+		let state = relay.state();
+		assert_eq!(state.nodes["tyo"], Entry { held: None, state: Presence::Waiting });
+	}
+
+	#[test]
+	fn a_state_time_alone_changes_is_sent_again_once() {
+		let peers = BTreeSet::from(["tyo".to_owned(), "buf".to_owned()]);
+		let relay = Relay::new("rdu".into(), "s3cret".into(), peers, Store::memory().unwrap()).unwrap();
+		let now = Timestamp::now();
+		let version = u64::try_from(now.as_millisecond()).unwrap();
+		relay.take("tyo", Carried { version, snapshot: Arc::new(serde_json::json!({})) }, None);
+		let mut changes = relay.subscribe_changes();
+		let mut swept = |seconds: i64, uptime: u64| {
+			relay.swept(now + jiff::SignedDuration::from_secs(seconds), Duration::from_secs(uptime));
+			std::iter::from_fn(|| changes.try_recv().ok())
+				.map(|change| (change.node, change.entry.state))
+				.collect::<Vec<_>>()
+		};
+		assert_eq!(swept(5, 5), []);
+		assert_eq!(swept(11, 11), [("tyo".to_owned(), Presence::Late)]);
+		assert_eq!(swept(12, 12), []);
+		// buf, never heard, is given up on once the relay has run a minute.
+		let gone = [("buf".to_owned(), Presence::Gone), ("tyo".to_owned(), Presence::Gone)];
+		assert_eq!(swept(61, 61), gone);
 	}
 }

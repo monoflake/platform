@@ -100,7 +100,13 @@ mod tests {
 	use tower::ServiceExt;
 
 	fn relay(node: &str) -> Arc<Relay> {
-		Relay::new(node.into(), "s3cret".into(), crate::runs::Store::memory().unwrap()).unwrap()
+		Relay::new(
+			node.into(),
+			"s3cret".into(),
+			Default::default(),
+			crate::runs::Store::memory().unwrap(),
+		)
+		.unwrap()
 	}
 
 	async fn ask(
