@@ -150,6 +150,37 @@ backed up. Decided with the author on 2026-10-09.
   with state on its node is -- infra's `spec/architecture/host.md`, "An app chooses how it is rolled
   out, and keeping nothing earns a gapless one".
 
+## Each node's minutes, kept for a year
+
+**Every relay keeps every node's history a minute at a time, as it keeps its runs**, so the console
+can draw a node over an hour or a year from one read: whether its apps ran, whether it was heard and
+how far its neighbors were, and what it deployed. A node's minutes are its own relay's, written by
+nobody else, versioned and spread on the mesh as its runs are -- "The runs, mirrored on every
+relay's disk" -- into the same file, and answered from it. Decided with the author on 2026-10-10.
+
+- **A minute is one row of its node's**: the minute it is, as its start in the origin's clock;
+  `beats`, the rounds that minute that read host, of the twenty it holds; `down`, the apps that
+  should run and did not at any round of it, by name; `held`, how many were stopped on purpose;
+  `round_trip`, each neighbor's mean round trip over it, in seconds, a neighbor not timed absent;
+  and `leaving`, the reason where the relay said it was leaving in it. The origin writes the row as
+  the minute ends.
+- **A minute missing is the node unheard**: the origin writes nothing while it is down, so a gap in
+  its minutes is that time, announced where the minute before it carries `leaving` and unannounced
+  where it does not.
+- **Kept in three tiers, each folded from the one under it**: minutes for two days, hours for 30
+  days and days for 400, an hour or a day holding the sum of its beats, the apps down in any of its
+  minutes and for how many minutes each, the minutes leaving, the minutes missing, and each
+  neighbor's round trip as its mean and its worst. The runs are folded to days as well, a count a
+  node and an outcome, kept 400 days beside the mirror's 30. Each relay folds what it holds as it
+  drops the tier under; a fold is the same wherever it is made, from the same minutes.
+- **`GET /history?span=<seconds>&slot=<seconds>`** answers every node over the `span` ending now,
+  cut into slots of `slot` seconds, each slot read from the finest tier that still holds it: the
+  runs in it by outcome, `succeeded`, `failed`, `running` and those that partly failed; its beats of
+  those due; the apps down in it and the minutes each was; the minutes leaving and missing; and the
+  round trip to each neighbor, mean and worst. Absent, not null, where a slot holds nothing -- the
+  workspace's `spec/json.md`. The console asks it for a span longer than a day, the mirror's runs
+  drawing the rest.
+
 ## The round trip to each neighbor
 
 **A relay times its own pings on `/mesh`, and its snapshot carries the latest per neighbor as
