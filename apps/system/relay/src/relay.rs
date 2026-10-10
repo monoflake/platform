@@ -1,11 +1,13 @@
-//! One relay's state: what it holds of every node, its own node's snapshot, the runs mirrored,
-//! and the stream every socket -- a neighbor's or a browser's -- is fed from.
+//! One relay's state: what it holds of every node, its own node's snapshot, the runs mirrored, the
+//! minutes, and the stream every socket -- a neighbor's or a browser's -- is fed from.
 
 use crate::cluster::{Carried, Cluster, Held, Versions};
+use crate::history::answer::{Asked, History};
+use crate::history::{Book, DAY};
 use crate::host::{PAGE, Reader, Reading};
 use crate::own::{Own, Part, RoundTrips};
 use crate::presence::{Entry, Leaving, Presence, presence};
-use crate::runs::{Batch, Mirror, Shown, Store, StoreError};
+use crate::runs::{Batch, Mirror, Shown, Store, StoreError, shared};
 use jiff::Timestamp;
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
@@ -80,6 +82,9 @@ pub struct Relay {
 	runs: Mirror,
 	/// This node's own rows as each round finds them new or changed, for the mesh to push.
 	batches: broadcast::Sender<Batch>,
+	history: Book,
+	/// This node's own minutes as each ends, for the mesh to push.
+	minutes: broadcast::Sender<crate::history::Batch>,
 	started: Instant,
 	/// Which socket to each neighbor sends unasked; see `mesh::Speaking`.
 	speakers: Mutex<BTreeMap<String, u64>>,
@@ -95,7 +100,7 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Relay {
-	/// A relay over its runs' file, read before anything else is.
+	/// A relay over its file of runs and minutes, read before anything else is.
 	pub fn new(
 		node: String,
 		secret: String,
@@ -103,8 +108,11 @@ impl Relay {
 		store: Store,
 	) -> Result<Arc<Self>, StoreError> {
 		let shown = peers.iter().map(|peer| (peer.clone(), Presence::Waiting)).collect();
+		let store = shared(store);
 		Ok(Arc::new(Self {
-			runs: Mirror::open(node.clone(), store)?,
+			runs: Mirror::open(node.clone(), store.clone())?,
+			history: Book::open(node.clone(), store)?,
+			minutes: broadcast::channel(BACKLOG).0,
 			node,
 			secret,
 			peers,
@@ -159,14 +167,17 @@ impl Relay {
 		true
 	}
 
-	/// One round of reading host, taken in as this node's snapshot with its round trips, and its
-	/// events into the runs.
+	/// One round of reading host, taken in as this node's snapshot with its round trips, its
+	/// events into the runs, and all of it into the minute.
 	pub fn observe(&self, reading: Reading) {
 		let now = Timestamp::now();
 		if let Ok(events) = &reading.events {
 			self.events_read(events, now);
 		}
 		let round_trips = self.round_trips();
+		if let Some(batch) = self.history.round(&reading, &round_trips, now) {
+			let _ = self.minutes.send(batch);
+		}
 		let changed = {
 			let mut own = lock(&self.own);
 			let before: BTreeSet<Part> = own.stale().clone();
@@ -187,7 +198,9 @@ impl Relay {
 	/// The last snapshot of this node, saying it is leaving, taken and so pushed to the neighbors;
 	/// its version.
 	pub fn leave(&self, leaving: Leaving) -> u64 {
-		let last = lock(&self.own).leave(leaving, Timestamp::now());
+		let now = Timestamp::now();
+		let _ = self.minutes.send(self.history.leave(leaving.reason, now));
+		let last = lock(&self.own).leave(leaving, now);
 		let version = last.0;
 		self.take_own(last);
 		version
@@ -234,6 +247,42 @@ impl Relay {
 	/// The window written, and what is past keeping dropped. See `runs::Mirror::write`.
 	pub async fn write_runs(&self) -> Result<(), StoreError> {
 		self.runs.write(Timestamp::now()).await
+	}
+
+	/// Takes a neighbor's batch of minutes; whether it did. Never this node's own, as `take`.
+	pub fn take_minutes(&self, batch: crate::history::Batch) -> bool {
+		self.history.merge(batch)
+	}
+
+	pub fn minute_versions(&self) -> Versions {
+		self.history.versions()
+	}
+
+	pub async fn lacking_minutes(
+		&self,
+		theirs: &Versions,
+		peer: &str,
+	) -> Result<Vec<crate::history::Batch>, StoreError> {
+		self.history.lacking(theirs, peer).await
+	}
+
+	pub fn subscribe_minutes(&self) -> broadcast::Receiver<crate::history::Batch> {
+		self.minutes.subscribe()
+	}
+
+	/// The minutes' window written, and each tier past keeping folded and dropped. See
+	/// `history::Book::write`.
+	pub async fn write_history(&self) -> Result<(), StoreError> {
+		self.history.write(Timestamp::now()).await
+	}
+
+	/// Every node over the span `asked`, from the file; the runs' rows from a day before it, so a
+	/// run begun before it is not counted as begun in it.
+	pub async fn history(&self, asked: Asked) -> Result<History, StoreError> {
+		let now = Timestamp::now();
+		let (from, _) = asked.bounds(now.as_millisecond());
+		let runs = self.runs.since(from - DAY, now).await?;
+		self.history.history(self.node.clone(), asked, runs, now).await
 	}
 
 	pub async fn runs(&self) -> Result<Runs, StoreError> {
@@ -394,16 +443,24 @@ pub async fn recall(relay: Arc<Relay>, source: Arc<dyn Reader>) {
 	}
 }
 
-/// Writes the runs every `every`, for as long as the relay runs. A refusal is logged and loses
-/// nothing: the rows stay for the next.
+/// Writes the runs and the minutes every `every`, for as long as the relay runs. A refusal is
+/// logged and loses nothing: the rows stay for the next.
 pub async fn write(relay: Arc<Relay>, every: Duration) {
 	let mut ticks = tokio::time::interval_at(tokio::time::Instant::now() + every, every);
 	ticks.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 	loop {
 		ticks.tick().await;
-		if let Err(error) = relay.write_runs().await {
-			eprintln!("relay: writing the runs: {error}");
-		}
+		written(&relay).await;
+	}
+}
+
+/// The runs and the minutes written, each refusal logged.
+pub async fn written(relay: &Relay) {
+	if let Err(error) = relay.write_runs().await {
+		eprintln!("relay: writing the runs: {error}");
+	}
+	if let Err(error) = relay.write_history().await {
+		eprintln!("relay: writing the minutes: {error}");
 	}
 }
 

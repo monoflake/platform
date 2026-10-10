@@ -4,6 +4,7 @@
 pub mod api;
 pub mod cluster;
 pub mod config;
+pub mod history;
 pub mod host;
 pub mod leaving;
 pub mod live;
@@ -13,3 +14,4 @@ pub mod presence;
 pub mod relay;
 pub mod runs;
 pub mod socket;
+pub mod window;

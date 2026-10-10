@@ -43,10 +43,8 @@ async fn main() -> anyhow::Result<()> {
 		}
 	};
 	axum::serve(listener, routes).with_graceful_shutdown(leaving).await?;
-	// What the window holds unwritten, so a deploy does not ask the neighbors for it again.
-	if let Err(error) = relay.write_runs().await {
-		eprintln!("relay: writing the runs: {error}");
-	}
+	// What the windows hold unwritten, so a deploy does not ask the neighbors for it again.
+	relay::relay::written(&relay).await;
 	Ok(())
 }
 

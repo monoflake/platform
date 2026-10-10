@@ -1,8 +1,8 @@
 //! The relays' mesh: a socket to every other node's relay. Both ends open with the versions they
 //! hold and send each other what the other lacks; after that a relay sends its own node's snapshot
 //! the moment it changes, and every other node's when a neighbor's comparison shows it behind. Its
-//! pings, timed, are the round trips its own snapshot carries. The runs travel the same way, by
-//! their own versions. See spec/architecture/relay.md.
+//! pings, timed, are the round trips its own snapshot carries. The runs and the minutes travel the
+//! same way, each by their own versions. See spec/architecture/relay.md.
 
 use crate::cluster::{Carried, Versions};
 use crate::config::Peer;
@@ -48,7 +48,8 @@ const FIRST_RETRY: Duration = Duration::from_secs(1);
 const LAST_RETRY: Duration = Duration::from_secs(60);
 
 /// What one relay sends another. `runs` is absent from a relay older than the runs, which is
-/// never sent `Runs`, a kind it cannot read; so the contract's version stands.
+/// never sent `Runs`, a kind it cannot read; so the contract's version stands. `minutes` is the
+/// same of the minutes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Message {
@@ -59,17 +60,23 @@ pub enum Message {
 		versions: Versions,
 		#[serde(default, skip_serializing_if = "Option::is_none")]
 		runs: Option<Versions>,
+		#[serde(default, skip_serializing_if = "Option::is_none")]
+		minutes: Option<Versions>,
 	},
 	/// What it holds, every comparison; answered with what it lacks.
 	Versions {
 		versions: Versions,
 		#[serde(default, skip_serializing_if = "Option::is_none")]
 		runs: Option<Versions>,
+		#[serde(default, skip_serializing_if = "Option::is_none")]
+		minutes: Option<Versions>,
 	},
 	/// A node's snapshot, newer than what the other was last known to hold.
 	Node { node: String, state: Carried },
 	/// Some of a node's runs, which the other was last known to lack.
 	Runs(Batch),
+	/// Some of a node's minutes, which the other was last known to lack.
+	Minutes(crate::history::Batch),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -137,34 +144,39 @@ pub async fn converse<S: Socket>(
 	// Subscribed before saying what is held, so nothing taken meanwhile is missed.
 	let mut updates = relay.subscribe();
 	let mut batches = relay.subscribe_runs();
+	let mut minutes = relay.subscribe_minutes();
 	let hello = Message::Hello {
 		version: VERSION,
 		node: relay.node().to_owned(),
 		versions: relay.versions(),
 		runs: Some(relay.run_versions()),
+		minutes: Some(relay.minute_versions()),
 	};
 	send(&mut socket, &hello).await?;
 
 	let theirs = tokio::time::timeout(INTRODUCTION, introduced(&mut socket))
 		.await
 		.map_err(|_| MeshError::Slow(INTRODUCTION))??;
-	let (peer, versions, runs) = match theirs {
+	let (peer, versions, runs, theirs_minutes) = match theirs {
 		Message::Hello { version, .. } if version != VERSION => {
 			return Err(MeshError::Version(version));
 		}
-		Message::Hello { node, versions, runs, .. } => (node, versions, runs),
-		Message::Versions { .. } | Message::Node { .. } | Message::Runs(_) => {
+		Message::Hello { node, versions, runs, minutes, .. } => (node, versions, runs, minutes),
+		Message::Versions { .. } | Message::Node { .. } | Message::Runs(_) | Message::Minutes(_) => {
 			return Err(MeshError::Unintroduced);
 		}
 	};
 	if peer == relay.node() || expected.is_some_and(|expected| expected != peer) {
 		return Err(MeshError::Stranger(peer));
 	}
-	// A neighbor that said nothing of runs is older than them; see `Message`.
-	let reads_runs = runs.is_some();
+	// A neighbor that said nothing of runs or minutes is older than them; see `Message`.
+	let (reads_runs, reads_minutes) = (runs.is_some(), theirs_minutes.is_some());
 	behind(&relay, &mut socket, &versions, &peer).await?;
 	if let Some(runs) = runs {
 		runs_behind(&relay, &mut socket, &runs, &peer).await?;
+	}
+	if let Some(theirs) = theirs_minutes {
+		minutes_behind(&relay, &mut socket, &theirs, &peer).await?;
 	}
 
 	let speaking = Speaking { relay: &relay, peer: &peer, conversation: relay.conversation() };
@@ -181,14 +193,20 @@ pub async fn converse<S: Socket>(
 						Message::Node { node, state } => {
 							relay.take(&node, state, Some(&peer));
 						}
-						Message::Versions { versions, runs } => {
+						Message::Versions { versions, runs, minutes } => {
 							behind(&relay, &mut socket, &versions, &peer).await?;
 							if let Some(runs) = runs {
 								runs_behind(&relay, &mut socket, &runs, &peer).await?;
 							}
+							if let Some(minutes) = minutes {
+								minutes_behind(&relay, &mut socket, &minutes, &peer).await?;
+							}
 						}
 						Message::Runs(batch) => {
 							relay.take_runs(batch);
+						}
+						Message::Minutes(batch) => {
+							relay.take_minutes(batch);
 						}
 						Message::Hello { .. } => {}
 					},
@@ -222,10 +240,20 @@ pub async fn converse<S: Socket>(
 				Err(RecvError::Lagged(_)) => {}
 				Err(RecvError::Closed) => return Ok(()),
 			},
+			batch = minutes.recv() => match batch {
+				Ok(batch) => {
+					if batch.node == relay.node() && reads_minutes && speaking.speaks() {
+						send(&mut socket, &Message::Minutes(batch)).await?;
+					}
+				}
+				Err(RecvError::Lagged(_)) => {}
+				Err(RecvError::Closed) => return Ok(()),
+			},
 			_ = comparison.tick() => {
 				if speaking.speaks() {
-					let runs = Some(relay.run_versions());
-					send(&mut socket, &Message::Versions { versions: relay.versions(), runs }).await?;
+					let (runs, minutes) = (Some(relay.run_versions()), Some(relay.minute_versions()));
+					let versions = Message::Versions { versions: relay.versions(), runs, minutes };
+					send(&mut socket, &versions).await?;
 				}
 			}
 			_ = ping.tick() => {
@@ -286,6 +314,25 @@ async fn runs_behind<S: Socket>(
 			}
 		}
 		Err(error) => eprintln!("relay: reading the runs for {peer}: {error}"),
+	}
+	Ok(())
+}
+
+/// Sends `peer`, holding `theirs` of the minutes, what it lacks; a file that cannot be read is
+/// logged, as the runs' is.
+async fn minutes_behind<S: Socket>(
+	relay: &Relay,
+	socket: &mut S,
+	theirs: &Versions,
+	peer: &str,
+) -> Result<(), MeshError> {
+	match relay.lacking_minutes(theirs, peer).await {
+		Ok(batches) => {
+			for batch in batches {
+				send(socket, &Message::Minutes(batch)).await?;
+			}
+		}
+		Err(error) => eprintln!("relay: reading the minutes for {peer}: {error}"),
 	}
 	Ok(())
 }
@@ -396,8 +443,13 @@ mod tests {
 		let (feed, incoming) = mpsc::unbounded_channel();
 		let sent = Arc::new(Mutex::new(Vec::new()));
 		let theirs = Versions::from([("tyo".into(), 6), ("buf".into(), 7), ("gvx".into(), 1)]);
-		let hello =
-			Message::Hello { version: VERSION, node: "tyo".into(), versions: theirs, runs: None };
+		let hello = Message::Hello {
+			version: VERSION,
+			node: "tyo".into(),
+			versions: theirs,
+			runs: None,
+			minutes: None,
+		};
 		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
 		drop(feed);
 
@@ -422,8 +474,13 @@ mod tests {
 	async fn met(relay: &Arc<Relay>, runs: Option<Versions>) -> Vec<Message> {
 		let (feed, incoming) = mpsc::unbounded_channel();
 		let sent = Arc::new(Mutex::new(Vec::new()));
-		let hello =
-			Message::Hello { version: VERSION, node: "tyo".into(), versions: Versions::new(), runs };
+		let hello = Message::Hello {
+			version: VERSION,
+			node: "tyo".into(),
+			versions: Versions::new(),
+			runs,
+			minutes: None,
+		};
 		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
 		drop(feed);
 		converse(relay.clone(), Some("tyo"), Fake { incoming, sent: sent.clone(), echo: None })
@@ -470,6 +527,62 @@ mod tests {
 		assert!(!older.iter().any(|message| matches!(message, Message::Runs(_))));
 	}
 
+	/// tyo's hello, holding `minutes` of the minutes or older than them.
+	async fn met_minutes(relay: &Arc<Relay>, minutes: Option<Versions>) -> Vec<Message> {
+		let (feed, incoming) = mpsc::unbounded_channel();
+		let sent = Arc::new(Mutex::new(Vec::new()));
+		let hello = Message::Hello {
+			version: VERSION,
+			node: "tyo".into(),
+			versions: Versions::new(),
+			runs: None,
+			minutes,
+		};
+		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
+		drop(feed);
+		converse(relay.clone(), Some("tyo"), Fake { incoming, sent: sent.clone(), echo: None })
+			.await
+			.unwrap();
+		sent.lock().unwrap().clone()
+	}
+
+	#[tokio::test]
+	async fn a_neighbor_is_sent_the_minutes_it_lacks_and_one_older_than_minutes_none() {
+		let relay = relay("rdu");
+		let minute = |version: u64, at: i64| crate::history::Row {
+			version,
+			minute: serde_json::from_value(serde_json::json!({ "at": at, "beats": 20 })).unwrap(),
+		};
+		for (node, version) in [("buf", 7), ("tyo", 4)] {
+			let rows = vec![minute(version, 1_791_499_980_000)];
+			relay.take_minutes(crate::history::Batch { node: node.into(), above: 0, version, rows });
+		}
+		let sent = met_minutes(&relay, Some(Versions::from([("buf".into(), 3)]))).await;
+		assert!(matches!(&sent[0], Message::Hello { minutes: Some(minutes), .. }
+			if minutes.get("buf") == Some(&7)));
+		let minutes: Vec<(String, u64, usize)> = sent
+			.into_iter()
+			.filter_map(|message| match message {
+				Message::Minutes(batch) => Some((batch.node, batch.above, batch.rows.len())),
+				_ => None,
+			})
+			.collect();
+		// buf above what tyo holds of it, and never tyo's own.
+		assert_eq!(minutes, [("buf".into(), 3, 1)]);
+		let older = met_minutes(&relay, None).await;
+		assert!(!older.iter().any(|message| matches!(message, Message::Minutes(_))));
+		// A minute not on a minute's start is no minute, and is not taken.
+		let odd = vec![minute(9, 1_791_499_980_001)];
+		relay.take_minutes(crate::history::Batch {
+			node: "gvx".into(),
+			above: 0,
+			version: 9,
+			rows: odd,
+		});
+		let lacking = relay.lacking_minutes(&Versions::new(), "buf").await.unwrap();
+		assert!(lacking.iter().find(|batch| batch.node == "gvx").unwrap().rows.is_empty());
+	}
+
 	#[tokio::test]
 	async fn a_neighbor_that_is_not_the_one_dialed_is_refused() {
 		let relay = relay("rdu");
@@ -480,6 +593,7 @@ mod tests {
 				node: said.into(),
 				versions: Versions::new(),
 				runs: None,
+				minutes: None,
 			};
 			feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
 			let fake = Fake { incoming, sent: Arc::default(), echo: None };
@@ -497,6 +611,7 @@ mod tests {
 			node: "tyo".into(),
 			versions: Versions::new(),
 			runs: None,
+			minutes: None,
 		};
 		feed.send(Received::Text(serde_json::to_string(&hello).unwrap())).unwrap();
 		let fake = Fake { incoming, sent: Arc::default(), echo: Some(feed) };
@@ -545,7 +660,8 @@ mod tests {
 	#[test]
 	fn the_messages_are_tagged_by_type() {
 		let versions = Versions::from([("tyo".into(), 7)]);
-		let hello = Message::Hello { version: 1, node: "rdu".into(), versions, runs: None };
+		let hello =
+			Message::Hello { version: 1, node: "rdu".into(), versions, runs: None, minutes: None };
 		assert_eq!(
 			serde_json::to_value(&hello).unwrap(),
 			serde_json::json!({ "type": "hello", "version": 1, "node": "rdu", "versions": { "tyo": 7 } })
@@ -559,7 +675,7 @@ mod tests {
 		// A relay older than the runs says nothing of them, and is read as such.
 		let older: Message =
 			serde_json::from_str(r#"{ "type": "versions", "versions": { "tyo": 7 } }"#).unwrap();
-		assert!(matches!(older, Message::Versions { runs: None, .. }));
+		assert!(matches!(older, Message::Versions { runs: None, minutes: None, .. }));
 		let runs: Message = serde_json::from_str(
 			r#"{ "type": "runs", "node": "tyo", "above": 3, "version": 9, "rows": [{ "version": 9,
 				"id": 1, "app": "geo", "action": "deploy", "source": { "kind": "panel" },

@@ -1,23 +1,33 @@
-//! What a relay answers: its health, every node at once, every node's runs, a browser's live
-//! socket and its neighbors' sockets.
+//! What a relay answers: its health, every node at once, every node's runs and history, a
+//! browser's live socket and its neighbors' sockets.
 
+use crate::history::answer::Asked;
 use crate::relay::Relay;
 use crate::{live, mesh};
 use axum::Router;
-use axum::extract::State;
+use axum::extract::rejection::QueryRejection;
 use axum::extract::ws::WebSocketUpgrade;
 use axum::extract::ws::rejection::WebSocketUpgradeRejection;
+use axum::extract::{Query, State};
 use axum::http::header::ORIGIN;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::Response;
 use axum::routing::get;
+use serde::Deserialize;
 use std::sync::Arc;
+use tower_http::compression::CompressionLayer;
 
+/// The answers compressed as the reader accepts, gzip or brotli: `/runs` is hundreds of kilobytes,
+/// more than a far node sends plain inside the console's wait. The sockets are not wrapped.
 pub fn routes(relay: Arc<Relay>) -> Router {
-	Router::new()
+	let answers = Router::new()
 		.route("/health", get(health))
 		.route("/state", get(state))
 		.route("/runs", get(runs))
+		.route("/history", get(history))
+		.layer(CompressionLayer::new().gzip(true).br(true).no_deflate().no_zstd());
+	Router::new()
+		.merge(answers)
 		.route("/live", get(watched))
 		.route(mesh::PATH, get(neighbor))
 		.fallback(|| async { response::failure(StatusCode::NOT_FOUND, "no_such_route") })
@@ -45,6 +55,32 @@ async fn runs(State(relay): State<Arc<Relay>>) -> Response {
 		Ok(runs) => response::success(StatusCode::OK, runs),
 		Err(error) => {
 			eprintln!("relay: reading the runs: {error}");
+			response::failure(StatusCode::SERVICE_UNAVAILABLE, "store_unavailable")
+		}
+	}
+}
+
+/// `/history`'s query, in seconds.
+#[derive(Deserialize)]
+struct Spanned {
+	span: u64,
+	slot: u64,
+}
+
+/// Read-only and with no token, as `/runs` is, and answered from the file the same way. See
+/// spec/architecture/relay.md, "Each node's minutes, kept for a year".
+async fn history(
+	State(relay): State<Arc<Relay>>,
+	query: Result<Query<Spanned>, QueryRejection>,
+) -> Response {
+	let asked = query.ok().and_then(|Query(Spanned { span, slot })| Asked::new(span, slot));
+	let Some(asked) = asked else {
+		return response::failure(StatusCode::BAD_REQUEST, "invalid_series");
+	};
+	match relay.history(asked).await {
+		Ok(history) => response::success(StatusCode::OK, history),
+		Err(error) => {
+			eprintln!("relay: reading the history: {error}");
 			response::failure(StatusCode::SERVICE_UNAVAILABLE, "store_unavailable")
 		}
 	}
@@ -193,6 +229,56 @@ mod tests {
 				"source": { "kind": "panel" }, "outcome": "running", "stage": "loading",
 				"started_at": started_at }])
 		);
+	}
+
+	#[tokio::test]
+	async fn history_answers_every_node_and_refuses_a_span_it_cannot_cut() {
+		let relay = relay("rdu");
+		let (status, body) = ask(&relay, "/history?span=86400&slot=3600", None).await;
+		assert_eq!(status, StatusCode::OK);
+		let data = &body["data"];
+		assert_eq!(
+			(&data["version"], &data["node"], &data["slot"]),
+			(&1.into(), &"rdu".into(), &3600.into())
+		);
+		assert!(data["from"].is_string() && data["until"].is_string());
+		assert_eq!(data["nodes"], serde_json::json!({}));
+		for path in
+			["/history", "/history?span=86400", "/history?span=a&slot=60", "/history?span=90&slot=60"]
+		{
+			let (status, body) = ask(&relay, path, None).await;
+			assert_eq!(
+				(status, &body["code"]),
+				(StatusCode::BAD_REQUEST, &"invalid_series".into()),
+				"{path}"
+			);
+		}
+	}
+
+	#[tokio::test]
+	async fn an_answer_is_compressed_when_the_reader_accepts_it_and_plain_when_not() {
+		let relay = relay("rdu");
+		let request = |encoding: Option<&str>| {
+			let mut request = Request::get("/runs");
+			if let Some(encoding) = encoding {
+				request = request.header("accept-encoding", encoding);
+			}
+			request.body(Body::empty()).unwrap()
+		};
+		for (accepted, encoding) in [("gzip", "gzip"), ("br", "br")] {
+			let response = routes(relay.clone()).oneshot(request(Some(accepted))).await.unwrap();
+			assert_eq!(response.headers()["content-encoding"], encoding);
+			let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+			assert!(serde_json::from_slice::<serde_json::Value>(&body).is_err());
+			if encoding == "gzip" {
+				assert_eq!(body[..2], [0x1f, 0x8b]);
+			}
+		}
+		let response = routes(relay.clone()).oneshot(request(None)).await.unwrap();
+		assert!(response.headers().get("content-encoding").is_none());
+		let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+		let plain: serde_json::Value = serde_json::from_slice(&body).unwrap();
+		assert_eq!(plain["data"]["runs"], serde_json::json!([]));
 	}
 
 	#[tokio::test]

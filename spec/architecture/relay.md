@@ -159,27 +159,48 @@ nobody else, versioned and spread on the mesh as its runs are -- "The runs, mirr
 relay's disk" -- into the same file, and answered from it. Decided with the author on 2026-10-10.
 
 - **A minute is one row of its node's**: the minute it is, as its start in the origin's clock;
-  `beats`, the rounds that minute that read host, of the twenty it holds; `down`, the apps that
-  should run and did not at any round of it, by name; `held`, how many were stopped on purpose;
-  `round_trip`, each neighbor's mean round trip over it, in seconds, a neighbor not timed absent;
-  and `leaving`, the reason where the relay said it was leaving in it. The origin writes the row as
-  the minute ends.
+  `beats`, the rounds that minute that read host, of the twenty it holds; `down`, each app that
+  should run and did not, with how many of the minute's twenty rounds it was down -- an hour or a
+  day sums those rounds, and the console decides how short a dip counts; `held`, how many were
+  stopped on purpose; `round_trip`, each neighbor's mean round trip over it, in seconds, a neighbor
+  not timed absent; and `leaving`, the reason where the relay said it was leaving in it. The origin
+  writes the row at the first round of the next minute. **A relay that says it is leaving ends the
+  minute there and writes it at once**; one back inside the same minute joins it, keeping the word,
+  so an upgrade's leaving minute is not written over.
 - **A minute missing is the node unheard**: the origin writes nothing while it is down, so a gap in
   its minutes is that time, announced where the minute before it carries `leaving` and unannounced
-  where it does not.
+  where it does not. A minute is due one minute after it ends, counted from the first minute held
+  of the node.
 - **Kept in three tiers, each folded from the one under it**: minutes for two days, hours for 30
-  days and days for 400, an hour or a day holding the sum of its beats, the apps down in any of its
-  minutes and for how many minutes each, the minutes leaving, the minutes missing, and each
-  neighbor's round trip as its mean and its worst. The runs are folded to days as well, a count a
-  node and an outcome, kept 400 days beside the mirror's 30. Each relay folds what it holds as it
-  drops the tier under; a fold is the same wherever it is made, from the same minutes.
+  days and days for 400, an hour or a day holding the minutes it held, the sum of its beats, each
+  app's rounds down, the minutes leaving, `announced` -- the minutes missing after one that said
+  leaving -- whether it ends on such a minute, so a gap running across folds stays announced, and
+  each neighbor's round trip as its mean and its worst. Missing is not stored: it is the due less
+  the held, worked out as the answer is, since what is due starts at the node's first minute.
+  **Each tier is dropped one whole unit of the one above at a time**: a minute goes with its hour
+  once that hour ended two days ago, and an hour with its day once that day ended 30 days ago, so
+  a unit is held in exactly one tier and a slot sums what it holds. **Only minutes travel on the
+  mesh**; hours, days and run days are each relay's own folds, the same wherever they are made
+  from the same minutes, so a fresh relay starts with the two days of minutes its neighbors hold.
+- **The runs are folded to days as well**, a count a node and an outcome, kept 400 days beside the
+  mirror's 30, each day folded just before its rows are dropped. A run is a CI run on a node, each
+  app at its latest row, or an action no run started grouped by its source, app and start minute;
+  running where any row is, partly failed where some succeeded and some failed, a skipped row not
+  counted. A day's count names the runs that went on past it, so the next does not count them
+  again. Rows dropped by the cap of 5,000 a node never reach a day's count.
 - **`GET /history?span=<seconds>&slot=<seconds>`** answers every node over the `span` ending now,
-  cut into slots of `slot` seconds, each slot read from the finest tier that still holds it: the
-  runs in it by outcome, `succeeded`, `failed`, `running` and those that partly failed; its beats of
-  those due; the apps down in it and the minutes each was; the minutes leaving and missing; and the
-  round trip to each neighbor, mean and worst. Absent, not null, where a slot holds nothing -- the
-  workspace's `spec/json.md`. The console asks it for a span longer than a day, the mirror's runs
-  drawing the rest.
+  cut into slots of `slot` seconds that fall on multiples of their length in UTC, the last holding
+  now, each slot read from the finest tier that still holds it: `runs` by outcome, `succeeded`,
+  `failed`, `running` and `partly_failed`, a slot of whole days reading a folded day's count and a
+  finer one the mirror; `beats` and `due`; `down`, each app's rounds; `leaving`, `missing` and
+  `announced`; and `round_trip` to each neighbor, mean and worst. A slot must be whole minutes,
+  whole hours past two days and whole days past 30, at most 1,000 slots and 400 days; anything
+  else is a 400 `invalid_series`. Absent, not null, where a slot holds nothing -- the workspace's
+  `spec/json.md`. The console asks it for a span longer than a day, the mirror's runs drawing the
+  rest.
+- **`/state`, `/runs` and `/history` are compressed**, gzip or brotli as the reader accepts, since
+  `/runs` is hundreds of kilobytes, more than a far node sends plain inside the console's wait. The
+  sockets are not.
 
 ## The round trip to each neighbor
 
