@@ -146,6 +146,13 @@ backed up. Decided with the author on 2026-10-09.
 - **`/runs` answers the mirror and the window together**, every node's rows of the last 30 days,
   newest first, each with its node; the console groups them into runs for display -- web's
   `spec/architecture/console.md`, "The console's server never waits on data; it only draws".
+- **`/runs` takes what a reader of a span or a count needs, and filters only**: `since`, a moment
+  in milliseconds, answers the rows that started then or later and every row still running however
+  long ago it began; `lean=true` leaves out the image, the stage, the commit, and why a row failed
+  where it did not. The console counts and groups as before, from less: a week's steps, a day's
+  verdict, the month's figures lean. A relay before these ignores them and answers every row whole,
+  which the console, filtering by its own moment, reads the same. Decided with the author on
+  2026-10-10, over counting in the relay, which would have kept the console's grouping twice.
 - **The file is `/data/runs.db`**, `[data]` in `service.toml`, so the relay is rolled out as an app
   with state on its node is -- infra's `spec/architecture/host.md`, "An app chooses how it is rolled
   out, and keeping nothing earns a gapless one".

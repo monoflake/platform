@@ -285,8 +285,22 @@ impl Relay {
 		self.history.history(self.node.clone(), asked, runs, now).await
 	}
 
-	pub async fn runs(&self) -> Result<Runs, StoreError> {
-		let runs = self.runs.listed(Timestamp::now()).await?;
+	/// Every node's rows, from `since` where it is given and with every one still running, and
+	/// `lean` without what no reader of a span or a count reads: the image, the stage, the commit,
+	/// and why a row failed where it did not.
+	pub async fn runs(&self, since: Option<i64>, lean: bool) -> Result<Runs, StoreError> {
+		let mut runs = self.runs.listed(since, Timestamp::now()).await?;
+		if lean {
+			for shown in &mut runs {
+				let event = &mut shown.event;
+				event.image = None;
+				event.stage = None;
+				event.source.commit = None;
+				if event.outcome != "failed" {
+					event.detail = None;
+				}
+			}
+		}
 		Ok(Runs { version: VERSION, node: self.node.clone(), runs })
 	}
 

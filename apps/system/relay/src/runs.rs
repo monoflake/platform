@@ -221,6 +221,23 @@ impl Store {
 		}
 		Ok(since)
 	}
+
+	/// Every node's rows that started at `from` or later, and every one still running however long
+	/// ago it started: what a reader of a span asks, a deploy that hangs on still being one.
+	pub fn since_or_running(&self, from: i64) -> Result<Vec<(String, Row)>, StoreError> {
+		let mut select = self.connection.prepare_cached(
+			"SELECT node, version, event FROM runs
+				WHERE started >= ?1 OR json_extract(event, '$.outcome') = 'running'",
+		)?;
+		let rows =
+			select.query_map(params![from], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))?;
+		let mut since = Vec::new();
+		for row in rows {
+			let (node, version, event): (String, i64, String) = row?;
+			since.push((node, Row { version: loaded(version), event: serde_json::from_str(&event)? }));
+		}
+		Ok(since)
+	}
 }
 
 /// Where a broken file goes: `runs.db.broken-<unix seconds>`, its `-wal` and `-shm` beside it as
@@ -413,9 +430,22 @@ impl Mirror {
 		Ok(since)
 	}
 
-	/// Every node's rows that started within `KEPT` of `now`, newest first.
-	pub async fn listed(&self, now: Timestamp) -> Result<Vec<Shown>, StoreError> {
-		let mut listed = self.since(i64::MIN, now).await?;
+	/// Every node's rows that started within `KEPT` of `now`, or at `from` or later where it is
+	/// given, and with those every row still running; newest first.
+	pub async fn listed(&self, from: Option<i64>, now: Timestamp) -> Result<Vec<Shown>, StoreError> {
+		let kept = cutoff(now);
+		let from = from.unwrap_or(i64::MIN).max(kept);
+		let written = blocking(&self.store, move |store| store.since_or_running(from)).await?;
+		let held: Vec<(String, Row)> =
+			lock(&self.window).rows().map(|(node, row)| (node.to_owned(), row.clone())).collect();
+		let mut listed: Vec<(i64, Shown)> = window::newest(written.into_iter().chain(held))
+			.into_iter()
+			.filter_map(|((node, _), row)| {
+				let started = started(&row.event).filter(|started| *started >= kept)?;
+				let shown = started >= from || row.event.outcome == "running";
+				shown.then(|| (started, Shown { node, event: row.event }))
+			})
+			.collect();
 		listed.sort_by(|(a, x), (b, y)| (b, y.event.id, &y.node).cmp(&(a, x.event.id, &x.node)));
 		Ok(listed.into_iter().map(|(_, shown)| shown).collect())
 	}
@@ -640,7 +670,7 @@ mod tests {
 		let tyo = Batch { node: "tyo".into(), above: 0, version: 4, rows: vec![row(9, 4, at(0))] };
 		mirror.merge(tyo);
 
-		let listed = mirror.listed(at(5)).await.unwrap();
+		let listed = mirror.listed(None, at(5)).await.unwrap();
 		let order: Vec<(&str, i64, &str)> = listed
 			.iter()
 			.map(|shown| (shown.node.as_str(), shown.event.id, shown.event.outcome.as_str()))

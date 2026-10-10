@@ -47,11 +47,25 @@ async fn state(State(relay): State<Arc<Relay>>) -> Response {
 	response::success(StatusCode::OK, relay.state())
 }
 
+/// `/runs`'s query: rows from a moment, in milliseconds, and lean of what no count reads.
+#[derive(Deserialize, Default)]
+struct Listed {
+	since: Option<i64>,
+	#[serde(default)]
+	lean: bool,
+}
+
 /// Read-only and with no token, as `/state` is; answered from the file and the window, never by
 /// asking host or a neighbor. See spec/architecture/relay.md, "The runs, mirrored on every relay's
 /// disk".
-async fn runs(State(relay): State<Arc<Relay>>) -> Response {
-	match relay.runs().await {
+async fn runs(
+	State(relay): State<Arc<Relay>>,
+	query: Result<Query<Listed>, QueryRejection>,
+) -> Response {
+	let Ok(Query(Listed { since, lean })) = query else {
+		return response::failure(StatusCode::BAD_REQUEST, "invalid_range");
+	};
+	match relay.runs(since, lean).await {
 		Ok(runs) => response::success(StatusCode::OK, runs),
 		Err(error) => {
 			eprintln!("relay: reading the runs: {error}");
@@ -229,6 +243,58 @@ mod tests {
 				"source": { "kind": "panel" }, "outcome": "running", "stage": "loading",
 				"started_at": started_at }])
 		);
+	}
+
+	#[tokio::test]
+	async fn runs_answer_from_a_moment_with_what_still_runs_and_lean_of_what_no_count_reads() {
+		let relay = relay("rdu");
+		let now = jiff::Timestamp::now();
+		let ago = |hours: i64| (now - jiff::SignedDuration::from_hours(hours)).to_string();
+		let event = |id: i64, outcome: &str, started_at: String| crate::host::Event {
+			id,
+			app: "geo".into(),
+			action: "deploy".into(),
+			source: crate::host::Source { kind: "run".into(), run: Some(7), commit: Some("abc".into()) },
+			image: Some("ghcr.io/x/geo:1".into()),
+			outcome: outcome.into(),
+			stage: Some("loading".into()),
+			detail: Some("why".into()),
+			started_at,
+			finished_at: None,
+		};
+		// A day and a half ago, one done and one that hangs on; an hour ago, one that failed.
+		let events = vec![
+			event(1, "succeeded", ago(36)),
+			event(2, "running", ago(36)),
+			event(3, "failed", ago(1)),
+		];
+		let machine = Ok(serde_json::json!({}));
+		relay.observe(crate::host::Reading { events: Ok(events), apps: Ok(vec![]), machine });
+
+		let ids = |body: &serde_json::Value| -> Vec<i64> {
+			body["data"]["runs"]
+				.as_array()
+				.unwrap()
+				.iter()
+				.map(|row| row["id"].as_i64().unwrap())
+				.collect()
+		};
+		let (_, every) = ask(&relay, "/runs", None).await;
+		assert_eq!(ids(&every), vec![3, 2, 1]);
+		let day = (now - jiff::SignedDuration::from_hours(24)).as_millisecond();
+		let (status, since) = ask(&relay, &format!("/runs?since={day}"), None).await;
+		assert_eq!((status, ids(&since)), (StatusCode::OK, vec![3, 2]));
+
+		let (_, lean) = ask(&relay, &format!("/runs?since={day}&lean=true"), None).await;
+		let rows = lean["data"]["runs"].as_array().unwrap();
+		for row in rows {
+			assert!(row.get("image").is_none() && row.get("stage").is_none());
+			assert_eq!(row["source"], serde_json::json!({ "kind": "run", "run": 7 }));
+		}
+		assert_eq!((&rows[0]["detail"], rows[1].get("detail")), (&"why".into(), None));
+
+		let (status, body) = ask(&relay, "/runs?since=soon", None).await;
+		assert_eq!((status, &body["code"]), (StatusCode::BAD_REQUEST, &"invalid_range".into()));
 	}
 
 	#[tokio::test]
