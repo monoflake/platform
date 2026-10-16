@@ -175,7 +175,6 @@ export const PARTS: Record<string, Part> = {
 				'start',
 				H,
 				'its working keys are certified by the intermediate key, online',
-				'nothing holds the intermediate key: no part, not root (offline)',
 			),
 		],
 		uses: ['capability*', 'vocabulary*', 'compat*'],
@@ -335,7 +334,10 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 		contract:
 			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept on disk, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
 	},
-	'?intermediate': {},
+	'?intermediate': {
+		contract:
+			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root, and signs the issuer's standing capability to read grants and allowances, b8f35. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the data plane's, since the issuer cannot sign past its working key's expiry without it, but it is needed once in a working key's life and never on a call. It starts before the issuer and without it; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, v1's; how long a working key lives",
+	},
 	'?runner': {
 		contract:
 			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the quorum's generation keeps all but one from confirming, vuanj. Its record of what is placed where is kept on disk and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",

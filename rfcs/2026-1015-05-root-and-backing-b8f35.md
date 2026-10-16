@@ -116,7 +116,10 @@ does not change for it.
   intermediate key for a long time; the intermediate, online, certifies the issuer's working keys
   for a short one and rotates them unattended; a working key signs capabilities. A part holds the
   root's public key alone and checks the chain, so a leaked working key is worth a short while, and
-  the root private key is used rarely.
+  the root private key is used rarely. **The intermediate key is rotated by the operator, offline,
+  with the root private key**; what holds it online is the data plane's, since the issuer cannot
+  sign past a working key's expiry without it, though it is needed once in a working key's life
+  and never on a call.
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
@@ -140,3 +143,8 @@ Open, for the discussion that follows:
 - The tiers: how many, their names, and what each maps to.
 - How big a block is, and how small a file is before it is packed.
 - How stores are added to a scope, which is to come down from what the layers above need.
+- How often the operator rotates the intermediate key, and how long a working key lives.
+- Whether a system apart from the platform -- a machine the author keeps, signing on the author's
+  authority -- may rotate the intermediate key unattended in the operator's place.
+- How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
+  failure, and so v1's.
