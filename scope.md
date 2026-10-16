@@ -27,36 +27,57 @@ operator's mistake is out of the model.
 What is already running needs nothing from the control plane to go on running; when the control
 plane returns, it takes over again.
 
+**What a problem is.** A rule of a dimension broken, within the failure model of the version in
+force. What lies outside the failure model is out of the model, written down and not designed for;
+what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a problem.
+
+**The system has three boundaries.**
+
+| Boundary         | What it is                                                                   | How the model treats it                                                           |
+| ---------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| above            | layer 0's three interfaces                                                   | an app is their user; an app's own mistake is not the platform's problem          |
+| below, ground    | a vendor's written guarantee, a proven algorithm, a physical fact            | trusted and never designed; the failures it states are taken into a failure model |
+| beside, operator | a person, holding the root private key and running day one's manual commands | ideal, above                                                                      |
+
+**The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
+layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something
+a part needs that no part is yet.
+
+**Each edge carries three attributes**: when it is needed, `start`, `serve`, `deploy` or
+`background`; what its loss does, `hard`, wrong or stopped, or `soft`, slower or staler and never
+wrong; and its contract, who defines the format crossing it.
+
+**A format carried unread is exempt from the contract.** A tablet holding the function product's
+rows runs SQL, whose rules are its own, and reads nothing of what the rows mean: a renamed column
+changes nothing for it. The issuer reading the same rows to decide what to sign must know each
+column, and a renamed one breaks it. A lower part may carry an upper part's format, never read it;
+an upper part may write into a format a lower one defines.
+
+**Five dimensions**, each a question, the edges it reads, and what violates it:
+
+| Dimension    | Question                                                                           | Reads                             | Violated by                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| D1 bootstrap | From the ground and the operator alone, can every part come up the first time?     | `start`, `deploy`                 | a cycle; an edge to a boundary; a `hard` edge pointing up                                      |
+| D2 restart   | After everything stops, can every part come back from what it kept?                | `start`, and what each part keeps | a part whose restart needs what lives only in another's memory; a cycle                        |
+| D3 upgrade   | While the rest runs, can one part be replaced by a new version?                    | `deploy`, and the contracts       | replacing a part needs itself; two ends of an edge with no version in common; no `deploy` edge |
+| D4 recovery  | With one part lost, does the data plane keep serving, and does the part come back? | `hard` `serve`                    | a part lost stops the data plane; its way back needs what has stopped                          |
+| D5 contract  | Is every format a part reads defined at its own layer or below?                    | the contracts                     | a lower part reading an upper part's format                                                    |
+
 ## v0
 
 The correct path alone: no failure is modeled.
 
-**Dimensions.** Each edge carries:
+**Rules beneath every dimension.** A `hard` edge points to its own layer or below; a `soft` edge
+may point up. A library uses only libraries.
 
-- when it is needed: `start`, `serve`, `deploy` or `background`;
-- what its loss does: `hard`, wrong or stopped, or `soft`, slower, staler or more garbage and never
-  wrong.
-
-A `hard` edge points to its own layer or below; a `soft` edge may point up. A library uses only
-libraries.
-
-**Checks.** Bootstrap, the order the `start` edges allow from the ground up. Upgrade, what replaces
-each part.
+**Dimensions run.** D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5 contract, by
+`node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
 
 **Out of the model in v0:** every failure, including one part crashing and one store lost, which
 are the first a later version takes in; performance and cost; an operator's mistake.
 
 Open, for v0:
 
-- The definitions proposed on 2026-10-15, not yet confirmed: what a problem is; the system's three
-  boundaries -- layer 0's interfaces above, the ground below, the operator beside; the five kinds of
-  thing in the model -- part, library, ground, operator, boundary; a third attribute on each edge,
-  the contract, who defines the format crossing it and whether the receiver reads it or carries it
-  unread; and the five dimensions -- bootstrap, restart, upgrade, recovery, contract -- each with its
-  question, the edges it reads and what violates it.
-- Whether a part that carries a format unread, as a tablet holds another part's rows, is exempt from
-  the contract dimension, which a part that reads it, as the issuer reads the function product's
-  rows, is not.
 - Sorting each boundary the model has found into: decided now, since a mistake is written into data
   and cannot be undone; done by hand on day one, with its command; or left for later, with what
   brings it back.

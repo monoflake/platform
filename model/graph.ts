@@ -4,7 +4,8 @@
  * more garbage, never wrong. A `hard` edge points to its own layer or below; a `soft` one may point up.
  * A target beginning `?` is something the drafts need and no part is yet: a boundary not drawn.
  * Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj parts, b8f35 root and backing, wnqvu
- * compat. Every `hard`/`soft` here is proposed, not decided; `open` marks the ones in question.
+ * compat; the rules they are checked by, `scope.md`. Every `hard`/`soft` here is proposed, not
+ * decided; `open` marks the ones in question.
  */
 export const VENDOR = -9;
 
@@ -17,10 +18,19 @@ export interface Edge {
 	why: string;
 	/** Why this edge's boundary is not yet clear. */
 	open?: string;
+	/**
+	 * Who defines the format the source reads across this edge, when it is not the target. A format
+	 * carried unread is no one's to name here: a tablet holding another part's rows reads none of them.
+	 */
+	reads?: string;
 }
 
 export interface Part {
 	layer: number;
+	/** The ground and the operator are outside the design: trusted as written, never built. */
+	kind?: 'ground' | 'operator';
+	/** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
+	keeps?: boolean;
 	edges: Edge[];
 	uses: string[];
 }
@@ -151,13 +161,16 @@ export const PARTS: Record<string, Part> = {
 	issuer: {
 		layer: -1,
 		edges: [
-			e(
-				'tablet',
-				'serve',
-				H,
-				"reads each scope's function tablet for bindings",
-				"the tablet is -1, but the rows are function's (0): a schema the issuer must read, so function's migration reaches down to it",
-			),
+			{
+				...e(
+					'tablet',
+					'serve',
+					H,
+					"reads each scope's function tablet for bindings",
+					"the tablet is -1, but the rows are function's (0): a schema the issuer must read, so function's migration reaches down to it",
+				),
+				reads: 'function',
+			},
 			e('tablet', 'serve', H, "reads the scope's allowance"),
 			e(
 				'?intermediate',
@@ -170,6 +183,7 @@ export const PARTS: Record<string, Part> = {
 		uses: ['capability*', 'vocabulary*', 'compat*'],
 	},
 	tablet: {
+		keeps: true,
 		layer: -1,
 		edges: [
 			e('backing', 'start', H, "its copies' stores and their grades"),
@@ -194,6 +208,7 @@ export const PARTS: Record<string, Part> = {
 		uses: ['quorum*', 'sqlite*', 'capability*', 'compat*'],
 	},
 	blob: {
+		keeps: true,
 		layer: -1,
 		edges: [
 			e('backing', 'serve', H, "the scope's stores"),
@@ -248,6 +263,7 @@ export const PARTS: Record<string, Part> = {
 	},
 
 	backing: {
+		keeps: true,
 		layer: -2,
 		edges: [
 			e('anchor', 'serve', H, "where a scope's backing is"),
@@ -259,6 +275,7 @@ export const PARTS: Record<string, Part> = {
 		uses: ['quorum*', 'capability*', 'compat*'],
 	},
 	extent: {
+		keeps: true,
 		layer: -2,
 		edges: [
 			e('backing', 'serve', H, "a block's place from the scope's stores"),
@@ -280,6 +297,7 @@ export const PARTS: Record<string, Part> = {
 	},
 
 	anchor: {
+		keeps: true,
 		layer: -3,
 		edges: [
 			e('vendor', 'serve', H, "its group's copies on vendors' stores"),
@@ -301,7 +319,8 @@ export const PARTS: Record<string, Part> = {
 		],
 		uses: [],
 	},
-	vendor: { layer: VENDOR, edges: [], uses: [] },
+	vendor: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
+	operator: { layer: VENDOR, kind: 'operator', edges: [], uses: [] },
 };
 
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
