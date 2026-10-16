@@ -118,6 +118,7 @@ export const PARTS: Record<string, Part> = {
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
 			e('?entry', 'serve', H, "a request trigger: HTTP reaches an app's function, 49qyg"),
+			e('?entry', 'deploy', H, "writes an app's routes, in the entry's format"),
 			{
 				...e(
 					'scope',
@@ -314,7 +315,10 @@ export const PARTS: Record<string, Part> = {
  * violation; with one it is an assumption the next layer down must keep. See `scope.md`.
  */
 export const BOUNDARIES: Record<string, { contract?: string }> = {
-	'?entry': {},
+	'?entry': {
+		contract:
+			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
+	},
 	'?clock': {},
 	'?intermediate': {},
 	'?runner': {},

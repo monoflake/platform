@@ -68,9 +68,10 @@ owner (one scope, its own unique salt)
   different hash, so an address cannot be computed by anyone outside the owner, and nothing is
   shared between owners.
 - **A link is the content's, not the name's**: a URL carrying the hash, through the platform's
-  gateway, answered with a strong `ETag`, `immutable` and a year's cache, public or private. Private
-  is decided by who asks, never by a parameter on the URL, so the address stays one. Content made
-  public cannot be recalled from caches the platform does not hold.
+  gateway -- its prefix the gateway's, which delivers the rest to the storage unread, so the rest is
+  the storage's own to shape -- answered with a strong `ETag`, `immutable` and a year's cache,
+  public or private. Private is decided by who asks, never by a parameter on the URL, so the address
+  stays one. Content made public cannot be recalled from caches the platform does not hold.
 - **When names disagree, the most permissive wins.** The same content named in two datasets, one
   public and one private, has one link, and it is public, since what one name published is already
   out; `head` on the private side says so.
