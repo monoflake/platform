@@ -325,7 +325,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	},
 	'?entry': {
 		keptBy:
-			"the organization's half: a request comes in by the organization's own resources, a node's network or a member's third-party account the platform operates through its API, v7v3w",
+			"the organization's half: a request comes in by the resources bound to the organization or shared with it, a node's network or a third-party account the platform operates through its API, v7v3w",
 		contract:
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
 	},
@@ -343,14 +343,14 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	},
 	'?roster': {
 		keptBy:
-			"the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35; the places an organization's work may go are the resources its members lend it, v7v3w",
+			"the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35; the places an organization's work may go are the resources bound to it or shared with it, v7v3w",
 		triage: 'by hand on day one',
 		contract:
 			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
 	},
 	'?egress': {
 		keptBy:
-			"the organization's half: a request leaves by the resource its call runs on, a node's network or a member's third-party account, v7v3w",
+			"the organization's half: a request leaves by the resource its call runs on, a node's network or a third-party account, v7v3w",
 		contract:
 			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
 	},
