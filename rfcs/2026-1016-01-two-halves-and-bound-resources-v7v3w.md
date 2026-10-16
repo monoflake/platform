@@ -111,9 +111,16 @@ operates third-party accounts with.
   the platform takes over again when it returns.
 - **An organization cannot revoke; the operator can, at once.** An organization is held on the
   platform and does not manage it, so its own deletion waits for its certificate to run out, below.
-  The operator manages the platform: revoking a user account, the operator revokes its
-  organization's certificate at once, never renews it, and removes the user account and the
-  organization.
+  The operator manages the platform and revokes a user account at once, and what depends on it is
+  revoked with it along the graph of dependencies, and nothing else:
+  - the user account is removed from every organization it is in, and one it was the last admin of
+    is revoked: its certificate is revoked and never renewed;
+  - every share a revoked organization receives is withdrawn, the resources the platform sold it
+    among them, from the copies their holders run from;
+  - every share it gives is withdrawn, and in every other organization what depends on a withdrawn
+    share is revoked with it -- one app of four, when one alone depends on it;
+  - the platform stops managing a revoked organization's own accounts and leaves them as they are:
+    what runs there is between their owner and the vendor, and nothing is cleaned up on purpose.
 - **An organization is deleted on request, at the end of its certificate.** The last admin leaving
   asks for it once everything in the organization has been removed and stopped, from the leaves
   inward, RFC vuanj; it is carried out when the current certificate runs out, within seven days, and
@@ -128,12 +135,8 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- How a revocation at once reaches what checks capabilities locally, since a chain is checked
-  against the root's public key and the platform is never asked. Proposed: every share to the
-  organization withdrawn from the copies its holders run from, and what the platform deployed on the
-  organization's own resources removed through the credentials it holds.
-- What becomes of the other organizations a revoked user account belongs to, among them one it is
-  the last admin of.
+- Whether what is revoked with an organization in one that is not -- an app depending on a
+  withdrawn share -- is stopped or removed.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
