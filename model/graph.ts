@@ -323,6 +323,25 @@ export const PARTS: Record<string, Part> = {
 	operator: { layer: VENDOR, kind: 'operator', edges: [], uses: [] },
 };
 
+/**
+ * Every boundary, and the contract it must keep once written: what it provides, and what the
+ * dimensions require of it through the parts that need it. Without a contract an edge to it is a
+ * violation; with one it is an assumption the next layer down must keep. See `scope.md`.
+ */
+export const BOUNDARIES: Record<string, { contract?: string }> = {
+	'?entry': {},
+	'?clock': {},
+	'?control': {},
+	'?intermediate': {},
+	'?runner': {},
+	'?repair': {},
+	'?trigger': {},
+	'?roster': {},
+	'?egress': {},
+	'?scope-or-global': {},
+	'?source': {},
+};
+
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
 export const GLOBAL_OPEN = [
 	'compat: who knows every running build to compute the write version, wnqvu',

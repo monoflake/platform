@@ -53,15 +53,28 @@ changes nothing for it. The issuer reading the same rows to decide what to sign 
 column, and a renamed one breaks it. A lower part may carry an upper part's format, never read it;
 an upper part may write into a format a lower one defines.
 
-**Five dimensions**, each a question, the edges it reads, and what violates it:
+**Six dimensions**, each a question, the edges it reads, and what violates it:
 
 | Dimension    | Question                                                                           | Reads                             | Violated by                                                                                    |
 | ------------ | ---------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| D1 bootstrap | From the ground and the operator alone, can every part come up the first time?     | `start`, `deploy`                 | a cycle; an edge to a boundary; a `hard` edge pointing up                                      |
+| D0 serve     | On the correct path, does every operation the products promise reach the ground?   | `serve`                           | a `serve` edge to a boundary with no contract                                                  |
+| D1 bootstrap | From the ground and the operator alone, can every part come up the first time?     | `start`, `deploy`                 | a cycle; an edge to a boundary with no contract; a `hard` edge pointing up                     |
 | D2 restart   | After everything stops, can every part come back from what it kept?                | `start`, and what each part keeps | a part whose restart needs what lives only in another's memory; a cycle                        |
 | D3 upgrade   | While the rest runs, can one part be replaced by a new version?                    | `deploy`, and the contracts       | replacing a part needs itself; two ends of an edge with no version in common; no `deploy` edge |
 | D4 recovery  | With one part lost, does the data plane keep serving, and does the part come back? | `hard` `serve`                    | a part lost stops the data plane; its way back needs what has stopped                          |
 | D5 contract  | Is every format a part reads defined at its own layer or below?                    | the contracts                     | a lower part reading an upper part's format                                                    |
+
+**A boundary is a contract, and a layer is checked against it.** A boundary `?name` states what it
+must guarantee: what it provides, and what the dimensions require of it through the parts that need
+it -- one an executor needs to start must itself start before the executor and without it. A layer is
+then checked as it stands: if every boundary beneath it keeps its contract, does the layer satisfy
+every dimension? An edge to a boundary with a contract is an assumption, passed and listed; one to a
+boundary without is a violation. Nothing beneath a layer need exist for it to be checked.
+
+**A layer is closed when** its own violations are fixed and every boundary it points down to has its
+contract written. Only then is the next layer begun, whose work is to keep those contracts and write
+its own. At the ground the last contracts are kept by what the real world provides, and the system
+holds by composition, without a complete model at any point between.
 
 ## v0
 
@@ -70,14 +83,14 @@ The correct path alone: no failure is modeled.
 **Rules beneath every dimension.** A `hard` edge points to its own layer or below; a `soft` edge
 may point up. A library uses only libraries.
 
-**Dimensions run.** D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5 contract, by
-`node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
+**Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
+contract, by `node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
 
 **Out of the model in v0:** every failure, including one part crashing and one store lost, which
 are the first a later version takes in; performance and cost; an operator's mistake.
 
 Open, for v0:
 
-- Sorting each boundary the model has found into: decided now, since a mistake is written into data
-  and cannot be undone; done by hand on day one, with its command; or left for later, with what
-  brings it back.
+- Sorting each contract, at the layer that keeps it, into: decided now, since a mistake is written
+  into data and cannot be undone; kept by hand on day one, with its command; or left for later, with
+  what brings it back.

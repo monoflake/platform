@@ -1,9 +1,10 @@
 /**
- * Runs v0's dimensions over the model, `scope.md`: D1 bootstrap, D2 restart, D3 upgrade and D5
- * contract, each printing its question and every violation. D4 recovery models a failure, so it is
- * v1's, and runs only with `--v1`. Exits 1 when any dimension finds a violation.
+ * Runs v0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3 upgrade
+ * and D5 contract, each printing its question, every violation, and every assumption -- an edge to a
+ * boundary whose contract is written. D4 recovery models a failure, so it is v1's, and runs only with
+ * `--v1`. Exits 1 when any dimension finds a violation.
  */
-import { GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
+import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
 	layer === VENDOR ? 'ground' : layer > 0 ? `+${layer}` : String(layer);
@@ -11,6 +12,7 @@ const known = (to: string) => !to.startsWith('?');
 const tag = (edge: Edge) => `${edge.when}/${edge.hard ? 'hard' : 'soft'}`;
 const designed = Object.entries(PARTS).filter(([, p]) => p.kind === undefined);
 const line = (from: string, edge: Edge) => `${from} -> ${edge.to} ${tag(edge)}: ${edge.why}`;
+const contracted = (to: string) => BOUNDARIES[to]?.contract !== undefined;
 
 /** Every cycle `next` closes among `names`, by a depth-first walk that remembers its path. */
 function cycles(next: (name: string) => string[], names: string[]): string[] {
@@ -30,21 +32,33 @@ function cycles(next: (name: string) => string[], names: string[]): string[] {
 	return found;
 }
 
-/** The order `edges` allow, the ground first, and what cannot be placed for waiting on a boundary. */
-function order(edges: (e: Edge) => boolean): { order: string[]; waiting: string[] } {
+/** The order the edges `when` selects allow, the ground first. */
+function order(when: (e: Edge) => boolean): string[] {
 	const out: string[] = [];
 	const seen = new Set<string>();
 	const visit = (n: string): void => {
 		if (seen.has(n)) return;
 		seen.add(n);
-		for (const x of PARTS[n]?.edges ?? []) if (edges(x) && known(x.to)) visit(x.to);
+		for (const x of PARTS[n]?.edges ?? []) if (when(x) && known(x.to)) visit(x.to);
 		out.push(n);
 	};
 	for (const n of Object.keys(PARTS).sort((a, b) => PARTS[a].layer - PARTS[b].layer)) visit(n);
-	const waiting = designed.flatMap(([n, p]) =>
-		p.edges.filter((x) => edges(x) && !known(x.to)).map((x) => line(n, x)),
+	return out;
+}
+
+/** The edges `when` selects that end at a boundary, split by whether its contract is written. */
+function atBoundaries(when: (e: Edge) => boolean): { violations: string[]; assumed: string[] } {
+	const hits = designed.flatMap(([n, p]) =>
+		p.edges.filter((x) => when(x) && !known(x.to)).map((x) => ({ n, x })),
 	);
-	return { order: out, waiting };
+	return {
+		violations: hits
+			.filter(({ x }) => !contracted(x.to))
+			.map(({ n, x }) => `no contract: ${line(n, x)}`),
+		assumed: hits
+			.filter(({ x }) => contracted(x.to))
+			.map(({ n, x }) => `${n} assumes ${x.to}: ${BOUNDARIES[x.to].contract}`),
+	};
 }
 
 let failed = false;
@@ -53,9 +67,11 @@ function dimension(
 	question: string,
 	violations: string[],
 	notes: string[] = [],
+	assumed: string[] = [],
 ): void {
 	console.log(`\n# ${title}\n${question}`);
 	console.log(violations.length ? violations.map((v) => `  x ${v}`).join('\n') : '  no violation');
+	for (const a of assumed) console.log(`  ~ ${a}`);
 	for (const n of notes) console.log(`  ${n}`);
 	if (violations.length) failed = true;
 }
@@ -90,29 +106,39 @@ dimension(
 	[`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`],
 );
 
-const d1 = order((x) => x.when === 'start' || x.when === 'deploy');
+const serve = (x: Edge) => x.when === 'serve';
+const d0 = atBoundaries(serve);
+dimension(
+	'D0 Serve',
+	'On the correct path, does every operation the products promise reach the ground?',
+	d0.violations,
+	[],
+	d0.assumed,
+);
+
+const firstUp = (x: Edge) => x.when === 'start' || x.when === 'deploy';
+const d1 = atBoundaries(firstUp);
 dimension(
 	'D1 Bootstrap',
 	'From the ground and the operator alone, can every part come up the first time?',
 	[
 		...cycles(
-			(n) =>
-				(PARTS[n]?.edges ?? [])
-					.filter((x) => (x.when === 'start' || x.when === 'deploy') && known(x.to))
-					.map((x) => x.to),
+			(n) => (PARTS[n]?.edges ?? []).filter((x) => firstUp(x) && known(x.to)).map((x) => x.to),
 			Object.keys(PARTS),
 		).map((c) => `cycle: ${c}`),
-		...d1.waiting.map((w) => `waits on a boundary: ${w}`),
+		...d1.violations,
 	],
-	[`order: ${d1.order.join(' -> ')}`],
+	[`order: ${order(firstUp).join(' -> ')}`],
+	d1.assumed,
 );
 
-const d2 = order((x) => x.when === 'start');
-const groundOf = (n: string, seen = new Set<string>()): boolean => {
+const start = (x: Edge) => x.when === 'start';
+const d2 = atBoundaries(start);
+const reachesGround = (n: string, seen = new Set<string>()): boolean => {
 	if (seen.has(n)) return false;
 	seen.add(n);
 	return (PARTS[n]?.edges ?? []).some(
-		(x) => x.hard && known(x.to) && (PARTS[x.to]?.kind === 'ground' || groundOf(x.to, seen)),
+		(x) => x.hard && known(x.to) && (PARTS[x.to]?.kind === 'ground' || reachesGround(x.to, seen)),
 	);
 };
 dimension(
@@ -120,17 +146,18 @@ dimension(
 	'After a planned stop of everything, can every part come back from what it kept?',
 	[
 		...designed
-			.filter(([n, p]) => p.keeps && !groundOf(n))
+			.filter(([n, p]) => p.keeps && !reachesGround(n))
 			.map(([n]) => `${n} keeps state, but no hard edge carries it to the ground`),
-		...d2.waiting.map((w) => `waits on a boundary: ${w}`),
+		...d2.violations,
 	],
 	[
-		`order: ${d2.order.join(' -> ')}`,
+		`order: ${order(start).join(' -> ')}`,
 		`keep state of their own: ${designed
 			.filter(([, p]) => p.keeps)
 			.map(([n]) => n)
 			.join(', ')}`,
 	],
+	d2.assumed,
 );
 
 const crossing = designed.flatMap(([n, p]) =>
@@ -145,8 +172,8 @@ dimension(
 			.map(([n]) => `${n}: no deploy edge, so nothing says what replaces it`),
 		...designed.flatMap(([n, p]) =>
 			p.edges
-				.filter((x) => x.when === 'deploy' && known(x.to) && x.to === n)
-				.map((x) => `${n}: replacing it needs itself`),
+				.filter((x) => x.when === 'deploy' && x.to === n)
+				.map(() => `${n}: replacing it needs itself`),
 		),
 		...crossing
 			.filter(({ from }) => !PARTS[from].uses.includes('compat*'))
@@ -166,13 +193,18 @@ dimension(
 		),
 );
 
-console.log('\n# Boundaries: something needed that no part is yet');
-const missing = new Map<string, string[]>();
+console.log('\n# Boundaries, and whether each has its contract');
+const needed = new Map<string, string[]>();
 for (const [name, part] of designed)
 	for (const edge of part.edges)
 		if (!known(edge.to))
-			missing.set(edge.to, [...(missing.get(edge.to) ?? []), `${name} ${tag(edge)}`]);
-for (const [to, from] of missing) console.log(`  ${to.padEnd(17)} ${from.join(', ')}`);
+			needed.set(edge.to, [...(needed.get(edge.to) ?? []), `${name} ${tag(edge)}`]);
+for (const [to, from] of needed)
+	console.log(`  ${contracted(to) ? 'contract' : 'none    '} ${to.padEnd(17)} ${from.join(', ')}`);
+for (const to of Object.keys(BOUNDARIES))
+	if (!needed.has(to)) console.log(`  unused   ${to}: no edge needs it`);
+for (const to of needed.keys())
+	if (!(to in BOUNDARIES)) console.log(`  unlisted ${to}: add it to BOUNDARIES`);
 
 if (process.argv.includes('--v1')) {
 	console.log('\n# D4 Recovery (v1): lose one running part, and what stops by hard serve edges');
@@ -181,7 +213,7 @@ if (process.argv.includes('--v1')) {
 		for (let grew = true; grew;) {
 			grew = false;
 			for (const [n, p] of designed)
-				if (!down.has(n) && p.edges.some((x) => x.hard && x.when === 'serve' && down.has(x.to))) {
+				if (!down.has(n) && p.edges.some((x) => x.hard && serve(x) && down.has(x.to))) {
 					down.add(n);
 					grew = true;
 				}
