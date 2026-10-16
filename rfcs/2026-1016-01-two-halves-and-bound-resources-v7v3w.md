@@ -79,6 +79,9 @@ service's, or a node.
   share there is removed first, as for any deletion. When none is, the holder withdraws it at once,
   and what depends on it is stopped as in a revocation: a holder is never held by an organization
   none of its admins can act in.
+- **The organization a share was made to gives it up by the graph of dependencies**, since its
+  admins can follow it: it is refused while something of its own depends on the share, which is
+  removed first.
 - **Every quota on a resource is its holder's**, at two levels: how much the resource gives in all,
   set when it is first bound, and how much each share may use of it, set when the share is made.
 - **An admin of the holder manages the resource**, and may remove it.
@@ -149,8 +152,6 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Whether the organization a share was made to, giving it up, is refused while something of its own
-  depends on it, since its admins can remove that first.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
