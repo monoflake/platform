@@ -161,7 +161,8 @@ or a panic.
   the highest -- so anyone with the same stores finds the same places, more copies take the next in
   line and leave the first where they are, and a store added or removed moves only the pieces it
   wins or held. A write is done when every piece the layout asks for has landed; a store down passes
-  its piece to the next in line, moved back by a repair later.
+  its piece to the next in line, moved back by a repair later. **A repair must run on its own while
+  the control plane is lost**, since until it does, data is held below its tier.
 - An executor runs code in one of two sandboxes.
 
 **Every dependency points down**: a product reaches the issuer, the tablet, the blob and the

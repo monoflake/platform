@@ -220,15 +220,8 @@ export const PARTS: Record<string, Part> = {
 				'background',
 				H,
 				'repair after a store is lost: until done, data is held below its tier',
-				'hard, so it must start from this layer or below; no part does',
 			),
-			e(
-				'?trigger',
-				'background',
-				S,
-				'tier migration and re-encryption, both readable meanwhile',
-				'what starts them',
-			),
+			e('?trigger', 'background', S, 'tier migration and re-encryption, both readable meanwhile'),
 		],
 		uses: ['placement*', 'layout*', 'keys*', 'capability*', 'compat*'],
 	},
@@ -342,8 +335,14 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 		contract:
 			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the quorum's generation keeps all but one from confirming, vuanj. Its record of what is placed where is kept on disk and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
-	'?repair': {},
-	'?trigger': {},
+	'?repair': {
+		contract:
+			"restores every piece a layout asks for, after a store is lost or a piece was passed to the next store while one was down; until it has, data is held below its tier. It must run on its own while the control plane is lost -- a requirement, not a preference -- so it is the data plane's and needs nothing above the blob to start or to work. It reads the extent's records and the places placement* computes, formats defined below. Its checks are v1's, since it answers a failure; how soon it must finish is open",
+	},
+	'?trigger': {
+		contract:
+			"moves content to a new layout when a tier's mapping changes, and to a new key when an old version of the encryption master is retired, at its own pace, every piece readable throughout. A change made by the control plane starts it -- on day one the operator's -- and it goes on in the background on its own, perhaps by the clock. It is soft: going slowly costs time, never correctness",
+	},
 	'?roster': {
 		contract:
 			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
