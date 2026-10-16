@@ -60,12 +60,18 @@ organization's. A person who wants apps of their own makes an organization, name
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.
 
-- **The first organization it is bound to holds it.** An admin binds it, and from then on it is that
-  organization's. Bound again to another organization, it is shared there: the organization it is
-  shared with may use it, and the holder both uses it and manages it.
+- **A resource is held by the first organization it is bound to**, the first time the platform sees
+  it anywhere, and stays that organization's whoever bound it: binding it is trusting the
+  organization with it. An admin is only who is allowed to act, since a user holds nothing; an admin
+  who leaves loses their control of the organization and nothing else.
+- **A resource the platform already knows is shared from its holder to another organization**,
+  never brought in by a user. A user who is an admin of both makes the share. The organization it is
+  shared with may use it; the holder both uses it and manages it.
 - **Every quota on a resource is its holder's**, at two levels: how much the resource gives in all,
-  and how much each organization it is shared with may use of it.
+  set when it is first bound, and how much each share may use of it, set when the share is made.
 - **An admin of the holder manages the resource**, and may remove it.
+- **An organization has at least one admin.** The last admin leaving is the organization dissolved,
+  done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
 - **An organization runs nothing until a resource is bound to it or shared with it.** The platform
   lends none of its own.
 - **A resource bound to more than one organization keeps them apart as well as the platform can**,
@@ -95,8 +101,6 @@ Open, for the discussion that follows:
   the clock, placement.
 - Where an admin's credential for a third-party account is kept, and what it may do.
 - How the operator's allowance, RFC vuanj, relates to the quotas a holder sets on its resources.
-- What follows when the person who brought a resource leaves the organization holding it, since
-  they may still reach it; nothing records who brought one.
 - How a buyer's organization is charged for what the platform's reserved organization shares with
   it.
 - Which vendor primitives are borrowed, each behind which contract.
