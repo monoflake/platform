@@ -74,6 +74,11 @@ service's, or a node.
   set against abuse, so that no holder is asked again and again for what it holds.
 - **A share is ended by either side alone**, each changing only its own configuration: the holder
   withdraws it, and the organization it was shared with gives it up.
+- **The holder withdraws a share by the graph of dependencies while someone can follow it.** When an
+  admin of the holder is also an admin of the organization it is shared with, what depends on the
+  share there is removed first, as for any deletion. When none is, the holder withdraws it at once,
+  and what depends on it is stopped as in a revocation: a holder is never held by an organization
+  none of its admins can act in.
 - **Every quota on a resource is its holder's**, at two levels: how much the resource gives in all,
   set when it is first bound, and how much each share may use of it, set when the share is made.
 - **An admin of the holder manages the resource**, and may remove it.
@@ -144,8 +149,8 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Whether ending a share while something depends on it is refused, as a deletion is, or stops what
-  depends on it, as a revocation does.
+- Whether the organization a share was made to, giving it up, is refused while something of its own
+  depends on it, since its admins can remove that first.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
