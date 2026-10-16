@@ -65,7 +65,12 @@ carried in one, a change would not reach the capabilities still alive.
   first. **Where a block is, it computes** from the block's hash and the scope's stores, and keeps
   only the exceptions: a block passed to the next store while one was down, until the repair moves
   it back. It stands on layer -3 directly, as the backing does, since a tablet stands on the blob
-  and the blob on it.
+  and the blob on it. **An extent is a scope's**, since a block is sealed with the scope's key, so
+  files of two scopes can never be packed into one, deduplication stays within an owner, and a scope
+  is deleted whole; how many scopes' extents share a quorum group is a lower layer's. **The extent
+  repairs**: knowing every block and every exception, it restores what a layout asks for after a
+  store is lost or a block was passed on, and since blocks are sealed it needs no key to do it. It
+  must repair on its own while the control plane is lost, RFC vuanj.
 - **`host`**: a place that runs sandboxes. A host says which sandboxes it offers -- a V8 isolate,
   WebAssembly -- and what they can reach, in the vocabulary of capabilities RFC 49qyg declares needs
   in: `network` and whatever comes after. The executor hands each call to a host that offers what it
@@ -124,6 +129,9 @@ does not change for it.
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
   leaves the old under its own; retiring an old version re-encrypts what still uses it.
+- **A migration is the blob's own work**: to a new layout when a tier's mapping changes, to a new
+  key when an old version is retired. The control plane starts it, as a caller, and the clock paces
+  it; every piece stays readable throughout, and going slowly costs time, never correctness.
 - **The root private key is held by the platform's administrator.** Lost, a new pair is made and
   every node deployed again with its public key; no data is lost.
 - **The two masters are kept as a key group for recovery alone**: each split into three shares,
@@ -143,6 +151,7 @@ Open, for the discussion that follows:
 - The tiers: how many, their names, and what each maps to.
 - How big a block is, and how small a file is before it is packed.
 - How stores are added to a scope, which is to come down from what the layers above need.
+- How many scopes' extents share one quorum group.
 - How often the operator rotates the intermediate key, and how long a working key lives.
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place.

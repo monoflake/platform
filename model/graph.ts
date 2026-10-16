@@ -216,12 +216,12 @@ export const PARTS: Record<string, Part> = {
 			e('root', 'start', H, 'the masters a scope key and salt are derived from'),
 			KEY(),
 			e(
-				'?repair',
+				'extent',
 				'background',
 				H,
 				'repair after a store is lost: until done, data is held below its tier',
 			),
-			e('?trigger', 'background', S, 'tier migration and re-encryption, both readable meanwhile'),
+			e('?clock', 'background', S, 'paces a migration the control plane started, b8f35'),
 		],
 		uses: ['placement*', 'layout*', 'keys*', 'capability*', 'compat*'],
 	},
@@ -262,13 +262,6 @@ export const PARTS: Record<string, Part> = {
 			REPLACED,
 			e('backing', 'serve', H, "a block's place from the scope's stores"),
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
-			e(
-				'?scope-or-global',
-				'start',
-				H,
-				'what one extent covers',
-				'gap 2: per scope or one for all',
-			),
 		],
 		uses: ['quorum*', 'placement*', 'compat*'],
 	},
@@ -314,8 +307,19 @@ export const PARTS: Record<string, Part> = {
  * dimensions require of it through the parts that need it. Without a contract an edge to it is a
  * violation; with one it is an assumption the next layer down must keep. See `scope.md`.
  */
-export const BOUNDARIES: Record<string, { contract?: string }> = {
+export interface Boundary {
+	contract?: string;
+	/** Who keeps the contract, once the layer beneath has said; absent while it is undecided. */
+	keptBy?: string;
+	/** Decided now, since a mistake is written into data; by hand on day one; or later. */
+	triage?: 'decided now' | 'by hand on day one' | 'later';
+}
+
+export const BOUNDARIES: Record<string, Boundary> = {
 	'?deployer': {
+		keptBy:
+			'the operator, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every part can stand on none of them',
+		triage: 'by hand on day one',
 		contract:
 			"installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a part may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
 	},
@@ -335,15 +339,10 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 		contract:
 			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the quorum's generation keeps all but one from confirming, vuanj. Its record of what is placed where is kept on disk and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
-	'?repair': {
-		contract:
-			"restores every piece a layout asks for, after a store is lost or a piece was passed to the next store while one was down; until it has, data is held below its tier. It must run on its own while the control plane is lost -- a requirement, not a preference -- so it is the data plane's and needs nothing above the blob to start or to work. It reads the extent's records and the places placement* computes, formats defined below. Its checks are v1's, since it answers a failure; how soon it must finish is open",
-	},
-	'?trigger': {
-		contract:
-			"moves content to a new layout when a tier's mapping changes, and to a new key when an old version of the encryption master is retired, at its own pace, every piece readable throughout. A change made by the control plane starts it -- on day one the operator's -- and it goes on in the background on its own, perhaps by the clock. It is soft: going slowly costs time, never correctness",
-	},
 	'?roster': {
+		keptBy:
+			'the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35',
+		triage: 'by hand on day one',
 		contract:
 			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
 	},
@@ -351,13 +350,12 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 		contract:
 			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
 	},
-	'?scope-or-global': {},
 	'?source': {},
 };
 
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
 export const GLOBAL_OPEN = [
-	'control plane: a caller of scope and backing -- creating a scope, setting its allowance, adding a store -- never a need of theirs; where it stands is undiscussed',
+	'control plane: a caller of scope, backing and blob -- creating a scope, setting its allowance, adding a store, starting a migration of layout or key -- never a need of theirs; where it stands is undiscussed',
 	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's",
 ];
 

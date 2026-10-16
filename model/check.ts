@@ -201,8 +201,11 @@ for (const [name, part] of designed)
 	for (const edge of part.edges)
 		if (!known(edge.to))
 			needed.set(edge.to, [...(needed.get(edge.to) ?? []), `${name} ${tag(edge)}`]);
-for (const [to, from] of needed)
-	console.log(`  ${contracted(to) ? 'contract' : 'none    '} ${to.padEnd(17)} ${from.join(', ')}`);
+for (const [to, from] of needed) {
+	const b = BOUNDARIES[to];
+	console.log(`  ${contracted(to) ? 'contract' : 'none    '} ${to.padEnd(14)} ${from.join(', ')}`);
+	console.log(`           kept by: ${b?.keptBy ? `${b.keptBy} [${b.triage}]` : 'undecided'}`);
+}
 for (const to of Object.keys(BOUNDARIES))
 	if (!needed.has(to)) console.log(`  unused   ${to}: no edge needs it`);
 for (const to of needed.keys())
