@@ -145,11 +145,14 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   any two of which restore it and so make the third again, held in three places. A part starts from
   its deployed secrets and never waits for a share; the shares are used only when a master is lost
   with what it was deployed to, since a master lost is every scope's data lost.
+- **What the root holds is kept two ways.** The root private key and the masters' shares are held
+  by the operator, offline. Everything else is kept on the platform's own vendor accounts, as the
+  secrets deployed with the parts that read them -- never in a repository, and never in a store the
+  platform itself runs, since what runs needs them to start.
 
 Open, for the discussion that follows:
 
-- Where the source of what is deployed from the root is kept, and how it reaches each part.
-- Where the three shares of each master are held.
+- Which three places, all offline and the operator's, hold a master's shares.
 - What the control plane is and how far it reaches, the name reserved for it.
 - Which vendor primitive the anchor stands on, and which the backing does, and how a scope's salt
   and key are kept in it.

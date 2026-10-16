@@ -360,7 +360,13 @@ export const BOUNDARIES: Record<string, Boundary> = {
 		contract:
 			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
 	},
-	'?source': {},
+	'?source': {
+		keptBy:
+			"the operator, standing on the ground: the root private key and the masters' shares held offline by hand, and the rest deployed by the operator as secrets on the platform's own vendor accounts, b8f35",
+		triage: 'by hand on day one',
+		contract:
+			"what the root holds reaches each part that reads it: the root public key every part in both halves, the organization's inside what the platform deploys there; the intermediate's key and certificate, the masters, the platform's own stores and their secrets, and the roster of the platform's own vendor accounts, the platform's half alone. All but the root private key and the masters' shares, held offline, is kept on the platform's own vendor accounts as secrets deployed with the parts that read them, through a vendor contract the platform writes, never in a repository or in a store the platform runs, which needs them to start. A change is the operator's, by hand, and deploys again what reads it. It is the control plane's: while it is lost, every part keeps what it was given",
+	},
 };
 
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */

@@ -152,6 +152,8 @@ otherwise.
 
 Open, for the discussion that follows:
 
+- Where a scope's salt and key are derived, since the masters span organizations and are deployed
+  only to the platform's half, while the blob that seals with them runs in the organization's.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
