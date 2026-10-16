@@ -213,6 +213,14 @@ for (const to of Object.keys(BOUNDARIES))
 for (const to of needed.keys())
 	if (!(to in BOUNDARIES)) console.log(`  unlisted ${to}: add it to BOUNDARIES`);
 
+// The completion rule of theory, `spec/process.md`: every boundary is kept by someone and sorted.
+const unsorted = [...needed.keys()].filter(
+	(to) => !BOUNDARIES[to]?.keptBy || !BOUNDARIES[to]?.triage,
+);
+console.log(
+	`\n# Completion\n  ${unsorted.length ? `not yet kept and sorted: ${unsorted.join(', ')}` : 'every boundary is kept and sorted'}`,
+);
+
 if (process.argv.includes('--v1')) {
 	console.log('\n# D4 Recovery (v1): lose one running part, and what stops by hard serve edges');
 	for (const [lost] of designed) {

@@ -98,10 +98,28 @@ contract, by `node model/check.ts`. D4 recovery models a failure and is v1's, ru
 are the first a later version takes in; a replacement that fails, and rolling it back; replacing
 more than one part at once; performance and cost; an operator's mistake.
 
+**Each contract is sorted** into one of three: decided now, since a mistake is written into data
+and cannot be undone; kept by hand on day one, with its command; or left for later, with what brings
+it back. The boundaries' sorting is in `model/graph.ts`, and `node model/check.ts` reports any not
+yet sorted.
+
+| Contract        | Sorted             |
+| --------------- | ------------------ |
+| `?deployer`     | by hand on day one |
+| `?roster`       | by hand on day one |
+| `?source`       | by hand on day one |
+| `?entry`        | by hand on day one |
+| `?runner`       | by hand on day one |
+| `?intermediate` | by hand on day one |
+| `?egress`       | later              |
+| `?clock`        | later              |
+
+**Decided now**, before the first byte is written, since each is written into every piece of data
+and a mistake in it is never undone: how a scope's salt is derived, the hash content is named by,
+and the format a block is sealed in, RFC b8f35. Which algorithm and format each is, is chosen in
+construction.
+
 Open, for v0:
 
-- Sorting each contract, at the layer that keeps it, into: decided now, since a mistake is written
-  into data and cannot be undone; kept by hand on day one, with its command; or left for later, with
-  what brings it back.
 - A check that nothing at layer 0 or below has an edge to what the platform runs as an owner, so
   the graph stays clean while the platform runs on itself, RFC vuanj.
