@@ -35,9 +35,9 @@ to what the platform is made of:
 **The platform runs on itself wherever an ordinary owner could.** What the platform runs is of
 three kinds:
 
-- **What an ordinary scope's permissions are enough for**, the console among them, is deployed by an
-  account of the platform's that holds no privilege, down the path every owner takes. It may be given
-  a larger allowance, which is a value, not a privilege.
+- **What an ordinary scope's permissions are enough for**, the console among them, is deployed in
+  an organization of the platform's that holds no privilege, down the path every owner takes. It may
+  be given a larger allowance, which is a value, not a privilege.
 - **What needs a privilege no owner holds**, reaching across scopes, never shares the owners' path,
   so nothing on that path has to tell a privileged request from another, or can let one leak. It
   runs apart, beneath that path. None is known yet.
@@ -60,7 +60,8 @@ dataset's path pointing at a hash -- shares a pattern with it, never a dependenc
 | `blob`     | Bytes by the hash of their content: put, get, delete               |
 | `executor` | Runs a function's code on an input, in the sandbox its kind allows |
 
-**A part knows a scope and never a user.** Accounts, logins and teams are above; which user owns
+**A part knows a scope and never a user.** A scope is an organization's, RFC v7v3w; accounts and
+logins are above; which user owns
 which scope is not a part's to know. Every tablet and every blob belongs to exactly one scope and
 never crosses it, so a product with a fault cannot reach another scope, a scope's usage is counted
 where it is kept, and a scope is deleted whole. A scope's salt and key, and the stores its bytes go
@@ -194,7 +195,8 @@ reaches the scope's backing and the extent, below it, RFC b8f35.
 
 Open, for the discussion that follows:
 
-- Where each part runs, on the edge, on the nodes or in an object store, and on which vendor.
+- Which half each part belongs to, where RFC v7v3w has not said, and which vendor primitive each
+  stands on.
 - Where what control held stands -- the scopes, the bindings and the functions' declarations the
   issuer reads -- now that control is taken apart by RFC b8f35.
 - How a private link's reader proves they may read it: the authentication of people, not parts.

@@ -204,7 +204,9 @@ for (const [name, part] of designed)
 for (const [to, from] of needed) {
 	const b = BOUNDARIES[to];
 	console.log(`  ${contracted(to) ? 'contract' : 'none    '} ${to.padEnd(14)} ${from.join(', ')}`);
-	console.log(`           kept by: ${b?.keptBy ? `${b.keptBy} [${b.triage}]` : 'undecided'}`);
+	console.log(
+		`           kept by: ${b?.keptBy ? `${b.keptBy}${b.triage ? ` [${b.triage}]` : ''}` : 'undecided'}`,
+	);
 }
 for (const to of Object.keys(BOUNDARIES))
 	if (!needed.has(to)) console.log(`  unused   ${to}: no edge needs it`);

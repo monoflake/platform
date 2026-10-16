@@ -75,6 +75,7 @@ carried in one, a change would not reach the capabilities still alive.
   WebAssembly -- and what they can reach, in the vocabulary of capabilities RFC 49qyg declares needs
   in: `network` and whatever comes after. The executor hands each call to a host that offers what it
   declared. **A sandbox is the single isolated unit a host runs a call in**; a host holds many.
+  A scope's hosts and stores are the resources its organization's members lend it, RFC v7v3w.
 
 **A library is no layer.** Shared code is not a dependency: each part that needs a library runs its
 own copy of it, so it is no node in the graph of layers and may be used at any of them. **A library

@@ -132,12 +132,12 @@ with no cycle**, so a first deployment and a deletion always have an order. **Th
 the same graph**: a dataset or a database is refused deletion while an app is bound to it, naming
 the app, so an owner deletes from the leaves inward. How a scope itself is deleted is RFC vuanj's.
 
-**No app calls an app of another owner.** A call across scopes is refused when deployed, in a state
-of its own whose reason is said as it is: calls across owners could close a cycle that no single
-scope can see, and no owner could order a deletion across one. An owner who wants another's app
-reaches it as a third party does: the other owner exports a public API, and the caller reaches it
-over the network as an `effect`, its `unavailable` the caller's to handle -- as any dependency on
-someone else should be.
+**No app calls an app of another organization**, the owner of a scope, RFC v7v3w. A call across
+scopes is refused when deployed, in a state of its own whose reason is said as it is: calls across
+organizations could close a cycle that no single scope can see, and no organization could order a
+deletion across one. An organization that wants another's app reaches it as a third party does: the
+other exports a public API, and the caller reaches it over the network as an `effect`, its
+`unavailable` the caller's to handle -- as any dependency on someone else should be.
 
 **A parameter's type is described in WIT**, the WebAssembly component model's interface language, or
 a subset of it taken when this lands: it was made for typed exports and imports between parts
