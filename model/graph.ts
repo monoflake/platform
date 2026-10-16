@@ -23,6 +23,8 @@ export interface Edge {
 	 * carried unread is no one's to name here: a tablet holding another part's rows reads none of them.
 	 */
 	reads?: string;
+	/** Whether this edge is how its part is itself replaced by a new version, D3. */
+	replaces?: boolean;
 }
 
 export interface Part {
@@ -51,6 +53,10 @@ const e = (to: string, when: When, hard: boolean, why: string, open?: string): E
 });
 const H = true;
 const S = false;
+const REPLACED: Edge = {
+	...e('?deployer', 'deploy', H, 'replaced by a new version while the rest runs'),
+	replaces: true,
+};
 const KEY = (to = 'root') =>
 	e(to, 'start', H, 'the root public key, deployed, to verify capabilities');
 
@@ -58,7 +64,10 @@ export const PARTS: Record<string, Part> = {
 	app: {
 		layer: 1,
 		edges: [
-			e('function', 'deploy', H, 'an app is deployed as functions, its types checked'),
+			{
+				...e('function', 'deploy', H, 'an app is deployed as functions, its types checked'),
+				replaces: true,
+			},
 			e('function', 'serve', H, 'it runs as functions'),
 			e('store', 'serve', H, 'the datasets it is bound to'),
 			e('database', 'serve', H, 'the database bound to it'),
@@ -68,6 +77,10 @@ export const PARTS: Record<string, Part> = {
 	console: {
 		layer: 1,
 		edges: [
+			{
+				...e('function', 'deploy', H, 'an app like any other, deployed as functions'),
+				replaces: true,
+			},
 			e('function', 'serve', H, 'an app like any other'),
 			e('store', 'serve', H, 'idem'),
 			e('database', 'serve', H, 'idem'),
@@ -78,6 +91,7 @@ export const PARTS: Record<string, Part> = {
 	store: {
 		layer: 0,
 		edges: [
+			REPLACED,
 			e('tablet', 'serve', H, 'its metadata per scope'),
 			e('blob', 'serve', H, 'content'),
 			e('scope', 'serve', H, 'a dataset belongs to one'),
@@ -97,6 +111,7 @@ export const PARTS: Record<string, Part> = {
 	database: {
 		layer: 0,
 		edges: [
+			REPLACED,
 			e('tablet', 'serve', H, 'a database is a tablet, its directory one'),
 			e('scope', 'serve', H, 'ids belong to one'),
 			KEY(),
@@ -106,6 +121,7 @@ export const PARTS: Record<string, Part> = {
 	function: {
 		layer: 0,
 		edges: [
+			REPLACED,
 			e('issuer', 'serve', H, "a call's capabilities"),
 			e('executor', 'serve', H, 'runs the code'),
 			e('tablet', 'serve', H, 'calls and status(id), queues, schedules, the derive index'),
@@ -140,6 +156,7 @@ export const PARTS: Record<string, Part> = {
 	scope: {
 		layer: -1,
 		edges: [
+			REPLACED,
 			e('tablet', 'serve', H, "configuration and allowance in the scope's own tablet"),
 			e('anchor', 'serve', H, 'exists while its anchor row does'),
 		],
@@ -148,6 +165,7 @@ export const PARTS: Record<string, Part> = {
 	issuer: {
 		layer: -1,
 		edges: [
+			REPLACED,
 			e('tablet', 'serve', H, "reads the scope's grants and allowance, in its own format, vuanj"),
 			e(
 				'?intermediate',
@@ -163,6 +181,7 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -1,
 		edges: [
+			REPLACED,
 			e('backing', 'start', H, "its copies' stores and their grades"),
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
 			e('blob', 'background', S, 'archives its log and snapshots'),
@@ -188,6 +207,7 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -1,
 		edges: [
+			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
 			e('extent', 'serve', H, 'which blocks a content is made of'),
 			e(
@@ -219,6 +239,7 @@ export const PARTS: Record<string, Part> = {
 	executor: {
 		layer: -1,
 		edges: [
+			REPLACED,
 			e('host', 'serve', H, 'hands each call to a host'),
 			e('blob', 'serve', H, 'code by hash, the first time on a host; kept after'),
 			e(
@@ -243,6 +264,7 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -2,
 		edges: [
+			REPLACED,
 			e('anchor', 'serve', H, "where a scope's backing is"),
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
 			e('root', 'start', H, "the platform's own stores and their secrets"),
@@ -254,6 +276,7 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -2,
 		edges: [
+			REPLACED,
 			e('backing', 'serve', H, "a block's place from the scope's stores"),
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
 			e(
@@ -268,7 +291,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	host: {
 		layer: -2,
-		edges: [e('vendor', 'serve', H, 'runs sandboxes on a machine or a runtime')],
+		edges: [REPLACED, e('vendor', 'serve', H, 'runs sandboxes on a machine or a runtime')],
 		uses: ['vocabulary*', 'compat*'],
 	},
 
@@ -276,6 +299,7 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -3,
 		edges: [
+			REPLACED,
 			e('vendor', 'serve', H, "its group's copies on vendors' stores"),
 			e('root', 'start', H, "the grades of the platform's stores"),
 		],
@@ -285,13 +309,16 @@ export const PARTS: Record<string, Part> = {
 	root: {
 		layer: -4,
 		edges: [
-			e(
-				'?source',
-				'deploy',
-				H,
-				'what it holds reaches each part',
-				'where the source is kept and how it is delivered, b8f35',
-			),
+			{
+				...e(
+					'?source',
+					'deploy',
+					H,
+					'what it holds reaches each part',
+					'where the source is kept and how it is delivered, b8f35',
+				),
+				replaces: true,
+			},
 		],
 		uses: [],
 	},
@@ -305,6 +332,7 @@ export const PARTS: Record<string, Part> = {
  * violation; with one it is an assumption the next layer down must keep. See `scope.md`.
  */
 export const BOUNDARIES: Record<string, { contract?: string }> = {
+	'?deployer': {},
 	'?entry': {
 		contract:
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
@@ -326,7 +354,6 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
 export const GLOBAL_OPEN = [
 	'compat: who knows every running build to compute the write version, wnqvu',
-	'deploy: no part has a deploy edge of its own; who replaces a part below layer 0 is unwritten',
 	'control plane: a caller of scope and backing -- creating a scope, setting its allowance, adding a store -- never a need of theirs; where it stands is undiscussed',
 	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's",
 ];

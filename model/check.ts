@@ -163,23 +163,25 @@ dimension(
 const crossing = designed.flatMap(([n, p]) =>
 	p.edges.filter((x) => x.reads !== undefined).map((x) => ({ from: n, edge: x })),
 );
+// What replaces a part is the edge marked `replaces`; an edge it deploys others by says nothing.
+const d3 = atBoundaries((x) => x.replaces === true);
 dimension(
 	'D3 Upgrade',
 	'While the rest runs, can one part be replaced by a new version?',
 	[
 		...designed
-			.filter(([, p]) => !p.edges.some((x) => x.when === 'deploy'))
-			.map(([n]) => `${n}: no deploy edge, so nothing says what replaces it`),
+			.filter(([, p]) => !p.edges.some((x) => x.replaces))
+			.map(([n]) => `${n}: nothing says what replaces it`),
 		...designed.flatMap(([n, p]) =>
-			p.edges
-				.filter((x) => x.when === 'deploy' && x.to === n)
-				.map(() => `${n}: replacing it needs itself`),
+			p.edges.filter((x) => x.replaces && x.to === n).map(() => `${n}: replacing it needs itself`),
 		),
+		...d3.violations,
 		...crossing
 			.filter(({ from }) => !PARTS[from].uses.includes('compat*'))
 			.map(({ from, edge }) => `${from} reads ${edge.reads}'s format without compat*`),
 	],
 	GLOBAL_OPEN.map((g) => `open: ${g}`),
+	d3.assumed,
 );
 
 dimension(
