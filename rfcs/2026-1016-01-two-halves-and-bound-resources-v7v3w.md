@@ -109,8 +109,11 @@ operates third-party accounts with.
   certifies for one week and that is renewed every week. So an organization runs on its own for up
   to a week while the platform's half cannot be reached, and only its configuration cannot change;
   the platform takes over again when it returns.
-- **Nothing is revoked at once.** A certificate not renewed, and the organization's configuration
-  withdrawn, is how an organization is revoked, on the platform's own cycle.
+- **An organization cannot revoke; the operator can, at once.** An organization is held on the
+  platform and does not manage it, so its own deletion waits for its certificate to run out, below.
+  The operator manages the platform: revoking a user account, the operator revokes its
+  organization's certificate at once, never renews it, and removes the user account and the
+  organization.
 - **An organization is deleted on request, at the end of its certificate.** The last admin leaving
   asks for it once everything in the organization has been removed and stopped, from the leaves
   inward, RFC vuanj; it is carried out when the current certificate runs out, within seven days, and
@@ -125,8 +128,12 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Whether the operator's revocation, RFC vuanj, waits for the certificate to run out as a deletion
-  asked for does.
+- How a revocation at once reaches what checks capabilities locally, since a chain is checked
+  against the root's public key and the platform is never asked. Proposed: every share to the
+  organization withdrawn from the copies its holders run from, and what the platform deployed on the
+  organization's own resources removed through the credentials it holds.
+- What becomes of the other organizations a revoked user account belongs to, among them one it is
+  the last admin of.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
