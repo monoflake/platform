@@ -43,7 +43,8 @@ serves it without translation:
   later; a read with a cursor is promised to see at least what that cursor names.
 - **Atomicity holds within one database.** Nothing spans two, so an app keeps what changes together
   in one, and splits along its own lines what does not -- a database per conversation, per user --
-  creating as many as it needs.
+  creating as many as it needs. **Creating one is the data plane's**, as writing to one is: it goes
+  on while the control plane is lost.
 
 **A database is known by an id that never changes**, and an owner sees it by **one name**,
 `(path)/(database)`, a key split by `/`, which points at the id. Moving the name changes nothing

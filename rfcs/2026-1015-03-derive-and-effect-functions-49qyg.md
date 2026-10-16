@@ -143,7 +143,9 @@ Open, for the discussion that follows:
 
 - How a `keyed` daemon's own credentials reach it, an account's login: env is the same for every
   copy of a deployment, so these may be what it is started with rather than env.
-- How a daemon is started, addressed and ended, given that any may vanish at any moment.
+- How a daemon is started, addressed and ended, given that any may vanish at any moment; a `keyed`
+  one, exactly one per key, has the shape of a tablet's writer, placed at run time with at least one
+  promised and the rest fenced, RFC vuanj.
 - Every capability past the kind and the network -- where a function's requests leave from, how
   long it may run, its resources -- each of which is at once a need, an allowance and what the
   platform can give, and is entered in the vocabulary when it is taken up.

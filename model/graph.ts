@@ -92,6 +92,7 @@ export const PARTS: Record<string, Part> = {
 		layer: 0,
 		edges: [
 			REPLACED,
+			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
 			e('tablet', 'serve', H, 'its metadata per scope'),
 			e('blob', 'serve', H, 'content'),
 			e('scope', 'serve', H, 'a dataset belongs to one'),
@@ -112,6 +113,7 @@ export const PARTS: Record<string, Part> = {
 		layer: 0,
 		edges: [
 			REPLACED,
+			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
 			e('tablet', 'serve', H, 'a database is a tablet, its directory one'),
 			e('scope', 'serve', H, 'ids belong to one'),
 			KEY(),
@@ -122,6 +124,7 @@ export const PARTS: Record<string, Part> = {
 		layer: 0,
 		edges: [
 			REPLACED,
+			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
 			e('issuer', 'serve', H, "a call's capabilities"),
 			e('executor', 'serve', H, 'runs the code'),
 			e('tablet', 'serve', H, 'calls and status(id), queues, schedules, the derive index'),
@@ -193,13 +196,7 @@ export const PARTS: Record<string, Part> = {
 				'if snapshots live only in the blob, archiving falling behind is not soft: how long the quorum keeps its log decides',
 			),
 			KEY(),
-			e(
-				'?runner',
-				'start',
-				H,
-				'a writer and read copies are processes somewhere; who places them and who decides a handover',
-				'where parts run is open, vuanj',
-			),
+			e('?runner', 'start', H, 'its writer and read copies are placed, and a handover decided'),
 		],
 		uses: ['quorum*', 'sqlite*', 'capability*', 'compat*'],
 	},
@@ -242,13 +239,7 @@ export const PARTS: Record<string, Part> = {
 			REPLACED,
 			e('host', 'serve', H, 'hands each call to a host'),
 			e('blob', 'serve', H, 'code by hash, the first time on a host; kept after'),
-			e(
-				'?roster',
-				'start',
-				H,
-				'which hosts exist, what each offers',
-				'gap 1: anchor is to hold scopes alone, root changes by an operator',
-			),
+			e('?roster', 'start', H, 'which hosts exist, what each offers'),
 			e(
 				'?egress',
 				'serve',
@@ -334,7 +325,7 @@ export const PARTS: Record<string, Part> = {
 export const BOUNDARIES: Record<string, { contract?: string }> = {
 	'?deployer': {
 		contract:
-			"installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
+			"installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a part may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
 	},
 	'?entry': {
 		contract:
@@ -345,10 +336,16 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept on disk, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
 	},
 	'?intermediate': {},
-	'?runner': {},
+	'?runner': {
+		contract:
+			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the quorum's generation keeps all but one from confirming, vuanj. Its record of what is placed where is kept on disk and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
+	},
 	'?repair': {},
 	'?trigger': {},
-	'?roster': {},
+	'?roster': {
+		contract:
+			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
+	},
 	'?egress': {},
 	'?scope-or-global': {},
 	'?source': {},

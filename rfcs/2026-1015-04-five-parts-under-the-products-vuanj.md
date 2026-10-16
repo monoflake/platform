@@ -106,6 +106,9 @@ follows:
 - **A writer handed over** is fenced by the quorum: the new one catches up and is made writer at the
   next generation, and the old can confirm nothing after; writes wait the few seconds it takes, and
   reads go on from the copies.
+- **Where a writer runs is placed at run time**, since a tablet is created while an app runs, never
+  only at a deployment. What places it promises at least one writer and never exactly one: two may
+  run for a moment, and the quorum's generation keeps all but one from confirming.
 
 A user's tablet has one copy unless its owner asks for more, as data in the storage does.
 
