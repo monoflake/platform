@@ -33,6 +33,8 @@ export interface Part {
 	kind?: 'ground' | 'operator';
 	/** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
 	keeps?: boolean;
+	/** Whether the platform runs it as an owner, in an organization of its own, RFC vuanj. */
+	asOwner?: boolean;
 	edges: Edge[];
 	uses: string[];
 }
@@ -76,6 +78,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	console: {
 		layer: 1,
+		asOwner: true,
 		edges: [
 			{
 				...e('function', 'deploy', H, 'an app like any other, deployed as functions'),

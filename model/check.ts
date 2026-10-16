@@ -94,6 +94,13 @@ for (const [name, part] of designed) {
 for (const [name, lib] of Object.entries(LIBRARIES))
 	for (const use of lib.uses)
 		if (LIBRARIES[use] === undefined) rules.push(`${name} uses ${use}: a part`);
+// The platform runs on itself only while the graph is clean: nothing at layer 0 or below has an edge,
+// hard or soft, to what it runs as an owner, RFC vuanj.
+for (const [name, part] of designed)
+	if (part.layer <= 0)
+		for (const edge of part.edges)
+			if (PARTS[edge.to]?.asOwner)
+				rules.push(`runs as an owner, needed below: ${line(name, edge)}`);
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);
@@ -101,7 +108,7 @@ for (const c of cycles((n) => LIBRARIES[n]?.uses ?? [], Object.keys(LIBRARIES)))
 	rules.push(`library cycle: ${c}`);
 dimension(
 	'Rules',
-	'Does every hard edge point down, and every library use only libraries?',
+	'Does every hard edge point down, every library use only libraries, and nothing below need an owner?',
 	rules,
 	[`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`],
 );

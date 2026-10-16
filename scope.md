@@ -89,7 +89,9 @@ holds by composition, without a complete model at any point between.
 The correct path alone: no failure is modeled.
 
 **Rules beneath every dimension.** A `hard` edge points to its own layer or below; a `soft` edge
-may point up. A library uses only libraries.
+may point up. A library uses only libraries. Nothing at layer 0 or below has an edge, `hard` or
+`soft`, to what the platform runs as an owner, so the graph stays clean while the platform runs on
+itself, RFC vuanj.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
 contract, by `node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
@@ -118,8 +120,3 @@ yet sorted.
 and a mistake in it is never undone: how a scope's salt is derived, the hash content is named by,
 and the format a block is sealed in, RFC b8f35. Which algorithm and format each is, is chosen in
 construction.
-
-Open, for v0:
-
-- A check that nothing at layer 0 or below has an edge to what the platform runs as an owner, so
-  the graph stays clean while the platform runs on itself, RFC vuanj.
