@@ -107,6 +107,11 @@ declaration stays in its scope.
 A user appears this low only as configuration: a store given to their own scope. The parts' logic
 does not change for it.
 
+**Whose a record is and where it is kept are two questions.** A record an owner's act brought
+about -- a dataset or database opened in their scope, a schedule declared, a tablet placed -- is the
+scope's: counted against its allowance and deleted with it, even when it is kept beneath the scope,
+as its backing is. The scope itself -- its row in the anchor, its allowance -- is the platform's.
+
 **The root is no running service, so it has no uptime to lose.** What it holds is of two kinds:
 
 | Held                                        | Used by                                    | Where                   |
@@ -157,3 +162,5 @@ Open, for the discussion that follows:
   authority -- may rotate the intermediate key unattended in the operator's place.
 - How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
   failure, and so v1's.
+- Whether a name that must be unique across scopes, such as an app's domain, is the platform's
+  record, and whether it is kept in the anchor or beside it.

@@ -103,3 +103,5 @@ Open, for v0:
 - Sorting each contract, at the layer that keeps it, into: decided now, since a mistake is written
   into data and cannot be undone; kept by hand on day one, with its command; or left for later, with
   what brings it back.
+- A check that nothing at layer 0 or below has an edge to what the platform runs as an owner, so
+  the graph stays clean while the platform runs on itself, RFC vuanj.

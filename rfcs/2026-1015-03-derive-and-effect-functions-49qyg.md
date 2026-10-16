@@ -128,7 +128,9 @@ functions it calls. Deploying A is refused when what it calls does not match wha
 number of parameters and their types -- never their values, which are A's business. Deploying B is
 refused when it would take away or change a function something still calls, and deleting B is
 refused while anything calls it, naming the caller: the callers go first. **The calls form a graph
-with no cycle**, so a first deployment and a deletion always have an order.
+with no cycle**, so a first deployment and a deletion always have an order. **The bindings are in
+the same graph**: a dataset or a database is refused deletion while an app is bound to it, naming
+the app, so an owner deletes from the leaves inward. How a scope itself is deleted is RFC vuanj's.
 
 **No app calls an app of another owner.** A call across scopes is refused when deployed, in a state
 of its own whose reason is said as it is: calls across owners could close a cycle that no single
@@ -153,8 +155,6 @@ Open, for the discussion that follows:
   platform can give, and is entered in the vocabulary when it is taken up.
 - Which imports a `derive` is denied in WebAssembly -- files, the network, the clock, entropy and the rest -- examined one by one when it is built.
 - Whether an exported function carries a version, so one can change while its callers move.
-- Whether the same graph holds the bindings too, a dataset or a database refusing deletion while an
-  app is bound to it.
 - Whether a change in storage starts a function, perhaps by putting a message in a queue.
 - Every bound: the `derive` budget, the longest wait for a lock and the longest hold, how long an id
   lives, how long an outcome is looked up before it is `unknown`, and how much a dead-letter list

@@ -48,7 +48,8 @@ serves it without translation:
 
 **A database is known by an id that never changes**, and an owner sees it by **one name**,
 `(path)/(database)`, a key split by `/`, which points at the id. Moving the name changes nothing
-else; **policy and binding belong to the id**. Deleting the name deletes the database and its id.
+else; **policy and binding belong to the id**. Deleting the name deletes the database and its id,
+refused while an app is bound to it, RFC 49qyg.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second
@@ -75,3 +76,4 @@ Open, for the discussion that follows:
 - Everything beneath the contract past what RFC vuanj settles for the tablet.
 - The form of results and the limits on one query.
 - The `analytical` kind's table definition and its query dialect, when something needs it.
+- Whether a database, as a dataset is, may be deleted only while empty.

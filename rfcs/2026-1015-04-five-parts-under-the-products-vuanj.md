@@ -32,6 +32,21 @@ to what the platform is made of:
 | -3        | The anchor, the one global state, on a vendor's primitive, RFC b8f35   |
 | -4        | The root, which depends on nothing and everything needs, RFC b8f35     |
 
+**The platform runs on itself wherever an ordinary owner could.** What the platform runs is of
+three kinds:
+
+- **What an ordinary scope's permissions are enough for**, the console among them, is deployed by an
+  account of the platform's that holds no privilege, down the path every owner takes. It may be given
+  a larger allowance, which is a value, not a privilege.
+- **What needs a privilege no owner holds**, reaching across scopes, never shares the owners' path,
+  so nothing on that path has to tell a privileged request from another, or can let one leak. It
+  runs apart, beneath that path. None is known yet.
+- **The parts at layer -1 and below**, which keep the platform up and place what owners run. They
+  are no app, and are never placed among apps.
+
+This holds only while the graph is clean: nothing the platform needs to start, restart or come back
+stands on what it runs as an owner.
+
 **The cycle came from drawing one layer where there are two.** Beneath the products are parts, each
 smaller than any product, and **the three products stand side by side on the parts and never on
 one another**. A product that looks like another -- a database's name pointing at an id, a
@@ -53,6 +68,12 @@ to, are its physical half, the backing at layer -2 -- RFC b8f35 -- which the blo
 the salt and key are derived from a master secret and the scope's id, so deleting a scope deletes
 its bytes, since its key can always be derived again.
 
+**A scope is deleted one of two ways.** Its owner deletes what it holds from the leaves inward, as
+the graph of dependencies orders it -- the apps first, then the datasets and databases they were
+bound to, then the scope -- and nothing is deleted while something depends on it, RFC 49qyg; only
+then may the owner close their account, which is above. The operator, revoking an owner, deletes
+the scope whole at once: a privilege of the platform's, never an owner's.
+
 **No part trusts its caller: it checks a capability.** A capability names a scope, a resource, an
 operation and when it expires, and is signed by the issuer alone, through a chain parts verify
 with the root's public key and never call at run time -- RFC b8f35. A call is given only the
@@ -70,7 +91,9 @@ migration runs, RFC zn3u5.
 **A scope also holds its `allowance`: what it may use and how much**, in the vocabulary of
 capabilities RFC 49qyg declares needs in. It lives in the scope's own tablet as the rest of its
 configuration does, and the issuer reads it there; setting it is the control plane's to do, but what
-it sets lives here, below layer 0, where every product can find it.
+it sets lives here, below layer 0, where every product can find it. **An allowance is the
+platform's, though it lives in the scope**: the operator sets it and the owner never does, and one
+scope given more than another holds no privilege the other lacks.
 
 **Beside it, a scope holds its `grants`: what each app in it may reach**, an app, a resource and
 the operations, a row each. **Their format is the issuer's**, defined at this layer, and the issuer
