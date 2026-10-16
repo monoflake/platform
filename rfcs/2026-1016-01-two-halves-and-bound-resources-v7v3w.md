@@ -91,14 +91,35 @@ No app calls an app of another organization, RFC 49qyg.
 it**: a node's network, or a third-party account, which the platform operates through that account's
 API with a credential an admin gives it.
 
+**The platform keeps an organization's configuration and decides for it; the resources bound to the
+organization hold its data and run it.**
+
+| What                                                                    | Is                                                    | Half               |
+| ----------------------------------------------------------------------- | ----------------------------------------------------- | ------------------ |
+| a scope's own tablet, its grants and allowance; each product's settings | configuration                                         | the platform's     |
+| the backing                                                             | configuration                                         | the platform's     |
+| placement                                                               | deciding                                              | the platform's     |
+| the clock's table, and its ticks                                        | configuration and deciding; a tick runs where it goes | the platform's     |
+| the extent                                                              | data, written with every put                          | the organization's |
+
+- **The platform's half is not the control plane.** Parts of it serve the data plane -- the issuer,
+  placement, the clock -- and go on while the control plane is lost, as every part of the data plane
+  does.
+- **A configuration's truth is in the platform's half; the organization's half runs from a copy**
+  of what it serves by, delivered to it, and reads nothing else. While the platform's half cannot be
+  reached, the organization's half goes on from its last copy until the capabilities it holds
+  expire, and the platform takes over again when it returns.
+- **An account bound to an organization is configured by the platform alone.** Its owner is warned
+  that changing it by hand may stop what runs on it working.
+
 **Between resources, a call takes the nearest way**: inline within one account of one vendor; over
 a private network laid over the public one, where one can be had; over the public network
 otherwise.
 
 Open, for the discussion that follows:
 
-- Which half each part not named above belongs to: a scope's own tablet, the backing, the extent,
-  the clock, placement.
+- How long a capability lives, which bounds how long an organization's half runs while the
+  platform's cannot be reached, RFC vuanj.
 - Where an admin's credential for a third-party account is kept, and what it may do.
 - How the operator's allowance, RFC vuanj, relates to the quotas a holder sets on its resources.
 - How a buyer's organization is charged for what the platform's reserved organization shares with
