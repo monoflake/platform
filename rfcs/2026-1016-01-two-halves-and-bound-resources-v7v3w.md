@@ -118,7 +118,10 @@ operates third-party accounts with.
   - every share a revoked organization receives is withdrawn, the resources the platform sold it
     among them, from the copies their holders run from;
   - every share it gives is withdrawn, and in every other organization what depends on a withdrawn
-    share is revoked with it -- one app of four, when one alone depends on it;
+    share is revoked with it -- one app of four, when one alone depends on it. Such an app is
+    stopped, never removed: what of it was placed on the withdrawn resource stays there, unmanaged
+    and unscheduled, and nothing is deleted, so the platform loses no data; getting it back is
+    between that organization and the resource's owner;
   - the platform stops managing a revoked organization's own accounts and leaves them as they are:
     what runs there is between their owner and the vendor, and nothing is cleaned up on purpose.
 - **An organization is deleted on request, at the end of its certificate.** The last admin leaving
@@ -135,8 +138,6 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Whether what is revoked with an organization in one that is not -- an app depending on a
-  withdrawn share -- is stopped or removed.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
