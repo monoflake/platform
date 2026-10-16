@@ -25,8 +25,9 @@ its entry -- whose extent is not yet discussed.
 everything else: the storage its datasets and their policies, the database its directory of
 names, and functions their apps, each app's deployed versions by code hash, its functions'
 declarations, its triggers, its env and its bindings. **Nothing holds every scope's configuration
-at once.** The issuer, signing a call's capabilities in a scope, reads that scope's function tablet
-with a standing capability the intermediate key signs, covering those tablets in every scope for
+at once.** The issuer, signing a call's capabilities in a scope, reads that scope's grants and
+allowance, in its own tablet and the issuer's own format, RFC vuanj -- never a product's tables --
+with a standing capability the intermediate key signs, covering only those, in every scope, for
 reading; a part checks it against the root's public key as it checks any other, so nothing turns
 back up to the issuer.
 

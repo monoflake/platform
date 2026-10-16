@@ -58,8 +58,8 @@ operation and when it expires, and is signed by the issuer alone, through a chai
 with the root's public key and never call at run time -- RFC b8f35. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
 the resource -- a dataset, whether writes are allowed -- and a part checks the scope. The issuer is
-its own part, reading each scope's bindings from that scope's own tablets, RFC b8f35.
-Authenticating the people who use an app is another matter, above.
+its own part, reading each scope's grants from that scope's own tablet, below. Authenticating the
+people who use an app is another matter, above.
 
 **The operations are five, each a right of its own**: read; create, which is refused where what it
 would write already exists; replace, which overwrites what exists and so can lose it as a deletion
@@ -71,6 +71,16 @@ migration runs, RFC zn3u5.
 capabilities RFC 49qyg declares needs in. It lives in the scope's own tablet as the rest of its
 configuration does, and the issuer reads it there; setting it is the control plane's to do, but what
 it sets lives here, below layer 0, where every product can find it.
+
+**Beside it, a scope holds its `grants`: what each app in it may reach**, an app, a resource and
+the operations, a row each. **Their format is the issuer's**, defined at this layer, and the issuer
+reads nothing else to decide what a call is given. The function product never has its own tables
+read by a part beneath it: it keeps an app's bindings in its own tablet, in whatever form it likes,
+and a deployment writes the grants they come to into the scope's list, in the issuer's format, before
+the new version takes a call. The grants are derived from the bindings and never written otherwise,
+so what an app may reach is decided in one place below layer 0, and the function product changes
+its own tables without anything beneath it changing. Grants are written as the control plane works,
+at deployment, and read as the data plane works, on each call.
 
 **Inside a scope each product has its own blob space**, since what counts the references to a hash
 is the product's own tablet; two products sharing one would delete what the other still holds.

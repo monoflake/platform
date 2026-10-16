@@ -124,6 +124,15 @@ export const PARTS: Record<string, Part> = {
 			e('blob', 'deploy', H, 'code kept by its hash'),
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
+			{
+				...e(
+					'scope',
+					'deploy',
+					H,
+					"writes an app's grants, derived from its bindings, before the version takes a call",
+				),
+				reads: 'issuer',
+			},
 			e(
 				'database',
 				'deploy',
@@ -161,17 +170,7 @@ export const PARTS: Record<string, Part> = {
 	issuer: {
 		layer: -1,
 		edges: [
-			{
-				...e(
-					'tablet',
-					'serve',
-					H,
-					"reads each scope's function tablet for bindings",
-					"the tablet is -1, but the rows are function's (0): a schema the issuer must read, so function's migration reaches down to it",
-				),
-				reads: 'function',
-			},
-			e('tablet', 'serve', H, "reads the scope's allowance"),
+			e('tablet', 'serve', H, "reads the scope's grants and allowance, in its own format, vuanj"),
 			e(
 				'?intermediate',
 				'start',
