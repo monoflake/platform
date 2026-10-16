@@ -64,6 +64,14 @@ an upper part may write into a format a lower one defines.
 | D4 recovery  | With one part lost, does the data plane keep serving, and does the part come back? | `hard` `serve`                    | a part lost stops the data plane; its way back needs what has stopped                          |
 | D5 contract  | Is every format a part reads defined at its own layer or below?                    | the contracts                     | a lower part reading an upper part's format                                                    |
 
+**A lower part may deliver to an upper one: the envelope points down, the letter may mean
+something only above.** Delivering is not depending. What a delivery travels by -- a route table,
+an address's prefix -- is an envelope, and its format is defined below, so the structure depends only
+downward. What it carries is a letter, carried unread, which may mean something only at a layer
+above, as IP reads its own header and carries a TCP segment as bytes. A part that delivers upward
+keeps running when what it delivers to is down, and answers that it is unavailable; the table it
+delivers by is written by the upper part, at deployment, in the lower part's format.
+
 **A boundary is a contract, and a layer is checked against it.** A boundary `?name` states what it
 must guarantee: what it provides, and what the dimensions require of it through the parts that need
 it -- one an executor needs to start must itself start before the executor and without it. A layer is
