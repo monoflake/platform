@@ -82,13 +82,8 @@ export const PARTS: Record<string, Part> = {
 			e('blob', 'serve', H, 'content'),
 			e('scope', 'serve', H, 'a dataset belongs to one'),
 			KEY(),
-			e(
-				'blob',
-				'background',
-				S,
-				'sweep: bytes nothing names, hashes nothing counts',
-				'what starts the sweep: no part keeps time below layer 0',
-			),
+			e('blob', 'background', S, 'sweep: bytes nothing names, hashes nothing counts'),
+			e('?clock', 'background', S, 'starts the sweep at set times'),
 			e(
 				'?entry',
 				'serve',
@@ -136,13 +131,8 @@ export const PARTS: Record<string, Part> = {
 				'not in the old graph; whether the call graph also holds bindings is open, 49qyg',
 			),
 			KEY(),
-			e(
-				'?clock',
-				'serve',
-				H,
-				'schedule fires at set times, queue retries wait between tries',
-				'nothing in the graph keeps time',
-			),
+			e('?clock', 'serve', H, 'schedule fires at set times, queue retries wait between tries'),
+			e('?clock', 'deploy', H, "writes an app's schedules, in the clock's format"),
 		],
 		uses: ['capability*', 'vocabulary*', 'wit*', 'compat*'],
 	},
@@ -319,7 +309,10 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 		contract:
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
 	},
-	'?clock': {},
+	'?clock': {
+		contract:
+			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept on disk, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
+	},
 	'?intermediate': {},
 	'?runner': {},
 	'?repair': {},
