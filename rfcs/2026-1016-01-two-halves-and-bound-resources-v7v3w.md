@@ -65,9 +65,15 @@ service's, or a node.
   it anywhere, and stays that organization's whoever bound it: binding it is trusting the
   organization with it. An admin is only who is allowed to act, since a user account holds nothing;
   an admin who leaves loses their control of the organization and nothing else.
+- **An admin may change their organization's configuration, and nothing more.** That is the one
+  real rule; what follows on sharing either comes from it or is a limit set against abuse.
 - **A resource the platform already knows is shared from its holder to another organization**,
-  never brought in by a user account. One that is an admin of both makes the share. The organization
-  it is shared with may use it; the holder both uses it and manages it.
+  never brought in by a user account. The organization it is shared with may use it; the holder both
+  uses it and manages it.
+- **A share is made by one who is an admin of both organizations.** The real rule asks less; this is
+  set against abuse, so that no holder is asked again and again for what it holds.
+- **A share is ended by either side alone**, each changing only its own configuration: the holder
+  withdraws it, and the organization it was shared with gives it up.
 - **Every quota on a resource is its holder's**, at two levels: how much the resource gives in all,
   set when it is first bound, and how much each share may use of it, set when the share is made.
 - **An admin of the holder manages the resource**, and may remove it.
@@ -138,6 +144,8 @@ otherwise.
 
 Open, for the discussion that follows:
 
+- Whether ending a share while something depends on it is refused, as a deletion is, or stops what
+  depends on it, as a revocation does.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
