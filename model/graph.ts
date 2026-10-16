@@ -62,13 +62,6 @@ export const PARTS: Record<string, Part> = {
 			e('function', 'serve', H, 'it runs as functions'),
 			e('store', 'serve', H, 'the datasets it is bound to'),
 			e('database', 'serve', H, 'the database bound to it'),
-			e(
-				'?entry',
-				'serve',
-				H,
-				'a request reaches its functions; a link is answered through the gateway',
-				'the entry is no part: control is a reserved name, its extent undiscussed, b8f35',
-			),
 		],
 		uses: [],
 	},
@@ -124,6 +117,7 @@ export const PARTS: Record<string, Part> = {
 			e('blob', 'deploy', H, 'code kept by its hash'),
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
+			e('?entry', 'serve', H, "a request trigger: HTTP reaches an app's function, 49qyg"),
 			{
 				...e(
 					'scope',
@@ -157,13 +151,6 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			e('tablet', 'serve', H, "configuration and allowance in the scope's own tablet"),
 			e('anchor', 'serve', H, 'exists while its anchor row does'),
-			e(
-				'?control',
-				'serve',
-				H,
-				'creating a scope, setting its allowance',
-				'"setting it is the control plane\'s", vuanj; the control plane is no part',
-			),
 		],
 		uses: ['compat*'],
 	},
@@ -269,7 +256,6 @@ export const PARTS: Record<string, Part> = {
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
 			e('root', 'start', H, "the platform's own stores and their secrets"),
 			KEY(),
-			e('?control', 'serve', H, 'adding a store to a scope', 'deferred by the author, b8f35'),
 		],
 		uses: ['quorum*', 'capability*', 'compat*'],
 	},
@@ -330,7 +316,6 @@ export const PARTS: Record<string, Part> = {
 export const BOUNDARIES: Record<string, { contract?: string }> = {
 	'?entry': {},
 	'?clock': {},
-	'?control': {},
 	'?intermediate': {},
 	'?runner': {},
 	'?repair': {},
@@ -345,6 +330,8 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 export const GLOBAL_OPEN = [
 	'compat: who knows every running build to compute the write version, wnqvu',
 	'deploy: no part has a deploy edge of its own; who replaces a part below layer 0 is unwritten',
+	'control plane: a caller of scope and backing -- creating a scope, setting its allowance, adding a store -- never a need of theirs; where it stands is undiscussed',
+	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's",
 ];
 
 export const LIBRARIES: Record<string, Library> = {

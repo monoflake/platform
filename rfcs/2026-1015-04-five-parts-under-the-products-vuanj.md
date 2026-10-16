@@ -114,7 +114,8 @@ directory of names, ids, the one app each belongs to and whether read copies are
 covers the databases of one app, so a database the app creates while it runs is reachable at once.
 
 **A function** keeps its code in its blob space, its code's hash its identity; its declarations in
-control, where the types and the call graph are checked when it is deployed; its calls, their ids,
+a tablet of its own per scope, RFC b8f35, where a deployment checks the types and the call graph,
+the calls never crossing a scope since they never cross an owner; its calls, their ids,
 outcomes and expiry, in a tablet `status(id)` reads; its `derive` cache as a tablet indexing a
 code's hash and an input's hash to an output kept in blobs, since a blob's hash is its content's and
 cannot be chosen; its queues and schedules in tablets. **The executor stores nothing**: it is given
