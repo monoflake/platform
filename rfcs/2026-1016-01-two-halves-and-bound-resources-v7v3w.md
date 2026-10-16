@@ -123,6 +123,9 @@ operates third-party accounts with.
   certifies for one week and that is renewed every week. So an organization runs on its own for up
   to a week while the platform's half cannot be reached, and only its configuration cannot change;
   the platform takes over again when it returns.
+- **A scope's salt and key are derived in the platform's half**, where the masters are deployed, and
+  delivered to the organization as its certificate is, so the masters never leave the platform's
+  half while the blob that seals with what they derive runs in the organization's, RFC b8f35.
 - **An organization cannot revoke; the operator can, at once.** An organization is held on the
   platform and does not manage it, so its own deletion waits for its certificate to run out, below.
   The operator manages the platform and revokes a user account at once, and what depends on it is
@@ -152,8 +155,6 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Where a scope's salt and key are derived, since the masters span organizations and are deployed
-  only to the platform's half, while the blob that seals with them runs in the organization's.
 - How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
   organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
