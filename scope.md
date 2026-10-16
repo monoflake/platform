@@ -95,7 +95,8 @@ may point up. A library uses only libraries.
 contract, by `node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
 
 **Out of the model in v0:** every failure, including one part crashing and one store lost, which
-are the first a later version takes in; performance and cost; an operator's mistake.
+are the first a later version takes in; a replacement that fails, and rolling it back; replacing
+more than one part at once; performance and cost; an operator's mistake.
 
 Open, for v0:
 

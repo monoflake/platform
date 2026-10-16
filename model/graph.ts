@@ -332,7 +332,10 @@ export const PARTS: Record<string, Part> = {
  * violation; with one it is an assumption the next layer down must keep. See `scope.md`.
  */
 export const BOUNDARIES: Record<string, { contract?: string }> = {
-	'?deployer': {},
+	'?deployer': {
+		contract:
+			"installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
+	},
 	'?entry': {
 		contract:
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
@@ -353,7 +356,6 @@ export const BOUNDARIES: Record<string, { contract?: string }> = {
 
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
 export const GLOBAL_OPEN = [
-	'compat: who knows every running build to compute the write version, wnqvu',
 	'control plane: a caller of scope and backing -- creating a scope, setting its allowance, adding a store -- never a need of theirs; where it stands is undiscussed',
 	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's",
 ];
