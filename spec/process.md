@@ -15,9 +15,9 @@ one is made to hold together on paper first.
 | Hardening    | The error paths, the irreversible first                                                         | Never                                                      |
 
 **The completion rule of theory**: every edge in the model either reaches something the real world
-already provides -- a vendor's guarantee, a proven algorithm, a physical fact -- or is marked to be
-done by hand on day one or left for later; and every check passes, or each violation is written down
-with the manual path that recovers from it.
+already provides -- a vendor's guarantee, a published standard, a proven algorithm, a physical fact
+-- or is marked to be done by hand on day one or left for later; and every check passes, or each
+violation is written down with the manual path that recovers from it.
 
 ## A layer at a time
 

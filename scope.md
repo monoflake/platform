@@ -33,11 +33,11 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 
 **The system has three boundaries.**
 
-| Boundary         | What it is                                                                   | How the model treats it                                                           |
-| ---------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| above            | layer 0's three interfaces                                                   | an app is their user; an app's own mistake is not the platform's problem          |
-| below, ground    | a vendor's written guarantee, a proven algorithm, a physical fact            | trusted and never designed; the failures it states are taken into a failure model |
-| beside, operator | a person, holding the root private key and running day one's manual commands | ideal, above                                                                      |
+| Boundary         | What it is                                                                              | How the model treats it                                                           |
+| ---------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| above            | layer 0's three interfaces                                                              | an app is their user; an app's own mistake is not the platform's problem          |
+| below, ground    | a vendor's written guarantee, a published standard, a proven algorithm, a physical fact | trusted and never designed; the failures it states are taken into a failure model |
+| beside, operator | a person, holding the root private key and running day one's manual commands            | ideal, above                                                                      |
 
 **The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
 layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something

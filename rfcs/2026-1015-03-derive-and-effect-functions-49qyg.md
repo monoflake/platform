@@ -36,8 +36,10 @@ entries are the two settled**: the kind, and **`network`, some of `http`, `tcp`,
 `http` alone by default -- grouped under one name as `env` holds `config` and `secret`. They are
 apart because each is apart where it matters: what a sandbox can give, and how much risk a scope is
 allowed. `http` goes out only through the platform's own request interface, which it can see and
-limit, though it runs over TCP; `tcp` is any socket; a function that needs to ask DNS itself
-declares `udp` and is not made to ask for `icmp` with it.
+limit, though it runs over TCP, and which checks for each request that its call declared it; `tcp`
+is any socket, and it, `udp` and `icmp` leave from the host that offers them, never through that
+interface; a function that needs to ask DNS itself declares `udp` and is not made to ask for `icmp`
+with it.
 
 **A function is one of two kinds, and the kind is part of what it declares.**
 
