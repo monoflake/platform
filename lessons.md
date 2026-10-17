@@ -45,6 +45,31 @@ Sources: https://developers.cloudflare.com/d1/tutorials/build-an-api-to-access-d
 https://developers.cloudflare.com/fundamentals/api/reference/limits/. How long a query from a
 machine outside Cloudflare takes through a Worker is not published, and is to be measured.
 
+**D1 runs a batch as one transaction, and has no transaction across calls.** "Batched statements
+are SQL transactions"; a statement that fails "aborts or rolls back the entire sequence", and "each
+statement in the list will execute and commit, sequentially, non-concurrently". Outside a batch
+D1 "operates in auto-commit". Its page says nothing of `BEGIN` and `COMMIT`; developers report
+them refused, so a transaction that reads and then decides is not offered. Asked by B16. Sources:
+https://developers.cloudflare.com/d1/worker-api/d1-database/ and, for the refusal, a report at
+https://github.com/drizzle-team/drizzle-orm/issues/2463.
+
+**Where a D1 database runs is hinted, never promised**: `wnam`, `enam`, `weur`, `eeur`, `apac`,
+`oc`, and "it will run in the nearest possible location (by latency) to your preference"; a
+jurisdiction, `eu`, `fedramp` or `us`, is set at creation and never changed. Read replicas in every
+region are reached only through the Sessions API, sequentially consistent within a session by a
+bookmark; without it every query goes to the primary. Asked by B16. Sources:
+https://developers.cloudflare.com/d1/configuration/data-location/ and
+https://developers.cloudflare.com/d1/best-practices/read-replication/
+
+**Where a Worker runs can follow what it calls**: a placement hint, `region` for a major cloud's
+region or `host` and `hostname` for one elsewhere, runs it nearest that; Smart Placement moves only
+fetch handlers, never RPC methods. Neither page says it follows a D1 database. Asked by B16.
+Sources: https://developers.cloudflare.com/changelog/post/2026-01-22-explicit-placement-hints/ and
+https://developers.cloudflare.com/workers/configuration/smart-placement/
+
+No measured latency of a write to D1 from a Worker is published; Cloudflare's own figures are for
+reads, and are to be measured for ourselves.
+
 **A Worker's limits** on Workers Paid, asked by B13. Source:
 https://developers.cloudflare.com/workers/platform/limits/
 
