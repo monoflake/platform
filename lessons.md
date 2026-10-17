@@ -136,5 +136,11 @@ https://developers.cloudflare.com/durable-objects/platform/pricing/
   $0.015 a GB-month, $4.50 a million Class A and $0.36 a million Class B. `PutObject` and
   `ListObjects` are Class A, `GetObject` and `HeadObject` Class B, `DeleteObject` free. Source:
   https://developers.cloudflare.com/r2/pricing/
+- R2's S3 API copies an object without it passing through the caller, `CopyObject`, with its
+  `x-amz-copy-source-if-*` conditions, and builds one from ranges of others, `UploadPartCopy`,
+  without them; it has no rename, so a move is a copy and a deletion. Source:
+  https://developers.cloudflare.com/r2/api/s3/api/. Amazon S3's `RenameObject` exists only for
+  directory buckets in S3 Express One Zone:
+  https://docs.aws.amazon.com/AmazonS3/latest/API/API_RenameObject.html
 - The Worker Loader is on the paid plan alone, and Workers for Platforms is a plan of its own, at
   $25 a month: https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/
