@@ -124,7 +124,12 @@ https://developers.cloudflare.com/durable-objects/platform/pricing/
 
 - Workers: 100,000 requests a day, 10 ms of CPU a request, 50 subrequests, 100 Workers an account,
   5 cron triggers.
-- D1: 10 databases an account, 500 MB each, 50 queries an invocation.
+- D1: 10 databases an account, 500 MB each and 5 GB in all, 50 queries an invocation; 5 million
+  rows read and 100,000 rows written a day. An `INSERT`, `UPDATE` or `DELETE` counts each row it
+  touches, and an index adds a row written when a write includes its column. On Workers Paid, 50
+  million rows written a month are included, then $1.00 a million, and 5 GB stored, then $0.75 a
+  GB-month. Whether space a deletion frees still counts as stored is not said. Source:
+  https://developers.cloudflare.com/d1/platform/pricing/
 - Durable Objects: the SQLite-backed kind alone, with 100,000 requests, 5 million rows read and
   100,000 rows written a day, and 5 GB stored.
 - The Worker Loader is on the paid plan alone, and Workers for Platforms is a plan of its own, at

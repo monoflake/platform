@@ -286,10 +286,12 @@ put(dataset, path, content)
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
   and never by the footing, `lessons.md`. Its seed is drawn at random, so one cut short before it is
   recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
-- **What is to be sealed never leaves memory unsealed.** A scope keeps one journal for each tier it
-  writes, in its footing, appended to only: each write is sealed in segments of at most 64 KiB, a
-  row each, and answered once the footing has them. Once the next piece would not fit, the journal
-  is frozen, read only from then, and that piece goes on in the next. A frozen journal's pieces,
+- **What is to be sealed never leaves memory unsealed.** A scope keeps, for each tier it writes, at
+  most two journals in its footing, 32 MiB in all: one open, appended to only, and one frozen. Each
+  write is sealed in segments of at most 64 KiB, a row each, small enough for any database a
+  footing may be, and answered once the footing has them. Once the next piece would not fit, the
+  open journal is frozen, read only from then, and that piece goes on in a new one under a seed of
+  its own; a write waits only while both are full, until the frozen one is exported. A frozen journal's pieces,
   compressed as they were written and never again, are sealed whole as a container and placed among
   the scope's stores first; then one batch records where its pieces are and removes its rows. What
   waits in a journal is as durable as the footing, not yet as its tier asks.
