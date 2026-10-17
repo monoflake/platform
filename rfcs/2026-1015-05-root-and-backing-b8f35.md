@@ -163,6 +163,11 @@ where it is shown, lowercase and at its full width, leading zeros kept:
   integer below 36^5. A derivation reads 8 hex digits as 4 bytes, big-endian, in the order they are
   written.
 
+**A time is a count, never a text**, by the same rule as an id: stored and passed as an integer
+of milliseconds since the Unix epoch, which is UTC by its definition. Where a text must carry one,
+it is ISO 8601 in UTC, ending in `Z`; a zone other than UTC, and a pretty format, appear only where
+a user is shown the time.
+
 A user appears this low only as configuration: a store given to their own scope. The parts' logic
 does not change for it.
 
