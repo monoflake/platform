@@ -63,7 +63,8 @@ owner (one scope, its own unique salt)
   replacement, which can lose what it pointed at as a deletion can; one allowed to create alone is
   refused there, so a dataset can be written only forward -- a backup, an audit log -- by a function
   that, taken over, could add and never erase.
-- **Content is addressed by its hash, keyed to the owner.** The same content stored twice within one
+- **Content is addressed by its hash, keyed to the owner** -- BLAKE3 keyed by the owner's salt,
+  RFC b8f35. The same content stored twice within one
   owner is stored once, across datasets and apps alike; across owners the same content has a
   different hash, so an address cannot be computed by anyone outside the owner, and nothing is
   shared between owners.
@@ -87,6 +88,4 @@ Open, for the discussion that follows:
 
 - Whether that metadata is held per owner or per dataset. Deduplication and the count of names
   pointing at each hash are an owner's, which argues for per owner.
-- Everything beneath the metadata: where content is kept, how it is split, copied, combined across
-  object stores or encrypted.
 - The capability's name, since it is not an object store.

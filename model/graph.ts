@@ -208,7 +208,7 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
-			e('extent', 'serve', H, 'which blocks a content is made of'),
+			e('extent', 'serve', H, 'which pieces a content is made of, and where each is packed'),
 			e(
 				'vendor',
 				'serve',
@@ -263,7 +263,7 @@ export const PARTS: Record<string, Part> = {
 		layer: -2,
 		edges: [
 			REPLACED,
-			e('backing', 'serve', H, "a block's place from the scope's stores"),
+			e('backing', 'serve', H, "a container's place from the scope's stores"),
 			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
 		],
 		uses: ['quorum*', 'placement*', 'compat*'],
@@ -405,12 +405,12 @@ export const LIBRARIES: Record<string, Library> = {
 		uses: ['compat*'],
 	},
 	'placement*': {
-		what: 'where a block goes, scored by its hash and each store, vuanj',
+		what: 'where a container goes, scored by its id and each store, vuanj',
 		agrees: true,
 		uses: ['compat*'],
 	},
 	'layout*': {
-		what: 'content cut into blocks, small packed, parity, b8f35',
+		what: 'content cut by FastCDC into pieces, packed into containers, parity, b8f35',
 		agrees: true,
 		uses: ['compat*'],
 	},

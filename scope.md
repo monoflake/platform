@@ -118,5 +118,5 @@ yet sorted.
 
 **Decided now**, before the first byte is written, since each is written into every piece of data
 and a mistake in it is never undone: how a scope's salt is derived, the hash content is named by,
-and the format a block is sealed in, RFC b8f35. Which algorithm and format each is, is chosen in
-construction.
+how content is cut, and the format a container is sealed in -- BLAKE3, FastCDC, and AES-256-GCM in
+STREAM segments, each decided in RFC b8f35.

@@ -45,7 +45,7 @@ nothing anywhere has seen it: a version is spent only when it is released.
   not known to be supported by asking its number; where a new feature must be supported by both
   sides and not merely ignored, each declares the features it has, and what both have is used, as
   the vocabulary of capabilities compares a set, RFC 49qyg.
-- **A library whose output must agree between parts -- where a block goes, how content is cut,
+- **A library whose output must agree between parts -- where a container goes, how content is cut,
   how a key is derived -- breaks with any change to its output**, since two parts computing it
   differently would lose data between them; it raises its version for every such change and writes
   that version into what it produces.
