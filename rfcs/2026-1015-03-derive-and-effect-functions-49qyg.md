@@ -33,7 +33,11 @@ fits what the scope allows, its allowance, RFC vuanj, refused in a state that na
 when it does not; running checks that it fits what the platform can give, `unavailable` when it
 does not. A capability added later is one more entry, and nothing that checks changes. **The first
 entries are the two settled**: the kind, and **`network`, some of `http`, `tcp`, `udp` and `icmp`**,
-`http` alone by default -- grouped under one name as `env` holds `config` and `secret`. They are
+`http` alone by default -- grouped under one name as `env` holds `config` and `secret`. A third is
+**`instance`**, yes or no, no by default: a place that offers it delivers every call for one key to
+one running instance, as a long-running process on a machine does and a runtime that pools its
+instances does not. A tablet's writer is placed only where it is offered, RFC vuanj, and a `keyed`
+daemon has its shape. They are
 apart because each is apart where it matters: what a sandbox can give, and how much risk a scope is
 allowed. `http` goes out only through the platform's own request interface, which it can see and
 limit, though it runs over TCP, and which checks for each request that its call declared it; `tcp`

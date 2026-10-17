@@ -1,11 +1,12 @@
 /**
- * Every part and every library the drafts name, each part's dependencies as typed edges. An edge says
- * when it is needed and whether its loss is `hard` -- wrong or stopped -- or `soft` -- slower, staler,
- * more garbage, never wrong. A `hard` edge points to its own layer or below; a `soft` one may point up.
- * A target beginning `?` is something the drafts need and no part is yet: a boundary not drawn.
- * Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj parts, b8f35 root and backing, wnqvu
- * compat; v7v3w the two halves; the rules they are checked by, `scope.md`. Every `hard`/`soft` here is proposed, not
- * decided; `open` marks the ones in question.
+ * Every part and every library the drafts name, each part's dependencies as typed edges. An edge
+ * says when it is needed and whether its loss is `hard` -- wrong or stopped -- or `soft` -- slower,
+ * staler, more garbage, never wrong. A `hard` edge points to its own layer or below; a `soft` one
+ * may point up. A target beginning `?` is something the drafts need and no part is yet: a boundary
+ * not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj parts, b8f35 root and
+ * backing, wnqvu compat; v7v3w the two halves; 94y0d the internal and external platforms; the rules
+ * they are checked by, `scope.md`. Every `hard`/`soft` here is proposed, not decided; `open` marks
+ * the ones in question.
  */
 export const VENDOR = -9;
 
@@ -385,7 +386,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization or shared with it, v7v3w; on day one the operator pins each database's writer to one resource by hand",
 		triage: 'by hand on day one',
 		contract:
-			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
+			"places each tablet's writer and read copies at run time, on places the roster lists that offer instance, 49qyg, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
 	'?roster': {
 		keptBy:

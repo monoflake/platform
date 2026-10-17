@@ -38,13 +38,17 @@ machine given both to the platform and to its users is the problem this avoids.
 **A vendor is borrowed without binding the platform to it.**
 
 - **Every edge to a vendor is a contract the platform writes**, in its own terms -- an object store
-  with a conditional write, a runtime, a timer -- and a vendor's name appears only in the binding
-  that keeps it. What one vendor alone offers is never what correctness rests on.
+  that reads back at once what was written, a database in SQLite's dialect, a runtime, a timer --
+  and a vendor's name appears only in the binding that keeps it. What one vendor alone offers is
+  never what correctness rests on.
 - **The platform's own state is kept in its own formats in its footing**, RFC b8f35, a database
   that is ground: changing the vendor beneath it is a planned stop, `scope.md`, which every
   organization's data plane runs through.
 - **The platform can always be stood up again** from its source and the state it keeps, on a new
   account, by the operator.
+
+**The platform runs as two deployments of one code**, an internal platform on third-party vendors
+and an external platform standing on it, RFC 94y0d; what follows holds of each.
 
 **The control plane is the platform's half.** It is reached at its own API on the platform's domain,
 and stands on the vendor contracts directly, never on layer 0, which it deploys.
