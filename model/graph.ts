@@ -228,12 +228,12 @@ export const PARTS: Record<string, Part> = {
 			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
 			e('extent', 'serve', H, 'which pieces a content is made of, and where each is packed'),
-			e('footing', 'serve', H, "an open container's journal"),
+			e('footing', 'serve', H, 'which journal each placement writes'),
 			e(
 				'vendor',
 				'serve',
 				H,
-				"containers written to the scope's stores",
+				"containers and journals written to the scope's stores",
 				'missing from the old graph: whether the blob or the extent writes to a store [B5]',
 			),
 			e(

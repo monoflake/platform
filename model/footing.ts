@@ -32,10 +32,10 @@ export const KEPT: Record<string, Kept> = {
 		bound: 'the stores a scope binds',
 	},
 	journals: {
-		what: 'the journals waiting to become containers',
+		what: 'which journal each placement writes; the journals themselves are kept in the stores',
 		from: 'b8f35',
 		grows: 'bounded',
-		bound: 'two of 16 MiB for each placement a scope writes, how many at once bounded [B18]',
+		bound: "a row for each placement a scope writes, which the levels' product bounds",
 	},
 	logs: {
 		what: "each tablet's log until the blob archives it",
@@ -70,10 +70,10 @@ export const KEPT: Record<string, Kept> = {
  * footing's own. A row written and later removed counts twice, since a deletion is a write.
  */
 export const ROWS = {
-	/** A file of one new piece: its journal row, its log entry, its extent's two rows; then the
-	 * journal row removed and the piece's container written as the journal is exported, and the log
-	 * entry removed once archived. */
-	smallWrite: 7,
+	/** A file of one new piece: its log entry and its extent's two rows, its bytes put to the stores
+	 * as a journal's object; then the piece's container written as the journal is exported, and the
+	 * log entry removed once archived. */
+	smallWrite: 5,
 	/** A file whose content is held already: its log entry, the count raised, the entry removed. */
 	duplicate: 3,
 	/** A MiB of a large file sealed at once: about one piece's two extent rows, a container's row and

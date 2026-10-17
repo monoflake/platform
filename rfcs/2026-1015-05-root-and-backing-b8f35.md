@@ -94,14 +94,14 @@ are marked `*`.
 
 **Every log is kept in a footing, and v0 has no quorum.** Each owner stands on one, RFC v7v3w -- an
 organization's for its scope, the platform's for the anchor, D1 on the internal platform's own
-account -- a database in SQLite's dialect that
-is ground, `scope.md`: trusted to be up and to keep what it confirmed, its redundancy its own and
-never the platform's. **It coordinates its owner**: it holds the backing, the extent's records, each
-tablet's log until a snapshot holds it, an open container's journal, which writer holds what and at
-which generation, and the bundle. A writer of an older generation is refused by the footing, so two
-never write at once. It holds no content, so it grows with the pieces a scope holds, about 200 bytes
-each: its 10 GB holds some fifty million, about 50 TB of large files. A footing lost is restored
-from its snapshot, RFC v7v3w.
+account -- a database in SQLite's dialect that is ground, `scope.md`: trusted to be up and to keep
+what it confirmed, its redundancy its own and never the platform's. **It coordinates its owner**: it
+holds the backing, the extent's records, each tablet's log until a snapshot holds it, which journal
+each placement writes, which writer holds what and at which generation, and the bundle. A writer of
+an older generation is refused by the footing, so two never write at once. It holds no content, yet
+the extent's records grow with the pieces a scope holds, about 200 bytes each, until the extent is
+kept off it [B17]: its 10 GB holds some fifty million, about 50 TB of large files. A footing lost is
+restored from its snapshot, RFC v7v3w.
 
 **On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it
 by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST
@@ -256,8 +256,9 @@ put(dataset, path, content)
   RFC 13ixj; what is sealed is not, since its hash tells nothing, so a container is checked and
   repaired with neither the salt nor the key. A file of one piece has one id for both. Kept as whole
   copies, a stored block is its container and has its id. **A store keeps a stored block under its
-  id as 64 hex digits and nothing else**, no extension, since the magic says what it is; the
-  footing keeps the id as 32 bytes.
+  id as 64 hex digits and nothing else**, no extension, since the magic says what it is, beneath two
+  directories named by its first four: `/{aa}/{bb}/{id}`, so a store of a petabyte holds about a
+  thousand in each. The footing keeps the id as 32 bytes.
 
 - **Content is cut by FastCDC with normalized chunking at level 2** (USENIX ATC 2016, extended in
   IEEE TPDS 2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB: 22 effective mask
@@ -301,17 +302,23 @@ put(dataset, path, content)
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
   and never by the footing, `lessons.md`. Its seed is drawn at random, so one cut short before it is
   recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
-- **What is to be sealed never leaves memory unsealed.** A scope keeps, for each placement it
-  writes, at most two journals in its footing, 32 MiB in all: one open, appended to only, and one
-  frozen. Each write is sealed in segments of at most 64 KiB, a row each, small enough for any
-  database a footing may be, and answered once the footing has them. Once the next piece would not
-  fit, the open journal is frozen, read only from then, and that piece goes on in a new one under a
-  seed of its own; a write waits only while both are full, until the frozen one is exported. A
-  frozen journal's pieces, compressed as they were written and never again, are sealed whole as a
-  container and placed among the scope's stores first; then one batch records where its pieces are
-  and removes its rows. What waits in a journal is as durable as the footing, not yet as its
-  placement asks. How many placements a scope may write at once is bounded, so its journals are.
-  [B18]
+- **What is to be sealed never leaves memory unsealed, and a journal is kept in the stores, never in
+  the footing.** A scope keeps, for each placement it writes, at most two journals: one open,
+  appended to only, and one frozen. A journal is placed as a container of its placement is, so what
+  waits in it is as durable as its placement asks from the moment it is answered, and the footing,
+  holding no journal, stays bounded, `scope.md`; it records only which journal each placement
+  writes. Each write is sealed in segments of at most 64 KiB and put to the placement's stores as
+  **one object**, `/journal/{journal}/{first segment}`, however many segments it holds; then one
+  batch of the footing names its pieces, and the write is answered. Bytes go first and names after,
+  as every write does, RFC vuanj, so a fault leaves at most an object nothing names, which a sweep
+  removes.
+- **A journal full is frozen and exported.** Once the next piece would not fit, the open journal is
+  frozen, read only from then, and that piece goes on in a new one under a seed of its own; a write
+  waits only while both are full, until the frozen one is exported. A frozen journal is read back
+  from one of its stores into a compute, its pieces, compressed as they were written and never
+  again, sealed whole as a container and placed first; then one batch records where its pieces are,
+  and its objects are deleted. It is read back because a container is sealed again, under another
+  key and in segments of its own, which no store's copy can do, `lessons.md`.
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
@@ -346,9 +353,10 @@ organization key || seed)`, so the same header always gives it back. Its header 
   other; the associated data is rebuilt as it is read, never written. No nonce repeats however many
   containers a scope writes, and a container is read whole.
 
-  **A journal draws its seed once, as it is opened**, and keeps it in its first row with the
-  revision and the master's version. Its rows are sealed as segments are, under the journal's key,
-  each the next index and `final` `0x00` throughout, its end the count of rows the footing holds.
+  **A journal draws its seed once, as it is opened**, and is named by it, 64 hex digits; its first
+  object begins with the revision and the master's version. Its segments are sealed as a
+  container's are, under the journal's key, each the next index and `final` `0x00` throughout, its
+  end what the footing records.
   The container it becomes takes the same seed under the container's key, so the two keys differ
   while every row and segment counts from zero, and **a journal exported again gives the same
   bytes, and so the same id**: a container placed but not yet recorded is placed again over itself,
@@ -391,7 +399,6 @@ Open, for the discussion that follows:
 - What the control plane is and how far it reaches, the name reserved for it. [B10]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
-- How many placements a scope writes journals for at once, so its footing stays bounded. [B18]
 - How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages
   in containers, the footing keeping their root. [B17]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]

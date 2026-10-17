@@ -63,7 +63,7 @@ stopping stops the control plane alone, and every organization runs on through i
 certificate.
 
 **What a footing keeps is bounded; what it is asked may grow.** It never grows with the content its
-owner holds, nor with time: a journal is bounded by two containers, a log by its archiving. Its
+owner holds, nor with time: a journal is kept in the stores, a log bounded by its archiving. Its
 reads and writes may grow with use, and how far each step of the bootstrap path asks of its
 vendor's plan is counted, `model/footing.ts`.
 

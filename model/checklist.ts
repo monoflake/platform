@@ -204,6 +204,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: 'how many placements a scope writes journals for at once, so its footing stays bounded',
 		from: '13ixj, b8f35',
+		done: 'b8f35',
 	},
 	// C -- blocks a later step.
 	{
