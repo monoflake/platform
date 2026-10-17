@@ -1,11 +1,12 @@
 /**
- * Runs s0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3
- * upgrade and D5 contract, each printing its question, every violation, and every assumption -- an
- * edge to a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d. D4
- * recovery models a failure, so it is s1's, and runs only with `--s1`. Exits 1 when any dimension
- * finds a violation.
+ * Runs s0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3 upgrade
+ * and D5 contract, each printing its question, every violation, and every assumption -- an edge to
+ * a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d. D4 recovery
+ * models a failure, so it is s1's, and runs only with `--s1`. With `--ready`, the checklist fails
+ * while a row that blocks step 0 is open. Exits 1 when any dimension finds a violation.
  */
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
+import { CHECKLIST } from './checklist.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
@@ -320,6 +321,43 @@ const unsorted = [...needed.keys()].filter(
 );
 console.log(
 	`\n# Completion\n  ${unsorted.length ? `not yet kept and sorted: ${unsorted.join(', ')}` : 'every boundary is kept and sorted'}`,
+);
+
+// The checklist, `model/checklist.ts`: its rows well formed, and how many still block building.
+const rows: string[] = [];
+const ids = new Set<string>();
+for (const item of CHECKLIST) {
+	if (ids.has(item.id)) rows.push(`${item.id}: listed twice`);
+	ids.add(item.id);
+	if (!item.id.startsWith(item.group)) rows.push(`${item.id}: filed under ${item.group}`);
+	if (item.group === 'C' && (item.step === undefined || STEPS[item.step] === undefined))
+		rows.push(`${item.id}: names no step of the bootstrap path`);
+	if (item.group !== 'C' && item.step !== undefined)
+		rows.push(`${item.id}: only a row of group C waits for a later step`);
+}
+const open = CHECKLIST.filter((x) => x.done === undefined);
+const blocking = open.filter((x) => x.group === 'A' || x.group === 'B' || x.group === 'E');
+const ready = process.argv.includes('--ready');
+dimension(
+	'Checklist',
+	ready
+		? 'Is every row that blocks step 0 crossed off, so building may begin?'
+		: 'Is every row well formed? Run with --ready to ask whether building may begin.',
+	ready ? [...rows, ...blocking.map((x) => `open ${x.id}: ${x.what} (${x.from})`)] : rows,
+	[
+		`open: ${(['A', 'B', 'C', 'D', 'E'] as const)
+			.map((g) => `${g} ${open.filter((x) => x.group === g).length}`)
+			.join(', ')}; crossed off: ${CHECKLIST.length - open.length}`,
+		`blocking step 0: ${blocking.length ? blocking.map((x) => x.id).join(' ') : 'none, building may begin'}`,
+		...(ready
+			? open
+					.filter((x) => x.group === 'C' || x.group === 'D')
+					.map(
+						(x) =>
+							`later ${x.id}${x.step !== undefined ? ` (before step ${x.step})` : ''}: ${x.what}`,
+					)
+			: []),
+	],
 );
 
 if (process.argv.includes('--s1')) {

@@ -1,0 +1,350 @@
+/**
+ * Every question left before the Platform is built, one row each, gathered from the drafts' Open
+ * lists, the model's open marks and what the discussion found. A row is crossed off by naming where
+ * it was decided. `node model/check.ts --ready` fails while a row that blocks step 0 is open: that
+ * is when building begins, `scope.md`.
+ */
+
+export type Group =
+	/** Written into data or published, so a mistake is never undone: decided before step 0. */
+	| 'A'
+	/** Blocks building v0, step 0. */
+	| 'B'
+	/** Blocks a later step, which `blocks` names. */
+	| 'C'
+	/** Commercial and operational, needed before users or when it is reached. */
+	| 'D'
+	/** Text gone stale or inconsistent, to fix or drop. */
+	| 'E';
+
+export interface Item {
+	id: string;
+	group: Group;
+	what: string;
+	/** The drafts or files it comes from, or `found` when the discussion found it. */
+	from: string;
+	/** For group C, the step of `model/bootstrap.ts` it must be decided before. */
+	step?: number;
+	/** Where it was decided, once it is; an open row has none. */
+	done?: string;
+}
+
+export const CHECKLIST: Item[] = [
+	// A -- written into data or published: decided before the first byte.
+	{
+		id: 'A1',
+		group: 'A',
+		what: "a container's header, byte by byte: a magic, the suite, the encryption master's version, the 32 random bytes, and what is authenticated with what it seals",
+		from: 'b8f35',
+	},
+	{
+		id: 'A2',
+		group: 'A',
+		what: "STREAM's nonce, bit by bit: a segment's index and the flag for the last, and how a short last segment is told apart",
+		from: 'b8f35',
+	},
+	{
+		id: 'A3',
+		group: 'A',
+		what: "every context string BLAKE3's derive_key is given -- a scope's salt, its key, a container's key, the gear table -- fixed forever",
+		from: 'found',
+	},
+	{
+		id: 'A4',
+		group: 'A',
+		what: "how FastCDC's gear table is derived from the salt, exactly",
+		from: 'found',
+	},
+	{
+		id: 'A5',
+		group: 'A',
+		what: "a scope id's bytes, as the salt and key derivations read them: its form can never change, since the salt would",
+		from: 'found',
+	},
+	{
+		id: 'A6',
+		group: 'A',
+		what: "placement's hash: which function scores a container against a store, since changing it moves every container",
+		from: 'vuanj',
+	},
+	{
+		id: 'A7',
+		group: 'A',
+		what: 'the tiers: how many and their names, which datasets record; what each maps to may change',
+		from: 'b8f35, 13ixj',
+	},
+	{
+		id: 'A8',
+		group: 'A',
+		what: "a link's URL past the gateway's prefix, how a hash is written in it: published, and cached for a year",
+		from: '13ixj',
+	},
+	{
+		id: 'A9',
+		group: 'A',
+		what: "the three products' names and their operations' names, as layer 0's published contract",
+		from: '13ixj',
+	},
+
+	// B -- blocks building v0.
+	{
+		id: 'B1',
+		group: 'B',
+		what: "whether the three products' own metadata -- the storage's paths, the function product's calls, queues and schedules, the database directory -- moves from tablets into the footing, so an organization with no instance compute still has storage and functions",
+		from: 'item 4',
+	},
+	{
+		id: 'B2',
+		group: 'B',
+		what: 'the placement rules: a function inline first, then the same account, a private network, the public one; containers by rendezvous over tags and weights; a tablet writer pinned in the footing; a background task by the resource scheduler and a lease; the extent index cached by generation',
+		from: 'item 4',
+	},
+	{
+		id: 'B3',
+		group: 'B',
+		what: "an organization's configuration: what it holds -- datasets, databases, apps, bindings, routes, schedules, resources -- and how the platform's half writes it onto a bound account through the vendor's API",
+		from: 'item 5',
+	},
+	{
+		id: 'B4',
+		group: 'B',
+		what: "the bundle's format, how its secrets are sealed in the footing, and where the key a compute opens them with is kept beside its deployment -- what the external platform's sealing rests on",
+		from: 'v7v3w',
+	},
+	{
+		id: 'B5',
+		group: 'B',
+		what: 'which vendor primitive each part stands on in v0, behind which contract: a Worker, D1, R2, a host on a machine a provider runs',
+		from: 'vuanj, v7v3w',
+	},
+	{
+		id: 'B6',
+		group: 'B',
+		what: "how the executor runs an app's code on Cloudflare, since a Worker refuses code it is handed at run time: a vendor's way of uploading each app's code, or the hosts alone; to be verified first",
+		from: 'found',
+	},
+	{
+		id: 'B7',
+		group: 'B',
+		what: "a host: what the process on a machine runs, how it is enrolled by hand at step 0, how it offers instance, and the CPU and memory reserved for the internal platform's",
+		from: '94y0d',
+	},
+	{
+		id: 'B8',
+		group: 'B',
+		what: "the footing's tables and how their schema is versioned, by compat, as a mixed-version upgrade reads them",
+		from: 'found',
+	},
+	{
+		id: 'B9',
+		group: 'B',
+		what: "the entry in v0: how a request reaches an organization's app on Cloudflare, an app's domain, and whether a name unique across scopes is kept in the anchor or beside it",
+		from: 'b8f35, 13ixj',
+	},
+	{
+		id: 'B10',
+		group: 'B',
+		what: 'the control plane: what it is, how far it reaches, and its name, since step 0 runs one',
+		from: 'b8f35',
+	},
+	{
+		id: 'B11',
+		group: 'B',
+		what: "day one's commands, written step by step: the deployer, the roster, the source, the entry, the runner, the intermediate",
+		from: 'scope.md',
+	},
+	{
+		id: 'B12',
+		group: 'B',
+		what: "which three places, offline and the operator's, hold each master's shares, since the masters are made at step 0",
+		from: 'b8f35',
+	},
+	{
+		id: 'B13',
+		group: 'B',
+		what: "facts to read from the vendor, into lessons.md: D1's write latency from a machine outside Cloudflare, how many databases an account holds, a Worker's limits on memory, CPU time and request size",
+		from: 'found',
+	},
+	{
+		id: 'B14',
+		group: 'B',
+		what: "the constants v0 picks: how long a container stays open, below what it is underfilled, the collection threshold, how long a capability and a working key live, a sweep's grace",
+		from: 'b8f35, vuanj, 49qyg',
+	},
+	{
+		id: 'B15',
+		group: 'B',
+		what: "how process.md's phases -- theory, simulation, comparison with what exists -- meet this checklist as the test for building, and what replaces the word stage there now the model's stages are s",
+		from: 'found',
+	},
+
+	// C -- blocks a later step.
+	{
+		id: 'C1',
+		group: 'C',
+		what: "a tablet's log replicated among hosts, from a footing holding the configuration and f+1 copies, Vertical Paxos's shape, simulated on paper with its failures",
+		from: '94y0d',
+		step: 8,
+	},
+	{
+		id: 'C2',
+		group: 'C',
+		what: "what the model's stages past s0 take in, now the internal and external platforms changed what they must cover",
+		from: 'scope.md',
+		step: 8,
+	},
+	{
+		id: 'C3',
+		group: 'C',
+		what: "bringing one's own cloud: how a store or a compute is added to a scope, where an admin's credential for a third-party account is kept and what it may do",
+		from: 'b8f35, v7v3w',
+		step: 6,
+	},
+	{
+		id: 'C4',
+		group: 'C',
+		what: 'the grades: how many, and what each means for a tier',
+		from: 'b8f35',
+		step: 6,
+	},
+	{
+		id: 'C5',
+		group: 'C',
+		what: 'the private network between resources',
+		from: 'v7v3w',
+		step: 6,
+	},
+	{
+		id: 'C6',
+		group: 'C',
+		what: 'when cells move onto a database organization, and what a cell holds before',
+		from: '94y0d',
+		step: 9,
+	},
+	{
+		id: 'C7',
+		group: 'C',
+		what: 'how much an organization writes through its footing before the footing bounds it, measured',
+		from: 'b8f35',
+		step: 9,
+	},
+	{
+		id: 'C8',
+		group: 'C',
+		what: 'whether one content named in a content and an opaque dataset is kept once, and whether small opaque contents are packed',
+		from: '13ixj',
+		step: 2,
+	},
+	{
+		id: 'C9',
+		group: 'C',
+		what: "the storage's metadata held per owner or per dataset",
+		from: '13ixj',
+		step: 2,
+	},
+	{
+		id: 'C10',
+		group: 'C',
+		what: "a private link's reader proving they may read it, the authentication of people",
+		from: '13ixj, vuanj',
+		step: 2,
+	},
+	{
+		id: 'C11',
+		group: 'C',
+		what: "functions past v0's: daemons and their credentials, a derive's denied imports, an export's version, storage starting a function, whether the call graph holds bindings",
+		from: '49qyg',
+		step: 2,
+	},
+	{
+		id: 'C12',
+		group: 'C',
+		what: "the database's analytical kind, a query's limits and the form of its results, deleting a database only while empty",
+		from: 'zn3u5',
+		step: 2,
+	},
+	{
+		id: 'C13',
+		group: 'C',
+		what: 'how the data kept in each version on disk is counted, so a reader knows when it may drop an old one',
+		from: 'wnqvu',
+		step: 3,
+	},
+	{
+		id: 'C14',
+		group: 'C',
+		what: 'the clock and the egress, built where v0 leaves them for later',
+		from: 'scope.md',
+		step: 4,
+	},
+
+	// D -- commercial and operational.
+	{
+		id: 'D1',
+		group: 'D',
+		what: "how a buyer's organization is charged, and how the operator's allowance relates to the quotas a holder sets",
+		from: 'v7v3w',
+	},
+	{
+		id: 'D2',
+		group: 'D',
+		what: "what becomes of a revoked organization's sealed data in cells the platform pays for",
+		from: '94y0d',
+	},
+	{
+		id: 'D3',
+		group: 'D',
+		what: 'how often the intermediate key is rotated, whether a machine of the author may rotate it unattended, and how a leaked one is revoked',
+		from: 'b8f35',
+	},
+	{
+		id: 'D4',
+		group: 'D',
+		what: "every other bound past v0's constants: an id's life, a derive's budget, a lock's wait and hold, a dead-letter list",
+		from: '49qyg, vuanj',
+	},
+
+	// E -- stale or inconsistent text.
+	{
+		id: 'E1',
+		group: 'E',
+		what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",
+		from: 'b8f35, v7v3w, graph.ts',
+	},
+	{
+		id: 'E2',
+		group: 'E',
+		what: "where what control held stands: answered by the bundle and the footing, so drop vuanj's Open",
+		from: 'vuanj',
+	},
+	{
+		id: 'E3',
+		group: 'E',
+		what: "which database is the platform's footing: D1 on the internal platform's own account, so close b8f35's Open",
+		from: 'b8f35',
+	},
+	{
+		id: 'E4',
+		group: 'E',
+		what: 'vuanj says the operator revoking an owner deletes its scope at once, v7v3w that what is revoked is stopped and nothing deleted: one must give way',
+		from: 'vuanj, v7v3w',
+	},
+	{
+		id: 'E5',
+		group: 'E',
+		what: "vuanj's sentence that deleting a scope deletes its bytes since its key can always be derived again, which does not follow",
+		from: 'vuanj',
+	},
+	{
+		id: 'E6',
+		group: 'E',
+		what: "v7v3w's heading that the platform runs on serverless vendors only, while the internal platform's hosts are machines from step 0: the heading means the platform's half",
+		from: 'v7v3w',
+	},
+	{
+		id: 'E7',
+		group: 'E',
+		what: "the backing's edge to the root for the platform's own stores, while an organization's stores now reach it in the bundle",
+		from: 'graph.ts',
+	},
+];

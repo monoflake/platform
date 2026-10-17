@@ -3,6 +3,9 @@
 What the model covers in its current stage. An edge case outside it goes to the out-of-model list
 and is not designed for until a later stage takes it in. See `spec/process.md`.
 
+**Building begins when `node model/check.ts --ready` passes**: every row of `model/checklist.ts`
+that blocks step 0 is crossed off by naming where it was decided, and every check holds.
+
 **Two numberings, never one.** A stage, `s0`, `s1`, is how far the paper model reaches; a version,
 `v0`, `v1`, is a release of the Platform, RFC 94y0d. What each stage takes in beyond `s0` is to be
 discussed again, since the internal and external platforms changed what it must cover.
