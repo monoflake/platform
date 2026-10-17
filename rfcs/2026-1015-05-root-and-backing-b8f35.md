@@ -249,6 +249,6 @@ Open, for the discussion that follows:
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place.
 - How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
-  failure, and so v1's.
+  failure, and so s1's.
 - Whether a name that must be unique across scopes, such as an app's domain, is the platform's
   record, and whether it is kept in the anchor or beside it.

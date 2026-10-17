@@ -31,7 +31,7 @@ placed on a resource an organization holds, and an organization a resource is sh
 holder as it trusts a vendor.
 
 **The platform runs on serverless vendors only.** One now, Cloudflare, taken as the ground and ideal
-in v0; others may be added later, as extensions or beneath the footing's contract, and not before
+in s0; others may be added later, as extensions or beneath the footing's contract, and not before
 the platform carries enough to judge its stability by. A node never runs the platform's half: a
 machine given both to the platform and to its users is the problem this avoids.
 
@@ -190,7 +190,7 @@ operates third-party accounts with.
   inward, RFC vuanj; it is carried out when the current certificate runs out, within seven days, and
   the request may be withdrawn until then.
 - **An account bound to an organization is configured by the platform alone.** Its owner is warned
-  that changing it by hand may stop what runs on it working. Such a change cannot be prevented; v0
+  that changing it by hand may stop what runs on it working. Such a change cannot be prevented; s0
   assumes none is made, and finding one afterwards is for later.
 
 **Between resources, a call takes the nearest way**: inline within one account of one vendor; over

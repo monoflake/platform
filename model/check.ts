@@ -1,9 +1,11 @@
 /**
- * Runs v0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3 upgrade
- * and D5 contract, each printing its question, every violation, and every assumption -- an edge to a
- * boundary whose contract is written. D4 recovery models a failure, so it is v1's, and runs only with
- * `--v1`. Exits 1 when any dimension finds a violation.
+ * Runs s0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3
+ * upgrade and D5 contract, each printing its question, every violation, and every assumption -- an
+ * edge to a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d. D4
+ * recovery models a failure, so it is s1's, and runs only with `--s1`. Exits 1 when any dimension
+ * finds a violation.
  */
+import { STEPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
@@ -218,6 +220,78 @@ dimension(
 		),
 );
 
+// The bootstrap path, RFC 94y0d: each step holds, and each deployment came to it by a move it may
+// take. A version, v, is the Platform's release; a stage, s, is the model's, `scope.md`.
+const path: string[] = [];
+const stops: string[] = [];
+STEPS.forEach((step, i) => {
+	const at = `step ${i}`;
+	const before = STEPS[i - 1];
+	const sides: [string, Deployment | undefined, Deployment | undefined][] = [
+		['internal', step.internal, before?.internal],
+		['external', step.external, before?.external],
+	];
+	for (const [name, d, was] of sides) {
+		if (!d) continue;
+		for (const f of d.on)
+			if (!VERSIONS[d.version]?.includes(f))
+				path.push(`${at}: the ${name} platform turns on ${f}, which v${d.version} lacks`);
+		if (was === undefined) {
+			const first = name === 'internal' ? 'by hand' : 'new organization';
+			if (d.move !== first)
+				path.push(`${at}: the ${name} platform first comes up by ${d.move}, not ${first}`);
+		} else if (d.version === was.version) {
+			if (d.move !== 'none')
+				path.push(`${at}: the ${name} platform moves by ${d.move} with no new version`);
+		} else if (d.move === 'rolling' && !was.on.includes('rolling'))
+			path.push(
+				`${at}: the ${name} platform rolls from v${was.version}, which cannot replace a part while the rest run`,
+			);
+		else if (d.move === 'planned stop')
+			stops.push(`${at}, the ${name} platform, v${was.version} -> v${d.version}`);
+		else if (d.move !== 'rolling')
+			path.push(`${at}: the ${name} platform changes version by ${d.move}`);
+		if (d.ground.includes('provider') && !d.on.includes('hosts'))
+			path.push(`${at}: the ${name} platform stands on machines without hosts turned on`);
+		if (d.on.includes('products') && !d.ground.some((g) => g === 'provider' || g === 'internal'))
+			path.push(`${at}: the ${name} platform's databases have no place offering instance`);
+	}
+	const { internal: a, external: b } = step;
+	for (const g of a.ground)
+		if (g === 'home' || g === 'internal') path.push(`${at}: the internal platform stands on ${g}`);
+	if (b && a.version > b.version)
+		path.push(
+			`${at}: the internal platform runs v${a.version}, newer than the external's v${b.version}`,
+		);
+	if (b && b.version - a.version > WINDOW)
+		path.push(`${at}: the external platform runs more than ${WINDOW} ahead of the internal's pin`);
+	const ran = STEPS.slice(0, i);
+	if (before && a.version !== before.internal.version)
+		if (!ran.some((s) => s.external?.version === a.version))
+			path.push(`${at}: the pin moves to v${a.version}, which the external platform never ran`);
+	if (before)
+		for (const f of a.on)
+			if (!before.internal.on.includes(f) && !ran.some((s) => s.external?.on.includes(f)))
+				path.push(`${at}: the internal platform turns on ${f}, never proven on the external`);
+	if (step.cells && !b) path.push(`${at}: cells, with no external platform`);
+	if (step.cells === 'database organization' && !a.on.includes('replicated'))
+		path.push(
+			`${at}: a database organization without a replicated log, so every footing on it writes through one`,
+		);
+});
+dimension(
+	'Bootstrap path',
+	'From day one by hand, does every step hold, and does each deployment reach it by a move it may take?',
+	path,
+	[
+		...STEPS.map(
+			(s, i) =>
+				`${i}: internal v${s.internal.version}${s.external ? `, external v${s.external.version}` : ''}${s.cells ? `, cells ${s.cells}` : ''} -- ${s.what}`,
+		),
+		`planned stops: ${stops.length ? stops.join('; ') : 'none'}`,
+	],
+);
+
 console.log('\n# Boundaries, and whether each has its contract');
 const needed = new Map<string, string[]>();
 for (const [name, part] of designed)
@@ -244,8 +318,8 @@ console.log(
 	`\n# Completion\n  ${unsorted.length ? `not yet kept and sorted: ${unsorted.join(', ')}` : 'every boundary is kept and sorted'}`,
 );
 
-if (process.argv.includes('--v1')) {
-	console.log('\n# D4 Recovery (v1): lose one running part, and what stops by hard serve edges');
+if (process.argv.includes('--s1')) {
+	console.log('\n# D4 Recovery (s1): lose one running part, and what stops by hard serve edges');
 	for (const [lost] of designed) {
 		const down = new Set([lost]);
 		for (let grew = true; grew;) {

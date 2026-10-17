@@ -1,7 +1,11 @@
 # Scope
 
-What the model covers in its current version. An edge case outside it goes to the out-of-model list
-and is not designed for until a later version takes it in. See `spec/process.md`.
+What the model covers in its current stage. An edge case outside it goes to the out-of-model list
+and is not designed for until a later stage takes it in. See `spec/process.md`.
+
+**Two numberings, never one.** A stage, `s0`, `s1`, is how far the paper model reaches; a version,
+`v0`, `v1`, is a release of the Platform, RFC 94y0d. What each stage takes in beyond `s0` is to be
+discussed again, since the internal and external platforms changed what it must cover.
 
 ## Decided
 
@@ -95,7 +99,7 @@ contract written. Only then is the next layer begun, whose work is to keep those
 its own. At the ground the last contracts are kept by what the real world provides, and the system
 holds by composition, without a complete model at any point between.
 
-## v0
+## s0
 
 The correct path alone: no failure is modeled.
 
@@ -105,10 +109,12 @@ may point up. A library uses only libraries. Nothing at layer 0 or below has an 
 itself, RFC vuanj.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
-contract, by `node model/check.ts`. D4 recovery models a failure and is v1's, run with `--v1`.
+contract, by `node model/check.ts`, and then the bootstrap path, `model/bootstrap.ts`: every step of
+RFC 94y0d holds, and each deployment reaches it by a move it may take. D4 recovery models a failure
+and is s1's, run with `--s1`.
 
-**Out of the model in v0:** every failure, including one part crashing and one store lost, which
-are the first a later version takes in; a replacement that fails, and rolling it back; replacing
+**Out of the model in s0:** every failure, including one part crashing and one store lost, which
+are the first a later stage takes in; a replacement that fails, and rolling it back; replacing
 more than one part at once; performance and cost; an operator's mistake.
 
 **Each contract is sorted** into one of three: decided now, since a mistake is written into data
