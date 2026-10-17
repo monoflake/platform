@@ -183,13 +183,14 @@ or a panic.
   it.
 - A blob puts bytes with a tier and answers their hash, gets them whole or by range, raises a hash
   to a higher tier, deletes, and lists, for a sweep alone. Below that face it encrypts with the
-  scope's key, lays the bytes out as the tier maps, and places each piece among the scope's stores:
-  each store a piece may go to is scored by a hash of the piece and the store, and the piece goes to
-  the highest -- so anyone with the same stores finds the same places, more copies take the next in
-  line and leave the first where they are, and a store added or removed moves only the pieces it
-  wins or held. A write is done when every piece the layout asks for has landed; a store down passes
-  its piece to the next in line, moved back by a repair later. **A repair must run on its own while
-  the control plane is lost**, since until it does, data is held below its tier.
+  scope's key, lays the bytes out as the tier maps, and places each container among the scope's
+  stores: each store a container may go to is scored by a hash of the container and the store, and
+  it goes to the highest, RFC b8f35 -- so anyone with the same stores finds the same places, more
+  copies take the next in line and leave the first where they are, and a store added or removed
+  moves only the containers it wins or held. A write is done when every container the layout asks
+  for has landed; a store down passes its container to the next in line, moved back by a repair
+  later. **A repair must run on its own while the control plane is lost**, since until it does, data
+  is held below its tier.
 - An executor runs code in one of two sandboxes.
 
 **Every dependency points down**: a product reaches the issuer, the tablet, the blob and the

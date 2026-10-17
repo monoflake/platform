@@ -353,6 +353,15 @@ organization key || seed)`, so the same header always gives it back. Its header 
   never left behind. **A key seals one content**: sealing the same bytes again under the same nonces
   tells nothing, and whatever else is sealed draws a new seed.
 
+- **A container's place is computed, by rendezvous hashing over integers alone.** Among the stores
+  its tier's tags allow, each store s scores the container by the highest, over k from 0 to its
+  weight less one, of the first 8 bytes, read big-endian, of
+  `derive_key("monoflake:container:placement:1", container id || store id || k)`: the container's
+  32 bytes, the store's id as 4 bytes big-endian, k as one byte. The copy or shard i goes to the
+  store ranked i, a tie to the lower store id. A weight is an integer from 1 to 255, so a store is
+  chosen in proportion to it, exactly, and never through a float, whose last bit two platforms may
+  compute apart and so look for a container where it is not. The store's id is hashed, never its
+  address, so a store's address or secret changed moves nothing.
 - **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no container. A
   piece is dead once no file names it, by a count of those that do, and a container's dead share is
   what its dead pieces take of it. Collection repacks a container's live pieces into a new one, in

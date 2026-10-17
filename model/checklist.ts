@@ -71,6 +71,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "placement's hash: which function scores a container against a store, since changing it moves every container",
 		from: 'vuanj',
+		done: 'b8f35',
 	},
 	{
 		id: 'A7',
