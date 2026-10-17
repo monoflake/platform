@@ -118,11 +118,16 @@ a scope's id and a reference to where its backing is, a row each. **A scope's ro
 removed, so its id is never given again**, since a second scope under the same id would derive the
 same salt and key. Its status says what is left of it:
 
-| Status      | What it means                                                      |
-| ----------- | ------------------------------------------------------------------ |
-| `active`    | it serves                                                          |
-| `suspended` | everything it holds is stopped and kept, RFC vuanj                 |
-| `deleted`   | everything it held is erased; the row stays, so its id stays spent |
+| Status      | What it means                                                                   |
+| ----------- | ------------------------------------------------------------------------------- |
+| `active`    | it serves                                                                       |
+| `suspended` | nothing it holds serves, and everything it holds is kept                        |
+| `deleted`   | nothing it holds serves, and what it holds is erased; final, its id stays spent |
+
+- **A suspended scope is deleted after seven days** unless it is made active again within them.
+- **A scope is deleted the moment it is asked to be**: the status is written first, then a task
+  erases what it held. An erasure cut short is no matter, since collection keeps only what a scope
+  that is not deleted still holds, and drops what it finds of a deleted one.
 
 The same holds for every id drawn where reusing it would derive what its first holder's did. The
 anchor is the platform's only global state, and it holds nothing else: every product's
@@ -205,12 +210,24 @@ put(dataset, path, content)
 ```
 
 - **A scope's salt is derived, never stored**, as BLAKE3's
-  `derive_key(context, salt master || scope id)`, its context a fixed string written into the
-  code as `monoflake:{scope}:{type}:{version}`: colons and no spaces, the version a positive
-  integer in decimal without leading zeros, raised by a change to what is derived, RFC wnqvu. A
-  scope's key is derived the same way, under another context, from the encryption master of a
-  version. The organization's certificate carries both each week, RFC v7v3w, and they are the
-  same every week: the certificate's own key pair rotates and has no part in them.
+  `derive_key(context, salt master || scope id)`. A scope's key is derived the same way, under
+  another context, from the encryption master of a version. The organization's certificate carries
+  both each week, RFC v7v3w, and they are the same every week: the certificate's own key pair
+  rotates and has no part in them.
+- **A context is `monoflake:{scope}:{type}:{version}`**, written into the code and never changed.
+  Its words are whole, never abbreviated, of lowercase letters and digits alone, joined by a
+  hyphen only where one word will not do, never by an underscore. A type is unique within its scope
+  alone, and the code keeps them as one list. The version is a positive integer in decimal without
+  leading zeros, raised by a change to what is derived, RFC wnqvu.
+
+  | Context                         | Derived from                                                                                  |
+  | ------------------------------- | --------------------------------------------------------------------------------------------- |
+  | `monoflake:organization:salt:1` | the salt master and the scope id; at version 1 forever, since another would change every hash |
+  | `monoflake:organization:key:1`  | the encryption master of a version and the scope id                                           |
+  | `monoflake:container:key:1`     | the organization's key and the container's 32 random bytes                                    |
+
+  The gear table's is named once its type is chosen. [A3]
+
 - **Every layer's record is named by BLAKE3, in one of two modes.**
 
   | Named        | Over                                       | Mode            | Recorded as                                                     |

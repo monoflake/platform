@@ -76,7 +76,7 @@ the graph of dependencies orders it -- the apps first, then the datasets and dat
 bound to, then the scope -- and nothing is deleted while something depends on it, RFC 49qyg; only
 then may the owner close their account, which is above. The operator, revoking an owner, stops at
 once everything it holds and deletes nothing, RFC v7v3w: a privilege of the platform's, never an
-owner's.
+owner's. A scope so suspended is deleted after seven days unless it is restored, RFC b8f35.
 
 **No part trusts its caller: it checks a capability.** A capability names a scope, a resource, an
 operation and when it expires, and is signed by the issuer alone, through a chain parts verify
