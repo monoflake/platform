@@ -23,14 +23,15 @@ The shape the discussion has reached so far, to be decided once it is diffed aga
 **Layers are numbered from the platform's face, layer 0**, upward to what users build and downward
 to what the platform is made of:
 
-| Layer     | What it is                                                             |
-| --------- | ---------------------------------------------------------------------- |
-| +1 and up | Users' apps, the console among them, since it is an app like any other |
-| 0         | The products an app sees: the storage, databases and functions         |
-| -1        | The parts the products are made of, this RFC                           |
-| -2        | What the parts stand on: backings, the extent and hosts, RFC b8f35     |
-| -3        | The anchor, the one global state, on a vendor's primitive, RFC b8f35   |
-| -4        | The root, which depends on nothing and everything needs, RFC b8f35     |
+| Layer     | What it is                                                                 |
+| --------- | -------------------------------------------------------------------------- |
+| +1 and up | Users' apps, the console among them, since it is an app like any other     |
+| 0         | The products an app sees: the storage, databases and functions             |
+| -1        | The parts the products are made of, this RFC                               |
+| -2        | What the parts stand on: backings, the extent and hosts, RFC b8f35         |
+| -3        | The anchor, the one global state, on a vendor's primitive, RFC b8f35       |
+| -4        | The root, which depends on nothing and everything needs, RFC b8f35         |
+| ground    | Each owner's footing, one database, and the vendors' primitives, RFC b8f35 |
 
 **The platform runs on itself wherever an ordinary owner could.** What the platform runs is of
 three kinds:
@@ -117,9 +118,9 @@ without its bytes. A hash nothing names is marked and removed later, never in th
 
 **A tablet is a log and a snapshot.** Its one writer runs each batch on its SQLite and turns it
 into an entry of a log, numbered in order, and that number is the cursor a write returns. The log
-is kept by a quorum, RFC b8f35: **a write is done once a majority of the voting copies confirm it**,
-what counts as a copy's confirming following from its store's grade, and only then is the log
-archived to the blob in batches, with a snapshot of the whole now and then. From there the rest
+is kept in the scope's footing, RFC b8f35: **a write is done once the footing has confirmed it**,
+and the log is archived to the blob in batches, with a snapshot of the whole now and then, and
+removed from the footing once archived. From there the rest
 follows:
 
 - **A read copy** applies the log as it comes and knows the number it has reached; a read with a
@@ -127,12 +128,12 @@ follows:
 - **Returning to an earlier time** is the snapshot before it and the log replayed up to it.
 - **A batch's id and expiry** are written in the tablet's own system table in the same transaction
   as the batch, so whether one was applied is answered exactly, and an expired one is refused.
-- **A writer handed over** is fenced by the quorum: the new one catches up and is made writer at the
-  next generation, and the old can confirm nothing after; writes wait the few seconds it takes, and
-  reads go on from the copies.
+- **A writer handed over** is fenced by the footing: the new one catches up and is made writer at
+  the next generation, and the old can write nothing after; writes wait the few seconds it takes,
+  and reads go on from the copies.
 - **Where a writer runs is placed at run time**, since a tablet is created while an app runs, never
   only at a deployment. What places it promises at least one writer and never exactly one: two may
-  run for a moment, and the quorum's generation keeps all but one from confirming.
+  run for a moment, and the generation the footing keeps refuses all but one.
 
 A user's tablet has one copy unless its owner asks for more, as data in the storage does.
 

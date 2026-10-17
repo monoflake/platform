@@ -21,27 +21,28 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Half              | Runs on                            | Holds                                                                                                                                                                                        |
-| ----------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform's    | the platform's own vendor accounts | what spans organizations, and what is decided for each: the control plane and the deployer, every configuration's truth, the credentials, the intermediate, the anchor, the root             |
-| an organization's | the resources bound to it          | that organization's alone, its data and what runs it: its issuer, placement, the clock's ticks, the extent, each database's tablet, the blob's bytes, the sandboxes, its requests in and out |
+| Half              | Runs on                            | Holds                                                                                                                                                                                                     |
+| ----------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform's    | the platform's own vendor accounts | what spans organizations, and what is decided for each: the control plane and the deployer, every configuration's truth, the credentials, the intermediate, the anchor, the root                          |
+| an organization's | the resources bound to it          | that organization's alone, its data and what runs it: its footing, its issuer, placement, the clock's ticks, the extent, each database's tablet, the blob's bytes, the sandboxes, its requests in and out |
 
 **Whoever controls a resource can see what runs on it.** So nothing that spans organizations is
 placed on a resource an organization holds, and an organization a resource is shared with trusts its
 holder as it trusts a vendor.
 
 **The platform runs on serverless vendors only.** One now, Cloudflare, taken as the ground and ideal
-in v0; others are added later, so that losing one is survived, and not before the platform carries
-enough to judge its stability by. A node never runs the platform's half: a machine given both to the
-platform and to its users is the problem this avoids.
+in v0; others may be added later, as extensions or beneath the footing's contract, and not before
+the platform carries enough to judge its stability by. A node never runs the platform's half: a
+machine given both to the platform and to its users is the problem this avoids.
 
 **A vendor is borrowed without binding the platform to it.**
 
 - **Every edge to a vendor is a contract the platform writes**, in its own terms -- an object store
   with a conditional write, a runtime, a timer -- and a vendor's name appears only in the binding
   that keeps it. What one vendor alone offers is never what correctness rests on.
-- **The platform's own state is kept in its own formats on vendors' stores**, through `quorum*`,
-  RFC b8f35, so a vendor is added as one more copy while everything runs.
+- **The platform's own state is kept in its own formats in its footing**, RFC b8f35, a database
+  that is ground: changing the vendor beneath it is a planned stop, `scope.md`, which every
+  organization's data plane runs through.
 - **The platform can always be stood up again** from its source and the state it keeps, on a new
   account, by the operator.
 
@@ -89,6 +90,18 @@ service's, or a node.
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
 - **An organization runs nothing until a resource is bound to it or shared with it.** The platform
   lends none of its own.
+- **An organization stands on one footing and on extensions.** Its footing is one database in
+  SQLite's dialect, transactional, at most 10 GB, which every compute of the organization can reach.
+  It is ground, `scope.md`: the platform makes nothing in it redundant, and its owner is warned to
+  bring one that is, which the platform cannot check. 10 GB is a hard limit, and an organization
+  that outgrows it is split into several. Everything else bound is an extension -- a compute, of
+  which at least one must be, and a store, of which at least one must be before the storage or a
+  database holds anything -- trusted as no footing is: what runs on extensions is made redundant by
+  the tiers, RFC 13ixj, and repaired.
+- **A primitive is whatever keeps its contract**, a vendor's or a product of the platform's own.
+- **What stands between an organization's resources and its three products is the platform's**,
+  deployed and run by it on those resources, and never shown: an organization sees the three
+  products, and, as usage, what the parts beneath them cost on its own resources.
 - **A resource bound to more than one organization keeps them apart as well as the platform can**,
   within a process, and that is not promised.
 
@@ -119,10 +132,28 @@ operates third-party accounts with.
 - **A configuration's truth is in the platform's half, and is changed there alone.** A read-only
   copy is delivered to the organization, which serves from it and from nothing else: its grants,
   its allowance, its schedules, the policy placement follows.
+- **The copy is a bundle**: the organization's configuration compiled into one dense table, with its
+  certificate and its backing, numbered by generation and signed in the chain to the root. One is
+  issued each day, with the certificate, and whenever the configuration changes: the platform says a
+  change is ready, and the organization fetches it. **A bundle is kept in the organization's
+  footing**, and a compute's deployment says only where the footing is, so a compute that starts
+  reads the newest bundle it can verify there, and starts while the platform's half cannot be
+  reached.
 - **An organization signs its own capabilities**, with a key of its own that the intermediate
-  certifies for one week and that is renewed every week. So an organization runs on its own for up
-  to a week while the platform's half cannot be reached, and only its configuration cannot change;
-  the platform takes over again when it returns.
+  certifies for seven days and renews every day. So an organization runs on its own for at least six
+  days while the platform's half cannot be reached, and only its configuration cannot change; the
+  platform takes over again when it returns.
+- **A timer is written into the scheduler of the resource it fires on**, at deployment, as
+  configuration -- a vendor's cron, a node's own timer -- so it fires while the platform's half
+  cannot be reached. The platform fires a tick itself only where a resource has no scheduler. A tick
+  fired on several computes is taken by one, by a lease in the footing. Nothing a timer starts is
+  needed for correctness: what waits on time is checked again on the next request as well.
+- **An organization's footing may be snapshotted outside it**, to an S3-compatible object store an
+  admin names, never one of its own extensions, which a lost footing could no longer find. Each
+  snapshot, with the current bundle, is sealed under a key of its own, and that key is sealed to a
+  public key the admin gives, by HPKE, RFC 9180. The private key is the admin's, held offline, so
+  nothing the organization runs can open its backups, and with it the organization can read
+  everything it holds without the platform.
 - **A scope's salt and key are derived in the platform's half**, where the masters are deployed, and
   delivered to the organization as its certificate is, so the masters never leave the platform's
   half while the blob that seals with what they derive runs in the organization's, RFC b8f35.
@@ -162,4 +193,7 @@ Open, for the discussion that follows:
 - How a buyer's organization is charged for what the platform's reserved organization shares with
   it.
 - Which vendor primitives are borrowed, each behind which contract.
+- How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
+  kept, beside its deployment.
+- Whether a product of the platform's may be an organization's footing or one of its extensions.
 - The private network between resources.

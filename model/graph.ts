@@ -188,19 +188,19 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('backing', 'start', H, "its copies' stores and their grades"),
-			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
+			e('footing', 'serve', H, 'its log, until a snapshot in the blob holds it'),
 			e('blob', 'background', S, 'archives its log and snapshots'),
 			e(
 				'blob',
 				'start',
 				H,
 				'a writer or read copy starts from the last snapshot',
-				'if snapshots live only in the blob, archiving falling behind is not soft: how long the quorum keeps its log decides',
+				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides',
 			),
 			KEY(),
 			e('?runner', 'start', H, 'its writer and read copies are placed, and a handover decided'),
 		],
-		uses: ['quorum*', 'sqlite*', 'capability*', 'compat*'],
+		uses: ['sqlite*', 'capability*', 'compat*'],
 	},
 	blob: {
 		keeps: true,
@@ -209,11 +209,12 @@ export const PARTS: Record<string, Part> = {
 			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
 			e('extent', 'serve', H, 'which pieces a content is made of, and where each is packed'),
+			e('footing', 'serve', H, "an open container's journal"),
 			e(
 				'vendor',
 				'serve',
 				H,
-				"pieces written to the scope's stores",
+				"containers written to the scope's stores",
 				'missing from the old graph: whether the blob or the extent writes to a store',
 			),
 			e('root', 'start', H, 'the masters a scope key and salt are derived from'),
@@ -252,11 +253,11 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('anchor', 'serve', H, "where a scope's backing is"),
-			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
+			e('footing', 'serve', H, "kept in the scope's footing"),
 			e('root', 'start', H, "the platform's own stores and their secrets"),
 			KEY(),
 		],
-		uses: ['quorum*', 'capability*', 'compat*'],
+		uses: ['capability*', 'compat*'],
 	},
 	extent: {
 		keeps: true,
@@ -264,9 +265,9 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('backing', 'serve', H, "a container's place from the scope's stores"),
-			e('vendor', 'serve', H, "its group's log on its copies' own stores"),
+			e('footing', 'serve', H, "its records, in the scope's footing"),
 		],
-		uses: ['quorum*', 'placement*', 'compat*'],
+		uses: ['placement*', 'compat*'],
 	},
 	host: {
 		layer: -2,
@@ -277,12 +278,8 @@ export const PARTS: Record<string, Part> = {
 	anchor: {
 		keeps: true,
 		layer: -3,
-		edges: [
-			REPLACED,
-			e('vendor', 'serve', H, "its group's copies on vendors' stores"),
-			e('root', 'start', H, "the grades of the platform's stores"),
-		],
-		uses: ['quorum*', 'compat*'],
+		edges: [REPLACED, e('footing', 'serve', H, "its rows, in the platform's footing")],
+		uses: ['compat*'],
 	},
 
 	root: {
@@ -301,6 +298,7 @@ export const PARTS: Record<string, Part> = {
 		],
 		uses: [],
 	},
+	footing: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
 	vendor: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
 	operator: { layer: VENDOR, kind: 'operator', edges: [], uses: [] },
 };
@@ -335,14 +333,14 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	},
 	'?clock': {
 		keptBy:
-			"the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by a resource bound to the organization, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
+			"the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by the scheduler of the resource bound to the organization it fires on, written there at deployment, the platform firing it only where a resource has none, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
 		triage: 'later',
 		contract:
-			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept on disk, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
+			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
 	},
 	'?intermediate': {
 		keptBy:
-			"the platform's half, since what it holds spans organizations; it certifies each organization's own signing key for a week at a time, v7v3w; on day one the operator certifies the intermediate with the root private key, and certifies each organization's key every week, by hand",
+			"the platform's half, since what it holds spans organizations; it certifies each organization's own signing key for seven days and renews it every day, v7v3w; on day one the operator certifies the intermediate with the root private key, and renews each organization's certificate every day, by hand",
 		triage: 'by hand on day one',
 		contract:
 			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root, and signs the issuer's standing capability to read grants and allowances, b8f35. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the data plane's, since the issuer cannot sign past its working key's expiry without it, but it is needed once in a working key's life and never on a call. It starts before the issuer and without it; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, v1's; how long a working key lives",
@@ -352,7 +350,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization or shared with it, v7v3w; on day one the operator pins each database's writer to one resource by hand",
 		triage: 'by hand on day one',
 		contract:
-			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the quorum's generation keeps all but one from confirming, vuanj. Its record of what is placed where is kept on disk and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
+			"places each tablet's writer and read copies at run time, on places the roster lists, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
 	'?roster': {
 		keptBy:
@@ -388,11 +386,6 @@ export const LIBRARIES: Record<string, Library> = {
 		what: 'versions: a frozen core, and ranges, features and refusals on it, wnqvu',
 		agrees: true,
 		uses: [],
-	},
-	'quorum*': {
-		what: 'a group of copies, a majority of voters confirming, b8f35',
-		agrees: false,
-		uses: ['compat*'],
 	},
 	'capability*': {
 		what: 'a capability and its chain to the root, checked, vuanj',

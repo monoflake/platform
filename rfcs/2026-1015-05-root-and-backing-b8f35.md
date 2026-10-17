@@ -47,8 +47,8 @@ carried in one, a change would not reach the capabilities still alive.
 - **`root`**: what nothing can start without, and nothing else. It changes rarely and by an
   operator.
 - **`backing`**: each scope's physical half, changed while the platform runs, as when a user adds a
-  store of their own. **It stands on layer -3's primitives directly, never on a tablet**, since a
-  tablet stands on the blob and the blob on it. Who may change a scope's backing is decided by a
+  store of their own. **It is kept in the scope's footing, never in a tablet**, since a tablet
+  stands on the blob and the blob on it. Who may change a scope's backing is decided by a
   capability, checked against the root's public key alone, so the backing never reaches up to the
   issuer. **It holds a scope's stores and nothing else**: each store's address, its secret, the
   tags a dataset's policy chooses stores by, never a store by name, its weight, and its **grade**:
@@ -64,11 +64,11 @@ carried in one, a change would not reach the capabilities still alive.
   whether it is compressed -- which cannot be computed, since what was packed with what depends on
   when it came, and which deduplication reads first. **Where a container is, it computes** from the
   container's id and the scope's stores, and keeps only the exceptions: a container passed to the
-  next store while one was down, until the repair moves it back. It stands on layer -3 directly, as
-  the backing does, since a tablet stands on the blob and the blob on it. **An extent is a
+  next store while one was down, until the repair moves it back. It is kept in the scope's
+  footing, as the backing is, since a tablet stands on the blob and the blob on it. **An extent is a
   scope's**, since a container is sealed with the scope's key, so files of two scopes can never be
-  packed into one, deduplication stays within an owner, and a scope is deleted whole; how many
-  scopes' extents share a quorum group is a lower layer's. **The extent repairs**: knowing every
+  packed into one, deduplication stays within an owner, and a scope is deleted whole. **The extent
+  repairs**: knowing every
   container and every exception, it restores what a layout asks for after a store is lost or a
   container was passed on, and since containers are sealed and named by an unkeyed hash it needs
   neither the key nor the salt to do it. It must repair on its own while the control plane is lost,
@@ -87,23 +87,22 @@ depends on no part**: what it needs, its caller hands it. A thing is a library o
 may have an instance of its own; one whose state two callers must see the same is a part. Libraries
 are marked `*`.
 
-- **`quorum*`**: the one way anything is kept by more than one copy, **a library, so that every
-  group of copies is its own** and none fails with another: given its copies -- an odd number that
-  vote and any number that only receive -- and each one's grade, it keeps a log: who writes now, at
-  which generation, and which entries a majority of the voters have confirmed. What counts as a
-  copy's confirming is derived from its store's grade and never written by hand -- a cloud's object
-  store lasts at once, a machine at home only once written through. A writer of an older generation
-  can confirm nothing, so two never write at once. A user's tablet runs one with its scope; the
-  anchor, the backings and the extent run theirs with none, kept by the platform for all. **A group
-  keeps its log on its copies' own stores and never in the blob**, which stands on several of them.
-  A pointer to a tablet's newest state is no part of its own: its group is that pointer. Its copies
-  talk to each other, so it carries a protocol version and reads the one before, RFC wnqvu.
 - **The root stands at the bottom**, below the anchor: it depends on nothing, and everything needs
-  it, the anchor's own group the grades of the platform's stores among them.
+  it.
+
+**Every log is kept in a footing, and v0 has no quorum.** Each owner stands on one, RFC v7v3w -- an
+organization's for its scope, the platform's for the anchor -- a database in SQLite's dialect that
+is ground, `scope.md`: trusted to be up and to keep what it confirmed, its redundancy its own and
+never the platform's. **It coordinates its owner**: it holds the backing, the extent's records, each
+tablet's log until a snapshot holds it, an open container's journal, which writer holds what and at
+which generation, and the bundle. A writer of an older generation is refused by the footing, so two
+never write at once. It holds no content, so it grows with the pieces a scope holds, about 200 bytes
+each: its 10 GB holds some fifty million, about 50 TB of large files. A footing lost is restored
+from its snapshot, RFC v7v3w.
 
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,
-at layer -3, standing on a vendor's primitive directly with nothing of the platform's beneath it:
+at layer -3, kept in the platform's footing with nothing of the platform's beneath it:
 a scope's id and a reference to where its backing is, a row each. **A scope exists while its row
 does**, and is gone when it is removed. **A scope's id never changes and is never given again**,
 since a second scope under the same id would derive the same salt and key. The anchor is the
@@ -196,11 +195,11 @@ put(dataset, path, content)
 - **A container is at most 16 MiB, and a piece never spans two**: one is closed when the next piece
   would not fit, so with pieces at most 4 MiB a full container holds 12 to 16 MiB. It is closed too
   after a short while or on a flush, so no write waits for one to fill.
-- **Nothing leaves memory unsealed.** A container still open is a journal, appended to only: each
-  write is sealed as a record of its own and appended, and answered once the journal's copies have
-  it. Closed, the container is sealed again whole, in 64 KiB segments, and placed. A scope with
-  object stores alone, which cannot be appended to, closes a container at each flush instead, and
-  collection merges what is left underfilled.
+- **Nothing leaves memory unsealed.** A container still open is a journal in the footing, appended
+  to only: each write is sealed in segments of at most 64 KiB, a row each, and answered once the
+  footing has them. Closed, the container is sealed again whole, in 64 KiB segments, placed among
+  the scope's stores, and its journal removed. Its closing after a while is checked again on the
+  next write, so no timer is needed for it.
 - **A container is sealed by a suite, named by a number in its header**, which is authenticated
   with what it seals. A suite names the whole format, so changed segments are a new number as a new
   cipher is; a suite a reader does not know is refused, never guessed.
@@ -239,17 +238,13 @@ Open, for the discussion that follows:
 
 - Which three places, all offline and the operator's, hold a master's shares.
 - What the control plane is and how far it reaches, the name reserved for it.
-- Which vendor primitive the anchor stands on, and which the backing does, and how a scope's salt
-  and key are kept in it.
-- How many copies the platform's own quorums keep, and of which grades.
-- The grades: how many, and what each means for confirming.
+- Which database is the platform's footing.
+- The grades: how many, and what each means for a tier.
 - The tiers: how many, their names, and what each maps to.
-- Where an open container's journal is kept: a node's own disk, copied, or the organization's
-  database.
+- How much an organization writes through its footing before the footing is what bounds it.
 - How long a container stays open before it is closed, and below what size it counts as
   underfilled.
 - How stores are added to a scope, which is to come down from what the layers above need.
-- How many scopes' extents share one quorum group.
 - How often the operator rotates the intermediate key, and how long a working key lives.
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place.

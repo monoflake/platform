@@ -39,6 +39,17 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 | below, ground    | a vendor's written guarantee, a published standard, a proven algorithm, a physical fact | trusted and never designed; the failures it states are taken into a failure model |
 | beside, operator | a person, holding the root private key and running day one's manual commands            | ideal, above                                                                      |
 
+**The footing is ground: trusted and never designed.** Each owner stands on one database, RFC v7v3w,
+which the model takes to be up and to keep what it confirmed; whether it is made redundant is
+beneath its contract and its owner's. **Its contract is frozen and carries no version**: SQLite's
+dialect, transactions, at most 10 GB, reached from every compute. Changing the vendor beneath a
+footing, or its contract, is a planned stop, by hand: its owner stops, the footing is copied,
+checked and switched to, and the old one is removed only after, which the 10 GB bound keeps to
+minutes. A footing down stops its owner, which is reversible; a footing losing data is guarded
+against by its vendor's written durability and by a backup held offline. The platform's footing
+stopping stops the control plane alone, and every organization runs on through it on its
+certificate.
+
 **The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
 layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something
 a part needs that no part is yet.
