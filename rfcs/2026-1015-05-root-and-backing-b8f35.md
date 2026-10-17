@@ -242,14 +242,14 @@ put(dataset, path, content)
   copies, a stored block is its container and has its id.
 
 - **Content is cut by FastCDC with normalized chunking at level 2** (USENIX ATC 2016, extended in
-  IEEE TPDS 2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB: 22 effective
-  mask bits before the 1 MiB and 18 after, the level its section 5.4 finds the sweet spot of
+  IEEE TPDS 2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB: 22 effective mask
+  bits before the 1 MiB and 18 after, the level its section 5.4 finds the sweet spot of
   deduplication at. It is written down by its definition and test vectors, never by a library's
-  version, since two implementations that cut one byte apart deduplicate nothing between them. A file shorter than the
-  least is one piece, so no other threshold says which files are cut. Its gear table is derived
-  from the salt, since where content is cut tells what it is, and deduplication is within a scope
-  already. **Its parameters never change**: changed, nothing breaks, but what is written after no
-  longer deduplicates against what was written before.
+  version, since two implementations that cut one byte apart deduplicate nothing between them. A
+  file shorter than the least is one piece, so no other threshold says which files are cut. Its gear
+  table is derived from the salt, since where content is cut tells what it is, and deduplication is
+  within a scope already. **Its parameters never change**: changed, nothing breaks, but what is
+  written after no longer deduplicates against what was written before.
 
   ```
   gear[0..256]  the first 2,048 bytes of derive_key("monoflake:organization:gear:1", salt),
@@ -267,55 +267,77 @@ put(dataset, path, content)
 - **A piece is compressed with zstd at level 1**, in a `content` dataset unless it is set otherwise,
   RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.
-- **A container is at most 16 MiB, and a piece never spans two**: one is closed when the next piece
-  would not fit, so with pieces at most 4 MiB a full container holds 12 to 16 MiB. It is closed too
-  after a short while or on a flush, so no write waits for one to fill.
-- **An `opaque` dataset's content is a container of its own**, RFC 13ixj: kept as given, neither
-  cut, compressed nor sealed, and placed by its tier as any container is.
+- **A container is exactly 16 MiB, 16,777,216 bytes, and a piece never spans two.** Its header,
+  256 segments and their tags fill it to the byte, 4,096 blocks of 4 KiB, so its size alone says it
+  is whole and no length is written. It holds 16,773,079 bytes of pieces: it is sealed once the
+  next piece would not fit, the rest zeros, so with pieces at most 4 MiB it holds at least 12 MiB of
+  them. It is never sealed early; what has not filled one waits in the journal.
+- **An `opaque` dataset's file is exactly 16 MiB, and is a container of its own**, RFC 13ixj: kept
+  as given, with no header, neither cut, compressed nor sealed, never through the journal, and
+  placed by its tier as any container is. Its dataset's kind, recorded in the footing, tells it
+  from a sealed one, never its bytes: a container that could say it is unsealed would let whoever
+  writes a store replace sealed content with its own.
 - **Only what cannot fill a container goes through a journal.** A write that fills one is sealed in
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
   and never by the footing, `lessons.md`.
-- **What is to be sealed never leaves memory unsealed.** A container still open is a journal in the
-  footing, appended to only: each write is sealed in segments of at most 64 KiB, a row each, and
-  answered once the footing has them. Closed, the container is sealed again whole, in 64 KiB
-  segments, placed among the scope's stores, and its journal removed. Its closing after a while is
-  checked again on the next write, so no timer is needed for it.
-- **A container is sealed by a suite, named by a letter in its header**, one byte from `A` to `Z`,
-  which is authenticated with what it seals. A suite names the whole format, so changed segments are
-  a new letter as a new cipher is; a suite a reader does not know is refused, never guessed.
+- **What is to be sealed never leaves memory unsealed.** A scope keeps one journal for each tier it
+  writes, in its footing, appended to only: each write is sealed in segments of at most 64 KiB, a
+  row each, and answered once the footing has them. Once the next piece would not fit, the
+  journal's pieces are sealed whole as a container, placed among the scope's stores, and its rows
+  removed. What waits in a journal is as durable as the footing, not yet as its tier asks.
+- **A container's format is named by its revision**, one byte of its header, an integer from 1 to
+  255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
+  format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
+  one a reader does not know is refused, never guessed.
 
-  | Suite     | Sealed by                               | State                                     |
-  | --------- | --------------------------------------- | ----------------------------------------- |
-  | `A`       | AES-256-GCM, STREAM, in 64 KiB segments | the one built                             |
-  | `B`       | ChaCha20-Poly1305, otherwise as `A`     | defined, and refused as reserved, unbuilt |
-  | any other | undefined                               | refused                                   |
+  | Revision       | Sealed by                                                      | State                                     |
+  | -------------- | -------------------------------------------------------------- | ----------------------------------------- |
+  | 1              | AES-256-GCM, 255 segments of 64 KiB and a last of 61,399 bytes | the one built                             |
+  | 2              | ChaCha20-Poly1305, otherwise as 1                              | defined, and refused as reserved, unbuilt |
+  | 0 or any other | undefined                                                      | refused                                   |
 
-  A reader that meets `B` answers that the suite is reserved and unsupported, an error of its own,
+  A reader that meets 2 answers that the revision is reserved and unsupported, an error of its own,
   and never calls a cipher for it.
 
   Native code seals with a library that reaches the CPU's AES instructions, a web runtime with its
   own WebCrypto; where a CPU has none, the same bytes are computed in software, more slowly.
 
-- **Each container is sealed under a key of its own.** Its header holds the suite, the encryption
-  master's version and 32 random bytes, and its key is BLAKE3's
-  `derive_key(context, scope key || random)`, so the same header always gives it back. Under that
-  key a segment's nonce is its index, eleven bytes big-endian, then one byte, `0x01` for the last
-  segment and `0x00` for every other, as age lays it out; no nonce repeats however many containers a
-  scope writes. A segment holds 64 KiB, the last 1 byte to 64 KiB, flagged even when full, so none
-  is empty and how many there are follows from the sealed length. A journal's segments all carry
-  `0x00`, its end being the count of rows the footing holds; closed, it is sealed again under new
-  random bytes, and only then has a last segment. **A key seals once**: what is sealed again -- a journal closed, a
-  container repacked -- draws new random bytes.
+- **Each container is sealed under a key of its own**, `derive_key("monoflake:container:key:1",
+organization key || seed)`, so the same header always gives it back. Its header is 41 bytes, and
+  nothing but segments follows:
+
+  | Offset | Bytes      | Field                           | Value                                                                   |
+  | ------ | ---------- | ------------------------------- | ----------------------------------------------------------------------- |
+  | 0      | 4          | magic                           | `MNFL`                                                                  |
+  | 4      | 1          | revision                        | 1                                                                       |
+  | 5      | 4          | the encryption master's version | a 32-bit integer, big-endian, at least 1                                |
+  | 9      | 32         | seed                            | drawn at random                                                         |
+  | 41     | 16,777,175 | segments                        | 255 of 65,536 bytes and one of 61,399, each sealed with its 16-byte tag |
+
+  Segment i is sealed with the nonce `8 zero bytes || u32_be(i)` and the associated data
+  `header || u32_be(i) || final`, `final` being `0x01` for segment 255 alone and `0x00` for every
+  other; the associated data is rebuilt as it is read, never written. No nonce repeats however many
+  containers a scope writes, and a container is read whole. A journal is sealed the same way under a
+  header of its own, kept in its first row, each row a segment under the next index and `final`
+  `0x00` throughout, its end the count of rows the footing holds. **A key seals once**: what is
+  sealed again -- a journal filled, a container repacked -- draws a new seed.
+
 - **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no container. A
   piece is dead once no file names it, by a count of those that do, and a container's dead share is
   what its dead pieces take of it. Collection repacks a container's live pieces into a new one, in
   three ways:
 
-  | Way       | What it does                                                                                                  | Changes data |
-  | --------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-  | inspect   | counts each container's dead share and what collecting would reclaim                                          | no           |
-  | collect   | repacks what it is pointed at, now, at any threshold; at zero, erases what was deleted                        | yes          |
-  | automatic | repacks a container once its dead share passes a threshold, 30 percent unless set, and merges the underfilled | yes          |
+  | Way        | What it does                                                                                           | Changes data |
+  | ---------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+  | inspect    | counts each container's dead share and what collecting would reclaim                                   | no           |
+  | collect    | repacks what it is pointed at, now, at any threshold; at zero, erases what was deleted                 | yes          |
+  | automatic  | repacks a container once a deletion's mark is written and its dead share passes 30 percent, unless set | yes          |
+  | background | walks every container, one at a time and each its own atomic step, repacking below the threshold too   | yes          |
+
+  **A deletion is answered once its mark is written**: the repack it may start is a task of its
+  own, and never holds the deletion back. A repack's live pieces take a write's way: what fills a
+  container is sealed at once, and the rest goes into the journal. What the background walk repacks,
+  and how often, is to be decided. [D6]
 
   A piece a write finds again is counted again in the same step as it is found; a repack drops only
   pieces still at zero when it commits, and the old container is removed only after. The threshold
@@ -328,8 +350,6 @@ Open, for the discussion that follows:
 - The grades: how many, and what each means for a tier. [C4]
 - The tiers: how many, their names, and what each maps to. [A7]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
-- How long a container stays open before it is closed, and below what size it counts as underfilled.
-  [B14]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's

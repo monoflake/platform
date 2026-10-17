@@ -36,6 +36,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "a container's header, byte by byte: a magic, the suite, the encryption master's version, the 32 random bytes, and what is authenticated with what it seals",
 		from: 'b8f35',
+		done: 'b8f35',
 	},
 	{
 		id: 'A2',
@@ -174,7 +175,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B14',
 		group: 'B',
-		what: "the constants v0 picks: how long a container stays open, below what it is underfilled, the collection threshold, how long a capability and a working key live, a sweep's grace",
+		what: "the constants v0 picks: how long a capability and a working key live, a sweep's grace",
 		from: 'b8f35, vuanj, 49qyg',
 	},
 	{
@@ -244,7 +245,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C8',
 		group: 'C',
-		what: 'whether one content named in a content and an opaque dataset is kept once, and whether small opaque contents are packed',
+		what: 'whether one content named in a content and an opaque dataset is kept once',
 		from: '13ixj',
 		step: 2,
 	},
@@ -357,6 +358,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "a host's way to a footing kept short where the vendor's routing lands a connection far: one connection dialed again, reads from replicas, the paid plan's routing measured",
 		from: 'lessons.md',
+	},
+	{
+		id: 'D6',
+		group: 'D',
+		what: 'the background collection: what it repacks below the threshold, how often, and in what order it walks containers',
+		from: 'b8f35',
 	},
 
 	// E -- stale or inconsistent text.

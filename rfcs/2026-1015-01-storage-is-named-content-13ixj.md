@@ -39,8 +39,9 @@ owner (one scope, its own unique salt)
   another policy is another dataset.
 - **A dataset's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
   `content`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
-  RFC b8f35. `opaque` is kept as given -- neither cut, compressed nor sealed -- for what is sealed
-  already above, RFC 94y0d. The tier, the quota and who may bind it are every kind's.
+  RFC b8f35. `opaque` is kept as given, each file exactly 16 MiB -- neither cut, compressed nor
+  sealed -- for what is sealed already above, RFC 94y0d. The tier, the quota and who may bind it are
+  every kind's.
 - **Durability is a tier, never a number.** A dataset names how much its data matters; the
   platform maps each tier to how many stores may fail with nothing lost, and to a layout that bears
   it -- whole copies, or pieces with parity -- chosen by size and by how many stores the scope has.
