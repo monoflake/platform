@@ -115,7 +115,7 @@ export const PARTS: Record<string, Part> = {
 				'serve',
 				H,
 				'link(): the content answered through the gateway, public or private',
-				'the gateway is no part; who checks a private reader is open, 13ixj',
+				'the gateway is no part; who checks a private reader is open, 13ixj [C10]',
 			),
 		],
 		uses: ['capability*', 'compat*'],
@@ -160,7 +160,7 @@ export const PARTS: Record<string, Part> = {
 				'deploy',
 				H,
 				'a deployment opens the migration window',
-				'not in the old graph; whether the call graph also holds bindings is open, 49qyg',
+				'not in the old graph; whether the call graph also holds bindings is open, 49qyg [C11]',
 			),
 			KEY(),
 			e('?clock', 'serve', H, 'schedule fires at set times, queue retries wait between tries'),
@@ -213,7 +213,7 @@ export const PARTS: Record<string, Part> = {
 				'start',
 				H,
 				'a writer or read copy starts from the last snapshot',
-				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides',
+				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides [B8]',
 			),
 			KEY(),
 			e('?runner', 'start', H, 'its writer and read copies are placed, and a handover decided'),
@@ -234,7 +234,7 @@ export const PARTS: Record<string, Part> = {
 				'serve',
 				H,
 				"containers written to the scope's stores",
-				'missing from the old graph: whether the blob or the extent writes to a store',
+				'missing from the old graph: whether the blob or the extent writes to a store [B5]',
 			),
 			e(
 				'root',
@@ -266,7 +266,7 @@ export const PARTS: Record<string, Part> = {
 				'serve',
 				H,
 				"an effect's http leaves through the platform's own request interface",
-				'that interface is no part, 49qyg',
+				'that interface is no part, 49qyg [C14]',
 			),
 		],
 		uses: ['vocabulary*', 'compat*'],
@@ -320,13 +320,7 @@ export const PARTS: Record<string, Part> = {
 		layer: -4,
 		edges: [
 			{
-				...e(
-					'?source',
-					'deploy',
-					H,
-					'what it holds reaches each part',
-					'where the source is kept and how it is delivered, b8f35',
-				),
+				...e('?source', 'deploy', H, 'what it holds reaches each part'),
 				replaces: true,
 			},
 		],
@@ -367,7 +361,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: a request comes in by the resources bound to the organization or shared with it, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator sets each app's routes by hand in the organization's account",
 		triage: 'by hand on day one',
 		contract:
-			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
+			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj [C10]",
 	},
 	'?clock': {
 		half: 'organization',
@@ -375,7 +369,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by the scheduler of the resource bound to the organization it fires on, written there at deployment, the platform firing it only where a resource has none, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
 		triage: 'later',
 		contract:
-			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
+			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open [C14]",
 	},
 	'?intermediate': {
 		half: 'platform',
@@ -383,7 +377,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the platform's half, since what it holds spans organizations; it certifies each organization's own signing key for seven days and renews it every day, v7v3w; on day one the operator certifies the intermediate with the root private key, and renews each organization's certificate every day, by hand",
 		triage: 'by hand on day one',
 		contract:
-			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root,. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the platform's half's: an organization's issuer signs on without it for seven days, and it is needed once a day and never on a call. It starts without the issuer; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, s1's; how long a working key lives",
+			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root,. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the platform's half's: an organization's issuer signs on without it for seven days, and it is needed once a day and never on a call. It starts without the issuer; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, s1's; how long a working key lives [D3]",
 	},
 	'?runner': {
 		half: 'organization',
@@ -406,7 +400,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: a request leaves by the resource its call runs on, a node's network or a third-party account, v7v3w; later: until the check is built into what the platform deploys, a request leaves unchecked, which on an organization's own resources costs only the guard",
 		triage: 'later',
 		contract:
-			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
+			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open [C14]. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
 	},
 	'?source': {
 		keptBy:
@@ -419,8 +413,8 @@ export const BOUNDARIES: Record<string, Boundary> = {
 
 /** What reads a running build's range: the write version is the lowest of every reader's highest. */
 export const GLOBAL_OPEN = [
-	"control plane: a caller of scope, backing and blob -- creating a scope, setting its allowance, adding a store, starting a migration of layout or key -- never a need of theirs; it is the platform's half and stands on the vendor contracts directly, never on layer 0, v7v3w",
-	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's",
+	"control plane: a caller of scope, backing and blob -- creating a scope, setting its allowance, adding a store, starting a migration of layout or key -- never a need of theirs; it is the platform's half and stands on the vendor contracts directly, never on layer 0, v7v3w [B10]",
+	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's [B10]",
 ];
 
 export const LIBRARIES: Record<string, Library> = {

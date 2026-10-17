@@ -1,10 +1,12 @@
 /**
  * Runs s0's dimensions over the model, `scope.md`: D0 serve, D1 bootstrap, D2 restart, D3 upgrade
  * and D5 contract, each printing its question, every violation, and every assumption -- an edge to
- * a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d. D4 recovery
- * models a failure, so it is s1's, and runs only with `--s1`. With `--ready`, the checklist fails
- * while a row that blocks step 0 is open. Exits 1 when any dimension finds a violation.
+ * a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d, and the
+ * checklist. D4 recovery models a failure, so it is s1's, and runs only with `--s1`. With
+ * `--ready`, or `--ready=N`, the checklist fails while a row that blocks step 0, or step N, is
+ * open, or an open question names no row. Exits 1 when any dimension finds a violation.
  */
+import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
@@ -323,7 +325,42 @@ console.log(
 	`\n# Completion\n  ${unsorted.length ? `not yet kept and sorted: ${unsorted.join(', ')}` : 'every boundary is kept and sorted'}`,
 );
 
-// The checklist, `model/checklist.ts`: its rows well formed, and how many still block building.
+// The checklist, `model/checklist.ts`, grows by itself: every open question a draft lists and every
+// open mark in the model names its row in brackets, `[B12]`, and one that names none is unfiled
+// until it is, so a new structure's new questions reach the checklist without being copied there.
+const TAG = /\[([A-E]\d+)\]/g;
+const marks: { where: string; text: string }[] = [];
+const rfcs = new URL('../rfcs/', import.meta.url);
+for (const file of readdirSync(rfcs)
+	.filter((f) => f.endsWith('.md'))
+	.sort()) {
+	const text = readFileSync(new URL(file, rfcs), 'utf8');
+	const at = text.indexOf('Open, for the discussion that follows:');
+	if (at < 0) continue;
+	const id = /-([a-z0-9]{5})\.md$/.exec(file)?.[1] ?? file;
+	let bullet: string[] | undefined;
+	for (const l of text.slice(at).split('\n').slice(1)) {
+		if (l.startsWith('- ')) marks.push({ where: id, text: (bullet = [l.slice(2)]).join(' ') });
+		else if (l.startsWith('  ') && bullet) {
+			bullet.push(l.trim());
+			marks[marks.length - 1].text = bullet.join(' ');
+		} else if (l.trim() === '') bullet = undefined;
+		else break;
+	}
+}
+for (const [name, part] of Object.entries(PARTS))
+	for (const edge of part.edges)
+		if (edge.open) marks.push({ where: `${name} -> ${edge.to}`, text: edge.open });
+for (const g of GLOBAL_OPEN) marks.push({ where: 'GLOBAL_OPEN', text: g });
+const openWords = /\b(is|are) open\b|\bOpen:/;
+for (const [name, b] of Object.entries(BOUNDARIES)) {
+	for (const text of [b.contract, b.keptBy])
+		if (text && openWords.test(text)) marks.push({ where: name, text });
+	if (b.triage === 'later' && ![b.contract, b.keptBy].some((t) => t && TAG.test(t)))
+		marks.push({ where: name, text: `left for later: ${b.keptBy ?? ''}` });
+	TAG.lastIndex = 0;
+}
+
 const rows: string[] = [];
 const ids = new Set<string>();
 for (const item of CHECKLIST) {
@@ -335,23 +372,48 @@ for (const item of CHECKLIST) {
 	if (item.group !== 'C' && item.step !== undefined)
 		rows.push(`${item.id}: only a row of group C waits for a later step`);
 }
+const unfiled: string[] = [];
+for (const m of marks) {
+	const named = [...m.text.matchAll(TAG)].map((x) => x[1]);
+	if (named.length === 0) unfiled.push(`unfiled, ${m.where}: ${m.text}`);
+	for (const id of named) {
+		const item = CHECKLIST.find((x) => x.id === id);
+		if (item === undefined) rows.push(`${m.where} names ${id}, no row of the checklist`);
+		else if (item.done !== undefined)
+			rows.push(`${m.where} still lists ${id} open, though it was decided in ${item.done}`);
+	}
+}
+
+const readyArg = process.argv.find((a) => a === '--ready' || a.startsWith('--ready='));
+const ready = readyArg !== undefined;
+const upTo = readyArg?.includes('=') ? Number(readyArg.split('=')[1]) : 0;
+if (ready && (!Number.isInteger(upTo) || STEPS[upTo] === undefined))
+	rows.push(`--ready=${upTo} names no step of the bootstrap path`);
 const open = CHECKLIST.filter((x) => x.done === undefined);
-const blocking = open.filter((x) => x.group === 'A' || x.group === 'B' || x.group === 'E');
-const ready = process.argv.includes('--ready');
+const blocking = open.filter(
+	(x) =>
+		x.group === 'A' || x.group === 'B' || x.group === 'E' || (x.group === 'C' && x.step! <= upTo),
+);
 dimension(
 	'Checklist',
 	ready
-		? 'Is every row that blocks step 0 crossed off, so building may begin?'
-		: 'Is every row well formed? Run with --ready to ask whether building may begin.',
-	ready ? [...rows, ...blocking.map((x) => `open ${x.id}: ${x.what} (${x.from})`)] : rows,
+		? `Is every row that blocks step ${upTo} crossed off, and every open question filed, so it may begin?`
+		: 'Is every row well formed, and every open question filed? Run with --ready to ask whether building may begin.',
+	[
+		...rows,
+		...unfiled,
+		...(ready ? blocking.map((x) => `open ${x.id}: ${x.what} (${x.from})`) : []),
+	],
 	[
 		`open: ${(['A', 'B', 'C', 'D', 'E'] as const)
 			.map((g) => `${g} ${open.filter((x) => x.group === g).length}`)
-			.join(', ')}; crossed off: ${CHECKLIST.length - open.length}`,
-		`blocking step 0: ${blocking.length ? blocking.map((x) => x.id).join(' ') : 'none, building may begin'}`,
+			.join(
+				', ',
+			)}; crossed off: ${CHECKLIST.length - open.length}; open questions filed: ${marks.length - unfiled.length} of ${marks.length}`,
+		`blocking step ${upTo}: ${blocking.length ? blocking.map((x) => x.id).join(' ') : 'none, it may begin'}`,
 		...(ready
 			? open
-					.filter((x) => x.group === 'C' || x.group === 'D')
+					.filter((x) => !blocking.includes(x))
 					.map(
 						(x) =>
 							`later ${x.id}${x.step !== undefined ? ` (before step ${x.step})` : ''}: ${x.what}`,

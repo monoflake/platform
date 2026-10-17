@@ -73,7 +73,7 @@ of time. Nothing needs it yet, so it is not built; its place is kept so that it 
 
 Open, for the discussion that follows:
 
-- Everything beneath the contract past what RFC vuanj settles for the tablet.
-- The form of results and the limits on one query.
-- The `analytical` kind's table definition and its query dialect, when something needs it.
-- Whether a database, as a dataset is, may be deleted only while empty.
+- Everything beneath the contract past what RFC vuanj settles for the tablet. [C12]
+- The form of results and the limits on one query. [C12]
+- The `analytical` kind's table definition and its query dialect, when something needs it. [C12]
+- Whether a database, as a dataset is, may be deleted only while empty. [C12]

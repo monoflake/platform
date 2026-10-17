@@ -4,7 +4,10 @@ What the model covers in its current stage. An edge case outside it goes to the 
 and is not designed for until a later stage takes it in. See `spec/process.md`.
 
 **Building begins when `node model/check.ts --ready` passes**: every row of `model/checklist.ts`
-that blocks step 0 is crossed off by naming where it was decided, and every check holds.
+that blocks step 0 is crossed off by naming where it was decided, and every check holds. **The
+checklist grows by itself**: every open question a draft lists, and every open mark in the model,
+names its row in brackets, `[B12]`; one that names none is unfiled and blocks, so a new dimension
+or structure brings its questions in. A later step is gated the same way, `--ready=N`.
 
 **Two numberings, never one.** A stage, `s0`, `s1`, is how far the paper model reaches; a version,
 `v0`, `v1`, is a release of the Platform, RFC 94y0d. What each stage takes in beyond `s0` is to be

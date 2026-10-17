@@ -199,11 +199,12 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- Where an admin's credential for a third-party account is kept, and what it may do.
+- Where an admin's credential for a third-party account is kept, and what it may do. [C3]
 - How the operator's allowance, RFC vuanj, relates to the quotas a holder sets on its resources.
+  [D1]
 - How a buyer's organization is charged for what the platform's reserved organization shares with
-  it.
-- Which vendor primitives are borrowed, each behind which contract.
+  it. [D1]
+- Which vendor primitives are borrowed, each behind which contract. [B5]
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
-  kept, beside its deployment.
-- The private network between resources.
+  kept, beside its deployment. [B4]
+- The private network between resources. [C5]

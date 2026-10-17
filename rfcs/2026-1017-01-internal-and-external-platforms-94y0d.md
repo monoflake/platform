@@ -130,7 +130,7 @@ segments once per write, a container once per 16 MiB.
 
 Open, for the discussion that follows:
 
-- How a tablet's log is replicated among hosts, simulated on paper before it is built.
-- When cells move onto a database organization, and what a cell holds before.
+- How a tablet's log is replicated among hosts, simulated on paper before it is built. [C1]
+- When cells move onto a database organization, and what a cell holds before. [C6]
 - What becomes of a revoked organization's sealed data on internal organizations the platform pays
-  for.
+  for. [D2]

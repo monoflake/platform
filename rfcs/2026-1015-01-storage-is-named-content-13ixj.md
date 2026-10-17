@@ -91,6 +91,6 @@ count are read, never computed, when it is listed.
 Open, for the discussion that follows:
 
 - Whether that metadata is held per owner or per dataset. Deduplication and the count of names
-  pointing at each hash are an owner's, which argues for per owner.
-- The capability's name, since it is not an object store.
-- Whether one content named in a `content` and an `opaque` dataset is kept once, and how.
+  pointing at each hash are an owner's, which argues for per owner. [C9]
+- The capability's name, since it is not an object store. [A9]
+- Whether one content named in a `content` and an `opaque` dataset is kept once, and how. [C8]

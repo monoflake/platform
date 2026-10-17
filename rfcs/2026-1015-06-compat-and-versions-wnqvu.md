@@ -66,4 +66,4 @@ every running reader's highest once a replacement lands.
 Open, for the discussion that follows:
 
 - How the data kept in each version on disk is counted, and by which part, so that a reader knows
-  when it may drop an old one.
+  when it may drop an old one. [C13]

@@ -242,18 +242,18 @@ put(dataset, path, content)
 
 Open, for the discussion that follows:
 
-- Which three places, all offline and the operator's, hold a master's shares.
-- What the control plane is and how far it reaches, the name reserved for it.
-- The grades: how many, and what each means for a tier.
-- The tiers: how many, their names, and what each maps to.
-- How much an organization writes through its footing before the footing is what bounds it.
-- How long a container stays open before it is closed, and below what size it counts as
-  underfilled.
-- How stores are added to a scope, which is to come down from what the layers above need.
-- How often the operator rotates the intermediate key, and how long a working key lives.
+- Which three places, all offline and the operator's, hold a master's shares. [B12]
+- What the control plane is and how far it reaches, the name reserved for it. [B10]
+- The grades: how many, and what each means for a tier. [C4]
+- The tiers: how many, their names, and what each maps to. [A7]
+- How much an organization writes through its footing before the footing is what bounds it. [C7]
+- How long a container stays open before it is closed, and below what size it counts as underfilled.
+  [B14]
+- How stores are added to a scope, which is to come down from what the layers above need. [C3]
+- How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
-  authority -- may rotate the intermediate key unattended in the operator's place.
+  authority -- may rotate the intermediate key unattended in the operator's place. [D3]
 - How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
-  failure, and so s1's.
+  failure, and so s1's. [D3]
 - Whether a name that must be unique across scopes, such as an app's domain, is the platform's
-  record, and whether it is kept in the anchor or beside it.
+  record, and whether it is kept in the anchor or beside it. [B9]
