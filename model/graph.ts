@@ -11,6 +11,8 @@ export const VENDOR = -9;
 
 export type When = 'start' | 'serve' | 'deploy' | 'background';
 
+export type Half = 'platform' | 'organization';
+
 export interface Edge {
 	to: string;
 	when: When;
@@ -35,6 +37,8 @@ export interface Part {
 	keeps?: boolean;
 	/** Whether the platform runs it as an owner, in an organization of its own, RFC vuanj. */
 	asOwner?: boolean;
+	/** Which half runs it, RFC v7v3w; the root runs nothing, so it has none. */
+	half?: Half;
 	edges: Edge[];
 	uses: string[];
 }
@@ -65,6 +69,7 @@ const KEY = (to = 'root') =>
 export const PARTS: Record<string, Part> = {
 	app: {
 		layer: 1,
+		half: 'organization',
 		edges: [
 			{
 				...e('function', 'deploy', H, 'an app is deployed as functions, its types checked'),
@@ -78,6 +83,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	console: {
 		layer: 1,
+		half: 'organization',
 		asOwner: true,
 		edges: [
 			{
@@ -93,6 +99,7 @@ export const PARTS: Record<string, Part> = {
 
 	store: {
 		layer: 0,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
@@ -114,6 +121,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	database: {
 		layer: 0,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
@@ -125,6 +133,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	function: {
 		layer: 0,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
@@ -161,23 +170,30 @@ export const PARTS: Record<string, Part> = {
 
 	scope: {
 		layer: -1,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('tablet', 'serve', H, "configuration and allowance in the scope's own tablet"),
-			e('anchor', 'serve', H, 'exists while its anchor row does'),
+			e(
+				'anchor',
+				'deploy',
+				H,
+				'its anchor row, compiled into the bundle; it exists by its certificate',
+			),
 		],
 		uses: ['compat*'],
 	},
 	issuer: {
 		layer: -1,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('tablet', 'serve', H, "reads the scope's grants and allowance, in its own format, vuanj"),
 			e(
 				'?intermediate',
-				'start',
+				'deploy',
 				H,
-				'its working keys are certified by the intermediate key, online',
+				'its signing key, certified for seven days and renewed each day, in the bundle, v7v3w',
 			),
 		],
 		uses: ['capability*', 'vocabulary*', 'compat*'],
@@ -185,6 +201,7 @@ export const PARTS: Record<string, Part> = {
 	tablet: {
 		keeps: true,
 		layer: -1,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('backing', 'start', H, "its copies' stores and their grades"),
@@ -205,6 +222,7 @@ export const PARTS: Record<string, Part> = {
 	blob: {
 		keeps: true,
 		layer: -1,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
@@ -217,7 +235,12 @@ export const PARTS: Record<string, Part> = {
 				"containers written to the scope's stores",
 				'missing from the old graph: whether the blob or the extent writes to a store',
 			),
-			e('root', 'start', H, 'the masters a scope key and salt are derived from'),
+			e(
+				'root',
+				'start',
+				H,
+				"a scope's salt and key, derived from the masters and kept in the bundle",
+			),
 			KEY(),
 			e(
 				'extent',
@@ -231,6 +254,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	executor: {
 		layer: -1,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('host', 'serve', H, 'hands each call to a host'),
@@ -250,9 +274,10 @@ export const PARTS: Record<string, Part> = {
 	backing: {
 		keeps: true,
 		layer: -2,
+		half: 'organization',
 		edges: [
 			REPLACED,
-			e('anchor', 'serve', H, "where a scope's backing is"),
+			e('anchor', 'deploy', H, 'its backing, compiled into the bundle the footing keeps, v7v3w'),
 			e('footing', 'serve', H, "kept in the scope's footing"),
 			e('root', 'start', H, "the platform's own stores and their secrets"),
 			KEY(),
@@ -262,6 +287,7 @@ export const PARTS: Record<string, Part> = {
 	extent: {
 		keeps: true,
 		layer: -2,
+		half: 'organization',
 		edges: [
 			REPLACED,
 			e('backing', 'serve', H, "a container's place from the scope's stores"),
@@ -271,6 +297,7 @@ export const PARTS: Record<string, Part> = {
 	},
 	host: {
 		layer: -2,
+		half: 'organization',
 		edges: [REPLACED, e('vendor', 'serve', H, 'runs sandboxes on a machine or a runtime')],
 		uses: ['vocabulary*', 'compat*'],
 	},
@@ -278,6 +305,7 @@ export const PARTS: Record<string, Part> = {
 	anchor: {
 		keeps: true,
 		layer: -3,
+		half: 'platform',
 		edges: [REPLACED, e('footing', 'serve', H, "its rows, in the platform's footing")],
 		uses: ['compat*'],
 	},
@@ -314,10 +342,13 @@ export interface Boundary {
 	keptBy?: string;
 	/** Decided now, since a mistake is written into data; by hand on day one; or later. */
 	triage?: 'decided now' | 'by hand on day one' | 'later';
+	/** Which half keeps it, where one does, RFC v7v3w. */
+	half?: Half;
 }
 
 export const BOUNDARIES: Record<string, Boundary> = {
 	'?deployer': {
+		half: 'platform',
 		keptBy:
 			'the operator, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every part can stand on none of them',
 		triage: 'by hand on day one',
@@ -325,6 +356,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a part may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
 	},
 	'?entry': {
+		half: 'organization',
 		keptBy:
 			"the organization's half: a request comes in by the resources bound to the organization or shared with it, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator sets each app's routes by hand in the organization's account",
 		triage: 'by hand on day one',
@@ -332,6 +364,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj",
 	},
 	'?clock': {
+		half: 'organization',
 		keptBy:
 			"the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by the scheduler of the resource bound to the organization it fires on, written there at deployment, the platform firing it only where a resource has none, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
 		triage: 'later',
@@ -339,13 +372,15 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open",
 	},
 	'?intermediate': {
+		half: 'platform',
 		keptBy:
 			"the platform's half, since what it holds spans organizations; it certifies each organization's own signing key for seven days and renews it every day, v7v3w; on day one the operator certifies the intermediate with the root private key, and renews each organization's certificate every day, by hand",
 		triage: 'by hand on day one',
 		contract:
-			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root, and signs the issuer's standing capability to read grants and allowances, b8f35. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the data plane's, since the issuer cannot sign past its working key's expiry without it, but it is needed once in a working key's life and never on a call. It starts before the issuer and without it; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, v1's; how long a working key lives",
+			"certifies each new working key the issuer gives it, with an expiry, in a chain to the root, and signs the issuer's standing capability to read grants and allowances, b8f35. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the platform's half's: an organization's issuer signs on without it for seven days, and it is needed once a day and never on a call. It starts without the issuer; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, v1's; how long a working key lives",
 	},
 	'?runner': {
+		half: 'organization',
 		keptBy:
 			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization or shared with it, v7v3w; on day one the operator pins each database's writer to one resource by hand",
 		triage: 'by hand on day one',
@@ -360,6 +395,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
 	},
 	'?egress': {
+		half: 'organization',
 		keptBy:
 			"the organization's half: a request leaves by the resource its call runs on, a node's network or a third-party account, v7v3w; later: until the check is built into what the platform deploys, a request leaves unchecked, which on an organization's own resources costs only the guard",
 		triage: 'later',

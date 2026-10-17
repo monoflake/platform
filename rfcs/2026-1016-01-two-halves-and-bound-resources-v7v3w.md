@@ -49,6 +49,15 @@ machine given both to the platform and to its users is the problem this avoids.
 **The control plane is the platform's half.** It is reached at its own API on the platform's domain,
 and stands on the vendor contracts directly, never on layer 0, which it deploys.
 
+**The platform's half is no organization and runs no layer 0.** A footing and a highly available
+compute on the platform's own accounts are all it needs to work, and it stops there: it holds no
+store, since what it keeps -- configuration's truth, the anchor, the credentials, the bundles --
+fits its footing, and an app's code goes from the deployer to its organization's own blob. It shares
+libraries with the organizations and never a part, RFC vuanj, and the operator configures it,
+`?source`. **Everything that serves runs in an organization**, the console's among them, and none of
+it needs the platform's half to serve or to start: an organization reads its bundle, and reaches the
+platform's half only to change it, which `model/check.ts` checks.
+
 **Only an organization is a scope, and only an organization holds anything.** It holds the apps,
 the datasets, the databases and the resources they run on; the scope of RFC vuanj is an
 **organization scope**. A person who wants apps of their own makes an organization, named as they

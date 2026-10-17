@@ -101,6 +101,14 @@ for (const [name, part] of designed)
 		for (const edge of part.edges)
 			if (PARTS[edge.to]?.asOwner)
 				rules.push(`runs as an owner, needed below: ${line(name, edge)}`);
+// The organization's half runs on while the platform's cannot be reached: none of its parts needs the
+// platform's to serve or to start, and reads a bundle instead, RFC v7v3w.
+const halfOf = (to: string) => (known(to) ? PARTS[to]?.half : BOUNDARIES[to]?.half);
+for (const [name, part] of designed)
+	if (part.half === 'organization')
+		for (const edge of part.edges)
+			if ((edge.when === 'serve' || edge.when === 'start') && halfOf(edge.to) === 'platform')
+				rules.push(`the organization's half needs the platform's: ${line(name, edge)}`);
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);
@@ -108,9 +116,17 @@ for (const c of cycles((n) => LIBRARIES[n]?.uses ?? [], Object.keys(LIBRARIES)))
 	rules.push(`library cycle: ${c}`);
 dimension(
 	'Rules',
-	'Does every hard edge point down, every library use only libraries, and nothing below need an owner?',
+	"Does every hard edge point down, every library use only libraries, nothing below need an owner, and no organization need the platform's half to serve or start?",
 	rules,
-	[`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`],
+	[
+		`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`,
+		`no half, since they run nothing: ${
+			designed
+				.filter(([, p]) => p.half === undefined)
+				.map(([n]) => n)
+				.join(', ') || 'none'
+		}`,
+	],
 );
 
 const serve = (x: Edge) => x.when === 'serve';

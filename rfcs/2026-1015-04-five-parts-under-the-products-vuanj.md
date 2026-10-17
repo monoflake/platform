@@ -196,8 +196,7 @@ reaches the scope's backing and the extent, below it, RFC b8f35.
 
 Open, for the discussion that follows:
 
-- Which half each part belongs to, where RFC v7v3w has not said, and which vendor primitive each
-  stands on.
+- Which vendor primitive each part stands on; the half each belongs to is in `model/graph.ts`.
 - Where what control held stands -- the scopes, the bindings and the functions' declarations the
   issuer reads -- now that control is taken apart by RFC b8f35.
 - How a private link's reader proves they may read it: the authentication of people, not parts.
