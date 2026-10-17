@@ -18,6 +18,8 @@ export type Feature =
 	| 'byoc'
 	/** An organization's extensions spread over vendors, so losing one is survived. */
 	| 'vendors'
+	/** What each resource is used for counted, and cut off short of a limit, RFC 94y0d. */
+	| 'metering'
 	/** A tablet's log replicated among hosts offering `instance`, not kept in a footing. */
 	| 'replicated';
 
@@ -25,8 +27,8 @@ export const VERSIONS: Record<number, Feature[]> = {
 	0: ['products', 'hosts'],
 	1: ['products', 'hosts', 'rolling'],
 	2: ['products', 'hosts', 'rolling', 'deployer'],
-	3: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors'],
-	4: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'replicated'],
+	3: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering'],
+	4: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering', 'replicated'],
 };
 
 /** What a deployment stands on. Only `provider` offers `instance`, 49qyg. */
@@ -47,6 +49,8 @@ export interface Deployment {
 	on: Feature[];
 	ground: Ground[];
 	move: Move;
+	/** The vendor's plan the deployment's Cloudflare account is on; free unless paid. */
+	plan?: 'free' | 'paid';
 }
 
 export interface Step {
@@ -116,22 +120,40 @@ export const STEPS: Step[] = [
 		cells: 'one each',
 	},
 	{
-		what: "bringing one's own cloud and more vendors than one built, proven on the author's own organizations",
+		what: "bringing one's own cloud, more vendors than one and metering built, proven on the author's own organizations",
 		internal: internal(2, ['products', 'hosts', 'rolling', 'deployer'], 'none'),
 		external: {
 			version: 3,
-			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors'],
+			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering'],
 			ground: OWN_CLOUDS,
 			move: 'rolling',
 		},
 		cells: 'one each',
 	},
 	{
-		what: 'the pin moved to v3: the internal platform survives losing a vendor',
-		internal: internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors'], 'rolling'),
+		what: 'the pin moved to v3: the internal platform survives losing a vendor, and meters its use',
+		internal: internal(
+			3,
+			['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'],
+			'rolling',
+		),
 		external: {
 			version: 3,
-			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors'],
+			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering'],
+			ground: OWN_CLOUDS,
+			move: 'none',
+		},
+		cells: 'one each',
+	},
+	{
+		what: "the vendor's paid plan taken, a checkpoint, once a few users are served for real",
+		internal: {
+			...internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'], 'none'),
+			plan: 'paid',
+		},
+		external: {
+			version: 3,
+			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering'],
 			ground: OWN_CLOUDS,
 			move: 'none',
 		},
@@ -139,10 +161,13 @@ export const STEPS: Step[] = [
 	},
 	{
 		what: "a tablet's log replicated among hosts built, proven on the external platform",
-		internal: internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors'], 'none'),
+		internal: {
+			...internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'], 'none'),
+			plan: 'paid',
+		},
 		external: {
 			version: 4,
-			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'replicated'],
+			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering', 'replicated'],
 			ground: OWN_CLOUDS,
 			move: 'rolling',
 		},
@@ -150,14 +175,17 @@ export const STEPS: Step[] = [
 	},
 	{
 		what: 'the pin moved to v4: cells move onto a database organization',
-		internal: internal(
-			4,
-			['products', 'hosts', 'rolling', 'deployer', 'vendors', 'replicated'],
-			'rolling',
-		),
+		internal: {
+			...internal(
+				4,
+				['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering', 'replicated'],
+				'rolling',
+			),
+			plan: 'paid',
+		},
 		external: {
 			version: 4,
-			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'replicated'],
+			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering', 'replicated'],
 			ground: OWN_CLOUDS,
 			move: 'none',
 		},

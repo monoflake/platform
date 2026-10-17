@@ -78,3 +78,54 @@ https://developers.cloudflare.com/workers/platform/limits/
 - 10,000 subrequests a request.
 - A request's body is limited by the account's plan: 100 MB on Free and Pro, 200 MB on Business,
   up to 5 GB on Enterprise.
+
+## Cloudflare's free plan, measured 2026-10-17
+
+Measured on the `monoflake` account, on the free plan, from two machines a provider runs, one in
+Tokyo and one in Singapore, against a Worker over D1, one keep-alive connection a run. Asked by
+B16. Times are the median; "in the Worker" is what the Worker timed around its call to D1.
+
+**Free-plan traffic does not always reach the nearest location.** Which location a connection
+lands in is chosen as it is made, and runs of the same machine landed far apart: Tokyo's in NRT
+and PDX, Singapore's in SIN, HKG, NRT and CDG. Landed far, a write took 200 to 550 ms from the
+machine instead of 40.
+
+**Where the database is matters less than where the request lands.** Landed in NRT:
+
+| Operation               | D1 hinted `apac`, in the Worker | D1 hinted `oc`, in the Worker |
+| ----------------------- | ------------------------------- | ----------------------------- |
+| a write of one row      | 26 to 37 ms                     | 143 to 145 ms                 |
+| a read from the primary | 18 to 23 ms                     | 138 to 143 ms                 |
+| a read from a replica   | 25 to 28 ms                     | not measured                  |
+
+D1's own time for a statement was about 0.2 ms; the rest is the way between the Worker and the
+database. A one-row write from Tokyo took 40 ms from the machine, 9 ms of it reaching the Worker.
+
+**Read replication is offered on the free plan**, turned on by the REST API's
+`{"read_replication": {"mode": "auto"}}`, and is reached through the Sessions API; landed in NRT
+it was no faster than the primary, which `apac` placed near Tokyo.
+
+**Commits grouped into one batch go far further than commits sent at once.** Landed in NRT:
+
+| How the commits are sent                   | Time                         | Commits a second       |
+| ------------------------------------------ | ---------------------------- | ---------------------- |
+| one a request, one after another           | 26 ms in the Worker          | about 25               |
+| 8 or 32 connections at once, one a request | 63 to 77 ms from the machine | about 100, and no more |
+| 32 in one batch                            | 30 ms in the Worker          | about 640              |
+| 128 in one batch                           | 41 ms in the Worker          | about 1,900            |
+
+**Writing through a batch of 64 KiB segments is slow for bulk**: 1 MiB in 16 segments took about
+240 ms from Tokyo, some 4 MiB a second on one connection.
+
+**What the free plan allows**, read the same day. Sources:
+https://developers.cloudflare.com/workers/platform/limits/,
+https://developers.cloudflare.com/d1/platform/limits/ and
+https://developers.cloudflare.com/durable-objects/platform/pricing/
+
+- Workers: 100,000 requests a day, 10 ms of CPU a request, 50 subrequests, 100 Workers an account,
+  5 cron triggers.
+- D1: 10 databases an account, 500 MB each, 50 queries an invocation.
+- Durable Objects: the SQLite-backed kind alone, with 100,000 requests, 5 million rows read and
+  100,000 rows written a day, and 5 GB stored.
+- The Worker Loader is on the paid plan alone, and Workers for Platforms is a plan of its own, at
+  $25 a month: https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/

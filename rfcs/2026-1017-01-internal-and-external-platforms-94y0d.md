@@ -63,24 +63,38 @@ deployment with its own bundle, credentials and directory, sharing nothing but t
 **The platform is built in steps, each first making the next move of the pin cheaper**, and
 `model/bootstrap.ts` checks every step and every move, `scope.md`:
 
-| Step | What                                                                                                       | Internal / external |
-| ---- | ---------------------------------------------------------------------------------------------------------- | ------------------- |
-| 0    | v0 is installed as the internal platform by hand, the commands `scope.md` keeps for day one, its hosts too | v0 / --             |
-| 1    | v0 is deployed again as the external platform, an organization on the internal one                         | v0 / v0             |
-| 2    | an upgrade by D3 is built, and the external platform moved to it by a planned stop of its own              | v0 / v1             |
-| 3    | the pin moves to v1, by the internal platform's one planned stop                                           | v1 / v1             |
-| 4    | the deployer is built, taking the place of day one's commands                                              | v1 / v2             |
-| 5    | the pin moves, by D3                                                                                       | v2 / v2             |
-| 6    | bringing one's own cloud and more vendors than one is built, and proven on the author's own organizations  | v2 / v3             |
-| 7    | the pin moves: from here the internal platform survives losing a vendor                                    | v3 / v3             |
-| 8    | a tablet's log replicated among hosts is built, and proven on the external platform                        | v3 / v4             |
-| 9    | the pin moves: cells move onto a database organization                                                     | v4 / v4             |
+| Step | What                                                                                                                  | Internal / external |
+| ---- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| 0    | v0 is installed as the internal platform by hand, the commands `scope.md` keeps for day one, its hosts too            | v0 / --             |
+| 1    | v0 is deployed again as the external platform, an organization on the internal one                                    | v0 / v0             |
+| 2    | an upgrade by D3 is built, and the external platform moved to it by a planned stop of its own                         | v0 / v1             |
+| 3    | the pin moves to v1, by the internal platform's one planned stop                                                      | v1 / v1             |
+| 4    | the deployer is built, taking the place of day one's commands                                                         | v1 / v2             |
+| 5    | the pin moves, by D3                                                                                                  | v2 / v2             |
+| 6    | bringing one's own cloud, more vendors than one, and metering are built, and proven on the author's own organizations | v2 / v3             |
+| 7    | the pin moves: from here the internal platform survives losing a vendor, and meters what it uses                      | v3 / v3             |
+| 8    | the vendor's paid plan is taken, a checkpoint, once a few users are served for real                                   | v3 / v3             |
+| 9    | a tablet's log replicated among hosts is built, and proven on the external platform                                   | v3 / v4             |
+| 10   | the pin moves: cells move onto a database organization                                                                | v4 / v4             |
 
 - **The bootstrap stops twice, and only then**: each deployment once, moving from v0, which cannot
   replace a part while the rest run. The external platform's stop comes first, while only the
   author's organizations are on it.
 - **The internal platform's hosts are enrolled by hand from step 0**, since its databases need a
-  place that offers `instance` and Cloudflare's runtime, as it is borrowed, offers none.
+  place that offers `instance` and Cloudflare's runtime, as it is borrowed, offers none. Until the
+  paid plan, a host on a machine runs every `derive` and `effect` and Cloudflare keeps the entry,
+  the footing and the stores.
+- **The vendor's paid plan is a checkpoint, never a start**: taken once the platform serves a few
+  users for real, and not while it is drafted, since a plan paid for nothing is waste. On Cloudflare
+  it is $5 a month and use past it, and brings the Worker Loader, D1 at 10 GB and CPU time past
+  10 ms, `lessons.md`; more is bought as use grows, by those who use it.
+- **It is taken only once metering holds.** A vendor offers no hard cap, so the platform counts what
+  it uses of each resource and cuts its own use off short of a limit it sets, with a margin. The
+  cutoff is soft: a little may pass it, and what it holds back is the growth that lasts. Once it
+  holds, a vendor's primitive priced by use, Durable Objects among them, may be used as well.
+- **A machine is metered as a vendor is**: what it sends and receives, and its disk, which the
+  platform limits below what the machine has, so a write is refused by the platform and never by a
+  full file system.
 
 Then the loop the steps end in: built on the external platform, proven there, taken by the pin.
 While the platform is built, what proves a version may take no time at all; once it serves users, it
@@ -131,6 +145,8 @@ segments once per write, a container once per 16 MiB.
 Open, for the discussion that follows:
 
 - How a tablet's log is replicated among hosts, simulated on paper before it is built. [C1]
+- What metering counts for each vendor and machine, where the counts are kept, and the margin it
+  cuts off at. [C18]
 - When cells move onto a database organization, and what a cell holds before. [C6]
 - What becomes of a revoked organization's sealed data on internal organizations the platform pays
   for. [D2]

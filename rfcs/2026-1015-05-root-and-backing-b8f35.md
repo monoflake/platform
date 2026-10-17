@@ -103,6 +103,14 @@ never write at once. It holds no content, so it grows with the pieces a scope ho
 each: its 10 GB holds some fifty million, about 50 TB of large files. A footing lost is restored
 from its snapshot, RFC v7v3w.
 
+**On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it
+by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST
+API, which carries the Cloudflare API's limit, `lessons.md`. **The footing Worker groups commits**:
+what reaches it within a moment is written as one batch, since a batch of 128 commits costs about
+what one does, `lessons.md`. Every write it takes is a conditional statement -- a generation
+fenced by `WHERE`, a lease by an upsert, a count raised only while it is above zero -- so no
+transaction ever reads before it decides.
+
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,
 at layer -3, kept in the platform's footing with nothing of the platform's beneath it:
@@ -201,6 +209,9 @@ put(dataset, path, content)
   after a short while or on a flush, so no write waits for one to fill.
 - **An `opaque` dataset's content is a container of its own**, RFC 13ixj: kept as given, neither
   cut, compressed nor sealed, and placed by its tier as any container is.
+- **Only what cannot fill a container goes through a journal.** A write that fills one is sealed in
+  memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
+  and never by the footing, `lessons.md`.
 - **What is to be sealed never leaves memory unsealed.** A container still open is a journal in the
   footing, appended to only: each write is sealed in segments of at most 64 KiB, a row each, and
   answered once the footing has them. Closed, the container is sealed again whole, in 64 KiB
@@ -257,3 +268,6 @@ Open, for the discussion that follows:
   failure, and so s1's. [D3]
 - Whether a name that must be unique across scopes, such as an app's domain, is the platform's
   record, and whether it is kept in the anchor or beside it. [B9]
+- How a host keeps its way to a footing short, where the vendor's routing lands a connection far:
+  one connection dialed again while it lands far, reads from replicas, a paid plan's routing
+  measured; an optimization, not a block. [D5]

@@ -185,6 +185,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "how a host on a machine reaches a footing in D1: through a Worker of the footing's account, since D1's REST API carries the Cloudflare API's limit of 1,200 requests in five minutes, lessons.md; and how long such a write takes, measured",
 		from: 'found',
+		done: 'b8f35, lessons.md',
 	},
 	// C -- blocks a later step.
 	{
@@ -192,14 +193,14 @@ export const CHECKLIST: Item[] = [
 		group: 'C',
 		what: "a tablet's log replicated among hosts, from a footing holding the configuration and f+1 copies, Vertical Paxos's shape, simulated on paper with its failures",
 		from: '94y0d',
-		step: 8,
+		step: 9,
 	},
 	{
 		id: 'C2',
 		group: 'C',
 		what: "what the model's stages past s0 take in, now the internal and external platforms changed what they must cover",
 		from: 'scope.md',
-		step: 8,
+		step: 9,
 	},
 	{
 		id: 'C3',
@@ -227,14 +228,14 @@ export const CHECKLIST: Item[] = [
 		group: 'C',
 		what: 'when cells move onto a database organization, and what a cell holds before',
 		from: '94y0d',
-		step: 9,
+		step: 10,
 	},
 	{
 		id: 'C7',
 		group: 'C',
 		what: 'how much an organization writes through its footing before the footing bounds it, measured',
 		from: 'b8f35',
-		step: 9,
+		step: 10,
 	},
 	{
 		id: 'C8',
@@ -305,7 +306,14 @@ export const CHECKLIST: Item[] = [
 		group: 'C',
 		what: "D1's 1 TB an account, which bounds every footing of the one-each cells in one account, and how footings spread over accounts",
 		from: 'found',
-		step: 9,
+		step: 10,
+	},
+	{
+		id: 'C18',
+		group: 'C',
+		what: "what metering counts for each vendor and machine -- requests, CPU, rows, storage, a machine's network in and out and its disk -- where the counts are kept, and the margin it cuts off at",
+		from: '94y0d',
+		step: 8,
 	},
 	// D -- commercial and operational.
 	{
@@ -331,6 +339,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "every other bound past v0's constants: an id's life, a derive's budget, a lock's wait and hold, a dead-letter list",
 		from: '49qyg, vuanj',
+	},
+	{
+		id: 'D5',
+		group: 'D',
+		what: "a host's way to a footing kept short where the vendor's routing lands a connection far: one connection dialed again, reads from replicas, the paid plan's routing measured",
+		from: 'lessons.md',
 	},
 
 	// E -- stale or inconsistent text.

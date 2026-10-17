@@ -52,7 +52,9 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 **The footing is ground: trusted and never designed.** Each owner stands on one database, RFC v7v3w,
 which the model takes to be up and to keep what it confirmed; whether it is made redundant is
 beneath its contract and its owner's. **Its contract is frozen and carries no version**: SQLite's
-dialect, transactions, at most 10 GB, reached from every compute. Changing the vendor beneath a
+dialect; atomic batches, a fixed list of statements that all hold or none, never a transaction that
+reads and then decides; at most 10 GB, or less where its vendor's plan holds less, revised when the
+vendor is; and reached from every compute. Changing the vendor beneath a
 footing, or its contract, is a planned stop, by hand: its owner stops, the footing is copied,
 checked and switched to, and the old one is removed only after, which the 10 GB bound keeps to
 minutes. A footing down stops its owner, which is reversible; a footing losing data is guarded

@@ -104,7 +104,8 @@ service's, or a node.
 - **An organization runs nothing until a resource is bound to it or shared with it.** The platform
   lends none of its own.
 - **An organization stands on one footing and on extensions.** Its footing is one database in
-  SQLite's dialect, transactional, at most 10 GB, which every compute of the organization can reach.
+  SQLite's dialect, taking atomic batches, at most 10 GB or what its vendor's plan holds,
+  `scope.md`, which every compute of the organization can reach.
   It is ground, `scope.md`: the platform makes nothing in it redundant, and its owner is warned to
   bring one that is, which the platform cannot check. 10 GB is a hard limit, and an organization
   that outgrows it is split into several. Everything else bound is an extension -- a compute, of

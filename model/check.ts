@@ -278,6 +278,10 @@ STEPS.forEach((step, i) => {
 		for (const f of a.on)
 			if (!before.internal.on.includes(f) && !ran.some((s) => s.external?.on.includes(f)))
 				path.push(`${at}: the internal platform turns on ${f}, never proven on the external`);
+	if (a.plan === 'paid' && !a.on.includes('metering'))
+		path.push(`${at}: the paid plan taken before the internal platform meters its use`);
+	if (before?.internal.plan === 'paid' && a.plan !== 'paid')
+		path.push(`${at}: the paid plan given up again`);
 	if (step.cells && !b) path.push(`${at}: cells, with no external platform`);
 	if (step.cells === 'database organization' && !a.on.includes('replicated'))
 		path.push(
@@ -293,7 +297,7 @@ dimension(
 	[
 		...STEPS.map(
 			(s, i) =>
-				`${i}: internal v${s.internal.version}${s.external ? `, external v${s.external.version}` : ''}${s.cells ? `, cells ${s.cells}` : ''} -- ${s.what}`,
+				`${i}: internal v${s.internal.version}${s.internal.plan === 'paid' ? ' paid' : ''}${s.external ? `, external v${s.external.version}` : ''}${s.cells ? `, cells ${s.cells}` : ''} -- ${s.what}`,
 		),
 		`planned stops: ${stops.length ? stops.join('; ') : 'none'}`,
 	],
