@@ -224,7 +224,8 @@ put(dataset, path, content)
   | ------------------------------- | --------------------------------------------------------------------------------------------- |
   | `monoflake:organization:salt:1` | the salt master and the scope id; at version 1 forever, since another would change every hash |
   | `monoflake:organization:key:1`  | the encryption master of a version and the scope id                                           |
-  | `monoflake:container:key:1`     | the organization's key and the container's 32 random bytes                                    |
+  | `monoflake:journal:key:1`       | the organization's key and the journal's seed                                                 |
+  | `monoflake:container:key:1`     | the organization's key and the container's seed, its journal's or drawn at random             |
   | `monoflake:organization:gear:1` | the scope's salt, for FastCDC's gear table                                                    |
 
 - **Every layer's record is named by BLAKE3, in one of two modes.**
@@ -283,13 +284,15 @@ put(dataset, path, content)
   writes a store replace sealed content with its own.
 - **Only what cannot fill a container goes through a journal.** A write that fills one is sealed in
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
-  and never by the footing, `lessons.md`.
+  and never by the footing, `lessons.md`. Its seed is drawn at random, so one cut short before it is
+  recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
 - **What is to be sealed never leaves memory unsealed.** A scope keeps one journal for each tier it
   writes, in its footing, appended to only: each write is sealed in segments of at most 64 KiB, a
-  row each, and answered once the footing has them. Once the next piece would not fit, the
-  journal's pieces are sealed whole as a container and placed among the scope's stores first; then
-  one batch records where its pieces are and removes its rows. What waits in a journal is as
-  durable as the footing, not yet as its tier asks.
+  row each, and answered once the footing has them. Once the next piece would not fit, the journal
+  is frozen, read only from then, and that piece goes on in the next. A frozen journal's pieces,
+  compressed as they were written and never again, are sealed whole as a container and placed among
+  the scope's stores first; then one batch records where its pieces are and removes its rows. What
+  waits in a journal is as durable as the footing, not yet as its tier asks.
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
@@ -322,10 +325,16 @@ organization key || seed)`, so the same header always gives it back. Its header 
   Segment i is sealed with the nonce `8 zero bytes || u32_be(i)` and the associated data
   `header || u32_be(i) || final`, `final` being `0x01` for segment 255 alone and `0x00` for every
   other; the associated data is rebuilt as it is read, never written. No nonce repeats however many
-  containers a scope writes, and a container is read whole. A journal is sealed the same way under a
-  header of its own, kept in its first row, each row a segment under the next index and `final`
-  `0x00` throughout, its end the count of rows the footing holds. **A key seals once**: what is
-  sealed again -- a journal filled, a container repacked -- draws a new seed.
+  containers a scope writes, and a container is read whole.
+
+  **A journal draws its seed once, as it is opened**, and keeps it in its first row with the
+  revision and the master's version. Its rows are sealed as segments are, under the journal's key,
+  each the next index and `final` `0x00` throughout, its end the count of rows the footing holds.
+  The container it becomes takes the same seed under the container's key, so the two keys differ
+  while every row and segment counts from zero, and **a journal exported again gives the same
+  bytes, and so the same id**: a container placed but not yet recorded is placed again over itself,
+  never left behind. **A key seals one content**: sealing the same bytes again under the same nonces
+  tells nothing, and whatever else is sealed draws a new seed.
 
 - **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no container. A
   piece is dead once no file names it, by a count of those that do, and a container's dead share is
