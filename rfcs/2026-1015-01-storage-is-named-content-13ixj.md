@@ -48,19 +48,21 @@ owner (one scope, its own unique salt)
   that meet every need. **Every attribute is ordered**, so content named in several datasets is held
   to the highest of each that any of them asks.
 
-  | Attribute    | Asks of a store                            | Levels, lowest first                                                                  | A dataset's default |
-  | ------------ | ------------------------------------------ | ------------------------------------------------------------------------------------- | ------------------- |
-  | availability | how surely it can be reached               | `opportunistic`, `best_effort`, `stable`, `recoverable`, `redundant`, `multiregional` | `best_effort`       |
-  | durability   | how surely what it holds lasts             | `ephemeral`, `persistent`, `redundant`, `replicated`, `multizone`, `multiregion`      | `persistent`        |
-  | custody      | whether the organization alone controls it | `false`, `true`                                                                       | `false`             |
+  | Attribute    | Asks of a store                            | Levels, lowest first                                                                | A dataset's default |
+  | ------------ | ------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------- |
+  | availability | how surely it can be reached               | `opportunistic`, `best_effort`, `stable`, `recoverable`, `redundant`, `multiregion` | `best_effort`       |
+  | durability   | how surely what it holds lasts             | `ephemeral`, `persistent`, `redundant`, `replicated`, `multizone`, `multiregion`    | `persistent`        |
+  | custody      | whether the organization alone controls it | `false`, `true`                                                                     | `false`             |
 
-  A store's availability is `opportunistic` while it lasts and may be gone at any moment without
-  warning, as a machine given free; `best_effort` with no redundancy and no steady environment, as a
-  machine at home; `stable` in a steady environment, not necessarily redundant; `recoverable` with
-  steady network and power, restarting itself after a crash, though it may be cut off a while;
-  `redundant` failing over without going offline; `multiregional` redundant across places that share
-  no data center, power or network, and no one disaster. What each level of durability means is to
-  be written. [A7]
+A store's availability is `opportunistic` while it lasts and may be gone at any moment without
+warning, as a machine given free; `best_effort` with no redundancy and no steady environment, as a
+machine at home; `stable` in a steady environment, not necessarily redundant; `recoverable` with
+steady network and power, restarting itself after a crash, though it may be cut off a while;
+`redundant` failing over without going offline; `multiregion` redundant across places that share no
+data center, power or network, and no one disaster. **A level is stored as its code**, and written
+out as its name only where text must carry it: `best_effort` in JSON and an API, `best-effort` in a
+derive context, and in code as its language names things. What each level of durability means is to
+be written. [A7]
 
 - **Spread is how many copies, and what they must be distinct in.** `copies` is the least kept;
   `distinct` maps a domain -- `node`, `site`, `account`, `zone`, `region` -- to how many of the
