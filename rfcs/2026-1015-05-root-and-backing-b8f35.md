@@ -250,6 +250,20 @@ put(dataset, path, content)
   from the salt, since where content is cut tells what it is, and deduplication is within a scope
   already. **Its parameters never change**: changed, nothing breaks, but what is written after no
   longer deduplicates against what was written before.
+
+  ```
+  gear[0..256]  the first 2,048 bytes of derive_key("monoflake:organization:gear:1", salt),
+                read as extended output; gear[i] is bytes 8i to 8i+8, little-endian
+  from 256 KiB, hash = 0
+  each byte b   hash = (hash << 1) + gear[b], wrapping at 64 bits
+                cut after b when hash & mask == 0: before 1 MiB the 22-bit mask
+                0x0000d93767537000, after it the 18-bit 0x0000d90707537000
+  at 4 MiB      cut regardless; a rest no longer than 256 KiB is one piece
+  ```
+
+  The masks are those `fastcdc-rs` keeps for 22 and 18 bits, written into the code as constants.
+  Test vectors are kept beside it: a fixed salt and input, and every cut they give.
+
 - **A piece is compressed with zstd at level 1**, in a `content` dataset unless it is set otherwise,
   RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.

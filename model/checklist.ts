@@ -56,6 +56,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "how FastCDC's gear table is derived from the salt, exactly; level 2 is decided, b8f35",
 		from: 'found',
+		done: 'b8f35',
 	},
 	{
 		id: 'A5',
