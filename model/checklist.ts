@@ -61,6 +61,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "a scope id's bytes, as the salt and key derivations read them: its form can never change, since the salt would",
 		from: 'found',
+		done: 'b8f35',
 	},
 	{
 		id: 'A6',
@@ -308,6 +309,13 @@ export const CHECKLIST: Item[] = [
 		what: "D1's 1 TB an account, which bounds every footing of the one-each cells in one account, and how footings spread over accounts",
 		from: 'found',
 		step: 10,
+	},
+	{
+		id: 'C19',
+		group: 'C',
+		what: 'whether an organization keeps one scope id on both the internal and the external platform',
+		from: 'b8f35',
+		step: 1,
 	},
 	{
 		id: 'C18',

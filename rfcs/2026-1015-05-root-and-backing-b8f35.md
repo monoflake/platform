@@ -114,11 +114,39 @@ transaction ever reads before it decides.
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,
 at layer -3, kept in the platform's footing with nothing of the platform's beneath it:
-a scope's id and a reference to where its backing is, a row each. **A scope exists while its row
-does**, and is gone when it is removed. **A scope's id never changes and is never given again**,
-since a second scope under the same id would derive the same salt and key. The anchor is the
-platform's only global state, and it holds nothing else: every product's configuration, every
-dataset and database, every app's declaration stays in its scope.
+a scope's id and a reference to where its backing is, a row each. **A scope's row is never
+removed, so its id is never given again**, since a second scope under the same id would derive the
+same salt and key. Its status says what is left of it:
+
+| Status      | What it means                                                      |
+| ----------- | ------------------------------------------------------------------ |
+| `active`    | it serves                                                          |
+| `suspended` | everything it holds is stopped and kept, RFC vuanj                 |
+| `deleted`   | everything it held is erased; the row stays, so its id stays spent |
+
+The same holds for every id drawn where reusing it would derive what its first holder's did. The
+anchor is the platform's only global state, and it holds nothing else: every product's
+configuration, every dataset and database, every app's declaration stays in its scope.
+
+**An id takes one of three forms**, stored as binary and written out as text only in a URL or
+where it is shown, lowercase and at its full width, leading zeros kept:
+
+| Written                          | Bits       | Made                         | For                                                   |
+| -------------------------------- | ---------- | ---------------------------- | ----------------------------------------------------- |
+| 5 characters of base36, `0-9a-z` | about 25.8 | drawn at random, and checked | a short link to a resource; none yet                  |
+| 8 hex digits                     | 32         | drawn at random, and checked | an account, a scope, and each kind of resource in one |
+| 64 hex digits                    | 256        | derived by BLAKE3            | content, at every layer                               |
+
+- **An id drawn is checked as it is inserted**, by a conditional insert, and drawn again on a
+  conflict. It is unique within its kind alone -- accounts among accounts, one kind of resource
+  within its scope -- and the internal and external platforms check theirs apart, RFC 94y0d, so
+  one id may name different things on each. Whether an organization keeps one scope id on both is
+  decided when it arises. [C19]
+- **An id derived is never checked and never shortened**: 256 bits are taken as never colliding,
+  and a match is taken as the same content, so a shortened one would hand one owner another's.
+- **Stored, it is an integer or bytes**: 8 hex digits as an integer, 64 as 32 bytes, base36 as an
+  integer below 36^5. A derivation reads 8 hex digits as 4 bytes, big-endian, in the order they are
+  written.
 
 A user appears this low only as configuration: a store given to their own scope. The parts' logic
 does not change for it.
@@ -178,8 +206,10 @@ put(dataset, path, content)
 
 - **A scope's salt is derived, never stored**, as BLAKE3's
   `derive_key(context, salt master || scope id)`, its context a fixed string written into the
-  code. A scope's key is derived the same way, under another context, from the encryption master
-  of a version. The organization's certificate carries both each week, RFC v7v3w, and they are the
+  code as `monoflake:{scope}:{type}:{version}`: colons and no spaces, the version a positive
+  integer in decimal without leading zeros, raised by a change to what is derived, RFC wnqvu. A
+  scope's key is derived the same way, under another context, from the encryption master of a
+  version. The organization's certificate carries both each week, RFC v7v3w, and they are the
   same every week: the certificate's own key pair rotates and has no part in them.
 - **Every layer's record is named by BLAKE3, in one of two modes.**
 
