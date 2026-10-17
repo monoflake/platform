@@ -175,8 +175,8 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B14',
 		group: 'B',
-		what: "the constants v0 picks: how long a capability and a working key live, a sweep's grace",
-		from: 'b8f35, vuanj, 49qyg',
+		what: "the constants v0 picks: how long a capability and a working key live, a sweep's grace, at what size a tablet's log is archived, and how long a writer's lease lasts, the longest a write waits after a writer is lost",
+		from: 'b8f35, vuanj, 49qyg, model/footing.ts',
 	},
 	{
 		id: 'B15',
@@ -191,6 +191,12 @@ export const CHECKLIST: Item[] = [
 		what: "how a host on a machine reaches a footing in D1: through a Worker of the footing's account, since D1's REST API carries the Cloudflare API's limit of 1,200 requests in five minutes, lessons.md; and how long such a write takes, measured",
 		from: 'found',
 		done: 'b8f35, lessons.md',
+	},
+	{
+		id: 'B17',
+		group: 'B',
+		what: "how the extent is kept off the footing's growth: its pages in containers, the footing keeping their root",
+		from: 'model/footing.ts',
 	},
 	// C -- blocks a later step.
 	{
@@ -364,6 +370,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: 'the background collection: what it repacks below the threshold, how often, and in what order it walks containers',
 		from: 'b8f35',
+	},
+	{
+		id: 'D7',
+		group: 'D',
+		what: "the anchor's rows, one for every scope ever made: how many the platform's footing holds, and what comes after",
+		from: 'model/footing.ts',
 	},
 
 	// E -- stale or inconsistent text.

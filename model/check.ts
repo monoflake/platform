@@ -9,6 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
+import { ALLOWED, ASSUMED, KEPT, ROWS } from './footing.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
@@ -303,6 +304,43 @@ dimension(
 	],
 );
 
+// The footing, RFC b8f35: what it keeps must be bounded, and what each step asks of the vendor's
+// plan is counted in rows a day, the load of an idle platform alone a violation past the plan.
+const footing: string[] = [];
+for (const [name, k] of Object.entries(KEPT))
+	if (k.grows !== 'bounded' && !k.open) footing.push(`${name} grows with ${k.grows}: ${k.what}`);
+const load = STEPS.map((step, i) => {
+	const external = ASSUMED.external(i);
+	const replicated =
+		step.cells === 'database organization' && step.internal.on.includes('replicated');
+	const organizations =
+		ASSUMED.internal + (step.cells === 'one each' ? external : replicated ? 1 : 0);
+	const own = organizations * ASSUMED.tablets * ROWS.idleTablet;
+	// An external organization's footing is a database of its cell, so each of its writes is a commit
+	// there, until a replicated log keeps it off the vendor's footing.
+	const theirs = replicated ? 0 : external * ASSUMED.tablets * ROWS.idleTablet * ROWS.commit;
+	const idle = own + theirs;
+	const allowed = ALLOWED[step.internal.plan ?? 'free'];
+	if (idle > allowed)
+		footing.push(
+			`step ${i}: an idle platform writes ${Math.round(idle)} rows a day, past the ${step.internal.plan ?? 'free'} plan's ${Math.round(allowed)}`,
+		);
+	const left = Math.max(allowed - idle, 0);
+	return `${i}: idle ${Math.round(idle)} of ${Math.round(allowed)} rows a day (${Math.round((idle / allowed) * 100)}%); what is left holds ${Math.floor(left / ROWS.smallWrite)} small writes, or ${Math.floor(left / ROWS.commit)} commits, or ${Math.floor(left / ROWS.largeMiB / 1024)} GiB written large`;
+});
+dimension(
+	'Footing',
+	'Is what each footing keeps bounded, and does each step fit the rows a day its plan allows?',
+	footing,
+	[
+		...Object.entries(KEPT).map(
+			([name, k]) => `${name}: ${k.grows}${k.bound ? `, by ${k.bound}` : ''} -- ${k.what}`,
+		),
+		`assumed: ${ASSUMED.tablets} tablets an organization, each writing ${ROWS.idleTablet} rows a day idle, ${ASSUMED.internal} organizations of the internal platform's own`,
+		...load,
+	],
+);
+
 console.log('\n# Boundaries, and whether each has its contract');
 const needed = new Map<string, string[]>();
 for (const [name, part] of designed)
@@ -356,6 +394,11 @@ for (const [name, part] of Object.entries(PARTS))
 	for (const edge of part.edges)
 		if (edge.open) marks.push({ where: `${name} -> ${edge.to}`, text: edge.open });
 for (const g of GLOBAL_OPEN) marks.push({ where: 'GLOBAL_OPEN', text: g });
+for (const [name, k] of Object.entries(KEPT)) {
+	if (k.open) marks.push({ where: `footing ${name}`, text: k.open });
+	if (k.bound && TAG.test(k.bound)) marks.push({ where: `footing ${name}`, text: k.bound });
+	TAG.lastIndex = 0;
+}
 const openWords = /\b(is|are) open\b|\bOpen:/;
 for (const [name, b] of Object.entries(BOUNDARIES)) {
 	for (const text of [b.contract, b.keptBy])

@@ -107,9 +107,19 @@ from its snapshot, RFC v7v3w.
 by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST
 API, which carries the Cloudflare API's limit, `lessons.md`. **The footing Worker groups commits**:
 what reaches it within a moment is written as one batch, since a batch of 128 commits costs about
-what one does, `lessons.md`. Every write it takes is a conditional statement -- a generation
-fenced by `WHERE`, a lease by an upsert, a count raised only while it is above zero -- so no
-transaction ever reads before it decides.
+what one does, `lessons.md`. Every write it takes is a conditional statement -- a generation fenced
+by `WHERE`, a writer taken over only past its lease, a count raised only while it is above zero --
+so no transaction ever reads before it decides.
+
+**A writer's lease is its writing.** Each entry of a tablet's log carries the time the footing gives
+it, by the footing's own clock, so no host's clock is trusted. A writer holds its tablet while its
+last entry is younger than the lease; idle, it renews nothing and writes no row, and writes on when
+it next has something, as long as no one has taken the tablet over. Another writer takes it over
+only past the lease, by one conditional statement that raises the generation where the last entry is
+older than that; it then catches up, and the old writer's next entry is refused by the generation.
+So an idle tablet costs its footing nothing, a taking over one row, and a write after a writer is
+lost waits at most the lease. When a log is archived, its newest entry stays, since it dates the
+lease.
 
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,
@@ -367,6 +377,8 @@ Open, for the discussion that follows:
 - The tiers: how many, their names, and what each maps to. [A7]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
+- How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages
+  in containers, the footing keeping their root. [B17]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place. [D3]

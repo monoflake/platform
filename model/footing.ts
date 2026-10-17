@@ -1,0 +1,106 @@
+/**
+ * What a footing keeps and what it is asked to write, RFC b8f35. A footing is a database priced by
+ * the row, so `check.ts` asks two things of it: that what it keeps is bounded, growing with neither
+ * the content its owner holds nor time, and how many rows a day each step of the bootstrap path asks
+ * of the vendor's plan, `scope.md`. Reads follow the caches above, and are not counted here.
+ */
+
+/** How what a footing keeps grows. Only `bounded` may stand; the rest wait on a row. */
+export type Growth =
+	/** By a constant for each owner, however much it holds and however long. */
+	| 'bounded'
+	/** With the content its owner holds. */
+	| 'content'
+	/** With every owner there has ever been. */
+	| 'owners';
+
+export interface Kept {
+	what: string;
+	from: string;
+	grows: Growth;
+	/** What bounds it, for `bounded`. */
+	bound?: string;
+	/** While it is not bounded, the question naming its row. */
+	open?: string;
+}
+
+export const KEPT: Record<string, Kept> = {
+	backing: {
+		what: "a scope's stores",
+		from: 'b8f35',
+		grows: 'bounded',
+		bound: 'the stores a scope binds',
+	},
+	journals: {
+		what: 'the journals waiting to become containers',
+		from: 'b8f35',
+		grows: 'bounded',
+		bound: 'two of 16 MiB for each tier a scope writes',
+	},
+	logs: {
+		what: "each tablet's log until the blob archives it",
+		from: 'vuanj, b8f35',
+		grows: 'bounded',
+		bound: 'archived in batches, at a size a constant picks [B14]',
+	},
+	writers: {
+		what: 'which writer holds each tablet, and at which generation',
+		from: 'b8f35',
+		grows: 'bounded',
+		bound: "a row for each of a scope's tablets",
+	},
+	bundle: { what: "the organization's bundle", from: 'v7v3w', grows: 'bounded', bound: 'one' },
+	extent: {
+		what: "which pieces each content is made of, each piece's container, and every container",
+		from: 'b8f35',
+		grows: 'content',
+		open: 'the extent is kept in the footing, about 200 bytes a piece, so the footing grows with what its scope holds; how it is bounded, its pages kept in containers and the footing keeping their root [B17]',
+	},
+	anchor: {
+		what: "a row for every scope there has been, the platform's footing alone",
+		from: 'b8f35',
+		grows: 'owners',
+		open: "the anchor keeps a row for every scope ever made, never removed: how many the platform's footing holds, and what comes after [D7]",
+	},
+};
+
+/**
+ * Rows written for one of each operation, as RFCs b8f35 and vuanj lay a write out: a tablet's
+ * batch is one entry of its log, however many of its rows it changes, and the extent's rows are the
+ * footing's own. A row written and later removed counts twice, since a deletion is a write.
+ */
+export const ROWS = {
+	/** A file of one new piece: its journal row, its log entry, its extent's two rows; then the
+	 * journal row removed and the piece's container written as the journal is exported, and the log
+	 * entry removed once archived. */
+	smallWrite: 7,
+	/** A file whose content is held already: its log entry, the count raised, the entry removed. */
+	duplicate: 3,
+	/** A MiB of a large file sealed at once: about one piece's two extent rows, a container's row and
+	 * the log entry spread over the 16 pieces of a container. */
+	largeMiB: 2.2,
+	/** An app's database commit: its log entry, and its removal once archived. */
+	commit: 2,
+	/** A tablet a day while idle: none, since a writer's lease is dated by its last entry, b8f35. */
+	idleTablet: 0,
+	/** A tablet taken over by another writer: its generation raised. */
+	takeover: 1,
+};
+
+/** Rows written a day that a plan allows a whole account, `lessons.md`: the paid plan's included
+ * 50 million a month, spread over 30 days. */
+export const ALLOWED: Record<'free' | 'paid', number> = { free: 100_000, paid: 50_000_000 / 30 };
+
+/**
+ * What the model assumes of the internal platform's account at each step, until it is measured
+ * [C7]: how many organizations the external platform holds, each standing on a cell of its own
+ * while cells are one each; how many tablets each organization keeps -- the storage's metadata, the
+ * functions', and its apps' databases.
+ */
+export const ASSUMED = {
+	/** The external organizations at each step, the author's own until users come at step 8. */
+	external: (step: number) => (step < 1 ? 0 : step < 8 ? 5 : 20),
+	/** The internal platform's own organizations: the console's and the external platform's. */
+	internal: 2,
+	tablets: 4,
+};

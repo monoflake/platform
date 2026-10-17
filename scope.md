@@ -62,6 +62,11 @@ against by its vendor's written durability and by a backup held offline. The pla
 stopping stops the control plane alone, and every organization runs on through it on its
 certificate.
 
+**What a footing keeps is bounded; what it is asked may grow.** It never grows with the content its
+owner holds, nor with time: a journal is bounded by two containers, a log by its archiving. Its
+reads and writes may grow with use, and how far each step of the bootstrap path asks of its
+vendor's plan is counted, `model/footing.ts`.
+
 **The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
 layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something
 a part needs that no part is yet.
@@ -118,12 +123,13 @@ itself, RFC vuanj.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
 contract, by `node model/check.ts`, and then the bootstrap path, `model/bootstrap.ts`: every step of
-RFC 94y0d holds, and each deployment reaches it by a move it may take. D4 recovery models a failure
+RFC 94y0d holds, and each deployment reaches it by a move it may take; and the footing,
+`model/footing.ts`: what each keeps is bounded, and each step fits the rows a day its plan allows. D4 recovery models a failure
 and is s1's, run with `--s1`.
 
 **Out of the model in s0:** every failure, including one part crashing and one store lost, which
 are the first a later stage takes in; a replacement that fails, and rolling it back; replacing
-more than one part at once; performance and cost; an operator's mistake.
+more than one part at once; performance, and cost past a footing's rows; an operator's mistake.
 
 **Each contract is sorted** into one of three: decided now, since a mistake is written into data
 and cannot be undone; kept by hand on day one, with its command; or left for later, with what brings
