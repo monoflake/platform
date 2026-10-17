@@ -128,7 +128,9 @@ bundle that opens the containers.
 **The external platform is its internal organizations' admin**, and sets their datasets' policies
 downward as any owner does, the upper writing into a format the lower defines, `scope.md`. A change
 to an external dataset's policy is the external platform's own migration; the internal one sees
-only containers written and deleted.
+only containers written and deleted. **An external organization revoked is suspended, and so is
+the internal organization beneath it**; both are deleted seven days after unless restored, RFC
+b8f35, so the platform pays for what it sealed no longer than that.
 
 **Once a deployment runs a version that replaces a part while the rest run, it never stops again on
 the correct path**, and the bootstrap stops at most five times; `model/bootstrap.ts` checks both. A
@@ -148,5 +150,3 @@ Open, for the discussion that follows:
 - What metering counts for each vendor and machine, where the counts are kept, and the margin it
   cuts off at. [C18]
 - When cells move onto a database organization, and what a cell holds before. [C6]
-- What becomes of a revoked organization's sealed data on internal organizations the platform pays
-  for. [D2]

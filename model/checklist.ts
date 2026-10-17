@@ -49,6 +49,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "every context string BLAKE3's derive_key is given -- a scope's salt, its key, a container's key, the gear table -- fixed forever",
 		from: 'found',
+		done: 'b8f35',
 	},
 	{
 		id: 'A4',
@@ -336,6 +337,7 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "what becomes of a revoked organization's sealed data in cells the platform pays for",
 		from: '94y0d',
+		done: '94y0d',
 	},
 	{
 		id: 'D3',

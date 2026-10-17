@@ -225,8 +225,7 @@ put(dataset, path, content)
   | `monoflake:organization:salt:1` | the salt master and the scope id; at version 1 forever, since another would change every hash |
   | `monoflake:organization:key:1`  | the encryption master of a version and the scope id                                           |
   | `monoflake:container:key:1`     | the organization's key and the container's 32 random bytes                                    |
-
-  The gear table's is named once its type is chosen. [A3]
+  | `monoflake:organization:gear:1` | the scope's salt, for FastCDC's gear table                                                    |
 
 - **Every layer's record is named by BLAKE3, in one of two modes.**
 
