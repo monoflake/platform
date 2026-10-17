@@ -122,6 +122,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "how the executor runs an app's code on Cloudflare, since a Worker refuses code it is handed at run time: a vendor's way of uploading each app's code, or the hosts alone; to be verified first",
 		from: 'found',
+		done: 'b8f35, lessons.md',
 	},
 	{
 		id: 'B7',
@@ -164,6 +165,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "facts to read from the vendor, into lessons.md: D1's write latency from a machine outside Cloudflare, how many databases an account holds, a Worker's limits on memory, CPU time and request size",
 		from: 'found',
+		done: 'lessons.md',
 	},
 	{
 		id: 'B14',
@@ -178,6 +180,12 @@ export const CHECKLIST: Item[] = [
 		from: 'found',
 	},
 
+	{
+		id: 'B16',
+		group: 'B',
+		what: "how a host on a machine reaches a footing in D1: through a Worker of the footing's account, since D1's REST API carries the Cloudflare API's limit of 1,200 requests in five minutes, lessons.md; and how long such a write takes, measured",
+		from: 'found',
+	},
 	// C -- blocks a later step.
 	{
 		id: 'C1',
@@ -278,6 +286,27 @@ export const CHECKLIST: Item[] = [
 		step: 4,
 	},
 
+	{
+		id: 'C15',
+		group: 'C',
+		what: "a derive's fuel on Cloudflare: the Worker Loader limits CPU milliseconds, not instructions, so the same input running out at the same place needs its module metered when it is deployed",
+		from: 'found',
+		step: 2,
+	},
+	{
+		id: 'C16',
+		group: 'C',
+		what: 'a call graph deeper than the four distinct dynamic Workers a request may have in flight on Cloudflare, lessons.md',
+		from: 'found',
+		step: 2,
+	},
+	{
+		id: 'C17',
+		group: 'C',
+		what: "D1's 1 TB an account, which bounds every footing of the one-each cells in one account, and how footings spread over accounts",
+		from: 'found',
+		step: 9,
+	},
 	// D -- commercial and operational.
 	{
 		id: 'D1',

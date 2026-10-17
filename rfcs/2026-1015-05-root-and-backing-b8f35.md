@@ -78,7 +78,10 @@ carried in one, a change would not reach the capabilities still alive.
   in: `network` and whatever comes after. The executor hands each call to a host that offers what it
   declared. **A sandbox is the single isolated unit a host runs a call in**; a host holds many.
   A scope's hosts and stores are the resources bound to its organization or shared with it, RFC
-  v7v3w.
+  v7v3w. **On Cloudflare a host is a Worker that loads each app's code into an isolate of its own**
+  through the Worker Loader binding, since a Worker refuses code it is handed otherwise: cached by
+  the code's hash, given only the bindings the call's capabilities allow, and its network only
+  through the platform's own request interface, `lessons.md`. On a machine, a host is a process.
 
 **A library is no layer.** Shared code is not a dependency: each part that needs a library runs its
 own copy of it, so it is no node in the graph of layers and may be used at any of them. **A library
