@@ -42,6 +42,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "STREAM's nonce, bit by bit: a segment's index and the flag for the last, and how a short last segment is told apart",
 		from: 'b8f35',
+		done: 'b8f35',
 	},
 	{
 		id: 'A3',
@@ -52,7 +53,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A4',
 		group: 'A',
-		what: "how FastCDC's gear table is derived from the salt, exactly",
+		what: "how FastCDC's gear table is derived from the salt, exactly; level 2 is decided, b8f35",
 		from: 'found',
 	},
 	{

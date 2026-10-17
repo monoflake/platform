@@ -195,8 +195,11 @@ put(dataset, path, content)
   repaired with neither the salt nor the key. A file of one piece has one id for both. Kept as whole
   copies, a stored block is its container and has its id.
 
-- **Content is cut by FastCDC with normalized chunking** (USENIX ATC 2016, extended in IEEE TPDS
-  2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB. A file shorter than the
+- **Content is cut by FastCDC with normalized chunking at level 2** (USENIX ATC 2016, extended in
+  IEEE TPDS 2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB: 22 effective
+  mask bits before the 1 MiB and 18 after, the level its section 5.4 finds the sweet spot of
+  deduplication at. It is written down by its definition and test vectors, never by a library's
+  version, since two implementations that cut one byte apart deduplicate nothing between them. A file shorter than the
   least is one piece, so no other threshold says which files are cut. Its gear table is derived
   from the salt, since where content is cut tells what it is, and deduplication is within a scope
   already. **Its parameters never change**: changed, nothing breaks, but what is written after no
@@ -236,8 +239,12 @@ put(dataset, path, content)
 - **Each container is sealed under a key of its own.** Its header holds the suite, the encryption
   master's version and 32 random bytes, and its key is BLAKE3's
   `derive_key(context, scope key || random)`, so the same header always gives it back. Under that
-  key a segment's nonce is its index and whether it is the last, so no nonce repeats however many
-  containers a scope writes. **A key seals once**: what is sealed again -- a journal closed, a
+  key a segment's nonce is its index, eleven bytes big-endian, then one byte, `0x01` for the last
+  segment and `0x00` for every other, as age lays it out; no nonce repeats however many containers a
+  scope writes. A segment holds 64 KiB, the last 1 byte to 64 KiB, flagged even when full, so none
+  is empty and how many there are follows from the sealed length. A journal's segments all carry
+  `0x00`, its end being the count of rows the footing holds; closed, it is sealed again under new
+  random bytes, and only then has a last segment. **A key seals once**: what is sealed again -- a journal closed, a
   container repacked -- draws new random bytes.
 - **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no container. A
   piece is dead once no file names it, by a count of those that do, and a container's dead share is
