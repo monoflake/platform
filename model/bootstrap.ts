@@ -167,3 +167,6 @@ export const STEPS: Step[] = [
 
 /** How far the external platform's newest version may run ahead of the internal's pin. */
 export const WINDOW = 1;
+
+/** How many planned stops the bootstrap may take in all, RFC 94y0d. */
+export const STOPS = 5;

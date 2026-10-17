@@ -5,7 +5,7 @@
  * recovery models a failure, so it is s1's, and runs only with `--s1`. Exits 1 when any dimension
  * finds a violation.
  */
-import { STEPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
+import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
@@ -247,9 +247,11 @@ STEPS.forEach((step, i) => {
 			path.push(
 				`${at}: the ${name} platform rolls from v${was.version}, which cannot replace a part while the rest run`,
 			);
-		else if (d.move === 'planned stop')
+		else if (d.move === 'planned stop') {
 			stops.push(`${at}, the ${name} platform, v${was.version} -> v${d.version}`);
-		else if (d.move !== 'rolling')
+			if (was.on.includes('rolling'))
+				path.push(`${at}: the ${name} platform stops, though v${was.version} can roll`);
+		} else if (d.move !== 'rolling')
 			path.push(`${at}: the ${name} platform changes version by ${d.move}`);
 		if (d.ground.includes('provider') && !d.on.includes('hosts'))
 			path.push(`${at}: the ${name} platform stands on machines without hosts turned on`);
@@ -279,6 +281,8 @@ STEPS.forEach((step, i) => {
 			`${at}: a database organization without a replicated log, so every footing on it writes through one`,
 		);
 });
+if (stops.length > STOPS)
+	path.push(`the bootstrap stops ${stops.length} times, more than ${STOPS}`);
 dimension(
 	'Bootstrap path',
 	'From day one by hand, does every step hold, and does each deployment reach it by a move it may take?',

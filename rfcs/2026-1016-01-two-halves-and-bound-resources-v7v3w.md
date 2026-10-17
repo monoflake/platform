@@ -208,5 +208,4 @@ Open, for the discussion that follows:
 - Which vendor primitives are borrowed, each behind which contract.
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment.
-- Whether a product of the platform's may be an organization's footing or one of its extensions.
 - The private network between resources.

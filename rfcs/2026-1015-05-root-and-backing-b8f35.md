@@ -190,16 +190,19 @@ put(dataset, path, content)
   from the salt, since where content is cut tells what it is, and deduplication is within a scope
   already. **Its parameters never change**: changed, nothing breaks, but what is written after no
   longer deduplicates against what was written before.
-- **A piece is compressed with zstd at level 1**, and kept as it came when that is not smaller. Both
+- **A piece is compressed with zstd at level 1**, in a `content` dataset unless it is set otherwise,
+  RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.
 - **A container is at most 16 MiB, and a piece never spans two**: one is closed when the next piece
   would not fit, so with pieces at most 4 MiB a full container holds 12 to 16 MiB. It is closed too
   after a short while or on a flush, so no write waits for one to fill.
-- **Nothing leaves memory unsealed.** A container still open is a journal in the footing, appended
-  to only: each write is sealed in segments of at most 64 KiB, a row each, and answered once the
-  footing has them. Closed, the container is sealed again whole, in 64 KiB segments, placed among
-  the scope's stores, and its journal removed. Its closing after a while is checked again on the
-  next write, so no timer is needed for it.
+- **An `opaque` dataset's content is a container of its own**, RFC 13ixj: kept as given, neither
+  cut, compressed nor sealed, and placed by its tier as any container is.
+- **What is to be sealed never leaves memory unsealed.** A container still open is a journal in the
+  footing, appended to only: each write is sealed in segments of at most 64 KiB, a row each, and
+  answered once the footing has them. Closed, the container is sealed again whole, in 64 KiB
+  segments, placed among the scope's stores, and its journal removed. Its closing after a while is
+  checked again on the next write, so no timer is needed for it.
 - **A container is sealed by a suite, named by a number in its header**, which is authenticated
   with what it seals. A suite names the whole format, so changed segments are a new number as a new
   cipher is; a suite a reader does not know is refused, never guessed.

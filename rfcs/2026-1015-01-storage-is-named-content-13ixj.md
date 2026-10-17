@@ -35,8 +35,12 @@ owner (one scope, its own unique salt)
 ```
 
 - **A dataset is one level only and never nested.** It is the scope of a policy: its tier of
-  durability, whether encrypted, a quota, who may bind it, and deletion of the whole. A part that needs another
-  policy is another dataset.
+  durability, its kind, a quota, who may bind it, and deletion of the whole. A part that needs
+  another policy is another dataset.
+- **A dataset's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
+  `content`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
+  RFC b8f35. `opaque` is kept as given -- neither cut, compressed nor sealed -- for what is sealed
+  already above, RFC 94y0d. The tier, the quota and who may bind it are every kind's.
 - **Durability is a tier, never a number.** A dataset names how much its data matters; the
   platform maps each tier to how many stores may fail with nothing lost, and to a layout that bears
   it -- whole copies, or pieces with parity -- chosen by size and by how many stores the scope has.
@@ -89,3 +93,4 @@ Open, for the discussion that follows:
 - Whether that metadata is held per owner or per dataset. Deduplication and the count of names
   pointing at each hash are an owner's, which argues for per owner.
 - The capability's name, since it is not an object store.
+- Whether one content named in a `content` and an `opaque` dataset is kept once, and how.
