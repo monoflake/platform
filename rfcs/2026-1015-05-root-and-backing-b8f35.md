@@ -24,12 +24,11 @@ its entry -- whose extent is not yet discussed.
 **Each product keeps its own configuration, per scope, in a tablet of its own**, as it keeps
 everything else: the storage its datasets and their policies, the database its directory of
 names, and functions their apps, each app's deployed versions by code hash, its functions'
-declarations, its triggers, its env and its bindings. **Nothing holds every scope's configuration
-at once.** The issuer, signing a call's capabilities in a scope, reads that scope's grants and
-allowance, in its own tablet and the issuer's own format, RFC vuanj -- never a product's tables --
-with a standing capability the intermediate key signs, covering only those, in every scope, for
-reading; a part checks it against the root's public key as it checks any other, so nothing turns
-back up to the issuer.
+declarations, its triggers, its env and its bindings. **Nothing in an organization's half holds
+another's configuration**: the platform's half holds every configuration's truth, and each
+organization a copy of its own, RFC v7v3w. The issuer runs in the scope's organization and signs
+with that organization's own key, reading the scope's grants and allowance in the issuer's own
+format, RFC vuanj -- never a product's tables -- so nothing turns back up to the platform's half.
 
 **A scope is two halves, and they live at different layers.**
 
@@ -91,7 +90,8 @@ are marked `*`.
   it.
 
 **Every log is kept in a footing, and v0 has no quorum.** Each owner stands on one, RFC v7v3w -- an
-organization's for its scope, the platform's for the anchor -- a database in SQLite's dialect that
+organization's for its scope, the platform's for the anchor, D1 on the internal platform's own
+account -- a database in SQLite's dialect that
 is ground, `scope.md`: trusted to be up and to keep what it confirmed, its redundancy its own and
 never the platform's. **It coordinates its owner**: it holds the backing, the extent's records, each
 tablet's log until a snapshot holds it, an open container's journal, which writer holds what and at
@@ -241,7 +241,6 @@ Open, for the discussion that follows:
 
 - Which three places, all offline and the operator's, hold a master's shares.
 - What the control plane is and how far it reaches, the name reserved for it.
-- Which database is the platform's footing.
 - The grades: how many, and what each means for a tier.
 - The tiers: how many, their names, and what each maps to.
 - How much an organization writes through its footing before the footing is what bounds it.

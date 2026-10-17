@@ -30,10 +30,10 @@ they hold:
 placed on a resource an organization holds, and an organization a resource is shared with trusts its
 holder as it trusts a vendor.
 
-**The platform runs on serverless vendors only.** One now, Cloudflare, taken as the ground and ideal
-in s0; others may be added later, as extensions or beneath the footing's contract, and not before
-the platform carries enough to judge its stability by. A node never runs the platform's half: a
-machine given both to the platform and to its users is the problem this avoids.
+**The platform's half runs on serverless vendors only.** One now, Cloudflare, taken as the ground
+and ideal in s0; others may be added later, as extensions or beneath the footing's contract, and not
+before the platform carries enough to judge its stability by. A node never runs the platform's half:
+a machine given both to the platform and to its users is the problem this avoids.
 
 **A vendor is borrowed without binding the platform to it.**
 
@@ -199,8 +199,6 @@ otherwise.
 
 Open, for the discussion that follows:
 
-- How the issuer's standing capability to read every scope's grants, RFC b8f35, changes now that each
-  organization signs its own.
 - Where an admin's credential for a third-party account is kept, and what it may do.
 - How the operator's allowance, RFC vuanj, relates to the quotas a holder sets on its resources.
 - How a buyer's organization is charged for what the platform's reserved organization shares with

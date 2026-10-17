@@ -67,14 +67,16 @@ which scope is not a part's to know. Every tablet and every blob belongs to exac
 never crosses it, so a product with a fault cannot reach another scope, a scope's usage is counted
 where it is kept, and a scope is deleted whole. A scope's salt and key, and the stores its bytes go
 to, are its physical half, the backing at layer -2 -- RFC b8f35 -- which the blob reads downward;
-the salt and key are derived from a master secret and the scope's id, so deleting a scope deletes
-its bytes, since its key can always be derived again.
+the salt and key are derived from a master secret and the scope's id, so neither is stored; and
+since its key can always be derived again, a scope is never deleted by losing its key, only by
+deleting its bytes.
 
 **A scope is deleted one of two ways.** Its owner deletes what it holds from the leaves inward, as
 the graph of dependencies orders it -- the apps first, then the datasets and databases they were
 bound to, then the scope -- and nothing is deleted while something depends on it, RFC 49qyg; only
-then may the owner close their account, which is above. The operator, revoking an owner, deletes
-the scope whole at once: a privilege of the platform's, never an owner's.
+then may the owner close their account, which is above. The operator, revoking an owner, stops at
+once everything it holds and deletes nothing, RFC v7v3w: a privilege of the platform's, never an
+owner's.
 
 **No part trusts its caller: it checks a capability.** A capability names a scope, a resource, an
 operation and when it expires, and is signed by the issuer alone, through a chain parts verify
@@ -197,7 +199,5 @@ reaches the scope's backing and the extent, below it, RFC b8f35.
 Open, for the discussion that follows:
 
 - Which vendor primitive each part stands on; the half each belongs to is in `model/graph.ts`.
-- Where what control held stands -- the scopes, the bindings and the functions' declarations the
-  issuer reads -- now that control is taken apart by RFC b8f35.
 - How a private link's reader proves they may read it: the authentication of people, not parts.
 - Every lifetime and bound: a capability's, a blob's grace before a sweep, an id's.
