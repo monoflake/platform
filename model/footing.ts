@@ -35,7 +35,7 @@ export const KEPT: Record<string, Kept> = {
 		what: 'the journals waiting to become containers',
 		from: 'b8f35',
 		grows: 'bounded',
-		bound: 'two of 16 MiB for each tier a scope writes',
+		bound: 'two of 16 MiB for each placement a scope writes, how many at once bounded [B18]',
 	},
 	logs: {
 		what: "each tablet's log until the blob archives it",

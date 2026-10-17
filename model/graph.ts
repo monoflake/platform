@@ -205,7 +205,7 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('backing', 'start', H, "its copies' stores and their grades"),
+			e('backing', 'start', H, "its copies' stores and what each declares"),
 			e('footing', 'serve', H, 'its log, until a snapshot in the blob holds it'),
 			e('blob', 'background', S, 'archives its log and snapshots'),
 			e(
@@ -247,7 +247,7 @@ export const PARTS: Record<string, Part> = {
 				'extent',
 				'background',
 				H,
-				'repair after a store is lost: until done, data is held below its tier',
+				'repair after a store is lost: until done, data is held below its placement',
 			),
 			e('?clock', 'background', S, 'paces a migration the control plane started, b8f35'),
 		],

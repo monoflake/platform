@@ -111,7 +111,7 @@ service's, or a node.
   that outgrows it is split into several. Everything else bound is an extension -- a compute, of
   which at least one must be, and a store, of which at least one must be before the storage or a
   database holds anything -- trusted as no footing is: what runs on extensions is made redundant by
-  the tiers, RFC 13ixj, and repaired.
+  the placements, RFC 13ixj, and repaired.
 - **A primitive is whatever keeps its contract**, a vendor's or a product of the platform's own.
 - **What stands between an organization's resources and its three products is the platform's**,
   deployed and run by it on those resources, and never shown: an organization sees the three

@@ -49,13 +49,13 @@ carried in one, a change would not reach the capabilities still alive.
   store of their own. **It is kept in the scope's footing, never in a tablet**, since a tablet
   stands on the blob and the blob on it. Who may change a scope's backing is decided by a
   capability, checked against the root's public key alone, so the backing never reaches up to the
-  issuer. **It holds a scope's stores and nothing else**: each store's address, its secret, the
-  tags a dataset's policy chooses stores by, never a store by name, its weight, and its **grade**:
-  how far it can be trusted and how soon what is written to it lasts; and, while the
-  stores change, the generation before, read from until what it held has moved. A scope's salt and
-  key are not kept here or anywhere: they are derived from the root's masters and the scope's id.
-  The tier a dataset asks for is the dataset's, carried down with each write, and how a tier is laid
-  out is the blob's.
+  issuer. **It holds a scope's stores and nothing else**: each store's address, its secret, its
+  weight, and what it declares as it is bound: its availability, durability and custody, and the
+  node, site, account, zone and region it stands in, RFC 13ixj; never a store by name; and, while
+  the stores change, the generation before, read from until what it held has moved. A scope's salt
+  and key are not kept here or anywhere: they are derived from the root's masters and the scope's
+  id. The placement a dataset asks for is the dataset's, carried down with each write, and how it is
+  laid out is the blob's.
 - **`extent`**: what a blob's content is made of. **Below the blob, content is cut into pieces,
   and pieces are packed into containers of about one size**, so stores fill evenly, a layout with
   parity has something to split, and moving data moves containers alike. The extent keeps which
@@ -198,9 +198,9 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
   leaves the old under its own; retiring an old version re-encrypts what still uses it.
-- **A migration is the blob's own work**: to a new layout when a tier's mapping changes, to a new
-  key when an old version is retired. The control plane starts it, as a caller, and the clock paces
-  it; every piece stays readable throughout, and going slowly costs time, never correctness.
+- **A migration is the blob's own work**: to a new layout when a dataset's placement changes, to a
+  new key when an old version is retired. The control plane starts it, as a caller, and the clock
+  paces it; every piece stays readable throughout, and going slowly costs time, never correctness.
 - **The root private key is held by the platform's administrator.** Lost, a new pair is made and
   every node deployed again with its public key; no data is lost.
 - **The two masters are kept as a key group for recovery alone**: each split into three shares,
@@ -292,7 +292,7 @@ put(dataset, path, content)
   them. It is never sealed early; what has not filled one waits in the journal.
 - **An `opaque` dataset's file is exactly 16 MiB, and is a container of its own**, RFC 13ixj:
   passed through raw, with no header, never cut, compressed or sealed and never through the
-  journal, and placed by its tier as any container is. What it is -- sealed already or not,
+  journal, and placed as its dataset asks, as any container is. What it is -- sealed already or not,
   compressed or not -- is not the platform's to know, so it takes what it is given and keeps that;
   doing either again would only spend. Its dataset's kind, recorded in the footing, tells it from a
   sealed container, never its bytes: a container that could say it is unsealed would let whoever
@@ -301,15 +301,17 @@ put(dataset, path, content)
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
   and never by the footing, `lessons.md`. Its seed is drawn at random, so one cut short before it is
   recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
-- **What is to be sealed never leaves memory unsealed.** A scope keeps, for each tier it writes, at
-  most two journals in its footing, 32 MiB in all: one open, appended to only, and one frozen. Each
-  write is sealed in segments of at most 64 KiB, a row each, small enough for any database a footing
-  may be, and answered once the footing has them. Once the next piece would not fit, the open
-  journal is frozen, read only from then, and that piece goes on in a new one under a seed of its
-  own; a write waits only while both are full, until the frozen one is exported. A frozen journal's
-  pieces, compressed as they were written and never again, are sealed whole as a container and
-  placed among the scope's stores first; then one batch records where its pieces are and removes its
-  rows. What waits in a journal is as durable as the footing, not yet as its tier asks.
+- **What is to be sealed never leaves memory unsealed.** A scope keeps, for each placement it
+  writes, at most two journals in its footing, 32 MiB in all: one open, appended to only, and one
+  frozen. Each write is sealed in segments of at most 64 KiB, a row each, small enough for any
+  database a footing may be, and answered once the footing has them. Once the next piece would not
+  fit, the open journal is frozen, read only from then, and that piece goes on in a new one under a
+  seed of its own; a write waits only while both are full, until the frozen one is exported. A
+  frozen journal's pieces, compressed as they were written and never again, are sealed whole as a
+  container and placed among the scope's stores first; then one batch records where its pieces are
+  and removes its rows. What waits in a journal is as durable as the footing, not yet as its
+  placement asks. How many placements a scope may write at once is bounded, so its journals are.
+  [B18]
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
@@ -354,7 +356,7 @@ organization key || seed)`, so the same header always gives it back. Its header 
   tells nothing, and whatever else is sealed draws a new seed.
 
 - **A container's place is computed, by rendezvous hashing over integers alone.** Among the stores
-  its tier's tags allow, each store s scores the container by the highest, over k from 0 to its
+  that meet its placement, each store s scores the container by the highest, over k from 0 to its
   weight less one, of the first 8 bytes, read big-endian, of
   `derive_key("monoflake:container:placement:1", container id || store id || k)`: the container's
   32 bytes, the store's id as 4 bytes big-endian, k as one byte. The copy or shard i goes to the
@@ -387,10 +389,9 @@ Open, for the discussion that follows:
 
 - Which three places, all offline and the operator's, hold a master's shares. [B12]
 - What the control plane is and how far it reaches, the name reserved for it. [B10]
-- The grades: how many, and what each means for a tier. [C4]
-- The tiers: how many, their names, and what each maps to. [A7]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
+- How many placements a scope writes journals for at once, so its footing stays bounded. [B18]
 - How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages
   in containers, the footing keeping their root. [B17]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]

@@ -121,7 +121,7 @@ organization that external organizations stand on is a **cell**.
 
 **The external platform hands the internal one only containers it has sealed**, whatever its own
 datasets ask: each is put whole into an `opaque` dataset of the external organization's internal
-one, a dataset per tier, RFC 13ixj, so nothing is cut, compressed or sealed twice. The external
+one, a dataset per placement, RFC 13ixj, so nothing is cut, compressed or sealed twice. The external
 organization's footing is a database of the internal one and is sealed there, since it holds the
 bundle that opens the containers.
 

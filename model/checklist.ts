@@ -76,7 +76,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A7',
 		group: 'A',
-		what: 'the tiers: how many and their names, which datasets record; what each maps to may change',
+		what: "what each level of a store's durability means, and the levels' codes as datasets and stores record them; the attributes and their names are decided, 13ixj",
 		from: 'b8f35, 13ixj',
 	},
 	{
@@ -199,6 +199,12 @@ export const CHECKLIST: Item[] = [
 		what: "how the extent is kept off the footing's growth: its pages in containers, the footing keeping their root",
 		from: 'model/footing.ts',
 	},
+	{
+		id: 'B18',
+		group: 'B',
+		what: 'how many placements a scope writes journals for at once, so its footing stays bounded',
+		from: '13ixj, b8f35',
+	},
 	// C -- blocks a later step.
 	{
 		id: 'C1',
@@ -227,6 +233,7 @@ export const CHECKLIST: Item[] = [
 		what: 'the grades: how many, and what each means for a tier',
 		from: 'b8f35',
 		step: 6,
+		done: '13ixj, b8f35',
 	},
 	{
 		id: 'C5',
@@ -326,6 +333,20 @@ export const CHECKLIST: Item[] = [
 		what: 'whether an organization keeps one scope id on both the internal and the external platform',
 		from: 'b8f35',
 		step: 1,
+	},
+	{
+		id: 'C20',
+		group: 'C',
+		what: 'a store lost without warning, or reaching an end its owner did not choose: what the platform does, and the state each dataset on it is left in',
+		from: '13ixj',
+		step: 6,
+	},
+	{
+		id: 'C21',
+		group: 'C',
+		what: 'whether copies are laid out whole or as shards with parity, and whether the owner sees which',
+		from: '13ixj',
+		step: 6,
 	},
 	{
 		id: 'C18',
