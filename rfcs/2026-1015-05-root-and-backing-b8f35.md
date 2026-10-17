@@ -288,13 +288,13 @@ put(dataset, path, content)
   recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
 - **What is to be sealed never leaves memory unsealed.** A scope keeps, for each tier it writes, at
   most two journals in its footing, 32 MiB in all: one open, appended to only, and one frozen. Each
-  write is sealed in segments of at most 64 KiB, a row each, small enough for any database a
-  footing may be, and answered once the footing has them. Once the next piece would not fit, the
-  open journal is frozen, read only from then, and that piece goes on in a new one under a seed of
-  its own; a write waits only while both are full, until the frozen one is exported. A frozen journal's pieces,
-  compressed as they were written and never again, are sealed whole as a container and placed among
-  the scope's stores first; then one batch records where its pieces are and removes its rows. What
-  waits in a journal is as durable as the footing, not yet as its tier asks.
+  write is sealed in segments of at most 64 KiB, a row each, small enough for any database a footing
+  may be, and answered once the footing has them. Once the next piece would not fit, the open
+  journal is frozen, read only from then, and that piece goes on in a new one under a seed of its
+  own; a write waits only while both are full, until the frozen one is exported. A frozen journal's
+  pieces, compressed as they were written and never again, are sealed whole as a container and
+  placed among the scope's stores first; then one batch records where its pieces are and removes its
+  rows. What waits in a journal is as durable as the footing, not yet as its tier asks.
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
