@@ -239,7 +239,9 @@ put(dataset, path, content)
   What is plaintext is keyed, since anyone holding the content could otherwise compute its address,
   RFC 13ixj; what is sealed is not, since its hash tells nothing, so a container is checked and
   repaired with neither the salt nor the key. A file of one piece has one id for both. Kept as whole
-  copies, a stored block is its container and has its id.
+  copies, a stored block is its container and has its id. **A store keeps a stored block under its
+  id as 64 hex digits and nothing else**, no extension, since the magic says what it is; the
+  footing keeps the id as 32 bytes.
 
 - **Content is cut by FastCDC with normalized chunking at level 2** (USENIX ATC 2016, extended in
   IEEE TPDS 2020), into pieces of at least 256 KiB, about 1 MiB and at most 4 MiB: 22 effective mask
@@ -272,10 +274,12 @@ put(dataset, path, content)
   is whole and no length is written. It holds 16,773,079 bytes of pieces: it is sealed once the
   next piece would not fit, the rest zeros, so with pieces at most 4 MiB it holds at least 12 MiB of
   them. It is never sealed early; what has not filled one waits in the journal.
-- **An `opaque` dataset's file is exactly 16 MiB, and is a container of its own**, RFC 13ixj: kept
-  as given, with no header, neither cut, compressed nor sealed, never through the journal, and
-  placed by its tier as any container is. Its dataset's kind, recorded in the footing, tells it
-  from a sealed one, never its bytes: a container that could say it is unsealed would let whoever
+- **An `opaque` dataset's file is exactly 16 MiB, and is a container of its own**, RFC 13ixj:
+  passed through raw, with no header, never cut, compressed or sealed and never through the
+  journal, and placed by its tier as any container is. What it is -- sealed already or not,
+  compressed or not -- is not the platform's to know, so it takes what it is given and keeps that;
+  doing either again would only spend. Its dataset's kind, recorded in the footing, tells it from a
+  sealed container, never its bytes: a container that could say it is unsealed would let whoever
   writes a store replace sealed content with its own.
 - **Only what cannot fill a container goes through a journal.** A write that fills one is sealed in
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
@@ -283,8 +287,8 @@ put(dataset, path, content)
 - **What is to be sealed never leaves memory unsealed.** A scope keeps one journal for each tier it
   writes, in its footing, appended to only: each write is sealed in segments of at most 64 KiB, a
   row each, and answered once the footing has them. Once the next piece would not fit, the
-  journal's pieces are sealed whole as a container, placed among the scope's stores, and its rows
-  removed. What waits in a journal is as durable as the footing, not yet as its tier asks.
+  journal's pieces are sealed whole as a container and placed among the scope's stores first; then
+  one batch records where its pieces are and removes its rows. What waits in a journal is as durable as the footing, not yet as its tier asks.
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
