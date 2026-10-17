@@ -217,15 +217,18 @@ put(dataset, path, content)
   answered once the footing has them. Closed, the container is sealed again whole, in 64 KiB
   segments, placed among the scope's stores, and its journal removed. Its closing after a while is
   checked again on the next write, so no timer is needed for it.
-- **A container is sealed by a suite, named by a number in its header**, which is authenticated
-  with what it seals. A suite names the whole format, so changed segments are a new number as a new
-  cipher is; a suite a reader does not know is refused, never guessed.
+- **A container is sealed by a suite, named by a letter in its header**, one byte from `A` to `Z`,
+  which is authenticated with what it seals. A suite names the whole format, so changed segments are
+  a new letter as a new cipher is; a suite a reader does not know is refused, never guessed.
 
-  | Suite | Sealed by                               | State             |
-  | ----- | --------------------------------------- | ----------------- |
-  | 0     | nothing                                 | refused           |
-  | 1     | AES-256-GCM, STREAM, in 64 KiB segments | the one built     |
-  | 2     | ChaCha20-Poly1305, otherwise as 1       | reserved, unbuilt |
+  | Suite     | Sealed by                               | State                                     |
+  | --------- | --------------------------------------- | ----------------------------------------- |
+  | `A`       | AES-256-GCM, STREAM, in 64 KiB segments | the one built                             |
+  | `B`       | ChaCha20-Poly1305, otherwise as `A`     | defined, and refused as reserved, unbuilt |
+  | any other | undefined                               | refused                                   |
+
+  A reader that meets `B` answers that the suite is reserved and unsupported, an error of its own,
+  and never calls a cipher for it.
 
   Native code seals with a library that reaches the CPU's AES instructions, a web runtime with its
   own WebCrypto; where a CPU has none, the same bytes are computed in software, more slowly.
