@@ -288,7 +288,8 @@ put(dataset, path, content)
   writes, in its footing, appended to only: each write is sealed in segments of at most 64 KiB, a
   row each, and answered once the footing has them. Once the next piece would not fit, the
   journal's pieces are sealed whole as a container and placed among the scope's stores first; then
-  one batch records where its pieces are and removes its rows. What waits in a journal is as durable as the footing, not yet as its tier asks.
+  one batch records where its pieces are and removes its rows. What waits in a journal is as
+  durable as the footing, not yet as its tier asks.
 - **A container's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
