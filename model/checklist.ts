@@ -206,6 +206,12 @@ export const CHECKLIST: Item[] = [
 		from: '13ixj, b8f35',
 		done: 'b8f35',
 	},
+	{
+		id: 'B19',
+		group: 'B',
+		what: "what a compute's levels of availability and custody mean, and what a function or a database's writer asks of one, since hosts are declared as they are enrolled from step 0",
+		from: 'v7v3w',
+	},
 	// C -- blocks a later step.
 	{
 		id: 'C1',

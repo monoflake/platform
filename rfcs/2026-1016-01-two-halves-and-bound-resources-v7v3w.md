@@ -112,6 +112,20 @@ service's, or a node.
   which at least one must be, and a store, of which at least one must be before the storage or a
   database holds anything -- trusted as no footing is: what runs on extensions is made redundant by
   the placements, RFC 13ixj, and repaired.
+- **Choosing is two-sided: a resource says what it is, and what uses it says what it needs.**
+  Whoever binds an extension declares it as it is bound, and the platform places on it only what it
+  meets, solving each need against what is bound, never by a resource's name. Every attribute is
+  ordered, RFC 13ixj.
+
+  | Declared by | Availability | Durability | Custody | node, site, account, zone, region | Offers                   |
+  | ----------- | ------------ | ---------- | ------- | --------------------------------- | ------------------------ |
+  | a store     | yes          | yes        | yes     | yes                               | --                       |
+  | a compute   | yes          | none held  | yes     | yes                               | its sandboxes, RFC 49qyg |
+
+  A database is no third kind: what it needs splits into a compute for its writer and a placement
+  for its log's archive and snapshots, each solved as the rest are. What a compute's levels mean,
+  and what a function or a database asks of one, is to be decided. [B19]
+
 - **A primitive is whatever keeps its contract**, a vendor's or a product of the platform's own.
 - **What stands between an organization's resources and its three products is the platform's**,
   deployed and run by it on those resources, and never shown: an organization sees the three
@@ -209,3 +223,4 @@ Open, for the discussion that follows:
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment. [B4]
 - The private network between resources. [C5]
+- What a compute's levels mean, and what a function or a database's writer asks of one. [B19]
