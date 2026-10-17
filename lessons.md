@@ -132,5 +132,9 @@ https://developers.cloudflare.com/durable-objects/platform/pricing/
   https://developers.cloudflare.com/d1/platform/pricing/
 - Durable Objects: the SQLite-backed kind alone, with 100,000 requests, 5 million rows read and
   100,000 rows written a day, and 5 GB stored.
+- R2: 10 GB-months stored, 1 million Class A and 10 million Class B requests a month free; then
+  $0.015 a GB-month, $4.50 a million Class A and $0.36 a million Class B. `PutObject` and
+  `ListObjects` are Class A, `GetObject` and `HeadObject` Class B, `DeleteObject` free. Source:
+  https://developers.cloudflare.com/r2/pricing/
 - The Worker Loader is on the paid plan alone, and Workers for Platforms is a plan of its own, at
   $25 a month: https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/
