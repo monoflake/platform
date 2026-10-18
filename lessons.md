@@ -281,3 +281,9 @@ https://developers.cloudflare.com/workers/ci-cd/builds/api-reference
 **A Worker can be rolled back to any of its last 100 versions**, raised from 10 in September 2025,
 unless a binding it names is gone or a Durable Object class changed between them. Source:
 https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/
+
+**A Worker is at most 3 MB on the free plan and 10 MB on the paid, and its global scope runs within
+a second.** The size is counted compressed; the startup limit was raised from 400 ms to 1 second in
+October 2025, on both plans. Some older pages show 64 MiB and 400 ms, and are stale. Asked of what
+bounds code on a target, RFC vr5lw. Sources: https://developers.cloudflare.com/workers/platform/limits
+and https://developers.cloudflare.com/changelog/2025-10-10-increased-startup-time/

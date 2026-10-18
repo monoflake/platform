@@ -513,7 +513,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"what builds for the organization's target, vr5lw: Cloudflare's own builds for a Worker, GitHub Actions in the user's repository, the platform's CI once it is; on day one the operator's GitHub Actions",
 		triage: 'by hand on day one',
 		contract:
-			"given an app's commit at its Git provider, a target, a sandbox and an architecture, it builds the code in that sandbox's own form and keeps it for as long as it keeps what it builds, answering its hash and, asked, an address the bytes are fetched from by a driver. Once it no longer keeps a version, the version is built again from its commit, and may differ. It is the control plane's: what runs keeps running from what its host holds, and a machine keeps the version it replaced until the new one serves",
+			"given an app's commit at its Git provider, a target, a sandbox and an architecture, it builds the code in that sandbox's own form and keeps it for as long as it keeps what it builds, answering its hash and, asked, an address the bytes are fetched from by a driver. Once it no longer keeps a version, the version is built again from its commit, and may differ. An artifact is fetched once, as it is deployed, and a start reads only what its host holds. It is the control plane's: what runs keeps running from what its host holds, and a machine keeps the version it replaced until the new one serves",
 	},
 	'?source': {
 		keptBy:

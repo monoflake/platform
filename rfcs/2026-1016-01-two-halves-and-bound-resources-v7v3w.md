@@ -197,7 +197,7 @@ service's, or a node.
   **A platform sells by opening a shadow organization on the platform beneath.** An organization the
   external platform opens has a shadow on the internal one, opened through the internal platform's
   control's API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
-  the internal platform charges for what each shadow uses. A user account buys nothing, since it holds
+  what each shadow uses is reported, and charged by an app, RFC vr5lw. A user account buys nothing, since it holds
   nothing.
 
 **The platform's own vendor accounts hold its footing and the footings it gives its organizations**,
@@ -275,7 +275,7 @@ configuration; its extensions hold its data and run it.**
 Open, for the discussion that follows:
 
 - How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
-- How a shadow organization's use is charged on the platform beneath. [D1]
+- What the app that charges reads of use, and how it acts on an organization. [D1]
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment. [B4]
 - What a compute's levels mean, and what a function or a database's writer asks of one. [B19]

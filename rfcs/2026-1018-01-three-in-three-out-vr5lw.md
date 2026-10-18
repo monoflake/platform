@@ -144,6 +144,23 @@ was built**, worked out with the author on 2026-10-18.
   the version it replaced on its own disk until the new one serves.
 - **A version's identity is its code's hash**, kept in configuration and checked against whatever
   is fetched, and a `derive`'s outputs are cached by it, RFC vuanj.
+- **Running code is kept on its target and started from there, never fetched as it starts**:
+  Cloudflare keeps it in the Worker's version; a machine's driver keeps it on the machine's disk, in
+  each binding's own share apart from its volumes -- the version running and the one it replaced,
+  removed once the new one serves. So a start waits on no builder, no control and no storage, which
+  itself runs on compute, and an artifact is fetched once, as it is deployed.
+- **Three bounds alone decide whether code is taken**: how large one artifact may be, as each driver
+  declares -- Cloudflare's 3 MB on the free plan and 10 MB on the paid, compressed, its global scope
+  run within a second, `lessons.md`; a machine's from a default its holder may change; how much a
+  binding may hold in all, its quota, RFC v7v3w; and how much the machine has free now, as its
+  driver reports. A deployment past any of them is refused, naming which.
+- **Charging is no part of the platform**, worked out with the author on 2026-10-18: what one
+  platform takes as a resource another sells -- the internal platform's own cloud is the external
+  one's resource, and the external one's user's own cloud is theirs -- so what is a cost depends on
+  who looks. The platform keeps bounds and reports use, each binding's own; what a vendor charges
+  is between it and its account; and what charges on a platform is an app of an organization's on
+  the internal one, which reads use through the controls' APIs as any client does, and acts through
+  them as its capability allows, bounding or suspending an organization.
 
 **What each resource gives:**
 

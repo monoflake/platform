@@ -429,7 +429,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'D1',
 		group: 'D',
-		what: "how a shadow organization's use is charged on the platform beneath; quotas are the binding's, v7v3w",
+		what: "the app that charges, an organization's on the internal platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
 		from: 'v7v3w',
 	},
 	{
