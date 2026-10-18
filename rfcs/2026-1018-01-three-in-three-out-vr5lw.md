@@ -102,9 +102,10 @@ one code is both.
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is open. [B7]
 
-- **A binding comes of a credential the host's holder makes** on the driver's own management, which
-  no binding sees -- a command on a machine, a secret on an account -- and gives an organization's
-  admin, who enters it in that organization's control.
+- **A binding comes of a token its control makes**, which the host's holder enters in the driver's
+  own management, which no binding sees -- a command on a machine, a secret on an account. The
+  driver keeps its hash alone, never the token. **A driver never makes a credential of itself**:
+  each comes of someone's act, below.
 - **A host's levels are declared by its host, and copied by each binding**, availability, durability
   and the rest, RFC 13ixj. A vendor's host is declared in the code, which knows what the vendor is;
   a machine's holder may declare it in its driver, or not. A binding copies what is declared as it
@@ -138,17 +139,25 @@ one code is both.
   host is always reached, as a vendor's account. Whoever needs to know a host is up asks its
   driver's heartbeat, and keeps none of its own.
 
-**Configuring a host is a privilege apart, never the driver's.** Worked out with the author on
-2026-10-18: a driver gives compute, storage and databases and nothing else, and some of what a
-host offers is none of them -- a domain's records on Cloudflare; a shell on a machine, its packages,
-its reboot. A control, the platform's or an organization's alike, reaches these with a credential
-of its own that the host's holder gives it, beside the binding: an API token of the account, or a
-key pair the control makes whose public half the holder installs. What it asks depends on the
-driver's kind, and it asks only for what the platform uses -- a domain's records, a shell -- never
-the host's whole. Without one a binding still works: what a Cloudflare driver opens is reached at
-the address the vendor gives it free, as a Worker's.
+**A host's own configuration is reached apart from its bindings.** Worked out with the author on
+2026-10-18: some of what a host offers is none of compute, storage or databases -- a domain's
+records on Cloudflare; a machine's shell configuration, its packages, its reboot -- and is reached
+with credentials of their own, three in all:
 
-- **The credential is the control's configuration**, kept by that control alone, sealed as its
+| Credential       | Made by                                                             | Kept by             | Kept apart                                | Over                                                      | Reaches                                                                                  |
+| ---------------- | ------------------------------------------------------------------- | ------------------- | ----------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| binding token    | the control                                                         | the host, as a hash | each sees its own alone                   | the driver's HTTPS                                        | compute, storage and databases                                                           |
+| management token | the host: the account on Cloudflare, the holder on a machine        | the control         | not: each authenticates, all see the same | HTTPS: the vendor's API, or a machine driver's management | the host's own: a domain's records; a machine's shell configuration, packages and reboot |
+| shell key        | the machine, which keeps the public half and shows the private once | the control         | its own                                   | SSH itself                                                | any command                                                                              |
+
+- **Over HTTPS go named operations alone; any command goes over SSH.** A flaw in the platform's own
+  code can then misuse a named operation at worst, never run what it likes on a machine, and SSH
+  keeps the handshake and the authentication it is trusted for.
+- **What a control asks depends on the driver's kind**, and only what the platform uses -- a
+  domain's records, a shell -- never the host's whole. Without either a binding still works: what a
+  Cloudflare driver opens is reached at the address the vendor gives it free, as a Worker's.
+
+- **A management token or a shell key is the control's configuration**, kept by that control alone, sealed as its
   other secrets are [B4], and never in a bundle, since nothing serving needs it.
 - **It is the holder's to give, as often as they like**; two controls given it for one host may
   undo each other's changes, which is the holder's choice, never the platform's to settle.
