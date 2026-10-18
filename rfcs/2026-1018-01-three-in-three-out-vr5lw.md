@@ -104,7 +104,7 @@ one code is both.
 
 - **A binding comes of a token its control makes**, which the host's holder enters in the driver's
   own management, which no binding sees -- a command on a machine, a secret on an account. The
-  driver keeps its hash alone, never the token. **A driver never makes a credential of itself**:
+  driver shows it once and keeps it salted and hashed, never the token itself. **A driver never makes a credential of itself**:
   each comes of someone's act, below.
 - **A host's levels are declared by its host, and copied by each binding**, availability, durability
   and the rest, RFC 13ixj. A vendor's host is declared in the code, which knows what the vendor is;
@@ -144,12 +144,16 @@ one code is both.
 records on Cloudflare; a machine's shell configuration, its packages, its reboot -- and is reached
 with credentials of their own, three in all:
 
-| Credential       | Made by                                                             | Kept by             | Kept apart                                | Over                                                      | Reaches                                                                                  |
-| ---------------- | ------------------------------------------------------------------- | ------------------- | ----------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| binding token    | the control                                                         | the host, as a hash | each sees its own alone                   | the driver's HTTPS                                        | compute, storage and databases                                                           |
-| management token | the host: the account on Cloudflare, the holder on a machine        | the control         | not: each authenticates, all see the same | HTTPS: the vendor's API, or a machine driver's management | the host's own: a domain's records; a machine's shell configuration, packages and reboot |
-| shell key        | the machine, which keeps the public half and shows the private once | the control         | its own                                   | SSH itself                                                | any command                                                                              |
+| Credential       | Made by                                                      | Kept by                                              | Kept apart                                | Over                                                      | Reaches                                                                                  |
+| ---------------- | ------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| binding token    | the control                                                  | the host, salted and hashed                          | each sees its own alone                   | the driver's HTTPS                                        | compute, storage and databases                                                           |
+| management token | the host: the account on Cloudflare, the holder on a machine | the control                                          | not: each authenticates, all see the same | HTTPS: the vendor's API, or a machine driver's management | the host's own: a domain's records; a machine's shell configuration, packages and reboot |
+| shell key        | the control, as a key pair                                   | the machine the public half, the control the private | its own                                   | SSH itself                                                | any command                                                                              |
 
+- **A shell key's public half is installed by one line the control gives**, which carries the key
+  itself, so what the holder runs is what is installed and nothing is fetched as it runs; a key
+  pair made by the control takes effect only once the machine's holder writes its half, so making
+  it there gives nothing away.
 - **Over HTTPS go named operations alone; any command goes over SSH.** A flaw in the platform's own
   code can then misuse a named operation at worst, never run what it likes on a machine, and SSH
   keeps the handshake and the authentication it is trusted for.
