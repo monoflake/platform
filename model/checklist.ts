@@ -95,12 +95,6 @@ export const CHECKLIST: Item[] = [
 
 	// B -- blocks building v0.
 	{
-		id: 'B1',
-		group: 'B',
-		what: "whether the three products' own metadata -- the storage's paths, the function product's calls, queues and schedules, the database directory -- moves from tablets into the footing, so an organization with no instance compute still has storage and functions",
-		from: 'item 4',
-	},
-	{
 		id: 'B2',
 		group: 'B',
 		what: 'the placement rules: a function inline first, then the same account, a private network, the public one; containers by rendezvous over tags and weights; a tablet writer pinned in the footing; a background task by the resource scheduler and a lease; the extent index cached by generation',
@@ -362,6 +356,13 @@ export const CHECKLIST: Item[] = [
 		what: "what metering counts for each vendor and machine -- requests, CPU, rows, storage, a machine's network in and out and its disk -- where the counts are kept, and the margin it cuts off at",
 		from: '94y0d',
 		step: 8,
+	},
+	{
+		id: 'C22',
+		group: 'C',
+		what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it: the internal platform has hosts from step 0",
+		from: 'vuanj, v7v3w; B1 before',
+		step: 6,
 	},
 	// D -- commercial and operational.
 	{
