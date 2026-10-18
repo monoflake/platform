@@ -9,6 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
+import { CLASS, NEEDS, extensionKinds, footingKinds, type Class } from './resources.ts';
 import { ALLOWED, ASSUMED, KEPT, ROWS } from './footing.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, RECORDS, VENDOR, type Edge } from './graph.ts';
 
@@ -127,12 +128,14 @@ for (const [name, r] of Object.entries(RECORDS)) {
 			rules.push(`an organization writes the platform's: ${w} writes ${name}, ${r.from}`);
 	}
 }
-// The platform's footing is for the platform's control alone, and an organization's half reaches
-// none of it, RFC vr5lw.
+// A footing is the platform's or an organization's, and each half stands on its own alone, by any
+// edge, RFC vr5lw.
 for (const [name, part] of designed)
-	for (const edge of part.edges)
-		if (edge.to === 'beneath' && part.half !== 'platform')
-			rules.push(`the platform's footing used by an organization's part: ${line(name, edge)}`);
+	for (const edge of part.edges) {
+		const to = PARTS[edge.to];
+		if (to?.kind === 'ground' && to.half !== undefined && to.half !== part.half)
+			rules.push(`stands on the other half's footing: ${line(name, edge)}`);
+	}
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);
@@ -140,7 +143,7 @@ for (const c of cycles((n) => LIBRARIES[n]?.uses ?? [], Object.keys(LIBRARIES)))
 	rules.push(`library cycle: ${c}`);
 dimension(
 	'Rules',
-	"Does every hard edge point down, every library use only libraries, nothing below need an owner, no organization need the platform's half to serve or start, the data plane write no configuration, and only the platform reach its footing?",
+	"Does every hard edge point down, every library use only libraries, nothing below need an owner, no organization need the platform's half to serve or start, the data plane write no configuration, and each half stand on its own footing alone?",
 	rules,
 	[
 		`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`,
@@ -277,8 +280,17 @@ STEPS.forEach((step, i) => {
 			path.push(`${at}: the ${name} platform changes version by ${d.move}`);
 		if (d.ground.includes('provider') && !d.on.includes('hosts'))
 			path.push(`${at}: the ${name} platform stands on machines without hosts turned on`);
-		if (d.on.includes('products') && !d.ground.some((g) => g === 'provider' || g === 'internal'))
-			path.push(`${at}: the ${name} platform's databases have no place offering instance`);
+		// What its ground gives, RFC vr5lw: a footing of one kind of each class, for the platform's
+		// control and each organization's alike, and extensions that give what the products need.
+		const held = new Set([...footingKinds(d)].map((k) => CLASS[k]));
+		for (const c of ['compute', 'storage', 'database'] as Class[])
+			if (!held.has(c)) path.push(`${at}: the ${name} platform's footing has no ${c}`);
+		if (d.on.includes('products')) {
+			const given = extensionKinds(d);
+			for (const n of NEEDS)
+				if (!given.has(n.kind))
+					path.push(`${at}: the ${name} platform's extensions give no ${n.kind}: ${n.why}`);
+		}
 	}
 	const { internal: a, external: b } = step;
 	for (const g of a.ground)
@@ -317,6 +329,10 @@ dimension(
 		...STEPS.map(
 			(s, i) =>
 				`${i}: internal v${s.internal.version}${s.internal.plan === 'paid' ? ' paid' : ''}${s.external ? `, external v${s.external.version}` : ''}${s.cells ? `, cells ${s.cells}` : ''} -- ${s.what}`,
+		),
+		...STEPS.map(
+			(s, i) =>
+				`${i}: extensions give, internal ${[...extensionKinds(s.internal)].sort().join(' ')}${s.external ? `; external ${[...extensionKinds(s.external)].sort().join(' ')}` : ''}`,
 		),
 		`planned stops: ${stops.length ? stops.join('; ') : 'none'}`,
 	],

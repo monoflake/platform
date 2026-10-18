@@ -15,6 +15,8 @@ export type Growth =
 	| 'owners';
 
 export interface Kept {
+	/** Whose footing keeps it, vr5lw. */
+	of: 'platform' | 'organization';
 	what: string;
 	from: string;
 	grows: Growth;
@@ -26,42 +28,49 @@ export interface Kept {
 
 export const KEPT: Record<string, Kept> = {
 	backing: {
+		of: 'organization',
 		what: "a scope's stores",
 		from: 'b8f35',
 		grows: 'bounded',
 		bound: 'the stores a scope binds',
 	},
 	journals: {
+		of: 'organization',
 		what: 'which journal each placement writes; the journals themselves are kept in the stores',
 		from: 'b8f35',
 		grows: 'bounded',
 		bound: "a row for each placement a scope writes, which the levels' product bounds",
 	},
 	logs: {
+		of: 'organization',
 		what: "each tablet's log until the blob archives it",
 		from: 'vuanj, b8f35',
 		grows: 'bounded',
 		bound: 'archived in batches, at a size a constant picks [B14]',
 	},
 	writers: {
+		of: 'organization',
 		what: 'which writer holds each tablet, and at which generation',
 		from: 'b8f35',
 		grows: 'bounded',
 		bound: "a row for each of a scope's tablets",
 	},
 	bundle: {
+		of: 'organization',
 		what: "the organization's bundle",
 		from: 'v7v3w',
 		grows: 'bounded',
 		bound: 'one, holding what the organization opened, as many as its allowance lets it',
 	},
 	extent: {
+		of: 'organization',
 		what: "which pieces each content is made of, each piece's container, and every container",
 		from: 'b8f35',
 		grows: 'content',
 		open: 'the extent is kept in the footing, about 200 bytes a piece, so the footing grows with what its scope holds; how it is bounded, its pages kept in containers and the footing keeping their root [B17]',
 	},
 	anchor: {
+		of: 'platform',
 		what: "a row for every scope there has been, the platform's footing alone",
 		from: 'b8f35',
 		grows: 'owners',

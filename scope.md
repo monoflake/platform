@@ -131,7 +131,9 @@ whoever asks, RFC v7v3w; `RECORDS` in `model/graph.ts` lists each kind of record
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
 contract, by `node model/check.ts`, and then the bootstrap path, `model/bootstrap.ts`: every step of
-RFC 94y0d holds, and each deployment reaches it by a move it may take; and the footing,
+RFC 94y0d holds, each deployment reaches it by a move it may take, and what its ground gives,
+`model/resources.ts`, makes a footing of one kind of each class and extensions that give what the
+products need, RFC vr5lw; and the footing,
 `model/footing.ts`: what each keeps is bounded, and each step fits the rows a day its plan allows. D4 recovery models a failure
 and is s1's, run with `--s1`.
 

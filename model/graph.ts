@@ -36,7 +36,10 @@ export interface Part {
 	kind?: 'ground' | 'operator';
 	/** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
 	keeps?: boolean;
-	/** Whether it is a control: an HTTPS API that alone writes configuration, v7v3w. */
+	/**
+	 * Whether it is a control, of the platform or of an organization as its half says: an HTTPS API
+	 * that alone writes configuration, v7v3w. A footing is the same one word, of either, vr5lw.
+	 */
 	control?: boolean;
 	/** Whether the platform runs it as an owner, in an organization of its own, RFC vuanj. */
 	asOwner?: boolean;
@@ -81,7 +84,12 @@ export const PARTS: Record<string, Part> = {
 			e('compute', 'serve', H, 'it runs as functions'),
 			e('storage', 'serve', H, 'the datasets it is bound to'),
 			e('database', 'serve', H, 'the database bound to it'),
-			e('control', 'deploy', H, "opens datasets and databases through its organization's control"),
+			e(
+				'control(organization)',
+				'deploy',
+				H,
+				"opens datasets and databases through its organization's control",
+			),
 		],
 		uses: [],
 	},
@@ -96,21 +104,36 @@ export const PARTS: Record<string, Part> = {
 				replaces: true,
 			},
 			e('compute', 'serve', H, 'an app like any other'),
-			e('platform', 'deploy', H, "calls the platform's control with its user's credential"),
-			e('control', 'deploy', H, "calls an organization's control with its user's credential"),
+			e(
+				'control(platform)',
+				'deploy',
+				H,
+				"calls the platform's control with its user's credential",
+			),
+			e(
+				'control(organization)',
+				'deploy',
+				H,
+				"calls an organization's control with its user's credential",
+			),
 		],
 		uses: [],
 	},
-	/** An organization's control: its products' configuration, as an HTTPS API, v7v3w. */
-	control: {
+	/** A control, of an organization: its products' configuration, as an HTTPS API, v7v3w. */
+	'control(organization)': {
 		layer: 0,
 		half: 'organization',
 		control: true,
 		edges: [
 			REPLACED,
-			e('footing', 'serve', H, "its products' configuration and the bundle it compiles"),
 			e(
-				'platform',
+				'footing(organization)',
+				'serve',
+				H,
+				"its products' configuration and the bundle it compiles",
+			),
+			e(
+				'control(platform)',
 				'deploy',
 				H,
 				'its certificate, allowance and extensions, copied down each day and on a change',
@@ -131,7 +154,12 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
-			e('footing', 'serve', H, 'its datasets and their policies, in the bundle, v7v3w'),
+			e(
+				'footing(organization)',
+				'serve',
+				H,
+				'its datasets and their policies, in the bundle, v7v3w',
+			),
 			e('tablet', 'serve', H, 'its metadata per scope: paths, hashes, references'),
 			e('blob', 'serve', H, 'content'),
 			e('scope', 'serve', H, 'a dataset belongs to one'),
@@ -154,7 +182,12 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
-			e('footing', 'serve', H, 'its directory of names and ids, in the bundle, v7v3w'),
+			e(
+				'footing(organization)',
+				'serve',
+				H,
+				'its directory of names and ids, in the bundle, v7v3w',
+			),
 			e('tablet', 'serve', H, 'a database is a tablet'),
 			e('scope', 'serve', H, 'ids belong to one'),
 			KEY(),
@@ -170,7 +203,7 @@ export const PARTS: Record<string, Part> = {
 			e('issuer', 'serve', H, "a call's capabilities"),
 			e('executor', 'serve', H, 'runs the code'),
 			e(
-				'footing',
+				'footing(organization)',
 				'serve',
 				H,
 				'its apps, versions, declarations, bindings, env, queues and schedules, in the bundle, v7v3w',
@@ -205,7 +238,12 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('footing', 'serve', H, 'its configuration and allowance, in the bundle, v7v3w'),
+			e(
+				'footing(organization)',
+				'serve',
+				H,
+				'its configuration and allowance, in the bundle, v7v3w',
+			),
 			e(
 				'anchor',
 				'deploy',
@@ -221,7 +259,7 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e(
-				'footing',
+				'footing(organization)',
 				'serve',
 				H,
 				"reads the scope's grants and allowance in the bundle, in its own format, vuanj",
@@ -242,7 +280,7 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('backing', 'start', H, "its copies' stores and what each declares"),
-			e('footing', 'serve', H, 'its log, until a snapshot in the blob holds it'),
+			e('footing(organization)', 'serve', H, 'its log, until a snapshot in the blob holds it'),
 			e('blob', 'background', S, 'archives its log and snapshots'),
 			e(
 				'blob',
@@ -264,7 +302,7 @@ export const PARTS: Record<string, Part> = {
 			REPLACED,
 			e('backing', 'serve', H, "the scope's stores"),
 			e('extent', 'serve', H, 'which pieces a content is made of, and where each is packed'),
-			e('footing', 'serve', H, 'which journal each placement writes'),
+			e('footing(organization)', 'serve', H, 'which journal each placement writes'),
 			e(
 				'vendor',
 				'serve',
@@ -315,7 +353,7 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('anchor', 'deploy', H, 'its backing, compiled into the bundle the footing keeps, v7v3w'),
-			e('footing', 'serve', H, "kept in the scope's footing"),
+			e('footing(organization)', 'serve', H, "kept in the scope's footing"),
 			e(
 				'root',
 				'start',
@@ -333,7 +371,7 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('backing', 'serve', H, "a container's place from the scope's stores"),
-			e('footing', 'serve', H, "its records, in the scope's footing"),
+			e('footing(organization)', 'serve', H, "its records, in the scope's footing"),
 		],
 		uses: ['placement*', 'compat*'],
 	},
@@ -348,17 +386,22 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -3,
 		half: 'platform',
-		edges: [REPLACED, e('beneath', 'serve', H, "its rows, in the platform's footing")],
+		edges: [REPLACED, e('footing(platform)', 'serve', H, "its rows, in the platform's footing")],
 		uses: ['compat*'],
 	},
-	/** The platform's control: what spans organizations, as an HTTPS API in no organization, v7v3w. */
-	platform: {
+	/** A control, of the platform: what spans organizations, as an HTTPS API in no organization, v7v3w. */
+	'control(platform)': {
 		layer: -3,
 		half: 'platform',
 		control: true,
 		edges: [
 			REPLACED,
-			e('beneath', 'serve', H, "configuration spanning organizations, in the platform's footing"),
+			e(
+				'footing(platform)',
+				'serve',
+				H,
+				"configuration spanning organizations, in the platform's footing",
+			),
 			e('anchor', 'serve', H, 'opens, suspends and deletes organizations by their rows'),
 			e('root', 'start', H, "the masters, to derive each organization's salt and key"),
 			e('?intermediate', 'deploy', H, "certifies each organization's key"),
@@ -376,10 +419,16 @@ export const PARTS: Record<string, Part> = {
 		],
 		uses: [],
 	},
-	/** An organization's footing, which the platform gives it, vr5lw. */
-	footing: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
-	/** The platform's footing, from the layer beneath, for the platform's control alone, vr5lw. */
-	beneath: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
+	/** A footing, of an organization: what the platform gives its control to stand on, vr5lw. */
+	'footing(organization)': {
+		layer: VENDOR,
+		kind: 'ground',
+		half: 'organization',
+		edges: [],
+		uses: [],
+	},
+	/** A footing, of the platform: what the layer beneath gives its control to stand on, vr5lw. */
+	'footing(platform)': { layer: VENDOR, kind: 'ground', half: 'platform', edges: [], uses: [] },
 	vendor: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
 	operator: { layer: VENDOR, kind: 'operator', edges: [], uses: [] },
 };
@@ -478,17 +527,17 @@ export interface Held {
 }
 
 export const RECORDS: Record<string, Held> = {
-	dataset: { half: 'organization', writes: ['control'], from: '13ixj, v7v3w' },
-	database: { half: 'organization', writes: ['control'], from: 'zn3u5, v7v3w' },
-	app: { half: 'organization', writes: ['control'], from: 'v7v3w' },
-	binding: { half: 'organization', writes: ['control'], from: 'v7v3w' },
-	grant: { half: 'organization', writes: ['control'], from: 'vuanj, v7v3w' },
-	route: { half: 'organization', writes: ['control'], from: 'v7v3w' },
-	schedule: { half: 'organization', writes: ['control'], from: '49qyg, v7v3w' },
-	env: { half: 'organization', writes: ['control'], from: '49qyg, v7v3w' },
-	extension: { half: 'platform', writes: ['platform'], from: 'v7v3w' },
-	certificate: { half: 'platform', writes: ['platform'], from: 'v7v3w' },
-	allowance: { half: 'platform', writes: ['platform'], from: 'vuanj' },
+	dataset: { half: 'organization', writes: ['control(organization)'], from: '13ixj, v7v3w' },
+	database: { half: 'organization', writes: ['control(organization)'], from: 'zn3u5, v7v3w' },
+	app: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	binding: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	grant: { half: 'organization', writes: ['control(organization)'], from: 'vuanj, v7v3w' },
+	route: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	schedule: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
+	env: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
+	extension: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	certificate: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	allowance: { half: 'platform', writes: ['control(platform)'], from: 'vuanj' },
 	file: { half: 'organization', writes: ['storage'], from: '13ixj' },
 	row: { half: 'organization', writes: ['database'], from: 'zn3u5' },
 	log: { half: 'organization', writes: ['tablet'], from: 'vuanj' },
