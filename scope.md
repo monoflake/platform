@@ -50,8 +50,10 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 | beside, operator | a person, holding the root private key and running day one's manual commands            | ideal, above                                                                      |
 
 **The footing is ground: trusted and never designed.** A footing is what an owner stands on from
-the layer beneath: one compute, which keeps nothing; one storage; and one database, each meeting one
-kind of its class at least, RFC vr5lw, and used by the `console` organization alone. What is kept
+beneath it: one compute, which keeps nothing; one storage; and one database, each meeting one kind
+of its class at least, RFC vr5lw. A control stands on it and nothing else does: the platform's
+footing, from the layer beneath, under the `console` organization's `control`; and each
+organization's, which the platform gives it, under that organization's own control. What is kept
 is backed up, the database and the storage, and only the database is held to the contract below.
 The platform stands on one database, RFC v7v3w,
 which the model takes to be up and to keep what it confirmed; whether it is made redundant is

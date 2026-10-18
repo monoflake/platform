@@ -117,10 +117,12 @@ for (const [name, part] of designed)
 				rules.push(`the organization's half needs the platform's: ${line(name, edge)}`);
 // What the platform's half holds is configuration, written on the control plane alone, so the data
 // plane runs on while the control plane is lost, `scope.md`.
-for (const [name, r] of Object.entries(RECORDS))
+for (const [name, r] of Object.entries(RECORDS)) {
+	const config = r.half === 'platform' || r.writes.some((w) => w.plane === 'control');
 	for (const w of r.writes)
-		if (r.half === 'platform' && w.plane === 'data')
+		if (config && w.plane === 'data')
 			rules.push(`the data plane writes configuration: ${w.by} writes ${name}, ${r.from}`);
+}
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);

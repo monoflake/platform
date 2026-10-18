@@ -73,23 +73,23 @@ function, R2's `object` and D1 give the internal platform's -- trusted as ideal,
 the `console` organization uses them, and its app, `control`, the platform's control plane, uses
 nothing else.
 
-**Every other organization stands on what it extends.** Before an organization other than the
-console runs anything, compute and storage are extended into it, of any kinds; a database is
-never extended, and is made of them. Above, a platform gives as many of the three as it has
-organizations to give them through.
+**Every organization is kept as the platform is: a control on a footing, and its apps on what it
+extends**, RFC v7v3w. Its control stands on one compute, one storage and one database the platform
+gives it, and keeps its records there; its apps stand on the compute and storage extended into it,
+of any kinds, and a database is never extended but made of them by its control. Above, a platform
+gives as many of the three as it has organizations to give them through.
+
+**A machine runs one driver**, which serves every binding of it and keeps them apart, RFC v7v3w; a
+vendor's primitive needs no driver, only an adapter from its terms to the platform's.
 
 **So one platform is built on another by an organization.** The external platform's footing is the
 three that one organization of the internal platform gives; its console stands on them alone. An
-organization opened on the external platform has its compute and storage extended from a shadow
-organization the external platform opens on the internal one through the internal platform's
-`control` API, or from the user's own clouds. The internal platform's own extensions come from
+organization opened on the external platform has its footing, and the compute and storage it buys,
+from a shadow organization the external platform opens on the internal one through the internal
+platform's `control` API; what else it extends comes from the user's own clouds. The internal platform's own extensions come from
 third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
-- Where an ordinary organization's own records are kept -- each tablet's log, the extent's records,
-  its backing, its bundle -- which b8f35 keeps in a footing of its own, now that only the console
-  stands on one: a database made of its extensions, placed by configuration. [B20]
-- Where what manages extensions runs, perhaps in `control`. [B20]
-- The database's sizes, a small one and a large one, and what each is made of. [B20]
+- The database's sizes, a small one and a large one, and what each is made of. [C23]
 - The new name for the storage's 16 MiB unit. [A10]

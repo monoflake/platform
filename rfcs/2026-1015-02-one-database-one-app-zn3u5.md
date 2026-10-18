@@ -45,8 +45,9 @@ serves it without translation:
   in one, and splits along its own lines what does not -- a database per conversation, per user --
   creating as many as it needs. **Creating one changes the organization's configuration**, whoever
   asks -- a person in the console, or the app's own code calling the configuration API -- so it is
-  the control plane's, RFC v7v3w: while the control plane is lost a create answers `unavailable`,
-  and every database that exists goes on serving.
+  its organization's own control's, RFC v7v3w: while that control is lost a create answers
+  `unavailable` and every database that exists goes on serving, and the platform's `control` lost
+  changes nothing for it.
 
 **A database is known by an id that never changes**, and an owner sees it by **one name**,
 `(path)/(database)`, a key split by `/`, which points at the id. Moving the name changes nothing

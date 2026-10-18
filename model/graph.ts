@@ -368,7 +368,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	'?entry': {
 		half: 'organization',
 		keptBy:
-			"the organization's half: a request comes in by the resources bound to the organization or shared with it, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator sets each app's routes by hand in the organization's account",
+			"the organization's half: a request comes in by the resources bound to the organization, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator sets each app's routes by hand in the organization's account",
 		triage: 'by hand on day one',
 		contract:
 			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj [C10]",
@@ -392,14 +392,14 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	'?runner': {
 		half: 'organization',
 		keptBy:
-			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization or shared with it, v7v3w; on day one the operator pins each database's writer to one resource by hand",
+			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization, v7v3w; on day one the operator pins each database's writer to one resource by hand",
 		triage: 'by hand on day one',
 		contract:
 			"places each tablet's writer and read copies at run time, on places the roster lists that offer instance, 49qyg, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Placing a tablet the configuration names is the data plane's, so it goes on while the control plane is lost; creating a database is configuration, the control plane's, zn3u5. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
 	'?roster': {
 		keptBy:
-			"the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35; the places an organization's work may go are the resources bound to it or shared with it, v7v3w",
+			"the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35; the places an organization's work may go are the resources bound to it, v7v3w",
 		triage: 'by hand on day one',
 		contract:
 			"lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
@@ -425,10 +425,10 @@ export type Plane = 'control' | 'data';
 
 /**
  * A kind of record, the half its truth is kept in, and what writes it on which plane. Whatever an
- * organization opens is configuration, the platform's half, written on the control plane alone;
- * data is what lives inside what was opened, the organization's, v7v3w. `check.ts` refuses a record
- * of the platform's half written on the data plane, since the data plane runs on while the control
- * plane is lost, `scope.md`.
+ * organization opens is configuration, written on a control plane alone: the platform's `control`
+ * for what spans organizations, an organization's own control for its products'; data is what lives
+ * inside what was opened, v7v3w. `check.ts` refuses configuration written on the data plane, since
+ * the data plane runs on while a control plane is lost, `scope.md`.
  */
 export interface Held {
 	half: Half;
@@ -440,15 +440,36 @@ const control = (by: string) => ({ by, plane: 'control' as const });
 const data = (by: string) => ({ by, plane: 'data' as const });
 
 export const RECORDS: Record<string, Held> = {
-	dataset: { half: 'platform', writes: [control('the configuration API')], from: '13ixj, v7v3w' },
-	database: { half: 'platform', writes: [control('the configuration API')], from: 'zn3u5, v7v3w' },
-	app: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
-	binding: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
-	grant: { half: 'platform', writes: [control('a deployment')], from: 'vuanj, v7v3w' },
-	route: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
-	schedule: { half: 'platform', writes: [control('a deployment')], from: '49qyg, v7v3w' },
-	env: { half: 'platform', writes: [control('a deployment')], from: '49qyg, v7v3w' },
-	resource: { half: 'platform', writes: [control('the configuration API')], from: 'v7v3w' },
+	dataset: {
+		half: 'organization',
+		writes: [control("the organization's control")],
+		from: '13ixj, v7v3w',
+	},
+	database: {
+		half: 'organization',
+		writes: [control("the organization's control")],
+		from: 'zn3u5, v7v3w',
+	},
+	app: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
+	binding: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
+	grant: {
+		half: 'organization',
+		writes: [control("the organization's control")],
+		from: 'vuanj, v7v3w',
+	},
+	route: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
+	schedule: {
+		half: 'organization',
+		writes: [control("the organization's control")],
+		from: '49qyg, v7v3w',
+	},
+	env: {
+		half: 'organization',
+		writes: [control("the organization's control")],
+		from: '49qyg, v7v3w',
+	},
+	extension: { half: 'platform', writes: [control("the platform's control")], from: 'v7v3w' },
+	certificate: { half: 'platform', writes: [control("the platform's control")], from: 'v7v3w' },
 	allowance: { half: 'platform', writes: [control('the operator')], from: 'vuanj' },
 	file: { half: 'organization', writes: [data('storage')], from: '13ixj' },
 	row: { half: 'organization', writes: [data('database')], from: 'zn3u5' },

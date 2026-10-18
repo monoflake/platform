@@ -218,6 +218,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "where an ordinary organization's own records are kept -- each tablet's log, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
 		from: 'vr5lw, v7v3w, b8f35',
+		done: 'v7v3w, vr5lw: each organization has a control of its own on a footing the platform gives it',
 	},
 	// C -- blocks a later step.
 	{
@@ -376,11 +377,18 @@ export const CHECKLIST: Item[] = [
 		from: 'vuanj, v7v3w; B1 before',
 		step: 6,
 	},
+	{
+		id: 'C23',
+		group: 'C',
+		what: "a database's sizes, a small one and a large one, and what each is made of",
+		from: 'vr5lw',
+		step: 2,
+	},
 	// D -- commercial and operational.
 	{
 		id: 'D1',
 		group: 'D',
-		what: "how a buyer's organization is charged, and how the operator's allowance relates to the quotas a holder sets",
+		what: "how a shadow organization's use is charged on the platform beneath; quotas are the binding's, v7v3w",
 		from: 'v7v3w',
 	},
 	{

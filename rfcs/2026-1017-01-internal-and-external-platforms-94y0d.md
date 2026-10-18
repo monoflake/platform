@@ -27,7 +27,7 @@ The internal platform is internal as a company's own systems are, used by those 
 platform and reached over the public network; it is no private network.
 
 - **The internal platform runs a version no newer than the external's**, and keeps off by
-  configuration what it does not need -- bringing one's own cloud, sharing, selling, signing up. The
+  configuration what it does not need -- bringing one's own cloud, selling, signing up. The
   code is never forked for it.
 - **The internal platform's ground is third-party vendors alone**: Cloudflare, and machines a
   provider runs. A machine the author keeps at home is bound only in the external platform, as a
@@ -52,10 +52,11 @@ platform and reached over the public network; it is no private network.
   once: the internal platform brings its own machines in with the code that lets a user bring
   theirs.
 
-**A machine may run a host of each deployment**, RFC b8f35: two processes, each enrolled in its own
-deployment with its own bundle, credentials and directory, sharing nothing but the machine.
+**A machine runs one driver, which may serve bindings of both deployments**, RFC v7v3w, each with
+its own bundle, credentials and directory, sharing nothing but the machine.
 
-- The internal platform's host is given reserved CPU and memory, so the external's cannot starve it.
+- What the driver runs for the internal platform is given reserved CPU and memory, so the
+  external's cannot starve it.
 - The internal platform's `instance` compute is the hosts on machines a provider runs, never a
   vendor's runtime that offers it, and stands on at least two machines, so a writer can be handed
   over when one is lost or slowed.

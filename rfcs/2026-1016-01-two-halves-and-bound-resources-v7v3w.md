@@ -21,14 +21,19 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Half              | Runs on                    | Holds                                                                                                                                                                                                     |
-| ----------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform's    | the `console` organization | what spans organizations, and what is decided for each: the control plane and the deployer, every configuration's truth, the credentials, the intermediate, the anchor, the root                          |
-| an organization's | the resources bound to it  | that organization's alone, its data and what runs it: its footing, its issuer, placement, the clock's ticks, the extent, each database's tablet, the blob's bytes, the sandboxes, its requests in and out |
+| Who                    | Its control                              | Stands on                                | Holds                                                                                                                                                                 |
+| ---------------------- | ---------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform           | `control`, in the `console` organization | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the credentials, the deployer, the intermediate, the anchor, the root |
+| an organization        | a control of its own                     | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases          |
+| an organization's apps | --                                       | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                           |
+
+Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
+way, a control on a footing of its own and what it runs apart from it. The platform's half is the
+first row; an organization's half is the other two.
 
 **Whoever controls a resource can see what runs on it.** So nothing that spans organizations is
-placed on a resource an organization holds, and an organization a resource is shared with trusts its
-holder as it trusts a vendor.
+placed on a resource an organization holds, and an organization that binds a resource others bind
+trusts its holder as it trusts a vendor.
 
 **The platform's half runs on serverless vendors only.** One now, Cloudflare, taken as the ground
 and ideal in s0; others may be added later, as extensions or beneath the footing's contract, and not
@@ -75,45 +80,37 @@ like.
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.
 
-- **A resource is held by the first organization it is bound to**, the first time the platform sees
-  it anywhere, and stays that organization's whoever bound it: binding it is trusting the
-  organization with it. An admin is only who is allowed to act, since a user account holds nothing;
-  an admin who leaves loses their control of the organization and nothing else.
-- **An admin may change their organization's configuration, and nothing more.** That is the one
-  real rule; what follows on sharing either comes from it or is a limit set against abuse.
-- **A resource the platform already knows is shared from its holder to another organization**,
-  never brought in by a user account. The organization it is shared with may use it; the holder both
-  uses it and manages it.
-- **A share is made by one who is an admin of both organizations.** The real rule asks less; this is
-  set against abuse, so that no holder is asked again and again for what it holds.
-- **A share is ended by either side alone**, each changing only its own configuration: the holder
-  withdraws it, and the organization it was shared with gives it up.
-- **The holder withdraws a share by the graph of dependencies while someone can follow it.** When an
-  admin of the holder is also an admin of the organization it is shared with, what depends on the
-  share there is removed first, as for any deletion. When none is, the holder withdraws it at once,
-  and what depends on it is stopped as in a revocation: a holder is never held by an organization
-  none of its admins can act in.
-- **The organization a share was made to gives it up by the graph of dependencies**, since its
-  admins can follow it: it is refused while something of its own depends on the share, which is
-  removed first.
-- **Every quota on a resource is its holder's**, at two levels: how much the resource gives in all,
-  set when it is first bound, and how much each share may use of it, set when the share is made.
-- **An admin of the holder manages the resource**, and may remove it.
+- **An admin may change their organization's configuration, and nothing more.**
+- **A resource is bound by whoever holds its credential, and may be bound by many organizations**,
+  each binding its own, on any platform. Nothing is shared from one organization to another. A
+  vendor's primitive is reached through an adapter that speaks its terms in the platform's; a
+  machine through its driver.
+- **A quota is the binding's**, set by the organization that binds, and none unless set, whether
+  the resource is a third party's, the user's own or bought. Ending a binding is the binding
+  organization's alone, by the graph of dependencies, as any deletion.
+- **A machine runs one driver, and the one driver serves every binding of it**, RFC vr5lw. It keeps
+  them apart itself: each binding sees and acts on only its own -- the containers, instances and
+  volumes it made, the functions it runs -- and is told nothing of another's. To every binding it
+  reports the machine's totals truly -- its CPU, its memory, its network in and out -- and of what
+  is counted by binding only that binding's own, the rest as other. A function runs in an isolate
+  or a WebAssembly runtime of its binding's own, an instance in a container without a volume, and a
+  container in a container with one.
+- **A driver sees everything on its machine**, so an organization binding a machine others bind
+  trusts the driver's holder as it trusts a vendor. What it stores is sealed, RFC b8f35, and no
+  driver reads it; what it runs runs in that machine's memory, kept apart from other bindings as
+  well as the technology allows, which is not promised. The platform warns of it as such a binding
+  is made.
 - **An organization has at least one admin.** The last admin leaving is the organization dissolved,
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
-- **An organization runs nothing until a resource is bound to it or shared with it.** The platform
-  lends none of its own.
-- **Only the console stands on a footing; every other organization stands on extensions**, RFC
-  vr5lw: compute and storage, never a database, which is made of them. Where its own records are
-  kept, which the rest of this bullet and RFC b8f35 still put in a footing of its own, is open.
-  [B20] The footing is one database in SQLite's dialect, taking atomic batches, at most 10 GB or
-  what its vendor's plan holds, which every compute can reach.
-  It is ground, `scope.md`: the platform makes nothing in it redundant, and its owner is warned to
-  bring one that is, which the platform cannot check. 10 GB is a hard limit, and an organization
-  that outgrows it is split into several. Everything else bound is an extension -- a compute, of
-  which at least one must be, and a store, of which at least one must be before the storage or a
-  database holds anything -- trusted as no footing is: what runs on extensions is made redundant by
-  the placements, RFC 13ixj, and repaired.
+- **An organization runs nothing until a resource is bound to it.** The platform lends none of its
+  own.
+- **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
+  vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
+  extension; its extensions are compute and storage, never a database, which its control makes of
+  them. The footing's database is in SQLite's dialect, taking atomic batches, at most 10 GB or what
+  its vendor's plan holds, which every compute can reach; it is ground, `scope.md`, and 10 GB is a
+  hard limit, so an organization that outgrows it is split into several. What runs on extensions is
+  made redundant by the placements, RFC 13ixj, and repaired.
 - **Choosing is two-sided: a resource says what it is, and what uses it says what it needs.**
   Whoever binds an extension declares it as it is bound, and the platform places on it only what it
   meets, solving each need against what is bound, never by a resource's name. Every attribute is
@@ -132,46 +129,46 @@ service's, or a node.
 - **What stands between an organization's resources and its three products is the platform's**,
   deployed and run by it on those resources, and never shown: an organization sees the three
   products, and, as usage, what the parts beneath them cost on its own resources.
-- **A resource bound to more than one organization keeps them apart as well as the platform can**,
-  within a process, and that is not promised.
+  **A platform sells by opening a shadow organization on the platform beneath.** An organization the
+  external platform opens has a shadow on the internal one, opened through the internal platform's
+  `control` API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
+  the internal platform charges for what each shadow uses. A user account buys nothing, since it holds
+  nothing.
 
-**The platform sells resources through an organization of its own, reserved for it.** That
-organization holds what is sold, and the platform pays the vendor for it and charges for it; it
-shares each with a buyer's organization, with a quota. A user account buys nothing, since it holds
-nothing.
-
-**The platform's own vendor accounts are bound to the `console` organization alone**, as its
-footing, and run nothing else.
+**The platform's own vendor accounts hold its footing and the footings it gives its organizations**,
+and are never bound as an extension.
 
 No app calls an app of another organization, RFC 49qyg.
 
-**An organization's requests come in and go out through the resources bound to it or shared with
-it**: a node's network, or a third-party account, which the platform operates through that account's
+**An organization's requests come in and go out through the resources bound to it**: a node's network, or a third-party account, which the platform operates through that account's
 API with a credential an admin gives it.
 
-**The platform keeps an organization's configuration; the resources bound to the organization hold
-its data and run it.** What the platform keeps is small: text, a few keys, and the credentials it
-operates third-party accounts with.
+**The platform keeps what spans organizations; each organization's control keeps its own
+configuration; its extensions hold its data and run it.**
 
-| Product  | Configuration, the platform's half          | Data, the organization's half                                                         |
+| Product  | Configuration, the organization's control   | Data, on its extensions                                                               |
 | -------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
 | storage  | its datasets and their policies             | each file's name and hash, content shared by hash, the extent's packing and splitting |
 | database | its databases and their bindings            | the rows, the log, the snapshots                                                      |
-| function | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages           |
+| compute  | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages           |
 
 - **Whatever an organization opens is configuration, whoever opens it**: a dataset, a database, an
-  app, a resource bound -- by a person in the console, or by an app's own code calling the
-  configuration API at run time, RFC zn3u5. Data is only what lives inside what was opened.
-- **A configuration's truth is in the platform's half, and is changed there alone.** A read-only
-  copy is delivered to the organization, which serves from it and from nothing else: its grants,
-  its allowance, its schedules, the policy placement follows.
-- **The copy is a bundle**: the organization's configuration compiled into one dense table, with its
-  certificate and its backing, numbered by generation and signed in the chain to the root. One is
-  issued each day, with the certificate, and whenever the configuration changes: the platform says a
-  change is ready, and the organization fetches it. **A bundle is kept in the organization's
-  footing**, and a compute's deployment says only where the footing is, so a compute that starts
-  reads the newest bundle it can verify there, and starts while the platform's half cannot be
-  reached.
+  app -- by a person in the console, or by an app's own code calling its organization's control at
+  run time, RFC zn3u5 -- and an extension bound, through the platform's `control`. Data is only what
+  lives inside what was opened.
+- **Two truths, each changed in one place.** The platform's `control` holds each organization's
+  existence, allowance, certificate and extensions; the organization's own control holds its
+  products' configuration, and makes its three products of its extensions as it likes, which is
+  the organization's business and none of the platform's. The platform's `control` lost, no
+  organization or extension is added, and nothing else stops: an organization's control goes on
+  opening what its extensions can hold.
+- **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the
+  root. The platform's gives an organization its certificate, allowance and extensions, each day
+  and on a change; the organization's control compiles its own configuration with it into the
+  bundle its parts serve from and from nothing else -- its grants, its allowance, its schedules, its
+  backing, the policy placement follows. **Both are kept in the organization's footing**, and a
+  compute's deployment says only where that is, so a compute that starts reads the newest bundle it
+  can verify there, and starts while either control cannot be reached.
 - **An organization signs its own capabilities**, with a key of its own that the intermediate
   certifies for seven days and renews every day. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the
@@ -196,13 +193,8 @@ operates third-party accounts with.
   revoked with it along the graph of dependencies, and nothing else:
   - the user account is removed from every organization it is in, and one it was the last admin of
     is revoked: its certificate is revoked and never renewed;
-  - every share a revoked organization receives is withdrawn, the resources the platform sold it
-    among them, from the copies their holders run from;
-  - every share it gives is withdrawn, and in every other organization what depends on a withdrawn
-    share is revoked with it -- one app of four, when one alone depends on it. Such an app is
-    stopped, never removed: what of it was placed on the withdrawn resource stays there, unmanaged
-    and unscheduled, and nothing is deleted, so the platform loses no data; getting it back is
-    between that organization and the resource's owner;
+  - every binding a revoked organization holds ends, and the shadows it bought are suspended, RFC
+    94y0d; no other organization depends on it, since nothing is shared;
   - the platform stops managing a revoked organization's own accounts and leaves them as they are:
     what runs there is between their owner and the vendor, and nothing is cleaned up on purpose.
 - **An organization is deleted on request, at the end of its certificate.** The last admin leaving
@@ -220,10 +212,7 @@ otherwise.
 Open, for the discussion that follows:
 
 - Where an admin's credential for a third-party account is kept, and what it may do. [C3]
-- How the operator's allowance, RFC vuanj, relates to the quotas a holder sets on its resources.
-  [D1]
-- How a buyer's organization is charged for what the platform's reserved organization shares with
-  it. [D1]
+- How a shadow organization's use is charged on the platform beneath. [D1]
 - Which vendor primitives are borrowed, each behind which contract. [B5]
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment. [B4]
