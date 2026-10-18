@@ -193,6 +193,11 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   with the root private key**; what holds it online is the data plane's, since the issuer cannot
   sign past a working key's expiry without it, though it is needed once in a working key's life
   and never on a call.
+- **A capability, a certificate and a bundle are signed records of one form**, worked out with the
+  author on 2026-10-18: a `COSE_Sign1` of RFC 9052, its content CBOR, signed by Ed25519, COSE's
+  `EdDSA`, which a Worker's WebCrypto signs and verifies, `lessons.md`. The standard is taken whole
+  rather than a form of the platform's own, so every language's library reads it; what each holds,
+  field by field, is open. [A11]
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and

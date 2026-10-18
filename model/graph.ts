@@ -144,6 +144,12 @@ export const PARTS: Record<string, Part> = {
 				H,
 				"deploys its organization's apps, their types and call graph checked",
 			),
+			e(
+				'?intermediate',
+				'deploy',
+				H,
+				"its bundle's signing key, its alone, certified for seven days and renewed each day, v7v3w",
+			),
 		],
 		uses: ['capability*', 'vocabulary*', 'wit*', 'extensions*', 'compat*'],
 	},

@@ -287,3 +287,7 @@ a second.** The size is counted compressed; the startup limit was raised from 40
 October 2025, on both plans. Some older pages show 64 MiB and 400 ms, and are stale. Asked of what
 bounds code on a target, RFC vr5lw. Sources: https://developers.cloudflare.com/workers/platform/limits
 and https://developers.cloudflare.com/changelog/2025-10-10-increased-startup-time/
+
+**A Worker's WebCrypto signs and verifies Ed25519**, by the name `Ed25519` under the Secure Curves
+API, or the older `NODE-ED25519`, which takes no raw private key. Asked of the signed record of RFC
+b8f35. Source: https://developers.cloudflare.com/workers/runtime-apis/web-crypto/

@@ -98,6 +98,12 @@ export const CHECKLIST: Item[] = [
 		what: "a new name for the storage's 16 MiB unit of sealed data, apart from compute's container, and the context strings that carry it, before any is written",
 		from: 'vr5lw',
 	},
+	{
+		id: 'A11',
+		group: 'A',
+		what: 'what a capability, a certificate and a bundle each hold, field by field, inside the COSE_Sign1 they are signed as, b8f35',
+		from: 'b8f35, v7v3w',
+	},
 
 	// B -- blocks building v0.
 	{
@@ -117,6 +123,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the bundle's format, and how each of the two is signed; a secret never enters one, v7v3w",
 		from: 'v7v3w',
+		done: "v7v3w: each bundle is CBOR, signed by the control that compiles it, as b8f35's signed record",
 	},
 	{
 		id: 'B5',

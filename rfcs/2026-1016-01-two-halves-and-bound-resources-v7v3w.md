@@ -254,6 +254,18 @@ configuration; its extensions hold its data and run it.**
   certifies for seven days and renews every day. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the
   platform takes over again when it returns.
+- **Each bundle is signed by the control that compiles it**, worked out with the author on
+  2026-10-18, as a signed record of RFC b8f35's form: the platform's by a working key of the
+  platform's control, which the intermediate certifies for a short while, the intermediate itself
+  certifying keys and signing nothing else; an organization's by a key its control alone holds,
+  apart from the key its issuer signs capabilities with, certified as that one is, for seven days
+  and renewed every day. So a part of the data plane taken over can sign a capability and never a
+  configuration.
+- **A bundle is kept as CBOR**, its `version` read first, as the workspace's `spec/json.md` has every
+  record, with its generation; an organization's names the generation of the platform's it was
+  compiled with. **A part refuses a generation lower than one it has read.** Starting cold it knows
+  none, so whoever can write the footing could hand it an older bundle still signed: only the
+  footing's vendor, trusted as ground, and never past the certificate's seven days.
 - **A timer is written into the scheduler of the resource it fires on**, at deployment, as
   configuration -- a vendor's cron, a node's own timer -- so it fires while the platform's half
   cannot be reached. The platform fires a tick itself only where a resource has no scheduler. A tick
@@ -294,7 +306,6 @@ Open, for the discussion that follows:
 
 - How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
 - What the app that charges reads of use, and how it acts on an organization. [D1]
-- A bundle's format, and how each of the two is signed. [B4]
 - What a compute's levels mean, and what a function or a database's writer asks of one. [B19]
 - Which ways of signing in each step builds, and what sends an email's link. [C27]
 - What one way counts for among a sign-in's factors, a passkey among them, and how an account that
