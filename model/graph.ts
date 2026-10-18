@@ -104,7 +104,8 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
-			e('tablet', 'serve', H, 'its metadata per scope'),
+			e('footing', 'serve', H, 'its datasets and their policies, in the bundle, v7v3w'),
+			e('tablet', 'serve', H, 'its metadata per scope: paths, hashes, references'),
 			e('blob', 'serve', H, 'content'),
 			e('scope', 'serve', H, 'a dataset belongs to one'),
 			KEY(),
@@ -126,7 +127,8 @@ export const PARTS: Record<string, Part> = {
 		edges: [
 			REPLACED,
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
-			e('tablet', 'serve', H, 'a database is a tablet, its directory one'),
+			e('footing', 'serve', H, 'its directory of names and ids, in the bundle, v7v3w'),
+			e('tablet', 'serve', H, 'a database is a tablet'),
 			e('scope', 'serve', H, 'ids belong to one'),
 			KEY(),
 		],
@@ -140,21 +142,23 @@ export const PARTS: Record<string, Part> = {
 			e('?runner', 'serve', H, "where a tablet's writer and copies are"),
 			e('issuer', 'serve', H, "a call's capabilities"),
 			e('executor', 'serve', H, 'runs the code'),
-			e('tablet', 'serve', H, 'calls and status(id), queues, schedules, the derive index'),
+			e(
+				'footing',
+				'serve',
+				H,
+				'its apps, versions, declarations, bindings, env, queues and schedules, in the bundle, v7v3w',
+			),
+			e(
+				'tablet',
+				'serve',
+				H,
+				"calls and status(id), queues' messages, schedules' repeats, the derive index",
+			),
 			e('blob', 'deploy', H, 'code kept by its hash'),
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
 			e('?entry', 'serve', H, "a request trigger: HTTP reaches an app's function, 49qyg"),
 			e('?entry', 'deploy', H, "writes an app's routes, in the entry's format"),
-			{
-				...e(
-					'scope',
-					'deploy',
-					H,
-					"writes an app's grants, derived from its bindings, before the version takes a call",
-				),
-				reads: 'issuer',
-			},
 			e(
 				'database',
 				'deploy',
@@ -174,7 +178,7 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('tablet', 'serve', H, "configuration and allowance in the scope's own tablet"),
+			e('footing', 'serve', H, 'its configuration and allowance, in the bundle, v7v3w'),
 			e(
 				'anchor',
 				'deploy',
@@ -189,7 +193,12 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('tablet', 'serve', H, "reads the scope's grants and allowance, in its own format, vuanj"),
+			e(
+				'footing',
+				'serve',
+				H,
+				"reads the scope's grants and allowance in the bundle, in its own format, vuanj",
+			),
 			e(
 				'?intermediate',
 				'deploy',

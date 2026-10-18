@@ -21,10 +21,10 @@ The shape the discussion has reached so far, to be decided once it is diffed aga
 layer it belongs to. **The name is kept, reserved for the platform's control plane as a whole** --
 its entry -- whose extent is not yet discussed.
 
-**Each product keeps its own configuration, per scope, in a tablet of its own**, as it keeps
-everything else: the storage its datasets and their policies, the database its directory of
-names, and functions their apps, each app's deployed versions by code hash, its functions'
-declarations, its triggers, its env and its bindings. **Nothing in an organization's half holds
+**Each product reads its own configuration from its organization's bundle, in the footing, never
+from a tablet**, RFC v7v3w: the storage its datasets and their policies, the database its directory
+of names, and functions their apps, each app's deployed versions by code hash, its functions'
+declarations, its triggers, its env and its bindings. A tablet holds data alone. **Nothing in an organization's half holds
 another's configuration**: the platform's half holds every configuration's truth, and each
 organization a copy of its own, RFC v7v3w. The issuer runs in the scope's organization and signs
 with that organization's own key, reading the scope's grants and allowance in the issuer's own

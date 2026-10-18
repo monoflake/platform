@@ -83,7 +83,8 @@ operation and when it expires, and is signed by the issuer alone, through a chai
 with the root's public key and never call at run time -- RFC b8f35. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
 the resource -- a dataset, whether writes are allowed -- and a part checks the scope. The issuer is
-its own part, reading each scope's grants from that scope's own tablet, below. Authenticating the
+its own part, reading each scope's grants from its organization's bundle, in the footing, RFC
+v7v3w. Authenticating the
 people who use an app is another matter, above.
 
 **The operations are five, each a right of its own**: read; create, which is refused where what it
@@ -93,26 +94,27 @@ add -- a backup, an audit log -- which, taken over, cannot erase. Alter is given
 migration runs, RFC zn3u5.
 
 **A scope also holds its `allowance`: what it may use and how much**, in the vocabulary of
-capabilities RFC 49qyg declares needs in. It lives in the scope's own tablet as the rest of its
-configuration does, and the issuer reads it there; setting it is the control plane's to do, but what
-it sets lives here, below layer 0, where every product can find it. **An allowance is the
+capabilities RFC 49qyg declares needs in. It reaches the organization in its bundle as the rest of
+its configuration does, RFC v7v3w, and the issuer reads it there; setting it is the control plane's
+to do, but what it sets is read here, below layer 0, where every product can find it. **An allowance is the
 platform's, though it lives in the scope**: the operator sets it and the owner never does, and one
 scope given more than another holds no privilege the other lacks.
 
 **Beside it, a scope holds its `grants`: what each app in it may reach**, an app, a resource and
 the operations, a row each. **Their format is the issuer's**, defined at this layer, and the issuer
-reads nothing else to decide what a call is given. The function product never has its own tables
-read by a part beneath it: it keeps an app's bindings in its own tablet, in whatever form it likes,
-and a deployment writes the grants they come to into the scope's list, in the issuer's format, before
-the new version takes a call. The grants are derived from the bindings and never written otherwise,
-so what an app may reach is decided in one place below layer 0, and the function product changes
-its own tables without anything beneath it changing. Grants are written as the control plane works,
+reads nothing else to decide what a call is given. An app's bindings are configuration, kept in the
+platform's half, RFC v7v3w; a deployment compiles the grants they come to into the bundle, in the
+issuer's format, and the new version takes a call only once its organization holds that bundle. The
+grants are derived from the bindings and never written otherwise, so what an app may reach is
+decided in one place, and the function product changes how it keeps bindings without anything
+beneath it changing. Grants are written as the control plane works,
 at deployment, and read as the data plane works, on each call.
 
 **Inside a scope each product has its own blob space**, since what counts the references to a hash
 is the product's own tablet; two products sharing one would delete what the other still holds.
 
-**The storage** keeps one tablet per scope for its metadata -- datasets, each path's hash, each
+**The storage** reads its datasets and their policies from the bundle, and keeps one tablet per
+scope for the rest of its metadata -- each path's hash, each
 hash's size, references, strictest policy and whether it is public, each directory's size -- and
 its content in its blob space. A write puts the bytes first and then changes the tablet in one
 batch, so a fault leaves at most bytes nothing names, which a sweep removes, and never a name
@@ -139,17 +141,19 @@ follows:
 
 A user's tablet has one copy unless its owner asks for more, as data in the storage does.
 
-**A `transactional` database is a tablet**, and the product adds what an app sees: a tablet per scope as the
-directory of names, ids, the one app each belongs to and whether read copies are on. A capability
+**A `transactional` database is a tablet**, and the product adds what an app sees: a directory of
+names, ids, the one app each belongs to and whether read copies are on, which is configuration and
+read from the bundle. A capability
 covers the databases of one app, so a database created for it is reachable once the organization
 holds the bundle that records it, RFC v7v3w.
 
-**A function** keeps its code in its blob space, its code's hash its identity; its declarations in
-a tablet of its own per scope, RFC b8f35, where a deployment checks the types and the call graph,
+**A function** keeps its code in its blob space, its code's hash its identity; its declarations
+are configuration, read from the bundle, and a deployment checks the types and the call graph,
 the calls never crossing a scope since they never cross an owner; its calls, their ids,
 outcomes and expiry, in a tablet `status(id)` reads; its `derive` cache as a tablet indexing a
 code's hash and an input's hash to an output kept in blobs, since a blob's hash is its content's and
-cannot be chosen; its queues and schedules in tablets. **The executor stores nothing**: it is given
+cannot be chosen; its queues' messages and its schedules' repeats in tablets, the queues and
+schedules themselves being configuration, in the bundle. **The executor stores nothing**: it is given
 the code's hash, the input and a sandbox -- for `derive` nothing at all, no capability, network, true
 time or randomness; for `effect` the call's capabilities and the network -- and gives back the output
 or a panic.
