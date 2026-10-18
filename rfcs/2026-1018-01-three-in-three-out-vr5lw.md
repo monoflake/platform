@@ -257,6 +257,36 @@ with credentials of their own, three in all:
 - A vendor's thing without an address of its own, as D1, takes the address of the adapter its
   driver deploys, and needs no relay.
 
+**Who may call is a capability's to say; who can reach is the network's, and kept apart.** Worked
+out with the author on 2026-10-18.
+
+- **Each export declares how far it is shown**: within its organization, the default, called by its
+  organization's apps with a capability at its deployment's address; or public, reached by anyone
+  through the entry. Nothing is public that was not declared so. Within an organization an address
+  may still stand on the public network, and every call to it without a capability of its
+  organization's is refused; a network laid over the public one, keeping such an address off it,
+  is a guard beside that, and open. [C25]
+- **A machine's driver keeps its firewall**, in software, so no hardware firewall is needed: what
+  comes in is let in only at a public export's port and the driver's own, and what goes out only as
+  each deployment's `network` allows, RFC 49qyg.
+- **To be public is a step of its own, and needs one way in from the public network**: an address
+  of its own is enough. The platform gives it a name of the platform's domain, its records DNS only,
+  pointing at the address its driver reports, which it reports again as it changes, so a machine's
+  address being fixed, changing or new at each restart is all one. A name of the user's own points
+  at the platform's by a CNAME, behind a proxy of their own or not as they choose; the platform
+  binds no domain of a user's itself. The two may stand together. A machine without an address is
+  public through a relay of Cloudflare's, RFC vr5lw above.
+- **A Worker is public at the address its vendor gives it**, or at a domain its account holds,
+  bound in that account.
+- **A platform's name may be served from a user's own Cloudflare account**, its traffic counted
+  there: where that account holds a domain of its own and the platform holds a management token
+  for it, the domain's zone takes the platform's name as a custom hostname, served by a Worker on
+  the zone, and the platform, holding its own domain's records, proves the name and points it there,
+  DNS only. Where it holds no domain, the vendor's address or the user's own domain serves instead.
+  `lessons.md`
+- **A machine named by the platform's domain is given that name's certificate** by a way open, the
+  platform holding the domain's records. [B9]
+
 **So one platform is built on another by an organization.** The external platform's footing is the
 three that one organization of the internal platform gives; its control stands on them alone. An
 organization opened on the external platform has its footing, and the compute and storage it buys,

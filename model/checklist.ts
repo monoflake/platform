@@ -147,8 +147,8 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B9',
 		group: 'B',
-		what: "the entry in v0: how a request reaches an organization's app on Cloudflare, an app's domain, and whether a name unique across scopes is kept in the anchor or beside it",
-		from: 'b8f35, 13ixj',
+		what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment; how a machine named by the platform's domain is given that name's certificate; and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing",
+		from: 'b8f35, 13ixj, vr5lw',
 	},
 	{
 		id: 'B10',
@@ -391,6 +391,13 @@ export const CHECKLIST: Item[] = [
 		id: 'C24',
 		group: 'C',
 		what: 'the comment format a key the platform made carries on a machine, known by every control of every platform by its form alone, and versioned, since it is written onto machines the platform does not hold',
+		from: 'vr5lw',
+		step: 6,
+	},
+	{
+		id: 'C25',
+		group: 'C',
+		what: "a network laid over the public one, keeping an organization's addresses off it: an overlay, or a vendor's network from a Worker to a machine; a guard beside the capability, which alone says who may call",
 		from: 'vr5lw',
 		step: 6,
 	},

@@ -89,6 +89,18 @@ https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-
 and
 https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/cloudflared-parameters/run-parameters/
 
+**Another account's Worker can serve a name of ours as a custom hostname.** Cloudflare for SaaS is
+offered on the Free, Pro and Business plans with 100 custom hostnames included, then $0.10 a hostname
+to 50,000. The zone serving them must be on Cloudflare with the feature turned on; a hostname points
+at it by a CNAME, its certificate is validated by TXT, delegated DCV or HTTP, before the cutover if
+asked; and a `*/*` route on that zone sends every custom hostname's traffic to a Worker, its fallback
+origin an originless proxied record. Asked of a platform name served by a user's account, RFC
+vr5lw, read 2026-10-18. Sources:
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/,
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/getting-started/
+and
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/advanced-settings/worker-as-origin/
+
 ## Cloudflare's free plan, measured 2026-10-17
 
 Measured on the `monoflake` account, on the free plan, from two machines a provider runs, one in

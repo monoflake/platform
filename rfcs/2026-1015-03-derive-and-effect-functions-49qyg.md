@@ -128,7 +128,8 @@ with until it is deployed again, as on Cloudflare and Vercel.
   without finishing go to a dead-letter list, where it can be found.
 
 **One app reaches another only through what the other exports, and both declare it.** B declares
-each function it exports: its name, its kind and its parameters' types. A declares which of B's
+each function it exports: its name, its kind, its parameters' types, and how far it is shown --
+within its organization by default, or public, RFC vr5lw. A declares which of B's
 functions it calls. Deploying A is refused when what it calls does not match what B exports, by the
 number of parameters and their types -- never their values, which are A's business. Deploying B is
 refused when it would take away or change a function something still calls, and deleting B is
