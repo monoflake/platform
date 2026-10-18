@@ -101,6 +101,19 @@ https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/s
 and
 https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/advanced-settings/worker-as-origin/
 
+**A custom hostname's certificate is its own, for that name alone.** Cloudflare issues SSL for SaaS
+certificates through Let's Encrypt, Google Trust Services or SSL.com, and the API takes a
+`certificate_authority` to choose among them, empty for the default, which checks CAA first; which
+values it takes is not on the reference page. No limit on a custom hostname's depth is written; a
+post of December 2025 reports a fourth-level name given a certificate in under a minute on Cloudflare
+for SaaS without Advanced Certificate Manager. That the same holds for a name of another account's
+zone pointing at it DNS only is to be tried. A certificate issued through Let's Encrypt counts toward
+that CA's limit for the name's registered domain, whoever asks. Asked of a platform name served by a
+user's account, RFC vr5lw, read 2026-10-18. Sources:
+https://developers.cloudflare.com/ssl/reference/certificate-authorities/,
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/security/certificate-management/issue-and-validate/issue-certificates/
+and https://hajekj.net/2025/12/22/protecting-4th-level-domains-with-cloudflare-for-free/
+
 ## Cloudflare's free plan, measured 2026-10-17
 
 Measured on the `monoflake` account, on the free plan, from two machines a provider runs, one in
