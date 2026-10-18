@@ -49,7 +49,12 @@ export const KEPT: Record<string, Kept> = {
 		grows: 'bounded',
 		bound: "a row for each of a scope's tablets",
 	},
-	bundle: { what: "the organization's bundle", from: 'v7v3w', grows: 'bounded', bound: 'one' },
+	bundle: {
+		what: "the organization's bundle",
+		from: 'v7v3w',
+		grows: 'bounded',
+		bound: 'one, holding what the organization opened, as many as its allowance lets it',
+	},
 	extent: {
 		what: "which pieces each content is made of, each piece's container, and every container",
 		from: 'b8f35',

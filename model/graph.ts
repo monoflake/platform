@@ -385,7 +385,7 @@ export const BOUNDARIES: Record<string, Boundary> = {
 			"the organization's half: placement decides at run time by a policy the platform keeps and copies down, on the resources bound to the organization or shared with it, v7v3w; on day one the operator pins each database's writer to one resource by hand",
 		triage: 'by hand on day one',
 		contract:
-			"places each tablet's writer and read copies at run time, on places the roster lists that offer instance, 49qyg, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Creating a tablet, as an app creating a database while it runs, is the data plane's, so it goes on while the control plane is lost. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
+			"places each tablet's writer and read copies at run time, on places the roster lists that offer instance, 49qyg, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Placing a tablet the configuration names is the data plane's, so it goes on while the control plane is lost; creating a database is configuration, the control plane's, zn3u5. It promises at least one writer, never exactly one: two may be placed for a moment, and the generation the footing keeps refuses all but one, vuanj. Its record of what is placed where is kept in the footing and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
 	},
 	'?roster': {
 		keptBy:
@@ -411,7 +411,44 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	},
 };
 
-/** What reads a running build's range: the write version is the lowest of every reader's highest. */
+export type Plane = 'control' | 'data';
+
+/**
+ * A kind of record, the half its truth is kept in, and what writes it on which plane. Whatever an
+ * organization opens is configuration, the platform's half, written on the control plane alone;
+ * data is what lives inside what was opened, the organization's, v7v3w. `check.ts` refuses a record
+ * of the platform's half written on the data plane, since the data plane runs on while the control
+ * plane is lost, `scope.md`.
+ */
+export interface Held {
+	half: Half;
+	writes: { by: string; plane: Plane }[];
+	from: string;
+}
+
+const control = (by: string) => ({ by, plane: 'control' as const });
+const data = (by: string) => ({ by, plane: 'data' as const });
+
+export const RECORDS: Record<string, Held> = {
+	dataset: { half: 'platform', writes: [control('the configuration API')], from: '13ixj, v7v3w' },
+	database: { half: 'platform', writes: [control('the configuration API')], from: 'zn3u5, v7v3w' },
+	app: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
+	binding: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
+	grant: { half: 'platform', writes: [control('a deployment')], from: 'vuanj, v7v3w' },
+	route: { half: 'platform', writes: [control('a deployment')], from: 'v7v3w' },
+	schedule: { half: 'platform', writes: [control('a deployment')], from: '49qyg, v7v3w' },
+	env: { half: 'platform', writes: [control('a deployment')], from: '49qyg, v7v3w' },
+	resource: { half: 'platform', writes: [control('the configuration API')], from: 'v7v3w' },
+	allowance: { half: 'platform', writes: [control('the operator')], from: 'vuanj' },
+	file: { half: 'organization', writes: [data('store')], from: '13ixj' },
+	row: { half: 'organization', writes: [data('database')], from: 'zn3u5' },
+	log: { half: 'organization', writes: [data('tablet')], from: 'vuanj' },
+	extent: { half: 'organization', writes: [data('blob')], from: 'b8f35' },
+	call: { half: 'organization', writes: [data('function')], from: '49qyg' },
+	message: { half: 'organization', writes: [data('function')], from: '49qyg' },
+	repeat: { half: 'organization', writes: [data('function')], from: '49qyg, v7v3w' },
+};
+
 export const GLOBAL_OPEN = [
 	"control plane: a caller of scope, backing and blob -- creating a scope, setting its allowance, adding a store, starting a migration of layout or key -- never a need of theirs; it is the platform's half and stands on the vendor contracts directly, never on layer 0, v7v3w [B10]",
 	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's [B10]",

@@ -98,10 +98,13 @@ owner (one scope, its own unique salt)
 
 | On      | Operation                                                                              |
 | ------- | -------------------------------------------------------------------------------------- |
-| dataset | `create` with its policy, `head`, `list`, `delete` (only while empty)                  |
+| dataset | `create` with its policy, `head`, `list`, `delete` (only while empty): configuration   |
 | file    | `put(dataset, path, content) -> {hash, size}`, `get`, `head`, `list(prefix)`, `delete` |
 | link    | `link(dataset, path) -> url`, the content the path names at this moment                |
 
+- **A dataset is configuration, a file is data.** Creating or deleting a dataset changes the
+  organization's configuration, through the configuration API, which an app may call as any client
+  does, RFC v7v3w; a file's operations are the data plane's.
 - **A name points at content; content never changes.** Writing a path again points it at new
   content, and a write may be conditional on the hash it last saw, so two writers never silently
   overwrite each other. A directory is never renamed.

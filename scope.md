@@ -119,7 +119,9 @@ The correct path alone: no failure is modeled.
 **Rules beneath every dimension.** A `hard` edge points to its own layer or below; a `soft` edge
 may point up. A library uses only libraries. Nothing at layer 0 or below has an edge, `hard` or
 `soft`, to what the platform runs as an owner, so the graph stays clean while the platform runs on
-itself, RFC vuanj.
+itself, RFC vuanj. The data plane writes no configuration: whatever an organization opens -- a dataset, a
+database, an app -- is configuration, the platform's half, written on the control plane alone,
+whoever asks, RFC v7v3w; `RECORDS` in `model/graph.ts` lists each kind of record.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
 contract, by `node model/check.ts`, and then the bootstrap path, `model/bootstrap.ts`: every step of

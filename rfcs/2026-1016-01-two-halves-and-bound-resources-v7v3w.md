@@ -157,6 +157,9 @@ operates third-party accounts with.
 | database | its databases and their bindings            | the rows, the log, the snapshots                                                      |
 | function | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages           |
 
+- **Whatever an organization opens is configuration, whoever opens it**: a dataset, a database, an
+  app, a resource bound -- by a person in the console, or by an app's own code calling the
+  configuration API at run time, RFC zn3u5. Data is only what lives inside what was opened.
 - **A configuration's truth is in the platform's half, and is changed there alone.** A read-only
   copy is delivered to the organization, which serves from it and from nothing else: its grants,
   its allowance, its schedules, the policy placement follows.

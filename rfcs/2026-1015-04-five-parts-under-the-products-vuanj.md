@@ -133,7 +133,7 @@ follows:
 - **A writer handed over** is fenced by the footing: the new one catches up and is made writer at
   the next generation, and the old can write nothing after; writes wait the few seconds it takes,
   and reads go on from the copies.
-- **Where a writer runs is placed at run time**, since a tablet is created while an app runs, never
+- **Where a writer runs is placed at run time**, since a database may be created at any time, never
   only at a deployment. What places it promises at least one writer and never exactly one: two may
   run for a moment, and the generation the footing keeps refuses all but one.
 
@@ -141,7 +141,8 @@ A user's tablet has one copy unless its owner asks for more, as data in the stor
 
 **A `transactional` database is a tablet**, and the product adds what an app sees: a tablet per scope as the
 directory of names, ids, the one app each belongs to and whether read copies are on. A capability
-covers the databases of one app, so a database the app creates while it runs is reachable at once.
+covers the databases of one app, so a database created for it is reachable once the organization
+holds the bundle that records it, RFC v7v3w.
 
 **A function** keeps its code in its blob space, its code's hash its identity; its declarations in
 a tablet of its own per scope, RFC b8f35, where a deployment checks the types and the call graph,

@@ -10,7 +10,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
 import { ALLOWED, ASSUMED, KEPT, ROWS } from './footing.ts';
-import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, VENDOR, type Edge } from './graph.ts';
+import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, RECORDS, VENDOR, type Edge } from './graph.ts';
 
 const layerName = (layer: number) =>
 	layer === VENDOR ? 'ground' : layer > 0 ? `+${layer}` : String(layer);
@@ -115,6 +115,12 @@ for (const [name, part] of designed)
 		for (const edge of part.edges)
 			if ((edge.when === 'serve' || edge.when === 'start') && halfOf(edge.to) === 'platform')
 				rules.push(`the organization's half needs the platform's: ${line(name, edge)}`);
+// What the platform's half holds is configuration, written on the control plane alone, so the data
+// plane runs on while the control plane is lost, `scope.md`.
+for (const [name, r] of Object.entries(RECORDS))
+	for (const w of r.writes)
+		if (r.half === 'platform' && w.plane === 'data')
+			rules.push(`the data plane writes configuration: ${w.by} writes ${name}, ${r.from}`);
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);
@@ -122,7 +128,7 @@ for (const c of cycles((n) => LIBRARIES[n]?.uses ?? [], Object.keys(LIBRARIES)))
 	rules.push(`library cycle: ${c}`);
 dimension(
 	'Rules',
-	"Does every hard edge point down, every library use only libraries, nothing below need an owner, and no organization need the platform's half to serve or start?",
+	"Does every hard edge point down, every library use only libraries, nothing below need an owner, no organization need the platform's half to serve or start, and the data plane write no configuration?",
 	rules,
 	[
 		`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`,
