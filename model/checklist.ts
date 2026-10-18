@@ -135,7 +135,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B7',
 		group: 'B',
-		what: "the driver: its interface and each primitive's contract in it -- how an object store, a database and a compute are reached, deployed to and called -- a machine's driver and Cloudflare's, how one is enrolled by hand at step 0, and the CPU and memory reserved for the internal platform's",
+		what: "the driver: how a typed value is written on the wire, a SQLite value's and a WIT value's alike; how a machine's driver and Cloudflare's are enrolled by hand at step 0; and the CPU and memory reserved for the internal platform's; the primitives' contracts and code's delivery are vr5lw's",
 		from: '94y0d, vr5lw',
 	},
 	{
@@ -299,7 +299,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C11',
 		group: 'C',
-		what: "functions past v0's: daemons and their credentials, a derive's denied imports, an export's version, storage starting a function, whether the call graph holds bindings",
+		what: "functions past v0's: daemons and their credentials, a derive's denied imports, an export's version, storage starting a function, whether the call graph holds bindings, and the format of a process's image",
 		from: '49qyg',
 		step: 2,
 	},
@@ -488,6 +488,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "the platform signing people in to others' apps itself, by OAuth",
 		from: 'v7v3w',
+	},
+	{
+		id: 'D11',
+		group: 'D',
+		what: "the platform's own CI: what it runs on, and how long it keeps what it builds",
+		from: 'vr5lw',
 	},
 
 	// E -- stale or inconsistent text.

@@ -106,6 +106,45 @@ organization's container.
 - **A call that opens something waits on that task as any call waits on an outcome**, RFC 49qyg:
   looked up until a deadline, then `unknown` with its id.
 
+**Code is delivered in its sandbox's own form, built by what its target allows, and kept where it
+was built**, worked out with the author on 2026-10-18.
+
+- **Each sandbox takes its own form**: V8 a bundle of JavaScript modules, WebAssembly within it as
+  it likes; WebAssembly a component; a process an image, whose format waits on the container
+  [C11]. WIT keeps the types one however it runs, RFC vuanj. Each driver declares the sandboxes it
+  gives: Cloudflare's V8 alone; a machine's all three, V8 by `workerd`, Cloudflare's own runtime
+  under an open license, so one bundle runs alike on both. `workerd` is no hardened sandbox and asks
+  for one around it where code may be hostile, `lessons.md`: on a machine it runs inside its
+  organization's container, whose isolation from other bindings is not promised, RFC v7v3w.
+- **Source is the Git provider's, GitHub alone for now**, and the platform keeps no source.
+- **What builds is chosen by the target**:
+
+  | Target     | Built by                                                                 |
+  | ---------- | ------------------------------------------------------------------------ |
+  | Cloudflare | Cloudflare's own builds, GitHub Actions, or the platform's CI once it is |
+  | a machine  | GitHub Actions, or the platform's CI once it is                          |
+
+  Built by Cloudflare, the build uploads a version of the Worker and deploys nothing, its deploy
+  command changed to do so, `lessons.md`, and the driver deploys that version as configuration is
+  applied, so a Worker's name and bindings stay configuration's. Built by GitHub Actions, the
+  workflow in the user's own repository keeps the artifact among its own and tells the control of
+  it by GitHub's OIDC token, which names the repository and the commit.
+
+- **An artifact is kept where it was built, as long as its builder keeps it**: Cloudflare the last
+  hundred versions; GitHub Actions ninety days unless set otherwise, up to ninety for a public
+  repository and four hundred for a private one, `lessons.md`; the platform's CI as it will set.
+  [D11] A driver fetches it from there by an address the control asks the builder for, so the
+  bytes go past the control.
+- **An artifact is built for the one target, sandbox and architecture asked**, and is never shared
+  between targets: two targets each build from the source.
+- **Another machine, or a return to an older version, takes the artifact while its builder keeps
+  it, and builds it again from its commit once it does not.** Built again it may differ, and is
+  then a version of its own.
+- **The version just replaced can always be returned to**: Cloudflare keeps it, and a machine keeps
+  the version it replaced on its own disk until the new one serves.
+- **A version's identity is its code's hash**, kept in configuration and checked against whatever
+  is fetched, and a `derive`'s outputs are cached by it, RFC vuanj.
+
 **What each resource gives:**
 
 | Resource                    | Compute                                    | Storage               | Database                                      |

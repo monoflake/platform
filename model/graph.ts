@@ -215,10 +215,10 @@ export const PARTS: Record<string, Part> = {
 				"calls and status(id), queues' messages, schedules' repeats, the derive index",
 			),
 			e(
-				'blob',
+				'?builder',
 				'deploy',
 				H,
-				'code kept by its hash, deployed as its configuration is applied, vr5lw',
+				'code by its hash, fetched from where it was built as its configuration is applied, vr5lw',
 			),
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
@@ -506,6 +506,14 @@ export const BOUNDARIES: Record<string, Boundary> = {
 		triage: 'later',
 		contract:
 			"an effect's HTTP request to the world leaves through it, and the response returns. Each request carries a capability showing its call declared network http, and it checks it, trusting no caller. It reads an HTTP request's envelope -- where it goes, its method, its headers -- whose format is a published standard, the ground's; bodies are carried unread. It sees each request's destination and size and limits them by the scope's allowance; what it counts to limit is soft, so a restart that loses it loosens a limit for a moment and keeps nothing on disk; the amounts are open [C14]. Only http goes through it: tcp, udp and icmp leave from the host that offers them, as the roster lists. It starts without the executor or the function product, and is the data plane's: while the control plane is lost, effects still reach the world",
+	},
+	'?builder': {
+		half: 'organization',
+		keptBy:
+			"what builds for the organization's target, vr5lw: Cloudflare's own builds for a Worker, GitHub Actions in the user's repository, the platform's CI once it is; on day one the operator's GitHub Actions",
+		triage: 'by hand on day one',
+		contract:
+			"given an app's commit at its Git provider, a target, a sandbox and an architecture, it builds the code in that sandbox's own form and keeps it for as long as it keeps what it builds, answering its hash and, asked, an address the bytes are fetched from by a driver. Once it no longer keeps a version, the version is built again from its commit, and may differ. It is the control plane's: what runs keeps running from what its host holds, and a machine keeps the version it replaced until the new one serves",
 	},
 	'?source': {
 		keptBy:

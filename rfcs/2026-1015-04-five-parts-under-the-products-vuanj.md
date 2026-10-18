@@ -148,7 +148,7 @@ read from the bundle. A capability
 covers the databases of one app, so a database created for it is reachable once the organization
 holds the bundle that records it, RFC v7v3w.
 
-**A function** keeps its code in its blob space, its code's hash its identity; its declarations
+**A function's** code is kept where it was built, RFC vr5lw, its hash its identity; its declarations
 are configuration, read from the bundle, and a deployment checks the types and the call graph,
 the calls never crossing a scope since they never cross an owner; its calls, their ids,
 outcomes and expiry, in a tablet `status(id)` reads; its `derive` cache as a tablet indexing a

@@ -154,6 +154,7 @@ yet sorted.
 | `?source`       | by hand on day one |
 | `?entry`        | by hand on day one |
 | `?runner`       | by hand on day one |
+| `?builder`      | by hand on day one |
 | `?intermediate` | by hand on day one |
 | `?egress`       | later              |
 | `?clock`        | later              |
