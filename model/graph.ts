@@ -136,7 +136,7 @@ export const PARTS: Record<string, Part> = {
 				'control(platform)',
 				'deploy',
 				H,
-				'its certificate, allowance and extensions, copied down each day and on a change',
+				'its certificate, allowance and leases, copied down each day and on a change',
 			),
 			e(
 				'compute',
@@ -145,7 +145,7 @@ export const PARTS: Record<string, Part> = {
 				"deploys its organization's apps, their types and call graph checked",
 			),
 		],
-		uses: ['capability*', 'vocabulary*', 'wit*', 'compat*'],
+		uses: ['capability*', 'vocabulary*', 'wit*', 'extensions*', 'compat*'],
 	},
 
 	storage: {
@@ -409,7 +409,7 @@ export const PARTS: Record<string, Part> = {
 			e('root', 'start', H, "the masters, to derive each organization's salt and key"),
 			e('?intermediate', 'deploy', H, "certifies each organization's key"),
 		],
-		uses: ['capability*', 'keys*', 'compat*'],
+		uses: ['capability*', 'keys*', 'extensions*', 'compat*'],
 	},
 
 	root: {
@@ -535,10 +535,18 @@ export const RECORDS: Record<string, Held> = {
 	app: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
 	binding: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
 	grant: { half: 'organization', writes: ['control(organization)'], from: 'vuanj, v7v3w' },
-	route: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	name: { half: 'organization', writes: ['control(organization)'], from: 'vr5lw' },
+	member: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
 	schedule: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
 	env: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
-	extension: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	'extension(platform)': { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	'extension(organization)': {
+		half: 'organization',
+		writes: ['control(organization)'],
+		from: 'v7v3w',
+	},
+	lease: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	account: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
 	certificate: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
 	allowance: { half: 'platform', writes: ['control(platform)'], from: 'vuanj' },
 	file: { half: 'organization', writes: ['storage'], from: '13ixj' },
@@ -588,6 +596,11 @@ export const LIBRARIES: Record<string, Library> = {
 	},
 	'wit*': {
 		what: "an export's types, and a call checked against them, 49qyg",
+		agrees: false,
+		uses: ['compat*'],
+	},
+	'extensions*': {
+		what: "a control's extensions: each host's binding, its credentials, quota, levels and grace, the networks its hosts may use, the capacity lists sent to drivers, and what it leases, the same code in both controls, v7v3w",
 		agrees: false,
 		uses: ['compat*'],
 	},

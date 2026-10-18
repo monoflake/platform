@@ -21,11 +21,11 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                        |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the deployer, the intermediate, the anchor, the root         |
-| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
-| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                  |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it leases of them, the deployer, the intermediate, the anchor, the root   |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those leased to it, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                                  |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -64,7 +64,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
 - **The platform's control holds what no one organization can.** It sees every organization -- the
   anchor, the names unique across them, the accounts that sign in -- holds the platform's secrets,
   the masters and the intermediate key, and acts on organizations: opening, suspending, deleting and
-  revoking one, setting its allowance, certifying its key, binding its extensions. Its privilege is
+  revoking one, setting its allowance, certifying its key, leasing it what it binds. Its privilege is
   where it stands, never a permission granted: only it reaches the platform's footing, and the
   secrets are deployed to it alone, `?source`. On the platform beneath, it is an ordinary client:
   the external platform's control opens its shadows on the internal one as any admin would.
@@ -139,8 +139,18 @@ service's, or a node.
   is made.
 - **An organization has at least one admin.** The last admin leaving is the organization dissolved,
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
-- **An organization runs nothing until a resource is bound to it.** The platform lends none of its
-  own.
+- **An organization runs nothing until a resource is bound or leased to it.**
+- **Both controls bind extensions, by one piece of code**, worked out with the author on
+  2026-10-18. The platform's control and each organization's hold their own extensions alike --
+  each host's binding and its credentials, the binding's quota, levels and grace, the relays and
+  private networks its hosts may use, the capacity lists sent to each driver and what each driver
+  reports -- so it is written once and runs in both.
+- **A control may lease what it binds, and then manages what it leased and nothing more.** It opens
+  a binding of its own host for the lessee, sets its quota, and hands over that binding's token;
+  the lessee holds the lease as any binding, by the same code, and reaches the host only within it.
+  The lessor keeps the host's management token, and with it the host's own configuration -- its
+  records, its shell, its grace -- and touches nothing else of the lessee's. A driver is told
+  nothing of a lease: it sees one binding more. The platform leases to its organizations.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
   vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
   extension; its extensions give compute, storage and databases, a database only in the platform's
@@ -192,16 +202,16 @@ configuration; its extensions hold its data and run it.**
 
 - **Whatever an organization opens is configuration, whoever opens it**: a dataset, a database, an
   app -- by a person through the console, or by an app's own code calling its organization's control at
-  run time, RFC zn3u5 -- and an extension bound, through the platform's control. Data is only what
+  run time, RFC zn3u5 -- and an extension bound, through the control that binds it. Data is only what
   lives inside what was opened.
 - **Two truths, each changed in one place.** The platform's control holds each organization's
-  existence, allowance, certificate and extensions; the organization's own control holds its
-  products' configuration, and makes its three products of its extensions as it likes, which is
-  the organization's business and none of the platform's. The platform's control lost, no
-  organization or extension is added, and nothing else stops: an organization's control goes on
-  opening what its extensions can hold.
+  existence, allowance and certificate, and what it leases it; the organization's own control
+  holds its products' configuration and its own extensions, and makes its three products of them as
+  it likes, which is the organization's business and none of the platform's. The platform's control
+  lost, no organization is added and nothing is leased anew, and nothing else stops: an
+  organization's control goes on binding its own extensions and opening what they can hold.
 - **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the
-  root. The platform's gives an organization its certificate, allowance and extensions, each day
+  root. The platform's gives an organization its certificate, allowance and leases, each day
   and on a change; the organization's control compiles its own configuration with it into the
   bundle its parts serve from and from nothing else -- its grants, its allowance, its schedules, its
   backing, the policy placement follows. **Both are kept in the organization's footing**, and a
