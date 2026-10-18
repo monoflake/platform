@@ -397,7 +397,6 @@ organization key || seed)`, so the same header always gives it back. Its header 
 Open, for the discussion that follows:
 
 - Which three places, all offline and the operator's, hold a master's shares. [B12]
-- What the control plane is and how far it reaches, the name reserved for it. [B10]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
 - How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages

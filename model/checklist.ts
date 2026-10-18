@@ -109,7 +109,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B3',
 		group: 'B',
-		what: "an organization's configuration: what it holds -- datasets, databases, apps, bindings, routes, schedules, resources -- and how the platform's half writes it onto a bound account through the vendor's API",
+		what: "an organization's configuration: what it holds -- datasets, databases, apps, bindings, names, schedules, resources -- and what each control's API offers over what it holds, reaching a host through its driver alone, vr5lw",
 		from: 'item 5',
 	},
 	{
@@ -154,8 +154,9 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B10',
 		group: 'B',
-		what: 'the control plane: what it is, how far it reaches, and its name, since step 0 runs one',
-		from: 'b8f35',
+		what: 'the control plane: what it is, how far it reaches, and its name, and how a person is authenticated to it, since step 0 runs one',
+		from: 'b8f35, v7v3w',
+		done: "v7v3w: a person signs in to the platform's control, and is a member by their organization's",
 	},
 	{
 		id: 'B11',
@@ -410,6 +411,20 @@ export const CHECKLIST: Item[] = [
 		from: 'vr5lw, lessons.md',
 		step: 6,
 	},
+	{
+		id: 'C27',
+		group: 'C',
+		what: "which ways of signing in each step builds -- a passkey; GitHub, Google or Apple; an email's link; a password; a TOTP code -- and what sends an email's link",
+		from: 'v7v3w',
+		step: 8,
+	},
+	{
+		id: 'C28',
+		group: 'C',
+		what: "what one way of signing in counts for among a sign-in's factors, a passkey among them, and how an account that lost every way it held is given back",
+		from: 'v7v3w',
+		step: 8,
+	},
 	// D -- commercial and operational.
 	{
 		id: 'D1',
@@ -467,6 +482,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "the domain organizations' public names are of, apart from the platform's own, and asking the Public Suffix List to take it once the platform serves thousands",
 		from: 'vr5lw, lessons.md',
+	},
+	{
+		id: 'D10',
+		group: 'D',
+		what: "the platform signing people in to others' apps itself, by OAuth",
+		from: 'v7v3w',
 	},
 
 	// E -- stale or inconsistent text.

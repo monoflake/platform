@@ -78,7 +78,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   neither is for later. **A dashboard draws, and computes nothing**: every warning, every choice
   offered and whether a warning was dismissed comes from the API, which keeps a dismissal as
   configuration, so every client shows the same and none works it out again; a dashboard may only
-  reshape what it is given for display. How a person is authenticated to either API is a design of its own. [B10]
+  reshape what it is given for display. How a person is authenticated to either API is below.
 - **Everything that serves runs in an organization**, and none of it needs the platform's control to
   serve or to start: an organization reads its bundle, and reaches the platform's control only to
   change it, which `model/check.ts` checks.
@@ -92,6 +92,27 @@ like.
   member, who may use what the organization holds, or as an admin, who may also manage it.
   Everything in an organization is visible to every member.
 - The operator never signs in to the console.
+
+**A person signs in to the platform's control, and is a member by their organization's**, worked
+out with the author on 2026-10-18. The platform keeps accounts and nothing of what an organization
+does; an organization keeps who its members are and nothing of how they sign in. Trust is handed
+down a layer at a time, each holding its own range alone.
+
+- **Signing in gives an account credential**, short-lived, signed by the platform's control and
+  naming the account alone. An organization's control checks it by the platform's public key,
+  without reaching the platform, checks the account against its own members, and its issuer signs
+  the capabilities a member or an admin is given. Past that, both controls take capabilities alone,
+  as every part does, so a person, an app's code and the external platform's control are checked
+  alike.
+- **The platform's control lost, no one signs in anew**: a credential already given serves until it
+  expires, and every organization goes on running.
+- **An account signs in by any of the ways it holds**: a passkey; GitHub, Google or Apple; a link
+  sent by email; a password; a TOTP code. A password is one way among them and never required, so an
+  account may hold none. The platform may later sign people in to others' apps itself, by OAuth.
+  [D10]
+- **An account sets how many of its ways a sign-in asks, and fewer than two is warned of, never
+  dismissed**: the warning is the platform's control's, given by its API with whether it may be
+  dismissed, so a client draws it and decides nothing, as a dashboard does above.
 
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.
@@ -222,7 +243,7 @@ configuration; its extensions hold its data and run it.**
   changing it by hand may stop what runs on it working. Such a change cannot be prevented; s0
   assumes none is made, and finding one afterwards is for later.
 
-**Between resources, a call is inline, direct or relayed**, RFC vr5lw.
+**Between resources, a call goes by a path of networks joined by jumps**, RFC vr5lw.
 
 Open, for the discussion that follows:
 
@@ -231,3 +252,6 @@ Open, for the discussion that follows:
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment. [B4]
 - What a compute's levels mean, and what a function or a database's writer asks of one. [B19]
+- Which ways of signing in each step builds, and what sends an email's link. [C27]
+- What one way counts for among a sign-in's factors, a passkey among them, and how an account that
+  lost every way it held is given back. [C28]
