@@ -115,7 +115,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B4',
 		group: 'B',
-		what: "the bundle's format, how its secrets are sealed in the footing, and where the key a compute opens them with is kept beside its deployment -- what the external platform's sealing rests on",
+		what: "the bundle's format, and how each of the two is signed; a secret never enters one, v7v3w",
 		from: 'v7v3w',
 	},
 	{

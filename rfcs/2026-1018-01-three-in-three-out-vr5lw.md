@@ -311,7 +311,7 @@ with credentials of their own, three in all:
   Cloudflare driver opens is reached at the address the vendor gives it free, as a Worker's.
 
 - **A management token or a shell key is the control's configuration**, kept by that control alone, sealed as its
-  other secrets are [B4], and never in a bundle, since nothing serving needs it.
+  other secrets are, RFC v7v3w, and never in a bundle, since nothing serving needs it.
 - **It is the holder's to give, as often as they like**; two controls given it for one host may
   undo each other's changes, which is the holder's choice, never the platform's to settle.
 - **A control changes nothing of a machine's own access unless asked**, in settings of the shell's

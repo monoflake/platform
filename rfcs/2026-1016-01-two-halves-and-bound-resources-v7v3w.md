@@ -234,6 +234,22 @@ configuration; its extensions hold its data and run it.**
   backing, the policy placement follows. **Both are kept in the organization's footing**, and a
   compute's deployment says only where that is, so a compute that starts reads the newest bundle it
   can verify there, and starts while either control cannot be reached.
+- **A secret never enters a bundle**, worked out with the author on 2026-10-18. It is deployed as a
+  secret of the one deployment that reads it, and kept by that deployment's host -- on Cloudflare a
+  Worker's secret, which that Worker alone reads; on a machine by its driver, beside the deployment
+  -- so a start finds it where it runs, and a deployment running a user's code holds its own
+  secrets and no other's. A bundle names the secrets a deployment needs, never their values.
+  - **What a control must deploy again it keeps sealed** among its records in its footing, under a
+    key deployed as a secret of its own deployment, so the footing alone opens nothing: an app's
+    secret env, the stores' secrets, the organization's signing key, the scope's salt and key, a
+    management token, a shell key.
+  - **A secret changed is a deployment of what reads it**, as env is, RFC 49qyg; and a deployment
+    can be taken over only by a host it was deployed to beforehand, its secrets with it, since a
+    host it never reached waits for its control.
+  - **The host that runs a deployment sees its secrets**, as whoever controls a resource sees what
+    runs on it, above. Sealing keeps them from whoever holds the data alone -- the footing's vendor,
+    a token leaked, a snapshot -- and so keeps the internal platform's data from opening the
+    external platform's containers, RFC 94y0d.
 - **An organization signs its own capabilities**, with a key of its own that the intermediate
   certifies for seven days and renews every day. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the
@@ -245,12 +261,14 @@ configuration; its extensions hold its data and run it.**
   needed for correctness: what waits on time is checked again on the next request as well.
 - **An organization's footing may be snapshotted outside it**, to an S3-compatible object store an
   admin names, never one of its own extensions, which a lost footing could no longer find. Each
-  snapshot, with the current bundle, is sealed under a key of its own, and that key is sealed to a
+  snapshot, with the current bundle and the key its control's secrets are sealed under, is sealed
+  under a key of its own, and that key is sealed to a
   public key the admin gives, by HPKE, RFC 9180. The private key is the admin's, held offline, so
   nothing the organization runs can open its backups, and with it the organization can read
   everything it holds without the platform.
 - **A scope's salt and key are derived in the platform's half**, where the masters are deployed, and
-  delivered to the organization as its certificate is, so the masters never leave the platform's
+  delivered to the organization's control as its certificate is, which deploys them to the blob
+  as secrets, so the masters never leave the platform's
   half while the blob that seals with what they derive runs in the organization's, RFC b8f35.
 - **An organization cannot revoke; the operator can, at once.** An organization is held on the
   platform and does not manage it, so its own deletion waits for its certificate to run out, below.
@@ -276,8 +294,7 @@ Open, for the discussion that follows:
 
 - How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
 - What the app that charges reads of use, and how it acts on an organization. [D1]
-- How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
-  kept, beside its deployment. [B4]
+- A bundle's format, and how each of the two is signed. [B4]
 - What a compute's levels mean, and what a function or a database's writer asks of one. [B19]
 - Which ways of signing in each step builds, and what sends an email's link. [C27]
 - What one way counts for among a sign-in's factors, a passkey among them, and how an account that
