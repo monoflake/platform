@@ -30,6 +30,18 @@ until the layer it was found at is finished. The workspace's `spec/planning.md` 
 A draft records what the author decided. A proposal they have not confirmed goes under Open, and so
 does anything not discussed -- with no numbers in it.
 
+## One decision at a time, the most urgent first
+
+Agreed with the author on 2026-10-18. A question is brought to the author one at a time, in plain
+words: what it is, why it must be decided now, the choices and what each costs, and a
+recommendation. New questions are looked for only once the open one is decided.
+
+The most urgent is chosen in this order: a contradiction in the core the model passes, since that
+is a false proof; then what the most other questions wait on; then the rest. A detail -- a name, a
+constant, a command -- waits until the structure it sits in is settled, however long the checklist
+lists it. When the model passes what is a contradiction, the dimension or record that would catch
+it is added to the model, so the check, not the conversation, proves it fixed.
+
 ## The old system answers questions, never shapes the design
 
 The code and designs that exist are read only to answer a question the model asks, and the answer is
