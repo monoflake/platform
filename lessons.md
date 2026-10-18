@@ -79,6 +79,16 @@ https://developers.cloudflare.com/workers/platform/limits/
 - A request's body is limited by the account's plan: 100 MB on Free and Pro, 200 MB on Business,
   up to 5 GB on Enterprise.
 
+**A tunnel keeps four connections out, and a request finds the nearest.** `cloudflared` makes
+"four outbound-only connections" to "four different servers spread across at least two distinct
+data centers"; a request "arriving at Cloudflare is forwarded to the geographically closest
+replica", up to 25 replicas a tunnel. Its protocol is QUIC by default, falling back to HTTP/2 where
+UDP cannot be had. How much an idle tunnel sends to keep itself alive is not published, and is to
+be measured. Asked of relays, RFC vr5lw, read 2026-10-18. Sources:
+https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/tunnel-availability/
+and
+https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/cloudflared-parameters/run-parameters/
+
 ## Cloudflare's free plan, measured 2026-10-17
 
 Measured on the `monoflake` account, on the free plan, from two machines a provider runs, one in

@@ -114,6 +114,18 @@ one code is both.
   address of its own. It is asked only for what comes in -- a machine without an address reaches out
   directly -- and carries what passes encrypted end to end, so its holder sees who speaks and how
   much, never what.
+- **A host without an address is told so as it is bound**, by whoever binds it, and its driver
+  checks it by asking a relay to dial the address back; where they disagree it warns, and changes
+  nothing of itself.
+- **Which relays a host may use is configuration**, chosen as it is bound: one or more, or all, the
+  relays among what its organization binds. **It holds a lasting connection to every one of them**,
+  costing little while idle, so a caller reaches it through whichever is nearest the caller, and
+  the first handshake is always right: no one keeps which relay is best, and nothing the data plane
+  needs waits on a control. A host answers back by the relay nearest its caller. A relay of
+  Cloudflare's is one name its network finds the host behind, `lessons.md`.
+- **A relay is withdrawn by its organization's control**, from what it observes -- a host's traffic
+  spent, say -- as any configuration changes: the new list reaches the host in its bundle, which
+  connects to what is new before it drops what is gone, and keeps what stays.
 - A vendor's thing without an address of its own, as D1, takes the address of the adapter its
   driver deploys, and needs no relay.
 
