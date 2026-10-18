@@ -94,8 +94,8 @@ one code is both.
   usage; for each thing opened it hands back an address and a credential for that thing alone,
   which speaks the platform's contract -- the vendor's own interface where it already does, an
   adapter the driver deploys beside it where it does not, as a Worker in front of D1, RFC b8f35.
-- **A driver holds its host's credentials**, put there by whoever holds the host; the platform holds
-  none of a vendor's. Using a driver is trusting that holder, who can read what runs and what a
+- **A driver holds its host's credentials**, put there by whoever holds the host; a control holds
+  none of them for what the driver gives, and takes one only to configure the host, below. Using a driver is trusting that holder, who can read what runs and what a
   database keeps, and remove the driver, which nothing prevents; only what storage keeps is sealed
   against them, RFC b8f35.
 
@@ -105,8 +105,12 @@ one code is both.
 - **A binding comes of a credential the host's holder makes** on the driver's own management, which
   no binding sees -- a command on a machine, a secret on an account -- and gives an organization's
   admin, who enters it in that organization's control.
-- **Each binding declares the host's levels for itself**, availability, durability and the rest,
-  RFC 13ixj: three organizations may declare one machine three ways, each in force within its own.
+- **A host's levels are declared by its host, and copied by each binding**, availability, durability
+  and the rest, RFC 13ixj. A vendor's host is declared in the code, which knows what the vendor is;
+  a machine's holder may declare it in its driver, or not. A binding copies what is declared as it
+  is made, and may set its own instead; what it holds is its own from then, never following the host
+  again, and in force within its own organization or platform alone. Three bindings may hold one
+  machine three ways.
 - **What a binding asks is a list, and the list names capacity, never what runs in it**: a
   container of so many cores and so much memory, a volume of so many gigabytes, a share of object
   storage. What an organization does within it -- which tablet's writer runs where, which app's code,
@@ -133,6 +137,23 @@ one code is both.
 - **Liveness is a heartbeat, and the driver's alone**: small, and its own to pace, or none where the
   host is always reached, as a vendor's account. Whoever needs to know a host is up asks its
   driver's heartbeat, and keeps none of its own.
+
+**Configuring a host is a privilege apart, never the driver's.** Worked out with the author on
+2026-10-18: a driver gives compute, storage and databases and nothing else, and some of what a
+host offers is none of them -- a domain's records on Cloudflare; a shell on a machine, its packages,
+its reboot. A control, the platform's or an organization's alike, reaches these with a credential
+of its own that the host's holder gives it, beside the binding: an API token of the account, or a
+key pair the control makes whose public half the holder installs. What it asks depends on the
+driver's kind, and it asks only for what the platform uses -- a domain's records, a shell -- never
+the host's whole. Without one a binding still works: what a Cloudflare driver opens is reached at
+the address the vendor gives it free, as a Worker's.
+
+- **The credential is the control's configuration**, kept by that control alone, sealed as its
+  other secrets are [B4], and never in a bundle, since nothing serving needs it.
+- **It is the holder's to give, as often as they like**; two controls given it for one host may
+  undo each other's changes, which is the holder's choice, never the platform's to settle.
+- **A control configuring a host never takes the holder's own way in away**: it may disable a
+  machine's password logins once its own key works, and keeps the holder's.
 
 **A call between resources takes one of three ways**, chosen by the platform, never by the caller:
 

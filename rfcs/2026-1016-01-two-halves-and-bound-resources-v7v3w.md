@@ -125,7 +125,8 @@ service's, or a node.
   hard limit, so an organization that outgrows it is split into several. What runs on extensions is
   made redundant by the placements, RFC 13ixj, and repaired.
 - **Choosing is two-sided: a resource says what it is, and what uses it says what it needs.**
-  Whoever binds an extension declares it as it is bound, and the platform places on it only what it
+  What an extension is, its binding holds as copied from its host or set for itself, RFC vr5lw, and
+  the platform places on it only what it
   meets, solving each need against what is bound, never by a resource's name. Every attribute is
   ordered, RFC 13ixj.
 
