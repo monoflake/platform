@@ -559,7 +559,7 @@ export const RECORDS: Record<string, Held> = {
 };
 
 export const GLOBAL_OPEN = [
-	"the two controls, the platform's and each organization's, are HTTPS APIs, v7v3w: what each API offers over what it holds [B3]",
+	"the two controls, the platform's and each organization's, are HTTPS APIs changing what they hold by generations, v7v3w: each record's fields [B3]",
 	'a control is a caller of scope, backing and blob -- opening a scope, adding a store, starting a migration of layout or key -- never a need of theirs [B3]',
 ];
 

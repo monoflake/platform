@@ -18,8 +18,7 @@ by bringing an object store of their own.
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
 
 **Control is not a part.** What it held is taken apart by what each piece is, and each goes to the
-layer it belongs to. **The name is kept, reserved for the platform's control plane as a whole** --
-its entry -- whose extent is not yet discussed.
+layer it belongs to. The name is now the two controls', the platform's and each organization's, HTTPS APIs that reserve no name, RFC v7v3w.
 
 **Each product reads its own configuration from its organization's bundle, in the footing, never
 from a tablet**, RFC v7v3w: the storage its datasets and their policies, the database its directory

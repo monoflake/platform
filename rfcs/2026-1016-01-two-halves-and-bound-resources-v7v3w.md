@@ -83,6 +83,23 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   serve or to start: an organization reads its bundle, and reaches the platform's control only to
   change it, which `model/check.ts` checks.
 
+**A control changes what it holds by generations**, worked out with the author on 2026-10-18, alike
+in the platform's control, an organization's and the extensions each binds.
+
+- **Each change accepted is a generation**: one record changed, or a batch of them changed together
+  or not at all. It is checked against the whole of what the control holds, so nothing still
+  depended on is removed, RFC vuanj, and once accepted it is compiled and deployed of itself; no
+  draft is kept.
+- **Asked as a dry run, a change is compiled and not taken**: the API answers with what it would
+  change and the warnings it would raise, so a client shows a change before it is made and works
+  none of it out.
+- **Generations are kept**, and going back is a change of its own, an older generation's records
+  given again.
+- **Accepted and deployed are told apart**: the API reports a generation accepted, and deployed
+  wherever it goes as each driver or bundle reports it.
+- **What is compiled is never written**: grants, paths, firewalls and bundles are compiled from what
+  is written, and the API offers no way to write them, as RFC vuanj has it of grants.
+
 **Only an organization is a scope, and only an organization holds anything.** It holds the apps,
 the datasets, the databases and the resources they run on; the scope of RFC vuanj is an
 **organization scope**. A person who wants apps of their own makes an organization, named as they

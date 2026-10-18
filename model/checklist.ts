@@ -109,7 +109,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B3',
 		group: 'B',
-		what: "an organization's configuration: what it holds -- datasets, databases, apps, bindings, names, schedules, resources -- and what each control's API offers over what it holds, reaching a host through its driver alone, vr5lw",
+		what: "each record a control holds, field by field -- datasets, databases, apps, bindings, names, schedules, members, extensions, leases, accounts -- and what a control calls beneath it: opening a scope, adding a store, starting a migration; who holds which and how a change is taken are v7v3w's",
 		from: 'item 5',
 	},
 	{
