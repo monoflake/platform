@@ -123,6 +123,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: 'which vendor primitive each part stands on in v0, behind which contract: a Worker, D1, R2, a host on a machine a provider runs',
 		from: 'vuanj, v7v3w',
+		done: 'vr5lw: a platform takes nothing but what a driver gives, in its own contract',
 	},
 	{
 		id: 'B6',
@@ -134,8 +135,8 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B7',
 		group: 'B',
-		what: "a host: what the process on a machine runs, how it is enrolled by hand at step 0, how it offers instance, and the CPU and memory reserved for the internal platform's",
-		from: '94y0d',
+		what: "the driver: its interface and each primitive's contract in it -- how an object store, a database and a compute are reached, deployed to and called -- a machine's driver and Cloudflare's, how one is enrolled by hand at step 0, and the CPU and memory reserved for the internal platform's",
+		from: '94y0d, vr5lw',
 	},
 	{
 		id: 'B8',
@@ -238,7 +239,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C3',
 		group: 'C',
-		what: "bringing one's own cloud: how a store or a compute is added to a scope, where an admin's credential for a third-party account is kept and what it may do",
+		what: "bringing one's own cloud: how a host is bound, what credential its driver gives a binding, and how an admin enters it",
 		from: 'b8f35, v7v3w',
 		step: 6,
 	},
@@ -256,6 +257,7 @@ export const CHECKLIST: Item[] = [
 		what: 'the private network between resources',
 		from: 'v7v3w',
 		step: 6,
+		done: 'vr5lw: inline, direct or relayed',
 	},
 	{
 		id: 'C6',
@@ -376,6 +378,7 @@ export const CHECKLIST: Item[] = [
 		what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it: the internal platform has hosts from step 0",
 		from: 'vuanj, v7v3w; B1 before',
 		step: 6,
+		done: "vr5lw: an extension gives a database in the platform's own contract",
 	},
 	{
 		id: 'C23',

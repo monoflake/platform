@@ -205,7 +205,6 @@ reaches the scope's backing and the extent, below it, RFC b8f35.
 
 Open, for the discussion that follows:
 
-- Which vendor primitive each part stands on; the half each belongs to is in `model/graph.ts`. [B5]
 - How a private link's reader proves they may read it: the authentication of people, not parts.
   [C10]
 - Every lifetime and bound: a capability's, a blob's grace before a sweep, an id's. [B14]

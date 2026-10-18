@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
-import { CLASS, NEEDS, extensionKinds, footingKinds, type Class } from './resources.ts';
+import { CLASS, NEEDS, extensionKinds, footingKinds, unrelayed, type Class } from './resources.ts';
 import { ALLOWED, ASSUMED, KEPT, ROWS } from './footing.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, RECORDS, VENDOR, type Edge } from './graph.ts';
 
@@ -282,15 +282,22 @@ STEPS.forEach((step, i) => {
 			path.push(`${at}: the ${name} platform stands on machines without hosts turned on`);
 		// What its ground gives, RFC vr5lw: a footing of one kind of each class, for the platform's
 		// control and each organization's alike, and extensions that give what the products need.
-		const held = new Set([...footingKinds(d)].map((k) => CLASS[k]));
+		const kinds = footingKinds(d);
+		const held = new Set([...kinds].map((k) => CLASS[k]));
 		for (const c of ['compute', 'storage', 'database'] as Class[])
 			if (!held.has(c)) path.push(`${at}: the ${name} platform's footing has no ${c}`);
+		if (!kinds.has('function'))
+			path.push(`${at}: the ${name} platform's footing gives no effect function for its control`);
 		if (d.on.includes('products')) {
 			const given = extensionKinds(d);
 			for (const n of NEEDS)
-				if (!given.has(n.kind))
-					path.push(`${at}: the ${name} platform's extensions give no ${n.kind}: ${n.why}`);
+				if (!n.any.some((k) => given.has(k)))
+					path.push(
+						`${at}: the ${name} platform's extensions give none of ${n.any.join(', ')}: ${n.why}`,
+					);
 		}
+		for (const r of unrelayed(d))
+			path.push(`${at}: the ${name} platform's ${r} has no address and no relay to be reached by`);
 	}
 	const { internal: a, external: b } = step;
 	for (const g of a.ground)

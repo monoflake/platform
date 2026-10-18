@@ -21,11 +21,11 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                 |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the credentials, the deployer, the intermediate, the anchor, the root |
-| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases          |
-| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                           |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the deployer, the intermediate, the anchor, the root         |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                  |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -119,8 +119,8 @@ service's, or a node.
   own.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
   vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
-  extension; its extensions are compute and storage, never a database, which its control makes of
-  them. The footing's database is in SQLite's dialect, taking atomic batches, at most 10 GB or what
+  extension; its extensions give compute, storage and databases, a database only in the platform's
+  own contract or made of compute and a volume. The footing's database is in SQLite's dialect, taking atomic batches, at most 10 GB or what
   its vendor's plan holds, which every compute can reach; it is ground, `scope.md`, and 10 GB is a
   hard limit, so an organization that outgrows it is split into several. What runs on extensions is
   made redundant by the placements, RFC 13ixj, and repaired.
@@ -153,8 +153,8 @@ and are never bound as an extension.
 
 No app calls an app of another organization, RFC 49qyg.
 
-**An organization's requests come in and go out through the resources bound to it**: a node's network, or a third-party account, which the platform operates through that account's
-API with a credential an admin gives it.
+**An organization's requests come in and go out through the resources bound to it**, each through
+its driver, RFC vr5lw.
 
 **The platform keeps what spans organizations; each organization's control keeps its own
 configuration; its extensions hold its data and run it.**
@@ -214,20 +214,16 @@ configuration; its extensions hold its data and run it.**
   asks for it once everything in the organization has been removed and stopped, from the leaves
   inward, RFC vuanj; it is carried out when the current certificate runs out, within seven days, and
   the request may be withdrawn until then.
-- **An account bound to an organization is configured by the platform alone.** Its owner is warned
-  that changing it by hand may stop what runs on it working. Such a change cannot be prevented; s0
+- **A host bound to an organization is configured by its driver alone.** Its holder is warned that
+  changing it by hand may stop what runs on it working. Such a change cannot be prevented; s0
   assumes none is made, and finding one afterwards is for later.
 
-**Between resources, a call takes the nearest way**: inline within one account of one vendor; over
-a private network laid over the public one, where one can be had; over the public network
-otherwise.
+**Between resources, a call is inline, direct or relayed**, RFC vr5lw.
 
 Open, for the discussion that follows:
 
-- Where an admin's credential for a third-party account is kept, and what it may do. [C3]
+- How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
 - How a shadow organization's use is charged on the platform beneath. [D1]
-- Which vendor primitives are borrowed, each behind which contract. [B5]
 - How a bundle's secrets are sealed in the footing, and where the key a compute opens them with is
   kept, beside its deployment. [B4]
-- The private network between resources. [C5]
 - What a compute's levels mean, and what a function or a database's writer asks of one. [B19]

@@ -51,34 +51,71 @@ as it stands on a vendor, RFC 94y0d.
 - **A volume can give `object`; `object` never gives a volume.** Datasets can be kept on a disk,
   but a disk cannot be made of files written whole, however fast: a database changes a few bytes
   of a file and must have them flushed at once, one writer at a time.
-- **A database is made of compute and storage**: an `instance` or a `container` for its one writer,
-  and a volume or a store of its own. One volume is mounted by one container, and a vendor's
-  instance is one per key, so either is the referee that keeps a database to one writer. Some
-  resources give a database already, a small one.
+- **A database is made of compute and a volume**, a `container`, whose one volume is mounted by it
+  alone and so keeps the database to one writer; a vendor's instance, one per key, does the same
+  with a store of its own. Some resources give a database already, a small one. **Whatever gives a
+  database gives it in the platform's own contract**, SQLite's dialect and atomic batches,
+  `scope.md`, never a vendor's.
 
 **What each resource gives:**
 
-| Resource                    | Compute                                    | Storage               | Database                                 |
-| --------------------------- | ------------------------------------------ | --------------------- | ---------------------------------------- |
-| a machine, a VPS or at home | function, `instance`, `container`          | `object` and `volume` | none of its own; a container on a volume |
-| a Worker                    | function                                   | --                    | --                                       |
-| a Durable Object            | `instance`, once metering holds, RFC 94y0d | its own small SQLite  | a small one                              |
-| D1                          | --                                         | --                    | a small one                              |
-| R2                          | --                                         | `object`              | --                                       |
+| Resource                    | Compute                                    | Storage               | Database                                      |
+| --------------------------- | ------------------------------------------ | --------------------- | --------------------------------------------- |
+| a machine, a VPS or at home | function, `instance`, `container`          | `object` and `volume` | one its driver makes, a container on a volume |
+| a Worker                    | function                                   | --                    | --                                            |
+| a Durable Object            | `instance`, once metering holds, RFC 94y0d | its own small SQLite  | a small one                                   |
+| D1                          | --                                         | --                    | a small one                                   |
+| R2                          | --                                         | `object`              | --                                            |
 
 **A platform's footing is one of each, and for its control alone.** Beneath every platform is one
 compute, one storage and one database, each meeting one kind of its class at least -- a Worker's
-function, R2's `object` and D1 give the internal platform's -- trusted as ideal, `scope.md`. Only
-the platform's control uses them, RFC v7v3w.
+function, R2's `object` and D1 give the internal platform's -- trusted as ideal, `scope.md`. Its
+compute must give a function, and `effect` among it, since a control writes and answers an API; it
+needs no `instance`, keeping its state in its database alone. Only the platform's control uses
+them, RFC v7v3w.
 
 **Every organization is kept as the platform is: a control on a footing, and its apps on what it
 extends**, RFC v7v3w. Its control stands on one compute, one storage and one database the platform
 gives it, and keeps its records there; its apps stand on the compute and storage extended into it,
-of any kinds, and a database is never extended but made of them by its control. Above, a platform
+of any kinds, and databases given in the platform's own contract or made of compute and a volume.
+Above, a platform
 gives as many of the three as it has organizations to give them through.
 
-**A machine runs one driver**, which serves every binding of it and keeps them apart, RFC v7v3w; a
-vendor's primitive needs no driver, only an adapter from its terms to the platform's.
+**A platform takes nothing from beneath but what a driver gives**, worked out with the author on
+2026-10-18. A host -- a machine, or a vendor's account, Cloudflare's as one -- runs one driver, on
+itself: on a machine as a process, on an account as what that account runs. One driver gives every
+kind its host can, of compute, storage and databases, in the platform's terms; it serves every
+binding of it, of any organization on any platform, and keeps them apart, RFC v7v3w; and its own
+management it shows to no binding. The internal platform gives an organization's three products to
+the external one through the same interface, so one platform's output is the next one's input, and
+one code is both.
+
+- **A driver manages, and data goes past it.** It opens, lists and ends what it gives, and reports
+  usage; for each thing opened it hands back an address and a credential for that thing alone,
+  which speaks the platform's contract -- the vendor's own interface where it already does, an
+  adapter the driver deploys beside it where it does not, as a Worker in front of D1, RFC b8f35.
+- **A driver holds its host's credentials**, put there by whoever holds the host; the platform holds
+  none of a vendor's. Using a driver is trusting that holder, who can read what runs and what a
+  database keeps, and remove the driver, which nothing prevents; only what storage keeps is sealed
+  against them, RFC b8f35.
+
+**A call between resources takes one of three ways**, chosen by the platform, never by the caller:
+
+| Way    | When                                                                                                              |
+| ------ | ----------------------------------------------------------------------------------------------------------------- |
+| inline | both ends are given by one driver, which offers a way within its host: an account's binding, a machine's loopback |
+| direct | the end called has an address of its own on the public network                                                    |
+| relay  | the end called has none, as a machine at home: it is reached through a relay its user chooses                     |
+
+- **Inline is the platform's to take, since it changes the way and nothing else**: the contract and
+  every capability checked are those of the public network, RFC 94y0d, so where its condition holds
+  it is always taken.
+- **A relay is a driver's**, never a container of its own: Cloudflare's, or a machine's with an
+  address of its own. It is asked only for what comes in -- a machine without an address reaches out
+  directly -- and carries what passes encrypted end to end, so its holder sees who speaks and how
+  much, never what.
+- A vendor's thing without an address of its own, as D1, takes the address of the adapter its
+  driver deploys, and needs no relay.
 
 **So one platform is built on another by an organization.** The external platform's footing is the
 three that one organization of the internal platform gives; its control stands on them alone. An
@@ -91,3 +128,5 @@ Open, for the discussion that follows:
 
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - The new name for the storage's 16 MiB unit. [A10]
+- The driver's interface, and each primitive's contract in it: how an `object` store, a database and
+  a compute are reached, deployed to and called. [B7]

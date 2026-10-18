@@ -307,8 +307,7 @@ export const PARTS: Record<string, Part> = {
 				'vendor',
 				'serve',
 				H,
-				"containers and journals written to the scope's stores",
-				'missing from the old graph: whether the blob or the extent writes to a store [B5]',
+				"containers and journals written to the scope's stores, at what each store's driver hands back, vr5lw",
 			),
 			e(
 				'root',
