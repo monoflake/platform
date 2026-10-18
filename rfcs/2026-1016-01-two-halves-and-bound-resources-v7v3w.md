@@ -21,11 +21,11 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                              | Stands on                                | Holds                                                                                                                                                                 |
-| ---------------------- | ---------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform           | `control`, in the `console` organization | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the credentials, the deployer, the intermediate, the anchor, the root |
-| an organization        | a control of its own                     | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases          |
-| an organization's apps | --                                       | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                           |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                 |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: each organization's existence, allowance, certificate and extensions, the credentials, the deployer, the intermediate, the anchor, the root |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases          |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                           |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -55,17 +55,30 @@ a machine given both to the platform and to its users is the problem this avoids
 **The platform runs as two deployments of one code**, an internal platform on third-party vendors
 and an external platform standing on it, RFC 94y0d; what follows holds of each.
 
-**The platform's half is an organization, reserved by the name `console` on every platform**,
-internal and external alike, worked out with the author on 2026-10-18. It is one like any other,
-built by the same model and never billed, and **its app is the platform's control plane**, reached
-at its own API on the platform's domain. Its resources are its footing alone, from the layer beneath,
-`scope.md` -- never an extension, and never a resource another organization holds: one compute,
-which keeps nothing, one storage and one database, RFC vr5lw. Its one app is `control`, the control
-plane. What it keeps -- configuration's truth, the anchor, the credentials, the bundles -- fits its
-database. The operator configures
-it, `?source`. **Everything that serves runs in an organization**, and none of it needs the
-`console` organization to serve or to start: an organization reads its bundle, and reaches the
-console only to change it, which `model/check.ts` checks.
+**A control is an HTTPS API, and nothing else**, worked out with the author on 2026-10-18. There
+are two: **the platform's control**, the platform's half, which runs in no organization and stands on
+the platform's footing alone, from the layer beneath, `scope.md`; and **each organization's
+control**, which the platform runs for it on the footing it gives it, RFC vr5lw. No name is
+reserved: neither is an app, and neither lives in an organization's namespace.
+
+- **The platform's control holds what no one organization can.** It sees every organization -- the
+  anchor, the names unique across them, the accounts that sign in -- holds the platform's secrets,
+  the masters and the intermediate key, and acts on organizations: opening, suspending, deleting and
+  revoking one, setting its allowance, certifying its key, binding its extensions. Its privilege is
+  where it stands, never a permission granted: only it reaches the platform's footing, and the
+  secrets are deployed to it alone, `?source`. On the platform beneath, it is an ordinary client:
+  the external platform's control opens its shadows on the internal one as any admin would.
+- **An organization's control holds what is that organization's alone**: its products'
+  configuration, the deployment of its apps, how its extensions are made into its three products,
+  and the records its parts keep. It answers that organization's admins, and reaches the platform's
+  control only for what the platform holds of it.
+- **The console is a dashboard, an ordinary app in an ordinary organization**, which is named
+  `console` by being opened first and holds no privilege: whatever it does it does through the two
+  APIs, with the credential of whoever uses it. The APIs are what is kept; a dashboard, a client or
+  neither is for later. How a person is authenticated to either API is a design of its own. [B10]
+- **Everything that serves runs in an organization**, and none of it needs the platform's control to
+  serve or to start: an organization reads its bundle, and reaches the platform's control only to
+  change it, which `model/check.ts` checks.
 
 **Only an organization is a scope, and only an organization holds anything.** It holds the apps,
 the datasets, the databases and the resources they run on; the scope of RFC vuanj is an
@@ -131,7 +144,7 @@ service's, or a node.
   products, and, as usage, what the parts beneath them cost on its own resources.
   **A platform sells by opening a shadow organization on the platform beneath.** An organization the
   external platform opens has a shadow on the internal one, opened through the internal platform's
-  `control` API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
+  control's API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
   the internal platform charges for what each shadow uses. A user account buys nothing, since it holds
   nothing.
 
@@ -153,13 +166,13 @@ configuration; its extensions hold its data and run it.**
 | compute  | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages           |
 
 - **Whatever an organization opens is configuration, whoever opens it**: a dataset, a database, an
-  app -- by a person in the console, or by an app's own code calling its organization's control at
-  run time, RFC zn3u5 -- and an extension bound, through the platform's `control`. Data is only what
+  app -- by a person through the console, or by an app's own code calling its organization's control at
+  run time, RFC zn3u5 -- and an extension bound, through the platform's control. Data is only what
   lives inside what was opened.
-- **Two truths, each changed in one place.** The platform's `control` holds each organization's
+- **Two truths, each changed in one place.** The platform's control holds each organization's
   existence, allowance, certificate and extensions; the organization's own control holds its
   products' configuration, and makes its three products of its extensions as it likes, which is
-  the organization's business and none of the platform's. The platform's `control` lost, no
+  the organization's business and none of the platform's. The platform's control lost, no
   organization or extension is added, and nothing else stops: an organization's control goes on
   opening what its extensions can hold.
 - **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the

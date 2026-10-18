@@ -25,7 +25,7 @@ to what the platform is made of:
 
 | Layer     | What it is                                                                 |
 | --------- | -------------------------------------------------------------------------- |
-| +1 and up | Users' apps, the console among them, since it is an app like any other     |
+| +1 and up | Users' apps, the console's dashboard among them, an app like any other     |
 | 0         | The products an app sees: the storage, databases and functions             |
 | -1        | The parts the products are made of, this RFC                               |
 | -2        | What the parts stand on: backings, the extent and hosts, RFC b8f35         |
@@ -41,7 +41,8 @@ three kinds:
   be given a larger allowance, which is a value, not a privilege.
 - **What needs a privilege no owner holds**, reaching across scopes, never shares the owners' path,
   so nothing on that path has to tell a privileged request from another, or can let one leak. It
-  runs apart, beneath that path. None is known yet.
+  runs apart, beneath that path. The platform's control is one, and the only one known: an HTTPS API on the platform's footing, in
+  no organization, RFC v7v3w.
 - **The parts at layer -1 and below**, which keep the platform up and place what owners run. They
   are no app, and are never placed among apps.
 

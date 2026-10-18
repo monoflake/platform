@@ -1,6 +1,6 @@
 ---
 name: 'Three In, Three Out'
-title: 'A platform takes compute, storage and a database from beneath and gives compute, storage and databases above, one of each beneath for its console alone and as many as it likes above, every other organization standing on the compute and storage it extends'
+title: "A platform takes compute, storage and a database from beneath and gives compute, storage and databases above, one of each beneath for its control alone and as many as it likes above, every organization's apps standing on the compute and storage it extends"
 status: draft
 supersedes: []
 blocked-by: []
@@ -10,8 +10,7 @@ references: []
 
 ## Question
 
-RFCs v7v3w and 94y0d stand two platforms one on the other, and reserve an organization, `console`,
-on each. Worked out with the author on 2026-10-18: what a platform takes from beneath, what it gives
+RFCs v7v3w and 94y0d stand two platforms one on the other, each with a control of its own. Worked out with the author on 2026-10-18: what a platform takes from beneath, what it gives
 above, and what each resource can give, so that one platform stands on another as it stands on a
 vendor.
 
@@ -67,11 +66,10 @@ as it stands on a vendor, RFC 94y0d.
 | D1                          | --                                         | --                    | a small one                              |
 | R2                          | --                                         | `object`              | --                                       |
 
-**A platform's footing is one of each, and for its console alone.** Beneath every platform is one
+**A platform's footing is one of each, and for its control alone.** Beneath every platform is one
 compute, one storage and one database, each meeting one kind of its class at least -- a Worker's
 function, R2's `object` and D1 give the internal platform's -- trusted as ideal, `scope.md`. Only
-the `console` organization uses them, and its app, `control`, the platform's control plane, uses
-nothing else.
+the platform's control uses them, RFC v7v3w.
 
 **Every organization is kept as the platform is: a control on a footing, and its apps on what it
 extends**, RFC v7v3w. Its control stands on one compute, one storage and one database the platform
@@ -83,10 +81,10 @@ gives as many of the three as it has organizations to give them through.
 vendor's primitive needs no driver, only an adapter from its terms to the platform's.
 
 **So one platform is built on another by an organization.** The external platform's footing is the
-three that one organization of the internal platform gives; its console stands on them alone. An
+three that one organization of the internal platform gives; its control stands on them alone. An
 organization opened on the external platform has its footing, and the compute and storage it buys,
 from a shadow organization the external platform opens on the internal one through the internal
-platform's `control` API; what else it extends comes from the user's own clouds. The internal platform's own extensions come from
+platform's control; what else it extends comes from the user's own clouds. The internal platform's own extensions come from
 third-party vendors and the author's machines.
 
 Open, for the discussion that follows:

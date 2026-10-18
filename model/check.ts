@@ -118,11 +118,21 @@ for (const [name, part] of designed)
 // What the platform's half holds is configuration, written on the control plane alone, so the data
 // plane runs on while the control plane is lost, `scope.md`.
 for (const [name, r] of Object.entries(RECORDS)) {
-	const config = r.half === 'platform' || r.writes.some((w) => w.plane === 'control');
-	for (const w of r.writes)
-		if (config && w.plane === 'data')
-			rules.push(`the data plane writes configuration: ${w.by} writes ${name}, ${r.from}`);
+	const config = r.half === 'platform' || r.writes.some((w) => PARTS[w]?.control);
+	for (const w of r.writes) {
+		if (PARTS[w] === undefined) rules.push(`${w} writes ${name}: no such part`);
+		else if (config && !PARTS[w].control)
+			rules.push(`the data plane writes configuration: ${w} writes ${name}, ${r.from}`);
+		else if (r.half === 'platform' && PARTS[w].half !== 'platform')
+			rules.push(`an organization writes the platform's: ${w} writes ${name}, ${r.from}`);
+	}
 }
+// The platform's footing is for the platform's control alone, and an organization's half reaches
+// none of it, RFC vr5lw.
+for (const [name, part] of designed)
+	for (const edge of part.edges)
+		if (edge.to === 'beneath' && part.half !== 'platform')
+			rules.push(`the platform's footing used by an organization's part: ${line(name, edge)}`);
 const hardNext = (n: string) =>
 	(PARTS[n]?.edges ?? []).filter((x) => x.hard && known(x.to)).map((x) => x.to);
 for (const c of cycles(hardNext, Object.keys(PARTS))) rules.push(`hard cycle: ${c}`);
@@ -130,7 +140,7 @@ for (const c of cycles((n) => LIBRARIES[n]?.uses ?? [], Object.keys(LIBRARIES)))
 	rules.push(`library cycle: ${c}`);
 dimension(
 	'Rules',
-	"Does every hard edge point down, every library use only libraries, nothing below need an owner, no organization need the platform's half to serve or start, and the data plane write no configuration?",
+	"Does every hard edge point down, every library use only libraries, nothing below need an owner, no organization need the platform's half to serve or start, the data plane write no configuration, and only the platform reach its footing?",
 	rules,
 	[
 		`soft edges upward, allowed: ${softUp.length ? softUp.join('; ') : 'none'}`,

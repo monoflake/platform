@@ -105,7 +105,7 @@ export const ALLOWED: Record<'free' | 'paid', number> = { free: 100_000, paid: 5
 export const ASSUMED = {
 	/** The external organizations at each step, the author's own until users come at step 8. */
 	external: (step: number) => (step < 1 ? 0 : step < 8 ? 5 : 20),
-	/** The internal platform's own organizations: the console's and the external platform's. */
+	/** The internal platform's own organizations: the console's dashboard's and the external platform's. */
 	internal: 2,
 	tablets: 4,
 };

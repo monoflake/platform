@@ -36,6 +36,8 @@ export interface Part {
 	kind?: 'ground' | 'operator';
 	/** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
 	keeps?: boolean;
+	/** Whether it is a control: an HTTPS API that alone writes configuration, v7v3w. */
+	control?: boolean;
 	/** Whether the platform runs it as an owner, in an organization of its own, RFC vuanj. */
 	asOwner?: boolean;
 	/** Which half runs it, RFC v7v3w; the root runs nothing, so it has none. */
@@ -79,13 +81,14 @@ export const PARTS: Record<string, Part> = {
 			e('compute', 'serve', H, 'it runs as functions'),
 			e('storage', 'serve', H, 'the datasets it is bound to'),
 			e('database', 'serve', H, 'the database bound to it'),
+			e('control', 'deploy', H, "opens datasets and databases through its organization's control"),
 		],
 		uses: [],
 	},
-	/** The `console` organization's one app, `control`: the platform's control plane, v7v3w, vr5lw. */
+	/** A dashboard in an ordinary organization named `console`, holding no privilege, v7v3w. */
 	console: {
 		layer: 1,
-		half: 'platform',
+		half: 'organization',
 		asOwner: true,
 		edges: [
 			{
@@ -93,10 +96,33 @@ export const PARTS: Record<string, Part> = {
 				replaces: true,
 			},
 			e('compute', 'serve', H, 'an app like any other'),
-			e('storage', 'serve', H, 'idem'),
-			e('database', 'serve', H, 'idem'),
+			e('platform', 'deploy', H, "calls the platform's control with its user's credential"),
+			e('control', 'deploy', H, "calls an organization's control with its user's credential"),
 		],
 		uses: [],
+	},
+	/** An organization's control: its products' configuration, as an HTTPS API, v7v3w. */
+	control: {
+		layer: 0,
+		half: 'organization',
+		control: true,
+		edges: [
+			REPLACED,
+			e('footing', 'serve', H, "its products' configuration and the bundle it compiles"),
+			e(
+				'platform',
+				'deploy',
+				H,
+				'its certificate, allowance and extensions, copied down each day and on a change',
+			),
+			e(
+				'compute',
+				'deploy',
+				H,
+				"deploys its organization's apps, their types and call graph checked",
+			),
+		],
+		uses: ['capability*', 'vocabulary*', 'wit*', 'compat*'],
 	},
 
 	storage: {
@@ -322,8 +348,22 @@ export const PARTS: Record<string, Part> = {
 		keeps: true,
 		layer: -3,
 		half: 'platform',
-		edges: [REPLACED, e('footing', 'serve', H, "its rows, in the platform's footing")],
+		edges: [REPLACED, e('beneath', 'serve', H, "its rows, in the platform's footing")],
 		uses: ['compat*'],
+	},
+	/** The platform's control: what spans organizations, as an HTTPS API in no organization, v7v3w. */
+	platform: {
+		layer: -3,
+		half: 'platform',
+		control: true,
+		edges: [
+			REPLACED,
+			e('beneath', 'serve', H, "configuration spanning organizations, in the platform's footing"),
+			e('anchor', 'serve', H, 'opens, suspends and deletes organizations by their rows'),
+			e('root', 'start', H, "the masters, to derive each organization's salt and key"),
+			e('?intermediate', 'deploy', H, "certifies each organization's key"),
+		],
+		uses: ['capability*', 'keys*', 'compat*'],
 	},
 
 	root: {
@@ -336,7 +376,10 @@ export const PARTS: Record<string, Part> = {
 		],
 		uses: [],
 	},
+	/** An organization's footing, which the platform gives it, vr5lw. */
 	footing: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
+	/** The platform's footing, from the layer beneath, for the platform's control alone, vr5lw. */
+	beneath: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
 	vendor: { layer: VENDOR, kind: 'ground', edges: [], uses: [] },
 	operator: { layer: VENDOR, kind: 'operator', edges: [], uses: [] },
 };
@@ -421,68 +464,43 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	},
 };
 
-export type Plane = 'control' | 'data';
-
 /**
- * A kind of record, the half its truth is kept in, and what writes it on which plane. Whatever an
- * organization opens is configuration, written on a control plane alone: the platform's `control`
- * for what spans organizations, an organization's own control for its products'; data is what lives
- * inside what was opened, v7v3w. `check.ts` refuses configuration written on the data plane, since
- * the data plane runs on while a control plane is lost, `scope.md`.
+ * A kind of record, the half its truth is kept in, and the parts that write it. A record a control
+ * writes is configuration: the platform's control for what spans organizations, an organization's
+ * for its products'; data is what lives inside what was opened, v7v3w. `check.ts` refuses
+ * configuration any other part writes, since the data plane runs on while a control is lost,
+ * `scope.md`, and a record of the platform's half any part of an organization's writes.
  */
 export interface Held {
 	half: Half;
-	writes: { by: string; plane: Plane }[];
+	writes: string[];
 	from: string;
 }
 
-const control = (by: string) => ({ by, plane: 'control' as const });
-const data = (by: string) => ({ by, plane: 'data' as const });
-
 export const RECORDS: Record<string, Held> = {
-	dataset: {
-		half: 'organization',
-		writes: [control("the organization's control")],
-		from: '13ixj, v7v3w',
-	},
-	database: {
-		half: 'organization',
-		writes: [control("the organization's control")],
-		from: 'zn3u5, v7v3w',
-	},
-	app: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
-	binding: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
-	grant: {
-		half: 'organization',
-		writes: [control("the organization's control")],
-		from: 'vuanj, v7v3w',
-	},
-	route: { half: 'organization', writes: [control("the organization's control")], from: 'v7v3w' },
-	schedule: {
-		half: 'organization',
-		writes: [control("the organization's control")],
-		from: '49qyg, v7v3w',
-	},
-	env: {
-		half: 'organization',
-		writes: [control("the organization's control")],
-		from: '49qyg, v7v3w',
-	},
-	extension: { half: 'platform', writes: [control("the platform's control")], from: 'v7v3w' },
-	certificate: { half: 'platform', writes: [control("the platform's control")], from: 'v7v3w' },
-	allowance: { half: 'platform', writes: [control('the operator')], from: 'vuanj' },
-	file: { half: 'organization', writes: [data('storage')], from: '13ixj' },
-	row: { half: 'organization', writes: [data('database')], from: 'zn3u5' },
-	log: { half: 'organization', writes: [data('tablet')], from: 'vuanj' },
-	extent: { half: 'organization', writes: [data('blob')], from: 'b8f35' },
-	call: { half: 'organization', writes: [data('compute')], from: '49qyg' },
-	message: { half: 'organization', writes: [data('compute')], from: '49qyg' },
-	repeat: { half: 'organization', writes: [data('compute')], from: '49qyg, v7v3w' },
+	dataset: { half: 'organization', writes: ['control'], from: '13ixj, v7v3w' },
+	database: { half: 'organization', writes: ['control'], from: 'zn3u5, v7v3w' },
+	app: { half: 'organization', writes: ['control'], from: 'v7v3w' },
+	binding: { half: 'organization', writes: ['control'], from: 'v7v3w' },
+	grant: { half: 'organization', writes: ['control'], from: 'vuanj, v7v3w' },
+	route: { half: 'organization', writes: ['control'], from: 'v7v3w' },
+	schedule: { half: 'organization', writes: ['control'], from: '49qyg, v7v3w' },
+	env: { half: 'organization', writes: ['control'], from: '49qyg, v7v3w' },
+	extension: { half: 'platform', writes: ['platform'], from: 'v7v3w' },
+	certificate: { half: 'platform', writes: ['platform'], from: 'v7v3w' },
+	allowance: { half: 'platform', writes: ['platform'], from: 'vuanj' },
+	file: { half: 'organization', writes: ['storage'], from: '13ixj' },
+	row: { half: 'organization', writes: ['database'], from: 'zn3u5' },
+	log: { half: 'organization', writes: ['tablet'], from: 'vuanj' },
+	extent: { half: 'organization', writes: ['blob'], from: 'b8f35' },
+	call: { half: 'organization', writes: ['compute'], from: '49qyg' },
+	message: { half: 'organization', writes: ['compute'], from: '49qyg' },
+	repeat: { half: 'organization', writes: ['compute'], from: '49qyg, v7v3w' },
 };
 
 export const GLOBAL_OPEN = [
-	"control plane: a caller of scope, backing and blob -- creating a scope, setting its allowance, adding a store, starting a migration of layout or key -- never a need of theirs; it is the platform's half and stands on the vendor contracts directly, never on layer 0, v7v3w [B10]",
-	"function: a deployment checks an app's types and the call graph; who runs a deployment is the control plane's [B10]",
+	"the two controls, the platform's and each organization's, are HTTPS APIs, v7v3w: what each API offers, and how a person is authenticated to it [B10]",
+	'a control is a caller of scope, backing and blob -- opening a scope, adding a store, starting a migration of layout or key -- never a need of theirs [B10]',
 ];
 
 export const LIBRARIES: Record<string, Library> = {

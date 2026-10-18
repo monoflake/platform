@@ -52,7 +52,7 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 **The footing is ground: trusted and never designed.** A footing is what an owner stands on from
 beneath it: one compute, which keeps nothing; one storage; and one database, each meeting one kind
 of its class at least, RFC vr5lw. A control stands on it and nothing else does: the platform's
-footing, from the layer beneath, under the `console` organization's `control`; and each
+footing, from the layer beneath, under the platform's control; and each
 organization's, which the platform gives it, under that organization's own control. What is kept
 is backed up, the database and the storage, and only the database is held to the contract below.
 The platform stands on one database, RFC v7v3w,
