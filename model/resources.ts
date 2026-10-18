@@ -27,8 +27,9 @@ export interface Resource {
 	addressed: boolean;
 	/** Whether its driver may relay for a host without an address. */
 	relays: boolean;
-	/** The CPU a call may take on each of the vendor's plans, in milliseconds, where it is bounded,
-	 * lessons.md; a machine's is bounded by nothing but itself. */
+	/** The CPU a call may take on each of the vendor's plans, in milliseconds, lessons.md. A machine's
+	 * driver declares how long a call may run as well, a value open [D8]; until it is, a machine is
+	 * taken here to bound nothing. */
 	cpu?: { free: number; paid: number };
 	/** Whether it is used only once metering holds, being priced by use, RFC 94y0d. */
 	metered?: boolean;

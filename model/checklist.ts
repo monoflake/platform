@@ -442,7 +442,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'D8',
 		group: 'D',
-		what: "how a machine's driver bounds what it holds by how full the machine is, beyond a count, and the default it starts from",
+		what: "how a machine's driver bounds what it holds by how full the machine is, beyond a count, and the default it starts from; and how long a call may run on a machine, a field its driver declares, its default and whether it counts CPU or the clock",
 		from: 'vr5lw',
 	},
 

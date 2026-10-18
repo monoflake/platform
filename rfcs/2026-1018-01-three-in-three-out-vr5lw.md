@@ -100,7 +100,9 @@ organization's container.
 - **What a host holds of them is bounded as its driver declares**, as its levels and its databases'
   limits are: Cloudflare's in the code, a hundred Workers an account on the free plan; a machine's
   from a default its holder may raise or lower, by more than a count -- by how full the machine is.
-  [D8]
+  [D8] **Each driver declares as well how long a call may run**, Cloudflare's in the code, 10 ms of
+  CPU on the free plan and five minutes on the paid; a machine's is a field its driver must
+  declare, whose default, and whether it counts CPU or the clock, are open. [D8]
 - **A call that opens something waits on that task as any call waits on an outcome**, RFC 49qyg:
   looked up until a deadline, then `unknown` with its id.
 
