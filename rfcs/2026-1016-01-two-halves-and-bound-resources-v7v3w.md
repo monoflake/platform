@@ -21,10 +21,10 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
 they hold:
 
-| Half              | Runs on                            | Holds                                                                                                                                                                                                     |
-| ----------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform's    | the platform's own vendor accounts | what spans organizations, and what is decided for each: the control plane and the deployer, every configuration's truth, the credentials, the intermediate, the anchor, the root                          |
-| an organization's | the resources bound to it          | that organization's alone, its data and what runs it: its footing, its issuer, placement, the clock's ticks, the extent, each database's tablet, the blob's bytes, the sandboxes, its requests in and out |
+| Half              | Runs on                    | Holds                                                                                                                                                                                                     |
+| ----------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform's    | the `console` organization | what spans organizations, and what is decided for each: the control plane and the deployer, every configuration's truth, the credentials, the intermediate, the anchor, the root                          |
+| an organization's | the resources bound to it  | that organization's alone, its data and what runs it: its footing, its issuer, placement, the clock's ticks, the extent, each database's tablet, the blob's bytes, the sandboxes, its requests in and out |
 
 **Whoever controls a resource can see what runs on it.** So nothing that spans organizations is
 placed on a resource an organization holds, and an organization a resource is shared with trusts its
@@ -50,17 +50,18 @@ a machine given both to the platform and to its users is the problem this avoids
 **The platform runs as two deployments of one code**, an internal platform on third-party vendors
 and an external platform standing on it, RFC 94y0d; what follows holds of each.
 
-**The control plane is the platform's half.** It is reached at its own API on the platform's domain,
-and stands on the vendor contracts directly, never on layer 0, which it deploys.
-
-**The platform's half is no organization and runs no layer 0.** A footing and a highly available
-compute on the platform's own accounts are all it needs to work, and it stops there: it holds no
-store, since what it keeps -- configuration's truth, the anchor, the credentials, the bundles --
-fits its footing, and an app's code goes from the deployer to its organization's own blob. It shares
-libraries with the organizations and never a part, RFC vuanj, and the operator configures it,
-`?source`. **Everything that serves runs in an organization**, the console's among them, and none of
-it needs the platform's half to serve or to start: an organization reads its bundle, and reaches the
-platform's half only to change it, which `model/check.ts` checks.
+**The platform's half is an organization, reserved by the name `console` on every platform**,
+internal and external alike, worked out with the author on 2026-10-18. It is one like any other,
+built by the same model and never billed, and **its app is the platform's control plane**, reached
+at its own API on the platform's domain. Its resources are its footing alone, from the layer beneath,
+`scope.md` -- never an extension, and never a resource another organization holds: a database, which
+must be; compute, which keeps nothing; and storage, only if an app in it uses storage, and then only
+the layer beneath's. What it keeps -- configuration's truth, the anchor, the credentials, the
+bundles -- fits its database, so the control plane runs on a database and compute alone, and what is
+backed up is that database, and its storage only where something uses it. The operator configures
+it, `?source`. **Everything that serves runs in an organization**, and none of it needs the
+`console` organization to serve or to start: an organization reads its bundle, and reaches the
+console only to change it, which `model/check.ts` checks.
 
 **Only an organization is a scope, and only an organization holds anything.** It holds the apps,
 the datasets, the databases and the resources they run on; the scope of RFC vuanj is an
@@ -103,9 +104,10 @@ service's, or a node.
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
 - **An organization runs nothing until a resource is bound to it or shared with it.** The platform
   lends none of its own.
-- **An organization stands on one footing and on extensions.** Its footing is one database in
-  SQLite's dialect, taking atomic batches, at most 10 GB or what its vendor's plan holds,
-  `scope.md`, which every compute of the organization can reach.
+- **An organization stands on one footing and on extensions.** Its footing is what it stands on
+  from beneath, `scope.md`: one database in SQLite's dialect, taking atomic batches, at most 10 GB or
+  what its vendor's plan holds, which every compute of the organization can reach and which it must
+  have; compute, which keeps nothing; and storage, which it may have.
   It is ground, `scope.md`: the platform makes nothing in it redundant, and its owner is warned to
   bring one that is, which the platform cannot check. 10 GB is a hard limit, and an organization
   that outgrows it is split into several. Everything else bound is an extension -- a compute, of
@@ -138,8 +140,8 @@ organization holds what is sold, and the platform pays the vendor for it and cha
 shares each with a buyer's organization, with a quota. A user account buys nothing, since it holds
 nothing.
 
-**The platform's own vendor accounts are never bound to an organization**: they run the platform's
-half and nothing else.
+**The platform's own vendor accounts are bound to the `console` organization alone**, as its
+footing, and run nothing else.
 
 No app calls an app of another organization, RFC 49qyg.
 
