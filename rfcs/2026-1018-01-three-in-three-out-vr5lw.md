@@ -99,6 +99,41 @@ one code is both.
   database keeps, and remove the driver, which nothing prevents; only what storage keeps is sealed
   against them, RFC b8f35.
 
+**A driver is managed by a list, and keeps the least it must**, worked out with the author on
+2026-10-18. What follows is its management alone; each primitive's contract is open. [B7]
+
+- **A binding comes of a credential the host's holder makes** on the driver's own management, which
+  no binding sees -- a command on a machine, a secret on an account -- and gives an organization's
+  admin, who enters it in that organization's control.
+- **Each binding declares the host's levels for itself**, availability, durability and the rest,
+  RFC 13ixj: three organizations may declare one machine three ways, each in force within its own.
+- **What a binding asks is a list, and the list names capacity, never what runs in it**: a
+  container of so many cores and so much memory, a volume of so many gigabytes, a share of object
+  storage. What an organization does within it -- which tablet's writer runs where, which app's code,
+  how much of it an app may use -- is its own control's, and never reaches the list, so the list is
+  small, a few kilobytes, and changes only when what is extended does.
+- **The whole list is sent each time, numbered by generation**; a driver takes a newer one over what
+  it holds and drops an older one that comes after. It compares the list with what its host holds,
+  which is the truth of what exists, and acts on the difference alone: what runs as asked is left
+  as it is, what is missing is made.
+- **What the host holds and the list does not is not removed at once.** The driver records when it
+  first found it so, and removes it once a grace has passed with it still unasked for; within the
+  grace the admin may ask for it again, or end it early, which is the one command apart from the
+  list. **The grace is a whole number of seconds from 0 to a year**, 0 removing at once, a week
+  unless set: set for the organization, and for each binding either inherited from that or its own.
+  It is the organization's control's configuration, sent to the driver as a policy with its own
+  generation and kept there, so the driver goes on by the last policy while the control cannot be
+  reached.
+- **A driver keeps the least state it must**: its credentials, the policy and list it last took,
+  and when each difference was first found. Everything else it reads from its host.
+- **What a driver has to tell, it pushes**, as events, each with an id: a difference found, a thing
+  removed, a thing that cannot be made. It pushes to each binding's control what is that binding's
+  alone; one it could not deliver it pushes again later, and hands back as well with the state a
+  control asks it for, so an event is never lost, and its id lets it be taken once. No one polls.
+- **Liveness is a heartbeat, and the driver's alone**: small, and its own to pace, or none where the
+  host is always reached, as a vendor's account. Whoever needs to know a host is up asks its
+  driver's heartbeat, and keeps none of its own.
+
 **A call between resources takes one of three ways**, chosen by the platform, never by the caller:
 
 | Way    | When                                                                                                              |
