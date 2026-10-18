@@ -343,7 +343,7 @@ organization key || seed)`, so the same header always gives it back. Its header 
 
   | Offset | Bytes      | Field                           | Value                                                                   |
   | ------ | ---------- | ------------------------------- | ----------------------------------------------------------------------- |
-  | 0      | 4          | magic                           | `MNFL`                                                                  |
+  | 0      | 4          | magic                           | `MOFL`                                                                  |
   | 4      | 1          | revision                        | 1                                                                       |
   | 5      | 4          | the encryption master's version | a 32-bit integer, big-endian, at least 1                                |
   | 9      | 32         | seed                            | drawn at random                                                         |
