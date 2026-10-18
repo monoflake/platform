@@ -63,6 +63,13 @@ as it stands on a vendor, RFC 94y0d.
 - **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
   compute and a volume, below; a dataset of compute, `object` stores and a database, its records'
   home, RFC b8f35.
+- **What is extended is `object` and volumes; what is given is `object` and datasets.** A dataset is
+  the platform's own and never taken from beneath: a platform above takes the one beneath as
+  `object`, through its `opaque` datasets, so nothing is cut or sealed twice, RFC 94y0d.
+- **A volume has no interface but the files it holds**: a file system mounted into one container
+  alone, kept past a restart, and on a disk once flushed. It is never reached over a network, since
+  being mounted by one alone is what keeps a database on it to one writer; storage reached over a
+  network is `object`.
 - **A database is made of compute and a volume**, a `container`, whose one volume is mounted by it
   alone and so keeps the database to one writer; a vendor's instance, one per key, does the same
   with a store of its own. Some resources give a database already, a small one. **Whatever gives a
