@@ -135,7 +135,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B7',
 		group: 'B',
-		what: "the driver: how a typed value is written on the wire, a SQLite value's and a WIT value's alike; how a machine's driver and Cloudflare's are enrolled by hand at step 0; and the CPU and memory reserved for the internal platform's; the primitives' contracts and code's delivery are vr5lw's",
+		what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory reserved for the internal platform's; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
 		from: '94y0d, vr5lw',
 	},
 	{

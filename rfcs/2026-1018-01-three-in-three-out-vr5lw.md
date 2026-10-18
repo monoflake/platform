@@ -79,12 +79,55 @@ as it stands on a vendor, RFC 94y0d.
   with the author on 2026-10-18: one statement, or one batch, each SQL with its parameters, answered
   with each statement's rows. No vendor here speaks a common protocol for it -- D1 is reached from a
   Worker, a machine's SQLite is a file -- so every driver adapts whatever is chosen, and the least
-  leaves nothing to adapt that the contract forbids. How a value of SQLite's is written in it is
-  open [B7].
+  leaves nothing to adapt that the contract forbids. A value of SQLite's is written in it as any
+  typed value is, below.
 - **Each host's driver declares its databases' limits** -- a statement's size, its parameters, how
   long a query may run -- as it declares its levels: a vendor's in the code, which knows the vendor,
   as D1's from `lessons.md`; a machine's from a default the platform gives, which its holder may
   change. The platform holds each database to what is declared of it.
+
+**A typed value is written by its WIT type, in JSON or in CBOR: one model, two forms**, worked out
+with the author on 2026-10-18, for calls and for the database's interface alike; how a record at
+rest is kept is RFC b8f35's and the bundle's.
+
+- **A value of SQLite's is a WIT variant**, so the database's interface is WIT as every other is:
+  `variant value { null, integer(s64), real(f64), text(string), bytes(list<u8>) }`.
+- **A name is its owner's**: a user's, of a function, a field, a case or a flag, is written as the
+  user wrote it, since changing it changes what they meant; the platform's own interfaces are
+  written in `snake_case`, their words whole, neutral and formal, nested by aspect; and so are the
+  encoding's own words below.
+- **The type is the WIT's, and never written in the value.** Both ends hold the same WIT, checked as
+  the call graph is deployed, so a reader parses each value by the type it expects and refuses one
+  that does not parse. Only where the WIT leaves which one open -- a variant, a result, a value of
+  SQLite's -- is a `kind` written, naming the case, its payload under `value`, and absent when the
+  case carries none.
+
+  | WIT                          | JSON                                                                     | CBOR                 |
+  | ---------------------------- | ------------------------------------------------------------------------ | -------------------- |
+  | `bool`                       | `true`, `false`                                                          | true, false          |
+  | `s8` to `s32`, `u8` to `u32` | a number                                                                 | an integer           |
+  | `s64`, `u64`                 | a decimal string                                                         | an integer           |
+  | `f32`, `f64`                 | a number; `"not_a_number"`, `"positive_infinity"`, `"negative_infinity"` | a float, any of them |
+  | `char`, `string`             | a string                                                                 | a text string        |
+  | `list<u8>`                   | base64, RFC 4648's alphabet, padded                                      | a byte string        |
+  | any other `list`, a `tuple`  | an array                                                                 | an array             |
+  | `record`                     | an object in its fields' order, an `option` that is none left out        | a map, the same      |
+  | `option` elsewhere           | `null`, or the value                                                     | null, or the value   |
+  | `enum`                       | its case's name                                                          | its case's name      |
+  | `variant`                    | `{"kind": case, "value": payload}`                                       | a map, the same      |
+  | `result`                     | `{"kind": "success" or "failure", "value": payload}`                     | a map, the same      |
+  | `flags`                      | an array of the names set, in their order                                | an array, the same   |
+
+  An `option` within an `option`, which neither form tells from none, and a resource's handle,
+  which means nothing past its process, are refused as they are deployed.
+
+- **Each request chooses its form**, by `Content-Type` and `Accept`, `application/json` or
+  `application/cbor`, JSON where it names neither; the platform's parts speak CBOR among
+  themselves. Both are built in v0, and run one set of examples, each in both forms, which every
+  codec must judge alike, as the workspace's `spec/json.md` has every contract do.
+- **A value's hash is the platform's alone, and is of its structure, never its bytes**: values equal
+  in structure are one value however they were written, in either form, in any order of a record's
+  fields. A caller computes none, and a `derive`'s outputs are cached by it, RFC vuanj.
 
 **Whatever runs is deployed as its configuration is applied, never loaded as a call comes**,
 worked out with the author on 2026-10-18. Since opening anything is a change of configuration, RFC
@@ -205,7 +248,7 @@ one code is both.
   against them, RFC b8f35.
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
-2026-10-18. What follows is its management alone; each primitive's contract is open. [B7]
+2026-10-18. What follows is its management alone; each primitive's contract is above.
 
 - **A binding comes of a token its control makes**, which the host's holder enters in the driver's
   own management, which no binding sees -- a command on a machine, a secret on an account. The
@@ -424,5 +467,5 @@ Open, for the discussion that follows:
 
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - The new name for the storage's 16 MiB unit. [A10]
-- The driver's interface, and each primitive's contract in it: how an `object` store, a database and
-  a compute are reached, deployed to and called. [B7]
+- How a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory kept
+  for the internal platform's. [B7]
