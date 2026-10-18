@@ -51,6 +51,18 @@ as it stands on a vendor, RFC 94y0d.
 - **A volume can give `object`; `object` never gives a volume.** Datasets can be kept on a disk,
   but a disk cannot be made of files written whole, however fast: a database changes a few bytes
   of a file and must have them flushed at once, one writer at a time.
+- **`object` is a contract of the platform's own, written as a subset of S3**, worked out with the
+  author on 2026-10-18: putting an object whole, getting it whole or by a range, asking whether one
+  is there, deleting it and listing by a prefix, each read seeing every write before it -- what the
+  blob asks, RFC vuanj, and no more. Every object is at most 16 MiB. It needs no condition on a
+  write, since a container is named by its content and a journal's object by a seed drawn at
+  random, no rename and no upload in parts. **What takes it and what gives it are one**: a store
+  is reached by it, and a platform gives an `opaque` dataset by it, RFC 13ixj, so one platform's
+  storage is the next one's `object`, RFC 94y0d. A `content` dataset may be given by the same
+  subset without the 16 MiB bound, for a client that speaks S3.
+- **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
+  compute and a volume, below; a dataset of compute, `object` stores and a database, its records'
+  home, RFC b8f35.
 - **A database is made of compute and a volume**, a `container`, whose one volume is mounted by it
   alone and so keeps the database to one writer; a vendor's instance, one per key, does the same
   with a store of its own. Some resources give a database already, a small one. **Whatever gives a

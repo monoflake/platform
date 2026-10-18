@@ -39,7 +39,7 @@ owner (one scope, its own unique salt)
   another policy is another dataset.
 - **A dataset's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
   `content`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
-  RFC b8f35. `opaque` is passed through raw, each file exactly 16 MiB -- never cut, compressed or
+  RFC b8f35. `opaque` is passed through raw, each file at most 16 MiB -- never cut, compressed or
   sealed, since whether it is either already is not the platform's to know -- as what the external
   platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the description are
   every kind's.

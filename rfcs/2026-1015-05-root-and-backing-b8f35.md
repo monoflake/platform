@@ -291,7 +291,8 @@ put(dataset, path, content)
   is whole and no length is written. It holds 16,773,079 bytes of pieces: it is sealed once the
   next piece would not fit, the rest zeros, so with pieces at most 4 MiB it holds at least 12 MiB of
   them. It is never sealed early; what has not filled one waits in the journal.
-- **An `opaque` dataset's file is exactly 16 MiB, and is a container of its own**, RFC 13ixj:
+- **An `opaque` dataset's file is at most 16 MiB, and is placed as a container is**, RFC 13ixj,
+  so a sealed container and a journal's object of the platform above both fit, RFC vr5lw:
   passed through raw, with no header, never cut, compressed or sealed and never through the
   journal, and placed as its dataset asks, as any container is. What it is -- sealed already or not,
   compressed or not -- is not the platform's to know, so it takes what it is given and keeps that;
