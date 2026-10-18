@@ -78,6 +78,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "what each level of a store's durability means, and the levels' codes as datasets and stores record them; the attributes and their names are decided, 13ixj",
 		from: 'b8f35, 13ixj',
+		done: '13ixj',
 	},
 	{
 		id: 'A8',

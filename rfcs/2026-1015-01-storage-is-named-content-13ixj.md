@@ -59,10 +59,18 @@ owner (one scope, its own unique salt)
   machine at home; `stable` in a steady environment, not necessarily redundant; `recoverable` with
   steady network and power, restarting itself after a crash, though it may be cut off a while;
   `redundant` failing over without going offline; `multiregion` redundant across places that share
-  no data center, power or network, and no one disaster. **A level is stored as its code**, and
-  written out as its name only where text must carry it: `best_effort` in JSON and an API,
-  `best-effort` in a derive context, and in code as its language names things. What each level of
-  durability means is to be written. [A7]
+  no data center, power or network, and no one disaster.
+
+  A store's durability is `ephemeral` when what it holds is lost as it restarts, as memory or a
+  temporary disk; `persistent` surviving a restart, on one disk; `redundant` surviving a disk lost,
+  mirrored or with parity within one machine; `replicated` surviving a machine lost, held on several
+  at one site; `multizone` surviving a data center lost, across the zones of one region;
+  `multiregion` surviving a region lost.
+
+  **A level is stored as its code**: availability's and durability's from 1, the lowest, to 6,
+  custody's 0 for `false` and 1 for `true`, compared as integers; 0 is never an ordered level's
+  code. It is written out as its name only where text must carry it: `best_effort` in JSON and an
+  API, `best-effort` in a derive context, and in code as its language names things.
 
 - **Spread is how many copies, and what they must be distinct in.** `copies` is the least kept;
   `distinct` maps a domain -- `node`, `site`, `account`, `zone`, `region` -- to how many of the
@@ -128,7 +136,6 @@ Open, for the discussion that follows:
   pointing at each hash are an owner's, which argues for per owner. [C9]
 - The capability's name, since it is not an object store. [A9]
 - Whether one content named in a `content` and an `opaque` dataset is kept once, and how. [C8]
-- What each level of durability means, and the codes the levels are recorded by. [A7]
 - What follows when a store is lost without warning, or reaches an end its owner did not choose.
   [C20]
 - Whether copies are laid out whole or as shards with parity, and whether the owner sees which.
