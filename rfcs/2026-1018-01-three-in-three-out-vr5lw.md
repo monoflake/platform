@@ -282,10 +282,31 @@ out with the author on 2026-10-18.
   there: where that account holds a domain of its own and the platform holds a management token
   for it, the domain's zone takes the platform's name as a custom hostname, served by a Worker on
   the zone, and the platform, holding its own domain's records, proves the name and points it there,
-  DNS only. Where it holds no domain, the vendor's address or the user's own domain serves instead.
+  DNS only. Its certificate is the vendor's, one for that name, asked of Google's CA so it
+  takes nothing of Let's Encrypt's count for the platform's domain; that a name four levels deep is
+  given one across accounts is to be tried. [C26] Where it holds no domain, the vendor's address or the user's own domain serves instead.
   `lessons.md`
-- **A machine named by the platform's domain is given that name's certificate** by a way open, the
-  platform holding the domain's records. [B9]
+- **An organization's public names are of a domain apart from the platform's own**,
+  `{app}.{organization}.{domain}`, as a vendor keeps its users' pages off its own domain, so nothing
+  an organization's app sets reaches the platform's console or controls. Organizations are kept
+  apart from one another by that domain's place in the Public Suffix List, asked for once the
+  platform serves thousands, which the list asks, `lessons.md`. [D9]
+- **A certificate service gives a machine its names' certificate**, worked out with the author on
+  2026-10-18: an app like any other, in an organization of the internal platform's own, which asks a
+  public CA by ACME and its DNS challenge -- Google's first, which counts no domain's certificates;
+  Let's Encrypt beside it -- and renews and, where its CA allows, revokes.
+  - **A key never leaves its machine**: the driver makes it and hands the service a request for a
+    certificate, and the service gives back the certificate alone, renewing on the same request
+    until the driver makes a new key.
+  - **It holds no token able to move a name**: each platform name's `_acme-challenge` is delegated
+    by a CNAME to a zone kept for validation alone, and the service holds a token for that zone
+    only; the records that point a name stay the platform's control's.
+  - **A machine is given one certificate for `*.{organization}.{domain}`**, its own key behind it,
+    so an app deployed there is named at once. Its holder could answer for another of the
+    organization's names only where that name's traffic reached it, and the platform points the
+    names. Let's Encrypt issues one set of names five times a week, so through it an organization
+    adds five machines a week at most, `lessons.md`.
+  - A driver asks for a name's certificate with a capability naming it.
 
 **So one platform is built on another by an organization.** The external platform's footing is the
 three that one organization of the internal platform gives; its control stands on them alone. An

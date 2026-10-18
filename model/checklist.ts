@@ -147,7 +147,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B9',
 		group: 'B',
-		what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment; how a machine named by the platform's domain is given that name's certificate; and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing",
+		what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing; a machine's certificate is the certificate service's, vr5lw",
 		from: 'b8f35, 13ixj, vr5lw',
 	},
 	{
@@ -401,6 +401,13 @@ export const CHECKLIST: Item[] = [
 		from: 'vr5lw',
 		step: 6,
 	},
+	{
+		id: 'C26',
+		group: 'C',
+		what: "to try that a user's Cloudflare account on the free plan gives a custom hostname four levels deep, a name of the platform's zone pointing at it DNS only, its certificate; and which certificate_authority values the API takes",
+		from: 'vr5lw, lessons.md',
+		step: 6,
+	},
 	// D -- commercial and operational.
 	{
 		id: 'D1',
@@ -451,6 +458,13 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "how a machine's driver bounds what it holds by how full the machine is, beyond a count, and the default it starts from; and how long a call may run on a machine, a field its driver declares, its default and whether it counts CPU or the clock",
 		from: 'vr5lw',
+	},
+
+	{
+		id: 'D9',
+		group: 'D',
+		what: "the domain organizations' public names are of, apart from the platform's own, and asking the Public Suffix List to take it once the platform serves thousands",
+		from: 'vr5lw, lessons.md',
 	},
 
 	// E -- stale or inconsistent text.
