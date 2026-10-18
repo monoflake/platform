@@ -54,11 +54,10 @@ and an external platform standing on it, RFC 94y0d; what follows holds of each.
 internal and external alike, worked out with the author on 2026-10-18. It is one like any other,
 built by the same model and never billed, and **its app is the platform's control plane**, reached
 at its own API on the platform's domain. Its resources are its footing alone, from the layer beneath,
-`scope.md` -- never an extension, and never a resource another organization holds: a database, which
-must be; compute, which keeps nothing; and storage, only if an app in it uses storage, and then only
-the layer beneath's. What it keeps -- configuration's truth, the anchor, the credentials, the
-bundles -- fits its database, so the control plane runs on a database and compute alone, and what is
-backed up is that database, and its storage only where something uses it. The operator configures
+`scope.md` -- never an extension, and never a resource another organization holds: one compute,
+which keeps nothing, one storage and one database, RFC vr5lw. Its one app is `control`, the control
+plane. What it keeps -- configuration's truth, the anchor, the credentials, the bundles -- fits its
+database. The operator configures
 it, `?source`. **Everything that serves runs in an organization**, and none of it needs the
 `console` organization to serve or to start: an organization reads its bundle, and reaches the
 console only to change it, which `model/check.ts` checks.
@@ -104,10 +103,11 @@ service's, or a node.
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
 - **An organization runs nothing until a resource is bound to it or shared with it.** The platform
   lends none of its own.
-- **An organization stands on one footing and on extensions.** Its footing is what it stands on
-  from beneath, `scope.md`: one database in SQLite's dialect, taking atomic batches, at most 10 GB or
-  what its vendor's plan holds, which every compute of the organization can reach and which it must
-  have; compute, which keeps nothing; and storage, which it may have.
+- **Only the console stands on a footing; every other organization stands on extensions**, RFC
+  vr5lw: compute and storage, never a database, which is made of them. Where its own records are
+  kept, which the rest of this bullet and RFC b8f35 still put in a footing of its own, is open.
+  [B20] The footing is one database in SQLite's dialect, taking atomic batches, at most 10 GB or
+  what its vendor's plan holds, which every compute can reach.
   It is ground, `scope.md`: the platform makes nothing in it redundant, and its owner is warned to
   bring one that is, which the platform cannot check. 10 GB is a hard limit, and an organization
   that outgrows it is split into several. Everything else bound is an extension -- a compute, of

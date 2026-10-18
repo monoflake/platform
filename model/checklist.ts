@@ -89,8 +89,14 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A9',
 		group: 'A',
-		what: "the three products' names and their operations' names, as layer 0's published contract",
-		from: '13ixj',
+		what: "the operations' names, as layer 0's published contract; the products are compute, database and storage, vr5lw",
+		from: '13ixj, vr5lw',
+	},
+	{
+		id: 'A10',
+		group: 'A',
+		what: "a new name for the storage's 16 MiB unit of sealed data, apart from compute's container, and the context strings that carry it, before any is written",
+		from: 'vr5lw',
 	},
 
 	// B -- blocks building v0.
@@ -206,6 +212,12 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "what a compute's levels of availability and custody mean, and what a function or a database's writer asks of one, since hosts are declared as they are enrolled from step 0",
 		from: 'v7v3w',
+	},
+	{
+		id: 'B20',
+		group: 'B',
+		what: "where an ordinary organization's own records are kept -- each tablet's log, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
+		from: 'vr5lw, v7v3w, b8f35',
 	},
 	// C -- blocks a later step.
 	{

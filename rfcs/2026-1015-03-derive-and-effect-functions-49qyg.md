@@ -98,7 +98,8 @@ whether it took effect, and whether trying again could help.
 - **An `effect` that wrote twice and stopped between is `unknown` too**: each batch is atomic, two
   are not. What must change together goes in one batch, RFC zn3u5.
 
-**A long-running process is not a function: it is a `daemon`.** A browser held open, a chat client
+**A long-running process is not a function: it is a `daemon`**, now a `container`, or several
+that stand in for one another, RFC vr5lw. A browser held open, a chat client
 logged in: it starts, runs, and is reached through the `effect` functions it exports. Its output is
 the world's -- a page differs by time, place and address -- so what it exports is `effect`, never
 `derive`, however many of it run. What it writes as it runs, a browser's cache or a chat client's

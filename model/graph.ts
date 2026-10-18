@@ -73,32 +73,33 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			{
-				...e('function', 'deploy', H, 'an app is deployed as functions, its types checked'),
+				...e('compute', 'deploy', H, 'an app is deployed as functions, its types checked'),
 				replaces: true,
 			},
-			e('function', 'serve', H, 'it runs as functions'),
-			e('store', 'serve', H, 'the datasets it is bound to'),
+			e('compute', 'serve', H, 'it runs as functions'),
+			e('storage', 'serve', H, 'the datasets it is bound to'),
 			e('database', 'serve', H, 'the database bound to it'),
 		],
 		uses: [],
 	},
+	/** The `console` organization's one app, `control`: the platform's control plane, v7v3w, vr5lw. */
 	console: {
 		layer: 1,
-		half: 'organization',
+		half: 'platform',
 		asOwner: true,
 		edges: [
 			{
-				...e('function', 'deploy', H, 'an app like any other, deployed as functions'),
+				...e('compute', 'deploy', H, 'an app like any other, deployed as functions'),
 				replaces: true,
 			},
-			e('function', 'serve', H, 'an app like any other'),
-			e('store', 'serve', H, 'idem'),
+			e('compute', 'serve', H, 'an app like any other'),
+			e('storage', 'serve', H, 'idem'),
 			e('database', 'serve', H, 'idem'),
 		],
 		uses: [],
 	},
 
-	store: {
+	storage: {
 		layer: 0,
 		half: 'organization',
 		edges: [
@@ -134,7 +135,7 @@ export const PARTS: Record<string, Part> = {
 		],
 		uses: ['capability*', 'compat*'],
 	},
-	function: {
+	compute: {
 		layer: 0,
 		half: 'organization',
 		edges: [
@@ -449,13 +450,13 @@ export const RECORDS: Record<string, Held> = {
 	env: { half: 'platform', writes: [control('a deployment')], from: '49qyg, v7v3w' },
 	resource: { half: 'platform', writes: [control('the configuration API')], from: 'v7v3w' },
 	allowance: { half: 'platform', writes: [control('the operator')], from: 'vuanj' },
-	file: { half: 'organization', writes: [data('store')], from: '13ixj' },
+	file: { half: 'organization', writes: [data('storage')], from: '13ixj' },
 	row: { half: 'organization', writes: [data('database')], from: 'zn3u5' },
 	log: { half: 'organization', writes: [data('tablet')], from: 'vuanj' },
 	extent: { half: 'organization', writes: [data('blob')], from: 'b8f35' },
-	call: { half: 'organization', writes: [data('function')], from: '49qyg' },
-	message: { half: 'organization', writes: [data('function')], from: '49qyg' },
-	repeat: { half: 'organization', writes: [data('function')], from: '49qyg, v7v3w' },
+	call: { half: 'organization', writes: [data('compute')], from: '49qyg' },
+	message: { half: 'organization', writes: [data('compute')], from: '49qyg' },
+	repeat: { half: 'organization', writes: [data('compute')], from: '49qyg, v7v3w' },
 };
 
 export const GLOBAL_OPEN = [

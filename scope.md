@@ -50,10 +50,10 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 | beside, operator | a person, holding the root private key and running day one's manual commands            | ideal, above                                                                      |
 
 **The footing is ground: trusted and never designed.** A footing is what an owner stands on from
-the layer beneath: a database, which it must have; compute, which keeps nothing and which it needs
-to run; and storage, which it may have. Only what is kept is backed up -- the database always, the
-storage only where something uses it -- and only the database is held to the contract below. Each
-owner stands on one database, RFC v7v3w,
+the layer beneath: one compute, which keeps nothing; one storage; and one database, each meeting one
+kind of its class at least, RFC vr5lw, and used by the `console` organization alone. What is kept
+is backed up, the database and the storage, and only the database is held to the contract below.
+The platform stands on one database, RFC v7v3w,
 which the model takes to be up and to keep what it confirmed; whether it is made redundant is
 beneath its contract and its owner's. **Its contract is frozen and carries no version**: SQLite's
 dialect; atomic batches, a fixed list of statements that all hold or none, never a transaction that
