@@ -227,33 +227,65 @@ with credentials of their own, three in all:
     platform's; none at all is allowed too, a holder reaching the machine by its console instead.
     Recognizing a key by its form is for showing, never for trusting.
 
-**A call between resources takes one of three ways**, chosen by the platform, never by the caller:
+**A call goes by a path the platform compiles, never one the caller chooses.** Worked out with the
+author on 2026-10-18. A network is what reaches itself unaided:
 
-| Way    | When                                                                                                              |
-| ------ | ----------------------------------------------------------------------------------------------------------------- |
-| inline | both ends are given by one driver, which offers a way within its host: an account's binding, a machine's loopback |
-| direct | the end called has an address of its own on the public network                                                    |
-| relay  | the end called has none, as a machine at home: it is reached through a relay its user chooses                     |
+| Network       | Who is in it                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------- |
+| within a host | one host alone: a machine's loopback, containers on one machine, an account's bindings            |
+| public        | whatever has an address of its own, IPv4 or IPv6                                                  |
+| private       | whatever joined it: Cloudflare's network by a tunnel, a tailnet, a local network, a relay's below |
 
-- **Inline is the platform's to take, since it changes the way and nothing else**: the contract and
-  every capability checked are those of the public network, RFC 94y0d, so where its condition holds
-  it is always taken.
-- **A relay is a driver's**, never a container of its own: Cloudflare's, or a machine's with an
-  address of its own. It is asked only for what comes in -- a machine without an address reaches out
-  directly -- and carries what passes encrypted end to end, so its holder sees who speaks and how
-  much, never what.
+- **A host in two networks is a jump between them, and a path is networks joined by jumps.**
+  Cloudflare's edge is the jump from the public network into its own, so a name it serves reaches a
+  machine by the tunnel the machine holds; a machine holding a tunnel and joined to a tailnet is
+  the jump by which a Worker reaches the tailnet.
+- **An organization's control compiles each call's paths as configuration is applied**, into the
+  caller's bundle: every path its networks allow, fewest jumps first, then one off the public
+  network first. The caller takes the first that answers, so a jump lost costs time and nothing
+  more, and nothing the data plane needs waits on a control. A path across the public network is
+  allowed, the capability guarding it as it guards every call.
+- **A jump carries what passes encrypted end to end, and ends nothing**: the end called answers
+  with its machine's certificate, at a name of its organization's no DNS record publishes, so a
+  jump's holder sees who speaks and how much, never what. A jump is a driver's, deployed as an
+  adapter is, never a container of its own.
+- **Within a host is the platform's to take, since it changes the way and nothing else**: the
+  contract and every capability checked are those of the public network, RFC 94y0d.
+- **A private network's members are known by what joins them**: Cloudflare's network and a tailnet
+  by the drivers that join a host to them; a local network by a test run only when the user asks
+  for it, each machine's driver reporting the ranges of its private addresses, an overlay's own
+  interface aside, and dialing every machine of the organization's within them. A network is shared
+  only where the machine dialed proves itself the organization's, since two networks apart often
+  number themselves alike. What a test finds is configuration, the control's to write; until the
+  user asks again nothing is tested or changed, and a path that stopped answering is passed over.
 - **A host without an address is told so as it is bound**, by whoever binds it, and its driver
   checks it by asking a relay to dial the address back; where they disagree it warns, and changes
   nothing of itself.
-- **Which relays a host may use is configuration**, chosen as it is bound: one or more, or all, the
-  relays among what its organization binds. **It holds a lasting connection to every one of them**,
-  costing little while idle, so a caller reaches it through whichever is nearest the caller, and
-  the first handshake is always right: no one keeps which relay is best, and nothing the data plane
-  needs waits on a control. A host answers back by the relay nearest its caller. A relay of
-  Cloudflare's is one name its network finds the host behind, `lessons.md`.
+- **A host without an address joins a network by a connection it holds out to a relay**,
+  Cloudflare's tunnel or a machine with an address of its own: the relay is the jump between that
+  network and the public one. **Which relays a host may use is configuration**, chosen as it is
+  bound: one or more, or all, the relays among what its organization binds. **It holds a lasting
+  connection to every one of them**, costing little while idle, so a caller reaches it through
+  whichever is nearest the caller, and the first handshake is always right: no one keeps which
+  relay is best. A host answers back by the relay nearest its caller. A relay of Cloudflare's is one
+  name its network finds the host behind, `lessons.md`.
 - **A relay is withdrawn by its organization's control**, from what it observes -- a host's traffic
   spent, say -- as any configuration changes: the new list reaches the host in its bundle, which
   connects to what is new before it drops what is gone, and keeps what stays.
+- **A Worker reaches a private network by a binding of its vendor's** into what stands behind a
+  tunnel, in beta and free while it is, `lessons.md`; where it cannot, its path crosses the public
+  network.
+- **A tailnet is a host that gives no resource, a network alone.** Its driver runs on any compute
+  that gives an `effect` function and holds, as its management token, an OAuth client its user makes
+  in Tailscale; for each machine joining it asks Tailscale for a key, tagged and authorized ahead,
+  so the driver makes no credential, and the machine's driver joins with it.
+  - **The policy file is its user's**: one document, replaced whole, `lessons.md`. The driver
+    checks that it holds what the organization needs -- the organization's tag, and a grant from
+    the tag to itself -- and where it does not warns, showing what to add, a warning that may be
+    dismissed; it writes the file only where its user turns that on, and then only over the version
+    it read.
+  - Tailscale's free plan is for non-commercial use and counts each tagged machine among 50,
+    `lessons.md`: a user's own plan, chosen by them.
 - A vendor's thing without an address of its own, as D1, takes the address of the adapter its
   driver deploys, and needs no relay.
 
@@ -262,13 +294,13 @@ out with the author on 2026-10-18.
 
 - **Each export declares how far it is shown**: within its organization, the default, called by its
   organization's apps with a capability at its deployment's address; or public, which it is
-  exactly when a name is bound to it. Nothing is public that no name is bound to. Within an organization an address
-  may still stand on the public network, and every call to it without a capability of its
-  organization's is refused; a network laid over the public one, keeping such an address off it,
-  is a guard beside that, and open. [C25]
+  exactly when a name is bound to it. Nothing is public that no name is bound to. Within an
+  organization an address may still stand on the public network, where a path to it crosses it,
+  and every call to it without a capability of its organization's is refused.
 - **A machine's driver keeps its firewall**, in software, so no hardware firewall is needed: what
-  comes in is let in only at a public export's port and the driver's own, and what goes out only as
-  each deployment's `network` allows, RFC 49qyg.
+  comes in is let in only at the driver's own port and where a path compiled to the machine crosses
+  the public network, so what every caller reaches by a private path is not on the public network at
+  all; what goes out, only as each deployment's `network` allows, RFC 49qyg.
 - **An app is reached from outside where it can be reached and can be found**, worked out with the
   author on 2026-10-18: reached, by an address of its own or a relay; found, by a name bound to it.
   **An entry is that name and nothing more**: on a machine, a listener its driver deploys beside

@@ -401,6 +401,7 @@ export const CHECKLIST: Item[] = [
 		what: "a network laid over the public one, keeping an organization's addresses off it: an overlay, or a vendor's network from a Worker to a machine; a guard beside the capability, which alone says who may call",
 		from: 'vr5lw',
 		step: 6,
+		done: 'vr5lw: networks joined by jumps, a path compiled by the control; a tailnet is a host of no resource',
 	},
 	{
 		id: 'C26',

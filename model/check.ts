@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { STEPS, STOPS, VERSIONS, WINDOW, type Deployment } from './bootstrap.ts';
 import { CHECKLIST } from './checklist.ts';
-import { CLASS, NEEDS, extensionKinds, footingKinds, unrelayed, type Class } from './resources.ts';
+import { CLASS, NEEDS, extensionKinds, footingKinds, unreached, type Class } from './resources.ts';
 import { ALLOWED, ASSUMED, KEPT, ROWS } from './footing.ts';
 import { BOUNDARIES, GLOBAL_OPEN, LIBRARIES, PARTS, RECORDS, VENDOR, type Edge } from './graph.ts';
 
@@ -296,8 +296,8 @@ STEPS.forEach((step, i) => {
 						`${at}: the ${name} platform's extensions give none of ${n.any.join(', ')}${n.cpu ? ` with ${n.cpu} ms of CPU a call` : ''}: ${n.why}`,
 					);
 		}
-		for (const r of unrelayed(d))
-			path.push(`${at}: the ${name} platform's ${r} has no address and no relay to be reached by`);
+		for (const r of unreached(d))
+			path.push(`${at}: the ${name} platform's ${r} reaches the public network by no path`);
 	}
 	const { internal: a, external: b } = step;
 	for (const g of a.ground)
