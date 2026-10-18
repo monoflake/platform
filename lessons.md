@@ -94,7 +94,7 @@ offered on the Free, Pro and Business plans with 100 custom hostnames included, 
 to 50,000. The zone serving them must be on Cloudflare with the feature turned on; a hostname points
 at it by a CNAME, its certificate is validated by TXT, delegated DCV or HTTP, before the cutover if
 asked; and a `*/*` route on that zone sends every custom hostname's traffic to a Worker, its fallback
-origin an originless proxied record. Asked of a platform name served by a user's account, RFC
+origin an originless proxied record. Wildcard custom hostnames are offered on Enterprise alone, "No" on Free, Pro and Business. Asked of a platform name served by a user's account, RFC
 vr5lw, read 2026-10-18. Sources:
 https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/,
 https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/getting-started/
@@ -173,7 +173,8 @@ https://developers.cloudflare.com/durable-objects/platform/pricing/
 "Up to 50 certificates can be issued per registered domain ... every 7 days", across all accounts;
 "We use the Public Suffix List to identify registered domains." "Up to 300 new orders can be created
 by a single account every 3 hours." A renewal coordinated by ARI is "exempt from all rate limits";
-one for the exact same names is exempt from the order and registered-domain limits. Asked of names
+one for the exact same names is exempt from the order and registered-domain limits. A certificate for the exact same set of names is issued at most 5 times
+every 7 days, across all accounts. Asked of names
 the platform gives machines, RFC vr5lw. Source: https://letsencrypt.org/docs/rate-limits/
 
 **The Public Suffix List takes a private domain by a pull request, and turns away one made to escape
