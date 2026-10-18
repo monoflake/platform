@@ -75,6 +75,16 @@ as it stands on a vendor, RFC 94y0d.
   with a store of its own. Some resources give a database already, a small one. **Whatever gives a
   database gives it in the platform's own contract**, SQLite's dialect and atomic batches,
   `scope.md`, never a vendor's.
+- **A database is reached by an HTTPS interface of the platform's own, and the least**, worked out
+  with the author on 2026-10-18: one statement, or one batch, each SQL with its parameters, answered
+  with each statement's rows. No vendor here speaks a common protocol for it -- D1 is reached from a
+  Worker, a machine's SQLite is a file -- so every driver adapts whatever is chosen, and the least
+  leaves nothing to adapt that the contract forbids. How a value of SQLite's is written in it is
+  open [B7].
+- **Each host's driver declares its databases' limits** -- a statement's size, its parameters, how
+  long a query may run -- as it declares its levels: a vendor's in the code, which knows the vendor,
+  as D1's from `lessons.md`; a machine's from a default the platform gives, which its holder may
+  change. The platform holds each database to what is declared of it.
 
 **What each resource gives:**
 
