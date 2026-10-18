@@ -166,3 +166,12 @@ https://developers.cloudflare.com/durable-objects/platform/pricing/
   https://docs.aws.amazon.com/AmazonS3/latest/API/API_RenameObject.html
 - The Worker Loader is on the paid plan alone, and Workers for Platforms is a plan of its own, at
   $25 a month: https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/
+
+## Let's Encrypt, read 2026-10-18
+
+**A registered domain gets 50 certificates a week, and the Public Suffix List says what one is.**
+"Up to 50 certificates can be issued per registered domain ... every 7 days", across all accounts;
+"We use the Public Suffix List to identify registered domains." "Up to 300 new orders can be created
+by a single account every 3 hours." A renewal coordinated by ARI is "exempt from all rate limits";
+one for the exact same names is exempt from the order and registered-domain limits. Asked of names
+the platform gives machines, RFC vr5lw. Source: https://letsencrypt.org/docs/rate-limits/
