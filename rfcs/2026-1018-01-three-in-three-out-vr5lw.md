@@ -152,8 +152,17 @@ the address the vendor gives it free, as a Worker's.
   other secrets are [B4], and never in a bundle, since nothing serving needs it.
 - **It is the holder's to give, as often as they like**; two controls given it for one host may
   undo each other's changes, which is the holder's choice, never the platform's to settle.
-- **A control configuring a host never takes the holder's own way in away**: it may disable a
-  machine's password logins once its own key works, and keeps the holder's.
+- **A control changes nothing of a machine's own access unless asked**, in settings of the shell's
+  own, worked out with the author on 2026-10-18. It warns, and acts only when told:
+  - password logins left on: a warning, and the advice to turn them off;
+  - **a key the platform made carries a comment in a format of the platform's own**, which every
+    control of every platform knows by its form alone, never checking it further, so the keys
+    of that form tell how many controls hold the machine, and are shown as such; the form is
+    open [C24];
+  - of the keys of no such form, with password logins off: one is taken for the holder's own and
+    advised kept; more than one bring a warning that may be dismissed, advising one kept beside the
+    platform's; none at all is allowed too, a holder reaching the machine by its console instead.
+    Recognizing a key by its form is for showing, never for trusting.
 
 **A call between resources takes one of three ways**, chosen by the platform, never by the caller:
 

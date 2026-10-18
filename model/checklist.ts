@@ -387,6 +387,13 @@ export const CHECKLIST: Item[] = [
 		from: 'vr5lw',
 		step: 2,
 	},
+	{
+		id: 'C24',
+		group: 'C',
+		what: 'the comment format a key the platform made carries on a machine, known by every control of every platform by its form alone, and versioned, since it is written onto machines the platform does not hold',
+		from: 'vr5lw',
+		step: 6,
+	},
 	// D -- commercial and operational.
 	{
 		id: 'D1',

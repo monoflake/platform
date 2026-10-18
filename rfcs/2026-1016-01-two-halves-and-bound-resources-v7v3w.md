@@ -75,7 +75,10 @@ reserved: neither is an app, and neither lives in an organization's namespace.
 - **The console is a dashboard, an ordinary app in an ordinary organization**, which is named
   `console` by being opened first and holds no privilege: whatever it does it does through the two
   APIs, with the credential of whoever uses it. The APIs are what is kept; a dashboard, a client or
-  neither is for later. How a person is authenticated to either API is a design of its own. [B10]
+  neither is for later. **A dashboard draws, and computes nothing**: every warning, every choice
+  offered and whether a warning was dismissed comes from the API, which keeps a dismissal as
+  configuration, so every client shows the same and none works it out again; a dashboard may only
+  reshape what it is given for display. How a person is authenticated to either API is a design of its own. [B10]
 - **Everything that serves runs in an organization**, and none of it needs the platform's control to
   serve or to start: an organization reads its bundle, and reaches the platform's control only to
   change it, which `model/check.ts` checks.
