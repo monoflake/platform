@@ -86,6 +86,24 @@ as it stands on a vendor, RFC 94y0d.
   as D1's from `lessons.md`; a machine's from a default the platform gives, which its holder may
   change. The platform holds each database to what is declared of it.
 
+**Whatever runs is deployed as its configuration is applied, never loaded as a call comes**,
+worked out with the author on 2026-10-18. Since opening anything is a change of configuration, RFC
+v7v3w, each has a moment it is applied, and a task, which no one waits on in a dashboard, deploys
+it then: an app's version, a database's writer, an `object` store made of a volume, a part of the
+platform's own. Compute is reached by two operations, deploying code into what is held already --
+never a change to a driver's list -- and calling what was deployed. On Cloudflare a deployment is a
+Worker of its own, made through the vendor's API; on a machine, an isolate or a process in its
+organization's container.
+
+- **A deployment is running or stopped**, and is stopped, resumed or deleted; it is deleted only
+  once stopped.
+- **What a host holds of them is bounded as its driver declares**, as its levels and its databases'
+  limits are: Cloudflare's in the code, a hundred Workers an account on the free plan; a machine's
+  from a default its holder may raise or lower, by more than a count -- by how full the machine is.
+  [D8]
+- **A call that opens something waits on that task as any call waits on an outcome**, RFC 49qyg:
+  looked up until a deadline, then `unknown` with its id.
+
 **What each resource gives:**
 
 | Resource                    | Compute                                    | Storage               | Database                                      |

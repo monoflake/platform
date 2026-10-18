@@ -291,9 +291,9 @@ STEPS.forEach((step, i) => {
 		if (d.on.includes('products')) {
 			const given = extensionKinds(d);
 			for (const n of NEEDS)
-				if (!n.any.some((k) => given.has(k)))
+				if (!n.any.some((k) => (given.get(k) ?? -1) >= (n.cpu ?? 0)))
 					path.push(
-						`${at}: the ${name} platform's extensions give none of ${n.any.join(', ')}: ${n.why}`,
+						`${at}: the ${name} platform's extensions give none of ${n.any.join(', ')}${n.cpu ? ` with ${n.cpu} ms of CPU a call` : ''}: ${n.why}`,
 					);
 		}
 		for (const r of unrelayed(d))
@@ -339,7 +339,7 @@ dimension(
 		),
 		...STEPS.map(
 			(s, i) =>
-				`${i}: extensions give, internal ${[...extensionKinds(s.internal)].sort().join(' ')}${s.external ? `; external ${[...extensionKinds(s.external)].sort().join(' ')}` : ''}`,
+				`${i}: extensions give, internal ${[...extensionKinds(s.internal).keys()].sort().join(' ')}${s.external ? `; external ${[...extensionKinds(s.external).keys()].sort().join(' ')}` : ''}`,
 		),
 		`planned stops: ${stops.length ? stops.join('; ') : 'none'}`,
 	],

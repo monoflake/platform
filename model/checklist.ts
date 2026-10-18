@@ -439,6 +439,13 @@ export const CHECKLIST: Item[] = [
 		from: 'model/footing.ts',
 	},
 
+	{
+		id: 'D8',
+		group: 'D',
+		what: "how a machine's driver bounds what it holds by how full the machine is, beyond a count, and the default it starts from",
+		from: 'vr5lw',
+	},
+
 	// E -- stale or inconsistent text.
 	{
 		id: 'E1',

@@ -27,8 +27,9 @@ export interface Resource {
 	addressed: boolean;
 	/** Whether its driver may relay for a host without an address. */
 	relays: boolean;
-	/** What it gives an app's code only on the vendor's paid plan, as the Worker Loader, lessons.md. */
-	paid?: Kind[];
+	/** The CPU a call may take on each of the vendor's plans, in milliseconds, where it is bounded,
+	 * lessons.md; a machine's is bounded by nothing but itself. */
+	cpu?: { free: number; paid: number };
 	/** Whether it is used only once metering holds, being priced by use, RFC 94y0d. */
 	metered?: boolean;
 	from: string;
@@ -50,7 +51,7 @@ export const RESOURCES: Record<string, Resource> = {
 	},
 	worker: {
 		gives: ['function'],
-		paid: ['function'],
+		cpu: { free: 10, paid: 300_000 },
 		addressed: true,
 		relays: true,
 		from: 'vr5lw, b8f35',
@@ -82,14 +83,23 @@ export const GROUND: Record<Ground, string[]> = {
 	internal: ['internal products'],
 };
 
+/** What cutting and sealing a container takes of CPU in a call, in milliseconds: assumed, an order
+ * past a free Worker's 10, until it is measured. */
+export const ASSUMED_SEAL_CPU = 100;
+
 /**
  * What the products ask of an organization's extensions in v0, each met by any of its kinds: a
  * function for compute; a database for the database product, given in the platform's contract or
  * as a tablet whose one writer an instance holds, RFC 49qyg; and objects for the storage and a
  * tablet's archive, RFC vuanj. The rest of a kind is asked only by an app that declares it.
  */
-export const NEEDS: { any: Kind[]; why: string }[] = [
+export const NEEDS: { any: Kind[]; cpu?: number; why: string }[] = [
 	{ any: ['function'], why: "compute runs an app's derive and effect" },
+	{
+		any: ['function'],
+		cpu: ASSUMED_SEAL_CPU,
+		why: 'the storage cuts and seals up to 16 MiB in a call, b8f35',
+	},
 	{
 		any: ['database', 'instance'],
 		why: 'the database product needs a database, or an instance to write a tablet',
@@ -120,14 +130,13 @@ export function footingKinds(d: Deployment): Set<Kind> {
 	);
 }
 
-/** What a deployment's extensions may give: compute, storage and databases, and what a vendor
- * gives an app's code only on its paid plan once that plan is taken. */
-export function extensionKinds(d: Deployment): Set<Kind> {
-	return new Set(
-		d.ground
-			.flatMap((g) => GROUND[g])
-			.map((n) => RESOURCES[n])
-			.filter((r) => usable(r, d))
-			.flatMap((r) => r.gives.filter((k) => d.plan === 'paid' || !r.paid?.includes(k))),
-	);
+/** What a deployment's extensions may give, compute, storage and databases, each kind with the
+ * most CPU a call may take of it on the deployment's plan. */
+export function extensionKinds(d: Deployment): Map<Kind, number> {
+	const given = new Map<Kind, number>();
+	for (const r of resourcesOf(d).filter((r) => usable(r, d))) {
+		const cpu = r.cpu ? r.cpu[d.plan ?? 'free'] : Infinity;
+		for (const k of r.gives) given.set(k, Math.max(given.get(k) ?? 0, cpu));
+	}
+	return given;
 }

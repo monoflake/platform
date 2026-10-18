@@ -214,7 +214,12 @@ export const PARTS: Record<string, Part> = {
 				H,
 				"calls and status(id), queues' messages, schedules' repeats, the derive index",
 			),
-			e('blob', 'deploy', H, 'code kept by its hash'),
+			e(
+				'blob',
+				'deploy',
+				H,
+				'code kept by its hash, deployed as its configuration is applied, vr5lw',
+			),
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
 			e('?entry', 'serve', H, "a request trigger: HTTP reaches an app's function, 49qyg"),
@@ -331,8 +336,7 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('host', 'serve', H, 'hands each call to a host'),
-			e('blob', 'serve', H, 'code by hash, the first time on a host; kept after'),
+			e('host', 'serve', H, 'hands each call to the deployment that runs it, vr5lw'),
 			e('?roster', 'start', H, 'which hosts exist, what each offers'),
 			e(
 				'?egress',

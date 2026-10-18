@@ -81,14 +81,13 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 - **The bootstrap stops twice, and only then**: each deployment once, moving from v0, which cannot
   replace a part while the rest run. The external platform's stop comes first, while only the
   author's organizations are on it.
-- **The internal platform's hosts are enrolled by hand from step 0**, since its databases need a
-  place that offers `instance` and Cloudflare's runtime, as it is borrowed, offers none. Until the
-  paid plan, a host on a machine runs every `derive` and `effect` and Cloudflare keeps the entry,
-  the footing and the stores.
+- **The internal platform's hosts are enrolled by hand from step 0**, since a Worker on the free
+  plan has 10 ms of CPU a request, too little for the storage to cut and seal what it writes,
+  `model/resources.ts`. Until the paid plan, what needs more runs on a machine, and Cloudflare keeps
+  the entry, the footing, the stores and what fits its limits.
 - **The vendor's paid plan is a checkpoint, never a start**: taken once the platform serves a few
   users for real, and not while it is drafted, since a plan paid for nothing is waste. On Cloudflare
-  it is $5 a month and use past it, and brings the Worker Loader, D1 at 10 GB and CPU time past
-  10 ms, `lessons.md`; more is bought as use grows, by those who use it.
+  it is $5 a month and use past it, and brings D1 at 10 GB and CPU time past 10 ms, `lessons.md`; more is bought as use grows, by those who use it.
 - **It is taken only once metering holds.** A vendor offers no hard cap, so the platform counts what
   it uses of each resource and cuts its own use off short of a limit it sets, with a margin. The
   cutoff is soft: a little may pass it, and what it holds back is the growth that lasts. Once it

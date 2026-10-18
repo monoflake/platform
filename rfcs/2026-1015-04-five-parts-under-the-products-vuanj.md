@@ -177,8 +177,8 @@ or a panic.
   as a browser, RFC 49qyg's daemons. Until it is settled, `icmp` is something no sandbox can give.
 - **The executor decides which sandbox a call needs and hands it to a host**, layer -2, RFC b8f35,
   one that offers that sandbox and every capability declared; what the hosts offer is what running
-  checks a declaration against. Code is fetched by its hash from the blob, and kept where it ran,
-  since what a hash names never changes.
+  checks a declaration against. Code is deployed before any call reaches it, as its configuration
+  is applied, and never fetched as a call comes, RFC vr5lw.
 
 **What the products ask of the parts:**
 
