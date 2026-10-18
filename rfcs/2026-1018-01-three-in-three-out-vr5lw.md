@@ -150,10 +150,11 @@ with credentials of their own, three in all:
 | management token | the host: the account on Cloudflare, the holder on a machine | the control                                          | not: each authenticates, all see the same | HTTPS: the vendor's API, or a machine driver's management | the host's own: a domain's records; a machine's shell configuration, packages and reboot |
 | shell key        | the control, as a key pair                                   | the machine the public half, the control the private | its own                                   | SSH itself                                                | any command                                                                              |
 
-- **A shell key's public half is installed by one line the control gives**, which carries the key
-  itself, so what the holder runs is what is installed and nothing is fetched as it runs; a key
-  pair made by the control takes effect only once the machine's holder writes its half, so making
-  it there gives nothing away.
+- **A shell key's public half is installed by one line the control gives**, which fetches it from
+  an address of that control's -- over HTTPS, carrying a random part no one can guess -- so the key
+  never stands in the machine's command history; once the binding is checked to work, the address
+  answers nothing more. The control is trusted already, so fetching from it adds no trust, and a
+  key pair made there takes effect only once the machine's holder writes its half.
 - **Over HTTPS go named operations alone; any command goes over SSH.** A flaw in the platform's own
   code can then misuse a named operation at worst, never run what it likes on a machine, and SSH
   keeps the handshake and the authentication it is trusted for.
