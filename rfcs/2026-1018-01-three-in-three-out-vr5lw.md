@@ -205,6 +205,35 @@ was built**, worked out with the author on 2026-10-18.
   the internal one, which reads use through the controls' APIs as any client does, and acts through
   them as its capability allows, bounding or suspending an organization.
 
+**Availability and durability are one model, applied to compute, databases and storage alike**,
+worked out with the author on 2026-10-18:
+
+| Product  | Availability                                                        | Durability                                                     |
+| -------- | ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| compute  | how many hosts hold a deployment, and whether one takes over        | none: it keeps nothing                                         |
+| storage  | as RFC 13ixj has it                                                 | as RFC 13ixj has it: copies, and the domains they lie apart in |
+| database | its writer's, a compute's: its standbys and how fast one takes over | its log's and snapshots', a placement's in storage, RFC v7v3w  |
+
+What each level of availability means is open [B19], and of durability [A7].
+
+- **Everything is placed by one function**: those that meet every need are kept -- the sandbox,
+  each capability declared, the levels, the binding's quota, the machine's free space -- and among
+  them each is scored by rendezvous over its weight, as a container is among stores, RFC b8f35. So a
+  host or a store added or removed moves only what it wins or held.
+- **An organization's control places each deployment as configuration is applied**: a set of hosts,
+  as many as its availability asks, every one deployed to beforehand, its secrets with it, RFC
+  v7v3w, and the set compiled into the bundle and never written. Running, the data plane chooses
+  within the set: any host for a `pool`, one held by a lease in the footing for a `keyed` container
+  or a database's writer. On Cloudflare the set is one account, which scales a Worker itself.
+- **A change is taken only where whatever it touches has a solution**, among what is bound then, and
+  a dry run names the need nothing meets. Each item is judged on its own.
+- **An item that loses its solution later, by what the platform does not hold -- a resource expired,
+  a binding revoked -- is placed again where the rest allows**, since a placement is compiled, and
+  is otherwise warned of, the data plane running on with what is left. It stays so until it is
+  changed, and a change to it is taken only once it solves; a change to anything else is taken as
+  ever. Nothing removed takes another's solution with it, since a removal follows the graph of
+  dependencies, RFC v7v3w, and a store goes only while every placement holds without it, RFC 13ixj.
+
 **What each resource gives:**
 
 | Resource                    | Compute                                    | Storage               | Database                                      |

@@ -151,7 +151,7 @@ export const PARTS: Record<string, Part> = {
 				"its bundle's signing key, its alone, certified for seven days and renewed each day, v7v3w",
 			),
 		],
-		uses: ['capability*', 'vocabulary*', 'wit*', 'extensions*', 'compat*'],
+		uses: ['capability*', 'vocabulary*', 'wit*', 'extensions*', 'placement*', 'compat*'],
 	},
 
 	storage: {
@@ -594,7 +594,7 @@ export const LIBRARIES: Record<string, Library> = {
 		uses: ['compat*'],
 	},
 	'placement*': {
-		what: 'where a container goes, scored by its id and each store, vuanj',
+		what: "where anything is placed among what meets its needs, scored by rendezvous over each one's weight: a container among stores, a deployment among hosts, b8f35, vr5lw",
 		agrees: true,
 		uses: ['compat*'],
 	},

@@ -109,8 +109,9 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B2',
 		group: 'B',
-		what: 'the placement rules: a function inline first, then the same account, a private network, the public one; containers by rendezvous over tags and weights; a tablet writer pinned in the footing; a background task by the resource scheduler and a lease; the extent index cached by generation',
+		what: 'the placement rules: where a deployment, a database writer and a container go, and how a call finds its way; the extent index is B17',
 		from: 'item 4',
+		done: 'vr5lw: one model of availability and durability, placed by one function, each item solved on its own',
 	},
 	{
 		id: 'B3',
@@ -207,7 +208,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B17',
 		group: 'B',
-		what: "how the extent is kept off the footing's growth: its pages in containers, the footing keeping their root",
+		what: "how the extent is kept off the footing's growth: its pages in containers, the footing keeping their root, and its index cached by generation",
 		from: 'model/footing.ts',
 	},
 	{
@@ -220,7 +221,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B19',
 		group: 'B',
-		what: "what a compute's levels of availability and custody mean, and what a function or a database's writer asks of one, since hosts are declared as they are enrolled from step 0",
+		what: "what each level of availability means, for compute, databases and storage alike, and how many hosts each asks; and what custody means; durability's levels are A7",
 		from: 'v7v3w',
 	},
 	{
