@@ -83,7 +83,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A8',
 		group: 'A',
-		what: "a link's URL past the gateway's prefix, how a hash is written in it: published, and cached for a year",
+		what: "a link's URL: the name bound to the storage it is served at, and how a hash is written in its path: published, and cached for a year",
 		from: '13ixj',
 	},
 	{
@@ -149,6 +149,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing; a machine's certificate is the certificate service's, vr5lw",
 		from: 'b8f35, 13ixj, vr5lw',
+		done: 'vr5lw: an entry is a name bound to an app, served by its host, and a gateway is an app',
 	},
 	{
 		id: 'B10',

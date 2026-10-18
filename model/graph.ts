@@ -170,8 +170,8 @@ export const PARTS: Record<string, Part> = {
 				'?entry',
 				'serve',
 				H,
-				'link(): the content answered through the gateway, public or private',
-				'the gateway is no part; who checks a private reader is open, 13ixj [C10]',
+				'link(): the content answered at a name bound to the storage, public or private',
+				'which name is open [A8]; who checks a private reader is open, 13ixj [C10]',
 			),
 		],
 		uses: ['capability*', 'compat*'],
@@ -223,7 +223,7 @@ export const PARTS: Record<string, Part> = {
 			e('blob', 'serve', S, 'derive outputs: a miss runs it again'),
 			e('scope', 'deploy', H, 'the allowance a declaration must fit'),
 			e('?entry', 'serve', H, "a request trigger: HTTP reaches an app's function, 49qyg"),
-			e('?entry', 'deploy', H, "writes an app's routes, in the entry's format"),
+			e('?entry', 'deploy', H, "binds an app's names, from the bundle, vr5lw"),
 			e(
 				'database',
 				'deploy',
@@ -463,10 +463,10 @@ export const BOUNDARIES: Record<string, Boundary> = {
 	'?entry': {
 		half: 'organization',
 		keptBy:
-			"the organization's half: a request comes in by the resources bound to the organization, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator sets each app's routes by hand in the organization's account",
+			"the organization's half: a request comes in by the resources bound to the organization, a node's network or a third-party account the platform operates through its API, v7v3w; on day one the operator binds each name by hand in the organization's account",
 		triage: 'by hand on day one',
 		contract:
-			"an HTTP request addressed to an app is delivered to the function product as a call of that app's request function, and its response returned; a URL under the entry's link prefix is delivered whole to the storage, which answers it. It delivers by a route table in its own format, written by the function product at deployment, and reads only that envelope -- the app a request is for, the link prefix -- carrying the rest of a request and of a link unread. It starts without the function product or the storage running and answers unavailable while either is down; it is the data plane's, and never authenticates an app's users. Who may read a private link is open, 13ixj [C10]",
+			"an HTTP request for a name is delivered to what the name is bound to -- an app's request function, as a call through the function product, or the storage, which answers a link -- and its response returned. It is the name and nothing more, vr5lw: on a machine a listener its driver deploys, as it deploys an adapter, ends TLS with the machine's certificate and hands the request to the deployment bound, and a Worker is its own entry; no route table stands beside the names, which the organization's control binds in its bundle. It reads the name alone, carrying the rest of a request unread. It starts without the function product or the storage running and answers unavailable while what a name is bound to is down; it is the data plane's, and never authenticates an app's users, and a gateway is an app, never a part. Who may read a private link is open, 13ixj [C10]",
 	},
 	'?clock': {
 		half: 'organization',

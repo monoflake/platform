@@ -261,21 +261,32 @@ with credentials of their own, three in all:
 out with the author on 2026-10-18.
 
 - **Each export declares how far it is shown**: within its organization, the default, called by its
-  organization's apps with a capability at its deployment's address; or public, reached by anyone
-  through the entry. Nothing is public that was not declared so. Within an organization an address
+  organization's apps with a capability at its deployment's address; or public, which it is
+  exactly when a name is bound to it. Nothing is public that no name is bound to. Within an organization an address
   may still stand on the public network, and every call to it without a capability of its
   organization's is refused; a network laid over the public one, keeping such an address off it,
   is a guard beside that, and open. [C25]
 - **A machine's driver keeps its firewall**, in software, so no hardware firewall is needed: what
   comes in is let in only at a public export's port and the driver's own, and what goes out only as
   each deployment's `network` allows, RFC 49qyg.
-- **To be public is a step of its own, and needs one way in from the public network**: an address
-  of its own is enough. The platform gives it a name of the platform's domain, its records DNS only,
-  pointing at the address its driver reports, which it reports again as it changes, so a machine's
-  address being fixed, changing or new at each restart is all one. A name of the user's own points
-  at the platform's by a CNAME, behind a proxy of their own or not as they choose; the platform
-  binds no domain of a user's itself. The two may stand together. A machine without an address is
-  public through a relay of Cloudflare's, RFC vr5lw above.
+- **An app is reached from outside where it can be reached and can be found**, worked out with the
+  author on 2026-10-18: reached, by an address of its own or a relay; found, by a name bound to it.
+  **An entry is that name and nothing more**: on a machine, a listener its driver deploys beside
+  the deployments, as it deploys an adapter, so data still goes past the driver, ends TLS with the
+  machine's certificate and hands a request to the deployment its name is bound to; a Worker is its
+  own entry. No route table stands beside the names. An entry reads the name alone and carries the rest
+  unread, answers unavailable while what the name is bound to is down, and never authenticates an
+  app's users.
+- **A gateway is an app, never a part**: an app bound to a name, calling others of its
+  organization by capability, inline or across machines, and limiting rate or authenticating its
+  users in its own code if at all. What stands behind it is shown within its organization alone and
+  needs no name. The platform keeps no gateway and reserves no name for one.
+- **A name bound to a machine's app is a record DNS only**, pointing at the address its driver
+  reports, which it reports again as it changes, so a machine's address being fixed, changing or
+  new at each restart is all one. A name of the user's own points at a platform name by a CNAME,
+  behind a proxy of their own or not as they choose; the platform binds no domain of a user's
+  itself. The two may stand together. A machine without an address is reached through a relay of
+  Cloudflare's, above.
 - **A Worker is public at the address its vendor gives it**, or at a domain its account holds,
   bound in that account.
 - **A platform's name may be served from a user's own Cloudflare account**, its traffic counted
@@ -286,9 +297,14 @@ out with the author on 2026-10-18.
   takes nothing of Let's Encrypt's count for the platform's domain; that a name four levels deep is
   given one across accounts is to be tried. [C26] Where it holds no domain, the vendor's address or the user's own domain serves instead.
   `lessons.md`
-- **An organization's public names are of a domain apart from the platform's own**,
-  `{app}.{organization}.{domain}`, as a vendor keeps its users' pages off its own domain, so nothing
-  an organization's app sets reaches the platform's console or controls. Organizations are kept
+- **An organization is given two names, `{organization}.{domain}` and `*.{organization}.{domain}`**,
+  of a domain apart from the platform's own, as a vendor keeps its users' pages off its own domain,
+  so nothing an organization's app sets reaches the platform's console or controls. It binds any
+  name the two cover -- the first, or one label beneath it -- to any of its apps, as it likes; an
+  app's name is offered as the label when the app is made, and binds nothing. Which organization
+  holds a label of the domain is the platform's control's record, kept beside the anchor in the
+  platform's footing; which app a name of the organization's is bound to is its own control's, and
+  a name is bound to one app at a time. Organizations are kept
   apart from one another by that domain's place in the Public Suffix List, asked for once the
   platform serves thousands, which the list asks, `lessons.md`. [D9]
 - **A certificate service gives a machine its names' certificate**, worked out with the author on
@@ -301,8 +317,9 @@ out with the author on 2026-10-18.
   - **It holds no token able to move a name**: each platform name's `_acme-challenge` is delegated
     by a CNAME to a zone kept for validation alone, and the service holds a token for that zone
     only; the records that point a name stay the platform's control's.
-  - **A machine is given one certificate for `*.{organization}.{domain}`**, its own key behind it,
-    so an app deployed there is named at once. Its holder could answer for another of the
+  - **A machine is given one certificate for `{organization}.{domain}` and
+    `*.{organization}.{domain}`**, its own key behind it, so a name bound to an app there is served
+    at once. Its holder could answer for another of the
     organization's names only where that name's traffic reached it, and the platform points the
     names. Let's Encrypt issues one set of names five times a week, so through it an organization
     adds five machines a week at most, `lessons.md`.

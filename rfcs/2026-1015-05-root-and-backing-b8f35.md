@@ -407,8 +407,6 @@ Open, for the discussion that follows:
   authority -- may rotate the intermediate key unattended in the operator's place. [D3]
 - How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
   failure, and so s1's. [D3]
-- Whether a name that must be unique across scopes, such as an app's domain, is the platform's
-  record, and whether it is kept in the anchor or beside it. [B9]
 - How a host keeps its way to a footing short, where the vendor's routing lands a connection far:
   one connection dialed again while it lands far, reads from replicas, a paid plan's routing
   measured; an optimization, not a block. [D5]

@@ -117,9 +117,9 @@ owner (one scope, its own unique salt)
   owner is stored once, across datasets and apps alike; across owners the same content has a
   different hash, so an address cannot be computed by anyone outside the owner, and nothing is
   shared between owners.
-- **A link is the content's, not the name's**: a URL carrying the hash, through the platform's
-  gateway -- its prefix the gateway's, which delivers the rest to the storage unread, so the rest is
-  the storage's own to shape -- answered with a strong `ETag`, `immutable` and a year's cache,
+- **A link is the content's, not the name's**: a URL carrying the hash, at a name bound to the
+  storage, whose entry delivers its path to the storage unread, so the path is the storage's own to
+  shape, RFC vr5lw; which name is open [A8] -- answered with a strong `ETag`, `immutable` and a year's cache,
   public or private. Private is decided by who asks, never by a parameter on the URL, so the address
   stays one. Content made public cannot be recalled from caches the platform does not hold.
 - **When names disagree, the most permissive wins.** The same content named in two datasets, one
