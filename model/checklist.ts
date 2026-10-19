@@ -547,6 +547,12 @@ export const CHECKLIST: Item[] = [
 		what: "holding an organization's DNS for it, so a domain's apex is pointed by the platform itself",
 		from: 'vr5lw',
 	},
+	{
+		id: 'D14',
+		group: 'D',
+		what: 'delivering a warning outside the API, by email first, and to whom: what sends it, which kinds are sent, and how a person turns them off',
+		from: 'v7v3w',
+	},
 
 	// E -- stale or inconsistent text.
 	{

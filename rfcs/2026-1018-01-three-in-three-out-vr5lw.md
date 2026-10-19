@@ -529,9 +529,9 @@ out with the author on 2026-10-18.
     past its registration with no end known is the operator's to settle by hand.
   - **Every proof is checked again weekly**, a CNAME by a lookup, a challenge by its few seconds.
     One that still holds changes nothing, but its end moves to a registration renewed; one that
-    fails warns the organization's admins, in the console and by email, and unbinds nothing, since a
-    failure may pass and the end is what releases. **A registration within 30 days of expiring is
-    warned of** at each check until it is renewed.
+    fails raises a warning, RFC v7v3w, unbinds nothing, since a failure may pass and the end is what
+    releases, and is checked again the next week. **A registration within 30 days of expiring
+    raises a warning** too, which stands until it is renewed.
   - How the platform could hold an organization's DNS, so an apex is pointed by the platform
     itself, is later. [D13]
 - **A Worker is public at the address its vendor gives it**, or at a domain its account holds,

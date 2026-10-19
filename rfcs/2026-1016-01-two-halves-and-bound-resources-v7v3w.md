@@ -79,6 +79,13 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   offered and whether a warning was dismissed comes from the API, which keeps a dismissal as
   configuration, so every client shows the same and none works it out again; a dashboard may only
   reshape what it is given for display. How a person is authenticated to either API is below.
+- **A warning is one model, whatever raises it**, worked out with the author on 2026-10-19, and a
+  reminder is a warning raised ahead of a date: its kind, a code; what it is about, an id; when it
+  was raised; what it says, from the API; whether it may be dismissed; and, once dismissed, the
+  dismissal, kept as configuration on what it is about. It stands while its cause holds and is
+  cleared when the cause is gone, by whatever finds it, so the API returns the same warnings to
+  every client. **Sending one elsewhere, as an email, is a delivery of the same warning**, added
+  later. [D14]
 - **Everything that serves runs in an organization**, and none of it needs the platform's control to
   serve or to start: an organization reads its bundle, and reaches the platform's control only to
   change it, which `model/check.ts` checks.
