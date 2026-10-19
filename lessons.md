@@ -370,3 +370,11 @@ https://html.spec.whatwg.org/multipage/browsers.html#sandboxing and https://www.
 attachments from 8.16, excludes `application/pdf` to make them load. Asked by A8. Sources:
 https://support.atlassian.com/jira/kb/pdf-attachments-fail-to-load-in-chrome-on-jira-data-center/
 and https://answers.sap.com/questions/13392550/chrome-blocking-pdf-content-accessed-via-media-url.html
+
+## COSE, read 2026-10-19
+
+**COSE names Ed25519 by -19, and the polymorphic `EdDSA`, -8, is deprecated.** RFC 9864, October
+2025, registers fully specified algorithms: `Ed25519` -19 and `Ed448` -53, both recommended, and
+marks `EdDSA` -8 "Deprecated", since an identifier covering two curves cannot be negotiated; WebAuthn
+had worked around it by reading -8 as Ed25519 alone. Asked by checklist A11. Source:
+https://www.rfc-editor.org/rfc/rfc9864.html

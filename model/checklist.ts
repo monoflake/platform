@@ -104,7 +104,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A11',
 		group: 'A',
-		what: 'what a capability, a certificate and a bundle each hold, field by field, inside the COSE_Sign1 they are signed as, b8f35',
+		what: "which bits a capability's rights take, and the labels of the claims the platform adds to CWT's; what each signed record holds is decided, b8f35",
 		from: 'b8f35, v7v3w',
 	},
 

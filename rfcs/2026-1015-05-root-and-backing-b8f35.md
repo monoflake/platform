@@ -241,11 +241,34 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   with the root private key**; what holds it online is the data plane's, since the issuer cannot
   sign past a working key's expiry without it, though it is needed once in a working key's life
   and never on a call.
-- **A capability, a certificate and a bundle are signed records of one form**, worked out with the
-  author on 2026-10-18: a `COSE_Sign1` of RFC 9052, its content CBOR, signed by Ed25519, COSE's
-  `EdDSA`, which a Worker's WebCrypto signs and verifies, `lessons.md`. The standard is taken whole
-  rather than a form of the platform's own, so every language's library reads it; what each holds,
-  field by field, is open. [A11]
+- **A capability, a certificate, an account credential and a bundle are signed records of one
+  form**, worked out with the author on 2026-10-18: a `COSE_Sign1` of RFC 9052, its content CBOR,
+  signed by Ed25519, COSE's algorithm -19 of RFC 9864 and never the polymorphic `EdDSA`, -8, which
+  it deprecates; a Worker's WebCrypto signs and verifies it, `lessons.md`. The standard is taken
+  whole rather than a form of the platform's own, so every language's library reads it. What each
+  holds, worked out with the author on 2026-10-19:
+  - **Every one's protected header holds `alg`, -19; `kid`, the first 16 bytes of the BLAKE3 of the
+    signer's public key; and `typ` of RFC 9596, `monoflake:{kind}:{version}`**, written as a context
+    is, so a signature over one kind is never taken as another's.
+  - **A capability, a certificate and an account credential are claim sets of CWT, RFC 8392**; a
+    bundle is a record, and no token.
+
+    | Record             | Holds                                                                                                                                                                                      |
+    | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | capability         | `iat` and `exp`; `sub`, the account or app it was given to, logged and never checked; the scope's id; the resource's id within it, which carries its type; the rights it grants            |
+    | certificate        | `iat` and `exp`; `cnf` of RFC 8747, the key certified, as a `COSE_Key`; the scope's id, none for the platform's own; one role, `intermediate`, `issuer`, `bundle` or `account`             |
+    | account credential | `iat` and `exp`; `sub`, the account; no scope                                                                                                                                              |
+    | bundle             | `version`; the scope's id; its generation, and an organization's the generation of the platform's it was compiled with; the body, each product's configuration in the product's own format |
+
+  - **A capability is refused unless its signer's certificate names the role `issuer` and the
+    capability's own scope**, so one organization's issuer never signs for another.
+  - **A capability carries its signer's `kid` alone, never the chain**: the certificates come in the
+    bundle a part reads anyway, the platform's copied down each day, and a `kid` a part does not know
+    sends it to read the bundle again. A call carries the capability alone.
+  - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
+    leaked is worth, B14; one bound to a key its holder proves would cost a signature a call.
+  - **No signed record holds a secret**: a certificate is public and travels in a bundle.
+  - Which bits the rights take, and the labels of the claims the platform adds, are open. [A11]
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
@@ -278,9 +301,10 @@ write(bucket, path, content)
 
 - **A scope's salt is derived, never stored**, as BLAKE3's
   `derive_key(context, salt master || scope id)`. A scope's key is derived the same way, under
-  another context, from the encryption master of a version. The organization's certificate carries
-  both each week, RFC v7v3w, and they are the same every week: the certificate's own key pair
-  rotates and has no part in them.
+  another context, from the encryption master of a version. Both are delivered beside the
+  organization's certificate each week, sealed apart from it and never in it, since a certificate
+  is public and travels in a bundle, RFC v7v3w; they are the same every week: the certificate's own
+  key pair rotates and has no part in them.
 - **A context is `monoflake:{scope}:{type}:{version}`**, written into the code and never changed.
   Its words are whole, never abbreviated, of lowercase letters and digits alone, joined by a
   hyphen only where one word will not do, never by an underscore. A type is unique within its scope
