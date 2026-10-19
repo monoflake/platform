@@ -474,10 +474,26 @@ out with the author on 2026-10-18.
   own entry. No route table stands beside the names. An entry reads the name alone and carries the rest
   unread, answers unavailable while what the name is bound to is down, and never authenticates an
   app's users.
-- **A gateway is an app, never a part**: an app bound to a name, calling others of its
-  organization by capability, inline or across machines, and limiting rate or authenticating its
-  users in its own code if at all. What stands behind it is shown within its organization alone and
-  needs no name. The platform keeps no gateway and reserves no name for one.
+- **An organization's gateway is its own, never an app**, worked out with the author on
+  2026-10-19: every organization has one, part of what the platform gives it, never among its apps
+  and configured only through its organization's control, RFC v7v3w. It is bound to the
+  organization's platform name and answers by path, `/v{n}/{scope}/...`.
+  - **A scope is the storage, another the platform reserves and names to its users, or an app**
+    the organization binds to it under a scope of its choosing; for an app it drops the scope and
+    hands the app `/v{n}/...`, the rest unread.
+  - **The version is each scope's own**, an integer written with its `v`: put first, it lets all
+    that follows change from one version to the next, and the gateway checks its spelling alone and
+    carries it through.
+  - **An app under it never holds the root**, so a site, which needs its root, is never built
+    there; one is built at a name of the organization's own.
+  - **Every answer it gives carries `X-Content-Type-Options: nosniff` and
+    `Content-Security-Policy: sandbox`**, but a type exempted, by the storage's rule, RFC 13ixj,
+    **and no `Set-Cookie`**, removed whatever the scope: a page there shows and does nothing, an API
+    is untouched, since a response's policy reaches only the document made from it, and no cookie is
+    set for the domain every organization shares. A name of the organization's own bound to an app
+    passes the app's answer as it is.
+  - What else it does -- authenticating an app's users, a firewall kept in step in the account it
+    runs in -- is to be decided, each on its own. [C30]
 - **A name bound to a machine's app is a record DNS only**, pointing at the address its driver
   reports, which it reports again as it changes, so a machine's address being fixed, changing or
   new at each restart is all one. A name of the user's own points at a platform name by a CNAME,
@@ -491,41 +507,40 @@ out with the author on 2026-10-18.
   for it, the domain's zone takes the platform's name as a custom hostname, served by a Worker on
   the zone, and the platform, holding its own domain's records, proves the name and points it there,
   DNS only. Its certificate is the vendor's, one for that name, asked of Google's CA so it
-  takes nothing of Let's Encrypt's count for the platform's domain; that a name four levels deep is
-  given one across accounts is to be tried. [C26] Where it holds no domain, the vendor's address or the user's own domain serves instead.
+  takes nothing of Let's Encrypt's count for the platform's domain; that one is given across accounts,
+  the name DNS only, is to be tried. [C26] Where it holds no domain, the vendor's address or the user's own domain serves instead.
   `lessons.md`
-- **An organization is given two names, `{organization}.{domain}` and `*.{organization}.{domain}`**,
-  of a domain apart from the platform's own, as a vendor keeps its users' pages off its own domain,
-  so nothing an organization's app sets reaches the platform's console or controls. It binds any
-  name the two cover -- the first, or one label beneath it -- to any of its apps, as it likes; an
-  app's name is offered as the label when the app is made, and binds nothing. Which organization
-  holds a label of the domain is the platform's control's record, kept beside the anchor in the
-  platform's footing; which app a name of the organization's is bound to is its own control's, and
-  a name is bound to one app at a time. Organizations are kept
-  apart from one another by that domain's place in the Public Suffix List, asked for once the
-  platform serves thousands, which the list asks, `lessons.md`. [D9]
-- **An organization's storage is given a name of a content domain**, `{organization}.{domain}` of a
-  domain apart from both the platform's and its apps', worked out with the author on 2026-10-18: a
-  link answers what a user uploaded, HTML as likely as not, which on its apps' domain could set
-  their cookies were it ever served as itself, RFC 13ixj. The Public Suffix List is asked of it as of
-  the other. [D9]
+- **An organization is given one platform name, `{organization}.mofl.fyi`, bound to its
+  gateway**, worked out with the author on 2026-10-19: of a domain apart from the platform's own, as
+  a vendor keeps its users' pages off its own domain, so nothing an organization's app sets reaches
+  the platform's console or controls. `*.{organization}.mofl.fyi` is never given: an app is public
+  under the gateway or at a name of the organization's own, which the organization holds and binds
+  to any of its resources. Which organization holds a label of the domain is the platform's
+  control's record, kept beside the anchor in the platform's footing; which app a name of the
+  organization's is bound to is its own control's, and a name is bound to one app at a time; a
+  label the platform keeps for itself, as `www`, `api` and `status`, is never given.
+  - **The domain is asked of the Public Suffix List before the platform opens to the public**,
+    which the list asks of a domain's size, `lessons.md`. Until then a cookie set for the whole
+    domain would reach every organization's, which the gateway's rules alone prevent; that its
+    account's holder could change the gateway is accepted while every user is one the author
+    invited, so the name points at it DNS only.
   - **`{organization}` is its scope id or any label it holds, all answering alike**, worked out with
     the author on 2026-10-19: a link at the scope id, eight hex digits, RFC b8f35, lasts as long as
     the organization, and one at a label as long as the label is held. **An organization may hold
     several labels at once**, so it moves from one to another with both answering; a label let go
     and taken by another organization breaks the old links and never serves them another's content,
     since the buckets and the hashes are each organization's own, RFC b8f35.
+- **An organization's storage answers under its gateway**, at `/v{n}/storage/...`, RFC 13ixj: a
+  link answers what a user uploaded, HTML as likely as not, made harmless by the gateway's rules,
+  so the storage needs no domain apart from its apps'.
   - **The storage is bound to names as an app is**, the organization's own among them, and one may
-    be its preferred, which `publish` answers with, the content domain's where none is. Every name
-    bound answers alike, the content domain's always.
+    be its preferred, which `publish` answers with, the gateway's where none is. Every name bound
+    answers alike, the gateway's always, and every one serves an object in a sandbox, RFC 13ixj.
   - **A name of its own is the organization's to keep**: a change of it reaches what the platform
     holds -- which name `publish` answers with, the configuration naming it -- and never a link handed
     out, hard-coded elsewhere or kept in an app's own data. Since names stand together, a change is
     a name added, made preferred, and the old unbound when the user likes; **unbinding is what
     breaks a link, and is warned of as such**, a preferred name changed is not.
-  - **A name of its own on a registrable domain its apps' names share is warned of**, a warning
-    that may be dismissed: content there could set those apps' cookies, which the content domain
-    exists to prevent.
 - **A certificate service gives a machine its names' certificate**, worked out with the author on
   2026-10-18: an app like any other, in an organization of the internal platform's own, which asks a
   public CA by ACME and its DNS challenge -- Google's first, which counts no domain's certificates;
@@ -536,9 +551,8 @@ out with the author on 2026-10-18.
   - **It holds no token able to move a name**: each platform name's `_acme-challenge` is delegated
     by a CNAME to a zone kept for validation alone, and the service holds a token for that zone
     only; the records that point a name stay the platform's control's.
-  - **A machine is given one certificate for `{organization}.{domain}` and
-    `*.{organization}.{domain}`**, its own key behind it, so a name bound to an app there is served
-    at once. Its holder could answer for another of the
+  - **A machine serving an organization's gateway is given a certificate for
+    `{organization}.mofl.fyi`**, its own key behind it. Its holder could answer for another of the
     organization's names only where that name's traffic reached it, and the platform points the
     names. Let's Encrypt issues one set of names five times a week, so through it an organization
     adds five machines a week at most, `lessons.md`.

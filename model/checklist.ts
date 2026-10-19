@@ -161,7 +161,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing; a machine's certificate is the certificate service's, vr5lw",
 		from: 'b8f35, 13ixj, vr5lw',
-		done: 'vr5lw: an entry is a name bound to an app, served by its host, and a gateway is an app',
+		done: "vr5lw: an entry is a name bound to an app, served by its host, and a gateway is the organization's, never an app",
 	},
 	{
 		id: 'B10',
@@ -421,7 +421,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C26',
 		group: 'C',
-		what: "to try that a user's Cloudflare account on the free plan gives a custom hostname four levels deep, a name of the platform's zone pointing at it DNS only, its certificate; and which certificate_authority values the API takes",
+		what: "to try that a user's Cloudflare account on the free plan gives a custom hostname, a name of the platform's zone pointing at it DNS only, its certificate; and which certificate_authority values the API takes",
 		from: 'vr5lw, lessons.md',
 		step: 6,
 	},
@@ -445,6 +445,13 @@ export const CHECKLIST: Item[] = [
 		what: 'a name for the bucket kind that is cut, compressed and sealed, since content names what lies beneath every bucket',
 		from: '13ixj',
 		step: 2,
+	},
+	{
+		id: 'C30',
+		group: 'C',
+		what: "what an organization's gateway does past routing, each on its own: authenticating an app's users, a firewall kept in step in the account it runs in; and the scopes the platform reserves past the storage",
+		from: 'vr5lw',
+		step: 6,
 	},
 	// D -- commercial and operational.
 	{
@@ -503,6 +510,7 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "the domains organizations' public names and their storage's names are of, apart from the platform's own and from each other, and asking the Public Suffix List to take them once the platform serves thousands",
 		from: 'vr5lw, lessons.md',
+		done: 'vr5lw: mofl.fyi, one name an organization at its gateway; the list asked before the platform opens',
 	},
 	{
 		id: 'D10',

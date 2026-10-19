@@ -174,7 +174,7 @@ storage (one an organization, its own unique salt)
   | data  | `json` `application/json`, `xml` `application/xml`, `xhtml` `application/xhtml+xml`, `wasm` `application/wasm`, `pdf` `application/pdf`                                                                                                                                                |
 
 - **An object bucket alone is served**, at `/v{n}/storage/{bucket}/{hash}.{extension}` of a name
-  bound to the storage, the content domain's or one the organization binds, RFC vr5lw; its entry
+  bound to the storage, its organization's gateway's or one the organization binds, RFC vr5lw; its entry
   delivers the path to the storage unread. The version is an integer, `v1` now, written with its
   `v` in the path alone; only that spelling answers, the version's and the hash's, 64 lowercase hex
   digits, RFC b8f35. It is answered with a strong `ETag`, `immutable` and a year's cache, public or
