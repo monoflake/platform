@@ -56,7 +56,7 @@ refused while an app is bound to it, RFC 49qyg.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second
-reader would be broken by the first one's migration without being told. A dataset can be shared
+reader would be broken by the first one's migration without being told. A bucket can be shared
 because a file has no schema; a database cannot.
 
 **A schema changes only in a migration, a privileged time a deployment opens**, and never while an
@@ -79,4 +79,4 @@ Open, for the discussion that follows:
 - Everything beneath the contract past what RFC vuanj settles for the tablet. [C12]
 - The form of results and the limits on one query. [C12]
 - The `analytical` kind's table definition and its query dialect, when something needs it. [C12]
-- Whether a database, as a dataset is, may be deleted only while empty. [C12]
+- Whether a database, as a bucket is, may be deleted only while empty. [C12]

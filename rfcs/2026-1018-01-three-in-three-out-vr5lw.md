@@ -43,12 +43,12 @@ as it stands on a vendor, RFC 94y0d.
 
 **Storage is of two uses, and only one is offered above as it is.**
 
-| Use      | What it is                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------ |
-| `object` | the storage's own: datasets of files by name, RFC 13ixj, narrower than S3, and optimized beneath |
-| `volume` | a disk: bytes changed in place and flushed, mounted by one `container` at a time                 |
+| Use      | What it is                                                                                      |
+| -------- | ----------------------------------------------------------------------------------------------- |
+| `object` | the storage's own: buckets of files by path and of objects by hash, RFC 13ixj, narrower than S3 |
+| `volume` | a disk: bytes changed in place and flushed, mounted by one `container` at a time                |
 
-- **A volume can give `object`; `object` never gives a volume.** Datasets can be kept on a disk,
+- **A volume can give `object`; `object` never gives a volume.** Buckets can be kept on a disk,
   but a disk cannot be made of files written whole, however fast: a database changes a few bytes
   of a file and must have them flushed at once, one writer at a time.
 - **`object` is a contract of the platform's own, written as a subset of S3**, worked out with the
@@ -57,15 +57,15 @@ as it stands on a vendor, RFC 94y0d.
   blob asks, RFC vuanj, and no more. Every object is at most 16 MiB. It needs no condition on a
   write, since a parcel is named by its content and a journal's object by a seed drawn at
   random, no rename and no upload in parts. **What takes it and what gives it are one**: a store
-  is reached by it, and a platform gives an `opaque` dataset by it, RFC 13ixj, so one platform's
-  storage is the next one's `object`, RFC 94y0d. A `content` dataset may be given by the same
+  is reached by it, and a platform gives an `opaque` bucket by it, RFC 13ixj, so one platform's
+  storage is the next one's `object`, RFC 94y0d. A `content` bucket may be given by the same
   subset without the 16 MiB bound, for a client that speaks S3.
 - **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
-  compute and a volume, below; a dataset of compute, `object` stores and a database, its records'
+  compute and a volume, below; a bucket of compute, `object` stores and a database, its records'
   home, RFC b8f35.
-- **What is extended is `object` and volumes; what is given is `object` and datasets.** A dataset is
+- **What is extended is `object` and volumes; what is given is `object` and buckets.** A bucket is
   the platform's own and never taken from beneath: a platform above takes the one beneath as
-  `object`, through its `opaque` datasets, so nothing is cut or sealed twice, RFC 94y0d.
+  `object`, through its `opaque` buckets, so nothing is cut or sealed twice, RFC 94y0d.
 - **A volume has no interface but the files it holds**: a file system mounted into one container
   alone, kept past a restart, and on a disk once flushed. It is never reached over a network, since
   being mounted by one alone is what keeps a database on it to one writer; storage reached over a
@@ -132,11 +132,11 @@ rest is kept is RFC b8f35's and the bundle's.
 **Layer 0's operations are named in whole words, neutral and formal**, worked out with the author on
 2026-10-18, each product an interface of the platform's own:
 
-| Product  | Operations                                                                                                                      |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| storage  | on a dataset `create`, `describe`, `list`, `delete`; on a file `write`, `read`, `describe`, `list`, `delete`; `link`, RFC 13ixj |
-| database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                 |
-| compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                 |
+| Product  | Operations                                                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| storage  | on a bucket `create`, `describe`, `list`, `delete`; on a file or an object `write`, `read`, `describe`, `list`, `delete`; `publish`, RFC 13ixj |
+| database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                                |
+| compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                                |
 
 The rights a capability grants stay `read`, `create`, `replace`, `delete` and `alter`, RFC vuanj, so
 a `write` asks `create` where its path is new and `replace` where it is not; and an `effect`'s
@@ -507,13 +507,13 @@ out with the author on 2026-10-18.
 - **An organization's storage is given a name of a content domain**, `{organization}.{domain}` of a
   domain apart from both the platform's and its apps', worked out with the author on 2026-10-18: a
   link answers what a user uploaded, HTML as likely as not, which on its apps' domain could set
-  their cookies; and kept as long as the organization is, so a link at it is never broken by a
+  their cookies were it ever served as itself, RFC 13ixj; and kept as long as the organization is, so a link at it is never broken by a
   change of the organization's. The Public Suffix List is asked of it as of the other. [D9]
   - **The storage is bound to names as an app is**, the organization's own among them, and one may
-    be its preferred, which `link` answers with, the content domain's where none is. Every name
+    be its preferred, which `publish` answers with, the content domain's where none is. Every name
     bound answers alike, the content domain's always.
   - **A name of its own is the organization's to keep**: a change of it reaches what the platform
-    holds -- which name `link` answers with, the configuration naming it -- and never a link handed
+    holds -- which name `publish` answers with, the configuration naming it -- and never a link handed
     out, hard-coded elsewhere or kept in an app's own data. Since names stand together, a change is
     a name added, made preferred, and the old unbound when the user likes; **unbinding is what
     breaks a link, and is warned of as such**, a preferred name changed is not.

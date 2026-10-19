@@ -110,7 +110,7 @@ export const NEEDS: { any: Kind[]; cpu?: number; why: string }[] = [
 		any: ['database', 'instance'],
 		why: 'the database product needs a database, or an instance to write a tablet',
 	},
-	{ any: ['object'], why: 'storage keeps datasets, and a tablet archives its log and snapshots' },
+	{ any: ['object'], why: 'storage keeps buckets, and a tablet archives its log and snapshots' },
 ];
 
 const resourcesOf = (d: Deployment) =>

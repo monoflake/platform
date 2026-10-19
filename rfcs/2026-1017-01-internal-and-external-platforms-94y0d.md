@@ -120,14 +120,14 @@ organization that external organizations stand on is a **cell**.
   internal organization, at most 10 GB, and the external organization sees nothing.
 
 **The external platform hands the internal one only parcels it has sealed**, whatever its own
-datasets ask: each is put whole into an `opaque` dataset of the external organization's internal
-one, a dataset per placement, RFC 13ixj, so nothing is cut, compressed or sealed twice. The external
+buckets ask: each is put whole into an `opaque` bucket of the external organization's internal
+one, a bucket per placement, RFC 13ixj, so nothing is cut, compressed or sealed twice. The external
 organization's footing is a database of the internal one and is sealed there, since it holds the
 bundle that opens the parcels.
 
-**The external platform is its internal organizations' admin**, and sets their datasets' policies
+**The external platform is its internal organizations' admin**, and sets their buckets' policies
 downward as any owner does, the upper writing into a format the lower defines, `scope.md`. A change
-to an external dataset's policy is the external platform's own migration; the internal one sees
+to an external bucket's policy is the external platform's own migration; the internal one sees
 only parcels written and deleted. **An external organization revoked is suspended, and so is
 the internal organization beneath it**; both are deleted seven days after unless restored, RFC
 b8f35, so the platform pays for what it sealed no longer than that.

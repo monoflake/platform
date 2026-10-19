@@ -101,7 +101,7 @@ in the platform's control, an organization's and the extensions each binds.
   is written, and the API offers no way to write them, as RFC vuanj has it of grants.
 
 **Only an organization is a scope, and only an organization holds anything.** It holds the apps,
-the datasets, the databases and the resources they run on; the scope of RFC vuanj is an
+the buckets, the databases and the resources they run on; the scope of RFC vuanj is an
 **organization scope**. A person who wants apps of their own makes an organization, named as they
 like.
 
@@ -211,13 +211,13 @@ its driver, RFC vr5lw.
 **The platform keeps what spans organizations; each organization's control keeps its own
 configuration; its extensions hold its data and run it.**
 
-| Product  | Configuration, the organization's control   | Data, on its extensions                                                               |
-| -------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
-| storage  | its datasets and their policies             | each file's name and hash, content shared by hash, the extent's packing and splitting |
-| database | its databases and their bindings            | the rows, the log, the snapshots                                                      |
-| compute  | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages           |
+| Product  | Configuration, the organization's control   | Data, on its extensions                                                                      |
+| -------- | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| storage  | its buckets and their policies              | each file's path and each object, content shared by hash, the extent's packing and splitting |
+| database | its databases and their bindings            | the rows, the log, the snapshots                                                             |
+| compute  | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages                  |
 
-- **Whatever an organization opens is configuration, whoever opens it**: a dataset, a database, an
+- **Whatever an organization opens is configuration, whoever opens it**: a bucket, a database, an
   app -- by a person through the console, or by an app's own code calling its organization's control at
   run time, RFC zn3u5 -- and an extension bound, through the control that binds it. Data is only what
   lives inside what was opened.

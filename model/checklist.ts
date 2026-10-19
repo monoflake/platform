@@ -76,14 +76,14 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A7',
 		group: 'A',
-		what: "what each level of a store's durability means, and the levels' codes as datasets and stores record them; the attributes and their names are decided, 13ixj",
+		what: "what each level of a store's durability means, and the levels' codes as buckets and stores record them; the attributes and their names are decided, 13ixj",
 		from: 'b8f35, 13ixj',
 		done: '13ixj',
 	},
 	{
 		id: 'A8',
 		group: 'A',
-		what: "a link's path: how a hash is written in it, and a name for its type: published, and cached for a year; its name is the content domain's or the organization's, vr5lw",
+		what: "an object's extension: the table that makes a media type or a path's extension one standard extension, each extension's type, and the types that could run in a browser and are never served as themselves",
 		from: '13ixj',
 	},
 	{
@@ -118,7 +118,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B3',
 		group: 'B',
-		what: "each record a control holds, field by field -- datasets, databases, apps, bindings, names, schedules, members, extensions, leases, accounts -- and what a control calls beneath it: opening a scope, adding a store, starting a migration; who holds which and how a change is taken are v7v3w's",
+		what: "each record a control holds, field by field -- buckets, databases, apps, bindings, names, schedules, members, extensions, leases, accounts -- and what a control calls beneath it: opening a scope, adding a store, starting a migration; who holds which and how a change is taken are v7v3w's",
 		from: 'item 5',
 	},
 	{
@@ -291,14 +291,14 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C8',
 		group: 'C',
-		what: 'whether one content named in a content and an opaque dataset is kept once',
+		what: 'whether one content named in a content and an opaque bucket is kept once',
 		from: '13ixj',
 		step: 2,
 	},
 	{
 		id: 'C9',
 		group: 'C',
-		what: "the storage's metadata held per owner or per dataset",
+		what: "the storage's metadata held per owner or per bucket",
 		from: '13ixj',
 		step: 2,
 	},
@@ -369,7 +369,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C20',
 		group: 'C',
-		what: 'a store lost without warning, or reaching an end its owner did not choose: what the platform does, and the state each dataset on it is left in',
+		what: 'a store lost without warning, or reaching an end its owner did not choose: what the platform does, and the state each bucket on it is left in',
 		from: '13ixj',
 		step: 6,
 	},
@@ -437,6 +437,13 @@ export const CHECKLIST: Item[] = [
 		what: "what one way of signing in counts for among a sign-in's factors, a passkey among them, and how an account that lost every way it held is given back",
 		from: 'v7v3w',
 		step: 8,
+	},
+	{
+		id: 'C29',
+		group: 'C',
+		what: 'a name for the bucket kind that is cut, compressed and sealed, since content names what lies beneath every bucket',
+		from: '13ixj',
+		step: 2,
 	},
 	// D -- commercial and operational.
 	{
@@ -507,6 +514,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: "the platform's own CI: what it runs on, and how long it keeps what it builds",
 		from: 'vr5lw',
+	},
+	{
+		id: 'D12',
+		group: 'D',
+		what: 'exporting a bucket, to another object store, a file system or an archive: plaintext, and a right of its own',
+		from: '13ixj',
 	},
 
 	// E -- stale or inconsistent text.

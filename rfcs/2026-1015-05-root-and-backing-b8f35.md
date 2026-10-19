@@ -21,7 +21,7 @@ The shape the discussion has reached so far, to be decided once it is diffed aga
 layer it belongs to. The name is now the two controls', the platform's and each organization's, HTTPS APIs that reserve no name, RFC v7v3w.
 
 **Each product reads its own configuration from its organization's bundle, in the footing, never
-from a tablet**, RFC v7v3w: the storage its datasets and their policies, the database its directory
+from a tablet**, RFC v7v3w: the storage its buckets and their policies, the database its directory
 of names, and functions their apps, each app's deployed versions by code hash, its functions'
 declarations, its triggers, its env and its bindings. A tablet holds data alone. **Nothing in an organization's half holds
 another's configuration**: the platform's half holds every configuration's truth, and each
@@ -33,7 +33,7 @@ format, RFC vuanj -- never a product's tables -- so nothing turns back up to the
 
 | Half     | What it holds                                                                                         | Layer         |
 | -------- | ----------------------------------------------------------------------------------------------------- | ------------- |
-| logical  | Its id, whether it exists, the datasets and databases it holds                                        | -1, `scope`   |
+| logical  | Its id, whether it exists, the buckets and databases it holds                                         | -1, `scope`   |
 | physical | The stores its bytes go to -- the platform's, or a user's own -- with their secrets, tags and weights | -2, `backing` |
 
 The blob reads a scope's backing, a dependency that points down. **A capability never carries
@@ -53,7 +53,7 @@ carried in one, a change would not reach the capabilities still alive.
   node, site, account, zone and region it stands in, RFC 13ixj; never a store by name; and, while
   the stores change, the generation before, read from until what it held has moved. A scope's salt
   and key are not kept here or anywhere: they are derived from the root's masters and the scope's
-  id. The placement a dataset asks for is the dataset's, carried down with each write, and how it is
+  id. The placement a bucket asks for is the bucket's, carried down with each write, and how it is
   laid out is the blob's.
 - **`extent`**: what a blob's content is made of. **Below the blob, content is cut into pieces,
   and pieces are packed into parcels of about one size**, so stores fill evenly, a layout with
@@ -187,7 +187,7 @@ same salt and key. Its status says what is left of it:
 
 The same holds for every id drawn where reusing it would derive what its first holder's did. The
 anchor is the platform's only global state, and it holds nothing else: every product's
-configuration, every dataset and database, every app's declaration stays in its scope.
+configuration, every bucket and database, every app's declaration stays in its scope.
 
 **An id takes one of three forms**, stored as binary and written out as text only in a URL or
 where it is shown, lowercase and at its full width, leading zeros kept:
@@ -199,8 +199,9 @@ where it is shown, lowercase and at its full width, leading zeros kept:
 | 64 hex digits                    | 256        | derived by BLAKE3            | content, at every layer                               |
 
 - **An id drawn is checked as it is inserted**, by a conditional insert, and drawn again on a
-  conflict. It is unique within its kind alone -- accounts among accounts, one kind of resource
-  within its scope -- and the internal and external platforms check theirs apart, RFC 94y0d, so
+  conflict. It is unique within its kind alone -- accounts among accounts, and a scope's resources
+  among all of its resources, whatever their kind, so an id names one resource and carries its
+  type, worked out with the author on 2026-10-18 -- and the internal and external platforms check theirs apart, RFC 94y0d, so
   one id may name different things on each. Whether an organization keeps one scope id on both is
   decided when it arises. [C19]
 - **An id derived is never checked and never shortened**: 256 bits are taken as never colliding,
@@ -218,7 +219,7 @@ A user appears this low only as configuration: a store given to their own scope.
 does not change for it.
 
 **Whose a record is and where it is kept are two questions.** A record an owner's act brought
-about -- a dataset or database opened in their scope, a schedule declared, a tablet placed -- is the
+about -- a bucket or database opened in their scope, a schedule declared, a tablet placed -- is the
 scope's: counted against its allowance and deleted with it, even when it is kept beneath the scope,
 as its backing is. The scope itself -- its row in the anchor, its allowance -- is the platform's.
 
@@ -249,7 +250,7 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
   leaves the old under its own; retiring an old version re-encrypts what still uses it.
-- **A migration is the blob's own work**: to a new layout when a dataset's placement changes, to a
+- **A migration is the blob's own work**: to a new layout when a bucket's placement changes, to a
   new key when an old version is retired. The control plane starts it, as a caller, and the clock
   paces it; every piece stays readable throughout, and going slowly costs time, never correctness.
 - **The root private key is held by the platform's administrator.** Lost, a new pair is made and
@@ -267,8 +268,8 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
 data and a mistake in it is never undone, `scope.md`. Worked out with the author on 2026-10-17.
 
 ```
-write(dataset, path, content)
-  -> file id: keyed BLAKE3 over the whole file
+write(bucket, path, content)
+  -> content id: keyed BLAKE3 over the whole file
   -> FastCDC cuts it into pieces; piece id: keyed BLAKE3 over each, before compression
   -> each new piece: zstd at level 1, kept only if smaller
   -> appended to the open parcel, sealed as it is appended
@@ -298,14 +299,14 @@ write(dataset, path, content)
 
   | Named        | Over                                       | Mode            | Recorded as                                                  |
   | ------------ | ------------------------------------------ | --------------- | ------------------------------------------------------------ |
-  | file         | the whole file, as it came                 | keyed, the salt | a path in a dataset -> its file id                           |
-  | piece        | the piece, before compression              | keyed, the salt | a file id -> its piece ids                                   |
+  | content      | the whole file or object, as it came       | keyed, the salt | a file's path or an object, in a bucket -> its content id    |
+  | piece        | the piece, before compression              | keyed, the salt | a content id -> its piece ids                                |
   | parcel       | the sealed parcel                          | unkeyed         | a piece id -> its parcel, offset, length, whether compressed |
   | stored block | each copy or parity shard a store is given | unkeyed         | a parcel id -> the stores holding it                         |
 
   What is plaintext is keyed, since anyone holding the content could otherwise compute its address,
   RFC 13ixj; what is sealed is not, since its hash tells nothing, so a parcel is checked and
-  repaired with neither the salt nor the key. A file of one piece has one id for both. Kept as whole
+  repaired with neither the salt nor the key. A content of one piece has one id for both. Kept as whole
   copies, a stored block is its parcel and has its id. **A store keeps a stored block under its
   id as 64 hex digits and nothing else**, no extension, since the magic says what it is, beneath two
   directories named by its first four: `/{aa}/{bb}/{id}`, so a store of a petabyte holds about a
@@ -334,7 +335,7 @@ write(dataset, path, content)
   The masks are those `fastcdc-rs` keeps for 22 and 18 bits, written into the code as constants.
   Test vectors are kept beside it: a fixed salt and input, and every cut they give.
 
-- **A piece is compressed with zstd at level 1**, in a `content` dataset unless it is set otherwise,
+- **A piece is compressed with zstd at level 1**, in a `content` bucket unless it is set otherwise,
   RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.
 - **A parcel is exactly 16 MiB, 16,777,216 bytes, and a piece never spans two.** Its header,
@@ -342,12 +343,12 @@ write(dataset, path, content)
   is whole and no length is written. It holds 16,773,079 bytes of pieces: it is sealed once the
   next piece would not fit, the rest zeros, so with pieces at most 4 MiB it holds at least 12 MiB of
   them. It is never sealed early; what has not filled one waits in the journal.
-- **An `opaque` dataset's file is at most 16 MiB, and is placed as a parcel is**, RFC 13ixj,
+- **An `opaque` bucket's file or object is at most 16 MiB, and is placed as a parcel is**, RFC 13ixj,
   so a sealed parcel and a journal's object of the platform above both fit, RFC vr5lw:
   passed through raw, with no header, never cut, compressed or sealed and never through the
-  journal, and placed as its dataset asks, as any parcel is. What it is -- sealed already or not,
+  journal, and placed as its bucket asks, as any parcel is. What it is -- sealed already or not,
   compressed or not -- is not the platform's to know, so it takes what it is given and keeps that;
-  doing either again would only spend. Its dataset's kind, recorded in the footing, tells it from a
+  doing either again would only spend. Its bucket's kind, recorded in the footing, tells it from a
   sealed parcel, never its bytes: a parcel that could say it is unsealed would let whoever
   writes a store replace sealed content with its own.
 - **Only what cannot fill a parcel goes through a journal.** A write that fills one is sealed in

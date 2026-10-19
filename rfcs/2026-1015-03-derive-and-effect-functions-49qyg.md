@@ -63,7 +63,7 @@ with it.
 
 **`effect`: it acts on what it is bound to, and on the world.**
 
-- It reads and writes its bound databases and datasets, and reaches the network.
+- It reads and writes its bound databases and buckets, and reaches the network.
 - **It is never retried by the platform** on its own judgment: whether to call again is its caller's.
 - **A write waits for a lock rather than failing on one**, so the time spent waiting is mixed with
   the network's and barely seen. The wait is bounded and so is how long a lock is held; past either
@@ -135,7 +135,7 @@ number of parameters and their types -- never their values, which are A's busine
 refused when it would take away or change a function something still calls, and deleting B is
 refused while anything calls it, naming the caller: the callers go first. **The calls form a graph
 with no cycle**, so a first deployment and a deletion always have an order. **The bindings are in
-the same graph**: a dataset or a database is refused deletion while an app is bound to it, naming
+the same graph**: a bucket or a database is refused deletion while an app is bound to it, naming
 the app, so an owner deletes from the leaves inward. How a scope itself is deleted is RFC vuanj's.
 
 **No app calls an app of another organization**, the owner of a scope, RFC v7v3w. A call across

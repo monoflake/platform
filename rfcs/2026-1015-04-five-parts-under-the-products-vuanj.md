@@ -52,7 +52,7 @@ stands on what it runs as an owner.
 **The cycle came from drawing one layer where there are two.** Beneath the products are parts, each
 smaller than any product, and **the three products stand side by side on the parts and never on
 one another**. A product that looks like another -- a database's name pointing at an id, a
-dataset's path pointing at a hash -- shares a pattern with it, never a dependency.
+file's path pointing at a hash -- shares a pattern with it, never a dependency.
 
 | Part       | What it is                                                         |
 | ---------- | ------------------------------------------------------------------ |
@@ -73,7 +73,7 @@ since its key can always be derived again, a scope is never deleted by losing it
 deleting its bytes.
 
 **A scope is deleted one of two ways.** Its owner deletes what it holds from the leaves inward, as
-the graph of dependencies orders it -- the apps first, then the datasets and databases they were
+the graph of dependencies orders it -- the apps first, then the buckets and databases they were
 bound to, then the scope -- and nothing is deleted while something depends on it, RFC 49qyg; only
 then may the owner close their account, which is above. The operator, revoking an owner, stops at
 once everything it holds and deletes nothing, RFC v7v3w: a privilege of the platform's, never an
@@ -83,7 +83,7 @@ owner's. A scope so suspended is deleted after seven days unless it is restored,
 operation and when it expires, and is signed by the issuer alone, through a chain parts verify
 with the root's public key and never call at run time -- RFC b8f35. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
-the resource -- a dataset, whether writes are allowed -- and a part checks the scope. The issuer is
+the resource -- a bucket, whether writes are allowed -- and a part checks the scope. The issuer is
 its own part, reading each scope's grants from its organization's bundle, in the footing, RFC
 v7v3w. Authenticating the
 people who use an app is another matter, above.
@@ -114,9 +114,9 @@ at deployment, and read as the data plane works, on each call.
 **Inside a scope each product has its own blob space**, since what counts the references to a hash
 is the product's own tablet; two products sharing one would delete what the other still holds.
 
-**The storage** reads its datasets and their policies from the bundle, and keeps one tablet per
-scope for the rest of its metadata -- each path's hash, each
-hash's size, references, strictest policy and whether it is public, each directory's size -- and
+**The storage** reads its buckets and their policies from the bundle, and keeps one tablet per
+scope for the rest of its metadata -- each path's hash, each object, each
+hash's size, references and strictest policy, each directory's size -- and
 its content in its blob space. A write puts the bytes first and then changes the tablet in one
 batch, so a fault leaves at most bytes nothing names, which a sweep removes, and never a name
 without its bytes. A hash nothing names is marked and removed later, never in the write.

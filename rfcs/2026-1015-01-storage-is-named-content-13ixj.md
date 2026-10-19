@@ -1,6 +1,6 @@
 ---
 name: 'Storage Is Named Content'
-title: 'An app stores files by name in datasets an owner holds, the names pointing at content addressed by a hash keyed to that owner, and reads them back by name or by an immutable link'
+title: 'An organization keeps files by path in file buckets and objects by hash and extension in object buckets, both naming content addressed by a hash keyed to the organization, and serves an object bucket alone'
 status: draft
 supersedes: []
 blocked-by: []
@@ -24,35 +24,49 @@ This is layer 0, the platform's face, as RFC vuanj numbers the layers.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
 
-**An owner holds datasets, and a dataset holds files by path.**
+**An organization's storage holds buckets of two types, and content beneath both**, worked out
+with the author on 2026-10-18. A bucket of either holds names alone; the bytes are content's.
 
 ```
-owner (one scope, its own unique salt)
-  dataset
-    {path}/.../{path}/{file}
-  dataset
-    ...
+storage (one an organization, its own unique salt)
+  file bucket     {path}/.../{path}/{file} -> hash     names the app chooses, changed by a write
+  object bucket   {hash}.{extension}       -> hash     names the content gives, never changed
+  ---------------------------------------------------- beneath, and invisible to an app
+  content         hash -> its pieces, RFC b8f35
 ```
 
-- **A dataset is one level only and never nested.** It is the scope of a policy: its placement, its
+- **A file bucket is a subset of S3**: files by path, each written and read whole, and no
+  versioning. It is never served: what is shown outside is an object, published from it.
+- **An object bucket holds objects named by their content.** An object is a hash and an
+  extension, `{hash}.{extension}`; an app gives content and its media type, never a name or a path,
+  and the extension is the type's, by a table [A8]. **The same content under two extensions is two
+  objects**, its bytes kept once, so a type given is never lost to one given before. An object is
+  never changed: written again under its extension, it is the object already there.
+- **Content is shared by every bucket of an organization**, and deduplicated across them: a file
+  and an object of the same bytes name one content. Content is collected once no file and no object
+  names it.
+- **A bucket's id is drawn from the one space of its organization's resources**, RFC b8f35, and
+  carries its type: an operation on a bucket of the other type is refused as `rejected`, saying so.
+- **A bucket is one level only and never nested.** It is the scope of a policy: its placement, its
   kind, a quota, who may bind it, a description, and deletion of the whole. A part that needs
-  another policy is another dataset.
-- **A dataset's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
+  another policy is another bucket.
+- **A bucket's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
   `content`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
-  RFC b8f35. `opaque` is passed through raw, each file at most 16 MiB -- never cut, compressed or
-  sealed, since whether it is either already is not the platform's to know -- as what the external
-  platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the description are
-  every kind's.
-- **A dataset's placement says what its data needs, and each store says what it is**, declared by
+  RFC b8f35. `opaque` is passed through raw, each file or object at most 16 MiB -- never cut,
+  compressed or sealed, since whether it is either already is not the platform's to know -- as
+  what the external platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the
+  description are every kind's. The kind `content` shares its name with what lies beneath every
+  bucket, and is to be named again. [C29]
+- **A bucket's placement says what its data needs, and each store says what it is**, declared by
   whoever binds it as it is bound, RFC b8f35; the platform places each parcel only on stores
-  that meet every need. **Every attribute is ordered**, so content named in several datasets is held
+  that meet every need. **Every attribute is ordered**, so content named in several buckets is held
   to the highest of each that any of them asks.
 
-  | Attribute    | Asks of a store                            | Levels, lowest first                                                                | A dataset's default |
-  | ------------ | ------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------- |
-  | availability | how surely it can be reached               | `opportunistic`, `best_effort`, `stable`, `recoverable`, `redundant`, `multiregion` | `best_effort`       |
-  | durability   | how surely what it holds lasts             | `ephemeral`, `persistent`, `redundant`, `replicated`, `multizone`, `multiregion`    | `persistent`        |
-  | custody      | whether the organization alone controls it | `false`, `true`                                                                     | `false`             |
+  | Attribute    | Asks of a store                            | Levels, lowest first                                                                | A bucket's default |
+  | ------------ | ------------------------------------------ | ----------------------------------------------------------------------------------- | ------------------ |
+  | availability | how surely it can be reached               | `opportunistic`, `best_effort`, `stable`, `recoverable`, `redundant`, `multiregion` | `best_effort`      |
+  | durability   | how surely what it holds lasts             | `ephemeral`, `persistent`, `redundant`, `replicated`, `multizone`, `multiregion`    | `persistent`       |
+  | custody      | whether the organization alone controls it | `false`, `true`                                                                     | `false`            |
 
   A store's availability is `opportunistic` while it lasts and may be gone at any moment without
   warning, as a machine given free; `best_effort` with no redundancy and no steady environment, as a
@@ -84,63 +98,78 @@ owner (one scope, its own unique salt)
   is the default. Whether copies are laid out whole or as shards with parity, and whether the owner
   sees which, is to be decided. [C21]
 - **A placement is checked against the scope's stores before it is saved**, and refused if they
-  cannot meet it; a store is removed only while every dataset's placement still holds without it.
+  cannot meet it; a store is removed only while every bucket's placement still holds without it.
   What follows when a store is lost without warning, or reaches an end its owner did not choose, is
   to be decided. [C20]
-- **A dataset not sealed and placed on a store outside its organization's custody is in a warning**,
-  kept as a field and never refused: never dismissed, shown on the dataset's own page and as it is
+- **A bucket not sealed and placed on a store outside its organization's custody is in a warning**,
+  kept as a field and never refused: never dismissed, shown on the bucket's own page and as it is
   created, and nowhere else.
 - **A description is free text**, empty unless written, and changed at any time.
-- **One or many apps may bind a dataset.** An app holds no state; it knows a dataset and the paths
+- **One or many apps may bind a bucket.** An app holds no state; it knows a bucket and the names
   it writes in it, nothing beneath.
 - **A path is a key split by `/`**, so a directory is only a prefix and a file may sit at the top,
-  `(dataset)/{file}`. The app names files freely.
+  `(bucket)/{file}`. The app names files freely.
 
 **What an app can do:**
 
-| On      | Operation                                                                                     |
-| ------- | --------------------------------------------------------------------------------------------- |
-| dataset | `create` with its policy, `describe`, `list`, `delete` (only while empty): configuration      |
-| file    | `write(dataset, path, content) -> {hash, size}`, `read`, `describe`, `list(prefix)`, `delete` |
-| link    | `link(dataset, path) -> url`, the content the path names at this moment                       |
+| On                          | Operation                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| bucket                      | `create` with its type and policy, `describe`, `list`, `delete` (only while empty): configuration |
+| file, in a file bucket      | `write(bucket, path, content) -> {hash, size}`, `read`, `describe`, `list(prefix)`, `delete`      |
+| object, in an object bucket | `write(bucket, content, type) -> object`, `read`, `describe`, `list`, `delete`                    |
+| publish                     | `publish(file bucket, path, object bucket) -> object`, the content the path names at this moment  |
 
-- **A dataset is configuration, a file is data.** Creating or deleting a dataset changes the
-  organization's configuration, through its organization's own control, which an app may call as
-  any client does, RFC v7v3w; a file's operations are the data plane's.
-- **A name points at content; content never changes.** Writing a path again points it at new
-  content, and a write may be conditional on the hash it last saw, so two writers never silently
-  overwrite each other. A directory is never renamed.
+- **A bucket is configuration; a file and an object are data.** Creating or deleting a bucket
+  changes the organization's configuration, through its organization's own control, which an app
+  may call as any client does, RFC v7v3w; a file's and an object's operations are the data plane's.
+- **A file's name points at content; content never changes.** Writing a path again points it at
+  new content, and a write may be conditional on the hash it last saw, so two writers never
+  silently overwrite each other. A directory is never renamed.
 - **Creating a path and replacing one are separate rights.** A write to a path that exists is a
   replacement, which can lose what it pointed at as a deletion can; one allowed to create alone is
-  refused there, so a dataset can be written only forward -- a backup, an audit log -- by a function
-  that, taken over, could add and never erase.
+  refused there, so a file bucket can be written only forward -- a backup, an audit log -- by a
+  function that, taken over, could add and never erase. An object bucket is written only forward
+  by its nature, since nothing in it is ever replaced.
 - **Content is addressed by its hash, keyed to the owner** -- BLAKE3 keyed by the owner's salt,
-  RFC b8f35. The same content stored twice within one
-  owner is stored once, across datasets and apps alike; across owners the same content has a
-  different hash, so an address cannot be computed by anyone outside the owner, and nothing is
-  shared between owners.
-- **A link is the content's, not the name's**: a URL carrying the hash, at a name bound to the
-  storage, whose entry delivers its path to the storage unread, so the path is the storage's own to
-  shape, at the content domain's or a name the organization binds, RFC vr5lw; how the path is
-  written is open [A8] -- answered with a strong `ETag`, `immutable` and a year's cache,
-  public or private. Private is decided by who asks, never by a parameter on the URL, so the address
-  stays one. Content made public cannot be recalled from caches the platform does not hold.
-- **When names disagree, the most permissive wins.** The same content named in two datasets, one
-  public and one private, has one link, and it is public, since what one name published is already
-  out; `describe` on the private side says so.
-- **Content held for datasets with different policies is held to the strictest of them**, the
+  RFC b8f35. The same content stored twice within one owner is stored once, across buckets and
+  apps alike; across owners the same content has a different hash, so an address cannot be computed
+  by anyone outside the owner, and nothing is shared between owners.
+- **`publish` puts a file's content into an object bucket by its hash**, and moves no byte: the
+  object is the content the path names as it is called, under the path's extension made a standard
+  one, by the same table. [A8]
+- **An object bucket alone is served**, at `/v{n}/storage/{bucket}/{hash}.{extension}` of a name
+  bound to the storage, the content domain's or one the organization binds, RFC vr5lw; its entry
+  delivers the path to the storage unread. The version is an integer, `v1` now, written with its
+  `v` in the path alone; only that spelling answers, the version's and the hash's, 64 lowercase hex
+  digits, RFC b8f35. It is answered with a strong `ETag`, `immutable` and a year's cache, public or
+  private.
+  - **Who may read is the bucket's**, decided by who asks, never by a parameter on the URL, so the
+    address stays one. Since the URL names its bucket, the same content in a public bucket and a
+    private one has a URL in each, each answered as its own bucket says. How a reader proves they
+    may read a private one is open. [C10] Content made public cannot be recalled from caches the
+    platform does not hold.
+  - **An object is served as its extension's type, its bytes never read to tell it**, with
+    `X-Content-Type-Options: nosniff`; an extension the table does not know is served as
+    `application/octet-stream`, and a type that could run in a browser -- HTML, SVG, a script -- is
+    never served as itself. [A8]
+- **Exported, an object bucket is laid out as `/{aa}/{bb}/{hash}.{extension}`**, the first four
+  digits of the hash as two directories, as a store keeps a stored block, RFC b8f35, so it moves
+  into any other object store or file system as it is; a file bucket is exported as its paths.
+  Content is never exported, so it has no layout. An export is plaintext, and is a right of its
+  own; when it is built is later. [D12]
+- **Content held for buckets with different policies is held to the strictest of them**, the
   highest of each attribute any of them asks.
 
-**Beneath the app, and invisible to it, is the storage's own metadata**: an owner's datasets, each
-dataset's paths and the hash each points at, the content's own metadata, and the access each grants.
-Writing a path updates every directory above it up to `/` in the same step, so a directory's size and
-count are read, never computed, when it is listed.
+**Beneath the app, and invisible to it, is the storage's own metadata**: an organization's buckets,
+each file bucket's paths and each object bucket's objects and the hash each names, the content's own
+metadata, and the access each bucket grants. Writing a path updates every directory above it up to
+`/` in the same step, so a directory's size and count are read, never computed, when it is listed.
 
 Open, for the discussion that follows:
 
-- Whether that metadata is held per owner or per dataset. Deduplication and the count of names
+- Whether that metadata is held per owner or per bucket. Deduplication and the count of names
   pointing at each hash are an owner's, which argues for per owner. [C9]
-- Whether one content named in a `content` and an `opaque` dataset is kept once, and how. [C8]
+- Whether one content named in a `content` and an `opaque` bucket is kept once, and how. [C8]
 - What follows when a store is lost without warning, or reaches an end its owner did not choose.
   [C20]
 - Whether copies are laid out whole or as shards with parity, and whether the owner sees which.
