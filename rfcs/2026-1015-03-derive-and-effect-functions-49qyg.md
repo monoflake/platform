@@ -158,8 +158,10 @@ owner configures what fills it, and goes with the organization. So one build dep
 slots are filled, and going back a version takes its whole shape back and leaves what fills it.
 
 **An app's record holds**: its `version`, the hash of the build deployed, whose manifest is found by
-it; its `bindings`; its `env`, each key's value, a secret's sealed; and the scope the gateway serves
-it under, whose naming is open. [B3]
+it; its `bindings`; and its `env`, each key's value, a secret's sealed. **Nothing in it makes the app
+public**: an app is reached from outside only once it is mounted under its organization's gateway or
+a name of the organization's own is bound to it, each an act of its own, RFC vr5lw, and it is
+neither as it is made.
 
 - **Bindings are nested by the type of what they hold**, `app`, `database` or `bucket`, the types
   of an organization's tree, RFC v7v3w, and within each a slot's name to an id: an app called is a

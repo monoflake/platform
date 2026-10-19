@@ -180,6 +180,7 @@ down a layer at a time, each holding its own range alone.
   | each member and its role                   | its own            | its own control's `configuration`, kind `member`                                  |
   | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`                              |
   | each resource's name shown and its folder  | its own            | its own footing's `tree` table                                                    |
+  | each app mounted under its gateway         | its own            | its own footing's `scope` table, RFC vr5lw                                        |
   | `allowance`, `shadow`, `deleting`          | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
   | its status and where its backing is        | the platform's say | the `anchor`, RFC b8f35                                                           |
   | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |

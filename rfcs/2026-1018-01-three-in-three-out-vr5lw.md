@@ -481,6 +481,11 @@ out with the author on 2026-10-18.
   - **A scope is one the platform reserves, `compute`, `storage` and `database` now, or an app**
     the organization binds to it under a scope of its choosing; for an app it drops the scope and
     hands the app `/v{n}/...`, the rest unread.
+  - **An app is mounted by a row of its organization's `scope` table**, worked out with the author
+    on 2026-10-19: a scope to the app's id, written as a label is, never one reserved, unique by
+    the table's key; unmounting is the row deleted. The mount is the gateway's configuration, never
+    the app's, since an app may never be mounted, or be reached by a name of its own instead, which
+    passes the gateway by.
   - **The version is each scope's own**, an integer written with its `v`: put first, it lets all
     that follows change from one version to the next, and the gateway checks its spelling alone and
     carries it through.
