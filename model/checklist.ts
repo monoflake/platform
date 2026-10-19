@@ -195,6 +195,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: 'how long a capability and an account credential live; the other constants v0 picks are decided, vuanj',
 		from: 'b8f35, vuanj, 49qyg, model/footing.ts',
+		done: 'vuanj: a capability an hour and a credential 12, or 15 minutes and an hour in the strict tier',
 	},
 	{
 		id: 'B15',

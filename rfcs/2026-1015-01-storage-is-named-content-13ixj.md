@@ -136,12 +136,23 @@ storage (one an organization, its own unique salt)
   apps alike; across owners the same content has a different hash, so an address cannot be computed
   by anyone outside the owner, and nothing is shared between owners.
 - **`publish` puts a file's content into an object bucket by its hash**, and moves no byte: the
-  object is the content the path names as it is called, under the path's extension, everything after
-  its last dot, so `a.tar.gz` gives `gz`.
+  object is the content the path names as it is called, under the path's extension: a compound one
+  of the table below where the path ends in one, `a.tar.gz` giving `tar.gz`, and otherwise
+  everything after its last dot, `app.min.js` giving `js`.
+- **A path is held to no rule of an extension, and an object's extension to every one**, worked out
+  with the author on 2026-10-19: a file bucket names files as the app likes, and a path whose
+  extension breaks an object's rules is published bare, `{hash}`; `write` to an object bucket is
+  given its extension by the caller, and refuses one that breaks them as `rejected`, saying which
+  rule. Content beneath has no name either way, so it is deduplicated alike.
+- **An object's extension is written in ASCII letters, digits and dots alone**, at most 16
+  characters, RFC vuanj; a hyphen, an underscore, a space, a letter outside ASCII, and a dot
+  leading, trailing or doubled break it. **A dot stands only inside a compound extension** of the
+  platform's table -- `tar.gz`, `tar.bz2`, `tar.xz`, `tar.zst` -- a tar compressed, its parts one
+  format; `min.js` is a name's habit and no format, and breaks it. The table only grows, as the
+  spellings' below.
 - **An extension is made standard before it names anything**, by `write` and `publish` alike, so
-  one format reaches one object by either: lowered to its small letters, checked to be letters and
-  digits alone, at most 16 characters, RFC vuanj, then rewritten by the platform's table of spellings, one
-  spelling of each format kept. **That table holds spellings of one format alone**, never types that
+  one format reaches one object by either: lowered to its small letters, then rewritten by the
+  platform's table of spellings, one spelling of each format kept. **That table holds spellings of one format alone**, never types that
   are only served alike, so `ini` is never `txt`; it is written by hand, and as it is part of an
   object's name a row once written is never changed or taken out, though rows may be added. An
   extension it does not know is kept as it came.
@@ -149,7 +160,8 @@ storage (one an organization, its own unique salt)
     letters by file systems that once allowed no more, `lessons.md`, worked out with the author on
     2026-10-19: `jpg` and `jpe` to `jpeg`, `tif` to `tiff`, `htm` to `html`, `xht` to `xhtml`, `mht`
     to `mhtml`, `mpg` and `mpe` to `mpeg`, `mid` to `midi`, `aif` to `aiff`, `pct` to `pict`, `yml`
-    to `yaml`, `sgm` to `sgml`, `djv` to `djvu`, `igs` to `iges`, `stp` to `step`.
+    to `yaml`, `sgm` to `sgml`, `djv` to `djvu`, `igs` to `iges`, `stp` to `step`; and a tar's
+    `tgz` to `tar.gz`, `tbz2` and `tbz` to `tar.bz2`, `txz` to `tar.xz`, `tzst` to `tar.zst`.
   - **Unless the short one is what the world recognizes**: `markdown` to `md`, `text` to `txt`,
     `wave` to `wav`.
   - **A pair alike in spelling but not one format is never joined**: `svgz` is `svg` compressed,
@@ -160,7 +172,8 @@ storage (one an organization, its own unique salt)
   served, in a short table of the extensions the platform knows; every other is served as
   `application/octet-stream`. This table is how a browser is answered and never part of a name, so
   it changes at any time, its cost an answer cached a year. One extension gives one type, and many
-  give the same, so a type never leads back to an extension. Each type is IANA's where IANA
+  give the same, so a type never leads back to an extension. A compound extension is served as
+  its last part's type, `tar.gz` as `gz`'s. Each type is IANA's where IANA
   registers one, MDN's where it does not, `lessons.md`; one a browser cannot show is listed all the
   same, since showing nothing harms nothing. The table it starts with:
 

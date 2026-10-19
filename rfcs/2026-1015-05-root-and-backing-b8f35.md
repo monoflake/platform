@@ -266,7 +266,7 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
     bundle a part reads anyway, the platform's copied down each day, and a `kid` a part does not know
     sends it to read the bundle again. A call carries the capability alone.
   - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
-    leaked is worth, B14; one bound to a key its holder proves would cost a signature a call.
+    leaked is worth, RFC vuanj; one bound to a key its holder proves would cost a signature a call.
   - **No signed record holds a secret**: a certificate is public and travels in a bundle.
   - **The rights are a set of bits in one unsigned integer**, worked out with the author on
     2026-10-19: `read` 1, `create` 2, `replace` 4, `delete` 8, `alter` 16, `call` 32, RFC vuanj.
