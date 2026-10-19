@@ -267,7 +267,7 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
 data and a mistake in it is never undone, `scope.md`. Worked out with the author on 2026-10-17.
 
 ```
-put(dataset, path, content)
+write(dataset, path, content)
   -> file id: keyed BLAKE3 over the whole file
   -> FastCDC cuts it into pieces; piece id: keyed BLAKE3 over each, before compression
   -> each new piece: zstd at level 1, kept only if smaller

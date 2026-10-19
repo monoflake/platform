@@ -120,7 +120,7 @@ with until it is deployed again, as on Cloudflare and Vercel.
   run late one by one: once it can run again, only the last missed is run. A time is delivered at
   least once and never promised exactly once, so the platform drops a repeat by the schedule and
   the time it was due before it runs, a guard kept in the function product's own tablet.
-- **`queue`**: a message an app puts in a queue, handled later. **Retrying is chosen here and
+- **`queue`**: a message an app submits to a queue, by `submit`, handled later. **Retrying is chosen here and
   nowhere else**, which is why an `effect` called directly is never retried: an app that wants a
   failure tried again puts the work in a queue. Every queue declares what a failure does -- the
   message dropped, or retried, and then it declares how: how many times and how far apart. A

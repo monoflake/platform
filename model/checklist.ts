@@ -91,6 +91,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "the operations' names, as layer 0's published contract; the products are compute, database and storage, vr5lw",
 		from: '13ixj, vr5lw',
+		done: 'vr5lw: write, read, describe, list, delete and link; execute; status and submit',
 	},
 	{
 		id: 'A10',

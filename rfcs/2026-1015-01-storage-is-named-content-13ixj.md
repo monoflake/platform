@@ -98,11 +98,11 @@ owner (one scope, its own unique salt)
 
 **What an app can do:**
 
-| On      | Operation                                                                              |
-| ------- | -------------------------------------------------------------------------------------- |
-| dataset | `create` with its policy, `head`, `list`, `delete` (only while empty): configuration   |
-| file    | `put(dataset, path, content) -> {hash, size}`, `get`, `head`, `list(prefix)`, `delete` |
-| link    | `link(dataset, path) -> url`, the content the path names at this moment                |
+| On      | Operation                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------- |
+| dataset | `create` with its policy, `describe`, `list`, `delete` (only while empty): configuration      |
+| file    | `write(dataset, path, content) -> {hash, size}`, `read`, `describe`, `list(prefix)`, `delete` |
+| link    | `link(dataset, path) -> url`, the content the path names at this moment                       |
 
 - **A dataset is configuration, a file is data.** Creating or deleting a dataset changes the
   organization's configuration, through its organization's own control, which an app may call as
@@ -126,7 +126,7 @@ owner (one scope, its own unique salt)
   stays one. Content made public cannot be recalled from caches the platform does not hold.
 - **When names disagree, the most permissive wins.** The same content named in two datasets, one
   public and one private, has one link, and it is public, since what one name published is already
-  out; `head` on the private side says so.
+  out; `describe` on the private side says so.
 - **Content held for datasets with different policies is held to the strictest of them**, the
   highest of each attribute any of them asks.
 
@@ -139,7 +139,6 @@ Open, for the discussion that follows:
 
 - Whether that metadata is held per owner or per dataset. Deduplication and the count of names
   pointing at each hash are an owner's, which argues for per owner. [C9]
-- The capability's name, since it is not an object store. [A9]
 - Whether one content named in a `content` and an `opaque` dataset is kept once, and how. [C8]
 - What follows when a store is lost without warning, or reaches an end its owner did not choose.
   [C20]

@@ -129,6 +129,20 @@ rest is kept is RFC b8f35's and the bundle's.
   in structure are one value however they were written, in either form, in any order of a record's
   fields. A caller computes none, and a `derive`'s outputs are cached by it, RFC vuanj.
 
+**Layer 0's operations are named in whole words, neutral and formal**, worked out with the author on
+2026-10-18, each product an interface of the platform's own:
+
+| Product  | Operations                                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| storage  | on a dataset `create`, `describe`, `list`, `delete`; on a file `write`, `read`, `describe`, `list`, `delete`; `link`, RFC 13ixj |
+| database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                 |
+| compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                 |
+
+The rights a capability grants stay `read`, `create`, `replace`, `delete` and `alter`, RFC vuanj, so
+a `write` asks `create` where its path is new and `replace` where it is not; and an `effect`'s
+outcomes stay `success`, `rejected`, `unavailable` and `unknown`, RFC 49qyg. `put`, `get` and `head`
+are S3's and HTTP's, and stay only where S3's subset is spoken, the `object` contract above.
+
 **Whatever runs is deployed as its configuration is applied, never loaded as a call comes**,
 worked out with the author on 2026-10-18. Since opening anything is a change of configuration, RFC
 v7v3w, each has a moment it is applied, and a task, which no one waits on in a dashboard, deploys

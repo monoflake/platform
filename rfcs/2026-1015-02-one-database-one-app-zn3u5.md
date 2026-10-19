@@ -35,8 +35,8 @@ analytical engine -- so an engine can be replaced under a kind whose name still 
 **A `transactional` database**, whose contract is **SQLite's dialect**, so any engine that speaks it
 serves it without translation:
 
-- `query(database, sql, parameters)` runs one statement and `batch(database, [statements])` runs several; each
-  is atomic, all or nothing, with no state in between. **There is no interactive transaction.**
+- `execute(database, [statements])` runs one statement or several, each its SQL and parameters, and
+  answers each one's rows; a call is atomic, all or nothing, with no state in between. **There is no interactive transaction.**
 - It keeps a write-ahead log and can be returned to an earlier time.
 - **Read copies are a switch on the database.** Off, every read is current. On, a read without a
   cursor is no longer promised current and may be behind by about a minute, the bound to be fixed
@@ -70,7 +70,7 @@ statements that split cleanly and the ones that do not look alike to the app, an
 would fail or slow without a reason it could see.
 
 **An `analytical` database** is for what is appended and scanned rather than updated, such as a
-transparency log or metrics: `append(table, rows)`, a restricted `query`, and deletion by a range
+transparency log or metrics: `append(table, rows)`, a restricted `execute`, and deletion by a range
 of time. Nothing needs it yet, so it is not built; its place is kept so that it comes as a kind of
 `database`, never as something beside it.
 
