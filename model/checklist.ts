@@ -205,6 +205,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "how process.md's phases -- theory, simulation, comparison with what exists -- meet this checklist as the test for building, and what replaces the word stage there now the model's stages are s",
 		from: 'found',
+		done: 'spec/process.md: phases, one gate --ready, simulation inside it, comparison a row',
 	},
 
 	{
@@ -261,6 +262,12 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "to try on one machine reinstalled before the three: a NixOS set's size, to fix ext4's; and whether btrfs's simple quotas hold a binding's limit on a qgroup above its subvolumes, or what bounds it if not",
 		from: 'vr5lw',
+	},
+	{
+		id: 'B24',
+		group: 'B',
+		what: 'comparison, spec/process.md: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped',
+		from: 'spec/process.md',
 	},
 	// C -- blocks a later step.
 	{
