@@ -147,7 +147,8 @@ move by a sweep, and the old one is dropped once no reader running needs it, RFC
 | `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet             |
 | `lease`         | a name                       | who holds it, and until when                                   | the part that takes it |
 
-The platform's footing holds the same, and `anchor` and `account` beside them. The tables are the
+The platform's footing holds the same, and `anchor`, `account`, `label`, `username`, `sign-in` and
+`membership` beside them, RFC v7v3w. The tables are the
 footing's own, and published nowhere.
 
 **On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it

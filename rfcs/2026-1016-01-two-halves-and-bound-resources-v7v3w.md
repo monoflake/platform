@@ -143,22 +143,51 @@ down a layer at a time, each holding its own range alone.
 - **An account sets how many of its ways a sign-in asks, and fewer than two is warned of, never
   dismissed**: the warning is the platform's control's, given by its API with whether it may be
   dismissed, so a client draws it and decides nothing, as a dashboard does above.
-- **An account's record holds**, worked out with the author on 2026-10-19:
+- **Who holds a thing is told by who may change it**, worked out with the author on 2026-10-19:
+  what an owner changes as it likes, touching no one else, is the owner's own record; what is unique
+  across owners is the platform's, a table of its own whose key is that value, since only a key
+  keeps it unique, never a field in a record's content; and what the platform alone decides of an
+  owner is the platform's record of it.
 
-  | Field      | Holds                                                                                                                                                                                                  |
-  | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-  | `name`     | the name shown, free text, empty unless written                                                                                                                                                        |
-  | `email`    | where the platform reaches the person, required and verified: an organization deleted, the account revoked, a security event; a way of signing in by email is apart                                    |
-  | `ways`     | the ways it signs in, each its kind and what checks it -- a passkey's public key and credential id, a provider's id for the user, an address; a password's hash and a TOTP seed sealed, as secrets are |
-  | `factors`  | how many ways a sign-in asks, at least one                                                                                                                                                             |
-  | `security` | `default` or `strict`, how long its credential lives, RFC vuanj; named so, since a tier is an account's plan, later                                                                                    |
-  | `status`   | `active`, or `revoked` by the operator, final, its id never given again                                                                                                                                |
+  | Of an organization                  | Is                 | Kept                                                                              |
+  | ----------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
+  | `name`, `description`, `security`   | its own            | its own control's `configuration`, kind `organization`                            |
+  | each member and its role            | its own            | its own control's `configuration`, kind `member`                                  |
+  | `allowance`, `shadow`, `deleting`   | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
+  | its status and where its backing is | the platform's say | the `anchor`, RFC b8f35                                                           |
+  | each label                          | unique             | the platform's `label` table, a label to the organization holding it              |
+  | its certificate                     | compiled           | no record                                                                         |
+
+  | Of an account                                      | Is                   | Kept                                                                                                                         |
+  | -------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+  | `name`, `factors`, `security`, its contact `email` | its own              | the platform control's `configuration`, kind `account`                                                                       |
+  | a password's hash, a TOTP seed                     | its own              | the same, sealed: they check an account already found, and find none                                                         |
+  | its status                                         | the platform's say   | the platform's `account` table, an account's anchor: `active`, or `revoked` by the operator, final, its id never given again |
+  | each way it is found by as it signs in             | unique               | the platform's `sign-in` table, a kind and an identifier to the account                                                      |
+  | its username                                       | unique               | the platform's `username` table, a username to the account                                                                   |
+  | the organizations it is in                         | the platform's index | the platform's `membership` table                                                                                            |
+  - **An account's `name` is the name shown**, free text, empty unless written; its **username** is
+    a second name, lowercase, for where a name must be written plainly. [B3]
+  - **Its contact `email` is required and verified**, and unique to no one, so one person may have
+    two accounts reached at one address: where the platform reaches the person, as an organization
+    is deleted, the account revoked or a security event comes. An address one signs in by is a row
+    of `sign-in`, apart.
+  - **A way one is found by** is a passkey's credential id, a provider's id for the user with the
+    provider, or an address a link is sent to; a password and a TOTP code are checked once the
+    account is found.
+  - **`factors` is how many ways a sign-in asks**, at least one; **`security` is `default` or
+    `strict`**, how long its credential lives, RFC vuanj, named so since a tier is an account's plan,
+    later.
+  - **`deleting` is when an organization's deletion was asked**, empty unless asked, and emptied as
+    it is withdrawn; it is the platform's, which carries it out even with the organization's own
+    control gone, RFC b8f35. **`shadow` is the id of an organization's shadow** on the platform
+    beneath, RFC 94y0d, empty on the internal platform.
 
 - **The platform keeps which organizations each account is in, and nothing of what it is there**:
-  a pair of an account and an organization a row, reported by the organization's control as its
-  members change, so the console lists an account's organizations and a revocation reaches each.
-  What the account is in one is asked of that organization. The pairs are an index, never the
-  truth: lost, they are gathered again from the organizations.
+  a pair of an account and an organization a row of `membership`, reported by the organization's
+  control as its members change, so the console lists an account's organizations and a revocation
+  reaches each. What the account is in one is asked of that organization. The pairs are an index,
+  never the truth: lost, they are gathered again from the organizations.
 
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.

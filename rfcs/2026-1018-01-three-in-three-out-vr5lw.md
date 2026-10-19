@@ -516,7 +516,7 @@ out with the author on 2026-10-18.
   the platform's console or controls. `*.{organization}.mofl.fyi` is never given: an app is public
   under the gateway or at a name of the organization's own, which the organization holds and binds
   to any of its resources. Which organization holds a label of the domain is the platform's
-  control's record, kept beside the anchor in the platform's footing; which app a name of the
+  `label` table, beside the anchor in the platform's footing, RFC v7v3w; which app a name of the
   organization's is bound to is its own control's, and a name is bound to one app at a time; a
   label the platform keeps for itself, as `www`, `api` and `status`, is never given.
   - **The domain is asked of the Public Suffix List before the platform opens to the public**,
