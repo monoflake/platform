@@ -347,7 +347,7 @@ one code is both.
   and when each difference was first found. Everything else it reads from its host.
 - **A machine's driver keeps back only what the machine and the driver need**, worked out with the
   author on 2026-10-19, since most machines a small team brings have 1 or 2 GB, and a driver written
-  in Rust or OCaml takes tens of megabytes. Memory kept back is the machine's own, measured as the
+  in Rust takes tens of megabytes. Memory kept back is the machine's own, measured as the
   driver is installed, before anything of the platform's runs, and 64 MiB for the driver; the rest
   is offered, and what runs is held under it by cgroup v2's `memory.max`. No CPU is kept back: all of
   it is offered, and the driver and the system are given precedence by `cpu.weight`, so what runs
@@ -357,7 +357,7 @@ one code is both.
 - **A machine runs NixOS**, worked out with the author on 2026-10-19: its newest stable release,
   with nixpkgs unstable beside it, by a flake, so what a machine is is one revision and nothing kept
   by hand. It runs four things and no more: containerd, which manages all that runs; the host's
-  driver, written in Rust or OCaml for this system alone, which speaks containerd's own gRPC API by
+  driver, written in Rust for this system alone, RFC fhg6w, which speaks containerd's own gRPC API by
   the client generated from its protobuf definitions, `containerd-client` in Rust, `lessons.md`; the
   tailnet, where the machine joins one; and a small software firewall. Docker is not among them: it
   builds images, which a machine never does.

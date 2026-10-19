@@ -266,20 +266,32 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B24',
 		group: 'B',
-		what: 'which language each part of the model is written in, declared in the model beside the part, fhg6w',
+		what: 'which language of three each part of the model is written in, declared in the model beside the part, and the check that a part uses only libraries of its own language, fhg6w',
 		from: 'fhg6w',
 	},
 	{
 		id: 'B25',
 		group: 'B',
-		what: "OCaml's standard library for code that runs on every target, its concurrency, and each language's HTTP server, OCaml's to be chosen beside axum and Hono, fhg6w",
+		what: "each language's standard library for code that runs on every target, its concurrency, and its HTTP server, fhg6w",
 		from: 'fhg6w',
-		done: 'fhg6w: Stdlib alone, shared libraries pure, Eio and cohttp-eio under a thin layer of our own',
+		done: "fhg6w: OCaml not written; Rust's server axum on tokio, TypeScript's Hono; a TypeScript library uses the web's APIs alone",
 	},
 	{
 		id: 'B26',
 		group: 'B',
-		what: 'how the repository is laid out, so dune, cargo and the JavaScript tools build one tree, fhg6w',
+		what: "how the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one tree, fhg6w",
+		from: 'fhg6w',
+	},
+	{
+		id: 'B27',
+		group: 'B',
+		what: 'where ReScript ends and TypeScript begins on a page, so neither spreads by habit, fhg6w',
+		from: 'fhg6w',
+	},
+	{
+		id: 'B28',
+		group: 'B',
+		what: "the language a wire contract is written in, generated for Rust, TypeScript and ReScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone; and TypeScript's CBOR, fhg6w",
 		from: 'fhg6w',
 	},
 	// C -- blocks a later step.
@@ -512,6 +524,7 @@ export const CHECKLIST: Item[] = [
 		what: 'whether the OCaml backend of ATD moves from atdgen to atdml, which ATD names as coming, fhg6w',
 		from: 'fhg6w',
 		step: 2,
+		done: 'fhg6w: moot, OCaml is not written',
 	},
 	// D -- commercial and operational.
 	{
