@@ -507,8 +507,14 @@ out with the author on 2026-10-18.
 - **An organization's storage is given a name of a content domain**, `{organization}.{domain}` of a
   domain apart from both the platform's and its apps', worked out with the author on 2026-10-18: a
   link answers what a user uploaded, HTML as likely as not, which on its apps' domain could set
-  their cookies were it ever served as itself, RFC 13ixj; and kept as long as the organization is, so a link at it is never broken by a
-  change of the organization's. The Public Suffix List is asked of it as of the other. [D9]
+  their cookies were it ever served as itself, RFC 13ixj. The Public Suffix List is asked of it as of
+  the other. [D9]
+  - **`{organization}` is its scope id or any label it holds, all answering alike**, worked out with
+    the author on 2026-10-19: a link at the scope id, eight hex digits, RFC b8f35, lasts as long as
+    the organization, and one at a label as long as the label is held. **An organization may hold
+    several labels at once**, so it moves from one to another with both answering; a label let go
+    and taken by another organization breaks the old links and never serves them another's content,
+    since the buckets and the hashes are each organization's own, RFC b8f35.
   - **The storage is bound to names as an app is**, the organization's own among them, and one may
     be its preferred, which `publish` answers with, the content domain's where none is. Every name
     bound answers alike, the content domain's always.
