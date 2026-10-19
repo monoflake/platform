@@ -556,3 +556,11 @@ registry holds opam, `github:ocaml/opam`, and no OCaml compiler or dune. Asked b
 https://dune.readthedocs.io/en/stable/tutorials/dune-package-management/index.html,
 https://dune.readthedocs.io/en/stable/explanation/package-management.html and
 https://github.com/ocaml/dune/releases
+
+**Rust's CBOR crates, read 2026-10-19**: minicbor 2.3.1, of 2026-10-18, Blue Oak 1.0.0, no_std, with
+`Encode` and `Decode` it derives and serde in `minicbor-serde`; ciborium 0.2.2, of 2024-01-24,
+Apache-2.0, serde's, keeping a map's pairs in the order they came. Neither's documentation speaks of
+deterministic encoding. OCaml's: cborl 0.1.0, AGPL, without half floats or indefinite strings; cbort,
+ISC, on Zarith and bytesrw; cbor 0.4, RFC 7049's. Asked by RFC fhg6w. Sources:
+https://docs.rs/minicbor/latest/minicbor/, https://github.com/enarx/ciborium, https://ocaml.org/p/cborl
+and https://tangled.org/gazagnaire.org/ocaml-cbort

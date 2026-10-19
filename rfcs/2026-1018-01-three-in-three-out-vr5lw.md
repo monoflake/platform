@@ -510,7 +510,8 @@ out with the author on 2026-10-18.
 
 - **Each export declares how far it is shown**: within its organization, the default, called by its
   organization's apps with a capability at its deployment's address; or public, which it is
-  exactly when a name is bound to it. Nothing is public that no name is bound to. Within an
+  exactly when a name is bound to it or it is mounted under its organization's gateway. Nothing is
+  public that neither reaches. Within an
   organization an address may still stand on the public network, where a path to it crosses it,
   and every call to it without a capability of its organization's is refused.
 - **A machine's driver keeps its firewall**, in software, so no hardware firewall is needed: what

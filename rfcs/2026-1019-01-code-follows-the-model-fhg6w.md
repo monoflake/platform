@@ -76,8 +76,9 @@ OCaml's types are -- records, sum types with payloads, options, defaults -- whos
 of format and takes annotations of any name, `lessons.md`.
 
 - **Each language is generated from the one `.atd`**, never written by hand: OCaml and Melange by
-  atdgen, TypeScript by atdts, and Rust by a backend the platform writes, emitting `serde` types,
-  since ATD has none. Where a tool asks JSON Schema, `atdcat -jsonschema` exports it.
+  atdgen, TypeScript by atdts, and Rust by a backend the platform writes, since ATD has none,
+  emitting `serde` types for JSON and minicbor's derived ones for CBOR, its fields in the order of
+  their CBOR keys so what it writes is deterministic. Where a tool asks JSON Schema, `atdcat -jsonschema` exports it.
 - **A contract encodes as JSON by atdgen's rules, and as CBOR by annotations of the platform's
   own**, `<cbor key="-65537">`, read by the OCaml and the Rust generators alike, so a record of the
   footing, a bundle and a claim of a CWT are written in ATD as an API's answer is.
@@ -97,8 +98,12 @@ implementation is held to all of them, and the platform owns what its every reco
 | COSE  | RFC 9052's `Sign1`, Ed25519 by RFC 9864, RFC b8f35   | `cose-wg/Examples`' sign1, EdDSA and CWT cases, and cases of the platform's own for -19 |
 | CWT   | RFC 8392                                             | its Appendix A                                                                          |
 
-- **Each is built twice**: in OCaml, one source for native and Melange, and in Rust, CBOR as a
-  `serde` data format.
+- **OCaml's is built, one source for native and Melange**, since none fits: cborl is AGPL and
+  lacks half floats and indefinite strings, cbort needs Zarith's C, and cbor is RFC 7049's,
+  `lessons.md`. **Rust's is minicbor**, worked out with the author on 2026-10-19, maintained, its
+  2.3.1 of 2026-10-18, and held to the same tests: neither it nor ciborium promises
+  deterministic encoding, so what the platform's own cases find decides whether it is patched,
+  forked or built. COSE and CWT are built on each.
 - **Every test runs in CI**, so what is built stays whole; what is general may be published for
   others, as a wheel built to a standard is.
 - **None is begun yet**: this is the plan.

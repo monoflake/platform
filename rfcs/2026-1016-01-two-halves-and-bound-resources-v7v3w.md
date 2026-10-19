@@ -150,7 +150,7 @@ the buckets, the databases and the resources they run on; the scope of RFC vuanj
 **organization scope**. A person who wants apps of their own makes an organization, named as they
 like.
 
-- **A user account is an id and holds nothing.** Any number of organizations may name it, each as a
+- **A user account is an id and holds no resource**, its record its own settings alone. Any number of organizations may name it, each as a
   member, who may use what the organization holds, or as an admin, who may also manage it.
   Everything in an organization is visible to every member.
 - The operator never signs in to the console.
