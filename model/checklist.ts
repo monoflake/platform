@@ -152,6 +152,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the footing's tables and how their schema is versioned, by compat, as a mixed-version upgrade reads them",
 		from: 'found',
+		done: 'b8f35: a table is its keys and one versioned CBOR record, and a key changed is a new table',
 	},
 	{
 		id: 'B9',

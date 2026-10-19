@@ -298,7 +298,7 @@ export const PARTS: Record<string, Part> = {
 				'start',
 				H,
 				'a writer or read copy starts from the last snapshot',
-				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides [B8]',
+				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides [B14]',
 			),
 			KEY(),
 			e('?runner', 'start', H, 'its writer and read copies are placed, and a handover decided'),

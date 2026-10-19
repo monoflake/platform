@@ -124,6 +124,31 @@ full, and SQLite's default page of 4 KiB, which D1 does not say it departs from,
 - **Past either, an organization is split, or served as a case of its own**, as an enterprise is.
   How much an organization is given to begin with is no part of the platform.
 
+**A footing's table is its keys and one versioned record**, worked out with the author on
+2026-10-18. A table's columns are what it is looked up by -- a piece's hash, a tablet, a generation
+-- and two more: `version`, and `content`, CBOR, which RFC wnqvu's rules govern as any record: a
+field unknown passed over, a field missing meaning what is written of it, and what is written a
+step behind what is read. So a field added is a key more in `content` and no change of schema, and
+a footing is versioned as a value on the wire and a bundle are. **A key changed is a break**: the
+deployer makes the new table before the build that writes it is deployed, both are read while rows
+move by a sweep, and the old one is dropped once no reader running needs it, RFC wnqvu.
+
+| Table           | Looked up by                 | Holds                                                       | Written by             |
+| --------------- | ---------------------------- | ----------------------------------------------------------- | ---------------------- |
+| `configuration` | kind, identifier, generation | each record a control holds, its secrets sealed, RFC v7v3w  | the control            |
+| `bundle`        | origin, generation           | a bundle as signed                                          | the control            |
+| `store`         | a store's identifier         | the backing's store                                         | the control            |
+| `content`       | a content's hash             | the pieces it is made of                                    | the blob               |
+| `piece`         | a piece's hash               | its parcel, offset, length and whether compressed           | the blob               |
+| `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place | the blob               |
+| `journal`       | a placement                  | the journal it writes                                       | the blob               |
+| `log`           | a tablet, a number           | an entry not yet archived                                   | the tablet             |
+| `writer`        | a tablet                     | which writer holds it, at which generation                  | the tablet             |
+| `lease`         | a name                       | who holds it, and until when                                | the part that takes it |
+
+The platform's footing holds the same, and `anchor` and `account` beside them. The tables are the
+footing's own, and published nowhere.
+
 **On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it
 by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST
 API, which carries the Cloudflare API's limit, `lessons.md`. **The footing Worker groups commits**:
