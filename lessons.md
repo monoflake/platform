@@ -519,3 +519,28 @@ Unlicense, holds 306 JSON cases, `sign1-tests`, `eddsa-examples` and `CWT` among
 before RFC 9864, so their EdDSA is -8. Asked by fhg6w. Sources:
 https://www.rfc-editor.org/rfc/rfc9052.txt, https://www.rfc-editor.org/rfc/rfc8392.txt and
 https://github.com/cose-wg/Examples
+
+**OCaml today is opam 2.6.1, of 2026-10-07, OCaml 5.5.1, of 2026-09-04, and dune 3.24.2.** ocaml.org
+installs it by opam, and warns that an opam from a system's package manager may be too old for the
+newest compiler. A switch is "an isolated environment for the OCaml compiler and any packages you
+install". Dune's own package management takes dependencies from `dune-project` into a lock file,
+solved from nothing, with a relocatable compiler cached apart from the project; opam is kept beside
+it. Asked by RFC fhg6w. Sources: https://ocaml.org/install,
+https://dune.readthedocs.io/en/stable/explanation/package-management.html and
+https://github.com/ocaml/opam/releases
+
+**OCaml's servers, read 2026-10-19**: Dream 1.0.0, of 2026-10-07, after years of alphas and a new team
+of maintainers from January 2026, MIT, on Lwt -- its handlers functions, its middleware composed by
+`@@`, with sessions, CSRF, WebSockets, GraphQL, templates, TLS and HTTP/2 -- and a port to Eio under
+way; cohttp-eio 6.3.0, a multicore HTTP/1.1 server in direct style on Eio, with no router or
+middleware; httpun-eio 0.2.0, lower still; Vif 0.0.1~beta6 on Miou, "we do not recommend using this
+project in production"; Piaf, a client. A 2026 account of OCaml web work in production uses Eio and
+cohttp. Asked by fhg6w. Sources: https://github.com/camlworks/dream,
+https://discuss.ocaml.org/t/the-new-owners-maintainers-of-dream/17712, https://ocaml.org/p/cohttp-eio,
+https://github.com/robur-coop/vif and https://www.m3tech.blog/entry/2026/05/26/150000
+
+**OCaml's libraries beside its own**: Base, "a complete and portable alternative" offering no I/O,
+shadows the standard modules, and some of its functions differ, `List.map` tail-recursive in Base
+and not in Stdlib; Core builds on it; Containers extends Stdlib rather than replacing it. Asked by
+fhg6w. Sources: https://ocaml.org/p/base/latest and
+https://discuss.ocaml.org/t/stdlib-vs-base-in-2025-beginner/16626

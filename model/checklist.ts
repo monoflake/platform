@@ -274,6 +274,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "OCaml's standard library for code that runs on every target, its concurrency, and each language's HTTP server, OCaml's to be chosen beside axum and Hono, fhg6w",
 		from: 'fhg6w',
+		done: 'fhg6w: Stdlib alone, shared libraries pure, Eio and cohttp-eio under a thin layer of our own',
 	},
 	{
 		id: 'B26',

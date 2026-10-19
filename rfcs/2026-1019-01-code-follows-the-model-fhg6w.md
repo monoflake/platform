@@ -49,6 +49,20 @@ parts, libraries and edges, each with its contract:
   Melange's `int` is 32 bits, so a 64-bit integer crossing into it is an `Int64`.
 - **The tools are dune and cargo, node, vite and tsdown on rolldown, oxlint and oxfmt**, and
   TypeScript 6 and 7 side by side.
+- **OCaml's standard library is its own, `Stdlib`, alone**, worked out with the author on
+  2026-10-19: Melange ships it, so it alone is sure on every target; Base and Core replace it,
+  shadowing its modules and changing some of what they mean, and bring Jane Street's world with
+  them; Containers extends it, and is taken only once a module of it is shown to build under
+  Melange, `lessons.md`.
+- **A library shared across targets is pure**: no I/O and no library of concurrency, since Eio does
+  not run under Melange and JavaScript has its own; I/O stands at a part's edge alone, Eio on a
+  server and a promise in a browser. This is what lets business code be written once.
+- **An OCaml server is Eio and cohttp-eio, under a thin layer of the platform's own** shaped as
+  axum's and Hono's are: a handler `Request.t -> Response.t` in direct style, a middleware
+  `handler -> handler`, and a router, a few hundred lines. Dream, 1.0.0 since 2026-10-07, is nearer
+  Hono out of its box, but stands on Lwt, whose promises spread through every signature that
+  touches them, and brings sessions, forms and templates an API never asks. Rust's server is axum
+  and TypeScript's Hono.
 
 **A wire contract is written in ATD, for every language at once**: a type language shaped as
 OCaml's types are -- records, sum types with payloads, options, defaults -- whose core is neutral
@@ -85,7 +99,5 @@ implementation is held to all of them, and the platform owns what its every reco
 Open, for the discussion that follows:
 
 - Which language each part of the model is written in, declared in the model beside the part. [B24]
-- OCaml's standard library for code that runs on every target, its concurrency, and the HTTP server
-  of each language: axum for Rust, Hono for TypeScript, OCaml's to be chosen. [B25]
 - How the repository is laid out, so dune, cargo and the JavaScript tools build one tree. [B26]
 - Whether the OCaml backend moves from atdgen to atdml, which ATD names as coming. [C33]
