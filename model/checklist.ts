@@ -83,7 +83,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A8',
 		group: 'A',
-		what: "a link's URL: the name bound to the storage it is served at, and how a hash is written in its path: published, and cached for a year",
+		what: "a link's path: how a hash is written in it, and a name for its type: published, and cached for a year; its name is the content domain's or the organization's, vr5lw",
 		from: '13ixj',
 	},
 	{
@@ -493,7 +493,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'D9',
 		group: 'D',
-		what: "the domain organizations' public names are of, apart from the platform's own, and asking the Public Suffix List to take it once the platform serves thousands",
+		what: "the domains organizations' public names and their storage's names are of, apart from the platform's own and from each other, and asking the Public Suffix List to take them once the platform serves thousands",
 		from: 'vr5lw, lessons.md',
 	},
 	{

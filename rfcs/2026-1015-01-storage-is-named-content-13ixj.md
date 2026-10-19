@@ -121,7 +121,8 @@ owner (one scope, its own unique salt)
   shared between owners.
 - **A link is the content's, not the name's**: a URL carrying the hash, at a name bound to the
   storage, whose entry delivers its path to the storage unread, so the path is the storage's own to
-  shape, RFC vr5lw; which name is open [A8] -- answered with a strong `ETag`, `immutable` and a year's cache,
+  shape, at the content domain's or a name the organization binds, RFC vr5lw; how the path is
+  written is open [A8] -- answered with a strong `ETag`, `immutable` and a year's cache,
   public or private. Private is decided by who asks, never by a parameter on the URL, so the address
   stays one. Content made public cannot be recalled from caches the platform does not hold.
 - **When names disagree, the most permissive wins.** The same content named in two datasets, one

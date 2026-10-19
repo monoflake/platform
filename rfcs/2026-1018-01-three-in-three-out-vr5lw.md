@@ -504,6 +504,22 @@ out with the author on 2026-10-18.
   a name is bound to one app at a time. Organizations are kept
   apart from one another by that domain's place in the Public Suffix List, asked for once the
   platform serves thousands, which the list asks, `lessons.md`. [D9]
+- **An organization's storage is given a name of a content domain**, `{organization}.{domain}` of a
+  domain apart from both the platform's and its apps', worked out with the author on 2026-10-18: a
+  link answers what a user uploaded, HTML as likely as not, which on its apps' domain could set
+  their cookies; and kept as long as the organization is, so a link at it is never broken by a
+  change of the organization's. The Public Suffix List is asked of it as of the other. [D9]
+  - **The storage is bound to names as an app is**, the organization's own among them, and one may
+    be its preferred, which `link` answers with, the content domain's where none is. Every name
+    bound answers alike, the content domain's always.
+  - **A name of its own is the organization's to keep**: a change of it reaches what the platform
+    holds -- which name `link` answers with, the configuration naming it -- and never a link handed
+    out, hard-coded elsewhere or kept in an app's own data. Since names stand together, a change is
+    a name added, made preferred, and the old unbound when the user likes; **unbinding is what
+    breaks a link, and is warned of as such**, a preferred name changed is not.
+  - **A name of its own on a registrable domain its apps' names share is warned of**, a warning
+    that may be dismissed: content there could set those apps' cookies, which the content domain
+    exists to prevent.
 - **A certificate service gives a machine its names' certificate**, worked out with the author on
   2026-10-18: an app like any other, in an organization of the internal platform's own, which asks a
   public CA by ACME and its DNS challenge -- Google's first, which counts no domain's certificates;
