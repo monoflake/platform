@@ -620,6 +620,7 @@ let checklist: array<item> = [
     group: #D,
     what: "how long a package version waits before it can be installed, raised from the 12 hours pnpm-workspace.yaml sets while the author alone builds, before the platform opens to the public",
     from: "found",
+    done: "pnpm-workspace.yaml: pnpm's default, 1440 minutes, written out so a change of default moves nothing",
   },
   {
     id: "E1",
