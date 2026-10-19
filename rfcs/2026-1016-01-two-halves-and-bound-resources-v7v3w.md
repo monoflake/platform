@@ -143,6 +143,22 @@ down a layer at a time, each holding its own range alone.
 - **An account sets how many of its ways a sign-in asks, and fewer than two is warned of, never
   dismissed**: the warning is the platform's control's, given by its API with whether it may be
   dismissed, so a client draws it and decides nothing, as a dashboard does above.
+- **An account's record holds**, worked out with the author on 2026-10-19:
+
+  | Field      | Holds                                                                                                                                                                                                  |
+  | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+  | `name`     | the name shown, free text, empty unless written                                                                                                                                                        |
+  | `email`    | where the platform reaches the person, required and verified: an organization deleted, the account revoked, a security event; a way of signing in by email is apart                                    |
+  | `ways`     | the ways it signs in, each its kind and what checks it -- a passkey's public key and credential id, a provider's id for the user, an address; a password's hash and a TOTP seed sealed, as secrets are |
+  | `factors`  | how many ways a sign-in asks, at least one                                                                                                                                                             |
+  | `security` | `default` or `strict`, how long its credential lives, RFC vuanj; named so, since a tier is an account's plan, later                                                                                    |
+  | `status`   | `active`, or `revoked` by the operator, final, its id never given again                                                                                                                                |
+
+- **The platform keeps which organizations each account is in, and nothing of what it is there**:
+  a pair of an account and an organization a row, reported by the organization's control as its
+  members change, so the console lists an account's organizations and a revocation reaches each.
+  What the account is in one is asked of that organization. The pairs are an index, never the
+  truth: lost, they are gathered again from the organizations.
 
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.

@@ -209,8 +209,8 @@ a release:
 
 | Constant                                         | Value                                                                    |
 | ------------------------------------------------ | ------------------------------------------------------------------------ |
-| a capability's life                              | an hour, or 15 minutes where its organization asks the strict tier       |
-| an account credential's life                     | 12 hours, or an hour where its account asks the strict tier              |
+| a capability's life                              | an hour, or 15 minutes where its organization's `security` is `strict`   |
+| an account credential's life                     | 12 hours, or an hour where its account's `security` is `strict`          |
 | an organization's key that signs capabilities    | certified for seven days and renewed every day, RFC v7v3w                |
 | a sweep's grace, before bytes nothing names go   | 24 hours, past the slowest upload between bytes and their name           |
 | a tablet's log, archived to the blob             | at 16 MiB, a parcel's size, RFC b8f35                                    |
