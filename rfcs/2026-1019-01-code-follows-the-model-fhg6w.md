@@ -61,8 +61,21 @@ parts, libraries and edges, each with its contract:
   it, whatever its language; ReScript is the floor of what the platform writes, and what it publishes
   to npm carries that floor to those who call it.
 - **TypeScript is the glue**, where JavaScript's ecosystem is met as it is, and the language of the
-  tools and scripts; JavaScript, JSDoc and Svelte stand beside it where a page or a tool asks. Where
-  it stops and ReScript begins is open [B27].
+  tools and scripts; JavaScript, JSDoc and Svelte stand beside it where a page or a tool asks.
+- **ReScript's edge is kept as Rust's `unsafe` is**, worked out with the author on 2026-10-19:
+  - **The platform's own logic is ReScript**, and calls itself freely within, so all inside the edge
+    is proven by the compiler.
+  - **A library of JavaScript's is taken in its own language**: one of standing, Hono's kind, is no
+    safer for a skin of ReScript over it, and may be better than ReScript written in haste.
+  - **Its bindings stand together at the edge**, one module a library, and are what is taken on
+    trust, as an `unsafe` block is.
+  - **The edge is drawn where crossings are fewest**, never through a library's busy interface: on a
+    Worker, Hono's routes are TypeScript and each calls one ReScript function with what it read, so
+    a request crosses once.
+  - **A crossing copies little**: ReScript's records, arrays and strings are JavaScript's own, so
+    they pass as they are; a variant, a list or an option within an option has a form of its own and
+    is converted at the binding. TypeScript reads ReScript's exports by genType until ReScript 13
+    writes `.d.ts` itself, `lessons.md`.
 - **OCaml is not written**, decided by the author on 2026-10-19. It was chosen so one library might
   run natively and, by Melange, as JavaScript; a browser computing nothing leaves that unasked, and
   what stays is a third native toolchain -- opam, dune's package management, which calls itself not
@@ -82,8 +95,22 @@ parts, libraries and edges, each with its contract:
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
 a claim of a CWT**, in one shape a contract at a time, its CBOR deterministic by RFC 8949's 4.2.
-**WIT stays the language of an app's exports**, RFC 49qyg: the platform's own contracts are written
-in a language open below, WIT its users'.
+
+**A wire contract is its producer's type, as the workspace's `spec/json.md` has it**, worked out with
+the author on 2026-10-19:
+
+- **The producer's type is the one source**, and its JSON Schema is generated from it and
+  committed: a Rust producer's by `schemars` from its `serde` type, a ReScript producer's by Sury's
+  `S.toJSONSchema`, `lessons.md`. A check generates it again and fails on any difference.
+- **Every reader in another language is generated from the schema**, never copied: TypeScript's
+  types and valibot validator by the workspace's generator, as today, and Rust's and ReScript's
+  readers beside them [B29].
+- **A CBOR record's keys ride in its schema**, as `x-cbor-key`, so every generator writes the same
+  keys in the same order.
+- **Both ends run one set of `valid/` and `invalid/` examples**, the producer's own answers among
+  them.
+- **WIT stays the language of an app's exports**, RFC 49qyg: the platform's own contracts are its
+  producers' types, WIT its users'.
 
 **CBOR, COSE's `Sign1` and CWT are held to their standards' tests**, worked out with the author on
 2026-10-19: each is small and public with its own tests, so an implementation is held to all of
@@ -97,8 +124,7 @@ them, whoever wrote it.
 
 - **Rust's CBOR is minicbor**, worked out with the author on 2026-10-19, maintained, its 2.3.1 of
   2026-10-18: neither it nor ciborium promises deterministic encoding, so what the platform's own
-  cases find decides whether it is patched, forked or built. JavaScript's is open beside the
-  contracts' language [B28].
+  cases find decides whether it is patched, forked or built. JavaScript's is open [B29].
 - **Every test runs in CI**, so what is taken or built stays whole.
 - **None is begun yet**: this is the plan.
 
@@ -108,6 +134,5 @@ Open, for the discussion that follows:
   the check that a part uses only libraries of its own language. [B24]
 - How the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one
   tree. [B26]
-- Where ReScript ends and TypeScript begins, on a Worker and on a page. [B27]
-- The language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON
-  and CBOR alike; and JavaScript's CBOR. [B28]
+- What generates Rust's and ReScript's readers from a schema, its CBOR keys among it, and which
+  library is JavaScript's CBOR. [B29]

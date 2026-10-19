@@ -606,3 +606,10 @@ with KV alone done. Hono's app is a fetch handler, so a binding wraps one functi
 in alpha. Asked by RFC fhg6w. Sources: https://npmjs.com/package/workers-res,
 https://www.mintlify.com/honojs/hono/deployment/cloudflare-workers,
 https://unpkg.com/sury@11.0.0-alpha.9/README.md and https://bestofjs.org/projects/sury
+
+**ReScript's values are JavaScript's where they can be**: a record compiles to a plain object, an
+array to an array, a string to a string, so they cross to TypeScript unconverted; a variant with a
+payload compiles to an object tagged `TAG`, `{ TAG: "A"; _0: number }` in genType's TypeScript, and
+genType exports ReScript's values and types to TypeScript and imports TypeScript's into ReScript.
+Asked by RFC fhg6w. Sources: https://rescript-lang.org/docs/manual/latest/shared-data-types and
+https://www.rescript-lang.org/docs/manual/typescript-integration

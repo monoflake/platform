@@ -287,11 +287,19 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: 'where ReScript ends and TypeScript begins, on a Worker and on a page, so neither spreads by habit, fhg6w',
 		from: 'fhg6w',
+		done: "fhg6w: the platform's own logic is ReScript, a JavaScript library is taken in its own language, bindings at the edge where crossings are fewest, as Rust's unsafe",
 	},
 	{
 		id: 'B28',
 		group: 'B',
-		what: "the language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone; and JavaScript's CBOR, fhg6w",
+		what: "the language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone, fhg6w",
+		from: 'fhg6w',
+		done: "fhg6w: the producer's type, its JSON Schema generated and committed, every reader generated from it, as spec/json.md",
+	},
+	{
+		id: 'B29',
+		group: 'B',
+		what: "what generates Rust's and ReScript's readers from a JSON Schema, a CBOR record's keys among it, and which library is JavaScript's CBOR, held to the standards' tests, fhg6w",
 		from: 'fhg6w',
 	},
 	// C -- blocks a later step.
