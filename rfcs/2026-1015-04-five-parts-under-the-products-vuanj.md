@@ -92,8 +92,8 @@ people who use an app is another matter, above.
 would write already exists; replace, which overwrites what exists and so can lose it as a deletion
 can; delete; alter, a database's schema; and call, an export of an app, added with the author on
 2026-10-19 since calling is none of the five done to data. Create apart from replace makes a holder that can only
-add -- a backup, an audit log -- which, taken over, cannot erase. Alter is given only while a
-migration runs, RFC zn3u5.
+add -- a backup, an audit log -- which, taken over, cannot erase. A database's capability grants
+read, create, replace, delete and alter together, RFC zn3u5.
 
 **A scope also holds its `allowance`: what it may use and how much**, in the vocabulary of
 capabilities RFC 49qyg declares needs in. It reaches the organization in its bundle as the rest of

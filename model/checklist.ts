@@ -242,6 +242,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "how a database's adapter in front of D1 tells a statement that only reads, for a capability of read alone, since D1 offers no authorizer and no query_only",
 		from: 'b8f35, lessons.md',
+		done: "zn3u5: none is told; a database's rights are granted together",
 	},
 	// C -- blocks a later step.
 	{

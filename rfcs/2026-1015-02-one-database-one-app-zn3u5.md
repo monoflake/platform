@@ -59,11 +59,12 @@ app's own interface, never directly: its schema is an agreement only its app kno
 reader would be broken by the first one's migration without being told. A bucket can be shared
 because a file has no schema; a database cannot.
 
-**A schema changes only in a migration, a privileged time a deployment opens**, and never while an
-app runs: no app drops a table in the course of its work. A migration may run a script of the
-user's own to carry data through a change that destroys its old shape. Every right to a database
-is separate -- read, insert, update, delete, and changing the schema -- each statement's kind known
-before it runs, and the last is given to a migration alone.
+**A schema is changed in a migration, a time a deployment opens**, and not while an app runs. A
+migration may run a script of the user's own to carry data through a change that destroys its old
+shape. **A database's rights are one**, worked out with the author on 2026-10-19: a capability to a
+database grants reading, writing and changing the schema together, since D1, behind its adapter,
+tells no statement's kind before it runs, RFC vr5lw, `lessons.md`. So that no app drops a table in
+the course of its work is the app's own discipline, never the platform's to enforce.
 
 **Not hidden sharding.** A statement is never split across databases behind the app's back: the
 statements that split cleanly and the ones that do not look alike to the app, and the second kind
