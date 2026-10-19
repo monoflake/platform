@@ -149,6 +149,24 @@ other exports a public API, and the caller reaches it over the network as an `ef
 a subset of it taken when this lands: it was made for typed exports and imports between parts
 written in different languages, which is what A and B declare to each other.
 
+**What a build declares and what its owner configures are apart**, worked out with the author on
+2026-10-19, told by what changes when one build is deployed in another organization. The build's
+manifest declares its shape, and goes with its version: its functions, each one's kind and needs,
+its exports and the calls it makes, the binding slots it needs -- a name and a type, `uploads` an
+object bucket -- the env keys it reads, each `config` or `secret`, and its schedules and queues. The
+owner configures what fills it, and goes with the organization. So one build deploys anywhere its
+slots are filled, and going back a version takes its whole shape back and leaves what fills it.
+
+**An app's record holds**: its `version`, the hash of the build deployed, whose manifest is found by
+it; its `bindings`; its `env`, each key's value, a secret's sealed; and the scope the gateway serves
+it under, whose naming is open. [B3]
+
+- **Bindings are nested by the type of what they hold**, `app`, `database` or `bucket`, the types
+  of an organization's tree, RFC v7v3w, and within each a slot's name to an id: an app called is a
+  slot as a database used is. A deployment is refused where the slot's declared type, the type it
+  is filled under and the type of the resource the id names disagree, saying which, so an id filled
+  in the wrong place is caught where it is written and never resolved to whatever it names.
+
 Open, for the discussion that follows:
 
 - How a `keyed` daemon's own credentials reach it, an account's login: env is the same for every
