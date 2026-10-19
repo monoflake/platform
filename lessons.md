@@ -386,3 +386,8 @@ statements are `table_list`, `table_info`, `table_xinfo`, `index_list`, `index_i
 `reverse_unordered_selects`, `foreign_keys`, `defer_foreign_keys` and `optimize`; `query_only` is
 not among them, and `EXPLAIN` is not named. Asked by checklist B21. Source:
 https://developers.cloudflare.com/d1/sql-api/sql-statements/
+
+**CWT keeps claim keys below -65536 for private use**, and has registered `scope` as 9, from OAuth,
+and `sub` as 2, a text string; -256 to 255 take Standards Action, -65536 to -257 and 256 to 65535
+Specification Required, and above 65535 Expert Review. Asked by checklist A11. Source:
+https://www.iana.org/assignments/cwt/cwt.xhtml

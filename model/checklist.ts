@@ -106,6 +106,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "the labels of the claims the platform adds to CWT's; what each signed record holds and the rights' bits are decided, b8f35",
 		from: 'b8f35, v7v3w',
+		done: 'b8f35: COSE_Sign1 by Ed25519, CWT claims, rights as bits, private labels below -65536',
 	},
 
 	// B -- blocks building v0.

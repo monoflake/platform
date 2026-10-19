@@ -287,7 +287,11 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
 
   - **A database's capability grants its five rights together**, and one granting fewer is refused
     as malformed, since D1, behind its adapter, tells no statement's kind, RFC zn3u5.
-  - The labels of the claims the platform adds to CWT's are open. [A11]
+  - **The claims the platform adds take labels below -65536**, the range IANA keeps for private use,
+    worked out with the author on 2026-10-19, so none is ever taken by a claim registered later:
+    `scope` is taken already, 9, OAuth's, `lessons.md`. -65537 the scope's id, -65538 the resource's
+    id, -65539 the rights, -65540 the role. **An id is written in them as its integer**, as it is
+    stored; `sub`, which CWT types as text, holds its 8 hex digits.
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and
