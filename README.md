@@ -16,4 +16,5 @@ spec/        how work here is done
 vendor/      other projects' files, copied at one version and left as written
 ```
 
-Run the model with `node model/check.ts`.
+The model is ReScript. Run it with `pnpm install` once, then `pnpm check`, which compiles it and
+runs `model/check.res`; `pnpm check --ready` asks whether building may begin.

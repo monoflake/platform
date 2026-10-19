@@ -17,7 +17,7 @@ this lands is for then.
 
 The shape the discussion has reached so far:
 
-**The model's boundaries are the code's**, since `model/graph.ts` already cuts the platform into
+**The model's boundaries are the code's**, since `model/graph.res` already cuts the platform into
 parts, libraries and edges, each with its contract:
 
 | In the model           | In the code                                                              |

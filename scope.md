@@ -3,7 +3,7 @@
 What the model covers in its current stage. An edge case outside it goes to the out-of-model list
 and is not designed for until a later stage takes it in. See `spec/process.md`.
 
-**Building begins when `node model/check.ts --ready` passes**: every row of `model/checklist.ts`
+**Building begins when `pnpm check --ready` passes**: every row of `model/checklist.res`
 that blocks step 0 is crossed off by naming where it was decided, and every check holds. **The
 checklist grows by itself**: every open question a draft lists, and every open mark in the model,
 names its row in brackets, `[B12]`; one that names none is unfiled and blocks, so a new dimension
@@ -71,7 +71,7 @@ certificate.
 **What a footing keeps is bounded; what it is asked may grow.** It never grows with the content its
 owner holds, nor with time: a journal is kept in the stores, a log bounded by its archiving. Its
 reads and writes may grow with use, and how far each step of the bootstrap path asks of its
-vendor's plan is counted, `model/footing.ts`.
+vendor's plan is counted, `model/footing.res`.
 
 **The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
 layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something
@@ -127,15 +127,15 @@ may point up. A library uses only libraries. Nothing at layer 0 or below has an 
 `soft`, to what the platform runs as an owner, so the graph stays clean while the platform runs on
 itself, RFC vuanj. The data plane writes no configuration: whatever an organization opens -- a bucket, a
 database, an app -- is configuration, the platform's half, written on the control plane alone,
-whoever asks, RFC v7v3w; `RECORDS` in `model/graph.ts` lists each kind of record.
+whoever asks, RFC v7v3w; `RECORDS` in `model/graph.res` lists each kind of record.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
-contract, by `node model/check.ts`, and then the bootstrap path, `model/bootstrap.ts`: every step of
+contract, by `pnpm check`, and then the bootstrap path, `model/bootstrap.res`: every step of
 RFC 94y0d holds, each deployment reaches it by a move it may take, and what its ground gives,
-`model/resources.ts`, makes a footing of one kind of each class, its compute an `effect` function,
+`model/resources.res`, makes a footing of one kind of each class, its compute an `effect` function,
 extensions that give what the products need, and a path to the public network for every resource,
 RFC vr5lw; and the footing,
-`model/footing.ts`: what each keeps is bounded, and each step fits the rows a day its plan allows. D4 recovery models a failure
+`model/footing.res`: what each keeps is bounded, and each step fits the rows a day its plan allows. D4 recovery models a failure
 and is s1's, run with `--s1`.
 
 **Out of the model in s0:** every failure, including one part crashing and one store lost, which
@@ -144,7 +144,7 @@ more than one part at once; performance, and cost past a footing's rows; an oper
 
 **Each contract is sorted** into one of three: decided now, since a mistake is written into data
 and cannot be undone; kept by hand on day one, with its command; or left for later, with what brings
-it back. The boundaries' sorting is in `model/graph.ts`, and `node model/check.ts` reports any not
+it back. The boundaries' sorting is in `model/graph.res`, and `pnpm check` reports any not
 yet sorted.
 
 | Contract        | Sorted             |

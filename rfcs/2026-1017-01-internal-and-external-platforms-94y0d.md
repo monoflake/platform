@@ -62,7 +62,7 @@ its own bundle, credentials and directory, sharing nothing but the machine.
   over when one is lost or slowed.
 
 **The platform is built in steps, each first making the next move of the pin cheaper**, and
-`model/bootstrap.ts` checks every step and every move, `scope.md`:
+`model/bootstrap.res` checks every step and every move, `scope.md`:
 
 | Step | What                                                                                                                  | Internal / external |
 | ---- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
@@ -143,7 +143,7 @@ the internal organization beneath it**; both are deleted seven days after unless
 b8f35, so the platform pays for what it sealed no longer than that.
 
 **Once a deployment runs a version that replaces a part while the rest run, it never stops again on
-the correct path**, and the bootstrap stops at most five times; `model/bootstrap.ts` checks both. A
+the correct path**, and the bootstrap stops at most five times; `model/bootstrap.res` checks both. A
 stop after that is a failure, which the correct path cannot produce: a capability proven too
 briefly on the external platform and taken by the pin, say, which a later stage of the model takes
 in.

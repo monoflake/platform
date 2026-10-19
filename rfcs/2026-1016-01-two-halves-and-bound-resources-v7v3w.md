@@ -88,7 +88,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   later. [D14]
 - **Everything that serves runs in an organization**, and none of it needs the platform's control to
   serve or to start: an organization reads its bundle, and reaches the platform's control only to
-  change it, which `model/check.ts` checks.
+  change it, which `model/check.res` checks.
 
 **A control changes what it holds by generations**, worked out with the author on 2026-10-18, alike
 in the platform's control, an organization's and the extensions each binds.

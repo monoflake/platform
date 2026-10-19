@@ -1,0 +1,7 @@
+{
+	"name": "blueprint",
+	"sources": [{ "dir": "model" }],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "error": "+a" }
+}
