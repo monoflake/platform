@@ -356,11 +356,31 @@ one code is both.
   organization's use, never kept back.
 - **A machine runs NixOS**, worked out with the author on 2026-10-19: its newest stable release,
   with nixpkgs unstable beside it, by a flake, so what a machine is is one revision and nothing kept
-  by hand. It runs four things and no more: Docker, which starts all that runs -- a container, an
-  instance's process, an isolate, each in a container; the host's driver, written in Rust or OCaml
-  for this system alone; the tailnet, where the machine joins one; and a small software firewall.
+  by hand. It runs four things and no more: containerd, which manages all that runs; the host's
+  driver, written in Rust or OCaml for this system alone, which speaks containerd's own gRPC API by
+  the client generated from its protobuf definitions, `containerd-client` in Rust, `lessons.md`; the
+  tailnet, where the machine joins one; and a small software firewall. Docker is not among them: it
+  builds images, which a machine never does.
+- **What runs is told apart in three layers**, worked out with the author on 2026-10-19:
+
+  | Layer     | Is                                                                                                                                                    |
+  | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | manager   | containerd: what is created, started, stopped and removed, each binding in a containerd namespace of its own                                          |
+  | runtime   | for a container, an OCI runtime -- runc, crun or youki, chosen a container at a time; for an isolate, workerd for V8's and wasmtime for WebAssembly's |
+  | isolation | native Linux, by namespaces and cgroups, for an OCI runtime; within the process, for an isolate's                                                     |
+
+  **A runtime declares the isolation it stands on as a list**, since an isolate run inside a
+  container stands on both, and a kind added later, a virtual machine's, is one more entry.
+  **Containerd's namespaces keep bindings apart**, each seeing its own containers and images alone,
+  RFC v7v3w. **A container outlives containerd's restart**, its shim its parent, so containerd is
+  upgraded without stopping what runs. How workerd and wasmtime are run is for when they are built.
+
+- **A machine goes back two ways, each set on its own**: its system, by the generations of NixOS it
+  keeps, upgraded at fixed staggered times so a count of generations stands for about as many
+  periods; and its workloads' data, by btrfs snapshots of their volumes, kept so many days. Its
+  driver sets both from what the machine's disk holds, and reports them.
 - **A machine's disk is two file systems, the host's and the workloads'**: ext4, small, for what
-  the host keeps -- the system, the driver's own state -- and btrfs for what runs keeps -- Docker's
+  the host keeps -- the system, the driver's own state -- and btrfs for what runs keeps -- containerd's
   own data moved onto it, and every binding's share -- so a workload that fills its disk never
   reaches the host. Where the system's store goes, and how a binding's share is bounded, are open.
   [B22]

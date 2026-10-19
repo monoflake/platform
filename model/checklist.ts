@@ -252,7 +252,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B22',
 		group: 'B',
-		what: "a machine's disk past its two file systems, decided in vr5lw: where NixOS's store goes, how a binding's share on btrfs is bounded, and how many days of a machine's going back its disk keeps, which its driver reports",
+		what: "a machine's disk past its two file systems, decided in vr5lw: where NixOS's store goes, and how a binding's share on btrfs is bounded",
 		from: 'vr5lw',
 	},
 	// C -- blocks a later step.
@@ -475,7 +475,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C32',
 		group: 'C',
-		what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a Docker one alike, and whether Docker's live restore carries what runs across them",
+		what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a containerd one, and what is handed over first where a container would not outlive it; and whether youki runs under containerd's runc shim as crun does",
 		from: 'vr5lw',
 		step: 2,
 	},
