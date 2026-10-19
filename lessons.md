@@ -446,3 +446,25 @@ an RDAP server for 1203 TLDs, `com`, `net`, `org`, `dev`, `app`, `fyi`, `ai` and
 and none for `io`, `cn`, `de`, `jp`, `us` or `co`. Asked of a domain's proof, RFC vr5lw. Sources:
 https://www.icann.org/en/announcements/details/icann-update-launching-rdap-sunsetting-whois-27-01-2025-en,
 https://www.rfc-editor.org/rfc/rfc9083.html and https://data.iana.org/rdap/dns.json
+
+## A machine's system, read 2026-10-19
+
+**NixOS 26.05 "Yarara" is the stable release, out 2026-05-30**, with fixes and security updates
+until 2026-12-31; 25.11 lost its security updates after 2026-06-30. Its stage 1 runs systemd by
+default. So a machine installed now crosses a release within months. Asked of a machine's system, RFC
+vr5lw. Sources: https://nixos.org/blog/announcements/2026/nixos-2605/ and
+https://www.phoronix.com/news/NixOS-26.05-Released
+
+**Docker's live restore keeps containers running while its daemon is down, across patch releases
+alone**: set `"live-restore": true` in `/etc/docker/daemon.json`; it is "only supported" across
+`YY.MM.x`, not a `YY.MM` upgrade, and restores only while the bridge's addresses and the graph driver
+are unchanged; a long outage can fill a container's log buffer and block its logging; standalone
+containers alone, not Swarm's. Asked by checklist C32. Source:
+https://docs.docker.com/engine/daemon/live-restore/
+
+**Btrfs has two quotas**: qgroups, which walk back-references on writes and commits and slow as
+snapshots grow, and simple quotas from Linux 6.7, `btrfs quota enable --simple`, which charge each
+extent for good to the subvolume that made it and cost about what no quota does, but cannot tell
+shared from exclusive use. Asked by B22. Sources: https://lwn.net/Articles/944371,
+https://blogs.oracle.com/linux/btrfs-qgroup-quota-vs-simple-quota and
+https://btrfs.readthedocs.io/en/latest/btrfs-quota.html

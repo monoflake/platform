@@ -354,6 +354,16 @@ one code is both.
   may use every core while they are idle. The machine's holder may set either otherwise. What the
   platform runs on a machine for its organization -- the blob, a tablet's writer -- is that
   organization's use, never kept back.
+- **A machine runs NixOS**, worked out with the author on 2026-10-19: its newest stable release,
+  with nixpkgs unstable beside it, by a flake, so what a machine is is one revision and nothing kept
+  by hand. It runs four things and no more: Docker, which starts all that runs -- a container, an
+  instance's process, an isolate, each in a container; the host's driver, written in Rust or OCaml
+  for this system alone; the tailnet, where the machine joins one; and a small software firewall.
+- **A machine's disk is two file systems, the host's and the workloads'**: ext4, small, for what
+  the host keeps -- the system, the driver's own state -- and btrfs for what runs keeps -- Docker's
+  own data moved onto it, and every binding's share -- so a workload that fills its disk never
+  reaches the host. Where the system's store goes, and how a binding's share is bounded, are open.
+  [B22]
 - **What a driver has to tell, it pushes**, as events, each with an id: a difference found, a thing
   removed, a thing that cannot be made. It pushes to each binding's control what is that binding's
   alone; one it could not deliver it pushes again later, and hands back as well with the state a
@@ -611,5 +621,5 @@ third-party vendors and the author's machines.
 Open, for the discussion that follows:
 
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
-- Where a machine's driver keeps its state, what it reports and what it runs, on the machine's disk.
-  [B22]
+- A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
+  [C32]

@@ -252,7 +252,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B22',
 		group: 'B',
-		what: "where a machine's driver keeps its own state, what it reports, and the containers and volumes it runs, on the machine's disk",
+		what: "a machine's disk past its two file systems, decided in vr5lw: where NixOS's store goes, how a binding's share on btrfs is bounded, and how many days of a machine's going back its disk keeps, which its driver reports",
 		from: 'vr5lw',
 	},
 	// C -- blocks a later step.
@@ -471,6 +471,13 @@ export const CHECKLIST: Item[] = [
 		what: "what an organization's gateway does past routing, each on its own: authenticating an app's users, a firewall kept in step in the account it runs in; the scopes it reserves are a list, v7v3w",
 		from: 'vr5lw',
 		step: 6,
+	},
+	{
+		id: 'C32',
+		group: 'C',
+		what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a Docker one alike, and whether Docker's live restore carries what runs across them",
+		from: 'vr5lw',
+		step: 2,
 	},
 	// D -- commercial and operational.
 	{
