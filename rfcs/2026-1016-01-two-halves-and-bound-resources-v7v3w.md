@@ -149,15 +149,15 @@ down a layer at a time, each holding its own range alone.
   keeps it unique, never a field in a record's content; and what the platform alone decides of an
   owner is the platform's record of it.
 
-  | Of an organization                  | Is                 | Kept                                                                              |
-  | ----------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
-  | `name`, `description`, `security`   | its own            | its own control's `configuration`, kind `organization`                            |
-  | each member and its role            | its own            | its own control's `configuration`, kind `member`                                  |
-  | each invitation not yet accepted    | its own            | its own control's `configuration`, kind `invitation`                              |
-  | `allowance`, `shadow`, `deleting`   | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
-  | its status and where its backing is | the platform's say | the `anchor`, RFC b8f35                                                           |
-  | each label                          | unique             | the platform's `label` table, a label to the organization holding it              |
-  | its certificate                     | compiled           | no record                                                                         |
+  | Of an organization                         | Is                 | Kept                                                                              |
+  | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------- |
+  | `name`, `description`, `security`, `grace` | its own            | its own control's `configuration`, kind `organization`                            |
+  | each member and its role                   | its own            | its own control's `configuration`, kind `member`                                  |
+  | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`                              |
+  | `allowance`, `shadow`, `deleting`          | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
+  | its status and where its backing is        | the platform's say | the `anchor`, RFC b8f35                                                           |
+  | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |
+  | its certificate                            | compiled           | no record                                                                         |
 
   | Of an account                                      | Is                   | Kept                                                                                                                         |
   | -------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -246,12 +246,35 @@ service's, or a node.
   each host's binding and its credentials, the binding's quota, levels and grace, the relays and
   private networks its hosts may use, the capacity lists sent to each driver and what each driver
   reports -- so it is written once and runs in both.
+  - **A binding's record holds**, kind `binding`, worked out with the author on 2026-10-19:
+
+    | Field        | Holds                                                                                                                                          |
+    | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `host`       | what is bound: the driver's kind, `cloudflare` or `machine`, and the host's own identifier, an account's id or what a machine's driver reports |
+    | `endpoint`   | where the driver's management answers                                                                                                          |
+    | `token`      | the binding token, sealed, which every call to the driver carries, RFC vr5lw                                                                   |
+    | `levels`     | availability, durability and custody, copied from the host as it is bound and its own from then, RFC vr5lw                                     |
+    | `place`      | the node, site, account, zone and region the host declares as it is bound, RFC 13ixj                                                           |
+    | `quota`      | none unless set                                                                                                                                |
+    | `grace`      | empty, inheriting the organization's, or its own seconds, RFC vr5lw                                                                            |
+    | `relays`     | the relays its host may use, bindings by id, or `all`                                                                                          |
+    | `address`    | whether its host is declared to have a public address, which the driver checks by a relay dialing back                                         |
+    | `management` | a management token, sealed, if given                                                                                                           |
+    | `shell`      | a shell key's private half, sealed, if made                                                                                                    |
+    | `dismissed`  | the warnings its admin dismissed, a dismissal being configuration                                                                              |
+
+  - **An organization's `grace` is what its bindings inherit**, a week unless set, RFC vr5lw.
 - **A control may lease what it binds, and then manages what it leased and nothing more.** It opens
   a binding of its own host for the lessee, sets its quota, and hands over that binding's token;
   the lessee holds the lease as any binding, by the same code, and reaches the host only within it.
   The lessor keeps the host's management token, and with it the host's own configuration -- its
   records, its shell, its grace -- and touches nothing else of the lessee's. A driver is told
   nothing of a lease: it sees one binding more. The platform leases to its organizations.
+  - **A lease is a record on either side**, worked out with the author on 2026-10-19: the lessor's
+    `lease` names the binding it opened, the lessee organization and the quota; the lessee's is a
+    `binding` like any, whose `lessor` names who leased it, so its control knows the host's
+    management token and shell key are the lessor's, never its own, and the console shows it
+    leased.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
   vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
   extension; its extensions give compute, storage and databases, a database only in the platform's
