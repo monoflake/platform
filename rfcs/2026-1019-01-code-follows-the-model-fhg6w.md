@@ -49,6 +49,13 @@ parts, libraries and edges, each with its contract:
   Melange's `int` is 32 bits, so a 64-bit integer crossing into it is an `Int64`.
 - **The tools are dune and cargo, node, vite and tsdown on rolldown, oxlint and oxfmt**, and
   TypeScript 6 and 7 side by side.
+- **OCaml's compiler and libraries are locked by dune's package management**, worked out with the
+  author on 2026-10-19: `dune pkg lock` writes the project's lock directory, kept in the
+  repository, with the compiler among what it locks, so any machine builds the same as cargo and its
+  lock do. opam is installed by mise, `github:ocaml/opam`, to search packages and to fall back on:
+  dune calls its package management not final, `lessons.md`, and reads `.opam` files still, so a
+  switch of opam's takes over should it fail. mise never manages the compiler, since a library is
+  built for one compiler and lives in its switch or lock beside it.
 - **OCaml's standard library is its own, `Stdlib`, alone**, worked out with the author on
   2026-10-19: Melange ships it, so it alone is sure on every target; Base and Core replace it,
   shadowing its modules and changing some of what they mean, and bring Jane Street's world with
@@ -99,5 +106,6 @@ implementation is held to all of them, and the platform owns what its every reco
 Open, for the discussion that follows:
 
 - Which language each part of the model is written in, declared in the model beside the part. [B24]
-- How the repository is laid out, so dune, cargo and the JavaScript tools build one tree. [B26]
+- How the repository is laid out, so dune, cargo and the JavaScript tools build one tree, and how
+  dune itself is installed. [B26]
 - Whether the OCaml backend moves from atdgen to atdml, which ATD names as coming. [C33]

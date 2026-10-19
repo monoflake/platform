@@ -544,3 +544,15 @@ shadows the standard modules, and some of its functions differ, `List.map` tail-
 and not in Stdlib; Core builds on it; Containers extends Stdlib rather than replacing it. Asked by
 fhg6w. Sources: https://ocaml.org/p/base/latest and
 https://discuss.ocaml.org/t/stdlib-vs-base-in-2025-beginner/16626
+
+**Dune's package management is "not final yet and details are still subject to change"**, its
+tutorial says. 3.24.0, of 2026-06-21, made the relocatable compiler its default, built once and
+cached apart from a project, and locks developer tools, `dune fmt` using a locked ocamlformat;
+3.25.0_alpha0 came on 2026-10-02. It installs the compiler and third-party packages by one tool from
+opam's repositories, reading `.opam` files still; it installs no system package, sandboxes no build
+as opam does by Bubblewrap, needs packages free of absolute paths, patching others in an overlay
+repository, and solves from nothing. Open in its tracker: Windows, cross-compilation. mise's
+registry holds opam, `github:ocaml/opam`, and no OCaml compiler or dune. Asked by RFC fhg6w. Sources:
+https://dune.readthedocs.io/en/stable/tutorials/dune-package-management/index.html,
+https://dune.readthedocs.io/en/stable/explanation/package-management.html and
+https://github.com/ocaml/dune/releases
