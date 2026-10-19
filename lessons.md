@@ -402,3 +402,12 @@ against correcting automatically. Thresholds are two-level, up to 16 groups of u
 master secret may be encrypted under a passphrase of printable ASCII, empty if none is given, and
 nothing tells a wrong passphrase from a right one. Asked by checklist B12. Source:
 https://github.com/satoshilabs/slips/blob/master/slip-0039.md
+
+## Names in a domain, read 2026-10-19
+
+**No publicly trusted CA certifies a host's name with an underscore.** CA/Browser Forum Ballot SC12,
+"Sunset of Underscores in dNSNames", passed in November 2018, ended the exception that had let
+them through, since RFC 5280 never allowed them; certificates with one were cut to 30 days and
+phased out in 2019. Asked by checklist B3. Sources:
+https://lists.cabforum.org/pipermail/servercert-wg/2018-November/000362.html and
+https://ssl.com/?p=26132

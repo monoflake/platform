@@ -166,8 +166,16 @@ down a layer at a time, each holding its own range alone.
   | each way it is found by as it signs in             | unique               | the platform's `sign-in` table, a kind and an identifier to the account                                                      |
   | its username                                       | unique               | the platform's `username` table, a username to the account                                                                   |
   | the organizations it is in                         | the platform's index | the platform's `membership` table                                                                                            |
-  - **An account's `name` is the name shown**, free text, empty unless written; its **username** is
-    a second name, lowercase, for where a name must be written plainly. [B3]
+  - **A username and a label are written alike**, worked out with the author on 2026-10-19, since
+    either may stand in a domain name, a label in `{organization}.mofl.fyi` now and a username
+    later: lowercase ASCII letters, digits and the hyphen alone, beginning and ending with a letter
+    or a digit, as RFC 1123 has a host's name; never beginning `xn--`, punycode's; of 3 to 63
+    characters, 63 the most a DNS label holds; and never eight hex digits, which would read as a
+    scope's id, RFC vr5lw. A dot would make another level of the name, and an underscore no public
+    CA certifies, `lessons.md`. Upper case given is lowered.
+  - **A name shown is an account's or an organization's `name`**, set as its owner likes in ASCII
+    letters of either case, digits, the dot, the underscore, the hyphen, and a space between them,
+    never leading or trailing; empty unless written.
   - **Its contact `email` is required and verified**, and unique to no one, so one person may have
     two accounts reached at one address: where the platform reaches the person, as an organization
     is deleted, the account revoked or a security event comes. An address one signs in by is a row
