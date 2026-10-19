@@ -274,16 +274,16 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
     right it never grants, and a right added later reaches no verifier that does not ask for it. A
     capability granting none is refused as malformed.
 
-    | Operation                                               | Asks for                                                                    |
-    | ------------------------------------------------------- | --------------------------------------------------------------------------- |
-    | a bucket's `create` and `delete`, through the control   | `create` and `delete` on the organization's control                         |
-    | `describe`, `list`, `read`, of a bucket, file or object | `read`                                                                      |
-    | a file's `write`                                        | `create` where its path is new, `replace` where it is not                   |
-    | an object's `write`                                     | `create`, though the object be there already and nothing is written         |
-    | `delete`                                                | `delete`                                                                    |
-    | `publish`                                               | two capabilities, `read` on the file bucket and `create` on the object one  |
-    | a database's `execute`                                  | `read` for a statement that only reads; every right but `call` for the rest |
-    | an export's call                                        | `call`, the export its resource                                             |
+    | Operation                                               | Asks for                                                                       |
+    | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+    | a bucket's `create` and `delete`, through the control   | `create` and `delete` on the organization's control                            |
+    | `describe`, `list`, `read`, of a bucket, file or object | `read`                                                                         |
+    | a file's `write`                                        | `create` where its path is new, `replace` where it is not                      |
+    | an object's `write`                                     | `create`, though the object be there already and nothing is written            |
+    | `delete`                                                | `delete`                                                                       |
+    | `publish`                                               | two capabilities, `read` on the file bucket and `create` on the object one     |
+    | a database's `execute`                                  | `read` for a statement that only reads; any one of the other four for the rest |
+    | an export's call                                        | `call`, the export its resource                                                |
 
   - **A database is told apart by reading alone**, worked out with the author on 2026-10-19: a
     capability of `read` alone runs what only reads, and one of any other right runs every
