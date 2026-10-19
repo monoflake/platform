@@ -340,3 +340,33 @@ the types a page could run, apart from its image, audio, video, font and archive
 `DetectContentType` follows it over the first 512 bytes and answers `application/octet-stream` when
 it cannot tell. Asked by A8. Sources: https://mimesniff.spec.whatwg.org/ and
 https://pkg.go.dev/net/http#DetectContentType
+
+**Three-letter extensions are mostly four-letter names cut short.** CP/M and the FAT file system of
+early MS-DOS and Windows allowed eight characters and an extension of three, and early Windows
+programs wrote three; classic Mac OS allowed longer. Pairs named: `jpg` `jpeg`, `tif` `tiff`, `pct`
+`pict`, `mpg` `mpeg`, `mid` `midi`, `aif` `aiff`, `wav` `wave`, `htm` `html`. The short ones
+outlived the limit, Windows being the most used. Asked by A8. Source:
+https://fileinfo.com/help/different_extensions
+
+**MDN names the type of each common extension**, IANA's where one is registered: `md`
+`text/markdown`, `js` and `mjs` `text/javascript` by RFC 9239, `flac` `audio/flac` where mime-db has
+only `audio/x-flac`, `wav` `audio/wav` with `audio/wave` preferred by its container page, `ico`
+`image/vnd.microsoft.icon`, `xml` `application/xml` by RFC 7303. `jxl`, `heic`, `tiff` and `mov`
+are not shown by every browser: TIFF by Safari alone, QuickTime by Safari. Asked by A8. Sources:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_types,
+https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Image_types and
+https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Formats/Containers
+
+**`Content-Security-Policy: sandbox` with no token makes a page show and do nothing.** Its origin is
+opaque, so `document.cookie` and `localStorage` are out of reach and every same-origin check
+fails; scripts do not run; a form is shown but never sent; popups and top-level navigation are
+refused. It works only as a response header, never in `<meta>`, and has been in every browser since
+November 2016. A response's policy populates the policy container of the document or worker made
+from it; a page's own policy governs the requests it makes. Asked by A8. Sources:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/sandbox,
+https://html.spec.whatwg.org/multipage/browsers.html#sandboxing and https://www.w3.org/TR/CSP3/
+
+**Chrome shows a PDF blank when its response carries `sandbox`.** Jira, which sends the header on
+attachments from 8.16, excludes `application/pdf` to make them load. Asked by A8. Sources:
+https://support.atlassian.com/jira/kb/pdf-attachments-fail-to-load-in-chrome-on-jira-data-center/
+and https://answers.sap.com/questions/13392550/chrome-blocking-pdf-content-accessed-via-media-url.html

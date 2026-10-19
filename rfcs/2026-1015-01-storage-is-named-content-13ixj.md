@@ -144,18 +144,35 @@ storage (one an organization, its own unique salt)
   spelling of each format kept. **That table holds spellings of one format alone**, never types that
   are only served alike, so `ini` is never `txt`; it is written by hand, and as it is part of an
   object's name a row once written is never changed or taken out, though rows may be added. An
-  extension it does not know is kept as it came. [A8]
+  extension it does not know is kept as it came.
   - **A spelling is rewritten to the format's full one**, since the short ones are mostly cut to three
-    letters by file systems that once allowed no more, worked out with the author on 2026-10-19:
-    `jpg` and `jpe` to `jpeg`, `yml` to `yaml`, `htm` to `html`, `tif` to `tiff`, `mpg` and `mpe` to
-    `mpeg`, `mid` to `midi`.
-  - **Unless the short one is what the world recognizes**, as `md` is, so `markdown` is rewritten to
-    `md`.
+    letters by file systems that once allowed no more, `lessons.md`, worked out with the author on
+    2026-10-19: `jpg` and `jpe` to `jpeg`, `tif` to `tiff`, `htm` to `html`, `xht` to `xhtml`, `mht`
+    to `mhtml`, `mpg` and `mpe` to `mpeg`, `mid` to `midi`, `aif` to `aiff`, `pct` to `pict`, `yml`
+    to `yaml`, `sgm` to `sgml`, `djv` to `djvu`, `igs` to `iges`, `stp` to `step`.
+  - **Unless the short one is what the world recognizes**: `markdown` to `md`, `text` to `txt`,
+    `wave` to `wav`.
+  - **A pair alike in spelling but not one format is never joined**: `svgz` is `svg` compressed,
+    `aifc` is `aiff` compressed, `smi` is SAMI captions as well as SMIL, `xsl` is XSL-FO as well as
+    XSLT. A pair whose recognized spelling is unsure, `3gp` and `3gpp`, waits: a row left out costs
+    one content a second name, a row wrong is wrong for good.
 - **An object's media type is never stored**: it is the extension's, looked up as the object is
-  served, in a short table of the extensions the platform knows; every other is served as one
-  fallback. This table is how a browser is answered and never part of a name, so it changes at any
-  time, its cost an answer cached a year. One extension gives one type, and many give the same, so a
-  type never leads back to an extension. [A8]
+  served, in a short table of the extensions the platform knows; every other is served as
+  `application/octet-stream`. This table is how a browser is answered and never part of a name, so
+  it changes at any time, its cost an answer cached a year. One extension gives one type, and many
+  give the same, so a type never leads back to an extension. Each type is IANA's where IANA
+  registers one, MDN's where it does not, `lessons.md`; one a browser cannot show is listed all the
+  same, since showing nothing harms nothing. The table it starts with:
+
+  | Of    | Extension -> type                                                                                                                                                                                                                                                                      |
+  | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | image | `png` `image/png`, `jpeg` `image/jpeg`, `gif` `image/gif`, `webp` `image/webp`, `avif` `image/avif`, `apng` `image/apng`, `jxl` `image/jxl`, `bmp` `image/bmp`, `ico` `image/vnd.microsoft.icon`, `tiff` `image/tiff`, `heic` `image/heic`, `heif` `image/heif`, `svg` `image/svg+xml` |
+  | audio | `mp3` `audio/mpeg`, `m4a` `audio/mp4`, `aac` `audio/aac`, `ogg` `oga` `opus` `audio/ogg`, `flac` `audio/flac`, `wav` `audio/wav`, `weba` `audio/webm`                                                                                                                                  |
+  | video | `mp4` `video/mp4`, `webm` `video/webm`, `ogv` `video/ogg`, `mov` `video/quicktime`                                                                                                                                                                                                     |
+  | font  | `woff2` `font/woff2`, `woff` `font/woff`, `ttf` `font/ttf`, `otf` `font/otf`                                                                                                                                                                                                           |
+  | text  | `txt` `text/plain`, `md` `text/markdown`, `csv` `text/csv`, `tsv` `text/tab-separated-values`, `vtt` `text/vtt`, `html` `text/html`, `css` `text/css`, `js` `mjs` `text/javascript`                                                                                                    |
+  | data  | `json` `application/json`, `xml` `application/xml`, `xhtml` `application/xhtml+xml`, `wasm` `application/wasm`, `pdf` `application/pdf`                                                                                                                                                |
+
 - **An object bucket alone is served**, at `/v{n}/storage/{bucket}/{hash}.{extension}` of a name
   bound to the storage, the content domain's or one the organization binds, RFC vr5lw; its entry
   delivers the path to the storage unread. The version is an integer, `v1` now, written with its
@@ -168,9 +185,19 @@ storage (one an organization, its own unique salt)
     may read a private one is open. [C10] Content made public cannot be recalled from caches the
     platform does not hold.
   - **An object is served as its extension's type, its bytes never read to tell it**, with
-    `X-Content-Type-Options: nosniff`; an extension the table does not know is served as
-    `application/octet-stream`, and a type that could run in a browser -- HTML, SVG, a script -- is
-    never served as itself. Which extensions are known, and how each is answered, is open. [A8]
+    `X-Content-Type-Options: nosniff`, so the browser never guesses. HTML, SVG and a script are
+    served as themselves too: what keeps them harmless is the next rule, never a type that lies,
+    which would break an SVG in an `<img>` and a script a page of another domain loads.
+  - **Every answer carries `Content-Security-Policy: sandbox`**, but a type exempted, worked out
+    with the author on 2026-10-19: what is opened as a page then shows and does nothing, its origin
+    opaque, with no script, no cookie, no form sent and no window opened, so what an app's user
+    uploads can never act as the organization's. A response's policy reaches only the document made
+    from it, so a script, a stylesheet, an image or a font loaded by a page elsewhere is untouched,
+    `lessons.md`. **The exemptions are listed, never the dangers**, so a type a browser learns to
+    run tomorrow is sandboxed already: `application/pdf` alone, which Chrome shows blank in a
+    sandbox.
+  - **A public bucket's answers carry `Access-Control-Allow-Origin: *`**, since a module script, a
+    font and a `fetch()` from another domain need it; a private one's is [C10]'s.
 - **Exported, an object bucket is laid out as `/{aa}/{bb}/{hash}.{extension}`**, the first four
   digits of the hash as two directories, as a store keeps a stored block, RFC b8f35, so it moves
   into any other object store or file system as it is; a file bucket is exported as its paths.

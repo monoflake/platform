@@ -83,8 +83,9 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A8',
 		group: 'A',
-		what: "an object's extension: whether `txt` stays against `text`, the spellings' rule being decided, 13ixj; and the extensions known when served, each one's type and whether it is shown or downloaded, those that could run in a browser never served as themselves; an object takes an extension and never a type, and its type is never stored, 13ixj",
+		what: "an object's extension: the spellings rewritten to one, and the extensions known when served with each one's type; an object takes an extension and never a type, and its type is never stored",
 		from: '13ixj',
+		done: '13ixj: full spellings unless the short is recognized; IANA types, sandboxed but PDF',
 	},
 	{
 		id: 'A9',

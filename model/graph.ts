@@ -177,7 +177,7 @@ export const PARTS: Record<string, Part> = {
 				'serve',
 				H,
 				'an object bucket answered at a name bound to the storage, public or private',
-				"each extension's type is open [A8]; who checks a private reader is open, 13ixj [C10]",
+				'who checks a private reader is open, 13ixj [C10]',
 			),
 		],
 		uses: ['capability*', 'compat*'],
