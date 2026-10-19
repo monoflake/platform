@@ -83,7 +83,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A8',
 		group: 'A',
-		what: "an object's extension: the table that makes a media type or a path's extension one standard extension, each extension's type, and the types that could run in a browser and are never served as themselves",
+		what: "an object's extension: the spellings rewritten to one, written by hand and never changed, and the extensions known when served, each one's type and whether it is shown or downloaded, those that could run in a browser never served as themselves; an object takes an extension and never a type, and its type is never stored, 13ixj",
 		from: '13ixj',
 	},
 	{

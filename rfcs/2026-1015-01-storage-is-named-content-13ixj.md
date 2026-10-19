@@ -38,10 +38,11 @@ storage (one an organization, its own unique salt)
 - **A file bucket is a subset of S3**: files by path, each written and read whole, and no
   versioning. It is never served: what is shown outside is an object, published from it.
 - **An object bucket holds objects named by their content.** An object is a hash and an
-  extension, `{hash}.{extension}`; an app gives content and its media type, never a name or a path,
-  and the extension is the type's, by a table [A8]. **The same content under two extensions is two
-  objects**, its bytes kept once, so a type given is never lost to one given before. An object is
-  never changed: written again under its extension, it is the object already there.
+  extension, `{hash}.{extension}`, the least a name can carry: an app gives content and an
+  extension, never a name, a path or a media type, and the platform computes the hash. **The same
+  content under two extensions is two objects**, its bytes kept once, so an extension given is never
+  lost to one given before. An object is never changed: written again under its extension, it is the
+  object already there. An object with no extension is `{hash}` alone.
 - **Content is shared by every bucket of an organization**, and deduplicated across them: a file
   and an object of the same bytes name one content. Content is collected once no file and no object
   names it.
@@ -116,7 +117,7 @@ storage (one an organization, its own unique salt)
 | --------------------------- | ------------------------------------------------------------------------------------------------- |
 | bucket                      | `create` with its type and policy, `describe`, `list`, `delete` (only while empty): configuration |
 | file, in a file bucket      | `write(bucket, path, content) -> {hash, size}`, `read`, `describe`, `list(prefix)`, `delete`      |
-| object, in an object bucket | `write(bucket, content, type) -> object`, `read`, `describe`, `list`, `delete`                    |
+| object, in an object bucket | `write(bucket, content, extension) -> object`, `read`, `describe`, `list`, `delete`               |
 | publish                     | `publish(file bucket, path, object bucket) -> object`, the content the path names at this moment  |
 
 - **A bucket is configuration; a file and an object are data.** Creating or deleting a bucket
@@ -135,8 +136,20 @@ storage (one an organization, its own unique salt)
   apps alike; across owners the same content has a different hash, so an address cannot be computed
   by anyone outside the owner, and nothing is shared between owners.
 - **`publish` puts a file's content into an object bucket by its hash**, and moves no byte: the
-  object is the content the path names as it is called, under the path's extension made a standard
-  one, by the same table. [A8]
+  object is the content the path names as it is called, under the path's extension, everything after
+  its last dot, so `a.tar.gz` gives `gz`.
+- **An extension is made standard before it names anything**, by `write` and `publish` alike, so
+  one format reaches one object by either: lowered to its small letters, checked to be letters and
+  digits alone, its length bounded [B14], then rewritten by the platform's table of spellings, one
+  spelling of each format kept, `jpg` to `jpeg`, `yml` to `yaml`. **That table holds spellings of one
+  format alone**, never types that are only served alike, so `ini` is never `txt`; it is written by
+  hand, and as it is part of an object's name it never changes once written. An extension it does
+  not know is kept as it came. [A8]
+- **An object's media type is never stored**: it is the extension's, looked up as the object is
+  served, in a short table of the extensions the platform knows; every other is served as one
+  fallback. This table is how a browser is answered and never part of a name, so it changes at any
+  time, its cost an answer cached a year. One extension gives one type, and many give the same, so a
+  type never leads back to an extension. [A8]
 - **An object bucket alone is served**, at `/v{n}/storage/{bucket}/{hash}.{extension}` of a name
   bound to the storage, the content domain's or one the organization binds, RFC vr5lw; its entry
   delivers the path to the storage unread. The version is an integer, `v1` now, written with its
@@ -151,7 +164,7 @@ storage (one an organization, its own unique salt)
   - **An object is served as its extension's type, its bytes never read to tell it**, with
     `X-Content-Type-Options: nosniff`; an extension the table does not know is served as
     `application/octet-stream`, and a type that could run in a browser -- HTML, SVG, a script -- is
-    never served as itself. [A8]
+    never served as itself. Which extensions are known, and how each is answered, is open. [A8]
 - **Exported, an object bucket is laid out as `/{aa}/{bb}/{hash}.{extension}`**, the first four
   digits of the hash as two directories, as a store keeps a stored block, RFC b8f35, so it moves
   into any other object store or file system as it is; a file bucket is exported as its paths.

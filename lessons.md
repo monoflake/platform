@@ -323,3 +323,20 @@ https://voidstar.tech/sqlite_insert_speed/
 **D1 names no page size.** Its compatible PRAGMA statements include `table_list`, `table_info`,
 `index_list`, `quick_check`, `foreign_keys` and `optimize`, among others, and none of `page_size`,
 `page_count`, `cache_size` or `mmap_size`. Source: https://developers.cloudflare.com/d1/sql-api/sql-statements/
+
+## Media types and extensions, read 2026-10-19
+
+**mime-db groups extensions by the type they are served as, never by spelling.** In 1.54.0, 2522
+types are listed, 1015 of them with extensions, 1239 extensions in all, and 48 extensions listed under
+more than one type: `js` under `application/javascript` and `text/javascript`, `mp4` under
+`application/mp4` and `video/mp4`. A type lists several: `image/jpeg` is `jpg`, `jpeg`, `jpe`, in that
+order; `text/yaml` is `yaml`, `yml`; `text/markdown` is `md`, `markdown`; `text/plain` is `txt`,
+`text`, `conf`, `def`, `list`, `log`, `in`, `ini`. `ts` is `video/mp2t` alone. So a type never leads
+back to one extension, and the first listed is not always the long spelling. Asked by checklist A8.
+Source: https://cdn.jsdelivr.net/npm/mime-db@1.54.0/db.json
+
+**WHATWG's sniffing obeys the type given once no-sniff is set**, and counts HTML, XML and PDF among
+the types a page could run, apart from its image, audio, video, font and archive patterns. Go's
+`DetectContentType` follows it over the first 512 bytes and answers `application/octet-stream` when
+it cannot tell. Asked by A8. Sources: https://mimesniff.spec.whatwg.org/ and
+https://pkg.go.dev/net/http#DetectContentType
