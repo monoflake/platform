@@ -411,3 +411,14 @@ them through, since RFC 5280 never allowed them; certificates with one were cut 
 phased out in 2019. Asked by checklist B3. Sources:
 https://lists.cabforum.org/pipermail/servercert-wg/2018-November/000362.html and
 https://ssl.com/?p=26132
+
+**A site's reserved usernames are listed by shouldbee/reserved-usernames**, 602 names under MIT,
+last changed 2021-07-14: paths a site keeps from its users, as `admin`, `api`, `login`, `settings`,
+`status`, `www`, `mail` and `ns1`, with a few misspellings and Spanish and Portuguese words among
+them. 577 fit a name of 3 or more lowercase letters, digits and hyphens. Asked by checklist B3.
+Source: https://github.com/shouldbee/reserved-usernames, kept in `vendor/reserved-usernames/`
+
+**RFC 2142 names the mailboxes a domain keeps**: `info`, `marketing`, `sales` and `support` for a
+business; `abuse`, `noc` and `security` for network operations; `postmaster`, `hostmaster`,
+`usenet`, `news`, `webmaster`, `www`, `uucp` and `ftp` for its services. Asked by B3. Source:
+https://www.rfc-editor.org/rfc/rfc2142.html

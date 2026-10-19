@@ -518,7 +518,7 @@ out with the author on 2026-10-18.
   to any of its resources. Which organization holds a label of the domain is the platform's
   `label` table, beside the anchor in the platform's footing, RFC v7v3w; which app a name of the
   organization's is bound to is its own control's, and a name is bound to one app at a time; a
-  label the platform keeps for itself, as `www`, `api` and `status`, is never given.
+  label the platform reserves, as `www`, `api` and `status`, is never given, RFC v7v3w.
   - **The domain is asked of the Public Suffix List before the platform opens to the public**,
     which the list asks of a domain's size, `lessons.md`. Until then a cookie set for the whole
     domain would reach every organization's, which the gateway's rules alone prevent; that its

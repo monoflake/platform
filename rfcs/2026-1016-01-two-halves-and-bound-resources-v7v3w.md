@@ -170,8 +170,9 @@ down a layer at a time, each holding its own range alone.
   - **A username and a label are written alike**, worked out with the author on 2026-10-19, since
     either may stand in a domain name, a label in `{organization}.mofl.fyi` now and a username
     later: lowercase ASCII letters, digits and the hyphen alone, beginning and ending with a letter
-    or a digit, as RFC 1123 has a host's name; never beginning `xn--`, punycode's; of 3 to 63
-    characters, 63 the most a DNS label holds; and never eight hex digits, which would read as a
+    or a digit, as RFC 1123 has a host's name; never beginning `xn--`, punycode's; of 3 to 16
+    characters, as many as an extension or a name shown, and only ever raised, well inside the 63 a
+    DNS label holds; and never eight hex digits, which would read as a
     scope's id, RFC vr5lw. A dot would make another level of the name, and an underscore no public
     CA certifies, `lessons.md`. Upper case given is lowered.
   - **A name shown is an account's or an organization's `name`**, set as its owner likes in ASCII
@@ -182,8 +183,17 @@ down a layer at a time, each holding its own range alone.
     admin invites an account, an `invitation` of the organization's own naming the account and the
     role offered, and the account's acceptance writes the `member`, its account and its role,
     `member` or `admin`, and reports it to `membership`. So no one is put in an organization
-    unasked, and none is listed among an account's that it never joined. How long an invitation
-    lasts is open. [B3]
+    unasked, and none is listed among an account's that it never joined. An invitation lasts seven
+    days, as a certificate does, and is sent again once it lapses.
+  - **No username or label is given that the platform reserves**, worked out with the author on
+    2026-10-19: one list for both, since either may stand in a domain name, kept as a constant in
+    the code and merged from three sources -- the names a site keeps from its users, as
+    `shouldbee/reserved-usernames` lists them, `vendor/`; the mailboxes RFC 2142 names, so no one
+    holds `abuse`, `noc` or `security` of a domain the platform serves; and the platform's own words:
+    `monoflake`, `mofl`, `platform`, `console`, `gateway`, `storage`, `database`, `compute`,
+    `footing`, `anchor`, `issuer`, `deployer`, `operator`, and the providers a sign-in shows,
+    `cloudflare`, `google`, `apple`, `github`. **The list only grows**, and a name added that someone
+    holds stays theirs: it keeps the name from whoever would take it next.
   - **Its contact `email` is required and verified**, and unique to no one, so one person may have
     two accounts reached at one address: where the platform reaches the person, as an organization
     is deleted, the account revoked or a security event comes. An address one signs in by is a row

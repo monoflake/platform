@@ -13,6 +13,7 @@ model/       the parts and their edges, and the checks run on them
 scope.md     what the model covers in its current version, and what it leaves out
 lessons.md   facts taken from the old system, each with its source
 spec/        how work here is done
+vendor/      other projects' files, copied at one version and left as written
 ```
 
 Run the model with `node model/check.ts`.
