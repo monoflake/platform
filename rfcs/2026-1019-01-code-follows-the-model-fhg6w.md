@@ -37,29 +37,46 @@ parts, libraries and edges, each with its contract:
   points to its own layer or below, a library uses libraries alone -- so the check proves the code's
   boundaries where the code keeps the model's.
 
-**Each language has its place**, worked out with the author on 2026-10-19:
+**A language is chosen by three measures, in order**, worked out with the author on 2026-10-19:
 
-| Language   | Where                                                                                                                                        |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rust       | a part that runs natively on a machine: its driver, RFC vr5lw, and what needs speed, or memory that is predictable since nothing collects it |
-| TypeScript | a part that runs as JavaScript, on a Worker or in `workerd` on a machine, what orchestrates among them; and the glue, tools and scripts      |
-| ReScript   | a page's logic, where TypeScript's types are too loose; compiled to JavaScript and imported by TypeScript and Svelte                         |
+1. **What is bound by the CPU is Rust**, near C's speed and collected by nothing.
+2. **What needs memory that is predictable is Rust**: that is a question of whether what
+   orchestrates may be collected, so where it may not, the orchestration is Rust too.
+3. **The rest is written where it is easiest to write**: where JavaScript runs, a language of its
+   ecosystem; on a machine, a native one, since a JavaScript runtime carried onto a machine is a
+   cost of its own.
 
+| Runs                                                       | Language   | Its server    |
+| ---------------------------------------------------------- | ---------- | ------------- |
+| natively on a machine: its driver, RFC vr5lw, and the rest | Rust       | axum on tokio |
+| as JavaScript: on a Worker, in `workerd`, in a browser     | ReScript   | Hono          |
+| beside either, as glue, a tool or a script                 | TypeScript | --            |
+
+- **A part on a machine is Rust whole, its orchestration among it**: its libraries are Rust already,
+  and a build that keeps every library's compiled output in a cache rebuilds only the part, within
+  two or three times a JavaScript build's seconds, the author's estimate, to be measured once code is.
+- **What the platform writes to run as JavaScript is ReScript**: of ML's family, its types sound, so
+  no `any` passes its compiler. Its ceiling is TypeScript's, since both end as JavaScript, and its
+  floor is the compiler's, never the writer's. A library taken from npm is as safe as whoever wrote
+  it, whatever its language; ReScript is the floor of what the platform writes, and what it publishes
+  to npm carries that floor to those who call it.
+- **TypeScript is the glue**, where JavaScript's ecosystem is met as it is, and the language of the
+  tools and scripts; JavaScript, JSDoc and Svelte stand beside it where a page or a tool asks. Where
+  it stops and ReScript begins is open [B27].
 - **OCaml is not written**, decided by the author on 2026-10-19. It was chosen so one library might
-  run natively and, by Melange, in a browser; a browser computing nothing leaves that unasked, and
+  run natively and, by Melange, as JavaScript; a browser computing nothing leaves that unasked, and
   what stays is a third native toolchain -- opam, dune's package management, which calls itself not
-  final, Eio -- beside Rust's. ReScript keeps OCaml's types for a page and rides npm, `lessons.md`.
-- **A part on a Worker is TypeScript, never Rust compiled to WebAssembly**: a Worker's ground is
-  JavaScript, Rust there crosses into it by copying at every call and runs without tokio, and a
-  machine's JavaScript part runs in `workerd`, so one bundle runs on both, vr5lw.
-- **JavaScript, JSDoc and Svelte stand beside TypeScript** where a page or a tool asks. ReScript is
-  never written inside a `.svelte` file, which it does not read; a page's logic is a `.res` module
-  the page imports compiled.
+  final, Eio -- beside Rust's. ReScript keeps OCaml's types where JavaScript runs and rides npm,
+  `lessons.md`.
+- **A part on a Worker is never Rust compiled to WebAssembly**: a Worker's ground is JavaScript,
+  Rust there crosses into it by copying at every call and runs without tokio, and a machine's
+  JavaScript part runs in `workerd`, so one bundle runs on both, vr5lw.
+- **ReScript is never written inside a `.svelte` file**, which it does not read; a page's logic is a
+  `.res` module the page imports compiled.
 - **ReScript's `int` is 32 bits**, so a 64-bit integer crossing into it, or into TypeScript, is a
   JavaScript `bigint`.
-- **A TypeScript library runs on a Worker, in `workerd` and in a browser alike**, so it uses the
-  web's standard APIs alone, never node's; I/O stands at a part's edge.
-- **Each language's server is its own**: Rust's axum on tokio, TypeScript's Hono.
+- **A library that runs as JavaScript runs on a Worker, in `workerd` and in a browser alike**, so it
+  uses the web's standard APIs alone, never node's; I/O stands at a part's edge.
 - **The tools are cargo, node, ReScript's compiler, vite and tsdown on rolldown, oxlint and oxfmt**,
   and TypeScript 6 and 7 side by side.
 
@@ -80,7 +97,7 @@ them, whoever wrote it.
 
 - **Rust's CBOR is minicbor**, worked out with the author on 2026-10-19, maintained, its 2.3.1 of
   2026-10-18: neither it nor ciborium promises deterministic encoding, so what the platform's own
-  cases find decides whether it is patched, forked or built. TypeScript's is open beside the
+  cases find decides whether it is patched, forked or built. JavaScript's is open beside the
   contracts' language [B28].
 - **Every test runs in CI**, so what is taken or built stays whole.
 - **None is begun yet**: this is the plan.
@@ -91,6 +108,6 @@ Open, for the discussion that follows:
   the check that a part uses only libraries of its own language. [B24]
 - How the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one
   tree. [B26]
-- Where ReScript ends and TypeScript begins on a page. [B27]
-- The language a wire contract is written in, generated for Rust, TypeScript and ReScript, its JSON
-  and CBOR alike; and TypeScript's CBOR. [B28]
+- Where ReScript ends and TypeScript begins, on a Worker and on a page. [B27]
+- The language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON
+  and CBOR alike; and JavaScript's CBOR. [B28]

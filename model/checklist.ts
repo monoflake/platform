@@ -274,7 +274,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "each language's standard library for code that runs on every target, its concurrency, and its HTTP server, fhg6w",
 		from: 'fhg6w',
-		done: "fhg6w: OCaml not written; Rust's server axum on tokio, TypeScript's Hono; a TypeScript library uses the web's APIs alone",
+		done: "fhg6w: OCaml not written; Rust's server axum on tokio, JavaScript's Hono; a library run as JavaScript uses the web's APIs alone",
 	},
 	{
 		id: 'B26',
@@ -285,13 +285,13 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B27',
 		group: 'B',
-		what: 'where ReScript ends and TypeScript begins on a page, so neither spreads by habit, fhg6w',
+		what: 'where ReScript ends and TypeScript begins, on a Worker and on a page, so neither spreads by habit, fhg6w',
 		from: 'fhg6w',
 	},
 	{
 		id: 'B28',
 		group: 'B',
-		what: "the language a wire contract is written in, generated for Rust, TypeScript and ReScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone; and TypeScript's CBOR, fhg6w",
+		what: "the language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone; and JavaScript's CBOR, fhg6w",
 		from: 'fhg6w',
 	},
 	// C -- blocks a later step.

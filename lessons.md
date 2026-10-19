@@ -598,3 +598,11 @@ ReScript's former name, is served by `atdgen-codec-runtime`, and no ReScript bac
 by fhg6w. Sources: https://registry.npmjs.org/atdts,
 https://opam-4.ocaml.org/packages/atdgen-codec-runtime/atdgen-codec-runtime.2.3.3 and
 https://github.com/ahrefs/atd
+
+**ReScript meets Workers and Hono by bindings the platform writes**: none named `rescript-hono` is
+found, and `workers-res`, "Cloudflare Workers bindings for ReScript", is 0.0.3, a work in progress
+with KV alone done. Hono's app is a fetch handler, so a binding wraps one function. Sury, formerly
+`rescript-schema`, writes and reads JSON Schema, `S.toJSONSchema` and `S.fromJSONSchema`, its 11
+in alpha. Asked by RFC fhg6w. Sources: https://npmjs.com/package/workers-res,
+https://www.mintlify.com/honojs/hono/deployment/cloudflare-workers,
+https://unpkg.com/sury@11.0.0-alpha.9/README.md and https://bestofjs.org/projects/sury
