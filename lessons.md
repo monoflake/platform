@@ -391,3 +391,14 @@ https://developers.cloudflare.com/d1/sql-api/sql-statements/
 and `sub` as 2, a text string; -256 to 255 take Standards Action, -65536 to -257 and 256 to 65535
 Specification Required, and above 65535 Expert Review. Asked by checklist A11. Source:
 https://www.iana.org/assignments/cwt/cwt.xhtml
+
+## SLIP-39, read 2026-10-19
+
+**SLIP-39 writes a Shamir share as words.** Its list holds exactly 1024 words, each with a unique
+four-letter prefix, so a word carries 10 bits; a share of a 128-bit secret is 20 words and of a
+256-bit one 33. The last three words are a Reed-Solomon checksum that detects any error in up to
+three words, and misses a larger one with less than a one-in-a-billion chance; the spec advises
+against correcting automatically. Thresholds are two-level, up to 16 groups of up to 16 members. The
+master secret may be encrypted under a passphrase of printable ASCII, empty if none is given, and
+nothing tells a wrong passphrase from a right one. Asked by checklist B12. Source:
+https://github.com/satoshilabs/slips/blob/master/slip-0039.md

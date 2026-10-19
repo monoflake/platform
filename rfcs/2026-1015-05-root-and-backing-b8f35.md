@@ -302,9 +302,18 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
 - **The root private key is held by the platform's administrator.** Lost, a new pair is made and
   every node deployed again with its public key; no data is lost.
 - **The two masters are kept as a key group for recovery alone**: each split into three shares,
-  any two of which restore it and so make the third again, held in three places. A part starts from
-  its deployed secrets and never waits for a share; the shares are used only when a master is lost
-  with what it was deployed to, since a master lost is every scope's data lost.
+  any two of which restore it and so make the third again, held in three places.
+  - **A share is a SLIP-39 mnemonic**, worked out with the author on 2026-10-19: words of its list of
+    1024, 33 of them for a secret of 256 bits, the last three a checksum that catches any error in up
+    to three words, `lessons.md`. It is read back by any SLIP-39 tool, so a master is restored
+    without the platform's own code. No passphrase is set, since SLIP-39 cannot tell a wrong one
+    and a forgotten one is the master lost.
+  - **Each master is split apart**, the salt master once for good and the encryption master once a
+    version, so a place holds one share of each.
+  - **A share is written on paper, and the three lie where no one disaster reaches two**: on paper,
+    since it needs no device to be read; never in a password manager, which is online. A part starts from
+    its deployed secrets and never waits for a share; the shares are used only when a master is lost
+    with what it was deployed to, since a master lost is every scope's data lost.
 - **What the root holds is kept two ways.** The root private key and the masters' shares are held
   by the operator, offline. Everything else is kept on the platform's own vendor accounts, as the
   secrets deployed with the parts that read them -- never in a repository, and never in a store the

@@ -182,6 +182,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "which three places, offline and the operator's, hold each master's shares, since the masters are made at step 0",
 		from: 'b8f35',
+		done: 'b8f35: SLIP-39 words on paper, three places no one disaster reaches two of',
 	},
 	{
 		id: 'B13',
