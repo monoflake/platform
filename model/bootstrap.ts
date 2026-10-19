@@ -8,7 +8,7 @@
 export type Feature =
 	/** The three products, standing on a footing. */
 	| 'products'
-	/** A machine a provider runs, enrolled as a host -- by hand until `byoc` automates it. */
+	/** A machine a provider runs, bound as a host by the ordinary flow, its commands the operator's. */
 	| 'hosts'
 	/** An upgrade by D3: one part replaced while the rest run. */
 	| 'rolling'
@@ -49,7 +49,8 @@ export interface Deployment {
 	on: Feature[];
 	ground: Ground[];
 	move: Move;
-	/** The vendor's plan the deployment's Cloudflare account is on; free unless paid. */
+	/** The vendor's plan the deployment's Cloudflare account is on: the internal platform's is paid
+	 * from step 0, RFC 94y0d. */
 	plan?: 'free' | 'paid';
 }
 
@@ -59,6 +60,8 @@ export interface Step {
 	external?: Deployment;
 	/** How external organizations are placed on internal ones, RFC 94y0d. */
 	cells?: 'one each' | 'database organization';
+	/** Who uses the platform: the author and a friend or two unless others are invited, RFC 94y0d. */
+	users?: 'author' | 'invited';
 }
 
 const internal = (version: number, on: Feature[], move: Move): Deployment => ({
@@ -66,12 +69,13 @@ const internal = (version: number, on: Feature[], move: Move): Deployment => ({
 	on,
 	ground: ['cloudflare', 'provider'],
 	move,
+	plan: 'paid',
 });
 const OWN_CLOUDS: Ground[] = ['internal', 'cloudflare', 'provider', 'home'];
 
 export const STEPS: Step[] = [
 	{
-		what: 'v0 installed as the internal platform by hand, its hosts enrolled by hand',
+		what: 'v0 installed as the internal platform, its own half by hand, its hosts bound as any host is',
 		internal: internal(0, ['products', 'hosts'], 'by hand'),
 	},
 	{
@@ -146,11 +150,12 @@ export const STEPS: Step[] = [
 		cells: 'one each',
 	},
 	{
-		what: "the vendor's paid plan taken, a checkpoint, once a few users are served for real",
-		internal: {
-			...internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'], 'none'),
-			plan: 'paid',
-		},
+		what: 'others than the author and a friend or two invited to test, a checkpoint, once metering holds',
+		internal: internal(
+			3,
+			['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'],
+			'none',
+		),
 		external: {
 			version: 3,
 			on: ['products', 'hosts', 'rolling', 'deployer', 'byoc', 'vendors', 'metering'],
@@ -158,12 +163,12 @@ export const STEPS: Step[] = [
 			move: 'none',
 		},
 		cells: 'one each',
+		users: 'invited',
 	},
 	{
 		what: "a tablet's log replicated among hosts built, proven on the external platform",
 		internal: {
 			...internal(3, ['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering'], 'none'),
-			plan: 'paid',
 		},
 		external: {
 			version: 4,
@@ -172,6 +177,7 @@ export const STEPS: Step[] = [
 			move: 'rolling',
 		},
 		cells: 'one each',
+		users: 'invited',
 	},
 	{
 		what: 'the pin moved to v4: cells move onto a database organization',
@@ -181,7 +187,6 @@ export const STEPS: Step[] = [
 				['products', 'hosts', 'rolling', 'deployer', 'vendors', 'metering', 'replicated'],
 				'rolling',
 			),
-			plan: 'paid',
 		},
 		external: {
 			version: 4,
@@ -190,6 +195,7 @@ export const STEPS: Step[] = [
 			move: 'none',
 		},
 		cells: 'database organization',
+		users: 'invited',
 	},
 ];
 

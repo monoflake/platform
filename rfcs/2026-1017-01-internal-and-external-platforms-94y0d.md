@@ -66,7 +66,7 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 
 | Step | What                                                                                                                  | Internal / external |
 | ---- | --------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| 0    | v0 is installed as the internal platform by hand, the commands `scope.md` keeps for day one, its hosts too            | v0 / --             |
+| 0    | v0 is installed as the internal platform, its own half by the commands `scope.md` keeps for day one, its hosts bound  | v0 / --             |
 | 1    | v0 is deployed again as the external platform, an organization on the internal one                                    | v0 / v0             |
 | 2    | an upgrade by D3 is built, and the external platform moved to it by a planned stop of its own                         | v0 / v1             |
 | 3    | the pin moves to v1, by the internal platform's one planned stop                                                      | v1 / v1             |
@@ -74,7 +74,7 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 | 5    | the pin moves, by D3                                                                                                  | v2 / v2             |
 | 6    | bringing one's own cloud, more vendors than one, and metering are built, and proven on the author's own organizations | v2 / v3             |
 | 7    | the pin moves: from here the internal platform survives losing a vendor, and meters what it uses                      | v3 / v3             |
-| 8    | the vendor's paid plan is taken, a checkpoint, once a few users are served for real                                   | v3 / v3             |
+| 8    | others than the author and a friend or two are invited to test, a checkpoint, once metering holds                     | v3 / v3             |
 | 9    | a tablet's log replicated among hosts is built, and proven on the external platform                                   | v3 / v4             |
 | 10   | the pin moves: cells move onto a database organization                                                                | v4 / v4             |
 
@@ -91,11 +91,15 @@ its own bundle, credentials and directory, sharing nothing but the machine.
   writer is handed over when one is lost, and one of 1 to 2 GB, since most machines a small team
   brings are that size, and a driver that fails on one should fail on day one. The author holds
   about ten more, kept for the steps that ask for them.
-- **The vendor's paid plan is a checkpoint, never a start**: taken once the platform serves a few
-  users for real, and not while it is drafted, since a plan paid for nothing is waste. On Cloudflare
-  it is $5 a month and use past it, and brings D1 at 10 GB and CPU time past 10 ms, `lessons.md`; more is bought as use grows, by those who use it.
-- **It is taken only once metering holds.** A vendor offers no hard cap, so the platform counts what
-  it uses of each resource and cuts its own use off short of a limit it sets, with a margin. The
+- **The vendor's paid plan is held from step 0**: the author took Cloudflare's on 2026-10-19, $5 a
+  month and use past it, which brings D1 at 10 GB and CPU time past 10 ms, `lessons.md`; more is
+  bought as use grows, by those who use it. So the storage cuts and seals in a Worker from the
+  start, and a machine at step 0 is there for `instance` alone.
+- **Others are invited only once metering holds**, worked out with the author on 2026-10-19: while
+  only the author and a friend or two use it, what the plan bills past its base is the author's own
+  use, and nothing counts it. A vendor offers no hard cap, so before others' code runs on the
+  platform, it counts what it uses of each resource and cuts its own use off short of a limit it
+  sets, with a margin. The
   cutoff is soft: a little may pass it, and what it holds back is the growth that lasts. Once it
   holds, a vendor's primitive priced by use, Durable Objects among them, may be used as well.
 - **A machine is metered as a vendor is**: what it sends and receives, and its disk, which the

@@ -316,8 +316,10 @@ STEPS.forEach((step, i) => {
 		for (const f of a.on)
 			if (!before.internal.on.includes(f) && !ran.some((s) => s.external?.on.includes(f)))
 				path.push(`${at}: the internal platform turns on ${f}, never proven on the external`);
-	if (a.plan === 'paid' && !a.on.includes('metering'))
-		path.push(`${at}: the paid plan taken before the internal platform meters its use`);
+	if (step.users === 'invited' && !a.on.includes('metering'))
+		path.push(`${at}: others invited before the internal platform meters its use`);
+	if (before?.users === 'invited' && step.users !== 'invited')
+		path.push(`${at}: the invited sent away again`);
 	if (before?.internal.plan === 'paid' && a.plan !== 'paid')
 		path.push(`${at}: the paid plan given up again`);
 	if (step.cells && !b) path.push(`${at}: cells, with no external platform`);
