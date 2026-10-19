@@ -578,9 +578,7 @@ export const RECORDS: Record<string, Held> = {
 	repeat: { half: 'organization', writes: ['compute'], from: '49qyg, v7v3w' },
 };
 
-export const GLOBAL_OPEN = [
-	'a control is a caller of scope, backing and blob -- opening a scope, adding a store, starting a migration of layout or key -- never a need of theirs [B3]',
-];
+export const GLOBAL_OPEN = [];
 
 export const LIBRARIES: Record<string, Library> = {
 	'compat*': {

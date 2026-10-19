@@ -187,6 +187,24 @@ same salt and key. Its status says what is left of it:
   erases what it held. An erasure cut short is no matter, since collection keeps only what a scope
   that is not deleted still holds, and drops what it finds of a deleted one.
 
+**A control reaches beneath by five operations, as a caller and never a need of theirs**, worked
+out with the author on 2026-10-19:
+
+| Operation            | On      | Called by                                                 | Does                                                                                                                                |
+| -------------------- | ------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `open`               | anchor  | the platform's control                                    | draws a scope's id by a conditional insert, `active`; its salt and key derived and delivered beside its certificate                 |
+| `suspend`, `restore` | anchor  | the platform's control                                    | changes its status; a suspension unrestored for seven days becomes a deletion                                                       |
+| `delete`             | anchor  | the platform's control                                    | writes `deleted` first, then a task erases; the id stays spent                                                                      |
+| `attach`, `detach`   | backing | the control holding the store                             | adds a store to a scope or takes one off, refused where a bucket's placement would no longer hold without it                        |
+| `migrate`            | blob    | a control starts it, the clock paces it, the blob does it | moves a bucket to a new layout as its placement changes, or to a new key as an old version retires, every piece readable throughout |
+
+- **A store is attached and detached, never deleted**, since `delete` is data's, RFC vr5lw, and a
+  store taken off a scope is left as it is.
+- **A migration returns an id at once**, as an `effect` does, RFC 49qyg, and `status(id)` tells how
+  far it is and how it ended, by the four outcomes, since it may run for days.
+- A database's schema migration is no operation of these: it is a time a deployment opens, RFC
+  zn3u5.
+
 The same holds for every id drawn where reusing it would derive what its first holder's did. The
 anchor is the platform's only global state, and it holds nothing else: every product's
 configuration, every bucket and database, every app's declaration stays in its scope.
