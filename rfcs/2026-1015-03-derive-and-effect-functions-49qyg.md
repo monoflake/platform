@@ -163,6 +163,10 @@ public**: an app is reached from outside only once it is mounted under its organ
 a name of the organization's own is bound to it, each an act of its own, RFC vr5lw, and it is
 neither as it is made.
 
+- **A schedule and a queue are a build's, never records of their own**, worked out with the author
+  on 2026-10-19: their times and a queue's failure are declared in the manifest and go with its
+  version; a queue's messages are data, and the guard against a schedule's repeat is the function
+  product's own tablet's, above.
 - **Bindings are nested by the type of what they hold**, `app`, `database` or `bucket`, the types
   of an organization's tree, RFC v7v3w, and within each a slot's name to an id: an app called is a
   slot as a database used is. A deployment is refused where the slot's declared type, the type it
