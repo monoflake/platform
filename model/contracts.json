@@ -1,0 +1,335 @@
+{
+	"version": 1,
+	"shell": [
+		{
+			"name": "kind",
+			"key": 1,
+			"shape": {
+				"prim": "string"
+			}
+		},
+		{
+			"name": "id",
+			"key": 2,
+			"shape": {
+				"prim": "uint32"
+			}
+		},
+		{
+			"name": "generation",
+			"key": 3,
+			"shape": {
+				"prim": "uint53"
+			}
+		},
+		{
+			"name": "version",
+			"key": 4,
+			"shape": {
+				"prim": "uint32"
+			}
+		},
+		{
+			"name": "content",
+			"key": 5,
+			"shape": {
+				"prim": "bytes"
+			},
+			"optional": true
+		}
+	],
+	"types": {
+		"bucket-type": {
+			"enum": [
+				{
+					"name": "file",
+					"code": 1
+				},
+				{
+					"name": "object",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"availability": {
+			"enum": [
+				{
+					"name": "opportunistic",
+					"code": 1
+				},
+				{
+					"name": "best_effort",
+					"code": 2
+				},
+				{
+					"name": "stable",
+					"code": 3
+				},
+				{
+					"name": "recoverable",
+					"code": 4
+				},
+				{
+					"name": "redundant",
+					"code": 5
+				},
+				{
+					"name": "multiregion",
+					"code": 6
+				}
+			],
+			"ordered": true
+		},
+		"durability": {
+			"enum": [
+				{
+					"name": "ephemeral",
+					"code": 1
+				},
+				{
+					"name": "persistent",
+					"code": 2
+				},
+				{
+					"name": "redundant",
+					"code": 3
+				},
+				{
+					"name": "replicated",
+					"code": 4
+				},
+				{
+					"name": "multizone",
+					"code": 5
+				},
+				{
+					"name": "multiregion",
+					"code": 6
+				}
+			],
+			"ordered": true
+		},
+		"custody": {
+			"enum": [
+				{
+					"name": "false",
+					"code": 0
+				},
+				{
+					"name": "true",
+					"code": 1
+				}
+			],
+			"ordered": false
+		},
+		"placement": {
+			"record": [
+				{
+					"name": "availability",
+					"key": 1,
+					"shape": {
+						"type": "availability"
+					}
+				},
+				{
+					"name": "durability",
+					"key": 2,
+					"shape": {
+						"type": "durability"
+					}
+				},
+				{
+					"name": "custody",
+					"key": 3,
+					"shape": {
+						"type": "custody"
+					}
+				}
+			]
+		},
+		"distinct": {
+			"record": [
+				{
+					"name": "node",
+					"key": 1,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "site",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "account",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "zone",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "region",
+					"key": 5,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"spread": {
+			"record": [
+				{
+					"name": "copies",
+					"key": 1,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "distinct",
+					"key": 2,
+					"shape": {
+						"type": "distinct"
+					}
+				}
+			]
+		},
+		"bucket-kind": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "packed",
+						"code": 1,
+						"fields": [
+							{
+								"name": "compress",
+								"key": 1,
+								"shape": {
+									"prim": "bool"
+								},
+								"optional": true
+							},
+							{
+								"name": "seal",
+								"key": 2,
+								"shape": {
+									"prim": "bool"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "opaque",
+						"code": 2,
+						"fields": []
+					}
+				]
+			}
+		},
+		"access": {
+			"enum": [
+				{
+					"name": "private",
+					"code": 1
+				},
+				{
+					"name": "public",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"bucket": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "type",
+					"key": 1,
+					"shape": {
+						"type": "bucket-type"
+					}
+				},
+				{
+					"name": "kind",
+					"key": 2,
+					"shape": {
+						"type": "bucket-kind"
+					}
+				},
+				{
+					"name": "placement",
+					"key": 3,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "spread",
+					"key": 4,
+					"shape": {
+						"type": "spread"
+					}
+				},
+				{
+					"name": "quota",
+					"key": 5,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "access",
+					"key": 6,
+					"shape": {
+						"type": "access"
+					}
+				},
+				{
+					"name": "bindable",
+					"key": 7,
+					"shape": {
+						"list": {
+							"id": "app"
+						}
+					},
+					"optional": true
+				}
+			]
+		}
+	},
+	"records": [
+		{
+			"kind": "bucket",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "bucket"
+		}
+	]
+}

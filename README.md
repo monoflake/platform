@@ -9,7 +9,7 @@ the design lands, so nothing here triggers a deployment or touches another repos
 
 ```
 rfcs/        the design, one draft per question, numbered by layer
-model/       the parts and their edges, and the checks run on them
+model/       the parts and their edges, the contracts, and the checks run on them, in ReScript
 scope.md     what the model covers in its current version, and what it leaves out
 lessons.md   facts taken from the old system, each with its source
 spec/        how work here is done
