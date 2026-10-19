@@ -44,7 +44,7 @@ owner (one scope, its own unique salt)
   platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the description are
   every kind's.
 - **A dataset's placement says what its data needs, and each store says what it is**, declared by
-  whoever binds it as it is bound, RFC b8f35; the platform places each container only on stores
+  whoever binds it as it is bound, RFC b8f35; the platform places each parcel only on stores
   that meet every need. **Every attribute is ordered**, so content named in several datasets is held
   to the highest of each that any of them asks.
 

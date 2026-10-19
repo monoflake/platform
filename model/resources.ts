@@ -89,7 +89,7 @@ export const GROUND: Record<Ground, string[]> = {
 	internal: ['internal products'],
 };
 
-/** What cutting and sealing a container takes of CPU in a call, in milliseconds: assumed, an order
+/** What cutting and sealing a parcel takes of CPU in a call, in milliseconds: assumed, an order
  * past a free Worker's 10, until it is measured. */
 export const ASSUMED_SEAL_CPU = 100;
 

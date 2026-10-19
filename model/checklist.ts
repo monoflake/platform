@@ -34,7 +34,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A1',
 		group: 'A',
-		what: "a container's header, byte by byte: a magic, the suite, the encryption master's version, the 32 random bytes, and what is authenticated with what it seals",
+		what: "a parcel's header, byte by byte: a magic, the suite, the encryption master's version, the 32 random bytes, and what is authenticated with what it seals",
 		from: 'b8f35',
 		done: 'b8f35',
 	},
@@ -48,7 +48,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A3',
 		group: 'A',
-		what: "every context string BLAKE3's derive_key is given -- a scope's salt, its key, a container's key, the gear table -- fixed forever",
+		what: "every context string BLAKE3's derive_key is given -- a scope's salt, its key, a parcel's key, the gear table -- fixed forever",
 		from: 'found',
 		done: 'b8f35',
 	},
@@ -69,7 +69,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A6',
 		group: 'A',
-		what: "placement's hash: which function scores a container against a store, since changing it moves every container",
+		what: "placement's hash: which function scores a parcel against a store, since changing it moves every parcel",
 		from: 'vuanj',
 		done: 'b8f35',
 	},
@@ -97,6 +97,7 @@ export const CHECKLIST: Item[] = [
 		group: 'A',
 		what: "a new name for the storage's 16 MiB unit of sealed data, apart from compute's container, and the context strings that carry it, before any is written",
 		from: 'vr5lw',
+		done: 'b8f35: a parcel, its context strings monoflake:parcel:key:1 and monoflake:parcel:placement:1',
 	},
 	{
 		id: 'A11',
@@ -109,7 +110,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B2',
 		group: 'B',
-		what: 'the placement rules: where a deployment, a database writer and a container go, and how a call finds its way; the extent index is B17',
+		what: 'the placement rules: where a deployment, a database writer and a parcel go, and how a call finds its way; the extent index is B17',
 		from: 'item 4',
 		done: 'vr5lw: one model of availability and durability, placed by one function, each item solved on its own',
 	},
@@ -208,7 +209,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B17',
 		group: 'B',
-		what: "how the extent is kept off the footing's growth: its pages in containers, the footing keeping their root, and its index cached by generation",
+		what: "how the extent is kept off the footing's growth: its pages in parcels, the footing keeping their root, and its index cached by generation",
 		from: 'model/footing.ts',
 	},
 	{
@@ -469,7 +470,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'D6',
 		group: 'D',
-		what: 'the background collection: what it repacks below the threshold, how often, and in what order it walks containers',
+		what: 'the background collection: what it repacks below the threshold, how often, and in what order it walks parcels',
 		from: 'b8f35',
 	},
 	{

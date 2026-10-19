@@ -249,7 +249,7 @@ configuration; its extensions hold its data and run it.**
   - **The host that runs a deployment sees its secrets**, as whoever controls a resource sees what
     runs on it, above. Sealing keeps them from whoever holds the data alone -- the footing's vendor,
     a token leaked, a snapshot -- and so keeps the internal platform's data from opening the
-    external platform's containers, RFC 94y0d.
+    external platform's parcels, RFC 94y0d.
 - **An organization signs its own capabilities**, with a key of its own that the intermediate
   certifies for seven days and renews every day. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the

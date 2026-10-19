@@ -119,16 +119,16 @@ organization that external organizations stand on is a **cell**.
 - Moving an external organization from the first to the second moves only the footing beneath its
   internal organization, at most 10 GB, and the external organization sees nothing.
 
-**The external platform hands the internal one only containers it has sealed**, whatever its own
+**The external platform hands the internal one only parcels it has sealed**, whatever its own
 datasets ask: each is put whole into an `opaque` dataset of the external organization's internal
 one, a dataset per placement, RFC 13ixj, so nothing is cut, compressed or sealed twice. The external
 organization's footing is a database of the internal one and is sealed there, since it holds the
-bundle that opens the containers.
+bundle that opens the parcels.
 
 **The external platform is its internal organizations' admin**, and sets their datasets' policies
 downward as any owner does, the upper writing into a format the lower defines, `scope.md`. A change
 to an external dataset's policy is the external platform's own migration; the internal one sees
-only containers written and deleted. **An external organization revoked is suspended, and so is
+only parcels written and deleted. **An external organization revoked is suspended, and so is
 the internal organization beneath it**; both are deleted seven days after unless restored, RFC
 b8f35, so the platform pays for what it sealed no longer than that.
 
@@ -142,7 +142,7 @@ in.
 runs.** Its code runs inline in the compute the internal platform gives it; a read is served from
 an instance's memory or from the internal storage through an index the compute caches, RFC b8f35;
 a write is confirmed once by the internal platform as well -- a database's batch once, a journal's
-segments once per write, a container once per 16 MiB.
+segments once per write, a parcel once per 16 MiB.
 
 Open, for the discussion that follows:
 

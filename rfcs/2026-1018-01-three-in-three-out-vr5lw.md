@@ -38,8 +38,8 @@ as it stands on a vendor, RFC 94y0d.
   process, RFC vuanj. A browser or a database engine needs a process; a `derive` always runs in
   WebAssembly.
 - **A `container` here is the cloud's**, a process with its own disk, and is bound to no runtime
-  such as Docker. The storage's 16 MiB unit of sealed data, RFC b8f35, shares the word and nothing
-  else, and is to be renamed. [A10]
+  such as Docker. The storage's 16 MiB unit of sealed data is a parcel, RFC b8f35, named apart from
+  it by the author on 2026-10-18.
 
 **Storage is of two uses, and only one is offered above as it is.**
 
@@ -55,7 +55,7 @@ as it stands on a vendor, RFC 94y0d.
   author on 2026-10-18: putting an object whole, getting it whole or by a range, asking whether one
   is there, deleting it and listing by a prefix, each read seeing every write before it -- what the
   blob asks, RFC vuanj, and no more. Every object is at most 16 MiB. It needs no condition on a
-  write, since a container is named by its content and a journal's object by a seed drawn at
+  write, since a parcel is named by its content and a journal's object by a seed drawn at
   random, no rename and no upload in parts. **What takes it and what gives it are one**: a store
   is reached by it, and a platform gives an `opaque` dataset by it, RFC 13ixj, so one platform's
   storage is the next one's `object`, RFC 94y0d. A `content` dataset may be given by the same
@@ -241,7 +241,7 @@ definition:
 
 - **Everything is placed by one function**: those that meet every need are kept -- the sandbox,
   each capability declared, the levels, the binding's quota, the machine's free space -- and among
-  them each is scored by rendezvous over its weight, as a container is among stores, RFC b8f35. So a
+  them each is scored by rendezvous over its weight, as a parcel is among stores, RFC b8f35. So a
   host or a store added or removed moves only what it wins or held.
 - **An organization's control places each deployment as configuration is applied**: a set of hosts,
   as many as its availability asks, every one deployed to beforehand, its secrets with it, RFC
@@ -518,6 +518,5 @@ third-party vendors and the author's machines.
 Open, for the discussion that follows:
 
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
-- The new name for the storage's 16 MiB unit. [A10]
 - How a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory kept
   for the internal platform's. [B7]

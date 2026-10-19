@@ -318,7 +318,7 @@ export const PARTS: Record<string, Part> = {
 				'vendor',
 				'serve',
 				H,
-				"containers and journals written to the scope's stores, at what each store's driver hands back, vr5lw",
+				"parcels and journals written to the scope's stores, at what each store's driver hands back, vr5lw",
 			),
 			e(
 				'root',
@@ -379,7 +379,7 @@ export const PARTS: Record<string, Part> = {
 		half: 'organization',
 		edges: [
 			REPLACED,
-			e('backing', 'serve', H, "a container's place from the scope's stores"),
+			e('backing', 'serve', H, "a parcel's place from the scope's stores"),
 			e('footing(organization)', 'serve', H, "its records, in the scope's footing"),
 		],
 		uses: ['placement*', 'compat*'],
@@ -594,12 +594,12 @@ export const LIBRARIES: Record<string, Library> = {
 		uses: ['compat*'],
 	},
 	'placement*': {
-		what: "where anything is placed among what meets its needs, scored by rendezvous over each one's weight: a container among stores, a deployment among hosts, b8f35, vr5lw",
+		what: "where anything is placed among what meets its needs, scored by rendezvous over each one's weight: a parcel among stores, a deployment among hosts, b8f35, vr5lw",
 		agrees: true,
 		uses: ['compat*'],
 	},
 	'layout*': {
-		what: 'content cut by FastCDC into pieces, packed into containers, parity, b8f35',
+		what: 'content cut by FastCDC into pieces, packed into parcels, parity, b8f35',
 		agrees: true,
 		uses: ['compat*'],
 	},

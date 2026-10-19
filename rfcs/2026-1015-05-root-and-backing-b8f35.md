@@ -56,19 +56,19 @@ carried in one, a change would not reach the capabilities still alive.
   id. The placement a dataset asks for is the dataset's, carried down with each write, and how it is
   laid out is the blob's.
 - **`extent`**: what a blob's content is made of. **Below the blob, content is cut into pieces,
-  and pieces are packed into containers of about one size**, so stores fill evenly, a layout with
-  parity has something to split, and moving data moves containers alike. The extent keeps which
-  pieces each content hash is made of, and for each piece its container, offset and length and
+  and pieces are packed into parcels of about one size**, so stores fill evenly, a layout with
+  parity has something to split, and moving data moves parcels alike. The extent keeps which
+  pieces each content hash is made of, and for each piece its parcel, offset and length and
   whether it is compressed -- which cannot be computed, since what was packed with what depends on
-  when it came, and which deduplication reads first. **Where a container is, it computes** from the
-  container's id and the scope's stores, and keeps only the exceptions: a container passed to the
+  when it came, and which deduplication reads first. **Where a parcel is, it computes** from the
+  parcel's id and the scope's stores, and keeps only the exceptions: a parcel passed to the
   next store while one was down, until the repair moves it back. It is kept in the scope's
   footing, as the backing is, since a tablet stands on the blob and the blob on it. **An extent is a
-  scope's**, since a container is sealed with the scope's key, so files of two scopes can never be
+  scope's**, since a parcel is sealed with the scope's key, so files of two scopes can never be
   packed into one, deduplication stays within an owner, and a scope is deleted whole. **The extent
   repairs**: knowing every
-  container and every exception, it restores what a layout asks for after a store is lost or a
-  container was passed on, and since containers are sealed and named by an unkeyed hash it needs
+  parcel and every exception, it restores what a layout asks for after a store is lost or a
+  parcel was passed on, and since parcels are sealed and named by an unkeyed hash it needs
   neither the key nor the salt to do it. It must repair on its own while the control plane is lost,
   RFC vuanj. Packing is the extent's and sealing the blob's, which holds the scope's key in the
   organization's half, RFC v7v3w; a repack is the two together.
@@ -224,7 +224,7 @@ put(dataset, path, content)
   -> file id: keyed BLAKE3 over the whole file
   -> FastCDC cuts it into pieces; piece id: keyed BLAKE3 over each, before compression
   -> each new piece: zstd at level 1, kept only if smaller
-  -> appended to the open container, sealed as it is appended
+  -> appended to the open parcel, sealed as it is appended
   -> closed at 16 MiB: sealed again in 64 KiB segments, placed among the scope's stores
 ```
 
@@ -244,22 +244,22 @@ put(dataset, path, content)
   | `monoflake:organization:salt:1` | the salt master and the scope id; at version 1 forever, since another would change every hash |
   | `monoflake:organization:key:1`  | the encryption master of a version and the scope id                                           |
   | `monoflake:journal:key:1`       | the organization's key and the journal's seed                                                 |
-  | `monoflake:container:key:1`     | the organization's key and the container's seed, its journal's or drawn at random             |
+  | `monoflake:parcel:key:1`        | the organization's key and the parcel's seed, its journal's or drawn at random                |
   | `monoflake:organization:gear:1` | the scope's salt, for FastCDC's gear table                                                    |
 
 - **Every layer's record is named by BLAKE3, in one of two modes.**
 
-  | Named        | Over                                       | Mode            | Recorded as                                                     |
-  | ------------ | ------------------------------------------ | --------------- | --------------------------------------------------------------- |
-  | file         | the whole file, as it came                 | keyed, the salt | a path in a dataset -> its file id                              |
-  | piece        | the piece, before compression              | keyed, the salt | a file id -> its piece ids                                      |
-  | container    | the sealed container                       | unkeyed         | a piece id -> its container, offset, length, whether compressed |
-  | stored block | each copy or parity shard a store is given | unkeyed         | a container id -> the stores holding it                         |
+  | Named        | Over                                       | Mode            | Recorded as                                                  |
+  | ------------ | ------------------------------------------ | --------------- | ------------------------------------------------------------ |
+  | file         | the whole file, as it came                 | keyed, the salt | a path in a dataset -> its file id                           |
+  | piece        | the piece, before compression              | keyed, the salt | a file id -> its piece ids                                   |
+  | parcel       | the sealed parcel                          | unkeyed         | a piece id -> its parcel, offset, length, whether compressed |
+  | stored block | each copy or parity shard a store is given | unkeyed         | a parcel id -> the stores holding it                         |
 
   What is plaintext is keyed, since anyone holding the content could otherwise compute its address,
-  RFC 13ixj; what is sealed is not, since its hash tells nothing, so a container is checked and
+  RFC 13ixj; what is sealed is not, since its hash tells nothing, so a parcel is checked and
   repaired with neither the salt nor the key. A file of one piece has one id for both. Kept as whole
-  copies, a stored block is its container and has its id. **A store keeps a stored block under its
+  copies, a stored block is its parcel and has its id. **A store keeps a stored block under its
   id as 64 hex digits and nothing else**, no extension, since the magic says what it is, beneath two
   directories named by its first four: `/{aa}/{bb}/{id}`, so a store of a petabyte holds about a
   thousand in each. The footing keeps the id as 32 bytes.
@@ -290,26 +290,26 @@ put(dataset, path, content)
 - **A piece is compressed with zstd at level 1**, in a `content` dataset unless it is set otherwise,
   RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.
-- **A container is exactly 16 MiB, 16,777,216 bytes, and a piece never spans two.** Its header,
+- **A parcel is exactly 16 MiB, 16,777,216 bytes, and a piece never spans two.** Its header,
   256 segments and their tags fill it to the byte, 4,096 blocks of 4 KiB, so its size alone says it
   is whole and no length is written. It holds 16,773,079 bytes of pieces: it is sealed once the
   next piece would not fit, the rest zeros, so with pieces at most 4 MiB it holds at least 12 MiB of
   them. It is never sealed early; what has not filled one waits in the journal.
-- **An `opaque` dataset's file is at most 16 MiB, and is placed as a container is**, RFC 13ixj,
-  so a sealed container and a journal's object of the platform above both fit, RFC vr5lw:
+- **An `opaque` dataset's file is at most 16 MiB, and is placed as a parcel is**, RFC 13ixj,
+  so a sealed parcel and a journal's object of the platform above both fit, RFC vr5lw:
   passed through raw, with no header, never cut, compressed or sealed and never through the
-  journal, and placed as its dataset asks, as any container is. What it is -- sealed already or not,
+  journal, and placed as its dataset asks, as any parcel is. What it is -- sealed already or not,
   compressed or not -- is not the platform's to know, so it takes what it is given and keeps that;
   doing either again would only spend. Its dataset's kind, recorded in the footing, tells it from a
-  sealed container, never its bytes: a container that could say it is unsealed would let whoever
+  sealed parcel, never its bytes: a parcel that could say it is unsealed would let whoever
   writes a store replace sealed content with its own.
-- **Only what cannot fill a container goes through a journal.** A write that fills one is sealed in
+- **Only what cannot fill a parcel goes through a journal.** A write that fills one is sealed in
   memory and placed at once, and answered once its stores have it, so bulk is bounded by the stores
   and never by the footing, `lessons.md`. Its seed is drawn at random, so one cut short before it is
-  recorded leaves a container no record names, which a sweep removes after its grace, RFC vuanj.
+  recorded leaves a parcel no record names, which a sweep removes after its grace, RFC vuanj.
 - **What is to be sealed never leaves memory unsealed, and a journal is kept in the stores, never in
   the footing.** A scope keeps, for each placement it writes, at most two journals: one open,
-  appended to only, and one frozen. A journal is placed as a container of its placement is, so what
+  appended to only, and one frozen. A journal is placed as a parcel of its placement is, so what
   waits in it is as durable as its placement asks from the moment it is answered, and the footing,
   holding no journal, stays bounded, `scope.md`; it records only which journal each placement
   writes. Each write is sealed in segments of at most 64 KiB and put to the placement's stores as
@@ -321,10 +321,10 @@ put(dataset, path, content)
   frozen, read only from then, and that piece goes on in a new one under a seed of its own; a write
   waits only while both are full, until the frozen one is exported. A frozen journal is read back
   from one of its stores into a compute, its pieces, compressed as they were written and never
-  again, sealed whole as a container and placed first; then one batch records where its pieces are,
-  and its objects are deleted. It is read back because a container is sealed again, under another
+  again, sealed whole as a parcel and placed first; then one batch records where its pieces are,
+  and its objects are deleted. It is read back because a parcel is sealed again, under another
   key and in segments of its own, which no store's copy can do, `lessons.md`.
-- **A container's format is named by its revision**, one byte of its header, an integer from 1 to
+- **A parcel's format is named by its revision**, one byte of its header, an integer from 1 to
   255 stored as binary, RFC wnqvu, and authenticated with what it seals. A revision names the whole
   format -- the cipher, the segments, the nonce, the tag -- so any change to it is a new revision;
   one a reader does not know is refused, never guessed.
@@ -341,7 +341,7 @@ put(dataset, path, content)
   Native code seals with a library that reaches the CPU's AES instructions, a web runtime with its
   own WebCrypto; where a CPU has none, the same bytes are computed in software, more slowly.
 
-- **Each container is sealed under a key of its own**, `derive_key("monoflake:container:key:1",
+- **Each parcel is sealed under a key of its own**, `derive_key("monoflake:parcel:key:1",
 organization key || seed)`, so the same header always gives it back. Its header is 41 bytes, and
   nothing but segments follows:
 
@@ -356,46 +356,46 @@ organization key || seed)`, so the same header always gives it back. Its header 
   Segment i is sealed with the nonce `8 zero bytes || u32_be(i)` and the associated data
   `header || u32_be(i) || final`, `final` being `0x01` for segment 255 alone and `0x00` for every
   other; the associated data is rebuilt as it is read, never written. No nonce repeats however many
-  containers a scope writes, and a container is read whole.
+  parcels a scope writes, and a parcel is read whole.
 
   **A journal draws its seed once, as it is opened**, and is named by it, 64 hex digits; its first
   object begins with the revision and the master's version. Its segments are sealed as a
-  container's are, under the journal's key, each the next index and `final` `0x00` throughout, its
+  parcel's are, under the journal's key, each the next index and `final` `0x00` throughout, its
   end what the footing records.
-  The container it becomes takes the same seed under the container's key, so the two keys differ
+  The parcel it becomes takes the same seed under the parcel's key, so the two keys differ
   while every row and segment counts from zero, and **a journal exported again gives the same
-  bytes, and so the same id**: a container placed but not yet recorded is placed again over itself,
+  bytes, and so the same id**: a parcel placed but not yet recorded is placed again over itself,
   never left behind. **A key seals one content**: sealing the same bytes again under the same nonces
   tells nothing, and whatever else is sealed draws a new seed.
 
-- **A container's place is computed, by rendezvous hashing over integers alone.** Among the stores
-  that meet its placement, each store s scores the container by the highest, over k from 0 to its
+- **A parcel's place is computed, by rendezvous hashing over integers alone.** Among the stores
+  that meet its placement, each store s scores the parcel by the highest, over k from 0 to its
   weight less one, of the first 8 bytes, read big-endian, of
-  `derive_key("monoflake:container:placement:1", container id || store id || k)`: the container's
+  `derive_key("monoflake:parcel:placement:1", parcel id || store id || k)`: the parcel's
   32 bytes, the store's id as 4 bytes big-endian, k as one byte. The copy or shard i goes to the
   store ranked i, a tie to the lower store id. A weight is an integer from 1 to 255, so a store is
   chosen in proportion to it, exactly, and never through a float, whose last bit two platforms may
-  compute apart and so look for a container where it is not. The store's id is hashed, never its
+  compute apart and so look for a parcel where it is not. The store's id is hashed, never its
   address, so a store's address or secret changed moves nothing.
-- **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no container. A
-  piece is dead once no file names it, by a count of those that do, and a container's dead share is
-  what its dead pieces take of it. Collection repacks a container's live pieces into a new one, in
+- **Deletion marks, and collection reclaims.** Deleting a file marks it and changes no parcel. A
+  piece is dead once no file names it, by a count of those that do, and a parcel's dead share is
+  what its dead pieces take of it. Collection repacks a parcel's live pieces into a new one, in
   three ways:
 
-  | Way        | What it does                                                                                           | Changes data |
-  | ---------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-  | inspect    | counts each container's dead share and what collecting would reclaim                                   | no           |
-  | collect    | repacks what it is pointed at, now, at any threshold; at zero, erases what was deleted                 | yes          |
-  | automatic  | repacks a container once a deletion's mark is written and its dead share passes 30 percent, unless set | yes          |
-  | background | walks every container, one at a time and each its own atomic step, repacking below the threshold too   | yes          |
+  | Way        | What it does                                                                                        | Changes data |
+  | ---------- | --------------------------------------------------------------------------------------------------- | ------------ |
+  | inspect    | counts each parcel's dead share and what collecting would reclaim                                   | no           |
+  | collect    | repacks what it is pointed at, now, at any threshold; at zero, erases what was deleted              | yes          |
+  | automatic  | repacks a parcel once a deletion's mark is written and its dead share passes 30 percent, unless set | yes          |
+  | background | walks every parcel, one at a time and each its own atomic step, repacking below the threshold too   | yes          |
 
   **A deletion is answered once its mark is written**: the repack it may start is a task of its
   own, and never holds the deletion back. A repack's live pieces take a write's way: what fills a
-  container is sealed at once, and the rest goes into the journal. What the background walk repacks,
+  parcel is sealed at once, and the rest goes into the journal. What the background walk repacks,
   and how often, is to be decided. [D6]
 
   A piece a write finds again is counted again in the same step as it is found; a repack drops only
-  pieces still at zero when it commits, and the old container is removed only after. The threshold
+  pieces still at zero when it commits, and the old parcel is removed only after. The threshold
   trades space for rewriting: at 30 percent, each byte reclaimed costs about 2.3 rewritten.
 
 Open, for the discussion that follows:
@@ -404,7 +404,7 @@ Open, for the discussion that follows:
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
 - How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages
-  in containers, the footing keeping their root. [B17]
+  in parcels, the footing keeping their root. [B17]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place. [D3]

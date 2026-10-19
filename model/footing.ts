@@ -64,10 +64,10 @@ export const KEPT: Record<string, Kept> = {
 	},
 	extent: {
 		of: 'organization',
-		what: "which pieces each content is made of, each piece's container, and every container",
+		what: "which pieces each content is made of, each piece's parcel, and every parcel",
 		from: 'b8f35',
 		grows: 'content',
-		open: 'the extent is kept in the footing, about 200 bytes a piece, so the footing grows with what its scope holds; how it is bounded, its pages kept in containers and the footing keeping their root [B17]',
+		open: 'the extent is kept in the footing, about 200 bytes a piece, so the footing grows with what its scope holds; how it is bounded, its pages kept in parcels and the footing keeping their root [B17]',
 	},
 	anchor: {
 		of: 'platform',
@@ -85,13 +85,13 @@ export const KEPT: Record<string, Kept> = {
  */
 export const ROWS = {
 	/** A file of one new piece: its log entry and its extent's two rows, its bytes put to the stores
-	 * as a journal's object; then the piece's container written as the journal is exported, and the
+	 * as a journal's object; then the piece's parcel written as the journal is exported, and the
 	 * log entry removed once archived. */
 	smallWrite: 5,
 	/** A file whose content is held already: its log entry, the count raised, the entry removed. */
 	duplicate: 3,
-	/** A MiB of a large file sealed at once: about one piece's two extent rows, a container's row and
-	 * the log entry spread over the 16 pieces of a container. */
+	/** A MiB of a large file sealed at once: about one piece's two extent rows, a parcel's row and
+	 * the log entry spread over the 16 pieces of a parcel. */
 	largeMiB: 2.2,
 	/** An app's database commit: its log entry, and its removal once archived. */
 	commit: 2,
