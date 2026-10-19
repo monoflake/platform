@@ -290,7 +290,7 @@ let checklist: array<item> = [
   {
     id: "B29",
     group: #B,
-    what: "the subset's integers, since ReScript's int is signed and 32 bits and an id is an unsigned 32: the bucket's trial in model/contracts.res proposes int32, uint32 and uint53, one exact in a JavaScript number, for a time or a size, and no 64; how bytes are written in a contract's JSON; and which library is JavaScript's CBOR, held to the standards' tests, fhg6w",
+    what: "how bytes are written in a contract's JSON, and which library is JavaScript's CBOR, held to the standards' tests; the subset's integers are decided, fhg6w",
     from: "fhg6w",
   },
   {

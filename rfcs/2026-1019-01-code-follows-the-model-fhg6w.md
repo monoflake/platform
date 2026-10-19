@@ -125,15 +125,30 @@ author on 2026-10-19:
 | Shape                                               | Rust                       | ReScript                   |
 | --------------------------------------------------- | -------------------------- | -------------------------- |
 | a boolean, a string, a 64-bit float                 | `bool`, `String`, `f64`    | `bool`, `string`, `float`  |
-| an integer, its widths open [B29]                   | --                         | --                         |
+| a signed 32-bit integer                             | `i32`                      | `int`                      |
+| an unsigned one, as an id, b8f35                    | `u32`                      | `float`, exact             |
+| one under 2^53, a time in milliseconds or a size    | `u64`, checked below 2^53  | `float`, exact             |
 | bytes                                               | `Vec<u8>`                  | `Uint8Array.t`             |
 | a record, a field absent when it has nothing to say | a struct, `Option` fields  | a record, optional fields  |
 | a closed set of names                               | an enum without data       | a variant without payloads |
 | a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
 | a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
 
-Left out: generics, functions, `null`, and whatever one language alone has. A tagged union is
-written as ReScript's `@tag` lays it out, so it crosses into ReScript unconverted.
+Left out: generics, functions, `null`, and whatever one language alone has, and an integer of 64
+bits, since ReScript's is a `bigint` and nothing asks one yet, decided by the author on 2026-10-19
+with the four below, from the bucket's trial, `model/contracts.res`:
+
+- **A union is a field's value, its case named inside it**: a bucket's kind is
+  `{"name": "packed", "compress": true}`, so a field belongs to its case alone. It is written as
+  ReScript's `@tag` lays it out, so it crosses into ReScript unconverted.
+- **An optional field's absence has one meaning, written beside it**: a bucket with no `bindable`
+  is bindable by every app, and one with an empty list by none.
+- **Key 0 is reserved**: a record's content holds its `description` there, every kind's, and a
+  union its case. An enumeration is its name in JSON and its code in CBOR; an ordered one's codes
+  start at 1, and custody's, 0 and 1, are no order.
+- **A version is raised for anything but an optional field added to a record**: the check refuses
+  to write a product whose type, reached from a record's content, changed otherwise while its
+  version stayed.
 
 **CBOR, COSE's `Sign1` and CWT are held to their standards' tests**, worked out with the author on
 2026-10-19: each is small and public with its own tests, so an implementation is held to all of
@@ -157,5 +172,4 @@ Open, for the discussion that follows:
   the check that a part uses only libraries of its own language. [B24]
 - How the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one
   tree. [B26]
-- How bytes and a 64-bit integer are written in JSON, and which library is JavaScript's CBOR.
-  [B29]
+- How bytes are written in JSON, and which library is JavaScript's CBOR. [B29]
