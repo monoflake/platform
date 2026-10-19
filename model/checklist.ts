@@ -431,7 +431,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C26',
 		group: 'C',
-		what: "to try that a user's Cloudflare account on the free plan gives a custom hostname, a name of the platform's zone pointing at it DNS only, its certificate; and which certificate_authority values the API takes",
+		what: "to try that a user's Cloudflare account on the free plan gives a custom hostname, a name of the platform's zone pointing at it DNS only, its certificate; which certificate_authority values the API takes; and how a name behind its owner's own Cloudflare proxy validates, which pre-validation does not cover for O2O",
 		from: 'vr5lw, lessons.md',
 		step: 6,
 	},
@@ -540,6 +540,12 @@ export const CHECKLIST: Item[] = [
 		group: 'D',
 		what: 'exporting a bucket, to another object store, a file system or an archive: plaintext, and a right of its own',
 		from: '13ixj',
+	},
+	{
+		id: 'D13',
+		group: 'D',
+		what: "holding an organization's DNS for it, so a domain's apex is pointed by the platform itself",
+		from: 'vr5lw',
 	},
 
 	// E -- stale or inconsistent text.

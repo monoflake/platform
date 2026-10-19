@@ -505,6 +505,35 @@ out with the author on 2026-10-18.
   behind a proxy of their own or not as they choose; the platform binds no domain of a user's
   itself. The two may stand together. A machine without an address is reached through a relay of
   Cloudflare's, above.
+- **A name of the organization's own is claimed before it is bound**, worked out with the author on
+  2026-10-19. Which organization holds a domain is unique across the platform, since an entry routes
+  by `Host`: the platform's `domain` table, a domain to its organization and until when its proof
+  holds, RFC v7v3w. What it is bound to is the organization's own, a `name`: the domain, its target
+  written by type as a binding is, `{ app: id }` or `{ storage }`, RFC 49qyg, and whether it is the
+  storage's preferred.
+  - **A CNAME is the proof**, followed to its end: only who keeps a domain's records can point it at
+    `{scope-id}.mofl.fyi`, an organization's name by its scope's id, which is never given again. One
+    at a label proves nothing, since a label let go may be another's.
+  - **Where no CNAME is seen** -- a domain's apex, flattened to addresses, or a name behind its own
+    proxy -- **a challenge is the proof**: the platform fetches
+    `/.well-known/monoflake-challenge/{id}` of the name, and only the claiming organization's entry,
+    holding that id, answers it, as ACME's HTTP challenge proves a name, `lessons.md`. An entry
+    takes the path only while it holds an id unanswered, a few seconds, and passes it to the app
+    otherwise, so no app loses it. The suffix is minted unregistered, which RFC 8615 asks of a new
+    one.
+  - **A proof holds at most until the domain's registration expires**, read by RDAP, its
+    `expiration` event, from the registry IANA's bootstrap names, `lessons.md`. A registry RDAP
+    does not reach gives no end, and the proof holds until the domain is let go.
+  - **A domain held is locked to its organization** until that organization lets it go, or its
+    proof's end passes; only then may another claim it, which clears the first's binding. One held
+    past its registration with no end known is the operator's to settle by hand.
+  - **Every proof is checked again weekly**, a CNAME by a lookup, a challenge by its few seconds.
+    One that still holds changes nothing, but its end moves to a registration renewed; one that
+    fails warns the organization's admins, in the console and by email, and unbinds nothing, since a
+    failure may pass and the end is what releases. **A registration within 30 days of expiring is
+    warned of** at each check until it is renewed.
+  - How the platform could hold an organization's DNS, so an apex is pointed by the platform
+    itself, is later. [D13]
 - **A Worker is public at the address its vendor gives it**, or at a domain its account holds,
   bound in that account.
 - **A platform's name may be served from a user's own Cloudflare account**, its traffic counted
