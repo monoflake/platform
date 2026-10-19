@@ -153,6 +153,7 @@ down a layer at a time, each holding its own range alone.
   | ----------------------------------- | ------------------ | --------------------------------------------------------------------------------- |
   | `name`, `description`, `security`   | its own            | its own control's `configuration`, kind `organization`                            |
   | each member and its role            | its own            | its own control's `configuration`, kind `member`                                  |
+  | each invitation not yet accepted    | its own            | its own control's `configuration`, kind `invitation`                              |
   | `allowance`, `shadow`, `deleting`   | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
   | its status and where its backing is | the platform's say | the `anchor`, RFC b8f35                                                           |
   | each label                          | unique             | the platform's `label` table, a label to the organization holding it              |
@@ -175,7 +176,14 @@ down a layer at a time, each holding its own range alone.
     CA certifies, `lessons.md`. Upper case given is lowered.
   - **A name shown is an account's or an organization's `name`**, set as its owner likes in ASCII
     letters of either case, digits, the dot, the underscore, the hyphen, and a space between them,
-    never leading or trailing; empty unless written.
+    never leading, trailing or beside another; at most 16 characters, enough as an extension's 16
+    are, RFC vuanj; empty unless written.
+  - **A member is written only once it accepts**, worked out with the author on 2026-10-19: an
+    admin invites an account, an `invitation` of the organization's own naming the account and the
+    role offered, and the account's acceptance writes the `member`, its account and its role,
+    `member` or `admin`, and reports it to `membership`. So no one is put in an organization
+    unasked, and none is listed among an account's that it never joined. How long an invitation
+    lasts is open. [B3]
   - **Its contact `email` is required and verified**, and unique to no one, so one person may have
     two accounts reached at one address: where the platform reaches the person, as an organization
     is deleted, the account revoked or a security event comes. An address one signs in by is a row
