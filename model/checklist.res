@@ -189,7 +189,7 @@ let checklist: array<item> = [
     id: "B14",
     group: #B,
     what: "how long a capability and an account credential live; the other constants v0 picks are decided, vuanj",
-    from: "b8f35, vuanj, 49qyg, model/footing.ts",
+    from: "b8f35, vuanj, 49qyg, model/footing.res",
     done: "vuanj: a capability an hour and a credential 12, or 15 minutes and an hour in the strict tier",
   },
   {
@@ -210,7 +210,7 @@ let checklist: array<item> = [
     id: "B17",
     group: #B,
     what: "how the extent is kept off the footing's growth: its pages in parcels, the footing keeping their root, and its index cached by generation",
-    from: "model/footing.ts",
+    from: "model/footing.res",
     done: "b8f35: the extent stays in the footing, whose 10 GB bounds an organization's pieces, beside its 30 TB in all",
   },
   {
@@ -564,7 +564,7 @@ let checklist: array<item> = [
     id: "D7",
     group: #D,
     what: "the anchor's rows, one for every scope ever made: how many the platform's footing holds, and what comes after",
-    from: "model/footing.ts",
+    from: "model/footing.res",
   },
   {
     id: "D8",
@@ -619,8 +619,8 @@ let checklist: array<item> = [
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",
-    from: "b8f35, v7v3w, graph.ts",
-    done: "b8f35, v7v3w, graph.ts",
+    from: "b8f35, v7v3w, graph.res",
+    done: "b8f35, v7v3w, graph.res",
   },
   {
     id: "E2",
@@ -661,8 +661,8 @@ let checklist: array<item> = [
     id: "E7",
     group: #E,
     what: "the backing's edge to the root for the platform's own stores, while an organization's stores now reach it in the bundle",
-    from: "graph.ts",
-    done: "graph.ts",
+    from: "graph.res",
+    done: "graph.res",
   },
   {
     id: "E8",
