@@ -254,6 +254,13 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "a machine's disk past its two file systems, decided in vr5lw: where NixOS's store goes, and how a binding's share on btrfs is bounded",
 		from: 'vr5lw',
+		done: 'vr5lw: /nix on ext4, 24 GB or 16 GB until measured; simple quotas through the btrfs snapshotter',
+	},
+	{
+		id: 'B23',
+		group: 'B',
+		what: "to try on one machine reinstalled before the three: a NixOS set's size, to fix ext4's; and whether btrfs's simple quotas hold a binding's limit on a qgroup above its subvolumes, or what bounds it if not",
+		from: 'vr5lw',
 	},
 	// C -- blocks a later step.
 	{

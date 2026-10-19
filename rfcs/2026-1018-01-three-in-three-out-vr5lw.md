@@ -382,8 +382,20 @@ one code is both.
 - **A machine's disk is two file systems, the host's and the workloads'**: ext4, small, for what
   the host keeps -- the system, the driver's own state -- and btrfs for what runs keeps -- containerd's
   own data moved onto it, and every binding's share -- so a workload that fills its disk never
-  reaches the host. Where the system's store goes, and how a binding's share is bounded, are open.
-  [B22]
+  reaches the host.
+  - **The system's store, `/nix`, is the host's, on ext4**, worked out with the author on
+    2026-10-19: what the host holds is a set fixed whatever runs -- NixOS, containerd, the OCI and
+    isolate runtimes, the driver, the tailnet, the firewall -- and all that grows with use is on
+    btrfs, code built for a binding among it. So ext4 is the set's size times the generations kept,
+    each up to a whole set where an update moves nixpkgs, with journald held to a bound. **Until it
+    is measured** by `nix path-info -Sh /run/current-system` on a machine reinstalled to try it, a
+    set is taken as about 3 GB, and ext4 as 24 GB, five generations past the current, or 16 GB,
+    three, on a disk under 80 GB. The driver reports how many fit.
+  - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, `lessons.md`, through
+    containerd's btrfs snapshotter, every image layer and container layer a subvolume: a binding's
+    volumes are subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup
+    above them all holds the binding's limit. Whether simple quotas take a qgroup above others is to
+    be tried on the same machine first. [B23]
 - **What a driver has to tell, it pushes**, as events, each with an id: a difference found, a thing
   removed, a thing that cannot be made. It pushes to each binding's control what is that binding's
   alone; one it could not deliver it pushes again later, and hands back as well with the state a
