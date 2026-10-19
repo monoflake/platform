@@ -665,4 +665,16 @@ export const CHECKLIST: Item[] = [
 		from: 'found',
 		done: 'b8f35',
 	},
+	{
+		id: 'E9',
+		group: 'E',
+		what: "vr5lw's entry reads a name alone and carries the rest of a request unread, yet a domain's challenge asks an entry to answer /.well-known/monoflake-challenge/ for a name bound to an app past the gateway",
+		from: 'found',
+	},
+	{
+		id: 'E10',
+		group: 'E',
+		what: "v7v3w's console is an organization named console by being opened first, yet console is among the names v7v3w reserves from every organization",
+		from: 'found',
+	},
 ];
