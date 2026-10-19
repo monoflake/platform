@@ -263,12 +263,6 @@ export const CHECKLIST: Item[] = [
 		what: "to try on one machine reinstalled before the three: a NixOS set's size, to fix ext4's; and whether btrfs's simple quotas hold a binding's limit on a qgroup above its subvolumes, or what bounds it if not",
 		from: 'vr5lw',
 	},
-	{
-		id: 'B24',
-		group: 'B',
-		what: 'comparison, spec/process.md: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped',
-		from: 'spec/process.md',
-	},
 	// C -- blocks a later step.
 	{
 		id: 'C1',
@@ -582,7 +576,12 @@ export const CHECKLIST: Item[] = [
 		what: 'delivering a warning outside the API, by email first, and to whom: what sends it, which kinds are sent, and how a person turns them off',
 		from: 'v7v3w',
 	},
-
+	{
+		id: 'D15',
+		group: 'D',
+		what: 'comparison, spec/process.md, before the first service that exists moves onto the platform: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped',
+		from: 'spec/process.md',
+	},
 	// E -- stale or inconsistent text.
 	{
 		id: 'E1',
