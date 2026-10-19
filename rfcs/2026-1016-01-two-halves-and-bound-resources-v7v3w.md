@@ -104,12 +104,31 @@ in the platform's control, an organization's and the extensions each binds.
   one record whatever its kind.
   - **Every kind holds a `description`**, free text and empty unless written, and nothing else in
     common.
-  - **A resource is its id; the name it is shown by is apart**, worked out with the author on
-    2026-10-19: a bucket of either type and a database alike hold no name, and what binds or calls
-    one is resolved to its id, so parts speak id to id. Each name shown and where it sits is a row
-    of its organization's `tree`, an id to its name and its parent, a folder being a row of its own
-    under an id from the same space; so an owner arranges what it sees as it likes, and nothing
-    bound moves. Whether two of one folder may share a name is open. [B3]
+  - **A resource is its id; where it is shown is apart**, worked out with the author on
+    2026-10-19: an app, a database and a bucket of either type hold no name, and what binds or calls
+    one is resolved to its id, so parts speak id to id. An organization's resources and folders are
+    shown on one tree, so what belongs to one project sits together however its owner likes, and
+    nothing bound moves.
+
+    | A node's | Holds                                                          |
+    | -------- | -------------------------------------------------------------- |
+    | `id`     | the resource's own, or a folder's, drawn from the same space   |
+    | `parent` | the folder it sits in, empty at the top                        |
+    | `type`   | `folder`, `app`, `database` or `bucket`                        |
+    | `slug`   | its part of a path, written as a label is                      |
+    | `name`   | the name shown, written as an account's is, repeated as freely |
+
+  - **A path is the slugs from the top joined by `/`**, `shop/api`, as a file's path is written,
+    RFC 13ixj; never eight hex digits a part, so wherever an id is taken a path may be taken
+    instead. **Within a folder a type and a slug are unique together**, the `tree` table's key, so
+    an app and a database of one project may share a slug and two apps may not; a path carries no
+    type, which the console draws and a command names.
+  - **A folder alone holds nodes**, so every part of a path but the last is a folder; it is deleted
+    only while empty, from the leaves inward, RFC vuanj. Moving or renaming a node changes its
+    `parent` or `slug` and never its id, and is a generation as every change is.
+  - **An app's slug is never a scope the gateway reserves**, worked out with the author on
+    2026-10-19: `compute`, `storage` and `database` now, a list in the code that only grows as the
+    platform offers more, RFC vr5lw; its name shown may be anything.
   - **A record names another by its id alone, never by a name**, so a name changed breaks nothing,
     and what still depends on a record is the rows of the current generation naming its id.
   - **Each generation is a row of its own**: its number, rising within its control; its `time`, by

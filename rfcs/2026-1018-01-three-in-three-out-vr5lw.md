@@ -478,7 +478,7 @@ out with the author on 2026-10-18.
   2026-10-19: every organization has one, part of what the platform gives it, never among its apps
   and configured only through its organization's control, RFC v7v3w. It is bound to the
   organization's platform name and answers by path, `/v{n}/{scope}/...`.
-  - **A scope is the storage, another the platform reserves and names to its users, or an app**
+  - **A scope is one the platform reserves, `compute`, `storage` and `database` now, or an app**
     the organization binds to it under a scope of its choosing; for an app it drops the scope and
     hands the app `/v{n}/...`, the rest unread.
   - **The version is each scope's own**, an integer written with its `v`: put first, it lets all

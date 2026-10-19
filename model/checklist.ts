@@ -460,7 +460,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C30',
 		group: 'C',
-		what: "what an organization's gateway does past routing, each on its own: authenticating an app's users, a firewall kept in step in the account it runs in; and the scopes the platform reserves past the storage",
+		what: "what an organization's gateway does past routing, each on its own: authenticating an app's users, a firewall kept in step in the account it runs in; the scopes it reserves are a list, v7v3w",
 		from: 'vr5lw',
 		step: 6,
 	},
