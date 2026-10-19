@@ -485,3 +485,37 @@ extent for good to the subvolume that made it and cost about what no quota does,
 shared from exclusive use. Asked by B22. Sources: https://lwn.net/Articles/944371,
 https://blogs.oracle.com/linux/btrfs-qgroup-quota-vs-simple-quota and
 https://btrfs.readthedocs.io/en/latest/btrfs-quota.html
+
+## Contracts and their encodings, read 2026-10-19
+
+**ATD is a language of types for data crossing languages**, its core neutral of format: "Types are
+mapped to each programming language or data format using language-specific conventions", and it
+takes annotations of any name. Its README lists atdcpp, atdd, atdj, atdgen for OCaml, "legacy", and
+Melange, atdml for OCaml "coming soon", atdpy, atds and atdts, and no Rust; `atdcat -jsonschema`
+exports JSON Schema. Its core reference is 651 lines; its tests are each backend's own, 82 files for
+atdgen, 21 for atdts, 13 for atdpy, and no conformance suite. It is under BSD's three clauses.
+Melange is served by atdgen's `-mel` and `melange-atdgen-codec-runtime`, 3.0.1 of 2025-03-17, work
+Ahrefs funded. Asked by RFC fhg6w. Sources: https://github.com/ahrefs/atd,
+https://atd.readthedocs.io/en/latest/atd-language.html,
+https://ocaml.org/p/melange-atdgen-codec-runtime and
+https://tech.ahrefs.com/getting-started-with-atd-and-melange-1f3a14004081
+
+**Melange is OCaml's compiler for applications whose other half is JavaScript; js_of_ocaml for
+reusing OCaml that exists.** OCaml.org gives Melange idiomatic output, deep integration with npm and
+its tools, and "Excellent TypeScript interoperability", a module a file; js_of_ocaml compatibility
+with most libraries and the standard library, OCaml 5's effects, limited support for domains, and
+32-bit integers. Asked by fhg6w. Source: https://ocaml.org/tools/javascript-target
+
+**CBOR is RFC 8949, 3674 lines of text, with its tests in it.** Its Appendix A has 82 encoded items,
+kept as JSON in `cbor/test-vectors`, 65 marked to re-encode byte for byte and 59 decodable as JSON;
+the repository states no license, and the items are the RFC's own. Its Appendix F lists about 90
+byte sequences that are not well formed, by kind: input ending in a head, strings and containers
+short of their items, reserved values, chunks of the wrong type, unclosed indefinite lengths. Its
+4.2 defines deterministic encoding. Asked by fhg6w. Sources:
+https://www.rfc-editor.org/rfc/rfc8949.txt and https://github.com/cbor/test-vectors
+
+**COSE is RFC 9052, about 3600 lines, and CWT RFC 8392, 25 pages**; `cose-wg/Examples`, under the
+Unlicense, holds 306 JSON cases, `sign1-tests`, `eddsa-examples` and `CWT` among them, written
+before RFC 9864, so their EdDSA is -8. Asked by fhg6w. Sources:
+https://www.rfc-editor.org/rfc/rfc9052.txt, https://www.rfc-editor.org/rfc/rfc8392.txt and
+https://github.com/cose-wg/Examples

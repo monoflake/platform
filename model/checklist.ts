@@ -263,6 +263,24 @@ export const CHECKLIST: Item[] = [
 		what: "to try on one machine reinstalled before the three: a NixOS set's size, to fix ext4's; and whether btrfs's simple quotas hold a binding's limit on a qgroup above its subvolumes, or what bounds it if not",
 		from: 'vr5lw',
 	},
+	{
+		id: 'B24',
+		group: 'B',
+		what: 'which language each part of the model is written in, declared in the model beside the part, fhg6w',
+		from: 'fhg6w',
+	},
+	{
+		id: 'B25',
+		group: 'B',
+		what: "OCaml's standard library for code that runs on every target, its concurrency, and each language's HTTP server, OCaml's to be chosen beside axum and Hono, fhg6w",
+		from: 'fhg6w',
+	},
+	{
+		id: 'B26',
+		group: 'B',
+		what: 'how the repository is laid out, so dune, cargo and the JavaScript tools build one tree, fhg6w',
+		from: 'fhg6w',
+	},
 	// C -- blocks a later step.
 	{
 		id: 'C1',
@@ -485,6 +503,13 @@ export const CHECKLIST: Item[] = [
 		group: 'C',
 		what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a containerd one, and what is handed over first where a container would not outlive it; and whether youki runs under containerd's runc shim as crun does",
 		from: 'vr5lw',
+		step: 2,
+	},
+	{
+		id: 'C33',
+		group: 'C',
+		what: 'whether the OCaml backend of ATD moves from atdgen to atdml, which ATD names as coming, fhg6w',
+		from: 'fhg6w',
 		step: 2,
 	},
 	// D -- commercial and operational.
