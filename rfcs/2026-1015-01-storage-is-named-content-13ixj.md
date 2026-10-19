@@ -141,10 +141,16 @@ storage (one an organization, its own unique salt)
 - **An extension is made standard before it names anything**, by `write` and `publish` alike, so
   one format reaches one object by either: lowered to its small letters, checked to be letters and
   digits alone, its length bounded [B14], then rewritten by the platform's table of spellings, one
-  spelling of each format kept, `jpg` to `jpeg`, `yml` to `yaml`. **That table holds spellings of one
-  format alone**, never types that are only served alike, so `ini` is never `txt`; it is written by
-  hand, and as it is part of an object's name it never changes once written. An extension it does
-  not know is kept as it came. [A8]
+  spelling of each format kept. **That table holds spellings of one format alone**, never types that
+  are only served alike, so `ini` is never `txt`; it is written by hand, and as it is part of an
+  object's name a row once written is never changed or taken out, though rows may be added. An
+  extension it does not know is kept as it came. [A8]
+  - **A spelling is rewritten to the format's full one**, since the short ones are mostly cut to three
+    letters by file systems that once allowed no more, worked out with the author on 2026-10-19:
+    `jpg` and `jpe` to `jpeg`, `yml` to `yaml`, `htm` to `html`, `tif` to `tiff`, `mpg` and `mpe` to
+    `mpeg`, `mid` to `midi`.
+  - **Unless the short one is what the world recognizes**, as `md` is, so `markdown` is rewritten to
+    `md`.
 - **An object's media type is never stored**: it is the extension's, looked up as the object is
   served, in a short table of the extensions the platform knows; every other is served as one
   fallback. This table is how a browser is answered and never part of a name, so it changes at any
