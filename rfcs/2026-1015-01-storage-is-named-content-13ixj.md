@@ -70,7 +70,9 @@ owner (one scope, its own unique salt)
   **A level is stored as its code**: availability's and durability's from 1, the lowest, to 6,
   custody's 0 for `false` and 1 for `true`, compared as integers; 0 is never an ordered level's
   code. It is written out as its name only where text must carry it: `best_effort` in JSON and an
-  API, `best-effort` in a derive context, and in code as its language names things.
+  API, `best-effort` in a derive context, and in code as its language names things. A set of
+  stores is of the level its members compose to, by RFC vr5lw's rules, and a host is of these levels
+  as a store is.
 
 - **Spread is how many copies, and what they must be distinct in.** `copies` is the least kept;
   `distinct` maps a domain -- `node`, `site`, `account`, `zone`, `region` -- to how many of the

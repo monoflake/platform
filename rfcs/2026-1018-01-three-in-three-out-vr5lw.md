@@ -214,7 +214,30 @@ worked out with the author on 2026-10-18:
 | storage  | as RFC 13ixj has it                                                 | as RFC 13ixj has it: copies, and the domains they lie apart in |
 | database | its writer's, a compute's: its standbys and how fast one takes over | its log's and snapshots', a placement's in storage, RFC v7v3w  |
 
-What each level of availability means is open [B19], and of durability [A7].
+**The levels are RFC 13ixj's, and mean of a host what they mean of a store**: each host declares its
+availability and custody as it is bound, RFC v7v3w, and its custody is `true` only where the
+organization alone controls it. **A set may be composed to a level higher than its members'**,
+worked out with the author on 2026-10-18, by these rules alone, each met by a level's own
+definition:
+
+- **Only members at `stable` or above compose**: what is `opportunistic` may vanish at any moment,
+  and what is `best_effort` has no steady environment, so several of either may fail together.
+
+  | Set, each at `stable` or above                                                | Composes to                                                                                       |
+  | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+  | a `pool` on 2 hosts or more, on distinct nodes                                | availability `redundant`, any answering while one is lost                                         |
+  | a `pool` on 2 hosts or more, in distinct regions                              | availability `multiregion`                                                                        |
+  | a `keyed` container or a database's writer on 2 hosts or more, distinct nodes | availability `recoverable` at most: a lease must lapse before another takes over, a while cut off |
+  | 2 copies or more, each `persistent` or above, on distinct nodes               | durability `replicated`                                                                           |
+  | the same, in distinct zones                                                   | durability `multizone`                                                                            |
+  | the same, in distinct regions                                                 | durability `multiregion`                                                                          |
+
+- **A set's level is the higher of its lowest member's own and the highest its spread composes
+  to**, its spread being RFC 13ixj's `copies` and `distinct`; so one member that is `multiregion` of
+  itself, as Cloudflare's network, is not pulled down, and machines compose as the rules allow. A
+  need is asked as a level or as a spread, and the placement solves either.
+- **Where a level came from is shown and never compared**: a level is compared as its code alone,
+  RFC 13ixj, and the API says whether it was declared or composed, and of what.
 
 - **Everything is placed by one function**: those that meet every need are kept -- the sandbox,
   each capability declared, the levels, the binding's quota, the machine's free space -- and among

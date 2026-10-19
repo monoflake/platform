@@ -188,7 +188,7 @@ service's, or a node.
 
   A database is no third kind: what it needs splits into a compute for its writer and a placement
   for its log's archive and snapshots, each solved as the rest are. What a compute's levels mean,
-  and what a function or a database asks of one, is to be decided. [B19]
+  and how a set composes to one, is RFC vr5lw's.
 
 - **A primitive is whatever keeps its contract**, a vendor's or a product of the platform's own.
 - **What stands between an organization's resources and its three products is the platform's**,
@@ -306,7 +306,6 @@ Open, for the discussion that follows:
 
 - How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
 - What the app that charges reads of use, and how it acts on an organization. [D1]
-- What a compute's levels mean, and what a function or a database's writer asks of one. [B19]
 - Which ways of signing in each step builds, and what sends an email's link. [C27]
 - What one way counts for among a sign-in's factors, a passkey among them, and how an account that
   lost every way it held is given back. [C28]

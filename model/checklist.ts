@@ -223,6 +223,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "what each level of availability means, for compute, databases and storage alike, and how many hosts each asks; and what custody means; durability's levels are A7",
 		from: 'v7v3w',
+		done: "vr5lw: the levels are 13ixj's, of a host as of a store, and a set composes to one by stated rules alone",
 	},
 	{
 		id: 'B20',
