@@ -146,13 +146,16 @@ storage (one an organization, its own unique salt)
   rule. Content beneath has no name either way, so it is deduplicated alike.
 - **An object's extension is written in ASCII letters, digits and dots alone**, at most 16
   characters, RFC vuanj; a hyphen, an underscore, a space, a letter outside ASCII, and a dot
-  leading, trailing or doubled break it. **A dot stands only inside a compound extension** of the
-  platform's table -- `tar.gz`, `tar.bz2`, `tar.xz`, `tar.zst` -- a tar compressed, its parts one
-  format; `min.js` is a name's habit and no format, and breaks it. The table only grows, as the
-  spellings' below.
+  leading, trailing or doubled break it. Between, a dot stands anywhere: `write` takes `min.js` as
+  it is given.
+- **The platform keeps a table of compound extensions** -- `tar.gz`, `tar.bz2`, `tar.xz`,
+  `tar.zst`, a tar compressed -- which `publish` reads to take a path's extension, since a path's
+  other dots are a name's habit, `app.min.js`, and no format. It only grows, as the spellings'
+  below.
 - **An extension is made standard before it names anything**, by `write` and `publish` alike, so
-  one format reaches one object by either: lowered to its small letters, then rewritten by the
-  platform's table of spellings, one spelling of each format kept. **That table holds spellings of one format alone**, never types that
+  one format reaches one object by either: lowered to its small letters, then its last part, the
+  format, rewritten by the platform's table of spellings, one spelling of each format kept, so
+  `min.jpg` is `min.jpeg`. **That table holds spellings of one format alone**, never types that
   are only served alike, so `ini` is never `txt`; it is written by hand, and as it is part of an
   object's name a row once written is never changed or taken out, though rows may be added. An
   extension it does not know is kept as it came.
@@ -172,8 +175,8 @@ storage (one an organization, its own unique salt)
   served, in a short table of the extensions the platform knows; every other is served as
   `application/octet-stream`. This table is how a browser is answered and never part of a name, so
   it changes at any time, its cost an answer cached a year. One extension gives one type, and many
-  give the same, so a type never leads back to an extension. A compound extension is served as
-  its last part's type, `tar.gz` as `gz`'s. Each type is IANA's where IANA
+  give the same, so a type never leads back to an extension. An extension of several parts is
+  served as its last part's type, `tar.gz` as `gz`'s and `min.js` as `js`'s. Each type is IANA's where IANA
   registers one, MDN's where it does not, `lessons.md`; one a browser cannot show is listed all the
   same, since showing nothing harms nothing. The table it starts with:
 
