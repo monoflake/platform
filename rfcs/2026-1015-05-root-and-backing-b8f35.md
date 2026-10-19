@@ -393,7 +393,7 @@ write(bucket, path, content)
   The masks are those `fastcdc-rs` keeps for 22 and 18 bits, written into the code as constants.
   Test vectors are kept beside it: a fixed salt and input, and every cut they give.
 
-- **A piece is compressed with zstd at level 1**, in a `content` bucket unless it is set otherwise,
+- **A piece is compressed with zstd at level 1**, in a `packed` bucket unless it is set otherwise,
   RFC 13ixj, and kept as it came when that is not smaller. Both
   hashes are taken before compression, so a level changed later changes no id.
 - **A parcel is exactly 16 MiB, 16,777,216 bytes, and a piece never spans two.** Its header,

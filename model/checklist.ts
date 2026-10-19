@@ -302,7 +302,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'C8',
 		group: 'C',
-		what: 'whether one content named in a content and an opaque bucket is kept once',
+		what: 'whether one content named in a packed and an opaque bucket is kept once',
 		from: '13ixj',
 		step: 2,
 	},
@@ -455,6 +455,7 @@ export const CHECKLIST: Item[] = [
 		what: 'a name for the bucket kind that is cut, compressed and sealed, since content names what lies beneath every bucket',
 		from: '13ixj',
 		step: 2,
+		done: '13ixj: packed, beside opaque',
 	},
 	{
 		id: 'C30',

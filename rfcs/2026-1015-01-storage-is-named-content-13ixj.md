@@ -52,12 +52,13 @@ storage (one an organization, its own unique salt)
   kind, a quota, who may bind it, a description, and deletion of the whole. A part that needs
   another policy is another bucket.
 - **A bucket's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
-  `content`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
+  `packed`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
   RFC b8f35. `opaque` is passed through raw, each file or object at most 16 MiB -- never cut,
   compressed or sealed, since whether it is either already is not the platform's to know -- as
   what the external platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the
-  description are every kind's. The kind `content` shares its name with what lies beneath every
-  bucket, and is to be named again. [C29]
+  description are every kind's. The two are named for what is done to the bytes, worked out with
+  the author on 2026-10-19: `packed`, its pieces packed into parcels, RFC b8f35, and `opaque`, left
+  as they came; content names what lies beneath every bucket of either.
 - **A bucket's placement says what its data needs, and each store says what it is**, declared by
   whoever binds it as it is bound, RFC b8f35; the platform places each parcel only on stores
   that meet every need. **Every attribute is ordered**, so content named in several buckets is held
@@ -239,7 +240,7 @@ Open, for the discussion that follows:
 
 - Whether that metadata is held per owner or per bucket. Deduplication and the count of names
   pointing at each hash are an owner's, which argues for per owner. [C9]
-- Whether one content named in a `content` and an `opaque` bucket is kept once, and how. [C8]
+- Whether one content named in a `packed` and an `opaque` bucket is kept once, and how. [C8]
 - What follows when a store is lost without warning, or reaches an end its owner did not choose.
   [C20]
 - Whether copies are laid out whole or as shards with parity, and whether the owner sees which.

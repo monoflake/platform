@@ -58,7 +58,7 @@ as it stands on a vendor, RFC 94y0d.
   write, since a parcel is named by its content and a journal's object by a seed drawn at
   random, no rename and no upload in parts. **What takes it and what gives it are one**: a store
   is reached by it, and a platform gives an `opaque` bucket by it, RFC 13ixj, so one platform's
-  storage is the next one's `object`, RFC 94y0d. A `content` bucket may be given by the same
+  storage is the next one's `object`, RFC 94y0d. A `packed` bucket may be given by the same
   subset without the 16 MiB bound, for a client that speaks S3.
 - **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
   compute and a volume, below; a bucket of compute, `object` stores and a database, its records'
