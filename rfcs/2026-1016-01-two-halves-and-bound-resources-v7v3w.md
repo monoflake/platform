@@ -103,7 +103,13 @@ in the platform's control, an organization's and the extensions each binds.
   both see that it was. The id is drawn from the one space of its scope's resources, so it names
   one record whatever its kind.
   - **Every kind holds a `description`**, free text and empty unless written, and nothing else in
-    common: a name is each kind's own, a database's a path and others not, so none is shared.
+    common.
+  - **A resource is its id; the name it is shown by is apart**, worked out with the author on
+    2026-10-19: a bucket of either type and a database alike hold no name, and what binds or calls
+    one is resolved to its id, so parts speak id to id. Each name shown and where it sits is a row
+    of its organization's `tree`, an id to its name and its parent, a folder being a row of its own
+    under an id from the same space; so an owner arranges what it sees as it likes, and nothing
+    bound moves. Whether two of one folder may share a name is open. [B3]
   - **A record names another by its id alone, never by a name**, so a name changed breaks nothing,
     and what still depends on a record is the rows of the current generation naming its id.
   - **Each generation is a row of its own**: its number, rising within its control; its `time`, by
@@ -154,6 +160,7 @@ down a layer at a time, each holding its own range alone.
   | `name`, `description`, `security`, `grace` | its own            | its own control's `configuration`, kind `organization`                            |
   | each member and its role                   | its own            | its own control's `configuration`, kind `member`                                  |
   | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`                              |
+  | each resource's name shown and its folder  | its own            | its own footing's `tree` table                                                    |
   | `allowance`, `shadow`, `deleting`          | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
   | its status and where its backing is        | the platform's say | the `anchor`, RFC b8f35                                                           |
   | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |

@@ -49,10 +49,16 @@ serves it without translation:
   `unavailable` and every database that exists goes on serving, and the platform's control lost
   changes nothing for it.
 
-**A database is known by an id that never changes**, and an owner sees it by **one name**,
-`(path)/(database)`, a key split by `/`, which points at the id. Moving the name changes nothing
-else; **policy and binding belong to the id**. Deleting the name deletes the database and its id,
-refused while an app is bound to it, RFC 49qyg.
+**A database is known by an id that never changes**, and an owner sees it by a name shown in its
+organization's tree, RFC v7v3w, a path only as it is drawn. Renaming or moving it changes nothing
+else; **policy and binding belong to the id**. Deleting the database deletes its id and its place in
+the tree, refused while an app is bound to it, RFC 49qyg.
+
+**A database's record holds**, worked out with the author on 2026-10-19: its `kind`,
+`transactional`; its `app`, the one it is bound to, set as it is made; `replicas`, whether read
+copies are on, off unless set; `copies` and `placement`, for its log's archive and snapshots, one
+copy unless asked and placed as a bucket is, RFC 13ixj; and `levels`, the availability and custody
+the compute its writer runs on needs, RFC vuanj.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second

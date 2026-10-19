@@ -106,6 +106,14 @@ storage (one an organization, its own unique salt)
   kept as a field and never refused: never dismissed, shown on the bucket's own page and as it is
   created, and nowhere else.
 - **A description is free text**, empty unless written, and changed at any time.
+- **A bucket's record holds**, worked out with the author on 2026-10-19: its `type`, `file` or
+  `object`, fixed as it is made; its `kind`, and for the kind that is cut, whether it is `compress`ed
+  and `seal`ed, both unless set otherwise; its `placement`, the levels' codes, and `spread`, its
+  `copies` and `distinct`; its `quota`, none unless set; its `access`, `private` or `public`, which an
+  object bucket alone serves by; and `bindable`, the apps that may bind it by id, or `all`, as it is
+  unless set. No name: a bucket is its id, and its name shown is its organization's tree's, RFC
+  v7v3w. The warning of a bucket unsealed off its custody is computed from its placement and kind,
+  never kept, since it is never dismissed.
 - **One or many apps may bind a bucket.** An app holds no state; it knows a bucket and the names
   it writes in it, nothing beneath.
 - **A path is a key split by `/`**, so a directory is only a prefix and a file may sit at the top,
