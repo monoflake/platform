@@ -81,10 +81,16 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 - **The bootstrap stops twice, and only then**: each deployment once, moving from v0, which cannot
   replace a part while the rest run. The external platform's stop comes first, while only the
   author's organizations are on it.
-- **The internal platform's hosts are enrolled by hand from step 0**, since a Worker on the free
-  plan has 10 ms of CPU a request, too little for the storage to cut and seal what it writes,
-  `model/resources.ts`. Until the paid plan, what needs more runs on a machine, and Cloudflare keeps
-  the entry, the footing, the stores and what fits its limits.
+- **Only the platform's own half is installed by hand**, worked out with the author on 2026-10-19:
+  the operator deploys the platform's control and footing and opens the internal platform's
+  organization through the control's API; every host after is bound as any host is, by a token its
+  control makes and a command or secret the operator enters, RFC vr5lw, so day one runs the code a
+  user's binding runs and no path used once. The platform's own vendor accounts are never bound,
+  RFC v7v3w, which is why they alone are by hand.
+- **Step 0 binds three machines**: two of four cores and 24 GB, the two `instance` needs so a
+  writer is handed over when one is lost, and one of 1 to 2 GB, since most machines a small team
+  brings are that size, and a driver that fails on one should fail on day one. The author holds
+  about ten more, kept for the steps that ask for them.
 - **The vendor's paid plan is a checkpoint, never a start**: taken once the platform serves a few
   users for real, and not while it is drafted, since a plan paid for nothing is waste. On Cloudflare
   it is $5 a month and use past it, and brings D1 at 10 GB and CPU time past 10 ms, `lessons.md`; more is bought as use grows, by those who use it.

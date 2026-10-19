@@ -345,6 +345,15 @@ one code is both.
   reached.
 - **A driver keeps the least state it must**: its credentials, the policy and list it last took,
   and when each difference was first found. Everything else it reads from its host.
+- **A machine's driver keeps back only what the machine and the driver need**, worked out with the
+  author on 2026-10-19, since most machines a small team brings have 1 or 2 GB, and a driver written
+  in Rust or OCaml takes tens of megabytes. Memory kept back is the machine's own, measured as the
+  driver is installed, before anything of the platform's runs, and 64 MiB for the driver; the rest
+  is offered, and what runs is held under it by cgroup v2's `memory.max`. No CPU is kept back: all of
+  it is offered, and the driver and the system are given precedence by `cpu.weight`, so what runs
+  may use every core while they are idle. The machine's holder may set either otherwise. What the
+  platform runs on a machine for its organization -- the blob, a tablet's writer -- is that
+  organization's use, never kept back.
 - **What a driver has to tell, it pushes**, as events, each with an id: a difference found, a thing
   removed, a thing that cannot be made. It pushes to each binding's control what is that binding's
   alone; one it could not deliver it pushes again later, and hands back as well with the state a
@@ -602,5 +611,5 @@ third-party vendors and the author's machines.
 Open, for the discussion that follows:
 
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
-- How a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory kept
-  for the internal platform's. [B7]
+- Where a machine's driver keeps its state, what it reports and what it runs, on the machine's disk.
+  [B22]

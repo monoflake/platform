@@ -150,6 +150,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory reserved for the internal platform's; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
 		from: '94y0d, vr5lw',
+		done: "94y0d: the platform's own half alone by hand, three machines; vr5lw: the machine's own memory and 64 MiB kept back, no CPU",
 	},
 	{
 		id: 'B8',
@@ -247,6 +248,12 @@ export const CHECKLIST: Item[] = [
 		what: "how a database's adapter in front of D1 tells a statement that only reads, for a capability of read alone, since D1 offers no authorizer and no query_only",
 		from: 'b8f35, lessons.md',
 		done: "zn3u5: none is told; a database's rights are granted together",
+	},
+	{
+		id: 'B22',
+		group: 'B',
+		what: "where a machine's driver keeps its own state, what it reports, and the containers and volumes it runs, on the machine's disk",
+		from: 'vr5lw',
 	},
 	// C -- blocks a later step.
 	{
