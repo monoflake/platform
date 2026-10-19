@@ -140,7 +140,7 @@ storage (one an organization, its own unique salt)
   its last dot, so `a.tar.gz` gives `gz`.
 - **An extension is made standard before it names anything**, by `write` and `publish` alike, so
   one format reaches one object by either: lowered to its small letters, checked to be letters and
-  digits alone, its length bounded [B14], then rewritten by the platform's table of spellings, one
+  digits alone, at most 16 characters, RFC vuanj, then rewritten by the platform's table of spellings, one
   spelling of each format kept. **That table holds spellings of one format alone**, never types that
   are only served alike, so `ini` is never `txt`; it is written by hand, and as it is part of an
   object's name a row once written is never changed or taken out, though rows may be added. An

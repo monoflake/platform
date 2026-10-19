@@ -193,7 +193,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B14',
 		group: 'B',
-		what: "the constants v0 picks: how long a capability and a working key live, a sweep's grace, at what size a tablet's log is archived, how long a writer's lease lasts, the longest a write waits after a writer is lost, and an object's longest extension, 13ixj",
+		what: 'how long a capability and an account credential live; the other constants v0 picks are decided, vuanj',
 		from: 'b8f35, vuanj, 49qyg, model/footing.ts',
 	},
 	{

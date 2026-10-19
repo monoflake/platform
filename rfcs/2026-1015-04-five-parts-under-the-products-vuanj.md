@@ -204,8 +204,20 @@ or a panic.
 executor; the executor reaches the blob for code; the tablet reaches the blob to persist; the blob
 reaches the scope's backing and the extent, below it, RFC b8f35.
 
+**The constants v0 picks**, worked out with the author on 2026-10-19, each in code and changed by
+a release:
+
+| Constant                                         | Value                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------ |
+| an organization's key that signs capabilities    | certified for seven days and renewed every day, RFC v7v3w                |
+| a sweep's grace, before bytes nothing names go   | 24 hours, past the slowest upload between bytes and their name           |
+| a tablet's log, archived to the blob             | at 16 MiB, a parcel's size, RFC b8f35                                    |
+| a writer's lease                                 | 10 seconds, renewed every 3                                              |
+| the longest a write waits after a writer is lost | 15 seconds, the lease and a new writer's catching up; then `unavailable` |
+| an object's longest extension                    | 16 characters, RFC 13ixj, only ever raised                               |
+
 Open, for the discussion that follows:
 
 - How a private link's reader proves they may read it: the authentication of people, not parts.
   [C10]
-- Every lifetime and bound: a capability's, a blob's grace before a sweep, an id's. [B14]
+- How long a capability and an account credential live. [B14]
