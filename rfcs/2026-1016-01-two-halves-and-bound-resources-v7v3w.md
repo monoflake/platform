@@ -97,6 +97,19 @@ in the platform's control, an organization's and the extensions each binds.
   given again.
 - **Accepted and deployed are told apart**: the API reports a generation accepted, and deployed
   wherever it goes as each driver or bundle reports it.
+- **Every record is a row of a kind, an id and the generation that wrote it**, worked out with the
+  author on 2026-10-19, in the footing's `configuration` table, RFC b8f35: its `version` and its
+  `content`. **A record deleted is a row whose content is empty**, so going back and looking back
+  both see that it was. The id is drawn from the one space of its scope's resources, so it names
+  one record whatever its kind.
+  - **Every kind holds a `description`**, free text and empty unless written, and nothing else in
+    common: a name is each kind's own, a database's a path and others not, so none is shared.
+  - **A record names another by its id alone, never by a name**, so a name changed breaks nothing,
+    and what still depends on a record is the rows of the current generation naming its id.
+  - **Each generation is a row of its own**: its number, rising within its control; its `time`, by
+    the footing's clock, as a lease's is, since no host's is trusted; its **`actor`**, the account or
+    app whose capability asked, its `sub`, RFC b8f35; and, where it goes back, the generation it
+    `reverts` to.
 - **What is compiled is never written**: grants, paths, firewalls and bundles are compiled from what
   is written, and the API offers no way to write them, as RFC vuanj has it of grants.
 

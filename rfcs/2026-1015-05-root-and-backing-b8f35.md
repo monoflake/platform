@@ -133,18 +133,19 @@ a footing is versioned as a value on the wire and a bundle are. **A key changed 
 deployer makes the new table before the build that writes it is deployed, both are read while rows
 move by a sweep, and the old one is dropped once no reader running needs it, RFC wnqvu.
 
-| Table           | Looked up by                 | Holds                                                       | Written by             |
-| --------------- | ---------------------------- | ----------------------------------------------------------- | ---------------------- |
-| `configuration` | kind, identifier, generation | each record a control holds, its secrets sealed, RFC v7v3w  | the control            |
-| `bundle`        | origin, generation           | a bundle as signed                                          | the control            |
-| `store`         | a store's identifier         | the backing's store                                         | the control            |
-| `content`       | a content's hash             | the pieces it is made of                                    | the blob               |
-| `piece`         | a piece's hash               | its parcel, offset, length and whether compressed           | the blob               |
-| `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place | the blob               |
-| `journal`       | a placement                  | the journal it writes                                       | the blob               |
-| `log`           | a tablet, a number           | an entry not yet archived                                   | the tablet             |
-| `writer`        | a tablet                     | which writer holds it, at which generation                  | the tablet             |
-| `lease`         | a name                       | who holds it, and until when                                | the part that takes it |
+| Table           | Looked up by                 | Holds                                                          | Written by             |
+| --------------- | ---------------------------- | -------------------------------------------------------------- | ---------------------- |
+| `configuration` | kind, identifier, generation | each record a control holds, its secrets sealed, RFC v7v3w     | the control            |
+| `generation`    | a generation                 | when it was taken, its actor and what it reverts to, RFC v7v3w | the control            |
+| `bundle`        | origin, generation           | a bundle as signed                                             | the control            |
+| `store`         | a store's identifier         | the backing's store                                            | the control            |
+| `content`       | a content's hash             | the pieces it is made of                                       | the blob               |
+| `piece`         | a piece's hash               | its parcel, offset, length and whether compressed              | the blob               |
+| `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place    | the blob               |
+| `journal`       | a placement                  | the journal it writes                                          | the blob               |
+| `log`           | a tablet, a number           | an entry not yet archived                                      | the tablet             |
+| `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet             |
+| `lease`         | a name                       | who holds it, and until when                                   | the part that takes it |
 
 The platform's footing holds the same, and `anchor` and `account` beside them. The tables are the
 footing's own, and published nowhere.

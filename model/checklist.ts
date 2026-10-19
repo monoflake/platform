@@ -120,7 +120,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'B3',
 		group: 'B',
-		what: "each record a control holds, field by field -- buckets, databases, apps, bindings, names, schedules, members, extensions, leases, accounts -- and what a control calls beneath it: opening a scope, adding a store, starting a migration; who holds which and how a change is taken are v7v3w's",
+		what: "each record a control holds, field by field -- buckets, databases, apps, bindings, names, schedules, members, extensions, leases, accounts -- and what a control calls beneath it: opening a scope, adding a store, starting a migration; who holds which, how a change is taken and the shape every record shares are v7v3w's",
 		from: 'item 5',
 	},
 	{
