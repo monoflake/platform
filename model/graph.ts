@@ -297,8 +297,7 @@ export const PARTS: Record<string, Part> = {
 				'blob',
 				'start',
 				H,
-				'a writer or read copy starts from the last snapshot',
-				'if snapshots live only in the blob, archiving falling behind is not soft: how long the footing keeps its log decides [B14]',
+				'a writer or read copy starts from the last snapshot and the log after it, which the footing keeps until it is archived, at 16 MiB, vuanj',
 			),
 			KEY(),
 			e('?runner', 'start', H, 'its writer and read copies are placed, and a handover decided'),
@@ -546,13 +545,14 @@ export interface Held {
 export const RECORDS: Record<string, Held> = {
 	bucket: { half: 'organization', writes: ['control(organization)'], from: '13ixj, v7v3w' },
 	database: { half: 'organization', writes: ['control(organization)'], from: 'zn3u5, v7v3w' },
-	app: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
-	binding: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	app: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
 	grant: { half: 'organization', writes: ['control(organization)'], from: 'vuanj, v7v3w' },
 	name: { half: 'organization', writes: ['control(organization)'], from: 'vr5lw' },
 	member: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
-	schedule: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
-	env: { half: 'organization', writes: ['control(organization)'], from: '49qyg, v7v3w' },
+	invitation: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	organization: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	tree: { half: 'organization', writes: ['control(organization)'], from: 'v7v3w' },
+	scope: { half: 'organization', writes: ['control(organization)'], from: 'vr5lw' },
 	'extension(platform)': { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
 	'extension(organization)': {
 		half: 'organization',
@@ -561,6 +561,12 @@ export const RECORDS: Record<string, Held> = {
 	},
 	lease: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
 	account: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	'organization(platform)': { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	label: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w, vr5lw' },
+	username: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	'sign-in': { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	membership: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
+	domain: { half: 'platform', writes: ['control(platform)'], from: 'vr5lw' },
 	certificate: { half: 'platform', writes: ['control(platform)'], from: 'v7v3w' },
 	allowance: { half: 'platform', writes: ['control(platform)'], from: 'vuanj' },
 	file: { half: 'organization', writes: ['storage'], from: '13ixj' },
@@ -573,7 +579,6 @@ export const RECORDS: Record<string, Held> = {
 };
 
 export const GLOBAL_OPEN = [
-	"the two controls, the platform's and each organization's, are HTTPS APIs changing what they hold by generations, v7v3w: each record's fields [B3]",
 	'a control is a caller of scope, backing and blob -- opening a scope, adding a store, starting a migration of layout or key -- never a need of theirs [B3]',
 ];
 

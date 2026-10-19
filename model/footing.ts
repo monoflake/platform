@@ -46,7 +46,7 @@ export const KEPT: Record<string, Kept> = {
 		what: "each tablet's log until the blob archives it",
 		from: 'vuanj, b8f35',
 		grows: 'bounded',
-		bound: 'archived in batches, at a size a constant picks [B14]',
+		bound: "archived in batches at 16 MiB, a parcel's size, vuanj",
 	},
 	writers: {
 		of: 'organization',
