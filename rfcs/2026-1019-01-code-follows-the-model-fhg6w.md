@@ -107,7 +107,7 @@ author on 2026-10-19:
   id, generation, version -- a reference between records, typed by what it refers to, and which
   contracts must exist, one for every edge between processes, follow from the graph; a record's own
   fields and a call's input and answer are declared in the model, once.
-- **The model writes one product, `model/contracts.json`**, by `pnpm check --write`, committed: every contract in the subset below,
+- **The model writes one product, `model/contracts.json`**, by `mise run check --write`, committed: every contract in the subset below,
   each type's JSON and CBOR fixed in it. It is the one thing a language reads. Nothing reads the
   model's code, ReScript's consumers among them, so the model may change, or change its language,
   without them.

@@ -3,7 +3,7 @@
 What the model covers in its current stage. An edge case outside it goes to the out-of-model list
 and is not designed for until a later stage takes it in. See `spec/process.md`.
 
-**Building begins when `pnpm check --ready` passes**: every row of `model/checklist.res`
+**Building begins when `mise run check --ready` passes**: every row of `model/checklist.res`
 that blocks step 0 is crossed off by naming where it was decided, and every check holds. **The
 checklist grows by itself**: every open question a draft lists, and every open mark in the model,
 names its row in brackets, `[B12]`; one that names none is unfiled and blocks, so a new dimension
@@ -130,7 +130,7 @@ database, an app -- is configuration, the platform's half, written on the contro
 whoever asks, RFC v7v3w; `RECORDS` in `model/graph.res` lists each kind of record.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
-contract, by `pnpm check`, and then the bootstrap path, `model/bootstrap.res`: every step of
+contract, by `mise run check`, and then the bootstrap path, `model/bootstrap.res`: every step of
 RFC 94y0d holds, each deployment reaches it by a move it may take, and what its ground gives,
 `model/resources.res`, makes a footing of one kind of each class, its compute an `effect` function,
 extensions that give what the products need, and a path to the public network for every resource,
@@ -144,7 +144,7 @@ more than one part at once; performance, and cost past a footing's rows; an oper
 
 **Each contract is sorted** into one of three: decided now, since a mistake is written into data
 and cannot be undone; kept by hand on day one, with its command; or left for later, with what brings
-it back. The boundaries' sorting is in `model/graph.res`, and `pnpm check` reports any not
+it back. The boundaries' sorting is in `model/graph.res`, and `mise run check` reports any not
 yet sorted.
 
 | Contract        | Sorted             |

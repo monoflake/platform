@@ -9,10 +9,10 @@ importers:
   .:
     devDependencies:
       '@rescript/runtime':
-        specifier: 12.3.1
+        specifier: ^12.3.1
         version: 12.3.1
       rescript:
-        specifier: 12.3.1
+        specifier: ^12.3.1
         version: 12.3.1
 
 packages:

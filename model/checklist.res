@@ -1,7 +1,7 @@
 /**
  * Every question left before the Platform is built, one row each, gathered from the drafts' Open
  * lists, the model's open marks and what the discussion found. A row is crossed off by naming where
- * it was decided. `pnpm check --ready` fails while a row that blocks step 0 is open: that
+ * it was decided. `mise run check --ready` fails while a row that blocks step 0 is open: that
  * is when building begins, `scope.md`.
  */
 /**
@@ -614,6 +614,12 @@ let checklist: array<item> = [
     group: #D,
     what: "comparison, spec/process.md, before the first service that exists moves onto the platform: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped",
     from: "spec/process.md",
+  },
+  {
+    id: "D16",
+    group: #D,
+    what: "how long a package version waits before it can be installed, raised from the 12 hours pnpm-workspace.yaml sets while the author alone builds, before the platform opens to the public",
+    from: "found",
   },
   {
     id: "E1",

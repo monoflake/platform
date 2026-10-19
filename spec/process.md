@@ -11,7 +11,7 @@ words are kept apart, worked out with the author on 2026-10-19.
 
 | Phase        | What is done                                                                                    | Done when                                      |
 | ------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Theory       | Drafts in `rfcs/`, and the model in `model/`                                                    | `pnpm check --ready` passes, `scope.md`        |
+| Theory       | Drafts in `rfcs/`, and the model in `model/`                                                    | `mise run check --ready` passes, `scope.md`    |
 | Simulation   | The model run through scenarios: a cold start, a part lost, a part upgraded, a contract changed | The same, since `check.res` runs them          |
 | Comparison   | The design diffed against the code and designs that exist                                       | Every component that exists has a fate         |
 | Construction | Built from the ground up, in the order the bootstrap check gives                                | The cold start is walked through once for real |

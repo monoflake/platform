@@ -1,0 +1,25 @@
+# The blueprint's own tasks. Its tools are the workspace's, read by walking up, until the workspace is
+# rebuilt on what this settles.
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+[tasks.fmt]
+description = "Format the model with ReScript's formatter and the prose and JSON with oxfmt: `fmt [--check]`"
+usage = 'flag "--check" help="Report what is not formatted and write nothing"'
+run = '''
+if [ -n "${usage_check:-}" ]; then
+	rescript format --check model/*.res
+	oxfmt --check '*.md' '*.json' 'rfcs/**/*.md' 'spec/**/*.md' 'model/*.json'
+else
+	rescript format model/*.res
+	oxfmt '*.md' '*.json' 'rfcs/**/*.md' 'spec/**/*.md' 'model/*.json'
+fi
+'''
+
+[tasks.check]
+description = "Compile the model and run its check: `check [--ready[=N]] [--s1] [--write]`"
+run = "rescript build && node model/check.res.mjs"
+
+[tasks.verify]
+description = "What a commit has to pass: everything formatted, and the check"
+run = ["mise run fmt --check", "mise run check"]

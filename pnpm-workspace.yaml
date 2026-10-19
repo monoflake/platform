@@ -1,0 +1,3 @@
+# A version waits 12 hours, in minutes, before it can be installed: short while the platform is
+# built by its author alone, and raised before it opens to the public [D16].
+minimumReleaseAge: 720

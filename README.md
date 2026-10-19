@@ -16,5 +16,6 @@ spec/        how work here is done
 vendor/      other projects' files, copied at one version and left as written
 ```
 
-The model is ReScript. Run it with `pnpm install` once, then `pnpm check`, which compiles it and
-runs `model/check.res`; `pnpm check --ready` asks whether building may begin.
+The model is ReScript, and its tasks are mise's, its tools the workspace's. After `pnpm install`,
+`mise run check` compiles it and runs `model/check.res`, and `mise run check --ready` asks whether
+building may begin; `mise run fmt` formats, and `mise run verify` is what a commit passes.
