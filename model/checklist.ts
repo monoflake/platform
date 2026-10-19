@@ -104,7 +104,7 @@ export const CHECKLIST: Item[] = [
 	{
 		id: 'A11',
 		group: 'A',
-		what: "which bits a capability's rights take, and the labels of the claims the platform adds to CWT's; what each signed record holds is decided, b8f35",
+		what: "the labels of the claims the platform adds to CWT's; what each signed record holds and the rights' bits are decided, b8f35",
 		from: 'b8f35, v7v3w',
 	},
 
@@ -236,6 +236,12 @@ export const CHECKLIST: Item[] = [
 		what: "where an ordinary organization's own records are kept -- each tablet's log, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
 		from: 'vr5lw, v7v3w, b8f35',
 		done: 'v7v3w, vr5lw: each organization has a control of its own on a footing the platform gives it',
+	},
+	{
+		id: 'B21',
+		group: 'B',
+		what: "how a database's adapter in front of D1 tells a statement that only reads, for a capability of read alone, since D1 offers no authorizer and no query_only",
+		from: 'b8f35, lessons.md',
 	},
 	// C -- blocks a later step.
 	{

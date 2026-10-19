@@ -378,3 +378,11 @@ and https://answers.sap.com/questions/13392550/chrome-blocking-pdf-content-acces
 marks `EdDSA` -8 "Deprecated", since an identifier covering two curves cannot be negotiated; WebAuthn
 had worked around it by reading -8 as Ed25519 alone. Asked by checklist A11. Source:
 https://www.rfc-editor.org/rfc/rfc9864.html
+
+**D1 names no PRAGMA that makes a connection read only, and no authorizer.** Its compatible PRAGMA
+statements are `table_list`, `table_info`, `table_xinfo`, `index_list`, `index_info`,
+`index_xinfo`, `quick_check`, `foreign_key_check`, `foreign_key_list`, `case_sensitive_like`,
+`ignore_check_constraints`, `legacy_alter_table`, `recursive_triggers`,
+`reverse_unordered_selects`, `foreign_keys`, `defer_foreign_keys` and `optimize`; `query_only` is
+not among them, and `EXPLAIN` is not named. Asked by checklist B21. Source:
+https://developers.cloudflare.com/d1/sql-api/sql-statements/

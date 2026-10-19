@@ -268,7 +268,28 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
     leaked is worth, B14; one bound to a key its holder proves would cost a signature a call.
   - **No signed record holds a secret**: a certificate is public and travels in a bundle.
-  - Which bits the rights take, and the labels of the claims the platform adds, are open. [A11]
+  - **The rights are a set of bits in one unsigned integer**, worked out with the author on
+    2026-10-19: `read` 1, `create` 2, `replace` 4, `delete` 8, `alter` 16, `call` 32, RFC vuanj.
+    An operation asks for the bits it needs and no others, so a bit a verifier does not know is a
+    right it never grants, and a right added later reaches no verifier that does not ask for it. A
+    capability granting none is refused as malformed.
+
+    | Operation                                               | Asks for                                                                    |
+    | ------------------------------------------------------- | --------------------------------------------------------------------------- |
+    | a bucket's `create` and `delete`, through the control   | `create` and `delete` on the organization's control                         |
+    | `describe`, `list`, `read`, of a bucket, file or object | `read`                                                                      |
+    | a file's `write`                                        | `create` where its path is new, `replace` where it is not                   |
+    | an object's `write`                                     | `create`, though the object be there already and nothing is written         |
+    | `delete`                                                | `delete`                                                                    |
+    | `publish`                                               | two capabilities, `read` on the file bucket and `create` on the object one  |
+    | a database's `execute`                                  | `read` for a statement that only reads; every right but `call` for the rest |
+    | an export's call                                        | `call`, the export its resource                                             |
+
+  - **A database is told apart by reading alone**, worked out with the author on 2026-10-19: a
+    capability of `read` alone runs what only reads, and one of any other right runs every
+    statement, since D1, behind its adapter, offers no finer model, RFC vr5lw. How the adapter tells
+    a statement that only reads is open. [B21]
+  - The labels of the claims the platform adds to CWT's are open. [A11]
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and

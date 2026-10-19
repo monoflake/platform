@@ -138,7 +138,7 @@ rest is kept is RFC b8f35's and the bundle's.
 | database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                                |
 | compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                                |
 
-The rights a capability grants stay `read`, `create`, `replace`, `delete` and `alter`, RFC vuanj, so
+The rights a capability grants stay `read`, `create`, `replace`, `delete`, `alter` and `call`, RFC vuanj, so
 a `write` asks `create` where its path is new and `replace` where it is not; and an `effect`'s
 outcomes stay `success`, `rejected`, `unavailable` and `unknown`, RFC 49qyg. `put`, `get` and `head`
 are S3's and HTTP's, and stay only where S3's subset is spoken, the `object` contract above.

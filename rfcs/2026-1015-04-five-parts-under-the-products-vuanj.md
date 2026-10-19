@@ -88,9 +88,10 @@ its own part, reading each scope's grants from its organization's bundle, in the
 v7v3w. Authenticating the
 people who use an app is another matter, above.
 
-**The operations are five, each a right of its own**: read; create, which is refused where what it
+**The operations are six, each a right of its own**: read; create, which is refused where what it
 would write already exists; replace, which overwrites what exists and so can lose it as a deletion
-can; delete; and alter, a database's schema. Create apart from replace makes a holder that can only
+can; delete; alter, a database's schema; and call, an export of an app, added with the author on
+2026-10-19 since calling is none of the five done to data. Create apart from replace makes a holder that can only
 add -- a backup, an audit log -- which, taken over, cannot erase. Alter is given only while a
 migration runs, RFC zn3u5.
 
