@@ -27,11 +27,11 @@ parts, libraries and edges, each with its contract:
 | an edge                | an interface between two parts                                           |
 
 - **An edge within one process is a call**, never serialized: ReScript compiled to JavaScript calls
-  TypeScript, and is called by it, in one memory.
+  a library of JavaScript's, and is called by it, in one memory.
 - **An edge between processes or hosts is a wire contract**, and only it.
-- **A browser computes nothing of the platform's**: a page draws what its API returns, the
-  workspace's `spec/code.md`, "A UI draws what an API gives". So what a server and a browser share is
-  the contracts' types alone, generated, and no logic is written to run in both. Logic that parts of
+- **A browser computes nothing of the platform's**: a page draws what its API returns. So what a
+  server and a browser share is the contracts alone, generated, and no logic is written to run in
+  both. Logic that parts of
   two languages both need is written in each and held to one set of cases kept beside it.
 - **The rules the model checks of its graph are the code's rules of dependency** -- a `hard` edge
   points to its own layer or below, a library uses libraries alone -- so the check proves the code's
@@ -50,7 +50,7 @@ parts, libraries and edges, each with its contract:
 | ---------------------------------------------------------- | ---------- | ------------- |
 | natively on a machine: its driver, RFC vr5lw, and the rest | Rust       | axum on tokio |
 | as JavaScript: on a Worker, in `workerd`, in a browser     | ReScript   | Hono          |
-| beside either, as glue, a tool or a script                 | TypeScript | --            |
+| as glue, where a library's surface is too wide to bind     | TypeScript | --            |
 
 - **A part on a machine is Rust whole, its orchestration among it**: its libraries are Rust already,
   and a build that keeps every library's compiled output in a cache rebuilds only the part, within
@@ -60,8 +60,10 @@ parts, libraries and edges, each with its contract:
   floor is the compiler's, never the writer's. A library taken from npm is as safe as whoever wrote
   it, whatever its language; ReScript is the floor of what the platform writes, and what it publishes
   to npm carries that floor to those who call it.
-- **TypeScript is the glue**, where JavaScript's ecosystem is met as it is, and the language of the
-  tools and scripts; JavaScript, JSDoc and Svelte stand beside it where a page or a tool asks.
+- **The platform's first party is Rust and ReScript alone**, decided by the author on 2026-10-19,
+  so every business edge is between them. **TypeScript is glue and nothing more**: written only where
+  a library's surface is so wide that binding it in ReScript costs more than a shim, with JavaScript,
+  JSDoc and Svelte beside it where a page asks.
 - **ReScript's edge is kept as Rust's `unsafe` is**, worked out with the author on 2026-10-19:
   - **The platform's own logic is ReScript**, and calls itself freely within, so all inside the edge
     is proven by the compiler.
@@ -69,9 +71,8 @@ parts, libraries and edges, each with its contract:
     safer for a skin of ReScript over it, and may be better than ReScript written in haste.
   - **Its bindings stand together at the edge**, one module a library, and are what is taken on
     trust, as an `unsafe` block is.
-  - **The edge is drawn where crossings are fewest**, never through a library's busy interface: on a
-    Worker, Hono's routes are TypeScript and each calls one ReScript function with what it read, so
-    a request crosses once.
+  - **The edge is drawn where crossings are fewest**, never through a library's busy interface:
+    Hono's app is a fetch handler, so its binding is a few calls, and a request crosses once.
   - **A crossing copies little**: ReScript's records, arrays and strings are JavaScript's own, so
     they pass as they are; a variant, a list or an option within an option has a form of its own and
     is converted at the binding. TypeScript reads ReScript's exports by genType until ReScript 13
@@ -96,21 +97,43 @@ parts, libraries and edges, each with its contract:
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
 a claim of a CWT**, in one shape a contract at a time, its CBOR deterministic by RFC 8949's 4.2.
 
-**A wire contract is its producer's type, as the workspace's `spec/json.md` has it**, worked out with
-the author on 2026-10-19:
+**A wire contract is declared in the model, and the model writes it out**, worked out with the
+author on 2026-10-19:
 
-- **The producer's type is the one source**, and its JSON Schema is generated from it and
-  committed: a Rust producer's by `schemars` from its `serde` type, a ReScript producer's by Sury's
-  `S.toJSONSchema`, `lessons.md`. A check generates it again and fails on any difference.
-- **Every reader in another language is generated from the schema**, never copied: TypeScript's
-  types and valibot validator by the workspace's generator, as today, and Rust's and ReScript's
-  readers beside them [B29].
-- **A CBOR record's keys ride in its schema**, as `x-cbor-key`, so every generator writes the same
-  keys in the same order.
-- **Both ends run one set of `valid/` and `invalid/` examples**, the producer's own answers among
-  them.
-- **WIT stays the language of an app's exports**, RFC 49qyg: the platform's own contracts are its
-  producers' types, WIT its users'.
+- **The model is written in ReScript**, decided by the author on 2026-10-19: nothing consumes it
+  yet, so it is cheapest now, and its sum types state the subset below exactly. It is ported first
+  as it stands, and the port holds when its check prints the same, byte for byte.
+- **What is structural is derived, what is business is declared once**: a record's shell -- kind,
+  id, generation, version -- a reference between records, typed by what it refers to, and which
+  contracts must exist, one for every edge between processes, follow from the graph; a record's own
+  fields and a call's input and answer are declared in the model, once.
+- **The model writes one product, `contracts.json`**, committed: every contract in the subset below,
+  each type's JSON and CBOR fixed in it. It is the one thing a language reads. Nothing reads the
+  model's code, ReScript's consumers among them, so the model may change, or change its language,
+  without them.
+- **Rust and ReScript each generate their envelope from it** -- the types, their encoding and their
+  decoding -- by a program of each language's own; past the envelope each language writes as it
+  likes, and nothing within is asked to match the other.
+- **The check guards it**: an edge between processes names its contract; a field removed or changed
+  without its contract's version raised fails against the product committed; a reference names a
+  record that exists.
+- **WIT stays the language of an app's exports**, RFC 49qyg: the platform's own contracts are the
+  model's, WIT its users'.
+
+**The subset is what both languages hold natively, and no more**:
+
+| Shape                                               | Rust                       | ReScript                   |
+| --------------------------------------------------- | -------------------------- | -------------------------- |
+| a boolean, a string, a 64-bit float                 | `bool`, `String`, `f64`    | `bool`, `string`, `float`  |
+| an integer of 32 bits; of 64                        | `i32`; `i64`               | `int`; `bigint`            |
+| bytes                                               | `Vec<u8>`                  | `Uint8Array.t`             |
+| a record, a field absent when it has nothing to say | a struct, `Option` fields  | a record, optional fields  |
+| a closed set of names                               | an enum without data       | a variant without payloads |
+| a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
+| a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
+
+Left out: generics, functions, `null`, and whatever one language alone has. A tagged union is
+written as ReScript's `@tag` lays it out, so it crosses into ReScript unconverted.
 
 **CBOR, COSE's `Sign1` and CWT are held to their standards' tests**, worked out with the author on
 2026-10-19: each is small and public with its own tests, so an implementation is held to all of
@@ -134,5 +157,5 @@ Open, for the discussion that follows:
   the check that a part uses only libraries of its own language. [B24]
 - How the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one
   tree. [B26]
-- What generates Rust's and ReScript's readers from a schema, its CBOR keys among it, and which
-  library is JavaScript's CBOR. [B29]
+- How bytes and a 64-bit integer are written in JSON, and which library is JavaScript's CBOR.
+  [B29]

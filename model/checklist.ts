@@ -294,12 +294,12 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "the language a wire contract is written in, generated for Rust, ReScript and TypeScript, its JSON and CBOR alike, now ATD's reason, OCaml, is gone, fhg6w",
 		from: 'fhg6w',
-		done: "fhg6w: the producer's type, its JSON Schema generated and committed, every reader generated from it, as spec/json.md",
+		done: 'fhg6w: declared in the model, in ReScript, written out as contracts.json in a subset both languages hold, each envelope generated from it',
 	},
 	{
 		id: 'B29',
 		group: 'B',
-		what: "what generates Rust's and ReScript's readers from a JSON Schema, a CBOR record's keys among it, and which library is JavaScript's CBOR, held to the standards' tests, fhg6w",
+		what: "how bytes and a 64-bit integer are written in a contract's JSON, and which library is JavaScript's CBOR, held to the standards' tests, fhg6w",
 		from: 'fhg6w',
 	},
 	// C -- blocks a later step.

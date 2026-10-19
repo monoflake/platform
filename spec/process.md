@@ -50,6 +50,14 @@ constant, a command -- waits until the structure it sits in is settled, however 
 lists it. When the model passes what is a contradiction, the dimension or record that would catch
 it is added to the model, so the check, not the conversation, proves it fixed.
 
+## The model is the spec; a draft keeps the why
+
+Agreed with the author on 2026-10-19. What a draft decides -- a table, a constant, a record's fields,
+a contract -- is written once, in the model, and the draft points to the file that holds it; the
+draft keeps its question, what was decided and why. A draft is dried this way when it is next
+touched, not all at once. `lessons.md` stays as it is: it holds facts from outside, with their
+sources, and none of the design.
+
 ## The old system answers questions, never shapes the design
 
 The code and designs that exist are read only to answer a question the model asks, and the answer is
