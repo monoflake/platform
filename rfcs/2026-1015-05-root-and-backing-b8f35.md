@@ -98,9 +98,31 @@ what it confirmed, its redundancy its own and never the platform's. **It coordin
 holds the backing, the extent's records, each tablet's log until a snapshot holds it, which journal
 each placement writes, which writer holds what and at which generation, and the bundle. A writer of
 an older generation is refused by the footing, so two never write at once. It holds no content, yet
-the extent's records grow with the pieces a scope holds, about 200 bytes each, until the extent is
-kept off it [B17]: its 10 GB holds some fifty million, about 50 TB of large files. A footing lost is
-restored from its snapshot, RFC v7v3w.
+the extent's records grow with the pieces a scope holds, about 200 bytes each.
+
+**The extent stays in the footing, and the footing's 10 GB is what bounds an organization's pieces**,
+worked out with the author on 2026-10-18. The figures rest on three assumptions, to be measured
+[C7]: about 200 bytes of the extent a piece, keys that are hashes and so pages about 70 percent
+full, and SQLite's default page of 4 KiB, which D1 does not say it departs from, `lessons.md`:
+
+| Of a 10 GB footing                                | Comes to                                                                |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| pieces                                            | about 35 million                                                        |
+| large files at a piece's average of 1 MiB, filled | about 37 TB; 9 TB were every piece 256 KiB, 147 TB were every one 4 MiB |
+| memory holding every page above the leaves        | about 160 MB, so a lookup reads the disk once                           |
+| restored from a snapshot at 200 MB a second       | under a minute                                                          |
+
+- **This is the one bound the platform sets of itself**: the footing is what an organization's
+  control stands on, the platform's to give, RFC vr5lw; whatever else it uses is leased or its own,
+  and the platform counts neither, a resource leased and one brought alike. What a platform
+  beneath exports is bounded there, by an app of its organizations', RFC vr5lw.
+- **An organization holds at most 30 TB in all**, on every resource it uses together, every copy
+  counted as the bytes it takes, so 30 TB is reached before the footing's pieces for files of the
+  usual sizes. A file's record is the storage's, on the organization's own extensions, bounded by
+  what their database declares; a file not held already takes a piece at least, so the footing
+  bounds them too.
+- **Past either, an organization is split, or served as a case of its own**, as an enterprise is.
+  How much an organization is given to begin with is no part of the platform.
 
 **On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it
 by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST
@@ -403,8 +425,6 @@ Open, for the discussion that follows:
 - Which three places, all offline and the operator's, hold a master's shares. [B12]
 - How much an organization writes through its footing before the footing is what bounds it. [C7]
 - How stores are added to a scope, which is to come down from what the layers above need. [C3]
-- How the extent is kept off the footing's growth, since a footing is bounded, `scope.md`: its pages
-  in parcels, the footing keeping their root. [B17]
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place. [D3]

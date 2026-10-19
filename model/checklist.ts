@@ -211,6 +211,7 @@ export const CHECKLIST: Item[] = [
 		group: 'B',
 		what: "how the extent is kept off the footing's growth: its pages in parcels, the footing keeping their root, and its index cached by generation",
 		from: 'model/footing.ts',
+		done: "b8f35: the extent stays in the footing, whose 10 GB bounds an organization's pieces, beside its 30 TB in all",
 	},
 	{
 		id: 'B18',

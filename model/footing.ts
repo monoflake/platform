@@ -66,8 +66,9 @@ export const KEPT: Record<string, Kept> = {
 		of: 'organization',
 		what: "which pieces each content is made of, each piece's parcel, and every parcel",
 		from: 'b8f35',
-		grows: 'content',
-		open: 'the extent is kept in the footing, about 200 bytes a piece, so the footing grows with what its scope holds; how it is bounded, its pages kept in parcels and the footing keeping their root [B17]',
+		grows: 'bounded',
+		bound:
+			"the footing's 10 GB, about 35 million pieces, an organization's 30 TB reached before it; past either it is split",
 	},
 	anchor: {
 		of: 'platform',
