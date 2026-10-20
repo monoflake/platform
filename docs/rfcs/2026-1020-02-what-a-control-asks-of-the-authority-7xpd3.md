@@ -42,9 +42,15 @@ that certificate expires: what is lost meanwhile is a change to it, never what i
 data plane runs on while a control is lost, `docs/scope.md`. How long a certificate lives is the
 operator's to set, and so the hosted platform's. [D17]
 
+**Trust rests on signatures, never on the connection**, decided by the author on 2026-10-20. The
+record pulled is signed by the authority under a key the intermediate certified, in a chain to the
+root, RFC b8f35, so the control knows it as the authority's whatever carried it. The control signs
+its pull with the organization's own key, which it holds from opening, so even its first pull says
+who it is, and no secret is shared between the two. A notice is not signed: it carries nothing but
+a generation, so a false one costs one pull, which is signed, and the control limits how often it
+is called.
+
 ## Open, for the discussion that follows:
 
-- How the organization's control proves who it is to the role, and how it knows an answer is the
-  role's: records signed beneath the root, RFC b8f35, or the connection alone. [B37]
 - The least a role must do for a platform of one organization -- one certificate, an allowance
   without bounds, no loans -- which is the glue a team running its own writes. [B38]

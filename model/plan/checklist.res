@@ -321,6 +321,7 @@ let own: array<item> = [
     group: #B,
     what: "how an organization's control proves itself to the authority, and how it knows an answer is the authority's",
     from: "7xpd3",
+    done: "7xpd3",
   },
   {
     id: "B38",
