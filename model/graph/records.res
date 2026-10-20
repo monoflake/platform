@@ -15,6 +15,8 @@ type held = {
   kind: string,
   writes: array<string>,
   from: string,
+  /** Whether its content is the platform half's own, so this model knows it by its id alone. */
+  elsewhere?: bool,
 }
 
 let own: array<held> = [
@@ -27,18 +29,11 @@ let own: array<held> = [
   {half: #organization, kind: "organization", writes: ["control(organization)"], from: "v7v3w"},
   {half: #organization, kind: "tree", writes: ["control(organization)"], from: "v7v3w"},
   {half: #organization, kind: "scope", writes: ["control(organization)"], from: "vr5lw"},
-  {half: #platform, kind: "extension", writes: ["authority"], from: "v7v3w"},
   {half: #organization, kind: "extension", writes: ["control(organization)"], from: "v7v3w"},
   /* A share of what an extension holds, an item of its driver's list, vr5lw. */
   {half: #organization, kind: "capacity", writes: ["control(organization)"], from: "vr5lw"},
-  {half: #platform, kind: "loan", writes: ["authority"], from: "v7v3w"},
-  {half: #platform, kind: "account", writes: ["authority"], from: "v7v3w"},
+  {half: #platform, kind: "account", writes: ["authority"], from: "v7v3w", elsewhere: true},
   {half: #platform, kind: "organization", writes: ["authority"], from: "v7v3w"},
-  {half: #platform, kind: "label", writes: ["authority"], from: "v7v3w, vr5lw"},
-  {half: #platform, kind: "username", writes: ["authority"], from: "v7v3w"},
-  {half: #platform, kind: "sign-in", writes: ["authority"], from: "v7v3w"},
-  {half: #platform, kind: "membership", writes: ["authority"], from: "v7v3w"},
-  {half: #platform, kind: "domain", writes: ["authority"], from: "vr5lw"},
   /* A footing's own tables, b8f35, each its keys and one versioned record; a product's tablet
    * holds rows of its own schema, a migration's to change, and an app's database its app's, so
    * neither is a kind of record here. */
@@ -59,10 +54,10 @@ let own: array<held> = [
 ]
 
 /** Every kind, each writer named as the whole graph names it: a filled role by its filler. */
-let records: array<held> = own->Array.map(r => {
-  ...r,
-  writes: r.writes->Array.map(Components.named),
-})
+let records: array<held> =
+  own
+  ->Array.concat(Fill.part("records")->Option.getOr([]))
+  ->Array.map(r => {...r, writes: r.writes->Array.map(Components.named)})
 
 /** The kind of record of a half by its name. */
 let find = (half: Components.half, kind) =>

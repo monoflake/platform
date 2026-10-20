@@ -6,7 +6,7 @@
  */
 open Subset
 
-let types: array<declared> = Array.flat([
+let ownTypes: array<declared> = Array.flat([
   Calls.types,
   Storage.types,
   Database.types,
@@ -20,7 +20,7 @@ let types: array<declared> = Array.flat([
   Management.types,
   Deployments.types,
 ])
-let contents: array<content> = Array.flat([
+let ownContents: array<content> = Array.flat([
   Storage.contents,
   Database.contents,
   Compute.contents,
@@ -28,6 +28,10 @@ let contents: array<content> = Array.flat([
   Platform.contents,
   Tables.contents,
 ])
+/** Every type and content, with the platform half's own given beside, RFC 8lkuv. */
+let types = Array.concat(ownTypes, Fill.part("types")->Option.getOr([]))
+let contents = Array.concat(ownContents, Fill.part("contents")->Option.getOr([]))
+
 let interfaces: array<interface_> = [
   Objects.interface_,
   Databases.interface_,
@@ -42,9 +46,12 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
     "shell": fieldsJson(shell),
     "types": Object(
       Dict.fromArray(
-        types->Array.map(t => (
+        ownTypes->Array.map(t => (
           t.name,
-          switch (defJson(t.def, ~content=contents->Array.some(c => c.content == t.name)), t.keys) {
+          switch (
+            defJson(t.def, ~content=ownContents->Array.some(c => c.content == t.name)),
+            t.keys,
+          ) {
           | (Object(d), Some(k)) if k != #subset =>
             d->Dict.set("keys", String((k :> string)))
             JSON.Object(d)
@@ -90,7 +97,7 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
     ),
     "interfaces": Object(Dict.fromArray(interfaces->Array.map(i => (i.name, interfaceJson(i))))),
     "records": Array(
-      contents->Array.map(c => JSON.Object(
+      ownContents->Array.map(c => JSON.Object(
         dict{
           "kind": String(c.kind),
           "half": String((c.half :> string)),

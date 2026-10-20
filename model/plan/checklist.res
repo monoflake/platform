@@ -298,7 +298,7 @@ let checklist: array<item> = [
   {
     id: "B34",
     group: #B,
-    what: "which records, checklist rows, bootstrap steps and reserved names are the platform half's alone, and so monoflake/cloud's",
+    what: "which checklist rows, bootstrap steps and reserved names are the platform half's alone, and so monoflake/cloud's; the records are decided, 8lkuv",
     from: "8lkuv",
   },
   {

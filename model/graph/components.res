@@ -560,7 +560,19 @@ let own: dict<component> = dict{
     control: true,
     half: #platform,
     answers: ["?authority"],
-    edges: [],
+    // What it needs of this half, whoever fills it: the masters to derive each organization's
+    // salt and key, and the intermediate to certify each organization's key.
+    edges: [
+      replaced,
+      e(
+        "root",
+        #start,
+        hard,
+        "the masters, to derive each organization's salt and key",
+        ~contract=["deployments"],
+      ),
+      e("?intermediate", #deploy, hard, "certifies each organization's key"),
+    ],
     uses: [],
   },
   "directory": {
@@ -568,7 +580,7 @@ let own: dict<component> = dict{
     kind: #provided,
     half: #platform,
     answers: ["?directory"],
-    edges: [],
+    edges: [replaced],
     uses: [],
   },
   "footing(organization)": {layer: vendor, kind: #ground, half: #organization, edges: [], uses: []},

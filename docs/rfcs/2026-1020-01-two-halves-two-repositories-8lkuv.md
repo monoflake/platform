@@ -55,12 +55,25 @@ control's writes to the anchor -- as `?control(platform)` and `?anchor` beside t
 `model/graph/components.res`'s, the roles check `model/checks/design/roles.res`, and what the other
 repository gives arrives as the file `MONOFLAKE_FILL` names, `model/graph/fill.res`.
 
+**A role declares what it needs of this half, and its filler reaches this half by those edges
+alone**, decided by the author on 2026-10-20: `authority` the root and the intermediate, both roles
+the deployer. Into its own repository a filler reaches as it likes, which is what is kept private,
+and the cycles a whole graph could close are checked where the whole graph is.
+
+**What crosses the line is public, and how it is made is not**, decided by the author on
+2026-10-20. Of the platform half's records an organization's half reads two: an organization's,
+what the authority alone decides of it, and an account, known here by its id and the signed
+account credential, RFC b8f35, and by nothing of its own record. The account's record and the seven
+others the platform's control alone keeps -- its extension, loan, label, username, sign-in,
+membership and domain -- are monoflake/cloud's, and `contracts.json`, which every language reads,
+is written from this repository's own alone.
+
 **The proof held on 2026-10-20**: with the graph walked by name, so no order rests on where a part
 is declared, the whole model's report from both repositories is the report before the split, line
-for line, but for the roles check and the two contracts each split in two.
+for line, but for the roles check, the two contracts each split in two, and one list of declared
+records now given in two parts.
 
 ## Open, for the discussion that follows:
 
-- Which of `model/graph/records.res`'s records, which rows of the checklist, and which of the
-  bootstrap steps and the reserved names are the platform half's alone, and so the other
-  repository's. [B34]
+- Which rows of the checklist, which of the bootstrap steps and which of the reserved names are the
+  platform half's alone, and so the other repository's. [B34]

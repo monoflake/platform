@@ -514,7 +514,8 @@ let run = () => {
         ->orNone(", ")}, no secret reaching any`,
       `to declare: ${Records.records
         ->Array.filter(r =>
-          !(Contracts.contents->Array.some(c => c.kind == r.kind && c.half == r.half))
+          r.elsewhere != Some(true) &&
+            !(Contracts.contents->Array.some(c => c.kind == r.kind && c.half == r.half))
         )
         ->Array.map(r => `the ${(r.half :> string)}'s ${r.kind}`)
         ->orNone(", ")}`,
