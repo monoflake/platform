@@ -314,6 +314,7 @@ let own: array<item> = [
     group: #B,
     what: "how the authority knows a notice reached, when an organization's control pulls with no notice, and what it does while the authority cannot be reached",
     from: "7xpd3",
+    done: "7xpd3",
   },
   {
     id: "B37",

@@ -33,11 +33,17 @@ the authority as the pulled end, noticing the control as it changes something.
 organization's certificate, its allowance, its loans and its status. Its salt and key are no part
 of it: they are delivered once, at opening, as every secret is.
 
+**A notice is sent again until it is pulled, and a pull is the one answer to it**, decided by the
+author on 2026-10-20: a notice names the generation there is to pull, and the authority repeats it
+until it sees the organization's control pull that generation or a later one. **With no notice,
+the control pulls only before its certificate expires**, which the certificate carries. **While
+the authority cannot be reached, the organization serves on from the last record it pulled** until
+that certificate expires: what is lost meanwhile is a change to it, never what it serves, as the
+data plane runs on while a control is lost, `docs/scope.md`. How long a certificate lives is the
+operator's to set, and so the hosted platform's. [D17]
+
 ## Open, for the discussion that follows:
 
-- How the authority knows a notice reached the organization's control, whether by seeing it pull
-  what the notice named; and when the control pulls with no notice, as before its certificate
-  expires; and what it does while the authority cannot be reached. [B36]
 - How the organization's control proves who it is to the role, and how it knows an answer is the
   role's: records signed beneath the root, RFC b8f35, or the connection alone. [B37]
 - The least a role must do for a platform of one organization -- one certificate, an allowance
