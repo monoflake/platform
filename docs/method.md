@@ -67,6 +67,15 @@ in it as its abstraction rises, never laid beside the rest. Both numbers are for
 asks first whether it still fits the platform, and only then how the tree is cut below it.
 `model/checks/tree.res` holds both.
 
+## A task is an entry, a script an order, a tool a program
+
+Agreed with the author on 2026-10-19. **A mise task is five lines at most**, an entry and nothing
+more; past that it is a script in `scripts/`, at the top, since it drives the model, the code and the
+documents alike. **A script decides only order**: what runs, with which arguments, and where it
+stops on a failure. **What computes is a tool**, a program in `code/tools/` with its tests: once a
+script parses, converts or generates, that part is moved into a tool and the script calls it. Both
+are ReScript, and TypeScript only where a library's surface is too wide to bind; Python never.
+
 ## The old system answers questions, never shapes the design
 
 The code and designs that exist are read only to answer a question the model asks, and the answer is

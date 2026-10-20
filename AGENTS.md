@@ -22,11 +22,14 @@ code/       the code, a component placed by its layer: apps/, products/, primiti
             platform/; and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
             scope.md, what the model covers
+scripts/    the entries that drive the rest, in order: no logic of their own
 vendor/     other projects' files, copied at one version and left as written
 ```
 
 - **The model is the spec**: what a draft decides is written once in `model/`, and the draft keeps
   why. `model/contracts.json` is what every language reads.
+- **A mise task is five lines at most**; past that it is a script in `scripts/`, and a script that
+  begins to compute hands that part to a tool in `code/tools/`.
 - **No directory holds more than 16 entries or lies more than 5 deep**, from a top-level directory
   or a package's root; the check holds both.
 
