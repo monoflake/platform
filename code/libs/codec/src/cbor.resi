@@ -1,6 +1,6 @@
 /***
  * CBOR, RFC 8949: one data item as its data model has it, written as its 4.2.1 writes it and read
- * strictly. The model's interface, `docs/code.md`; `src/interface.rs` is the same in Rust.
+ * strictly. The model's interface, `docs/code.md`; `src/lib.rs` is the same in Rust.
  */
 
 /**

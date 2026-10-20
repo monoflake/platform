@@ -200,7 +200,7 @@ let find = package => {
 }
 
 /** Whether a file of a block, by its path within it, is its interface, the model's to write. */
-let isInterface = file => file->String.endsWith(".resi") || file == "src/interface.rs"
+let isInterface = file => file->String.endsWith(".resi") || file == "src/lib.rs"
 
 /**
  * Whether a file of a block may cross into JavaScript unchecked, as Rust's `unsafe` does: its own

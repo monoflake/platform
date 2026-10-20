@@ -64,10 +64,10 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       found->Array.push(`${path}/${f}: no ${implementation} implements it`)
     }
   })
-  if files->Array.includes("src/interface.rs") {
-    let rust = files->Array.filter(f => f->String.endsWith(".rs") && f != "src/interface.rs")
+  if files->Array.includes("src/lib.rs") {
+    let rust = files->Array.filter(f => f->String.endsWith(".rs") && f != "src/lib.rs")
     let traits = /pub trait (\w+)/g
-    let text = read("src/interface.rs")
+    let text = read("src/lib.rs")
     let go = ref(true)
     while go.contents {
       switch traits->RegExp.exec(text) {
@@ -75,7 +75,7 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
         switch m->RegExp.Result.matches {
         | [Some(t)] =>
           if !(rust->Array.some(f => read(f)->String.includes(`impl ${t} for`))) {
-            found->Array.push(`${path}/src/interface.rs: ${t}, implemented for nothing`)
+            found->Array.push(`${path}/src/lib.rs: ${t}, implemented for nothing`)
           }
         | _ => ()
         }
@@ -86,7 +86,7 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
   let tests = (l: lang) =>
     files->Array.filter(f =>
       switch l {
-      | #rust => f->String.endsWith(".rs") && f != "src/interface.rs"
+      | #rust => f->String.endsWith(".rs") && f != "src/lib.rs"
       | #rescript => f->String.startsWith("tests/") && f->String.endsWith(".res")
       }
     )

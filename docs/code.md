@@ -11,8 +11,15 @@ against it, and the whole is held by the conversation.
   implementation of a kind or its management, or a library, `model/checks/layout/blocks.res`.
   `mise run brief <package>` prints what it holds, read from the model; no brief is written by hand.
 - **Its interface is the model's**: a ReScript `.resi` beside the module it types, and Rust's
-  `src/interface.rs`. The conversation writes it and the author reviews it before the block is
-  begun; a worker implements it and never edits it, and reports one that seems wrong.
+  crate root, `src/lib.rs`. The conversation writes it and the author reviews it before the block
+  is begun; a worker implements it and never edits it, and reports one that seems wrong.
+- **A crate's root is its interface, and every module beneath it private**, decided by the author
+  on 2026-10-20: it holds the types, the traits a worker implements for them and the constants,
+  and declares one private `mod` for each `.resi` the block's ReScript holds, so what the crate
+  makes public is the model's alone, held by the compiler, and both languages' modules are named
+  alike. Rust declares no signature without its body but a trait's, so a trait is what the
+  compiler holds an implementation to. A worker splits a module into its own beneath it, as
+  `cbor.rs` holds `cbor/decode.rs`, and asks for a module beside it.
 - **A worker owns its block's directory and nothing else.** `model/`, `tests/`, `vendor/`,
   `docs/`, the root's manifests and the interface are asked about, never changed; registering a
   block in the root's manifests is the conversation's.
