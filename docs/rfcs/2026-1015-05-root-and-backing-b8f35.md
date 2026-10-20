@@ -96,8 +96,9 @@ organization's for its scope, the platform's for the anchor, D1 on the foundatio
 account -- a database in SQLite's dialect that is ground, `docs/scope.md`: trusted to be up and to keep
 what it confirmed, its redundancy its own and never the platform's. **It coordinates its owner**: it
 holds the backing, the extent's records, which journal
-each placement writes, which writer holds what and at which generation, and the bundle. A writer of
-an older generation is refused by the footing, so two never write at once. It holds no content, yet
+each placement writes, which copies hold each tablet on machines and at which generation, and the
+bundle. A primary of an older generation gathers no majority of its copies, so two never write at
+once, RFC vuanj. It holds no content, yet
 the extent's records grow with the pieces a scope holds, about 200 bytes each.
 
 **The extent stays in the footing, and the footing's 10 GB is what bounds an organization's pieces**,
@@ -143,7 +144,7 @@ move by a sweep, and the old one is dropped once no reader running needs it, RFC
 | `piece`         | a piece's hash               | its parcel, offset, length and whether compressed              | the blob                    |
 | `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place    | the blob                    |
 | `journal`       | a placement                  | the journal it writes                                          | the blob                    |
-| `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet                  |
+| `writer`        | a tablet on machines         | its copies, its primary, at which generation                   | the tablet                  |
 | `lease`         | a name                       | who holds it, and until when                                   | the component that takes it |
 
 The platform's footing holds the same, and `anchor`, `account`, `label`, `username`, `sign-in`,
@@ -158,15 +159,17 @@ by a service binding, a host on a machine over HTTPS with a capability, and noth
 API, which carries the Cloudflare API's limit, `docs/lessons/`. **The footing Worker groups commits**:
 what reaches it within a moment is written as one batch, since a batch of 128 commits costs about
 what one does, `docs/lessons/`. Every write it takes is a conditional statement -- a generation fenced
-by `WHERE`, a writer taken over only past its lease, a count raised only while it is above zero --
+by `WHERE`, a lease taken only once it has lapsed, a count raised only while it is above zero --
 so no transaction ever reads before it decides.
 
 **A tablet's log is no longer the footing's**, decided by the author on 2026-10-20: a tablet's
 history is its implementation's own, kept and rewound by it, RFC vuanj, so a write is never
 written twice to be kept, and the footing holds no row of one. **The footing still keeps which
-writer holds each tablet, and at which generation**, raised by one conditional statement as one
-takes it over. How a writer holds its tablet and is fenced, now that its writes no longer reach
-the footing to date its lease, is open. [B31]
+copies hold each tablet on machines, and at which generation**, raised by one conditional statement as one
+takes it over, decided by the author on 2026-10-20: a tablet on machines is held by a majority of
+its copies, which keep the lease among themselves, so the footing is written only as a primary is
+taken over or a copy replaced; a vendor's tablet keeps no row, its writer held by the vendor, RFC
+vuanj.
 
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,

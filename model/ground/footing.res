@@ -40,8 +40,8 @@ let kept: dict<kept> = dict{
   },
   "writers": {
     of_: #organization,
-    what: "which writer holds each tablet, and at which generation",
-    from: "b8f35",
+    what: "for each tablet on machines, its copies, its primary and its generation; a vendor's holds its own writer",
+    from: "b8f35, vuanj",
     grows: #bounded,
     bound: "a row for each of a scope's tablets",
   },
@@ -86,9 +86,11 @@ type rows = {
   largeMiB: float,
   /** An app's database commit: none, its tablet's own. */
   commit: float,
-  /** A tablet a day while idle: none, how a writer holds it being open [B31]. */
+  /** A tablet a day while idle: none, its primary held by its copies hearing from it, a vendor's by
+   * the vendor, vuanj. */
   idleTablet: float,
-  /** A tablet taken over by another writer: its generation raised. */
+  /** A tablet on machines taken over by another primary, or a copy of it replaced: its generation
+   * raised. */
   takeover: float,
 }
 

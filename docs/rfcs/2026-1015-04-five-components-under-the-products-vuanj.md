@@ -154,14 +154,39 @@ the time -- so no input is refused and no write costs twice. From there the rest
   own.
 - **A batch's id and expiry** are written in the tablet's own system table in the same transaction
   as the batch, so whether one was applied is answered exactly, and an expired one is refused.
-- **A writer handed over** is fenced by the footing: the new one catches up and is made writer at
-  the next generation, and the old can write nothing after; writes wait the few seconds it takes,
-  and reads go on from the copies; how, now that its writes reach the footing no more, is open. [B31]
+- **A tablet's one writer is held by whatever gives it**, decided by the author on 2026-10-20. A
+  Durable Object is one instance for its id, its uniqueness enforced as it touches its storage, so
+  one replaced can write nothing after; D1 runs every write on its one primary; neither keeps a row
+  of the footing for its writer, `docs/lessons/cloudflare.md`. **On machines a tablet is its
+  copies**, each a SQLite on a volume one container mounts, each on a machine of its own, one unless
+  its owner asks for more, as data in the storage is, and at most 5.
+- **On machines a write is done once a majority of the copies configured hold it**, decided by the
+  author on 2026-10-20: of n, n halved and one more -- 1 of 1, 2 of 2, 2 of 3, 3 of 4, 3 of 5 --
+  each having flushed the batch's WAL frames, its primary among them; the rest catch up after. A
+  copy checkpoints only what is done, so a frame never done can still be cut.
+- **A primary handed over is fenced by its generation.** The footing's `writer` row names each such
+  tablet's copies, its primary and its generation. When a majority of the copies has heard nothing
+  from the primary for a lease, one raises the generation by one conditional statement and has a
+  majority take it; the old primary then gathers no majority and writes nothing more, and the new
+  starts from the longest WAL among them, which holds every write done, since two majorities share a
+  copy. The lease is the copies' own, never a row of the footing: it dates when a takeover may
+  begin, and never decides whether a write is safe. A copy is replaced the same way, one at a time,
+  and counted once it has caught up. With one copy nothing is handed over: its machine lost, the
+  database is unavailable until it returns.
+- **Fewer than a majority alive, a database is read-only**, decided by the author on 2026-10-20.
+  Its writes fail as `read_only`; its reads go on from what the copies alive hold, each marked as
+  possibly behind, since a write done may lie on the copies lost alone; a warning stands, RFC
+  v7v3w. With a majority back, it writes again. The majority is always of the copies configured,
+  never of those alive, so a database never writes on fewer than its owner asked.
+- **The lock is released by its owner alone, by configuring copies those alive are a majority
+  of**, decided by the author on 2026-10-20: from 2 alive, 2 or 3, `model/contracts/records/database.res`,
+  shown in a dry run as possibly losing what the lost copies alone held, and never done by the
+  platform itself. A configuration short of copies is reached this way alone, never made from
+  nothing: it writes again, stands in a warning, and the placement makes the copies it lacks.
 - **Where a writer runs is placed at run time**, since a database may be created at any time, never
   only at a deployment. What places it promises at least one writer and never exactly one: two may
-  run for a moment, and the generation the footing keeps refuses all but one.
-
-A user's tablet has one copy unless its owner asks for more, as data in the storage does.
+  run for a moment, and the vendor, or the generation a majority of the copies took, refuses all but
+  one.
 
 **A `transactional` database is a tablet**, and the product adds what an app sees: a directory of
 names, ids, the one app each belongs to and whether read copies are on, which is configuration and
@@ -233,8 +258,8 @@ a release:
 | an account credential's life                     | 12 hours, or an hour where its account's `security` is `strict`          |
 | an organization's key that signs capabilities    | certified for seven days and renewed every day, RFC v7v3w                |
 | a sweep's grace, before bytes nothing names go   | 24 hours, past the slowest upload between bytes and their name           |
-| a tablet's log, archived to the blob             | at 16 MiB, a parcel's size, RFC b8f35                                    |
-| a writer's lease                                 | 10 seconds, renewed every 3                                              |
+| a machine tablet's WAL, archived to the storage  | at 16 MiB, a parcel's size, RFC b8f35                                    |
+| a primary's lease, held among its copies         | 10 seconds, renewed every 3                                              |
 | the longest a write waits after a writer is lost | 15 seconds, the lease and a new writer's catching up; then `unavailable` |
 | an object's longest extension                    | 16 characters, RFC 13ixj, only ever raised                               |
 

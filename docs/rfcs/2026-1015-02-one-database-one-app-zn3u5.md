@@ -65,10 +65,13 @@ else; **policy and binding belong to the id**. Deleting the database deletes its
 the tree, refused while an app is bound to it, RFC 49qyg.
 
 **A database's record is `model/contracts/records/database.res`**, worked out with the author on
-2026-10-19: bound to one app as it is made, read copies off unless set, its snapshots kept apart
-from its implementation as many as its `copies` and placed as a bucket is, RFC 13ixj, one unless
-asked and so none beyond it, its snapshots past 30 days by its `retention`, none unless set, and
-the levels the compute its writer runs on needs, RFC vuanj.
+2026-10-19: bound to one app as it is made, `read_copies` off unless set; its `copies`, one unless
+asked and at most 5, a write done once a majority of them hold it and the database read-only with
+fewer alive, decided by the author on 2026-10-20, RFC vuanj; its snapshots kept apart from its
+implementation as many as its `snapshot_copies` and placed as a bucket is, RFC 13ixj, one unless
+asked and so none beyond it; its snapshots past 30 days by its `retention`, none unless set; and
+the levels the compute its writer runs on needs, RFC vuanj. A copy and a snapshot copy are
+named apart, since the first holds every write as it is done and the second a moment of it.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second

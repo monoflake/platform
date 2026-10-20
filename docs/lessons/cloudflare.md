@@ -230,3 +230,15 @@ whole storage at its next start, `ctx.abort()` restarting it, and answer one tha
 locally. A Durable Object has no export. Sources:
 https://developers.cloudflare.com/d1/reference/time-travel/,
 https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/
+
+## A Durable Object's one instance, read 2026-10-20
+
+**A Durable Object is one instance for its id, enforced as it touches its storage.** The known
+issues page: "there is only a single instance of a Durable Object class with a given ID running at
+once, across the world", and "uniqueness is enforced upon starting a new event (such as receiving
+an HTTP request), and upon accessing storage". An instance replaced, as in a network partition or a
+software update, that accesses storage after "will receive an exception"; one that never touches
+storage may go on unaware. So a Durable Object fences its own writer, and keeps no row of a
+footing for it. Sources:
+https://developers.cloudflare.com/durable-objects/platform/known-issues/,
+https://blog.cloudflare.com/durable-objects-easy-fast-correct-choose-three/

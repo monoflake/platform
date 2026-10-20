@@ -280,6 +280,7 @@ let checklist: array<item> = [
     group: #B,
     what: "how a tablet's writer holds it and is fenced, now that its writes no longer reach the footing to date its lease: what a Durable Object promises of one instance, a volume of one container mounting it, and what is handed over when a machine is lost",
     from: "b8f35, vuanj",
+    done: "vuanj, b8f35, zn3u5",
   },
   {
     id: "B27",

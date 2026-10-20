@@ -435,7 +435,7 @@
 					}
 				},
 				{
-					"name": "replicas",
+					"name": "read_copies",
 					"key": 3,
 					"shape": {
 						"prim": "bool"
@@ -443,7 +443,7 @@
 					"optional": true
 				},
 				{
-					"name": "copies",
+					"name": "snapshot_copies",
 					"key": 4,
 					"shape": {
 						"prim": "uint32"
@@ -472,6 +472,14 @@
 						"list": {
 							"type": "database-retention"
 						}
+					},
+					"optional": true
+				},
+				{
+					"name": "copies",
+					"key": 8,
+					"shape": {
+						"prim": "uint32"
 					},
 					"optional": true
 				}
@@ -3363,7 +3371,7 @@
 			"kind": "database",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 1,
+			"version": 2,
 			"content": "database",
 			"unique": []
 		},
