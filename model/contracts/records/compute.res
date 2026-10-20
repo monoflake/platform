@@ -25,6 +25,123 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
+  // A build's manifest, decided by the author on 2026-10-20: what it declares of its shape, found by
+  // its version's hash where its builder keeps it, vr5lw; its types are the WIT it carries, every
+  // function, export and call named in it, and checked by the wit library, 49qyg.
+  {
+    name: "function-kind",
+    def: Enum({choices: codes(["derive", "effect"]), ordered: false}),
+    from: "49qyg",
+  },
+  // A function of its WIT, its kind and what it needs, each a capability's value by its name.
+  {
+    name: "manifest-function",
+    def: Record([
+      field("name", 1, Prim(#string)),
+      field("kind", 2, Type("function-kind")),
+      optional("needs", 3, Map(Type("allowance-value"))),
+    ]),
+    from: "49qyg",
+  },
+  // How far an export is shown: within its organization, the default, or to anyone, vr5lw.
+  {
+    name: "export-shown",
+    def: Enum({choices: codes(["organization", "public"]), ordered: false}),
+    from: "49qyg, vr5lw",
+  },
+  {
+    name: "manifest-export",
+    def: Record([field("function", 1, Prim(#string)), optional("shown", 2, Type("export-shown"))]),
+    from: "49qyg",
+  },
+  // A call to another app's export, through the slot of type `app` its owner fills.
+  {
+    name: "manifest-call",
+    def: Record([field("slot", 1, Prim(#string)), field("function", 2, Prim(#string))]),
+    from: "49qyg",
+  },
+  {
+    name: "slot-type",
+    def: Enum({
+      choices: codes(["app", "database", "file_bucket", "object_bucket"]),
+      ordered: false,
+    }),
+    from: "49qyg",
+  },
+  {
+    name: "manifest-slot",
+    def: Record([field("name", 1, Prim(#string)), field("type", 2, Type("slot-type"))]),
+    from: "49qyg",
+  },
+  {
+    name: "env-kind",
+    def: Enum({choices: codes(["config", "secret"]), ordered: false}),
+    from: "49qyg",
+  },
+  {
+    name: "manifest-env",
+    def: Record([field("key", 1, Prim(#string)), field("kind", 2, Type("env-kind"))]),
+    from: "49qyg",
+  },
+  // A schedule's times, five fields of cron's in UTC, as Cloudflare's triggers take them.
+  {
+    name: "manifest-schedule",
+    def: Record([field("function", 1, Prim(#string)), field("cron", 2, Prim(#string))]),
+    from: "49qyg",
+  },
+  // What a queue's failure does: the message dropped, or tried again so many times, so far apart.
+  {
+    name: "queue-failure",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "drop", code: 1, fields: []},
+        {
+          name: "retry",
+          code: 2,
+          fields: [field("tries", 1, Prim(#uint32)), field("spacing", 2, Prim(#uint53))],
+        },
+      ],
+    }),
+    from: "49qyg",
+  },
+  {
+    name: "manifest-queue",
+    def: Record([
+      field("name", 1, Prim(#string)),
+      field("function", 2, Prim(#string)),
+      field("failure", 3, Type("queue-failure")),
+    ]),
+    from: "49qyg",
+  },
+  // A database slot's migrations, run in the order of their names, each once, as D1 runs them, the
+  // ones run kept in the database itself, zn3u5.
+  {
+    name: "migration",
+    def: Record([field("name", 1, Prim(#string)), field("sql", 2, Prim(#string))]),
+    from: "zn3u5",
+  },
+  {
+    name: "manifest-migrations",
+    def: Record([field("slot", 1, Prim(#string)), field("migrations", 2, List(Type("migration")))]),
+    from: "zn3u5",
+  },
+  // A daemon's shape is open, so no manifest declares one yet [C11].
+  {
+    name: "manifest",
+    def: Record([
+      field("wit", 1, Prim(#string)),
+      field("functions", 2, List(Type("manifest-function"))),
+      optional("exports", 3, List(Type("manifest-export"))),
+      optional("calls", 4, List(Type("manifest-call"))),
+      optional("slots", 5, List(Type("manifest-slot"))),
+      optional("env", 6, List(Type("manifest-env"))),
+      optional("schedules", 7, List(Type("manifest-schedule"))),
+      optional("queues", 8, List(Type("manifest-queue"))),
+      optional("migrations", 9, List(Type("manifest-migrations"))),
+    ]),
+    from: "49qyg, vr5lw, zn3u5",
+  },
   // `version` is the hash of the build deployed, whose manifest it finds; nothing here makes the
   // app public, which a mount or a name does, vr5lw.
   {

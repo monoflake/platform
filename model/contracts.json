@@ -578,6 +578,370 @@
 				}
 			]
 		},
+		"function-kind": {
+			"enum": [
+				{
+					"name": "derive",
+					"code": 1
+				},
+				{
+					"name": "effect",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"manifest-function": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"key": 2,
+					"shape": {
+						"type": "function-kind"
+					}
+				},
+				{
+					"name": "needs",
+					"key": 3,
+					"shape": {
+						"map": {
+							"type": "allowance-value"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		"export-shown": {
+			"enum": [
+				{
+					"name": "organization",
+					"code": 1
+				},
+				{
+					"name": "public",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"manifest-export": {
+			"record": [
+				{
+					"name": "function",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "shown",
+					"key": 2,
+					"shape": {
+						"type": "export-shown"
+					},
+					"optional": true
+				}
+			]
+		},
+		"manifest-call": {
+			"record": [
+				{
+					"name": "slot",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "function",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"slot-type": {
+			"enum": [
+				{
+					"name": "app",
+					"code": 1
+				},
+				{
+					"name": "database",
+					"code": 2
+				},
+				{
+					"name": "file_bucket",
+					"code": 3
+				},
+				{
+					"name": "object_bucket",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"manifest-slot": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "type",
+					"key": 2,
+					"shape": {
+						"type": "slot-type"
+					}
+				}
+			]
+		},
+		"env-kind": {
+			"enum": [
+				{
+					"name": "config",
+					"code": 1
+				},
+				{
+					"name": "secret",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"manifest-env": {
+			"record": [
+				{
+					"name": "key",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "kind",
+					"key": 2,
+					"shape": {
+						"type": "env-kind"
+					}
+				}
+			]
+		},
+		"manifest-schedule": {
+			"record": [
+				{
+					"name": "function",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "cron",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"queue-failure": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "drop",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "retry",
+						"code": 2,
+						"fields": [
+							{
+								"name": "tries",
+								"key": 1,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "spacing",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"manifest-queue": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "function",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "failure",
+					"key": 3,
+					"shape": {
+						"type": "queue-failure"
+					}
+				}
+			]
+		},
+		"migration": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "sql",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"manifest-migrations": {
+			"record": [
+				{
+					"name": "slot",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "migrations",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "migration"
+						}
+					}
+				}
+			]
+		},
+		"manifest": {
+			"record": [
+				{
+					"name": "wit",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "functions",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "manifest-function"
+						}
+					}
+				},
+				{
+					"name": "exports",
+					"key": 3,
+					"shape": {
+						"list": {
+							"type": "manifest-export"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "calls",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "manifest-call"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "slots",
+					"key": 5,
+					"shape": {
+						"list": {
+							"type": "manifest-slot"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "env",
+					"key": 6,
+					"shape": {
+						"list": {
+							"type": "manifest-env"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "schedules",
+					"key": 7,
+					"shape": {
+						"list": {
+							"type": "manifest-schedule"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "queues",
+					"key": 8,
+					"shape": {
+						"list": {
+							"type": "manifest-queue"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "migrations",
+					"key": 9,
+					"shape": {
+						"list": {
+							"type": "manifest-migrations"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
 		"app": {
 			"record": [
 				{
@@ -5209,6 +5573,18 @@
 						},
 						{
 							"name": "unplaceable",
+							"failure": "rejected"
+						},
+						{
+							"name": "beyond_allowance",
+							"failure": "rejected"
+						},
+						{
+							"name": "calls_unmatched",
+							"failure": "rejected"
+						},
+						{
+							"name": "call_cycle",
 							"failure": "rejected"
 						}
 					]

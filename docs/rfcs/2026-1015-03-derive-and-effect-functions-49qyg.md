@@ -135,7 +135,7 @@ within its organization by default, or public, RFC vr5lw. A declares which of B'
 functions it calls. **What a version declares is checked as its change is taken**, decided by the
 author on 2026-10-20: a change of configuration giving an app a version is refused there, by its
 organization's control, where the version asks past the allowance, a call matches no export, or the
-calls close a cycle, each a reason of its own once the build's manifest is declared [B32].
+calls close a cycle: `beyond_allowance`, `calls_unmatched` and `call_cycle`.
 Deploying A is refused when what it calls does not match what B exports, by the
 number of parameters and their types -- never their values, which are A's business. Deploying B is
 refused when it would take away or change a function something still calls, and deleting B is
@@ -154,6 +154,16 @@ other exports a public API, and the caller reaches it over the network as an `ef
 **A parameter's type is described in WIT**, the WebAssembly component model's interface language, or
 a subset of it taken when this lands: it was made for typed exports and imports between components
 written in different languages, which is what A and B declare to each other.
+
+**A build's manifest is a record of the subset carrying the build's WIT**, decided by the author on
+2026-10-20, `manifest` in `model/contracts/records/compute.res`: its functions, each its kind and
+needs; its exports and the calls it makes, each named in its WIT, whose types the `wit*` library
+compares; its slots, env keys, schedules and queues; and its migrations. Its builder keeps it beside
+the code and gives it by the version's hash, so the control reads it as a change gives an app that
+version. A schedule's times are cron's five fields in UTC, as Cloudflare's triggers take them; a
+queue's failure drops the message, or tries it again so many times so far apart; a database slot's
+migrations are SQL run in the order of their names, once each, the ones run kept in that database,
+as D1 keeps them, RFC zn3u5. A daemon is declared once its shape is settled. [C11]
 
 **What a build declares and what its owner configures are apart**, worked out with the author on
 2026-10-19, told by what changes when one build is deployed in another organization. The build's

@@ -245,12 +245,15 @@ let products = [Buckets.interface_.name, Generations.interface_.name]
 
 /**
  * What a product's case is given before its first step: the records changed first, through its
- * organization's control, each with its handle; and the room of the one store the runner binds, at
- * a bucket's default levels, `best_effort`, `persistent` and no custody.
+ * organization's control, each with its handle; the room of the one store the runner binds, at a
+ * bucket's default levels, `best_effort`, `persistent` and no custody; the builds its builder keeps,
+ * each manifest by its version's hash; and the allowance its authority gives it.
  */
 let productGiven = [
   Subset.optional("records", 1, List(Type("change-item"))),
   Subset.optional("room", 2, Prim(#uint53)),
+  Subset.optional("builds", 3, Map(Type("manifest"))),
+  Subset.optional("allowance", 4, Map(Type("allowance-value"))),
 ]
 
 /**

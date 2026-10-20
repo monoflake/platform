@@ -197,8 +197,9 @@ let types: array<declared> = [
 /**
  * A change checked against the whole of what the control holds: a record read at a generation it
  * has changed since, a handle naming nothing, a record still depended on removed, content that
- * breaks its kind's rules, or a placement the scope's stores cannot meet. What an app's version
- * declares is held to the allowance as compute deploys it, which is the orchestration's [B32].
+ * breaks its kind's rules, or a placement the scope's stores cannot meet; and, an app given a
+ * version, what its build's manifest declares past the allowance, a call matching no export, or
+ * calls closing a cycle, 49qyg.
  */
 let interface_: interface_ = {
   name: "configuration",
@@ -215,6 +216,9 @@ let interface_: interface_ = {
         ("depended_on", #rejected),
         ("invalid", #rejected),
         ("unplaceable", #rejected),
+        ("beyond_allowance", #rejected),
+        ("calls_unmatched", #rejected),
+        ("call_cycle", #rejected),
       ],
     ),
     op("read", "record-read", "record-found", [("no_kind", #rejected), ("not_found", #rejected)]),

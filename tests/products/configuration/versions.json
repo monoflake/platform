@@ -1,0 +1,307 @@
+{
+	"interface": "configuration",
+	"cases": [
+		{
+			"description": "an app given a version its manifest fits is made",
+			"given": {
+				"builds": {
+					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+						"wit": "package app:hello;\nworld main {\n  export hello: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "hello",
+								"kind": "effect",
+								"needs": {
+									"network": {
+										"name": "some",
+										"values": ["http"]
+									}
+								}
+							}
+						],
+						"exports": [
+							{
+								"function": "hello"
+							}
+						]
+					}
+				},
+				"allowance": {
+					"network": {
+						"name": "some",
+						"values": ["http"]
+					}
+				}
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "app",
+								"handle": "hello",
+								"content": {
+									"version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+									"bindings": {},
+									"env": {}
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {
+								"hello": {
+									"$any": true
+								}
+							},
+							"changed": [
+								{
+									"kind": "app",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": {
+								"$any": true
+							},
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a version whose manifest asks past the allowance is refused",
+			"given": {
+				"builds": {
+					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+						"wit": "package app:raw;\nworld main {\n  export raw: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "raw",
+								"kind": "effect",
+								"needs": {
+									"network": {
+										"name": "some",
+										"values": ["http", "tcp"]
+									}
+								}
+							}
+						]
+					}
+				},
+				"allowance": {
+					"network": {
+						"name": "some",
+						"values": ["http"]
+					}
+				}
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "app",
+								"handle": "raw",
+								"content": {
+									"version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+									"bindings": {},
+									"env": {}
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "beyond_allowance"
+					}
+				}
+			]
+		},
+		{
+			"description": "a call that matches no export of the app its slot names is refused",
+			"given": {
+				"builds": {
+					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+						"wit": "package app:front;\nworld main {\n  export front: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "front",
+								"kind": "effect"
+							}
+						],
+						"calls": [
+							{
+								"slot": "back",
+								"function": "missing"
+							}
+						],
+						"slots": [
+							{
+								"name": "back",
+								"type": "app"
+							}
+						]
+					},
+					"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+						"wit": "package app:back;\nworld main {\n  export back: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "back",
+								"kind": "effect"
+							}
+						],
+						"exports": [
+							{
+								"function": "back"
+							}
+						]
+					}
+				}
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "app",
+								"handle": "back",
+								"content": {
+									"version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+									"bindings": {},
+									"env": {}
+								}
+							},
+							{
+								"kind": "app",
+								"handle": "front",
+								"content": {
+									"version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+									"bindings": {
+										"app": {
+											"back": "back"
+										}
+									},
+									"env": {}
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "calls_unmatched"
+					}
+				}
+			]
+		},
+		{
+			"description": "calls that close a cycle are refused, since a cycle has no order to deploy or delete by",
+			"given": {
+				"builds": {
+					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": {
+						"wit": "package app:ping;\nworld main {\n  export ping: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "ping",
+								"kind": "effect"
+							}
+						],
+						"exports": [
+							{
+								"function": "ping"
+							}
+						],
+						"calls": [
+							{
+								"slot": "other",
+								"function": "pong"
+							}
+						],
+						"slots": [
+							{
+								"name": "other",
+								"type": "app"
+							}
+						]
+					},
+					"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb": {
+						"wit": "package app:pong;\nworld main {\n  export pong: func() -> string;\n}\n",
+						"functions": [
+							{
+								"name": "pong",
+								"kind": "effect"
+							}
+						],
+						"exports": [
+							{
+								"function": "pong"
+							}
+						],
+						"calls": [
+							{
+								"slot": "other",
+								"function": "ping"
+							}
+						],
+						"slots": [
+							{
+								"name": "other",
+								"type": "app"
+							}
+						]
+					}
+				}
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "app",
+								"handle": "ping",
+								"content": {
+									"version": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+									"bindings": {
+										"app": {
+											"other": "pong"
+										}
+									},
+									"env": {}
+								}
+							},
+							{
+								"kind": "app",
+								"handle": "pong",
+								"content": {
+									"version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+									"bindings": {
+										"app": {
+											"other": "ping"
+										}
+									},
+									"env": {}
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "call_cycle"
+					}
+				}
+			]
+		}
+	]
+}
