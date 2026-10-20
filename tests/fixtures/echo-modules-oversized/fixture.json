@@ -1,0 +1,5 @@
+{
+	"description": "echo-modules padded a byte past the artifact its driver takes",
+	"of": "echo-modules",
+	"padded": { "bound": "artifact", "plus": 1 }
+}

@@ -40,6 +40,11 @@ let product = (~half: string => string, ~writes: string => array<string>): JSON.
         dict{"name": String(r.name), "failure": String((r.failure :> string))},
       )),
     ),
+    "calling": Array(
+      Calls.calling->Array.map(r => JSON.Object(
+        dict{"name": String(r.name), "failure": String((r.failure :> string))},
+      )),
+    ),
     "interfaces": Object(Dict.fromArray(interfaces->Array.map(i => (i.name, interfaceJson(i))))),
     "records": Array(
       contents->Array.map(c => JSON.Object(

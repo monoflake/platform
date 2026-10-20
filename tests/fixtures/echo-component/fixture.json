@@ -1,0 +1,1 @@
+{ "description": "echo, as a WebAssembly component", "form": "component", "exports": ["echo"] }

@@ -1,0 +1,5 @@
+{
+	"description": "echo-modules served under a hash that is not its own",
+	"of": "echo-modules",
+	"served": "hash_mismatched"
+}

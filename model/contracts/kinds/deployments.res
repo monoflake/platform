@@ -117,6 +117,7 @@ let types: array<declared> = [
 let interface_: interface_ = {
   name: "deployments",
   version: 1,
+  declared: ["artifact"],
   from: "vr5lw",
   operations: [
     op(

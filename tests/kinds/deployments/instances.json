@@ -1,0 +1,57 @@
+{
+	"interface": "deployments",
+	"cases": [
+		{
+			"description": "every call for one key reaches the one instance of it, and another key its own",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "counter-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "increment", "body": {}, "key": "a" },
+					"expect": { "answer": { "count": "1" } }
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "increment", "body": {}, "key": "a" },
+					"expect": { "answer": { "count": "2" } }
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "increment", "body": {}, "key": "b" },
+					"expect": { "answer": { "count": "1" } }
+				}
+			]
+		}
+	]
+}

@@ -10,6 +10,11 @@ let common: array<reason> = [
   {name: "overloaded", failure: #unavailable},
 ]
 
+/** The reasons a call to what is deployed may fail for, beside every operation's: the platform's
+ * own, answered as an `error` before the app's code is reached, vr5lw. What the app answers is its
+ * own exports' in WIT, never these. */
+let calling: array<reason> = [{name: "stopped", failure: #unavailable}]
+
 let types: array<declared> = [
   {
     name: "failure",

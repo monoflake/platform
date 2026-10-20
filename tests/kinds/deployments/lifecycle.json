@@ -1,0 +1,185 @@
+{
+	"interface": "deployments",
+	"cases": [
+		{
+			"description": "a deployment stopped answers a call as stopped, and resumed answers again",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"call": "stop",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "name": "stopped" }
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "echo", "body": { "text": "hello" } },
+					"expect": { "failure": "unavailable", "reason": "stopped" }
+				},
+				{
+					"call": "resume",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "resumed" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "resumed" }, "export": "echo", "body": { "text": "hello" } },
+					"expect": { "answer": { "text": "hello" } }
+				}
+			]
+		},
+		{
+			"description": "a deployment is deleted only once stopped, and is then not found",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"call": "delete",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"expect": { "failure": "rejected", "reason": "still_running" }
+				},
+				{
+					"call": "stop",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "name": "stopped" }
+						}
+					}
+				},
+				{
+					"call": "delete",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				}
+			]
+		},
+		{
+			"description": "what was never deployed is not found, and deleting it succeeds",
+			"steps": [
+				{
+					"call": "stop",
+					"input": { "runs": { "name": "app", "id": 9 } },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				},
+				{
+					"call": "resume",
+					"input": { "runs": { "name": "app", "id": 9 } },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 9 } },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				},
+				{
+					"call": "delete",
+					"input": { "runs": { "name": "app", "id": 9 } },
+					"expect": { "output": {} }
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,6 @@
+{
+	"description": "counts the calls to increment for its key in its memory, and answers the count",
+	"form": "modules",
+	"exports": ["increment"],
+	"instance": true
+}

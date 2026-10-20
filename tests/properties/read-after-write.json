@@ -1,0 +1,6 @@
+{
+	"description": "a read sees every write answered before it was sent, whoever wrote it",
+	"checker": "read_after_write",
+	"interfaces": ["object", "database"],
+	"load": { "keys": 4, "callers": 8, "operations": 512 }
+}

@@ -193,10 +193,105 @@ let items = j =>
   | _ => []
   }
 
+/** The capacity a case of an interface is `given`: its own kind's, and a container for what is deployed. */
+let capacityOf = name => name == "deployments" ? "container" : name
+
+/** How a fixture is served: as it was built, under a hash not its own, or from where nothing answers. */
+let served = ["as_built", "hash_mismatched", "unfetchable"]
+
+/** The checkers a property names, each written in the runner, never in a sample. */
+let checkers = ["single_instance", "read_after_write"]
+
 let run = () => {
   let found = []
   let called = Set.make()
   let sampled = Set.make()
+  let sent = ref(false)
+  let deployments = Contracts.interfaces->Array.find(i => i.name == "deployments")
+  // A fixture, `tests/fixtures/{name}/fixture.json`: an app deployed by samples, its source the runner's to build.
+  let fixtures = Dict.make()
+  let fixtureFiles = files("tests/fixtures")
+  fixtureFiles->Array.forEach(path => {
+    let parts = path->String.split("/")
+    switch parts {
+    | ["tests", "fixtures", name, "fixture.json"] => fixtures->Dict.set(name, read(path))
+    | _ => found->Array.push(`${path}: a fixture is tests/fixtures/{name}/fixture.json alone`)
+    }
+  })
+  let forms = switch declared->Dict.get("deployment-form") {
+  | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
+  | _ => []
+  }
+  fixtures->Dict.forEachWithKey((f, name) => {
+    let at = `tests/fixtures/${name}`
+    switch f->member("description") {
+    | Some(String(_)) => ()
+    | _ => found->Array.push(`${at}: no description`)
+    }
+    switch f->member("of") {
+    | None =>
+      switch f->member("form") {
+      | Some(String(form)) if forms->Array.includes(form) => ()
+      | _ => found->Array.push(`${at}: no form of deployment-form`)
+      }
+      switch f->member("exports") {
+      | Some(Array(e)) if e != [] && e->Array.every(x => x->JSON.Decode.string != None) => ()
+      | _ => found->Array.push(`${at}: no exports`)
+      }
+    | Some(String(base)) =>
+      if fixtures->Dict.get(base) == None {
+        found->Array.push(`${at}: of ${base}, no fixture`)
+      }
+    | Some(_) => found->Array.push(`${at}: of names a fixture`)
+    }
+    switch f->member("instance") {
+    | None | Some(Boolean(_)) => ()
+    | Some(_) => found->Array.push(`${at}: instance is yes or no`)
+    }
+    switch f->member("served") {
+    | None => ()
+    | Some(String(x)) if served->Array.includes(x) => ()
+    | Some(_) => found->Array.push(`${at}: served, none of ${served->Array.join(", ")}`)
+    }
+    switch f->member("padded") {
+    | None => ()
+    | Some(p) =>
+      switch (p->member("bound"), p->member("plus")) {
+      | (Some(String(b)), Some(Number(n))) if isInteger(n, 0., 1e9) =>
+        if !(deployments->Option.flatMap(d => d.declared)->Option.getOr([])->Array.includes(b)) {
+          found->Array.push(`${at}: padded past ${b}, no bound deployments declares`)
+        }
+      | _ => found->Array.push(`${at}: padded is a bound and how many past it`)
+      }
+    }
+  })
+  let formOf = name => {
+    let rec go = (n, depth) =>
+      switch fixtures->Dict.get(n) {
+      | Some(f) if depth < 4 =>
+        switch (f->member("form"), f->member("of")) {
+        | (Some(String(form)), _) => Some(form)
+        | (_, Some(String(b))) => go(b, depth + 1)
+        | _ => None
+        }
+      | _ => None
+      }
+    go(name, 0)
+  }
+  // A reason a case expects, its operation's own or every operation's, held to the failure it is.
+  let expectFailure = (at, reasons: array<Subset.reason>, e, key) =>
+    switch (e->member("failure"), e->member("reason")) {
+    | (Some(String(failure)), Some(String(reason))) =>
+      switch reasons->Array.find(r => r.name == reason) {
+      | Some(r) =>
+        if (r.failure :> string) != failure {
+          found->Array.push(`${at}: ${reason} is ${(r.failure :> string)}, not ${failure}`)
+        }
+        sampled->Set.add(`${key}.${reason}`)
+      | None => found->Array.push(`${at}: ${reason}, no reason here`)
+      }
+    | _ => found->Array.push(`${at}: expects an output, or a failure and its reason`)
+    }
   let behavior = files("tests/kinds")
   behavior->Array.forEach(path => {
     let j = read(path)
@@ -224,7 +319,7 @@ let run = () => {
           | Some(g) =>
             switch declared->Dict.get("management-capacity") {
             | Some({def: Union({cases})}) =>
-              switch (cases->Array.find(x => x.name == name), g) {
+              switch (cases->Array.find(x => x.name == capacityOf(name)), g) {
               | (Some(k), Object(d)) => record(s, k.fields, d, [], Input, `${at}.given`)
               | _ => found->Array.push(`${at}: given, which ${name} holds no capacity of`)
               }
@@ -244,44 +339,99 @@ let run = () => {
               | Some(Number(ms)) if isInteger(ms, 1., 3600000.) => ()
               | Some(_) => found->Array.push(`${at}: within, no milliseconds up to an hour`)
               }
-              switch st->member("call") {
-              | Some(String(call)) =>
+              let expect = st->member("expect")
+              switch (st->member("call"), st->member("send")) {
+              | (Some(String(call)), None) =>
                 switch i.operations->Array.find(o => o.name == call) {
                 | None => found->Array.push(`${at}: ${call}, no operation of ${name}`)
                 | Some(o) =>
                   called->Set.add(`${name}.${call}`)
-                  conforms(
-                    s,
-                    Type(o.input),
-                    st->member("input")->Option.getOr(Null),
-                    Input,
-                    `${at}.input`,
-                  )
-                  switch st->member("expect") {
-                  | Some(e) =>
-                    switch (e->member("output"), e->member("failure"), e->member("reason")) {
-                    | (Some(out), None, None) =>
-                      conforms(s, Type(o.output), out, Expected, `${at}.output`)
-                    | (None, Some(String(failure)), Some(String(reason))) =>
-                      switch Array.concat(o.reasons, Calls.common)->Array.find(
-                        r => r.name == reason,
-                      ) {
-                      | Some(r) =>
-                        if (r.failure :> string) != failure {
-                          found->Array.push(
-                            `${at}: ${reason} is ${(r.failure :> string)}, not ${failure}`,
-                          )
-                        }
-                        sampled->Set.add(`${name}.${call}.${reason}`)
-                      | None => found->Array.push(`${at}: ${reason}, no reason of ${call}`)
+                  // A fixture's version, form and artifact are the runner's to write, where a step writes none.
+                  let input = switch (st->member("fixture"), st->member("input")) {
+                  | (None, Some(x)) => x
+                  | (None, None) => Null
+                  | (Some(String(f)), x) =>
+                    let d = switch x {
+                    | Some(Object(d)) => d->Dict.copy
+                    | _ => Dict.make()
+                    }
+                    switch formOf(f) {
+                    | None => found->Array.push(`${at}: fixture ${f}, none in tests/fixtures/`)
+                    | Some(form) =>
+                      switch d->Dict.get("form") {
+                      | Some(String(given)) if given != form =>
+                        found->Array.push(`${at}: form ${given}, yet ${f} is ${form}`)
+                      | _ => ()
                       }
+                      let zeros = String.repeat("0", 64)
+                      [
+                        ("version", JSON.String(zeros)),
+                        ("form", String(form)),
+                        ("artifact", Object(dict{"address": String(f), "hash": String(zeros)})),
+                      ]->Array.forEach(
+                        ((k, v)) =>
+                          if d->Dict.get(k) == None {
+                            d->Dict.set(k, v)
+                          },
+                      )
+                    }
+                    Object(d)
+                  | (Some(_), _) =>
+                    found->Array.push(`${at}: fixture names one`)
+                    Null
+                  }
+                  conforms(s, Type(o.input), input, Input, `${at}.input`)
+                  switch expect {
+                  | Some(e) =>
+                    switch e->member("output") {
+                    | Some(out) if e->member("failure") == None =>
+                      conforms(s, Type(o.output), out, Expected, `${at}.output`)
                     | _ =>
-                      found->Array.push(`${at}: expects an output, or a failure and its reason`)
+                      expectFailure(at, Array.concat(o.reasons, Calls.common), e, `${name}.${call}`)
                     }
                   | None => found->Array.push(`${at}: expects nothing`)
                   }
                 }
-              | _ => found->Array.push(`${at}: calls nothing`)
+              // A call to what is deployed, in its app's own WIT: held to its shape alone, never a contract's.
+              | (None, Some(Object(d))) =>
+                if name != "deployments" {
+                  found->Array.push(`${at}: sends to what ${name} deploys not`)
+                }
+                sent := true
+                switch d->Dict.get("to") {
+                | Some(String(_)) => ()
+                | Some(x) =>
+                  switch placeholder(x) {
+                  | Some(("$use", String(n))) if s.captured->Set.has(n) => ()
+                  | _ => found->Array.push(`${at}: sends to no address captured`)
+                  }
+                | None => found->Array.push(`${at}: sends to nowhere`)
+                }
+                switch d->Dict.get("export") {
+                | Some(String(e)) if e != "" => ()
+                | _ => found->Array.push(`${at}: sends to no export`)
+                }
+                switch d->Dict.get("key") {
+                | None | Some(String(_)) => ()
+                | Some(_) => found->Array.push(`${at}: a key is text`)
+                }
+                d
+                ->Dict.keysToArray
+                ->Array.forEach(
+                  k =>
+                    if !(["to", "export", "key", "body"]->Array.includes(k)) {
+                      found->Array.push(`${at}: ${k}, nothing a send holds`)
+                    },
+                )
+                switch expect {
+                | Some(e) =>
+                  switch e->member("answer") {
+                  | Some(_) if e->member("failure") == None => ()
+                  | _ => expectFailure(at, Array.concat(Calls.calling, Calls.common), e, "calling")
+                  }
+                | None => found->Array.push(`${at}: expects nothing`)
+                }
+              | _ => found->Array.push(`${at}: calls nothing, or sends and calls at once`)
               }
             },
           )
@@ -306,6 +456,49 @@ let run = () => {
       })
     }
   )
+  if sent.contents {
+    Calls.calling->Array.forEach(r =>
+      if !(sampled->Set.has(`calling.${r.name}`)) {
+        found->Array.push(`a call: ${r.name} met by no sample`)
+      }
+    )
+  }
+  // A property is a checker of the runner's, the interfaces it is run on, and how hard.
+  let properties = files("tests/properties")
+  properties->Array.forEach(path => {
+    let p = read(path)
+    switch p->member("checker") {
+    | Some(String(c)) if checkers->Array.includes(c) => ()
+    | _ => found->Array.push(`${path}: no checker of ${checkers->Array.join(", ")}`)
+    }
+    switch p->member("interfaces") {
+    | Some(Array(xs)) if xs != [] =>
+      xs->Array.forEach(x =>
+        switch x {
+        | String(n) if Contracts.interfaces->Array.some(i => i.name == n) => ()
+        | _ => found->Array.push(`${path}: an interface not declared`)
+        }
+      )
+    | _ => found->Array.push(`${path}: run on no interface`)
+    }
+    switch p->member("fixture") {
+    | None => ()
+    | Some(String(f)) if fixtures->Dict.get(f) != None => ()
+    | Some(_) => found->Array.push(`${path}: a fixture not in tests/fixtures/`)
+    }
+    switch p->member("load") {
+    | Some(Object(d))
+      if d
+      ->Dict.valuesToArray
+      ->Array.every(v =>
+        switch v {
+        | Number(n) => isInteger(n, 1., 1e6)
+        | _ => false
+        }
+      ) => ()
+    | _ => found->Array.push(`${path}: load, counts of what the checker runs`)
+    }
+  })
   // A codec sample is a value in JSON beside its CBOR; one refused fails as every reader must refuse it.
   let codec = files("tests/codec")
   let pairs = ref(0)
@@ -353,6 +546,9 @@ let run = () => {
     "Does every sample in tests/ call what its contract declares, with what it parses, expecting what it can answer, and is every interface sampled sampled whole?",
     found,
     ~notes=[
+      `fixtures: ${int(fixtures->Dict.keysToArray->Array.length)}; properties: ${int(
+          properties->Array.length,
+        )}`,
       `behavior: ${int(behavior->Array.length)} files; codec: ${int(pairs.contents)} pairs, ${int(
           refused.contents,
         )} refused`,

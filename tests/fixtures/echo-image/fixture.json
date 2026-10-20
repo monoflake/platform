@@ -1,0 +1,5 @@
+{
+	"description": "echo, as an image answering HTTP at the port it is deployed with",
+	"form": "image",
+	"exports": ["echo"]
+}

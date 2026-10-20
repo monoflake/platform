@@ -1,0 +1,5 @@
+{
+	"description": "answers each call to echo with the body it was sent",
+	"form": "modules",
+	"exports": ["echo"]
+}

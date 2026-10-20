@@ -1,0 +1,95 @@
+{
+	"interface": "deployments",
+	"cases": [
+		{
+			"description": "a component is deployed and called as modules are, where a runtime takes it",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-component",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "echo", "body": { "text": "hello" } },
+					"expect": { "answer": { "text": "hello" } }
+				}
+			]
+		},
+		{
+			"description": "an image runs in the container it is given, called at its port",
+			"given": { "millicores": 500, "memory": 268435456 },
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-image",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["kernel"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"],
+						"port": 8080
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "echo", "body": { "text": "hello" } },
+					"expect": { "answer": { "text": "hello" } }
+				}
+			]
+		}
+	]
+}

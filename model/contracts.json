@@ -1310,6 +1310,12 @@
 			"failure": "unavailable"
 		}
 	],
+	"calling": [
+		{
+			"name": "stopped",
+			"failure": "unavailable"
+		}
+	],
 	"interfaces": {
 		"object": {
 			"version": 1,
@@ -1447,7 +1453,7 @@
 		"deployments": {
 			"version": 1,
 			"bounds": {},
-			"declared": [],
+			"declared": ["artifact"],
 			"operations": [
 				{
 					"name": "deploy",

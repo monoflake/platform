@@ -373,7 +373,8 @@ abstractions.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
   `model/contracts/`: `object`, `database`, the drivers' management and `deployments`, which function,
-  instance and container share, are declared; `object`, `database` and the management are sampled so far. [B30]
+  instance and container share, are declared, and each is sampled in `tests/`, decided by the author
+  on 2026-10-19.
 - **The cases are data in `tests/`, three of a kind**, decided by the author on 2026-10-19:
   `codec/`, a value in JSON beside its CBOR, and inputs every reader refuses; `kinds/`, each
   interface's cases, a case a list of steps -- an operation called, its output or its failure and
@@ -388,6 +389,18 @@ abstractions.
   may be answered `within` some milliseconds, called again until it is answered as expected, as
   what a driver makes is made in a while. Each case starts from nothing, and an output expected is
   the whole output.
+- **What is deployed in a sample is a fixture**, `tests/fixtures/{name}/fixture.json`, decided by
+  the author on 2026-10-19: an app of its own form and exports, an echo or a counter of its key's
+  calls, which the runner builds and serves, writing a deploy's version, form and artifact where a
+  step names the fixture; one fixture may be another `served` under a hash not its own or from
+  nowhere, or `padded` past a bound a driver declares. Its source is the runner's, written with it.
+  **A call to what is deployed is a step of its own**, `send`: to an address captured, an export,
+  a key for an instance, and a body in the app's own WIT, answered as it was sent or with the
+  platform's `stopped`, `model/contracts/subset/calls.res`; the check holds it to its shape alone.
+  A deployment's case may be `given` the container it runs in. A form a driver takes no runtime for
+  is passed over, the runner asking the driver what it gives [D8]. **A property names its checker,
+  the interfaces it is run on, a fixture where it deploys one, and its load**, and the checker is
+  the runner's.
 - **The check holds the samples to the contracts**, `model/checks/written/cases.res`: each step
   calls an operation that exists, with an input that parses, expecting an output that parses or a
   reason its operation has and the failure that reason is; every operation and every reason of an
@@ -773,8 +786,6 @@ third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
-- The six kinds' contracts, declared in `model/contracts/`, and the cases each runs against every
-  implementation of it. [B30]
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]

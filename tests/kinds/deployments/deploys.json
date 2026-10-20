@@ -1,0 +1,183 @@
+{
+	"interface": "deployments",
+	"cases": [
+		{
+			"description": "a deployment made runs, and a call reaches it and comes back as it was sent",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": {
+						"to": { "$use": "address" },
+						"export": "echo",
+						"body": { "text": "hello", "count": "5" }
+					},
+					"expect": { "answer": { "text": "hello", "count": "5" } }
+				}
+			]
+		},
+		{
+			"description": "deploying the same again is the one deployment",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": { "$any": null }
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": { "runs": { "name": "app", "id": 1 } },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": { "name": "app", "id": 1 },
+							"version": { "$any": null },
+							"state": {
+								"name": "running",
+								"address": { "$capture": "address" },
+								"runtime": { "$any": null },
+								"isolation": { "$any": null }
+							}
+						}
+					}
+				},
+				{
+					"send": { "to": { "$use": "address" }, "export": "echo", "body": { "text": "again" } },
+					"expect": { "answer": { "text": "again" } }
+				}
+			]
+		},
+		{
+			"description": "an isolation no runtime of the host stands on is beyond it",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["vm"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": { "failure": "rejected", "reason": "beyond_host" }
+				}
+			]
+		},
+		{
+			"description": "code past the artifact its driver takes is refused",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules-oversized",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": { "failure": "rejected", "reason": "too_large" }
+				}
+			]
+		},
+		{
+			"description": "an artifact that is not what its hash says is refused",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules-mismatched",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": { "failure": "rejected", "reason": "hash_mismatch" }
+				}
+			]
+		},
+		{
+			"description": "an artifact nothing serves fails as unavailable, to be tried again",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules-unfetchable",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": { "failure": "unavailable", "reason": "unfetchable" }
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,7 @@
+{
+	"description": "calls for one key, sent at once from many callers, are counted by one instance: every count once, none twice",
+	"checker": "single_instance",
+	"interfaces": ["deployments"],
+	"fixture": "counter-modules",
+	"load": { "keys": 4, "callers": 8, "calls": 256 }
+}

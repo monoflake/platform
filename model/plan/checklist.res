@@ -300,6 +300,7 @@ let checklist: array<item> = [
     group: #B,
     what: "the six kinds' contracts -- function, instance, container, object, volume, database -- declared in model/contracts/ in the platform's own protocol, the subset given operations, and the cases each runs against every implementation of it, at its HTTP API, bytes in any text but base64url unpadded refused among them, written in tests/ and held by the check, vr5lw, fhg6w",
     from: "vr5lw",
+    done: "vr5lw, fhg6w: model/contracts/kinds/ and tests/; the runner is built with the code",
   },
   {
     id: "C1",
