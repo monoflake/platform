@@ -362,7 +362,7 @@ one code is both.
   against them, RFC b8f35.
 
 **A driver is a component of its vendor's own, made of implementations**, worked out with the author
-on 2026-10-19: `machine-driver` and `cloudflare-driver`, at layer -2 beside the host they run,
+on 2026-10-19: `driver(machine)` and `driver(cloudflare)`, at layer -2 beside the host they run,
 `model/graph/components.res`. Neither does the other's work, since neither vendor has the other's
 abstractions. Each holds its management beside its implementations, the process that answers the
 management interface below, RFC fhg6w.
@@ -372,8 +372,8 @@ management interface below, RFC fhg6w.
   the model. **An implementation of a kind has one**: a Worker over R2 and a process over a
   machine's file system both give `object`, on grounds that share nothing, so each is written as its
   ground asks, `model/ground/drivers.res`. A driver implements every kind its vendor's resources
-  give and no other: `cloudflare-driver` function, instance, object and database, in ReScript;
-  `machine-driver` all six, in Rust.
+  give and no other: `driver(cloudflare)` function, instance, object and database, in ReScript;
+  `driver(machine)` all six, in Rust.
 - **Nothing calls an implementation but through its kind's contract**, and no implementation calls
   another, so above the drivers a product speaks of `object` and never of R2 or a disk.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers

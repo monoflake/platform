@@ -130,10 +130,12 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   organization's resources may be Cloudflare's, every component is ReScript; an app's code is its
   user's and the root runs nothing, so neither declares one. **Where the platform meets a vendor, a
   kind is a contract with an implementation a vendor**, and the language is the implementation's:
-  a driver declares none, and lies as a directory of its implementations, `machine-driver`'s Rust
-  and `cloudflare-driver`'s ReScript, RFC vr5lw. **The drivers lie together in `substrate/driver/`**,
-  decided by the author on 2026-10-19, each named without the word its parent says,
-  `driver/cloudflare` and `driver/machine`, as a half is dropped from a name.
+  a driver declares none, and lies as a directory of its implementations, `driver(machine)`'s Rust
+  and `driver(cloudflare)`'s ReScript, RFC vr5lw. **The drivers lie together in `substrate/driver/`**,
+  decided by the author on 2026-10-19, each named `driver(...)` with its vendor in parentheses, as
+  `control(organization)` names what it is first and which after, decided by the author on
+  2026-10-20, so its directory is that name, `driver/cloudflare` and `driver/machine`, and no word is
+  said twice. **A name is written whole**, never shortened.
   `model/checks/layout/code.res` holds that each component's code lies in its layer's directory, named as
   the model names it, that its manifest is its language's, and that it uses only libraries of its
   own language.
@@ -149,7 +151,7 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   what is there.
 - **A package is named as the model names what it holds**: a component by its name, a half
   written after a hyphen, `control-organization`; a driver's implementation and its management
-  by the driver's name and theirs, `machine-driver-object`, `machine-driver-management`; a library
+  by the driver's name and theirs, `driver-machine-object`, `driver-machine-management`; a library
   by its subject. A ReScript package is `@blueprint/` led in its `package.json` and its
   `rescript.json` alike, which pnpm links it by, and **namespaced**, so two packages' modules of one
   name never meet. Its sources are `src/`; a setting such as its warnings is its own to write, as

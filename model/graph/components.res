@@ -396,13 +396,13 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("machine-driver", #serve, hard, "on a machine, the processes its driver runs, vr5lw"),
-      e("cloudflare-driver", #serve, hard, "on Cloudflare, the Workers its driver makes, b8f35"),
+      e("driver(machine)", #serve, hard, "on a machine, the processes its driver runs, vr5lw"),
+      e("driver(cloudflare)", #serve, hard, "on Cloudflare, the Workers its driver makes, b8f35"),
     ],
     uses: ["vocabulary*", "compat*"],
   },
   /* A driver is made of implementations, one for each kind its vendor gives, each in its own language, `model/ground/drivers.res`. */
-  "machine-driver": {
+  "driver(machine)": {
     layer: -2,
     half: #organization,
     edges: [
@@ -416,7 +416,7 @@ let components: dict<component> = dict{
     ],
     uses: [],
   },
-  "cloudflare-driver": {
+  "driver(cloudflare)": {
     layer: -2,
     half: #organization,
     edges: [

@@ -27,7 +27,7 @@ type driver = {
 }
 
 let drivers: dict<driver> = dict{
-  "cloudflare-driver": {
+  "driver(cloudflare)": {
     grounds: [#cloudflare],
     management: #rescript,
     implements: [
@@ -42,7 +42,7 @@ let drivers: dict<driver> = dict{
     ],
     runtimes: [{name: "workers", takes: "modules", stands: ["isolate"]}],
   },
-  "machine-driver": {
+  "driver(machine)": {
     grounds: [#provider, #home],
     management: #rust,
     implements: [

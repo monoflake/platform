@@ -28,15 +28,16 @@ let group = layer =>
 /** A half in a name is the layer's already, so it is no part of the directory's. */
 let dirName = name => name->String.replace("(organization)", "")->String.replace("(platform)", "")
 
-/** A package's name is the model's, a half written after a hyphen, as no package name holds a parenthesis. */
-let packageName = name =>
-  name->String.replace("(organization)", "-organization")->String.replace("(platform)", "-platform")
+/** A package's name is the model's, what is in parentheses written after a hyphen, as no package
+ * name holds a parenthesis: `control-organization`, `driver-machine`. */
+let packageName = name => name->String.replace("(", "-")->String.replace(")", "")
 
-/** A driver's directory is its name without the word its parent already says: `cloudflare-driver`
- * lies at `driver/cloudflare`. A driver whose name ends otherwise has none. */
+/** A driver is named `driver(...)`, its vendor in parentheses, and lies at `driver/` and that name,
+ * as `control(organization)` names what it is first and which after: `driver(cloudflare)` lies at
+ * `driver/cloudflare`. A driver named otherwise has none. */
 let driverDir = name =>
-  name->String.endsWith("-driver")
-    ? Some(name->String.slice(~start=0, ~end=String.length(name) - String.length("-driver")))
+  name->String.startsWith("driver(") && name->String.endsWith(")")
+    ? Some(name->String.slice(~start=String.length("driver("), ~end=String.length(name) - 1))
     : None
 
 /** A library's name in the model carries a mark, which its directory does not. */
@@ -77,7 +78,7 @@ let run = () => {
     switch c.language {
     | None if Drivers.drivers->Dict.get(name) != None =>
       switch (group(c.layer), Drivers.drivers->Dict.get(name), driverDir(name)) {
-      | (_, _, None) => found->Array.push(`${name}: a driver whose name does not end in -driver`)
+      | (_, _, None) => found->Array.push(`${name}: a driver not named driver(...)`)
       | (Some(g), Some(d), Some(dir)) =>
         d.implements->Array.forEach(i =>
           expected->Map.set(
@@ -85,13 +86,17 @@ let run = () => {
             {
               name: `${name} ${(i.kind :> string)}`,
               languages: [i.language],
-              package: `${name}-${(i.kind :> string)}`,
+              package: `${packageName(name)}-${(i.kind :> string)}`,
             },
           )
         )
         expected->Map.set(
           `code/${g}/driver/${dir}/management`,
-          {name: `${name} management`, languages: [d.management], package: `${name}-management`},
+          {
+            name: `${name} management`,
+            languages: [d.management],
+            package: `${packageName(name)}-management`,
+          },
         )
         let given = Set.fromArray(
           d.grounds
