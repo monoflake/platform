@@ -40,14 +40,13 @@ let types: array<declared> = [
     from: "vuanj, 49qyg",
   },
   // What the platform alone decides of an organization, kept under its scope's id: its allowance,
-  // each capability by its name, vuanj; its shadow on the platform beneath, kept by another, 94y0d;
-  // and when its deletion was asked, emptied as it is withdrawn, which the platform carries out even
-  // with the organization's own control gone, b8f35.
+  // each capability by its name, `export` among them, vuanj; and when its deletion was asked,
+  // emptied as it is withdrawn, which the platform carries out even with the organization's own
+  // control gone, b8f35. Nothing of another platform is here: a platform knows itself alone, 94y0d.
   {
     name: "platform-organization",
     def: Record([
       field("allowance", 1, Map(Type("allowance-value"))),
-      optional("shadow", 2, Across(#platform, "organization")),
       optional("deleting", 3, Prim(#uint53)),
     ]),
     from: "v7v3w, vuanj, 94y0d",
@@ -111,7 +110,7 @@ let types: array<declared> = [
 
 let contents: array<content> = [
   {half: #platform, kind: "account", version: 1, content: "account"},
-  {half: #platform, kind: "organization", version: 1, content: "platform-organization"},
+  {half: #platform, kind: "organization", version: 2, content: "platform-organization"},
   {half: #platform, kind: "extension", version: 1, content: "extension"},
   {half: #platform, kind: "lease", version: 1, content: "lease"},
   {half: #platform, kind: "label", version: 1, content: "label", unique: [["label"]]},

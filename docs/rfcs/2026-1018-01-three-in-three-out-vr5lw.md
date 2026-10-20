@@ -781,7 +781,7 @@ out with the author on 2026-10-18.
 **So one platform is built on another by an organization.** The production platform's footing is the
 three that one organization of the foundation platform gives; its control stands on them alone. An
 organization opened on the production platform has its footing, and the compute and storage it buys,
-from a shadow organization the production platform opens on the foundation platform through the foundation
+from a cell the production platform opens on the foundation platform through the foundation
 platform's control; what else it extends comes from the user's own clouds. The foundation platform's own extensions come from
 third-party vendors and the author's machines.
 

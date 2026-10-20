@@ -67,7 +67,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   revoking one, setting its allowance, certifying its key, leasing it what it binds. Its privilege is
   where it stands, never a permission granted: only it reaches the platform's footing, and the
   secrets are deployed to it alone, `?source`. On the platform beneath, it is an ordinary client:
-  the production platform's control opens its shadows on the foundation platform as any admin would.
+  the production platform's control opens its cells on the foundation platform as any admin would, RFC 94y0d.
 - **An organization's control holds what is that organization's alone**: its products'
   configuration, the deployment of its apps, how its extensions are made into its three products,
   and the records its components keep. It answers that organization's admins, and reaches the platform's
@@ -185,7 +185,7 @@ down a layer at a time, each holding its own range alone.
   | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`                              |
   | each resource's name shown and its folder  | its own            | its own footing's `tree` table                                                    |
   | each app mounted under its gateway         | its own            | its own footing's `scope` table, RFC vr5lw                                        |
-  | `allowance`, `shadow`, `deleting`          | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
+  | `allowance`, `deleting`                    | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
   | its status and where its backing is        | the platform's say | the `anchor`, RFC b8f35                                                           |
   | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |
   | its certificate                            | compiled           | no record                                                                         |
@@ -243,8 +243,7 @@ down a layer at a time, each holding its own range alone.
     later.
   - **`deleting` is when an organization's deletion was asked**, empty unless asked, and emptied as
     it is withdrawn; it is the platform's, which carries it out even with the organization's own
-    control gone, RFC b8f35. **`shadow` is the id of an organization's shadow** on the platform
-    beneath, RFC 94y0d, empty on the foundation platform.
+    control gone, RFC b8f35.
 
 - **The platform keeps which organizations each account is in, and nothing of what it is there**:
   a pair of an account and an organization a row of `membership`, reported by the organization's
@@ -328,11 +327,11 @@ service's, or a node.
 - **What stands between an organization's resources and its three products is the platform's**,
   deployed and run by it on those resources, and never shown: an organization sees the three
   products, and, as usage, what the components beneath them cost on its own resources.
-  **A platform sells by opening a shadow organization on the platform beneath.** An organization the
-  production platform opens has a shadow on the foundation platform, opened through the foundation platform's
-  control's API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
-  what each shadow uses is reported, and charged by an app, RFC vr5lw. A user account buys nothing, since it holds
-  nothing.
+  **A platform sells by opening a cell on the platform beneath**, an organization there whose
+  products it imports, RFC 94y0d. An organization the production platform opens has a cell on the
+  foundation platform, opened through the foundation platform's control's API, whose products are
+  given it as its footing and as the extensions it buys; what each cell uses is reported, and
+  charged by an app, RFC vr5lw. A user account buys nothing, since it holds nothing.
 
 **The platform's own vendor accounts hold its footing and the footings it gives its organizations**,
 and are never bound as an extension.
@@ -422,7 +421,7 @@ configuration; its extensions hold its data and run it.**
   revoked with it along the graph of dependencies, and nothing else:
   - the user account is removed from every organization it is in, and one it was the last admin of
     is revoked: its certificate is revoked and never renewed;
-  - every binding a revoked organization holds ends, and the shadows it bought are suspended, RFC
+  - every binding a revoked organization holds ends, and the cells it bought are suspended, RFC
     94y0d; no other organization depends on it, since nothing is shared;
   - the platform stops managing a revoked organization's own accounts and leaves them as they are:
     what runs there is between their owner and the vendor, and nothing is cleaned up on purpose.

@@ -50,6 +50,17 @@ name the same two**, and the four words stand only before platform, never alone,
   and the same capability checks it would meet across the world. What is forbidden is a shortcut
   around the contract: one deployment reading another's files or ports.
 
+**A platform knows itself alone**, decided by the author on 2026-10-20: another platform is outside
+it, whether or not it runs the same code, so nothing of one platform's records names the other's,
+and nothing checks across them. **Between two platforms are an export and an import, each bounded
+by its own side**: the importing platform binds what it takes as an extension, held to that
+extension's quota, RFC v7v3w; the exporting platform holds what each of its organizations may give
+out by the `export` capability of its allowance, RFC 49qyg, which its own control enforces. What
+exports is an app of the exporting organization's own, a driver's contract its interface, RFC
+vr5lw, so the importing platform binds it as it binds any vendor, and a cell is an extension's host
+to it, known by an identifier it never reads. The foundation platform bears its exports' bounds,
+and the production platform never sees past them.
+
 **The foundation platform is pinned to a version the production platform has run.**
 
 - Moving the pin is an upgrade by D3, one component at a time while the rest run, and it can be moved
@@ -165,6 +176,9 @@ a write is confirmed once by the foundation platform as well -- a database's bat
 segments once per write, a parcel once per 16 MiB.
 
 Open, for the discussion that follows:
+
+- What an organization may export, each an amount of the `export` capability -- compute, storage,
+  databases -- and the app that exports it. [C37]
 
 - How a tablet's log is replicated among hosts, simulated on paper before it is built. [C1]
 - What metering counts for each vendor and machine, where the counts are kept, and the margin it

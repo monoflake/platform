@@ -556,6 +556,13 @@ let checklist: array<item> = [
     step: 8,
   },
   {
+    id: "C37",
+    group: #C,
+    what: "what an organization may export to another platform, each an amount of the allowance's export capability -- compute, storage, databases -- and the app of its own that exports it, speaking a driver's contract",
+    from: "94y0d, 49qyg",
+    step: 1,
+  },
+  {
     id: "D1",
     group: #D,
     what: "the app that charges, an organization's on the foundation platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",

@@ -1210,15 +1210,6 @@
 					}
 				},
 				{
-					"name": "shadow",
-					"key": 2,
-					"shape": {
-						"id": "organization",
-						"half": "platform"
-					},
-					"optional": true
-				},
-				{
 					"name": "deleting",
 					"key": 3,
 					"shape": {
@@ -2691,7 +2682,7 @@
 			"kind": "organization",
 			"half": "platform",
 			"writes": ["control(platform)"],
-			"version": 1,
+			"version": 2,
 			"content": "platform-organization",
 			"unique": []
 		},
