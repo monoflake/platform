@@ -1,10 +1,9 @@
 # AGENTS.md
 
-The entry point for anyone starting here with no context. The blueprint is the paper model of the
-platform's next architecture: the design worked out from what an app needs down to what the real
-world already provides, checked by a model, before any of it is built. It is the author's new
-attempt, and the workspace above it is to be rebuilt on what it settles, so a rule of the
-workspace's is never a reason here; its tools are borrowed only where nothing conflicts.
+What anyone working here reads after the workspace's `AGENTS.md`, whose rules hold here as in every
+repository below it; this file adds only what is the blueprint's own. The blueprint is the paper
+model of the platform's next architecture: the design worked out from what an app needs down to
+what the real world already provides, checked by a model, before any of it is built.
 
 It is public at `monoflake/platform`, listed in the workspace's `repos/registry.toml` as
 `monoflake`. Nothing here deploys anything or touches another repository.
@@ -31,24 +30,23 @@ vendor/     other projects' files, copied at one version and left as written
 
 - **The model is the spec**: what a draft decides is written once in `model/`, and the draft keeps
   why. `model/contracts.json` is what every language reads.
-- **A mise task is five lines at most**; past that it is a script in `scripts/`, and a script that
-  begins to compute hands that part to a tool in `code/tools/`.
-- **The root holds the three workspaces' manifests and no package**: `Cargo.toml`, `package.json`
-  with `pnpm-workspace.yaml`, and `rescript.json`, each list held by the check to what `code/` holds.
-- **No directory but the root holds more than 16 entries, and none lies more than 5 deep**, from a
-  top-level directory or a package's root; the check holds both.
+- **A script in `scripts/` decides only order**; one that begins to compute hands that part to a
+  tool in `code/tools/`.
+- **The root's three workspaces list what `code/` holds**: `Cargo.toml`, `package.json` with
+  `pnpm-workspace.yaml`, and `rescript.json`, each list held to it by the check.
 
 ## Commands
 
 The model is ReScript; the tasks are mise's, the tools the workspace's.
 
-| Command                  | Does                                                      |
-| ------------------------ | --------------------------------------------------------- |
-| `pnpm install`           | once, the ReScript compiler                               |
-| `mise run check`         | compiles the model and runs `model/check.res`             |
-| `mise run check --ready` | asks whether building may begin                           |
-| `mise run check --write` | writes `model/contracts.json` again from the model        |
-| `mise run fmt`           | formats the ReScript, the prose and the JSON              |
-| `mise run verify`        | what a commit passes: everything formatted, and the check |
+| Command                  | Does                                                  |
+| ------------------------ | ----------------------------------------------------- |
+| `pnpm install`           | once, the ReScript compiler                           |
+| `mise run check`         | compiles the model and runs `model/check.res`         |
+| `mise run check --ready` | asks whether building may begin                       |
+| `mise run check --write` | writes `model/contracts.json` again from the model    |
+| `mise run fmt`           | formats the ReScript, the prose and the JSON          |
+| `mise run verify`        | everything formatted, the check, and the crates' deny |
 
-A commit is made only after `mise run verify` passes.
+A commit waits on `mise run check monoflake`, run from the workspace: this verify, then the
+workspace's rules over the tree.

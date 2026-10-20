@@ -60,19 +60,15 @@ sources, and none of the design.
 
 ## The tree grows by nesting, never by spreading
 
-Agreed with the author on 2026-10-19. A directory holds at most 16 entries, the root excepted, decided
-by the author on 2026-10-20, and lies at most 5 deep,
-counted from a top-level directory or a package's root -- a directory with a `Cargo.toml`, a
-`package.json` or a `rescript.json` -- its first subdirectory 1. What outgrows a directory is nested
-in it as its abstraction rises, never laid beside the rest. Both numbers are for now: one reached
-asks first whether it still fits the platform, and only then how the tree is cut below it.
-`model/checks/layout/tree.res` holds both.
+Agreed with the author on 2026-10-19, and the workspace's rule since 2026-10-20: its
+`docs/repos.md`, "A tree grows by nesting, never by spreading", gives the limits, and its check
+holds this tree to them. Here a limit reached asks first whether the tree still fits the platform.
 
 ## A task is an entry, a script an order, a tool a program
 
-Agreed with the author on 2026-10-19. **A mise task is five lines at most**, an entry and nothing
-more; past that it is a script in `scripts/`, at the top, since it drives the model, the code and the
-documents alike. **A script decides only order**: what runs, with which arguments, and where it
+Agreed with the author on 2026-10-19. A task is the workspace's entry, its lines limited there --
+the workspace's `docs/toolchain.md`. Past that it is a script in `scripts/`, at the top, since it
+drives the model, the code and the documents alike. **A script decides only order**: what runs, with which arguments, and where it
 stops on a failure. **What computes is a tool**, a program in `code/tools/` with its tests: once a
 script parses, converts or generates, that part is moved into a tool and the script calls it. Both
 are ReScript, and TypeScript only where a library's surface is too wide to bind; Python never.
