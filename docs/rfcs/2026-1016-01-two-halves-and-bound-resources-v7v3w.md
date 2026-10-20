@@ -21,11 +21,11 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The components that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                     |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it lends of them, the deployer, the intermediate, the anchor, the root |
-| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those lent to it, and the records its components keep: its bundle, its backing, the extent's records, each tablet's writer, the clock's leases   |
-| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                               |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                   |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform           | the platform half's, RFC 8lkuv                     | what the platform half stands on         | what spans organizations, known to an organization as two roles: the authority, its existence, allowance, certificate and loans, RFC 7xpd3; and the directory, where its backing is, RFC 4dijn          |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those lent to it, and the records its components keep: its bundle, its backing, the extent's records, each tablet's writer, the clock's leases |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                             |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -34,11 +34,6 @@ first row; an organization's half is the other two.
 **Whoever controls a resource can see what runs on it.** So nothing that spans organizations is
 placed on a resource an organization holds, and an organization that binds a resource others bind
 trusts its holder as it trusts a vendor.
-
-**The platform's half runs on serverless vendors only.** One now, Cloudflare, taken as the ground
-and ideal in s0; others may be added later, as extensions or beneath the footing's contract, and not
-before the platform carries enough to judge its stability by. A node never runs the platform's half:
-a machine given both to the platform and to its users is the problem this avoids.
 
 **A vendor is borrowed without binding the platform to it.**
 
@@ -52,34 +47,24 @@ a machine given both to the platform and to its users is the problem this avoids
 - **The platform can always be stood up again** from its source and the state it keeps, on a new
   account, by the operator.
 
-**The platform runs as two deployments of one code**, a foundation platform on third-party vendors
-and a production platform standing on it, RFC 94y0d; what follows holds of each.
+**A platform may stand on another, one code as more than one deployment**, RFC 94y0d; what follows
+holds of each.
 
 **A control is an HTTPS API, and nothing else**, worked out with the author on 2026-10-18. There
-are two: **the platform's control**, the platform's half, which runs in no organization and stands on
-the platform's footing alone, from the layer beneath, `docs/scope.md`; and **each organization's
-control**, which the platform runs for it on the footing it gives it, RFC vr5lw. No name is
+are two: **the platform half's**, which runs in no organization and which an organization knows as
+the authority, RFC 8lkuv; and **each organization's control**, which the platform runs for it on the
+footing it gives it, RFC vr5lw. No name is
 reserved: neither is an app, and neither lives in an organization's namespace.
 
-- **The platform's control holds what no one organization can.** It sees every organization -- the
-  anchor, the names unique across them, the accounts that sign in -- holds the platform's secrets,
-  the masters and the intermediate key, and acts on organizations: opening, suspending, deleting and
-  revoking one, setting its allowance, certifying its key, leasing it what it binds. Its privilege is
-  where it stands, never a permission granted: only it reaches the platform's footing, and the
-  secrets are deployed to it alone, `?source`. On the platform beneath, it is an ordinary client:
-  the production platform's control opens its cells on the foundation platform as any admin would, RFC 94y0d.
 - **An organization's control holds what is that organization's alone**: its products'
   configuration, the deployment of its apps, how its extensions are made into its three products,
-  and the records its components keep. It answers that organization's admins, and reaches the platform's
-  control only for what the platform holds of it.
-- **The console is a dashboard, an ordinary app in an ordinary organization**, named `console`, a
-  name reserved for the platform that the operator gives it as it is opened at step 0, and holding
-  no privilege: whatever it does it does through the two
-  APIs, with the credential of whoever uses it. The APIs are what is kept; a dashboard, a client or
-  neither is for later. **A dashboard draws, and computes nothing**: every warning, every choice
+  and the records its components keep. It answers that organization's admins, and reaches the
+  authority only for what the platform half holds of it, RFC 7xpd3.
+- **A client draws, and computes nothing**: every warning, every choice
   offered and whether a warning was dismissed comes from the API, which keeps a dismissal as
   configuration, so every client shows the same and none works it out again; a dashboard may only
-  reshape what it is given for display. How a person is authenticated to either API is below.
+  reshape what it is given for display. How a person is authenticated to an organization's control is
+  below.
 - **A warning is one model, whatever raises it**, worked out with the author on 2026-10-19, and a
   reminder is a warning raised ahead of a date: its kind, a code; what it is about, an id; when it
   was raised; what it says, from the API; whether it may be dismissed; and, once dismissed, the
@@ -87,12 +72,12 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   cleared when the cause is gone, by whatever finds it, so the API returns the same warnings to
   every client. **Sending one elsewhere, as an email, is a delivery of the same warning**, added
   later. [D14]
-- **Everything that serves runs in an organization**, and none of it needs the platform's control to
-  serve or to start: an organization reads its bundle, and reaches the platform's control only to
-  change it, which `model/check.res` checks.
+- **Everything that serves runs in an organization**, and none of it needs the authority to serve or
+  to start: an organization reads its bundle, and reaches the authority only to change it, which
+  `model/check.res` checks.
 
 **A control changes what it holds by generations**, worked out with the author on 2026-10-18, alike
-in the platform's control, an organization's and the extensions each binds.
+in every control and the extensions each binds.
 
 - **Each change accepted is a generation**: one record changed, or a batch of them changed together
   or not at all. It is checked against the whole of what the control holds, so nothing still
@@ -125,7 +110,7 @@ in the platform's control, an organization's and the extensions each binds.
     RFC 13ixj; never eight hex digits a part, so wherever an id is taken a path may be taken
     instead. **Within a folder a type and a slug are unique together**, the `tree` table's key, so
     an app and a database of one project may share a slug and two apps may not; a path carries no
-    type, which the console draws and a command names.
+    type, which a client draws and a command names.
   - **A folder alone holds nodes**, so every part of a path but the last is a folder; it is deleted
     only while empty, from the leaves inward, RFC vuanj. Moving or renaming a node changes its
     `parent` or `slug` and never its id, and is a generation as every change is.
@@ -149,66 +134,45 @@ like.
 - **A user account is an id and holds no resource**, its record its own settings alone. Any number of organizations may name it, each as a
   member, who may use what the organization holds, or as an admin, who may also manage it.
   Everything in an organization is visible to every member.
-- The operator never signs in to the console.
 
-**A person signs in to the platform's control, and is a member by their organization's**, worked
-out with the author on 2026-10-18. The platform keeps accounts and nothing of what an organization
+**A person signs in to the platform half, and is a member by their organization's**, worked out
+with the author on 2026-10-18. The platform half keeps accounts and nothing of what an organization
 does; an organization keeps who its members are and nothing of how they sign in. Trust is handed
 down a layer at a time, each holding its own range alone.
 
-- **Signing in gives an account credential**, short-lived, signed by the platform's control and
-  naming the account alone. An organization's control checks it by the platform's public key,
+- **Signing in gives an account credential**, short-lived, signed by the authority and naming the
+  account alone, RFC 7xpd3. An organization's control checks it by the platform's public key,
   without reaching the platform, checks the account against its own members, and its issuer signs
   the capabilities a member or an admin is given. Past that, both controls take capabilities alone,
-  as every component does, so a person, an app's code and the production platform's control are checked
-  alike.
-- **The platform's control lost, no one signs in anew**: a credential already given serves until it
-  expires, and every organization goes on running.
-- **An account signs in by any of the ways it holds**: a passkey; GitHub, Google or Apple; a link
-  sent by email; a password; a TOTP code. A password is one way among them and never required, so an
-  account may hold none. The platform may later sign people in to others' apps itself, by OAuth.
-  [D10]
-- **An account sets how many of its ways a sign-in asks, and fewer than two is warned of, never
-  dismissed**: the warning is the platform's control's, given by its API with whether it may be
-  dismissed, so a client draws it and decides nothing, as a dashboard does above.
+  as every component does, so a person, an app's code and the controls of a platform above are
+  checked alike.
+- **The authority lost, no one signs in anew**: a credential already given serves until it expires,
+  and every organization goes on running.
 - **Who holds a thing is told by who may change it**, worked out with the author on 2026-10-19:
   what an owner changes as it likes, touching no one else, is the owner's own record; what is unique
-  across owners is the platform's, a table of its own whose key is that value, since only a key
-  keeps it unique, never a field in a record's content -- a kind whose content names its key,
-  `unique`, decided by the author on 2026-10-20, so each row is still a record of a generation; and what the platform alone decides of an
-  owner is the platform's record of it.
+  across owners is the platform half's; and what the platform alone decides of an owner is the
+  authority's record of it.
 
-  | Of an organization                         | Is                 | Kept                                                                              |
-  | ------------------------------------------ | ------------------ | --------------------------------------------------------------------------------- |
-  | `name`, `description`, `security`, `grace` | its own            | its own control's `configuration`, kind `organization`                            |
-  | each member and its role                   | its own            | its own control's `configuration`, kind `member`                                  |
-  | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`                              |
-  | each resource's name shown and its folder  | its own            | its own footing's `tree` table                                                    |
-  | each app mounted under its gateway         | its own            | its own footing's `scope` table, RFC vr5lw                                        |
-  | `allowance`, `deleting`                    | the platform's say | the platform control's `configuration`, kind `organization`, under its scope's id |
-  | its status and where its backing is        | the platform's say | the `anchor`, RFC b8f35                                                           |
-  | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |
-  | its certificate                            | compiled           | no record                                                                         |
+  | Of an organization                         | Is                 | Kept                                                        |
+  | ------------------------------------------ | ------------------ | ----------------------------------------------------------- |
+  | `name`, `description`, `security`, `grace` | its own            | its own control's `configuration`, kind `organization`      |
+  | each member and its role                   | its own            | its own control's `configuration`, kind `member`            |
+  | each invitation not yet accepted           | its own            | its own control's `configuration`, kind `invitation`        |
+  | each resource's name shown and its folder  | its own            | its own footing's `tree` table                              |
+  | each app mounted under its gateway         | its own            | its own footing's `scope` table, RFC vr5lw                  |
+  | `allowance`, `deleting`                    | the platform's say | the authority's record of it, RFC 7xpd3                     |
+  | its status and where its backing is        | the platform's say | the authority's record and the directory, RFCs 7xpd3, 4dijn |
+  | its label                                  | unique             | the platform half's                                         |
+  | its certificate                            | compiled           | no record                                                   |
 
   What is its own is `model/contracts/records/control.res`; what is the platform's say,
-  `model/contracts/records/platform.res`.
-
-  | Of an account                                      | Is                   | Kept                                                                                                                         |
-  | -------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-  | `name`, `factors`, `security`, its contact `email` | its own              | the platform control's `configuration`, kind `account`                                                                       |
-  | a password's hash, a TOTP seed                     | its own              | the same, sealed: they check an account already found, and find none                                                         |
-  | its status                                         | the platform's say   | the platform's `account` table, an account's anchor: `active`, or `revoked` by the operator, final, its id never given again |
-  | each way it is found by as it signs in             | unique               | the platform's `sign-in` table, a kind and an identifier to the account                                                      |
-  | its username                                       | unique               | the platform's `username` table, a username to the account                                                                   |
-  | the organizations it is in                         | the platform's index | the platform's `membership` table                                                                                            |
-
-  Each is `model/contracts/records/platform.res` but the status, the anchor's.
+  `model/contracts/records/platform.res`. **An account is an id to an organization**, known by the
+  credential it holds and nothing of its own record.
   - **A username and a label are written alike**, worked out with the author on 2026-10-19, since
-    either may stand in a domain name, a label in `{organization}.mofl.fyi` now and a username
-    later: lowercase ASCII letters, digits and the hyphen alone, beginning and ending with a letter
-    or a digit, as RFC 1123 has a host's name; never beginning `xn--`, punycode's; of 3 to 16
-    characters, as many as an extension or a name shown, and only ever raised, well inside the 63 a
-    DNS label holds; and never eight hex digits, which would read as a
+    either may stand in a domain name: lowercase ASCII letters, digits and the hyphen alone,
+    beginning and ending with a letter or a digit, as RFC 1123 has a host's name; never beginning
+    `xn--`, punycode's; of 3 to 16 characters, as many as an extension or a name shown, and only ever
+    raised, well inside the 63 a DNS label holds; and never eight hex digits, which would read as a
     scope's id, RFC vr5lw. A dot would make another level of the name, and an underscore no public
     CA certifies, `docs/lessons/`. Upper case given is lowered.
   - **A name shown is an account's or an organization's `name`**, set as its owner likes in ASCII
@@ -218,38 +182,21 @@ down a layer at a time, each holding its own range alone.
   - **A member is written only once it accepts**, worked out with the author on 2026-10-19: an
     admin invites an account, an `invitation` of the organization's own naming the account and the
     role offered, and the account's acceptance writes the `member`, its account and its role,
-    `member` or `admin`, and reports it to `membership`, `model/contracts/records/control.res`. So no one is put in an organization
-    unasked, and none is listed among an account's that it never joined. An invitation lasts seven
-    days, as a certificate does, and is sent again once it lapses.
+    `member` or `admin`, and is reported to the platform half, `model/contracts/records/control.res`.
+    So no one is put in an organization unasked. An invitation lasts seven days, as a certificate
+    does, and is sent again once it lapses.
   - **No username or label is given that the platform reserves**, worked out with the author on
     2026-10-19: one list for both, since either may stand in a domain name, `model/names/reserved.res`,
     merged from the names a site keeps from its users, `vendor/`, the mailboxes RFC 2142 names, and
     the platform's own words and providers. **The list only grows**, and a name added that someone
     holds stays theirs: it keeps the name from whoever would take it next.
   - **Reserved means kept for the platform**, worked out with the author on 2026-10-19: the
-    ordinary flow refuses a reserved name to whoever asks, on the foundation platform and the production platform
-    alike, and the operator alone gives one, by hand, to an organization of the platform's own. The
-    check holds that every label the platform's own organizations hold is reserved, so no one takes
-    it first.
-  - **Its contact `email` is required and verified**, and unique to no one, so one person may have
-    two accounts reached at one address: where the platform reaches the person, as an organization
-    is deleted, the account revoked or a security event comes. An address one signs in by is a row
-    of `sign-in`, apart.
-  - **A way one is found by** is a passkey's credential id, a provider's id for the user with the
-    provider, or an address a link is sent to; a password and a TOTP code are checked once the
-    account is found.
-  - **`factors` is how many ways a sign-in asks**, at least one; **`security` is `default` or
-    `strict`**, how long its credential lives, RFC vuanj, named so since a tier is an account's plan,
-    later.
+    ordinary flow refuses a reserved name to whoever asks, on any platform, and the operator alone
+    gives one, by hand, to an organization of the platform's own. The check holds that every label
+    the platform's own organizations hold is reserved, so no one takes it first.
   - **`deleting` is when an organization's deletion was asked**, empty unless asked, and emptied as
-    it is withdrawn; it is the platform's, which carries it out even with the organization's own
+    it is withdrawn; it is the authority's, which carries it out even with the organization's own
     control gone, RFC b8f35.
-
-- **The platform keeps which organizations each account is in, and nothing of what it is there**:
-  a pair of an account and an organization a row of `membership`, reported by the organization's
-  control as its members change, so the console lists an account's organizations and a revocation
-  reaches each. What the account is in one is asked of that organization. The pairs are an index,
-  never the truth: lost, they are gathered again from the organizations.
 
 **A resource is a place that offers capabilities**: a third-party account, a vendor's or any other
 service's, or a node.
@@ -277,11 +224,11 @@ service's, or a node.
 - **An organization has at least one admin.** The last admin leaving is the organization dissolved,
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
 - **An organization runs nothing until a resource is bound or lent to it.**
-- **Both controls bind extensions, by one piece of code**, worked out with the author on
-  2026-10-18. The platform's control and each organization's hold their own extensions alike --
+- **Every control binds extensions by one piece of code**, worked out with the author on
+  2026-10-18. Each holds its own extensions alike --
   each host's binding and its credentials, the binding's quota, levels and grace, the relays and
   private networks its hosts may use, the capacity lists sent to each driver and what each driver
-  reports -- so it is written once and runs in both.
+  reports -- so it is written once, here, and runs in every one.
   - **An extension's record is `model/contracts/records/control.res`**, kind `extension`,
     worked out with the author on 2026-10-19: an extension is a host injected from outside, never
     made within, and what is made within binds it. Its record holds where its driver's
@@ -297,11 +244,10 @@ service's, or a node.
   records, its shell, its grace -- and touches nothing else of the borrower's. A driver is told
   nothing of a loan: it sees one binding more. The platform lends to its organizations. **It is
   named a loan**, decided by the author on 2026-10-20, as a lease is a clock's lock, b8f35.
-  - **A loan is a record on either side**, worked out with the author on 2026-10-19: the lender's
-    `loan` names the extension it lent of, the borrower organization and the quota; the borrower's
-    is an `extension` like any, whose `lender` names who lent it, so its control knows the host's
-    management token and shell key are the lender's, never its own, and the console shows it
-    lent.
+  - **A loan is a record on either side**, worked out with the author on 2026-10-19: the
+    borrower's is an `extension` like any, whose `lender` names who lent it, so its control knows
+    the host's management token and shell key are the lender's, never its own, and a client shows
+    it lent.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
   vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
   extension; its extensions give compute, storage and databases, a database only in the platform's
@@ -329,13 +275,9 @@ service's, or a node.
   deployed and run by it on those resources, and never shown: an organization sees the three
   products, and, as usage, what the components beneath them cost on its own resources.
   **A platform sells by opening a cell on the platform beneath**, an organization there whose
-  products it imports, RFC 94y0d. An organization the production platform opens has a cell on the
-  foundation platform, opened through the foundation platform's control's API, whose products are
-  given it as its footing and as the extensions it buys; what each cell uses is reported, and
-  charged by an app, RFC vr5lw. A user account buys nothing, since it holds nothing.
-
-**The platform's own vendor accounts hold its footing and the footings it gives its organizations**,
-and are never bound as an extension.
+  products it imports, RFC 94y0d: an organization above has a cell beneath, opened through that
+  platform's API, whose products are given it as its footing and as the extensions it buys, and
+  what each cell uses is reported. A user account buys nothing, since it holds nothing.
 
 No app calls an app of another organization, RFC 49qyg.
 
@@ -352,18 +294,18 @@ configuration; its extensions hold its data and run it.**
 | compute  | apps, versions, declarations, bindings, env | what a call leaves behind: a schedule's repeats dropped, a queue's messages                  |
 
 - **Whatever an organization opens is configuration, whoever opens it**: a bucket, a database, an
-  app -- by a person through the console, or by an app's own code calling its organization's control at
+  app -- by a person through a client, or by an app's own code calling its organization's control at
   run time, RFC zn3u5 -- and an extension bound, through the control that binds it. Data is only what
   lives inside what was opened.
-- **Two truths, each changed in one place.** The platform's control holds each organization's
-  existence, allowance and certificate, and what it lends it; the organization's own control
+- **Two truths, each changed in one place.** The authority holds each organization's existence,
+  allowance and certificate, and what it lends it, RFC 7xpd3; the organization's own control
   holds its products' configuration and its own extensions, and makes its three products of them as
-  it likes, which is the organization's business and none of the platform's. The platform's control
-  lost, no organization is added and nothing is lent anew, and nothing else stops: an
+  it likes, which is the organization's business and none of the platform's. The authority lost,
+  no organization is added and nothing is lent anew, and nothing else stops: an
   organization's control goes on binding its own extensions and opening what they can hold.
 - **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the
-  root. The platform's gives an organization its certificate, allowance and loans, each day
-  and on a change; the organization's control compiles its own configuration with it into the
+  root. The authority's record gives an organization its certificate, allowance, loans and status,
+  pulled when its control holds none and on a notice, RFC 7xpd3; the organization's control compiles its own configuration with it into the
   bundle its components serve from and from nothing else -- its grants, its allowance, its schedules, its
   backing, the policy placement follows. **Both are kept in the organization's footing**, and a
   compute's deployment says only where that is, so a compute that starts reads the newest bundle it
@@ -382,18 +324,16 @@ configuration; its extensions hold its data and run it.**
     host it never reached waits for its control.
   - **The host that runs a deployment sees its secrets**, as whoever controls a resource sees what
     runs on it, above. Sealing keeps them from whoever holds the data alone -- the footing's vendor,
-    a token leaked, a snapshot -- and so keeps the foundation platform's data from opening the
-    production platform's parcels, RFC 94y0d.
-- **An organization signs its own capabilities**, with a key of its own that the intermediate
-  certifies for seven days and renews every day. So an organization runs on its own for at least six
+    a token leaked, a snapshot -- and so keeps the platform beneath from opening the parcels of the
+    one above, RFC 94y0d.
+- **An organization signs its own capabilities**, with a key of its own that the authority
+  certifies for seven days and renews every day, RFC 7xpd3. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the
   platform takes over again when it returns.
 - **Each bundle is signed by the control that compiles it**, worked out with the author on
-  2026-10-18, as a signed record of RFC b8f35's form: the platform's by a working key of the
-  platform's control, which the intermediate certifies for a short while, the intermediate itself
-  certifying keys and signing nothing else; an organization's by a key its control alone holds,
-  apart from the key its issuer signs capabilities with, certified as that one is, for seven days
-  and renewed every day. So a component of the data plane taken over can sign a capability and never a
+  2026-10-18, as a signed record of RFC b8f35's form: the authority's by its own key in a chain to
+  the root, RFC 7xpd3; an organization's by a key its control alone holds, apart from the key its
+  issuer signs capabilities with, certified as that one is, for seven days and renewed every day. So a component of the data plane taken over can sign a capability and never a
   configuration.
 - **A bundle is kept as CBOR**, its `version` read first, as the workspace's `spec/json.md` has every
   record, with its generation; an organization's names the generation of the platform's it was
@@ -439,7 +379,3 @@ configuration; its extensions hold its data and run it.**
 Open, for the discussion that follows:
 
 - How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]
-- What the app that charges reads of use, and how it acts on an organization. [D1]
-- Which ways of signing in each step builds, and what sends an email's link. [C27]
-- What one way counts for among a sign-in's factors, a passkey among them, and how an account that
-  lost every way it held is given back. [C28]

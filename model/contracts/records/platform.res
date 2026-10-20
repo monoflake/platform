@@ -1,8 +1,8 @@
 /**
  * What of the platform half's records an organization's half reads, RFC 8lkuv: what the authority
  * alone decides of an organization, its allowance and its deletion, RFC v7v3w. An account is an id
- * here and nothing more; its record, and every other the platform's control keeps, is
- * monoflake/cloud's.
+ * here and nothing more; its record, and every other the platform half keeps, is the platform
+ * half's.
  */
 open Subset
 

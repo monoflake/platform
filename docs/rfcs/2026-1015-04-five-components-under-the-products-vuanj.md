@@ -25,24 +25,24 @@ to what the platform is made of:
 
 | Layer     | What it is                                                                 |
 | --------- | -------------------------------------------------------------------------- |
-| +1 and up | Users' apps, the console's dashboard among them, an app like any other     |
+| +1 and up | Users' apps, the platform's own among them, each an app like any other     |
 | 0         | The products an app sees: the storage, databases and functions             |
 | -1        | The components the products are made of, this RFC                          |
 | -2        | What the components stand on: backings, the extent and hosts, RFC b8f35    |
-| -3        | The anchor, the one global state, on a vendor's primitive, RFC b8f35       |
+| -3        | The directory, the one global state, the platform half's, RFC b8f35        |
 | -4        | The root, which depends on nothing and everything needs, RFC b8f35         |
 | ground    | Each owner's footing, one database, and the vendors' primitives, RFC b8f35 |
 
 **The platform runs on itself wherever an ordinary owner could.** What the platform runs is of
 three kinds:
 
-- **What an ordinary scope's permissions are enough for**, the console among them, is deployed in
+- **What an ordinary scope's permissions are enough for**, a dashboard among them, is deployed in
   an organization of the platform's that holds no privilege, down the path every owner takes. It may
   be given a larger allowance, which is a value, not a privilege.
 - **What needs a privilege no owner holds**, reaching across scopes, never shares the owners' path,
   so nothing on that path has to tell a privileged request from another, or can let one leak. It
-  runs apart, beneath that path. The platform's control is one, and the only one known: an HTTPS API on the platform's footing, in
-  no organization, RFC v7v3w.
+  runs apart, beneath that path: the platform half, which an organization knows as the authority and
+  the directory, in no organization, RFC 8lkuv.
 - **The components at layer -1 and below**, which keep the platform up and place what owners run. They
   are no app, and are never placed among apps.
 

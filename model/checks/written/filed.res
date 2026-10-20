@@ -26,11 +26,16 @@ let run = () => {
     found
   }
   let marks: array<mark> = []
-  let rfcs = urlIn("docs/rfcs/", root)
-  readdirSync(rfcs)
-  ->Array.filter(f => f->String.endsWith(".md"))
-  ->Array.toSorted(byText)
-  ->Array.forEach(file => {
+  // This repository's drafts, and the other half's where they are given, RFC 8lkuv.
+  let given: array<string> = Fill.part("rfcs")->Option.getOr([])
+  [urlIn("docs/rfcs/", root), ...given->Array.map(absolute)]
+  ->Array.flatMap(rfcs =>
+    readdirSync(rfcs)
+    ->Array.filter(f => f->String.endsWith(".md"))
+    ->Array.toSorted(byText)
+    ->Array.map(file => (rfcs, file))
+  )
+  ->Array.forEach(((rfcs, file)) => {
     let text = readFileSync(urlIn(file, rfcs))
     let at = text->String.indexOf("Open, for the discussion that follows:")
     if at >= 0 {
@@ -122,8 +127,8 @@ let run = () => {
     if !(item.id->String.startsWith((item.group :> string))) {
       rowsWrong->Array.push(`${item.id}: filed under ${(item.group :> string)}`)
     }
-    if item.group == #C && steps != [] && item.step->Option.mapOr(true, s => steps[s] == None) {
-      rowsWrong->Array.push(`${item.id}: names no step of the bootstrap path`)
+    if item.group == #C && item.step == None {
+      rowsWrong->Array.push(`${item.id}: names no step it waits for`)
     }
     if item.group != #C && item.step != None {
       rowsWrong->Array.push(`${item.id}: only a row of group C waits for a later step`)
@@ -153,7 +158,7 @@ let run = () => {
   | Some(a) if a->String.includes("=") => number(a->String.split("=")->Array.getUnsafe(1))
   | _ => 0.
   }
-  if ready && (!isInteger(upTo) || (steps != [] && steps[upTo->Float.toInt] == None)) {
+  if ready && !isInteger(upTo) {
     rowsWrong->Array.push(`--ready=${num(upTo)} names no step of the bootstrap path`)
   }
   let open_ = checklist->Array.filter(x => x.done == None)

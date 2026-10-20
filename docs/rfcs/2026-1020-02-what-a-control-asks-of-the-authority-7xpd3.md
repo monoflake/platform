@@ -10,10 +10,10 @@ references: []
 
 ## Question
 
-RFC 8lkuv names the platform's control, as an organization's control needs it, a role of its own,
-since the platform half is another repository's. The edge is drawn today -- an organization's
+RFC 8lkuv names what an organization's control needs of the platform half a role of its own, since
+the platform half is another repository's. The edge is drawn today -- an organization's
 control copies down its certificate, allowance and loans each day and on a change, RFC v7v3w -- but
-its contract is undeclared, `?control(platform)`. Whatever is decided here is what a team running
+its contract is undeclared, `?authority`. Whatever is decided here is what a team running
 its own platform writes as glue, so how small that glue can be is decided here too.
 
 What the role does for one organization is settled by the drafts already: it opens, suspends,

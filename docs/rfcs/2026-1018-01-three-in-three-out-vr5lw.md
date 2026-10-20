@@ -260,12 +260,12 @@ was built**, worked out with the author on 2026-10-18.
   binding may hold in all, its quota, RFC v7v3w; and how much the machine has free now, as its
   driver reports. A deployment past any of them is refused, naming which.
 - **Charging is no part of the platform**, worked out with the author on 2026-10-18: what one
-  platform takes as a resource another sells -- the foundation platform's own cloud is the production platform
-  one's resource, and the production platform's user's own cloud is theirs -- so what is a cost depends on
+  platform takes as a resource another sells -- one platform's own cloud is the resource of the
+  platform above it, and that platform's users' own clouds are theirs -- so what is a cost depends on
   who looks. The platform keeps bounds and reports use, each binding's own; what a vendor charges
-  is between it and its account; and what charges on a platform is an app of an organization's on
-  the foundation platform, which reads use through the controls' APIs as any client does, and acts through
-  them as its capability allows, bounding or suspending an organization.
+  is between it and its account; and what charges on a platform is an app, which reads use through
+  the controls' APIs as any client does, and acts through them as its capability allows, bounding
+  or suspending an organization.
 
 **Availability and durability are one model, applied to compute, databases and storage alike**,
 worked out with the author on 2026-10-18:
@@ -329,15 +329,14 @@ definition:
 | D1                          | --                                         | --                    | a small one                                   |
 | R2                          | --                                         | `object`              | --                                            |
 
-**A platform's footing is one of each, and for its control alone.** Beneath every platform is one
-compute, one storage and one database, each meeting one kind of its class at least -- a Worker's
-function, R2's `object` and D1 give the foundation platform's -- trusted as ideal, `docs/scope.md`. Its
-compute must give a function, and `effect` among it, since a control writes and answers an API; it
-needs no `instance`, keeping its state in its database alone. Only the platform's control uses
-them, RFC v7v3w.
+**A footing is one of each, and for a control alone.** It is one compute, one storage and one
+database, each meeting one kind of its class at least -- on Cloudflare a Worker's function, R2's
+`object` and D1 -- trusted as ideal, `docs/scope.md`. Its compute must give a function, and
+`effect` among it, since a control writes and answers an API; it needs no `instance`, keeping its
+state in its database alone.
 
-**Every organization is kept as the platform is: a control on a footing, and its apps on what it
-extends**, RFC v7v3w. Its control stands on one compute, one storage and one database the platform
+**Every organization is kept so: a control on a footing, and its apps on what it extends**, RFC
+v7v3w. Its control stands on one compute, one storage and one database the platform
 gives it, and keeps its records there; its apps stand on the compute and storage extended into it,
 of any kinds, and databases given in the platform's own contract or made of compute and a volume.
 Above, a platform
@@ -348,8 +347,8 @@ gives as many of the three as it has organizations to give them through.
 itself: on a machine as a process, on an account as what that account runs. One driver gives every
 kind its host can, of compute, storage and databases, in the platform's terms; it serves every
 binding of it, of any organization on any platform, and keeps them apart, RFC v7v3w; and its own
-management it shows to no binding. The foundation platform gives an organization's three products to
-the production platform through the same interface, so one platform's output is the next one's input, and
+management it shows to no binding. A platform gives an organization's three products to a platform
+above through the same interface, RFC 94y0d, so one platform's output is the next one's input, and
 one code is both.
 
 - **A driver manages, and data goes past it.** It opens, lists and ends what it gives, and reports
@@ -562,7 +561,7 @@ with credentials of their own, three in all:
     open [C24];
   - of the keys of no such form, with password logins off: one is taken for the holder's own and
     advised kept; more than one bring a warning that may be dismissed, advising one kept beside the
-    platform's; none at all is allowed too, a holder reaching the machine by its console instead.
+    platform's; none at all is allowed too, a holder reaching the machine as its provider lets it instead.
     Recognizing a key by its form is for showing, never for trusting.
 
 **A call goes by a path the platform compiles, never one the caller chooses.** Worked out with the
@@ -703,7 +702,7 @@ out with the author on 2026-10-18.
        and every name beneath it**, so one record at `example.com` stands for `api.example.com` and
        the rest.
     2. **A CNAME, followed to its end**: only who keeps a domain's records can point it at
-       `{scope-id}.mofl.fyi`, an organization's name by its scope's id, which is never given again.
+       `{scope-id}.{apps}`, an organization's name by its scope's id, which is never given again.
        One at a label proves nothing, since a label let go may be another's.
     3. **An HTTP challenge, where neither is seen** -- a domain's apex, flattened to addresses, or a
        name behind its own proxy -- so a name already pointed at the platform is proven with no
@@ -737,13 +736,14 @@ out with the author on 2026-10-18.
   takes nothing of Let's Encrypt's count for the platform's domain; that one is given across accounts,
   the name DNS only, is to be tried. [C26] Where it holds no domain, the vendor's address or the user's own domain serves instead.
   `docs/lessons/`
-- **An organization is given one platform name, `{organization}.mofl.fyi`, bound to its
-  gateway**, worked out with the author on 2026-10-19: of a domain apart from the platform's own, as
-  a vendor keeps its users' pages off its own domain, so nothing an organization's app sets reaches
-  the platform's console or controls. `*.{organization}.mofl.fyi` is never given: an app is public
+- **An organization is given one platform name, `{organization}.{apps}`, bound to its gateway**,
+  worked out with the author on 2026-10-19: `{apps}` a domain apart from the one every control of
+  the platform answers at, which the operator chooses, as a vendor keeps its users' pages off its
+  own domain, so nothing an organization's app sets reaches a control or a client of one.
+  `*.{organization}.{apps}` is never given: an app is public
   under the gateway or at a name of the organization's own, which the organization holds and binds
-  to any of its resources. Which organization holds a label of the domain is the platform's
-  `label` table, beside the anchor in the platform's footing, RFC v7v3w; which app a name of the
+  to any of its resources. Which organization holds a label of the domain is the platform
+  half's, RFC v7v3w; which app a name of the
   organization's is bound to is its own control's, and a name is bound to one app at a time; a
   label the platform reserves, as `www`, `api` and `status`, is never given, RFC v7v3w.
   - **The domain is asked of the Public Suffix List before the platform opens to the public**,
@@ -769,7 +769,7 @@ out with the author on 2026-10-18.
     a name added, made preferred, and the old unbound when the user likes; **unbinding is what
     breaks a link, and is warned of as such**, a preferred name changed is not.
 - **A certificate service gives a machine its names' certificate**, worked out with the author on
-  2026-10-18: an app like any other, in an organization of the foundation platform's own, which asks a
+  2026-10-18: an app like any other, in an organization of the platform's own, which asks a
   public CA by ACME and its DNS challenge -- Google's first, which counts no domain's certificates;
   Let's Encrypt beside it -- and renews and, where its CA allows, revokes.
   - **A key never leaves its machine**: the driver makes it and hands the service a request for a
@@ -777,20 +777,19 @@ out with the author on 2026-10-18.
     until the driver makes a new key.
   - **It holds no token able to move a name**: each platform name's `_acme-challenge` is delegated
     by a CNAME to a zone kept for validation alone, and the service holds a token for that zone
-    only; the records that point a name stay the platform's control's.
+    only; the records that point a name stay the platform half's.
   - **A machine serving an organization's gateway is given a certificate for
-    `{organization}.mofl.fyi`**, its own key behind it. Its holder could answer for another of the
+    `{organization}.{apps}`**, its own key behind it. Its holder could answer for another of the
     organization's names only where that name's traffic reached it, and the platform points the
     names. Let's Encrypt issues one set of names five times a week, so through it an organization
     adds five machines a week at most, `docs/lessons/`.
   - A driver asks for a name's certificate with a capability naming it.
 
-**So one platform is built on another by an organization.** The production platform's footing is the
-three that one organization of the foundation platform gives; its control stands on them alone. An
-organization opened on the production platform has its footing, and the compute and storage it buys,
-from a cell the production platform opens on the foundation platform through the foundation
-platform's control; what else it extends comes from the user's own clouds. The foundation platform's own extensions come from
-third-party vendors and the author's machines.
+**So one platform is built on another by an organization**, RFC 94y0d: the footing of the platform
+above is the three that one organization beneath gives, and its control stands on them alone. An
+organization opened above has its footing, and the compute and storage it buys, from a cell the
+platform above opens beneath through that platform's API; what else it extends comes from its
+users' own clouds.
 
 Open, for the discussion that follows:
 

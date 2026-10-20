@@ -43,8 +43,9 @@ components, libraries and edges, each with its contract:
 
 **What a user runs is MIT OR Apache-2.0, and what stands it up as the hosted platform is kept
 apart**, decided by the author on 2026-10-20, replacing an AGPL-3.0-only control plane decided
-earlier that day. `control(platform)`, `anchor` and `console`, with the two deployments'
-configuration and their operation, are the private `monoflake/cloud`'s and no directory here;
+earlier that day. The platform half, which fills this half's roles, with the hosted platform's
+configuration and its operation, is the private `monoflake/cloud`'s and no directory here, RFC
+8lkuv;
 every other component, `control(organization)` among them, every driver and every library is MIT
 OR Apache-2.0, `model/graph/components.res`. So a team can stand its own platform up from this
 repository with a little glue of its own, and the glue and the running of it are what the hosted
@@ -123,17 +124,17 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 
 | `code/`       | Layer | Holds                                                       |
 | ------------- | ----- | ----------------------------------------------------------- |
-| `apps/`       | 1     | the platform's own apps, the console; a user's are not here |
+| `apps/`       | 1     | the platform's own apps; a user's are not here              |
 | `products/`   | 0     | the three products and the control that configures them     |
 | `primitives/` | -1    | the five components the products are built from, RFC vuanj  |
 | `substrate/`  | -2    | what those stand on: backings, the extent, hosts, drivers   |
-| `platform/`   | -3    | the platform's half, which layer -3 is whole                |
+| `platform/`   | -3    | the platform half, layer -3, whose code is not here, 8lkuv  |
 | `libs/`       | --    | the libraries, placed by subject, a library having no layer |
 | `tools/`      | --    | programs run while the platform is built: the generators    |
 
 - **A half is never a directory**, since the layers already part them: layer -3 is the platform's
   half and every layer above it the organization's, so `control(organization)` is
-  `products/control` and `control(platform)` `platform/control`.
+  `products/control`.
 - **A library's languages are a property the model declares, never a directory**: a library is
   one subject, and one written in two languages is one directory holding each language's
   manifest beside the other's, decided by the author on 2026-10-19 with `envelope`, the

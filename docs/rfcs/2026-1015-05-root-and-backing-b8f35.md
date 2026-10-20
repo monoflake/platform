@@ -88,12 +88,11 @@ depends on no component**: what it needs, its caller hands it. A thing is a libr
 may have an instance of its own; one whose state two callers must see the same is a component. Libraries
 are marked `*`.
 
-- **The root stands at the bottom**, below the anchor: it depends on nothing, and everything needs
+- **The root stands at the bottom**, below the directory: it depends on nothing, and everything needs
   it.
 
 **Every log is kept in a footing, and v0 has no quorum.** Each owner stands on one, RFC v7v3w -- an
-organization's for its scope, the platform's for the anchor, D1 on the foundation platform's own
-account -- a database in SQLite's dialect that is ground, `docs/scope.md`: trusted to be up and to keep
+organization's for its scope, the platform half's for its own -- a database in SQLite's dialect that is ground, `docs/scope.md`: trusted to be up and to keep
 what it confirmed, its redundancy its own and never the platform's. **It coordinates its owner**: it
 holds the backing, the extent's records, which journal
 each placement writes, which copies hold each tablet on machines and at which generation, and the
@@ -147,8 +146,7 @@ move by a sweep, and the old one is dropped once no reader running needs it, RFC
 | `writer`        | a tablet on machines         | its copies, its primary, at which generation                   | the tablet                  |
 | `lease`         | a name                       | who holds it, and until when                                   | the component that takes it |
 
-The platform's footing holds the same, and `anchor`, `account`, `label`, `username`, `sign-in`,
-`membership` and `domain` beside them, RFC v7v3w. The tables are the
+The platform half's footing holds the same, and its own tables beside them, RFC 8lkuv. The tables are the
 footing's own, and published nowhere. Each is declared in `model/contracts/records/`, its key the fields its
 content names `unique`, decided by the author on 2026-10-20: the control's records in the rest,
 these others in `tables.res`. **A tablet's rows are no table of a footing's**, its product's own
@@ -172,9 +170,9 @@ taken over or a copy replaced; a vendor's tablet keeps no row, its writer held b
 vuanj.
 
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
-still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,
-at layer -3, kept in the platform's footing with nothing of the platform's beneath it:
-a scope's id and a reference to where its backing is, a row each. **A scope's row is never
+still has storage of its own, so something must say where each scope's is. That is the **directory**,
+at layer -3, the platform half's, RFC 4dijn: a scope's id and a reference to where its backing is,
+a row each. **A scope's row is never
 removed, so its id is never given again**, since a second scope under the same id would derive the
 same salt and key. Its status says what is left of it:
 
@@ -189,16 +187,14 @@ same salt and key. Its status says what is left of it:
   erases what it held. An erasure cut short is no matter, since collection keeps only what a scope
   that is not deleted still holds, and drops what it finds of a deleted one.
 
-**A control reaches beneath by five operations, as a caller and never a need of theirs**, worked
+**A control reaches beneath by these operations, as a caller and never a need of theirs**, worked
 out with the author on 2026-10-19:
 
-| Operation            | On      | Called by                                                 | Does                                                                                                                                |
-| -------------------- | ------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `open`               | anchor  | the platform's control                                    | draws a scope's id by a conditional insert, `active`; its salt and key derived and delivered beside its certificate                 |
-| `suspend`, `restore` | anchor  | the platform's control                                    | changes its status; a suspension unrestored for seven days becomes a deletion                                                       |
-| `delete`             | anchor  | the platform's control                                    | writes `deleted` first, then a task erases; the id stays spent                                                                      |
-| `attach`, `detach`   | backing | the control holding the store                             | adds a store to a scope or takes one off, refused where a bucket's placement would no longer hold without it                        |
-| `migrate`            | blob    | a control starts it, the clock paces it, the blob does it | moves a bucket to a new layout as its placement changes, or to a new key as an old version retires, every piece readable throughout |
+| Operation                              | On        | Called by                                                 | Does                                                                                                                                |
+| -------------------------------------- | --------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `open`, `suspend`, `restore`, `delete` | directory | the authority                                             | a scope opened, its status changed, it deleted: the platform half's own writes, RFC 4dijn                                           |
+| `attach`, `detach`                     | backing   | the control holding the store                             | adds a store to a scope or takes one off, refused where a bucket's placement would no longer hold without it                        |
+| `migrate`                              | blob      | a control starts it, the clock paces it, the blob does it | moves a bucket to a new layout as its placement changes, or to a new key as an old version retires, every piece readable throughout |
 
 - **A store is attached and detached, never deleted**, since `delete` is data's, RFC vr5lw, and a
   store taken off a scope is left as it is.
@@ -208,7 +204,7 @@ out with the author on 2026-10-19:
   zn3u5.
 
 The same holds for every id drawn where reusing it would derive what its first holder's did. The
-anchor is the platform's only global state, and it holds nothing else: every product's
+directory is the only global state beneath an organization, and holds nothing else: every product's
 configuration, every bucket and database, every app's declaration stays in its scope.
 
 **An id takes one of three forms**, stored as binary and written out as text only in a URL or
@@ -223,9 +219,8 @@ where it is shown, lowercase and at its full width, leading zeros kept:
 - **An id drawn is checked as it is inserted**, by a conditional insert, and drawn again on a
   conflict. It is unique within its kind alone -- accounts among accounts, and a scope's resources
   among all of its resources, whatever their kind, so an id names one resource and carries its
-  type, worked out with the author on 2026-10-18 -- and the foundation and production platforms check theirs apart, RFC 94y0d, so
-  one id may name different things on each. Whether an organization keeps one scope id on both is
-  decided when it arises. [C19]
+  type, worked out with the author on 2026-10-18 -- and two platforms, one on another, check theirs
+  apart, RFC 94y0d, so one id may name different things on each.
 - **An id derived is never checked and never shortened**: 256 bits are taken as never colliding,
   and a match is taken as the same content, so a shortened one would hand one owner another's.
 - **Stored, it is an integer or bytes**: 8 hex digits as an integer, 64 as 32 bytes, base36 as an
@@ -244,7 +239,7 @@ does not change for it.
 **Whose a record is and where it is kept are two questions.** A record an owner's act brought
 about -- a bucket or database opened in their scope, a schedule declared, a tablet placed -- is the
 scope's: counted against its allowance and deleted with it, even when it is kept beneath the scope,
-as its backing is. The scope itself -- its row in the anchor, its allowance -- is the platform's.
+as its backing is. The scope itself -- its row in the directory, its allowance -- is the platform half's.
 
 **The root is no running service, so it has no uptime to lose.** What it holds is of two kinds:
 

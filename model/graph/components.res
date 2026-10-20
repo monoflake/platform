@@ -4,8 +4,8 @@
  * slower, staler, more garbage, never wrong. A `hard` edge points to its own layer or below; a
  * `soft` one may point up. A target beginning `?` is something the drafts need and no component is
  * yet: a boundary not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj
- * components, b8f35 root and backing, wnqvu compat; v7v3w the two halves; 94y0d the foundation and
- * production platforms; the rules they are checked by, `docs/scope.md`. Every `hard`/`soft` here is
+ * components, b8f35 root and backing, wnqvu compat; v7v3w the two halves; 94y0d one platform on
+ * another; 8lkuv the roles; the rules they are checked by, `docs/scope.md`. Every `hard`/`soft` here is
  * proposed, not decided; `open_` marks the ones in question.
  */
 let vendor = -9
@@ -90,11 +90,9 @@ let key = (~to_="root", ()) =>
   )
 
 /*
- * Of the components: `console` is a dashboard in an ordinary organization named `console`, holding
- * no privilege, v7v3w; `control(organization)` an organization's control, its products'
- * configuration as an HTTPS API, v7v3w; `control(platform)` the platform's, what spans
- * organizations, as an HTTPS API in no organization, v7v3w; `footing(organization)` and
- * `footing(platform)` what the platform, or the layer beneath, gives a control to stand on, vr5lw.
+ * Of the components: `control(organization)` an organization's control, its products'
+ * configuration as an HTTPS API, v7v3w; `footing(organization)` what the layer beneath gives it to
+ * stand on, vr5lw; and the roles, what this half needs of the platform half, 8lkuv.
  */
 let own: dict<component> = dict{
   "app": {
@@ -296,7 +294,7 @@ let own: dict<component> = dict{
         "directory",
         #deploy,
         hard,
-        "its anchor row, which names where its backing is kept; it exists by its certificate",
+        "its row in the directory, which names where its backing is kept; it exists by its certificate",
         ~contract=["?directory"],
       ),
     ],
@@ -555,9 +553,8 @@ let own: dict<component> = dict{
     uses: [],
   },
   /*
-   * The roles the platform half fills, RFC 8lkuv: `authority`, what the platform's control is to an
-   * organization's, RFC 7xpd3, and `directory`, what the anchor is to a scope and its backing, RFC
-   * 4dijn.
+   * The roles the platform half fills, RFC 8lkuv: `authority`, what says an organization exists and
+   * what it may use, RFC 7xpd3, and `directory`, what says where a scope's backing is, RFC 4dijn.
    */
   "authority": {
     layer: -3,

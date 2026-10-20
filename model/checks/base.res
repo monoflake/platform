@@ -5,6 +5,7 @@
 type url
 @new external url: (string, string) => url = "URL"
 @new external urlIn: (string, url) => url = "URL"
+@new external absolute: string => url = "URL"
 @val external importMetaUrl: string = "import.meta.url"
 @module("node:fs") external readdirSync: url => array<string> = "readdirSync"
 @module("node:fs") external readFileSync: (url, @as("utf8") _) => string = "readFileSync"
@@ -131,5 +132,3 @@ type listing = {withFileTypes: bool}
 @module("node:fs") external entries: (url, listing) => array<dirent> = "readdirSync"
 @get external entryName: dirent => string = "name"
 @send external isDirectory: dirent => bool = "isDirectory"
-
-let steps = Steps.steps

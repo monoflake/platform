@@ -10,17 +10,17 @@ references: []
 
 ## Question
 
-RFC 8lkuv names the anchor, as a scope and its backing need it, a role of its own, since the anchor
-is the platform half's, the other repository's. What it holds is settled, RFC b8f35: a row a scope,
+RFC 8lkuv names what a scope and its backing need of the platform half a role of its own, since
+the platform half is the other repository's. What it holds is settled, RFC b8f35: a row a scope,
 its id, its status of `active`, `suspended` or `deleted`, and a reference to where its backing is,
 never removed so an id is never given twice. The edges from `scope` and `backing` to it are drawn,
-and their contract is undeclared, `?anchor`.
+and their contract is undeclared, `?directory`.
 
 ## Decided
 
 **The contract is the reading alone**, decided by the author on 2026-10-20: this half reads the
 directory and never writes it. Opening, suspending, restoring and deleting a scope are the
-authority's own writes to its directory, the platform half's `?anchor`, so a team running its own
+authority's own writes to its directory, the platform half's own, so a team running its own
 writes the one row its one scope needs, once.
 
 **A row crosses as the scope's id, its status and where its backing is**, decided by the author on

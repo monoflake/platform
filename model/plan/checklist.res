@@ -140,7 +140,7 @@ let own: array<item> = [
   {
     id: "B7",
     group: #B,
-    what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory reserved for the foundation platform's; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
+    what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory a machine keeps back for the platform half; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
     from: "94y0d, vr5lw",
     done: "94y0d: the platform's own half alone by hand, three machines; vr5lw: the machine's own memory and 64 MiB kept back, no CPU",
   },
@@ -154,7 +154,7 @@ let own: array<item> = [
   {
     id: "B9",
     group: #B,
-    what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform control's, kept beside the anchor in the platform's footing; a machine's certificate is the certificate service's, vr5lw",
+    what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform half's; a machine's certificate is the certificate service's, vr5lw",
     from: "b8f35, 13ixj, vr5lw",
     done: "vr5lw: an entry is a name bound to an app, served by its host, and a gateway is the organization's, never an app",
   },
@@ -163,7 +163,7 @@ let own: array<item> = [
     group: #B,
     what: "the control plane: what it is, how far it reaches, and its name, and how a person is authenticated to it, since step 0 runs one",
     from: "b8f35, v7v3w",
-    done: "v7v3w: a person signs in to the platform's control, and is a member by their organization's",
+    done: "v7v3w, 7xpd3: a person signs in to the platform half and is a member by their organization's, holding the account credential the authority signs",
   },
   {
     id: "B11",
@@ -230,7 +230,7 @@ let own: array<item> = [
   {
     id: "B20",
     group: #B,
-    what: "where an ordinary organization's own records are kept -- each tablet's writer, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
+    what: "where an ordinary organization's own records are kept -- each tablet's writer, the extent's records, its backing, its bundle -- once an ordinary organization stands on no footing of its own: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
     from: "vr5lw, v7v3w, b8f35",
     done: "v7v3w, vr5lw: each organization has a control of its own on a footing the platform gives it",
   },
@@ -291,7 +291,7 @@ let own: array<item> = [
   {
     id: "B33",
     group: #B,
-    what: "the two roles' names: `authority` for what the platform's control is to an organization's, `directory` for what the anchor is to a scope and its backing, or others",
+    what: "the two roles' names, `authority` and `directory`, for what this half needs of the platform half, or others",
     from: "8lkuv",
     done: "8lkuv",
   },
@@ -382,16 +382,9 @@ let own: array<item> = [
   {
     id: "C1",
     group: #C,
-    what: "a tablet's copies on machines, simulated on paper with their failures -- a primary lost, a copy lost, a partition, the read-only lock and its release -- so no write done is lost, before the production platform holds an organization's data",
+    what: "a tablet's copies on machines, simulated on paper with their failures -- a primary lost, a copy lost, a partition, the read-only lock and its release -- so no write done is lost, before a platform holds its users' data",
     from: "94y0d, vuanj",
     step: 1,
-  },
-  {
-    id: "C2",
-    group: #C,
-    what: "what the model's stages past s0 take in, now the foundation and production platforms changed what they must cover",
-    from: "docs/scope.md",
-    step: 9,
   },
   {
     id: "C3",
@@ -501,13 +494,6 @@ let own: array<item> = [
     step: 9,
   },
   {
-    id: "C19",
-    group: #C,
-    what: "whether an organization keeps one scope id on both the foundation platform and the production platform platform",
-    from: "b8f35",
-    step: 1,
-  },
-  {
     id: "C20",
     group: #C,
     what: "a store lost without warning, or reaching an end its owner did not choose: what the platform does, and the state each bucket on it is left in",
@@ -531,7 +517,7 @@ let own: array<item> = [
   {
     id: "C22",
     group: #C,
-    what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it: the foundation platform has hosts from step 0",
+    what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it",
     from: "vuanj, v7v3w; B1 before",
     step: 6,
     done: "vr5lw: an extension gives a database in the platform's own contract",
@@ -564,20 +550,6 @@ let own: array<item> = [
     what: "to try that a user's Cloudflare account on the free plan gives a custom hostname, a name of the platform's zone pointing at it DNS only, its certificate; which certificate_authority values the API takes; and how a name behind its owner's own Cloudflare proxy validates, which pre-validation does not cover for O2O",
     from: "vr5lw, docs/lessons/",
     step: 6,
-  },
-  {
-    id: "C27",
-    group: #C,
-    what: "which ways of signing in each step builds -- a passkey; GitHub, Google or Apple; an email's link; a password; a TOTP code -- and what sends an email's link",
-    from: "v7v3w",
-    step: 8,
-  },
-  {
-    id: "C28",
-    group: #C,
-    what: "what one way of signing in counts for among a sign-in's factors, a passkey among them, and how an account that lost every way it held is given back",
-    from: "v7v3w",
-    step: 8,
   },
   {
     id: "C29",
@@ -661,13 +633,6 @@ let own: array<item> = [
     done: "vuanj",
   },
   {
-    id: "E3",
-    group: #E,
-    what: "which database is the platform's footing: D1 on the foundation platform's own account, so close b8f35's Open",
-    from: "b8f35",
-    done: "b8f35",
-  },
-  {
     id: "E4",
     group: #E,
     what: "vuanj says the operator revoking an owner deletes its scope at once, v7v3w that what is revoked is stopped and nothing deleted: one must give way",
@@ -680,13 +645,6 @@ let own: array<item> = [
     what: "vuanj's sentence that deleting a scope deletes its bytes since its key can always be derived again, which does not follow",
     from: "vuanj",
     done: "vuanj",
-  },
-  {
-    id: "E6",
-    group: #E,
-    what: "v7v3w's heading that the platform runs on serverless vendors only, while the foundation platform's hosts are machines from step 0: the heading means the platform's half",
-    from: "v7v3w",
-    done: "v7v3w",
   },
   {
     id: "E7",
@@ -708,13 +666,6 @@ let own: array<item> = [
     what: "vr5lw's entry reads a name alone and carries the rest of a request unread, yet a domain's challenge asks an entry to answer /.well-known/monoflake-challenge/ for a name bound to an app past the gateway",
     from: "found",
     done: "vr5lw: a TXT record, a CNAME, then an HTTP challenge, tried in order; the entry's one path written into its rule and its contract",
-  },
-  {
-    id: "E10",
-    group: #E,
-    what: "v7v3w's console is an organization named console by being opened first, yet console is among the names v7v3w reserves from every organization",
-    from: "found",
-    done: "v7v3w: reserved means kept for the platform, given by the operator alone; model/names/reserved.res and its check",
   },
 ]
 

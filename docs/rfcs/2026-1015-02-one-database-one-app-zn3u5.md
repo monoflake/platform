@@ -54,10 +54,10 @@ serves it without translation:
 - **Atomicity holds within one database.** Nothing spans two, so an app keeps what changes together
   in one, and splits along its own lines what does not -- a database per conversation, per user --
   creating as many as it needs. **Creating one changes the organization's configuration**, whoever
-  asks -- a person in the console, or the app's own code calling the configuration API -- so it is
+  asks -- a person through a client, or the app's own code calling the configuration API -- so it is
   its organization's own control's, RFC v7v3w: while that control is lost a create answers
-  `unavailable` and every database that exists goes on serving, and the platform's control lost
-  changes nothing for it.
+  `unavailable` and every database that exists goes on serving, and the authority lost changes
+  nothing for it.
 
 **A database is known by an id that never changes**, and an owner sees it by a name shown in its
 organization's tree, RFC v7v3w, a path only as it is drawn. Renaming or moving it changes nothing

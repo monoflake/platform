@@ -62,7 +62,7 @@ let own: dict<kept> = dict{
   },
 }
 
-/** What the platform's footing keeps, given with what fills the roles, RFC 8lkuv. */
+/** What every footing keeps, with what the platform half keeps given beside, RFC 8lkuv. */
 let kept: dict<kept> = Dict.fromArray(
   Array.concat(own->Dict.toArray, Fill.part("kept")->Option.getOr(Dict.make())->Dict.toArray),
 )
@@ -111,24 +111,10 @@ let allowed = (plan: Steps.plan) =>
   }
 
 /**
- * What the model assumes of the foundation platform's account at each step, until it is measured
- * [C7]: how many organizations the production platform holds, each standing on a cell of its own
- * while cells are one each; how many tablets each organization keeps -- the storage's metadata, the
- * functions', and its apps' databases.
+ * What the model assumes of one organization until it is measured [C7]: how many tablets it keeps --
+ * the storage's metadata, the functions', and its apps' databases. How many organizations a
+ * deployment holds at each step is the hosted platform's, RFC 8lkuv.
  */
-type assumed = {
-  /** The production organizations at each step, the author's own until users come at step 8. */
-  production: int => float,
-  /**
-   * The foundation platform's own organizations: the console's dashboard's and the production
-   * platform's.
-   */
-  foundation: float,
-  tablets: float,
-}
+type assumed = {tablets: float}
 
-let assumed = {
-  production: step => step < 1 ? 0. : step < 8 ? 5. : 20.,
-  foundation: 2.,
-  tablets: 4.,
-}
+let assumed = {tablets: 4.}

@@ -39,7 +39,7 @@ one running instance, as a long-running process on a machine does and a runtime 
 instances does not. A tablet's writer is placed only where it is offered, RFC vuanj, and a `keyed`
 daemon has its shape. A fourth is **`export`**, decided by the author on 2026-10-20: amounts, grouped
 under one name as `network` is, of what an organization may give another platform, none by default,
-held by its own platform's control, RFC 94y0d; which amounts it holds is open. [C37] They are
+held by its own platform's authority, RFC 94y0d; which amounts it holds is open. [C37] They are
 apart because each is apart where it matters: what a sandbox can give, and how much risk a scope is
 allowed. `http` goes out only through the platform's own request interface, which it can see and
 limit, though it runs over TCP, and which checks for each request that its call declared it; `tcp`

@@ -21,17 +21,16 @@ dimension is checked over.
 **The line is RFC v7v3w's, between the two halves**, decided by the author on 2026-10-20. This
 repository holds the organization half -- an organization's control, the three products, the
 primitives, the substrate and the drivers, and the app -- with the root, which runs nothing, and
-every contract between the halves. `monoflake/cloud` holds the platform half -- the platform's
-control, the anchor and the platform's footing -- with the console and the two deployments'
-configuration, RFC 94y0d. So this repository is everything one organization needs, and the other is
+every contract between the halves. `monoflake/cloud` holds the platform half, with the hosted
+platform's configuration. So this repository is everything one organization needs, and the other is
 what hosting many of them together adds: a team running its own writes the second as a little glue.
 
 **What this half needs of the other is a role, named for what it does**, decided by the author on
 2026-10-20: a component of a new kind, `provided`, carrying its layer, its half and the contracts it
 answers, and nothing of how it is built -- no edges, no language. An edge to a role is an assumption
 on its contract, as an edge to the ground is, so this repository's check runs on its own. Two roles
-are needed: what the platform's control is to an organization's, RFC 7xpd3, and what the anchor is to
-a scope and its backing, RFC 4dijn. Their contracts are drafts until each question below is settled,
+are needed: what says an organization exists and what it may use, RFC 7xpd3, and what says where a
+scope's backing is, RFC 4dijn. Their contracts are drafts until each question below is settled,
 and a role's contract left open is listed as undeclared, as one is today.
 
 **`monoflake/cloud`'s model depends on this one's and fills each role exactly once**, by a component
@@ -58,10 +57,9 @@ losing one is survived, and its use counted and cut off short of its allowance; 
 for that use is the hosted platform's.
 
 **The roles are `authority` and `directory`**, decided by the author on 2026-10-20: `authority`
-for what the platform's control is to an organization's, `directory` for what the anchor is to a
-scope and its backing. Each answers one contract of its name, `?authority` and `?directory`, while
-the platform half keeps its own -- the console's calls on the platform's control, the platform's
-control's writes to the anchor -- as `?control(platform)` and `?anchor` beside them. A role is
+for what says an organization exists and what it may use, `directory` for what says where a scope's
+backing is. Each answers one contract of its name, `?authority` and `?directory`, while the
+platform half keeps its own contracts beside them, the other repository's. A role is
 `model/graph/components.res`'s, the roles check `model/checks/design/roles.res`, and what the other
 repository gives arrives as the file `MONOFLAKE_FILL` names, `model/graph/fill.res`.
 
@@ -77,9 +75,8 @@ are checked where both are.
 **What crosses the line is public, and how it is made is not**, decided by the author on
 2026-10-20. Of the platform half's records an organization's half reads two: an organization's,
 what the authority alone decides of it, and an account, known here by its id and the signed
-account credential, RFC b8f35, and by nothing of its own record. The account's record and the seven
-others the platform's control alone keeps -- its extension, loan, label, username, sign-in,
-membership and domain -- are monoflake/cloud's, and `contracts.json`, which every language reads,
+account credential, RFC b8f35, and by nothing of its own record. The account's record and every other
+the platform half alone keeps are monoflake/cloud's, and `contracts.json`, which every language reads,
 is written from this repository's own alone.
 
 **The rest of the line runs the same way**, decided by the author on 2026-10-20. The reserved

@@ -50,6 +50,14 @@ constant, a command -- waits until the structure it sits in is settled, however 
 lists it. When the model passes what is a contradiction, the dimension or record that would catch
 it is added to the model, so the check, not the conversation, proves it fixed.
 
+## What only the platform half needs is written there
+
+Decided by the author on 2026-10-20, RFC 8lkuv: a draft or a file here says what this half needs of
+a role and stops; how the role is filled, and everything only the hosted platform asks, is written
+in monoflake/cloud. What was published before stays as it was; from now on nothing more of it is
+written here, and the silence check, `model/names/withheld.res`, refuses a name only the other
+repository holds.
+
 ## The model is the spec; a draft keeps the why
 
 Agreed with the author on 2026-10-19. What a draft decides -- a table, a constant, a record's fields,
