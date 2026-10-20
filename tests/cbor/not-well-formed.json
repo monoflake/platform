@@ -1,0 +1,381 @@
+{
+	"source": "RFC 8949, Appendix F.1, Examples of CBOR Data Items That Are Not Well-Formed: https://www.rfc-editor.org/rfc/rfc8949#appendix-F.1",
+	"items": [
+		{
+			"hex": "18",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "19",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "1a",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "1b",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "1901",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "1a0102",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "1b01020304050607",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "38",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "58",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "78",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "98",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "9a01ff00",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "b8",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "d8",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "f8",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "f900",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "fa0000",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "fb000000",
+			"kind": "end of input in a head"
+		},
+		{
+			"hex": "41",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "61",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "5affffffff00",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "5bffffffffffffffff010203",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "7affffffff00",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "7b7fffffffffffffff010203",
+			"kind": "definite-length strings with short data"
+		},
+		{
+			"hex": "81",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "818181818181818181",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "8200",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "a1",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "a20102",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "a100",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "a2000000",
+			"kind": "definite-length maps and arrays not closed with enough items"
+		},
+		{
+			"hex": "c0",
+			"kind": "tag number not followed by tag content"
+		},
+		{
+			"hex": "5f4100",
+			"kind": "indefinite-length strings not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "7f6100",
+			"kind": "indefinite-length strings not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "9f",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "9f0102",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "bf",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "bf01020102",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "819f",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "9f8000",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "9f9f9f9f9fffffffff",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "9f819f819f9fffffff",
+			"kind": "indefinite-length maps and arrays not closed by a \"break\" stop code"
+		},
+		{
+			"hex": "1c",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "1d",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "1e",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "3c",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "3d",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "3e",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "5c",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "5d",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "5e",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "7c",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "7d",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "7e",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "9c",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "9d",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "9e",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "bc",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "bd",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "be",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "dc",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "dd",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "de",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "fc",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "fd",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "fe",
+			"kind": "reserved additional information values"
+		},
+		{
+			"hex": "f800",
+			"kind": "reserved two-byte encodings of simple values"
+		},
+		{
+			"hex": "f801",
+			"kind": "reserved two-byte encodings of simple values"
+		},
+		{
+			"hex": "f818",
+			"kind": "reserved two-byte encodings of simple values"
+		},
+		{
+			"hex": "f81f",
+			"kind": "reserved two-byte encodings of simple values"
+		},
+		{
+			"hex": "5f00ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5f21ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5f6100ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5f80ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5fa0ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5fc000ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5fe0ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "7f4100ff",
+			"kind": "indefinite-length string chunks not of the correct type"
+		},
+		{
+			"hex": "5f5f4100ffff",
+			"kind": "indefinite-length string chunks not definite length"
+		},
+		{
+			"hex": "7f7f6100ffff",
+			"kind": "indefinite-length string chunks not definite length"
+		},
+		{
+			"hex": "ff",
+			"kind": "break occurring on its own outside of an indefinite-length item"
+		},
+		{
+			"hex": "81ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "8200ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "a1ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "a1ff00",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "a100ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "a20000ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "9f81ff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "9f829f819f9fffffffff",
+			"kind": "break occurring in a definite-length array or map or a tag"
+		},
+		{
+			"hex": "bf00ff",
+			"kind": "break in an indefinite-length map that would lead to an odd number of items (break in a value position)"
+		},
+		{
+			"hex": "bf000000ff",
+			"kind": "break in an indefinite-length map that would lead to an odd number of items (break in a value position)"
+		},
+		{
+			"hex": "1f",
+			"kind": "major type 0, 1, 6 with additional information 31"
+		},
+		{
+			"hex": "3f",
+			"kind": "major type 0, 1, 6 with additional information 31"
+		},
+		{
+			"hex": "df",
+			"kind": "major type 0, 1, 6 with additional information 31"
+		}
+	]
+}

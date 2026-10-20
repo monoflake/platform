@@ -22,9 +22,10 @@ its tools, and "Excellent TypeScript interoperability", a module a file; js_of_o
 with most libraries and the standard library, OCaml 5's effects, limited support for domains, and
 32-bit integers. Asked by fhg6w. Source: https://ocaml.org/tools/javascript-target
 
-**CBOR is RFC 8949, 3674 lines of text, with its tests in it.** Its Appendix A has 82 encoded items,
-kept as JSON in `cbor/test-vectors`, 65 marked to re-encode byte for byte and 59 decodable as JSON;
-the repository states no license, and the items are the RFC's own. Its Appendix F lists about 90
+**CBOR is RFC 8949, 3674 lines of text, with its tests in it.** Its Appendix A has 81 encoded items,
+64 of them as its 4.2.1 writes them; `cbor/test-vectors` keeps RFC 7049's 82 as JSON, one a simple
+value RFC 8949 drops as not well formed, and states no license, so `tests/cbor/` is written from the
+RFC's text instead. Its Appendix F lists about 90
 byte sequences that are not well formed, by kind: input ending in a head, strings and containers
 short of their items, reserved values, chunks of the wrong type, unclosed indefinite lengths. Its
 4.2 defines deterministic encoding. Asked by fhg6w. Sources:

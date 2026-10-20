@@ -38,9 +38,11 @@ let libraries: dict<library> = dict{
     uses: [],
     takes: [
       {language: #rust, name: "minicbor", major: "2"},
+      {language: #rust, name: "serde_json", major: "1"},
       {language: #rescript, name: "cbor2", major: "2"},
     ],
     samples: [
+      "tests/cbor",
       "vendor/cose-examples/sign1-tests",
       "vendor/cose-examples/eddsa-examples/eddsa-sig-01.json",
       "vendor/cose-examples/eddsa-examples/eddsa-sig-02.json",

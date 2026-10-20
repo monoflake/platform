@@ -1,0 +1,14 @@
+{
+	"source": "RFC 8949, Section 4.2.1, Core Deterministic Encoding Requirements: https://www.rfc-editor.org/rfc/rfc8949#section-4.2.1",
+	"keys": "a map's keys, each by its deterministic encoding, in the order a map holding them all is written",
+	"items": [
+		{ "diagnostic": "10", "hex": "0a" },
+		{ "diagnostic": "100", "hex": "1864" },
+		{ "diagnostic": "-1", "hex": "20" },
+		{ "diagnostic": "\"z\"", "hex": "617a" },
+		{ "diagnostic": "\"aa\"", "hex": "626161" },
+		{ "diagnostic": "[100]", "hex": "811864" },
+		{ "diagnostic": "[-1]", "hex": "8120" },
+		{ "diagnostic": "false", "hex": "f4" }
+	]
+}

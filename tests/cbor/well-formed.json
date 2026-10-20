@@ -1,0 +1,411 @@
+{
+	"source": "RFC 8949, Appendix A, Table 6, Examples of Encoded CBOR Data Items: https://www.rfc-editor.org/rfc/rfc8949#appendix-A",
+	"deterministic": "whether the item is written as RFC 8949's 4.2.1 writes it: definite lengths, every head and float in its shortest form, NaN as f97e00, a map's keys in the bytewise order of their encodings",
+	"items": [
+		{
+			"diagnostic": "0",
+			"hex": "00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1",
+			"hex": "01",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "10",
+			"hex": "0a",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "23",
+			"hex": "17",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "24",
+			"hex": "1818",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "25",
+			"hex": "1819",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "100",
+			"hex": "1864",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1000",
+			"hex": "1903e8",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1000000",
+			"hex": "1a000f4240",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1000000000000",
+			"hex": "1b000000e8d4a51000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "18446744073709551615",
+			"hex": "1bffffffffffffffff",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "18446744073709551616",
+			"hex": "c249010000000000000000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-18446744073709551616",
+			"hex": "3bffffffffffffffff",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-18446744073709551617",
+			"hex": "c349010000000000000000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-1",
+			"hex": "20",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-10",
+			"hex": "29",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-100",
+			"hex": "3863",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-1000",
+			"hex": "3903e7",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "0.0",
+			"hex": "f90000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-0.0",
+			"hex": "f98000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1.0",
+			"hex": "f93c00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1.1",
+			"hex": "fb3ff199999999999a",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1.5",
+			"hex": "f93e00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "65504.0",
+			"hex": "f97bff",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "100000.0",
+			"hex": "fa47c35000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "3.4028234663852886e+38",
+			"hex": "fa7f7fffff",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1.0e+300",
+			"hex": "fb7e37e43c8800759c",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "5.960464477539063e-8",
+			"hex": "f90001",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "0.00006103515625",
+			"hex": "f90400",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-4.0",
+			"hex": "f9c400",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-4.1",
+			"hex": "fbc010666666666666",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "Infinity",
+			"hex": "f97c00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "NaN",
+			"hex": "f97e00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "-Infinity",
+			"hex": "f9fc00",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "Infinity",
+			"hex": "fa7f800000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "NaN",
+			"hex": "fa7fc00000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "-Infinity",
+			"hex": "faff800000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "Infinity",
+			"hex": "fb7ff0000000000000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "NaN",
+			"hex": "fb7ff8000000000000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "-Infinity",
+			"hex": "fbfff0000000000000",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "false",
+			"hex": "f4",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "true",
+			"hex": "f5",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "null",
+			"hex": "f6",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "undefined",
+			"hex": "f7",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "simple(16)",
+			"hex": "f0",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "simple(255)",
+			"hex": "f8ff",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "0(\"2013-03-21T20:04:00Z\")",
+			"hex": "c074323031332d30332d32315432303a30343a30305a",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1(1363896240)",
+			"hex": "c11a514b67b0",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "1(1363896240.5)",
+			"hex": "c1fb41d452d9ec200000",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "23(h'01020304')",
+			"hex": "d74401020304",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "24(h'6449455446')",
+			"hex": "d818456449455446",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "32(\"http://www.example.com\")",
+			"hex": "d82076687474703a2f2f7777772e6578616d706c652e636f6d",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "h''",
+			"hex": "40",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "h'01020304'",
+			"hex": "4401020304",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"\"",
+			"hex": "60",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"a\"",
+			"hex": "6161",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"IETF\"",
+			"hex": "6449455446",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"\\\"\\\\\"",
+			"hex": "62225c",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"\\u00fc\"",
+			"hex": "62c3bc",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"\\u6c34\"",
+			"hex": "63e6b0b4",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "\"\\ud800\\udd51\"",
+			"hex": "64f0908591",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "[]",
+			"hex": "80",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "[1, 2, 3]",
+			"hex": "83010203",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "[1, [2, 3], [4, 5]]",
+			"hex": "8301820203820405",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]",
+			"hex": "98190102030405060708090a0b0c0d0e0f101112131415161718181819",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "{}",
+			"hex": "a0",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "{1: 2, 3: 4}",
+			"hex": "a201020304",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "{\"a\": 1, \"b\": [2, 3]}",
+			"hex": "a26161016162820203",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "[\"a\", {\"b\": \"c\"}]",
+			"hex": "826161a161626163",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "{\"a\": \"A\", \"b\": \"B\", \"c\": \"C\", \"d\": \"D\", \"e\": \"E\"}",
+			"hex": "a56161614161626142616361436164614461656145",
+			"deterministic": true
+		},
+		{
+			"diagnostic": "(_ h'0102', h'030405')",
+			"hex": "5f42010243030405ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "(_ \"strea\", \"ming\")",
+			"hex": "7f657374726561646d696e67ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[_ ]",
+			"hex": "9fff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[_ 1, [2, 3], [_ 4, 5]]",
+			"hex": "9f018202039f0405ffff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[_ 1, [2, 3], [4, 5]]",
+			"hex": "9f01820203820405ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[1, [2, 3], [_ 4, 5]]",
+			"hex": "83018202039f0405ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[1, [_ 2, 3], [4, 5]]",
+			"hex": "83019f0203ff820405",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[_ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]",
+			"hex": "9f0102030405060708090a0b0c0d0e0f101112131415161718181819ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "{_ \"a\": 1, \"b\": [_ 2, 3]}",
+			"hex": "bf61610161629f0203ffff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "[\"a\", {_ \"b\": \"c\"}]",
+			"hex": "826161bf61626163ff",
+			"deterministic": false
+		},
+		{
+			"diagnostic": "{_ \"Fun\": true, \"Amt\": -2}",
+			"hex": "bf6346756ef563416d7421ff",
+			"deterministic": false
+		}
+	]
+}
