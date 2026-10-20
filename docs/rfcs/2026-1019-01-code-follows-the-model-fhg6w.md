@@ -96,10 +96,26 @@ components, libraries and edges, each with its contract:
 
 **The model and the code are one repository**, decided by the author on 2026-10-19, so the check
 reads the code it holds to the model's boundaries, `model/contracts.json` reaches its generators
-unpublished, and a change to both is one commit. Its top is four directories, drawn for the author
-to judge: `model/`, the spec; `code/`, with `components/<half>/<component>` named as the model names each
-component, `libs/` and `tools/`; `docs/`, what is read; and `vendor/`. A library is placed by its subject,
-its language a property the model declares and never a directory.
+unpublished, and a change to both is one commit. Its top is four directories: `model/`, the spec;
+`code/`; `docs/`, what is read; and `vendor/`.
+
+**A component's code is placed by its layer, in a directory named as the model names it**, worked out
+with the author on 2026-10-19, so where code goes follows from the model and is never argued again:
+
+| `code/`       | Layer | Holds                                                         |
+| ------------- | ----- | ------------------------------------------------------------- |
+| `apps/`       | 1     | the platform's own apps, the console; a user's are not here   |
+| `products/`   | 0     | the three products and the control that configures them       |
+| `primitives/` | -1    | the five components the products are built from, RFC vuanj    |
+| `substrate/`  | -2    | what those stand on: backings, the extent, hosts              |
+| `platform/`   | -3    | the platform's half, which layer -3 is whole                  |
+| `libs/`       | --    | the libraries, placed by subject, a library having no layer   |
+| `tools/`      | --    | what runs while the platform is built: generators and scripts |
+
+- **A half is never a directory**, since the layers already part them: layer -3 is the platform's
+  half and every layer above it the organization's, so `control(organization)` is
+  `products/control` and `control(platform)` `platform/control`.
+- **A library's language is a property the model declares, never a directory.**
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
 a claim of a CWT**, in one shape a contract at a time, its CBOR deterministic by RFC 8949's 4.2.

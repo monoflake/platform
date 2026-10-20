@@ -10,7 +10,8 @@ the design lands, so nothing here triggers a deployment or touches another repos
 ```
 model/         the spec: the graph, the ground, the bootstrap path, the contracts, and the checks
   contracts.json   the product every language reads
-code/          the code, cut where the model is: components/<half>/<component>, libs/, tools/
+code/          the code, a component placed by its layer: apps/, products/, primitives/,
+               substrate/, platform/; and libs/, tools/
 docs/          what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
                scope.md, what the model covers
 vendor/        other projects' files, copied at one version and left as written
