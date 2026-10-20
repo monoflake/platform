@@ -1,7 +1,7 @@
 /**
  * The bootstrap path, RFC 94y0d: what each version of the Platform can do, what each step runs, and
  * how each deployment came to it from the step before. `check.res` runs it in s0, on the correct
- * path alone; how a move fails, and the replicated log a database organization needs, are s1's.
+ * path alone; how a move fails, and how a tablet's copies fail, are s1's.
  */
 /**
  * What a deployment stands on: `provider` a machine a provider runs, `home` a machine the author
@@ -133,27 +133,11 @@ let steps: array<step> = [
     users: #invited,
   },
   {
-    what: "a tablet's log replicated among hosts built, proven on the production platform",
+    what: "cells move onto a database organization",
     foundation: foundation(3, [#products, #hosts, #rolling, #deployer, #vendors, #metering], #none),
     production: {
-      version: 4,
-      on: [#products, #hosts, #rolling, #deployer, #byoc, #vendors, #metering, #replicated],
-      ground: ownClouds,
-      move: #rolling,
-    },
-    cells: #"one each",
-    users: #invited,
-  },
-  {
-    what: "the pin moved to v4: cells move onto a database organization",
-    foundation: foundation(
-      4,
-      [#products, #hosts, #rolling, #deployer, #vendors, #metering, #replicated],
-      #rolling,
-    ),
-    production: {
-      version: 4,
-      on: [#products, #hosts, #rolling, #deployer, #byoc, #vendors, #metering, #replicated],
+      version: 3,
+      on: [#products, #hosts, #rolling, #deployer, #byoc, #vendors, #metering],
       ground: ownClouds,
       move: #none,
     },

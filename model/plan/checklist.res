@@ -313,9 +313,9 @@ let checklist: array<item> = [
   {
     id: "C1",
     group: #C,
-    what: "a tablet's log replicated among hosts, from a footing holding the configuration and f+1 copies, Vertical Paxos's shape, simulated on paper with its failures",
-    from: "94y0d",
-    step: 9,
+    what: "a tablet's copies on machines, simulated on paper with their failures -- a primary lost, a copy lost, a partition, the read-only lock and its release -- so no write done is lost, before the production platform holds an organization's data",
+    from: "94y0d, vuanj",
+    step: 1,
   },
   {
     id: "C2",
@@ -352,14 +352,14 @@ let checklist: array<item> = [
     group: #C,
     what: "when cells move onto a database organization, and what a cell holds before",
     from: "94y0d",
-    step: 10,
+    step: 9,
   },
   {
     id: "C7",
     group: #C,
     what: "how much an organization writes through its footing before the footing bounds it, measured",
     from: "b8f35",
-    step: 10,
+    step: 9,
   },
   {
     id: "C8",
@@ -429,7 +429,7 @@ let checklist: array<item> = [
     group: #C,
     what: "D1's 1 TB an account, which bounds every footing of the one-each cells in one account, and how footings spread over accounts",
     from: "found",
-    step: 10,
+    step: 9,
   },
   {
     id: "C19",

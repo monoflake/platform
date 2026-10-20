@@ -6,8 +6,8 @@
  * replaced while the rest run; `deployer`, the deployer, in place of day one's commands; `byoc`, a
  * user binding a cloud of their own; `vendors`, an organization's extensions spread over vendors, so
  * losing one is survived; `metering`, what each resource is used for counted, and cut off short of a
- * limit, RFC 94y0d; `replicated`, a tablet's log replicated among hosts offering `instance`, not
- * kept in a footing.
+ * limit, RFC 94y0d. A tablet's copies on machines are v0's own, RFC vuanj, so no version waits on
+ * them.
  */
 type feature = [
   | #products
@@ -17,7 +17,6 @@ type feature = [
   | #byoc
   | #vendors
   | #metering
-  | #replicated
 ]
 
 /** What each version has, by its number. */
@@ -26,5 +25,4 @@ let versions: array<array<feature>> = [
   [#products, #hosts, #rolling],
   [#products, #hosts, #rolling, #deployer],
   [#products, #hosts, #rolling, #deployer, #byoc, #vendors, #metering],
-  [#products, #hosts, #rolling, #deployer, #byoc, #vendors, #metering, #replicated],
 ]

@@ -96,8 +96,7 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 | 6    | bringing one's own cloud, more vendors than one, and metering are built, and proven on the author's own organizations       | v2 / v3                                   |
 | 7    | the pin moves: from here the foundation platform survives losing a vendor, and meters what it uses                          | v3 / v3                                   |
 | 8    | others than the author and a friend or two are invited to test, a checkpoint, once metering holds                           | v3 / v3                                   |
-| 9    | a tablet's log replicated among hosts is built, and proven on the production platform                                       | v3 / v4                                   |
-| 10   | the pin moves: cells move onto a database organization                                                                      | v4 / v4                                   |
+| 9    | cells move onto a database organization                                                                                     | v3 / v3                                   |
 
 - **The bootstrap stops twice, and only then**: each deployment once, moving from v0, which cannot
   replace a component while the rest run. The production platform's stop comes first, while only the
@@ -139,13 +138,12 @@ organizations stand on is a **cell**.
 
 - **First, one each.** Each organization of the production platform has a cell of its own, whose
   footing is a vendor's database; the organization's footing is a database of its cell. A vendor's limit on how many databases an account holds is far off at this scale.
-- **Then, a database organization.** Once the Platform replicates a tablet's log among hosts
-  that offer `instance` on several machines, the cells' footings become databases
-  of a database organization of the foundation platform, whose own footing is a vendor's. A cell then costs a tablet.
-- **The quorum returns with the database organization.** In v0 a tablet's log is kept in its owner's
-  footing, RFC b8f35; were it still so then, every footing placed on the database organization would
-  write through that organization's one footing. So a tablet's log is replicated among hosts there
-  instead, a capability built on the production platform first.
+- **Then, a database organization.** The cells' footings become databases of a database
+  organization of the foundation platform, whose own footing is a vendor's, each a tablet on machines
+  kept by a majority of its copies, RFC vuanj. A cell then costs a tablet, and its footing writes
+  nothing through the database organization's own, which a tablet's copies reach only to take a
+  primary over. **No version waits on it**, decided by the author on 2026-10-20: a tablet's copies
+  are v0's, so the move is v3's, and when it comes is C6's. [C6]
 - **Whose footing is kept where is acyclic, and one level deep**: an organization whose databases
   are others' footings has a vendor's database as its own. A footing bound so is a resource, never
   an app's call, so RFC 49qyg's rule that no app calls an app of another organization holds.
@@ -182,7 +180,8 @@ Open, for the discussion that follows:
 - What an organization may export, each an amount of the `export` capability -- compute, storage,
   databases -- and the app that exports it. [C37]
 
-- How a tablet's log is replicated among hosts, simulated on paper before it is built. [C1]
+- How a tablet's copies fail, simulated on paper before the production platform holds an
+  organization's data. [C1]
 - What metering counts for each vendor and machine, where the counts are kept, and the margin it
   cuts off at. [C18]
 - When cells move onto a database organization, and what a cell holds before. [C6]

@@ -18,15 +18,12 @@ let run = () => {
   let floor = x => num(Math.floor(x))
   let load = steps->Array.mapWithIndex((step, i) => {
     let production = assumed.production(i)
-    let replicated =
-      step.cells == Some(#"database organization") && ons(step.foundation, #replicated)
+    // A production organization's footing is a database of its cell: a vendor's while cells are one
+    // each, then a tablet of the database organization's, kept by its copies, RFC 94y0d.
+    let pooled = step.cells == Some(#"database organization")
     let organizations =
-      assumed.foundation +. (step.cells == Some(#"one each") ? production : replicated ? 1. : 0.)
-    let own = organizations *. assumed.tablets *. rows.idleTablet
-    // A production organization's footing is a database of its cell, so each of its writes is a commit
-    // there, until a replicated log keeps it off the vendor's footing.
-    let theirs = replicated ? 0. : production *. assumed.tablets *. rows.idleTablet *. rows.commit
-    let idle = own +. theirs
+      assumed.foundation +. (step.cells == Some(#"one each") ? production : pooled ? 1. : 0.)
+    let idle = organizations *. assumed.tablets *. rows.idleTablet
     let plan = step.foundation.plan->Option.getOr(#free)
     let allowed = Footing.allowed(plan)
 

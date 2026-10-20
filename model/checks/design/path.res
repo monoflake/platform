@@ -171,11 +171,6 @@ let run = () => {
     if step.cells != None && b == None {
       path->Array.push(`${at}: cells, with no production platform`)
     }
-    if step.cells == Some(#"database organization") && !ons(a, #replicated) {
-      path->Array.push(
-        `${at}: a database organization without a replicated log, so every footing on it writes through one`,
-      )
-    }
   })
   if stops->Array.length > Steps.stops {
     path->Array.push(
