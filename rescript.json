@@ -1,6 +1,6 @@
 {
 	"name": "blueprint",
-	"sources": [{ "dir": "model" }],
+	"sources": [{ "dir": "model", "subdirs": true }],
 	"package-specs": [{ "module": "esmodule", "in-source": true }],
 	"suffix": ".res.mjs",
 	"warnings": { "error": "+a" }

@@ -8,11 +8,11 @@ description = "Format the model with ReScript's formatter and the prose and JSON
 usage = 'flag "--check" help="Report what is not formatted and write nothing"'
 run = '''
 if [ -n "${usage_check:-}" ]; then
-	rescript format --check model/*.res
-	oxfmt --check '*.md' '*.json' 'rfcs/**/*.md' 'spec/**/*.md' 'model/*.json'
+	rescript format --check
+	oxfmt --check '*.md' '*.json' 'docs/**/*.md' 'model/*.json'
 else
-	rescript format model/*.res
-	oxfmt '*.md' '*.json' 'rfcs/**/*.md' 'spec/**/*.md' 'model/*.json'
+	rescript format
+	oxfmt '*.md' '*.json' 'docs/**/*.md' 'model/*.json'
 fi
 '''
 

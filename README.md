@@ -8,13 +8,16 @@ It is local only. It has no remote, is not in the workspace's `repos.toml`, and 
 the design lands, so nothing here triggers a deployment or touches another repository.
 
 ```
-rfcs/        the design, one draft per question, numbered by layer
-model/       the parts and their edges, the contracts, and the checks run on them, in ReScript
-scope.md     what the model covers in its current version, and what it leaves out
-lessons.md   facts taken from the old system, each with its source
-spec/        how work here is done
-vendor/      other projects' files, copied at one version and left as written
+model/         the spec: the graph, the ground, the bootstrap path, the contracts, and the checks
+  contracts.json   the product every language reads
+code/          the code, cut where the model is: parts/<half>/<part>, libs/, tools/
+docs/          what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
+               scope.md, what the model covers
+vendor/        other projects' files, copied at one version and left as written
 ```
+
+No directory holds more than 16 entries or lies more than 5 deep, counted from a top-level directory
+or a package's root, `docs/method.md`; the check holds both.
 
 The model is ReScript, and its tasks are mise's, its tools the workspace's. After `pnpm install`,
 `mise run check` compiles it and runs `model/check.res`, and `mise run check --ready` asks whether

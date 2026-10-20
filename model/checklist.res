@@ -2,7 +2,7 @@
  * Every question left before the Platform is built, one row each, gathered from the drafts' Open
  * lists, the model's open marks and what the discussion found. A row is crossed off by naming where
  * it was decided. `mise run check --ready` fails while a row that blocks step 0 is open: that
- * is when building begins, `scope.md`.
+ * is when building begins, `docs/scope.md`.
  */
 /**
  * `A`, written into data or published, so a mistake is never undone: decided before step 0; `B`,
@@ -18,7 +18,7 @@ type item = {
   what: string,
   /** The drafts or files it comes from, or `found` when the discussion found it. */
   from: string,
-  /** For group C, the step of `model/bootstrap.res` it must be decided before. */
+  /** For group C, the step of `model/bootstrap/steps.res` it must be decided before. */
   step?: int,
   /** Where it was decided, once it is; an open row has none. */
   done?: string,
@@ -135,7 +135,7 @@ let checklist: array<item> = [
     group: #B,
     what: "how the executor runs an app's code on Cloudflare, since a Worker refuses code it is handed at run time: a vendor's way of uploading each app's code, or the hosts alone; to be verified first",
     from: "found",
-    done: "b8f35, lessons.md",
+    done: "b8f35, docs/lessons/",
   },
   {
     id: "B7",
@@ -169,7 +169,7 @@ let checklist: array<item> = [
     id: "B11",
     group: #B,
     what: "day one's commands, written step by step: the deployer, the roster, the source, the entry, the runner, the intermediate",
-    from: "scope.md",
+    from: "docs/scope.md",
   },
   {
     id: "B12",
@@ -181,15 +181,15 @@ let checklist: array<item> = [
   {
     id: "B13",
     group: #B,
-    what: "facts to read from the vendor, into lessons.md: D1's write latency from a machine outside Cloudflare, how many databases an account holds, a Worker's limits on memory, CPU time and request size",
+    what: "facts to read from the vendor, into docs/lessons/: D1's write latency from a machine outside Cloudflare, how many databases an account holds, a Worker's limits on memory, CPU time and request size",
     from: "found",
-    done: "lessons.md",
+    done: "docs/lessons/",
   },
   {
     id: "B14",
     group: #B,
     what: "how long a capability and an account credential live; the other constants v0 picks are decided, vuanj",
-    from: "b8f35, vuanj, 49qyg, model/footing.res",
+    from: "b8f35, vuanj, 49qyg, model/ground/footing.res",
     done: "vuanj: a capability an hour and a credential 12, or 15 minutes and an hour in the strict tier",
   },
   {
@@ -197,20 +197,20 @@ let checklist: array<item> = [
     group: #B,
     what: "how process.md's phases -- theory, simulation, comparison with what exists -- meet this checklist as the test for building, and what replaces the word stage there now the model's stages are s",
     from: "found",
-    done: "spec/process.md: phases, one gate --ready, simulation inside it, comparison a row",
+    done: "docs/method.md: phases, one gate --ready, simulation inside it, comparison a row",
   },
   {
     id: "B16",
     group: #B,
-    what: "how a host on a machine reaches a footing in D1: through a Worker of the footing's account, since D1's REST API carries the Cloudflare API's limit of 1,200 requests in five minutes, lessons.md; and how long such a write takes, measured",
+    what: "how a host on a machine reaches a footing in D1: through a Worker of the footing's account, since D1's REST API carries the Cloudflare API's limit of 1,200 requests in five minutes, docs/lessons/; and how long such a write takes, measured",
     from: "found",
-    done: "b8f35, lessons.md",
+    done: "b8f35, docs/lessons/",
   },
   {
     id: "B17",
     group: #B,
     what: "how the extent is kept off the footing's growth: its pages in parcels, the footing keeping their root, and its index cached by generation",
-    from: "model/footing.res",
+    from: "model/ground/footing.res",
     done: "b8f35: the extent stays in the footing, whose 10 GB bounds an organization's pieces, beside its 30 TB in all",
   },
   {
@@ -238,7 +238,7 @@ let checklist: array<item> = [
     id: "B21",
     group: #B,
     what: "how a database's adapter in front of D1 tells a statement that only reads, for a capability of read alone, since D1 offers no authorizer and no query_only",
-    from: "b8f35, lessons.md",
+    from: "b8f35, docs/lessons/",
     done: "zn3u5: none is told; a database's rights are granted together",
   },
   {
@@ -304,7 +304,7 @@ let checklist: array<item> = [
     id: "C2",
     group: #C,
     what: "what the model's stages past s0 take in, now the internal and external platforms changed what they must cover",
-    from: "scope.md",
+    from: "docs/scope.md",
     step: 9,
   },
   {
@@ -390,7 +390,7 @@ let checklist: array<item> = [
     id: "C14",
     group: #C,
     what: "the clock and the egress, built where v0 leaves them for later",
-    from: "scope.md",
+    from: "docs/scope.md",
     step: 4,
   },
   {
@@ -403,7 +403,7 @@ let checklist: array<item> = [
   {
     id: "C16",
     group: #C,
-    what: "a call graph deeper than the four distinct dynamic Workers a request may have in flight on Cloudflare, lessons.md",
+    what: "a call graph deeper than the four distinct dynamic Workers a request may have in flight on Cloudflare, docs/lessons/",
     from: "found",
     step: 2,
   },
@@ -476,7 +476,7 @@ let checklist: array<item> = [
     id: "C26",
     group: #C,
     what: "to try that a user's Cloudflare account on the free plan gives a custom hostname, a name of the platform's zone pointing at it DNS only, its certificate; which certificate_authority values the API takes; and how a name behind its owner's own Cloudflare proxy validates, which pre-validation does not cover for O2O",
-    from: "vr5lw, lessons.md",
+    from: "vr5lw, docs/lessons/",
     step: 6,
   },
   {
@@ -552,7 +552,7 @@ let checklist: array<item> = [
     id: "D5",
     group: #D,
     what: "a host's way to a footing kept short where the vendor's routing lands a connection far: one connection dialed again, reads from replicas, the paid plan's routing measured",
-    from: "lessons.md",
+    from: "docs/lessons/",
   },
   {
     id: "D6",
@@ -564,7 +564,7 @@ let checklist: array<item> = [
     id: "D7",
     group: #D,
     what: "the anchor's rows, one for every scope ever made: how many the platform's footing holds, and what comes after",
-    from: "model/footing.res",
+    from: "model/ground/footing.res",
   },
   {
     id: "D8",
@@ -576,7 +576,7 @@ let checklist: array<item> = [
     id: "D9",
     group: #D,
     what: "the domains organizations' public names and their storage's names are of, apart from the platform's own and from each other, and asking the Public Suffix List to take them once the platform serves thousands",
-    from: "vr5lw, lessons.md",
+    from: "vr5lw, docs/lessons/",
     done: "vr5lw: mofl.fyi, one name an organization at its gateway; the list asked before the platform opens",
   },
   {
@@ -612,8 +612,8 @@ let checklist: array<item> = [
   {
     id: "D15",
     group: #D,
-    what: "comparison, spec/process.md, before the first service that exists moves onto the platform: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped",
-    from: "spec/process.md",
+    what: "comparison, docs/method.md, before the first service that exists moves onto the platform: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped",
+    from: "docs/method.md",
   },
   {
     id: "D16",
@@ -626,8 +626,8 @@ let checklist: array<item> = [
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",
-    from: "b8f35, v7v3w, graph.res",
-    done: "b8f35, v7v3w, graph.res",
+    from: "b8f35, v7v3w, model/graph/",
+    done: "b8f35, v7v3w, model/graph/",
   },
   {
     id: "E2",
@@ -668,8 +668,8 @@ let checklist: array<item> = [
     id: "E7",
     group: #E,
     what: "the backing's edge to the root for the platform's own stores, while an organization's stores now reach it in the bundle",
-    from: "graph.res",
-    done: "graph.res",
+    from: "model/graph/",
+    done: "model/graph/",
   },
   {
     id: "E8",
