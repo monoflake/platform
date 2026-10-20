@@ -328,6 +328,7 @@ let own: array<item> = [
     group: #B,
     what: "the least an authority does for a platform of one organization: the glue a team running its own writes",
     from: "7xpd3",
+    done: "7xpd3",
   },
   {
     id: "B39",

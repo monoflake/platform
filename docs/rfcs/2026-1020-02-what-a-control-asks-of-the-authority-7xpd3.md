@@ -50,7 +50,14 @@ who it is, and no secret is shared between the two. A notice is not signed: it c
 a generation, so a false one costs one pull, which is signed, and the control limits how often it
 is called.
 
-## Open, for the discussion that follows:
+**The least an authority does, for a platform of one organization, is the glue a team running its
+own writes**, decided by the author on 2026-10-20: a root of its own, kept offline, certifying the
+key the authority signs with; at opening, the organization's key and salt, delivered once; the
+pulled end, answering a signed pull with the organization's certificate, an allowance without
+bounds, no loans and its status; and an account credential signed for each person who signs in,
+however they sign in. It need send no notice: with nothing changing, the control pulls only before
+its certificate expires.
 
-- The least a role must do for a platform of one organization -- one certificate, an allowance
-  without bounds, no loans -- which is the glue a team running its own writes. [B38]
+**No authority is published, only the cases it is held to**, decided by the author on 2026-10-20:
+a reference authority would be the glue itself, so this repository gives the contract and, with it
+once declared, its cases in `tests/kinds/`, against which a team checks the authority it writes.
