@@ -38,8 +38,9 @@ vendor/     other projects' files, copied at one version and left as written
 ## Commands
 
 The model is ReScript; the tasks are mise's, the tools the workspace's. What it inherits from the
-workspace -- `.editorconfig`, `.oxfmtrc.json`, `jujutsu.toml` -- sits at the root as a link up to
-the workspace's file, which dangles in a clone of this repository alone.
+workspace -- `.editorconfig`, `.oxfmtrc.json`, `.oxlintrc.json`, `rustfmt.toml`, `jujutsu.toml` --
+sits at the root as a link up to the workspace's file, which dangles in a clone of this repository
+alone.
 
 | Command                  | Does                                                  |
 | ------------------------ | ----------------------------------------------------- |
