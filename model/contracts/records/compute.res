@@ -25,8 +25,8 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
-  // `version` is the hash of the build deployed, whose manifest it finds; nothing here makes the app
-  // public, which a mount or a name does, vr5lw.
+  // `version` is the hash of the build deployed, whose manifest it finds; nothing here makes the
+  // app public, which a mount or a name does, vr5lw.
   {
     name: "app",
     def: Record([

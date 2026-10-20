@@ -13,9 +13,9 @@ let types: array<declared> = [
     def: Enum({choices: codes(["default", "strict"]), ordered: false}),
     from: "v7v3w, vuanj",
   },
-  // An organization's own: its name shown, at most 16 characters, empty unless written; how long its
-  // credentials live, vuanj; and the grace its extensions inherit, a week unless set, vr5lw. Its
-  // description is every record's.
+  // An organization's own: its name shown, at most 16 characters, empty unless written; how long
+  // its credentials live, vuanj; and the grace its extensions inherit, a week unless set, vr5lw.
+  // Its description is every record's.
   {
     name: "organization",
     def: Record([
@@ -40,7 +40,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w",
   },
-  // An invitation offers an account a role, and lapses seven days after the generation that wrote it.
+  // An invitation offers an account a role, and lapses seven days after the generation that wrote
+  // it.
   {
     name: "invitation",
     def: Record([
@@ -55,8 +56,8 @@ let types: array<declared> = [
     from: "v7v3w",
   },
   // A node's id is its resource's, or a folder's, from the one space; `parent` the folder it sits
-  // in, none at the top; `slug` its part of a path, written as a label is; `name` the name shown, written as an account's
-  // is and repeated as freely.
+  // in, none at the top; `slug` its part of a path, written as a label is; `name` the name shown,
+  // written as an account's is and repeated as freely.
   {
     name: "tree",
     def: Record([
@@ -123,7 +124,8 @@ let types: array<declared> = [
     ]),
     from: "13ixj, v7v3w",
   },
-  // Who lent the extension, whose management token and shell key are the lender's and never its own.
+  // Who lent the extension, whose management token and shell key are the lender's and never its
+  // own.
   {
     name: "extension-lender",
     def: Union({tag: "name", cases: [{name: "platform", code: 1, fields: []}]}),
@@ -146,9 +148,9 @@ let types: array<declared> = [
   },
   // A host injected from outside and bound: `endpoint` where its driver's management answers;
   // `token` the binding token, sealed; `levels` copied from the host as it is bound, its own from
-  // then; `quota` none unless set; `grace` the organization's unless set; `address` whether its host
-  // is declared to have a public one, which a relay dialing back checks; a management token and a
-  // shell key's private half sealed, if given; and the warnings its admin dismissed.
+  // then; `quota` none unless set; `grace` the organization's unless set; `address` whether its
+  // host is declared to have a public one, which a relay dialing back checks; a management token
+  // and a shell key's private half sealed, if given; and the warnings its admin dismissed.
   {
     name: "extension",
     def: Record([
@@ -168,8 +170,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w, vr5lw",
   },
-  // A share opened on an extension, bound to it, an item of its driver's list: its capacity, and its
-  // secrets, one or two, sealed, which the control hands what uses it and whose hashes alone it
+  // A share opened on an extension, bound to it, an item of its driver's list: its capacity, and
+  // its secrets, one or two, sealed, which the control hands what uses it and whose hashes alone it
   // sends the driver, vr5lw.
   {
     name: "capacity",
@@ -186,8 +188,8 @@ let types: array<declared> = [
     def: Record([field("names", 1, List(Type("name"))), field("scopes", 2, List(Type("scope")))]),
     from: "vr5lw",
   },
-  // A host as its bundle holds it: the relays it may use, and whether it has a public address, which
-  // a relay dialing back checks; nothing of the extension sealed.
+  // A host as its bundle holds it: the relays it may use, and whether it has a public address,
+  // which a relay dialing back checks; nothing of the extension sealed.
   {
     name: "bundle-host",
     def: Record([field("relays", 1, Type("extension-relays")), field("address", 2, Prim(#bool))]),

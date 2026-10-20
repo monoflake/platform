@@ -55,7 +55,10 @@ let jsonName = path =>
   | _ => (None, None)
   }
 
-/** A key's text in a Cargo.toml's `[package]`, read a line at a time, as nothing else of it is asked. */
+/**
+ * A key's text in a Cargo.toml's `[package]`, read a line at a time, as nothing else of it is
+ * asked.
+ */
 let crateKey = (path, key) => {
   let section = ref("")
   let found = ref(None)
@@ -169,7 +172,8 @@ let run = () => {
     )
   )
   let written = []
-  // A directory written holds each language's manifest it is declared in, and no other, each naming it.
+  // A directory written holds each language's manifest it is declared in, and no other, each naming
+  // it.
   let check = (path, h: held) => {
     let files = entries(urlIn(`${path}/`, root), {withFileTypes: true})->Array.map(entryName)
     if files->Array.length > 0 {

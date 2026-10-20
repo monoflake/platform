@@ -1,5 +1,6 @@
 # What a crate may depend on, RFC fhg6w: `cargo deny check`, run by verify. A dependency is under a
-# license every component's own allows it to be linked into, so the permissive half stays permissive.
+# license every component's own allows it to be linked into, so the permissive half stays
+# permissive.
 [graph]
 all-features = true
 

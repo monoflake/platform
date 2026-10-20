@@ -1,14 +1,17 @@
 /**
- * A kind of record, named within its half, the half its truth is kept in, and the components that write it. A record a control
- * writes is configuration: the platform's control for what spans organizations, an organization's
- * for its products'; data is what lives inside what was opened, v7v3w. `check.res` refuses
- * configuration any other component writes, since the data plane runs on while a control is lost,
- * `docs/scope.md`, and a record of the platform's half any component of an organization's writes.
+ * A kind of record, named within its half, the half its truth is kept in, and the components that
+ * write it. A record a control writes is configuration: the platform's control for what spans
+ * organizations, an organization's for its products'; data is what lives inside what was opened,
+ * v7v3w. `check.res` refuses configuration any other component writes, since the data plane runs on
+ * while a control is lost, `docs/scope.md`, and a record of the platform's half any component of an
+ * organization's writes.
  */
 type held = {
   half: Components.half,
-  /** Its name within its half, as the shell of each of its rows writes it: one name may be a kind of
-   * each half, one concept kept in both, as an extension, or two, as an organization. */
+  /**
+   * Its name within its half, as the shell of each of its rows writes it: one name may be a kind of
+   * each half, one concept kept in both, as an extension, or two, as an organization.
+   */
   kind: string,
   writes: array<string>,
   from: string,

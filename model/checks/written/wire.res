@@ -2,8 +2,9 @@
 open Base
 
 let run = () => {
-  // The contracts, RFC fhg6w: each declared once, in the subset, and written out as the product every
-  // language reads. A product changed in place, a type of a record whose version stayed, is refused.
+  // The contracts, RFC fhg6w: each declared once, in the subset, and written out as the product
+  // every language reads. A product changed in place, a type of a record whose version stayed, is
+  // refused.
   let contractRules = []
   let declared = Dict.fromArray(Contracts.types->Array.map(t => (t.name, t)))
   let unique = (names, what) => {
@@ -300,8 +301,9 @@ let run = () => {
       )
     })
   })
-  // The drivers' runtimes, RFC vr5lw: each a runtime the deployments' contract names, taking one of its
-  // forms and standing on its isolations, every runtime given by some driver and every form taken.
+  // The drivers' runtimes, RFC vr5lw: each a runtime the deployments' contract names, taking one of
+  // its forms and standing on its isolations, every runtime given by some driver and every form
+  // taken.
   let choices = n =>
     switch declared->Dict.get(n) {
     | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)

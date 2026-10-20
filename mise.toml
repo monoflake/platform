@@ -1,23 +1,25 @@
-# The blueprint's own tasks. Its tools are the workspace's, read by walking up, until the workspace is
-# rebuilt on what this settles.
+# The blueprint's own tasks; its tools are the workspace's, read by walking up.
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
-cargo-deny = "0.20.2"
+cargo-deny = "0.20"
+
+# What oxfmt formats here; ReScript's formatter takes its sources from rescript.json.
+[vars]
+formatted = "'*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'"
 
 [tasks.fmt]
-description = "Format the model with ReScript's formatter and the prose, the product and the samples with oxfmt: `fmt [--check]`"
-usage = 'flag "--check" help="Report what is not formatted and write nothing"'
-run = '''
-if [ -n "${usage_check:-}" ]; then
-	rescript format --check
-	oxfmt --check '*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'
-else
-	rescript format
-	oxfmt '*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'
-fi
-'''
+description = "Format the model with ReScript's formatter and the prose, the product and the samples with oxfmt: `fmt [--dry-run]`"
+usage = 'flag "-n --dry-run" help="List what is not formatted and write nothing"'
+run = """
+if [ -z "${usage_dry_run:-}" ]; then rescript format && oxfmt {{vars.formatted}}; exit; fi
+rescript format --check; oxfmt --list-different {{vars.formatted}}; exit 0
+"""
+
+[tasks.formatted]
+description = "Fail where anything is not formatted, as verify asks"
+run = "rescript format --check && oxfmt --check {{vars.formatted}}"
 
 [tasks.check]
 description = "Compile the model and run its check: `check [--ready[=N]] [--s1] [--write]`"
@@ -26,7 +28,7 @@ run = "rescript build && node model/check.res.mjs"
 [tasks.verify]
 description = "What a commit has to pass: everything formatted, the check, and the crates' dependencies once there are crates"
 run = [
-	"mise run fmt --check",
+	"mise run formatted",
 	"mise run check",
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]

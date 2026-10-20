@@ -1,4 +1,7 @@
-/** The reserved names, `model/names/reserved.res`: every label the platform's own organizations hold is reserved, so no one takes it first, and each is a label as v7v3w writes one. */
+/**
+ * The reserved names, `model/names/reserved.res`: every label the platform's own organizations hold
+ * is reserved, so no one takes it first, and each is a label as v7v3w writes one.
+ */
 open Base
 
 let isLabel = s =>

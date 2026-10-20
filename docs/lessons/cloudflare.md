@@ -224,7 +224,7 @@ https://developers.cloudflare.com/d1/best-practices/import-export-data/,
 https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/export/
 
 **D1 and a Durable Object each rewind to any minute of the last 30 days.** D1's Time Travel is on
-always, at no cost, restored in place, in-flight queries cancelled, and answers a bookmark that
+always, at no cost, restored in place, in-flight queries canceled, and answers a bookmark that
 undoes it. A Durable Object's `getBookmarkForTime()` and `onNextSessionRestoreBookmark()` restore its
 whole storage at its next start, `ctx.abort()` restarting it, and answer one that undoes it too; not
 locally. A Durable Object has no export. Sources:

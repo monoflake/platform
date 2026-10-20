@@ -1,11 +1,13 @@
 /**
  * Every library the drafts name, RFC fhg6w: one subject, in one language or several, each
- * language's manifest beside the others' in its one directory, `code/libs/{name}`, and used by every
- * component of any of them that needs it.
+ * language's manifest beside the others' in its one directory, `code/libs/{name}`, and used by
+ * every component of any of them that needs it.
  */
 type library = {
   what: string,
-  /** The languages it is written in, a component using only a library written in its own, RFC fhg6w. */
+  /**
+   * The languages it is written in, a component using only a library written in its own, RFC fhg6w.
+   */
   languages: array<[#rust | #rescript]>,
   /** Whether its output must agree between components, so its version goes into what it writes. */
   agrees: bool,

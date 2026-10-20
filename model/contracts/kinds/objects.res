@@ -62,7 +62,10 @@ let types: array<declared> = [
   },
 ]
 
-/** Deleting what is not there, and describing it, succeed: neither is a failure, each read seeing every write before it. */
+/**
+ * Deleting what is not there, and describing it, succeed: neither is a failure, each read seeing
+ * every write before it.
+ */
 let interface_: interface_ = {
   name: "object",
   version: 1,

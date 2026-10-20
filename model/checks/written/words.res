@@ -1,4 +1,8 @@
-/** The two platforms' names, RFC 94y0d: foundation, production, internal and external stand only before platform, never alone, in what the design is written in. The lessons quote others, and are not read. */
+/**
+ * The two platforms' names, RFC 94y0d: foundation, production, internal and external stand only
+ * before platform, never alone, in what the design is written in. The lessons quote others, and are
+ * not read.
+ */
 open Base
 
 let run = () => {

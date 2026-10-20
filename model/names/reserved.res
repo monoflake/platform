@@ -1,13 +1,19 @@
 /**
  * The names no username or label is given by the ordinary flow, on the foundation platform and the
- * production platform alike, since either may stand in a domain name, v7v3w. Reserved means kept for the
- * platform: the operator alone gives one, by hand, to an organization of the platform's own. The
- * list only grows, and a name added that someone holds stays theirs.
+ * production platform alike, since either may stand in a domain name, v7v3w. Reserved means kept
+ * for the platform: the operator alone gives one, by hand, to an organization of the platform's
+ * own. The list only grows, and a name added that someone holds stays theirs.
  */
-/** The names a site keeps from its users, as shouldbee/reserved-usernames lists them, read by the check. */
+/**
+ * The names a site keeps from its users, as shouldbee/reserved-usernames lists them, read by the
+ * check.
+ */
 let vendored = "vendor/reserved-usernames/reserved-usernames.json"
 
-/** The mailboxes RFC 2142 names, so no one holds `abuse`, `noc` or `security` of a domain the platform serves, `docs/lessons/domains.md`. */
+/**
+ * The mailboxes RFC 2142 names, so no one holds `abuse`, `noc` or `security` of a domain the
+ * platform serves, `docs/lessons/domains.md`.
+ */
 let mailboxes = [
   "info",
   "marketing",

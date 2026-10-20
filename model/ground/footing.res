@@ -1,8 +1,9 @@
 /**
  * What a footing keeps and what it is asked to write, RFC b8f35. A footing is a database priced by
- * the row, so `check.res` asks two things of it: that what it keeps is bounded, growing with neither
- * the content its owner holds nor time, and how many rows a day each step of the bootstrap path asks
- * of the vendor's plan, `docs/scope.md`. Reads follow the caches above, and are not counted here.
+ * the row, so `check.res` asks two things of it: that what it keeps is bounded, growing with
+ * neither the content its owner holds nor time, and how many rows a day each step of the bootstrap
+ * path asks of the vendor's plan, `docs/scope.md`. Reads follow the caches above, and are not
+ * counted here.
  */
 /**
  * How what a footing keeps grows. Only `bounded` may stand; the rest wait on a row: `bounded` by a
@@ -120,7 +121,10 @@ let allowed = (plan: Steps.plan) =>
 type assumed = {
   /** The production organizations at each step, the author's own until users come at step 8. */
   production: int => float,
-  /** The foundation platform's own organizations: the console's dashboard's and the production platform's. */
+  /**
+   * The foundation platform's own organizations: the console's dashboard's and the production
+   * platform's.
+   */
   foundation: float,
   tablets: float,
 }

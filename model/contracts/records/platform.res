@@ -9,9 +9,9 @@ open Subset
 
 let types: array<declared> = [
   // An account's own: its name shown; how many ways a sign-in asks, one at least; how long its
-  // credential lives; the address the platform reaches the person at, verified and unique to no one;
-  // and a password's hash and a TOTP seed, sealed, each where held, which check an account already
-  // found and find none.
+  // credential lives; the address the platform reaches the person at, verified and unique to no
+  // one; and a password's hash and a TOTP seed, sealed, each where held, which check an account
+  // already found and find none.
   {
     name: "account",
     def: Record([
@@ -24,8 +24,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w",
   },
-  // A capability's value in an allowance, by its type in the vocabulary, 49qyg: yes or no, an amount
-  // in its unit, one of a set, or some of it.
+  // A capability's value in an allowance, by its type in the vocabulary, 49qyg: yes or no, an
+  // amount in its unit, one of a set, or some of it.
   {
     name: "allowance-value",
     def: Union({

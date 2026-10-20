@@ -1,12 +1,15 @@
 /**
- * The signed records, RFC b8f35: a capability, a certificate and an account credential, each a claim
- * set of CWT, RFC 8392, and a bundle, a record and no token. What the platform adds to CWT's claims
- * takes labels below -65536, IANA's range for private use; `iat` and `exp` are CWT's NumericDate,
- * seconds, the one time the platform counts in seconds, as the standard is taken whole.
+ * The signed records, RFC b8f35: a capability, a certificate and an account credential, each a
+ * claim set of CWT, RFC 8392, and a bundle, a record and no token. What the platform adds to CWT's
+ * claims takes labels below -65536, IANA's range for private use; `iat` and `exp` are CWT's
+ * NumericDate, seconds, the one time the platform counts in seconds, as the standard is taken
+ * whole.
  */
 open Subset
 
-/** The claims CWT registers that the platform's records hold, by name and number, RFCs 8392, 8747. */
+/**
+ * The claims CWT registers that the platform's records hold, by name and number, RFCs 8392, 8747.
+ */
 let registered = [("sub", 2), ("exp", 4), ("iat", 6), ("cnf", 8)]
 
 let types: array<declared> = [
@@ -120,7 +123,8 @@ let types: array<declared> = [
     }),
     from: "vuanj",
   },
-  // A grant: what an app may reach, and with which rights, compiled from its bindings, never written.
+  // A grant: what an app may reach, and with which rights, compiled from its bindings, never
+  // written.
   {
     name: "grant",
     def: Record([

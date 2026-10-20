@@ -1,22 +1,22 @@
 /**
  * The wire contracts, in the subset Rust and ReScript both hold natively, RFC fhg6w: declared here
- * once, and written out by `mise run check --write` as `model/contracts.json`, the one thing a language
- * reads. What is structural is derived -- every record's shell, its `description`, a reference typed
- * by the kind it names -- and only what is a kind's own is declared.
+ * once, and written out by `mise run check --write` as `model/contracts.json`, the one thing a
+ * language reads. What is structural is derived -- every record's shell, its `description`, a
+ * reference typed by the kind it names -- and only what is a kind's own is declared.
  *
- * A record encodes as JSON with its fields' names, and as CBOR with their keys, deterministic. Key 0
- * of a record's content is its `description`, every kind's, v7v3w; key 0 of a union is its case.
+ * A record encodes as JSON with its fields' names, and as CBOR with their keys, deterministic. Key
+ * 0 of a record's content is its `description`, every kind's, v7v3w; key 0 of a union is its case.
  * An enumeration is written as its name in JSON and as its code in CBOR, 13ixj's levels among them.
  */
 /**
  * A primitive: a 32-bit integer, signed or not; one exact in a JavaScript number, under 2^53, for a
  * time in milliseconds or a size in bytes, b8f35; a signed one within 2^53 either way, SQLite's as
- * the platform holds it, fhg6w, a number in JSON as any; a 64-bit float; bytes, base64url and unpadded in
- * JSON, RFC 4648's fifth section, and read in that text alone, fhg6w; and a content's hash, 32 bytes in CBOR and its 64 lowercase hex
- * digits in JSON, as b8f35 writes it wherever it is text; and a secret, written as bytes are, sealed
- * under its control's key where it is kept and plain only in the call that hands it to what uses
- * it, which no signed record and no section of a bundle reaches, fhg6w. An id is never one of these:
- * it is `Id`, typed by the kind it names.
+ * the platform holds it, fhg6w, a number in JSON as any; a 64-bit float; bytes, base64url and
+ * unpadded in JSON, RFC 4648's fifth section, and read in that text alone, fhg6w; and a content's
+ * hash, 32 bytes in CBOR and its 64 lowercase hex digits in JSON, as b8f35 writes it wherever it is
+ * text; and a secret, written as bytes are, sealed under its control's key where it is kept and
+ * plain only in the call that hands it to what uses it, which no signed record and no section of a
+ * bundle reaches, fhg6w. An id is never one of these: it is `Id`, typed by the kind it names.
  */
 type prim = [
   | #bool
@@ -39,7 +39,9 @@ type rec shape =
   /** An id of a record kind of the half the record holding it is kept in, stored as its integer, 8
    * hex digits shown, b8f35: within one footing, so its control checks it exists and guards it. */
   | Id(string)
-  /** An id of a kind of the other half, which its control never checks nor guards, kept by another. */
+  /**
+   * An id of a kind of the other half, which its control never checks nor guards, kept by another.
+   */
   | Across(half, string)
   /** A type declared below, by its name. */
   | Type(string)
@@ -73,13 +75,16 @@ type keys = [#subset | #cwt | #standard]
 type declared = {name: string, def: def, from: string, keys?: keys}
 
 /**
- * A signed record, b8f35: a `COSE_Sign1` by Ed25519, its protected header derived -- `alg` -19, `kid`
- * the first 16 bytes of the BLAKE3 of the signer's public key, `typ` `monoflake:{name}:{version}` --
- * its content a claim set of CWT's, or a record of the subset's. None is a record of a footing.
+ * A signed record, b8f35: a `COSE_Sign1` by Ed25519, its protected header derived -- `alg` -19,
+ * `kid` the first 16 bytes of the BLAKE3 of the signer's public key, `typ`
+ * `monoflake:{name}:{version}` -- its content a claim set of CWT's, or a record of the subset's.
+ * None is a record of a footing.
  */
 type signed = {name: string, version: int, form: [#claims | #record], content: string}
 
-/** A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu. */
+/**
+ * A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu.
+ */
 type content = {
   half: half,
   kind: string,
@@ -98,7 +103,9 @@ type failure = [#rejected | #unavailable | #unknown]
 
 type reason = {name: string, failure: failure}
 
-/** An operation: its input and its output, each a record declared, and the reasons it may fail for. */
+/**
+ * An operation: its input and its output, each a record declared, and the reasons it may fail for.
+ */
 type operation = {name: string, input: string, output: string, reasons: array<reason>}
 
 /**
@@ -112,7 +119,9 @@ type interface_ = {
   operations: array<operation>,
   /** The bounds a sample may be written against, by name, each an integer. */
   bounds?: dict<int>,
-  /** The bounds each driver declares of its own, by name, which a runner asks the driver for [D8]. */
+  /**
+   * The bounds each driver declares of its own, by name, which a runner asks the driver for [D8].
+   */
   declared?: array<string>,
   from: string,
 }

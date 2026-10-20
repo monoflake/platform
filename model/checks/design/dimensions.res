@@ -65,7 +65,8 @@ let run = () => {
       p.edges->Array.filterMap(x => x.reads->Option.map(reads => (n, x, reads)))
     )
   let replaces = (x: Components.edge) => x.replaces->Option.getOr(false)
-  // What replaces a component is the edge marked `replaces`; an edge it deploys others by says nothing.
+  // What replaces a component is the edge marked `replaces`; an edge it deploys others by says
+  // nothing.
   let d3 = atBoundaries(replaces)
   dimension(
     "D3 Upgrade",

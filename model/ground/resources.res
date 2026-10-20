@@ -1,13 +1,16 @@
 /**
- * What each host's driver gives, RFC vr5lw, and what a footing and the products ask of it. `check.res`
- * asks of every step of the bootstrap path that each deployment's footing, of the platform and of an
- * organization alike, holds one kind of each class, its compute an `effect` function; that its
- * extensions give every kind the products need; and that every resource reaches the public network
- * by a path, networks joined by jumps.
+ * What each host's driver gives, RFC vr5lw, and what a footing and the products ask of it.
+ * `check.res` asks of every step of the bootstrap path that each deployment's footing, of the
+ * platform and of an organization alike, holds one kind of each class, its compute an `effect`
+ * function; that its extensions give every kind the products need; and that every resource reaches
+ * the public network by a path, networks joined by jumps.
  */
 type class = [#compute | #storage | #database]
 
-/** A kind of what a resource gives, each a contract with an implementation a driver, `model/ground/drivers.res`; a database's sizes are open [C23]. */
+/**
+ * A kind of what a resource gives, each a contract with an implementation a driver,
+ * `model/ground/drivers.res`; a database's sizes are open [C23].
+ */
 type kind = [#function | #instance | #container | #object | #volume | #database]
 
 let classOf = (k: kind): class =>
@@ -18,8 +21,8 @@ let classOf = (k: kind): class =>
   }
 
 /**
- * A network a resource may be in, RFC vr5lw: the public one; Cloudflare's, joined by a tunnel; and a
- * relay's, joined by a connection held out to a machine with an address. A tailnet and a local
+ * A network a resource may be in, RFC vr5lw: the public one; Cloudflare's, joined by a tunnel; and
+ * a relay's, joined by a connection held out to a machine with an address. A tailnet and a local
  * network are private networks as well, bound by an organization and on no ground here.
  */
 type network = [#public | #cloudflare | #relay]
@@ -30,9 +33,11 @@ type resource = {
   in_: array<network>,
   /** The private networks it stands up, which it is a jump into from the public one. */
   stands?: array<network>,
-  /** The CPU a call may take on each of the vendor's plans, in milliseconds, docs/lessons/. A machine's
-   * driver declares how long a call may run as well, a value open [D8]; until it is, a machine is
-   * taken here to bound nothing. */
+  /**
+   * The CPU a call may take on each of the vendor's plans, in milliseconds, docs/lessons/. A
+   * machine's driver declares how long a call may run as well, a value open [D8]; until it is, a
+   * machine is taken here to bound nothing.
+   */
   cpu?: {free: float, paid: float},
   /** Whether it is used only once metering holds, being priced by use, RFC 94y0d. */
   metered?: bool,
@@ -69,7 +74,10 @@ let resources: dict<resource> = dict{
   /* Reached at the adapter its driver deploys, which is its address, vr5lw. */
   "d1": {gives: [#database], in_: [#public, #cloudflare], from: "vr5lw"},
   "r2": {gives: [#object], in_: [#public, #cloudflare], from: "vr5lw"},
-  /* The foundation platform's three products, given the production platform through the driver's interface. */
+  /*
+   * The foundation platform's three products, given the production platform through the driver's
+   * interface.
+   */
   "foundation products": {
     gives: [#function, #instance, #container, #object, #database],
     in_: [#public],

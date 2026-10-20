@@ -1,4 +1,7 @@
-/** What every check stands on: the bindings, the graph read as the checks read it, and how a dimension prints. */
+/**
+ * What every check stands on: the bindings, the graph read as the checks read it, and how a
+ * dimension prints.
+ */
 type url
 @new external url: (string, string) => url = "URL"
 @new external urlIn: (string, url) => url = "URL"

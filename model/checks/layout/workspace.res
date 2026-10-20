@@ -1,8 +1,8 @@
 /**
  * The tree's three workspaces, RFC fhg6w: the root's `Cargo.toml` lists every crate beneath `code/`
  * as a member and nothing else, its `rescript.json` every ReScript package as a dependency, and
- * `pnpm-workspace.yaml` takes all beneath `code/`, where every package that pnpm links lies. Cargo and
- * ReScript take no recursive glob, so each list is written out and held here.
+ * `pnpm-workspace.yaml` takes all beneath `code/`, where every package that pnpm links lies. Cargo
+ * and ReScript take no recursive glob, so each list is written out and held here.
  */
 open Base
 
@@ -21,7 +21,9 @@ let rec holding = (path, manifest) => {
   )
 }
 
-/** The strings in a TOML array under a key of a section, read as the root's manifest writes them. */
+/**
+ * The strings in a TOML array under a key of a section, read as the root's manifest writes them.
+ */
 let tomlList = (text, section, key) => {
   let at = ref("")
   let collecting = ref(false)

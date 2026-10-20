@@ -102,7 +102,9 @@ let types: array<declared> = [
   {name: "management-ended", def: Record([]), from: "vr5lw"},
 ]
 
-/** Ending what is not there succeeds; what the list still asks is ended only by a list without it. */
+/**
+ * Ending what is not there succeeds; what the list still asks is ended only by a list without it.
+ */
 let interface_: interface_ = {
   name: "management",
   version: 2,

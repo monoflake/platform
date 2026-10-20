@@ -1,9 +1,10 @@
 /**
  * What each driver is made of, RFC vr5lw: one implementation for each kind its vendor's resources
- * give, `model/ground/resources.res`. A kind is a contract the model declares, `model/contracts/kinds/`, with no
- * language of its own; each implementation of it has one, since a Worker over R2 and a process over
- * a machine's file system do the same work on grounds that share nothing. Nothing calls an
- * implementation but through its kind's contract, and no implementation calls another.
+ * give, `model/ground/resources.res`. A kind is a contract the model declares,
+ * `model/contracts/kinds/`, with no language of its own; each implementation of it has one, since a
+ * Worker over R2 and a process over a machine's file system do the same work on grounds that share
+ * nothing. Nothing calls an implementation but through its kind's contract, and no implementation
+ * calls another.
  */
 type implementation = {kind: Resources.kind, language: [#rust | #rescript], as_: string}
 

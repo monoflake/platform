@@ -1,20 +1,23 @@
 /**
- * The compute kinds' contract, RFC vr5lw: function, instance and container are each deployed by this
- * one interface, into what a driver's list holds already, and differ in how what is deployed is
- * called, which is an app's own exports in WIT, never this subset. A deployment is of an app, by its
- * id, or of a component of the platform's own, by the name the model gives it; neither is renamed.
+ * The compute kinds' contract, RFC vr5lw: function, instance and container are each deployed by
+ * this one interface, into what a driver's list holds already, and differ in how what is deployed
+ * is called, which is an app's own exports in WIT, never this subset. A deployment is of an app, by
+ * its id, or of a component of the platform's own, by the name the model gives it; neither is
+ * renamed.
  */
 open Subset
 
 let types: array<declared> = [
-  // What a builder makes: a bundle of JavaScript modules, a WebAssembly component, an OCI image [C11].
+  // What a builder makes: a bundle of JavaScript modules, a WebAssembly component, an OCI image
+  // [C11].
   {
     name: "deployment-form",
     def: Enum({choices: codes(["modules", "component", "image"]), ordered: false}),
     from: "vr5lw",
   },
-  // What runs a form: Cloudflare's Workers runtime and workerd for modules, wasmtime for a component,
-  // an OCI runtime for an image. Each driver declares its own, `model/ground/drivers.res`.
+  // What runs a form: Cloudflare's Workers runtime and workerd for modules, wasmtime for a
+  // component, an OCI runtime for an image. Each driver declares its own,
+  // `model/ground/drivers.res`.
   {
     name: "deployment-runtime",
     def: Enum({
@@ -24,7 +27,8 @@ let types: array<declared> = [
     from: "vr5lw",
   },
   // What keeps a deployment apart, each standing on its own and none above another: an isolate
-  // within its process; the kernel's namespaces and cgroups; a kernel in user space; a virtual machine.
+  // within its process; the kernel's namespaces and cgroups; a kernel in user space; a virtual
+  // machine.
   {
     name: "deployment-isolation",
     def: Enum({choices: codes(["isolate", "kernel", "userspace", "vm"]), ordered: false}),
@@ -113,7 +117,10 @@ let types: array<declared> = [
   {name: "deployment-deleted", def: Record([]), from: "vr5lw"},
 ]
 
-/** Stopping, resuming and describing what was never deployed fail as `not_found`; deleting it succeeds. */
+/**
+ * Stopping, resuming and describing what was never deployed fail as `not_found`; deleting it
+ * succeeds.
+ */
 let interface_: interface_ = {
   name: "deployments",
   version: 2,

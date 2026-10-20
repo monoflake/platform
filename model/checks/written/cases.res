@@ -32,7 +32,10 @@ let isInteger = (x, lo, hi) => Math.floor(x) == x && x >= lo && x <= hi
 
 let isHex = s => hexText->RegExp.test(s)
 
-/** Where a value stands: in an input, in what is expected, or in a codec sample, read as a reader would. */
+/**
+ * Where a value stands: in an input, in what is expected, or in a codec sample, read as a reader
+ * would.
+ */
 type mode = Input | Expected | Codec
 
 type scope = {
@@ -213,10 +216,16 @@ let items = j =>
   | _ => []
   }
 
-/** The capacity a case of an interface is `given`: its own kind's, and a container for what is deployed. */
+/**
+ * The capacity a case of an interface is `given`: its own kind's, and a container for what is
+ * deployed.
+ */
 let capacityOf = name => name == "deployments" ? "container" : name
 
-/** How a fixture is served: as it was built, under a hash not its own, or from where nothing answers. */
+/**
+ * How a fixture is served: as it was built, under a hash not its own, or from where nothing
+ * answers.
+ */
 let served = ["as_built", "hash_mismatched", "unfetchable"]
 
 /** The checkers a property names, each written in the runner, never in a sample. */
@@ -228,7 +237,8 @@ let run = () => {
   let sampled = Set.make()
   let sent = ref(false)
   let deployments = Contracts.interfaces->Array.find(i => i.name == "deployments")
-  // A fixture, `tests/fixtures/{name}/fixture.json`: an app deployed by samples, its source the runner's to build.
+  // A fixture, `tests/fixtures/{name}/fixture.json`: an app deployed by samples, its source the
+  // runner's to build.
   let fixtures = Dict.make()
   let fixtureFiles = files("tests/fixtures")
   fixtureFiles->Array.forEach(path => {
@@ -379,7 +389,8 @@ let run = () => {
                 | None => found->Array.push(`${at}: ${call}, no operation of ${name}`)
                 | Some(o) =>
                   called->Set.add(`${name}.${call}`)
-                  // A fixture's version, form and artifact are the runner's to write, where a step writes none.
+                  // A fixture's version, form and artifact are the runner's to write, where a step
+                  // writes none.
                   let input = switch (st->member("fixture"), st->member("input")) {
                   | (None, Some(x)) => x
                   | (None, None) => Null
@@ -425,7 +436,8 @@ let run = () => {
                   | None => found->Array.push(`${at}: expects nothing`)
                   }
                 }
-              // A call to what is deployed, in its app's own WIT: held to its shape alone, never a contract's.
+              // A call to what is deployed, in its app's own WIT: held to its shape alone, never a
+              // contract's.
               | (None, Some(Object(d))) =>
                 if name != "deployments" {
                   found->Array.push(`${at}: sends to what ${name} deploys not`)
@@ -464,7 +476,8 @@ let run = () => {
                   }
                 | None => found->Array.push(`${at}: expects nothing`)
                 }
-              // A step that loses some of the copies its case is held on, so a sample may ask of fewer.
+              // A step that loses some of the copies its case is held on, so a sample may ask of
+              // fewer.
               | (None, None) if st->member("lose") != None =>
                 switch (st->member("lose"), copies) {
                 | (Some(Number(k)), Some(n)) if isInteger(k, 1., n -. lost.contents) =>
@@ -545,7 +558,8 @@ let run = () => {
     | _ => found->Array.push(`${path}: load, counts of what the checker runs`)
     }
   })
-  // A codec sample is a value in JSON beside its CBOR; one refused fails as every reader must refuse it.
+  // A codec sample is a value in JSON beside its CBOR; one refused fails as every reader must
+  // refuse it.
   let codec = files("tests/codec")
   let pairs = ref(0)
   let refused = ref(0)

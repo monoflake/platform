@@ -18,7 +18,8 @@ let types: array<declared> = [
     from: "zn3u5, vuanj",
   },
   // A tier of what is kept past the 30 days every implementation rewinds within: a snapshot every
-  // so many milliseconds, kept until it is so old, the newest of each span kept, as restic's buckets.
+  // so many milliseconds, kept until it is so old, the newest of each span kept, as restic's
+  // buckets.
   {
     name: "database-retention",
     def: Record([field("every", 1, Prim(#uint53)), field("keep", 2, Prim(#uint53))]),
@@ -86,5 +87,8 @@ let retentionMost =
   365. *. day
 let retentionFinest = hour
 
-/** The tiers a database is given when its owner turns them on, and changes as it likes within the bounds. */
+/**
+ * The tiers a database is given when its owner turns them on, and changes as it likes within the
+ * bounds.
+ */
 let retentionPreset = [(day, 90. *. day), (7. *. day, 180. *. day), (30. *. day, 365. *. day)]
