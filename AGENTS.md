@@ -35,8 +35,8 @@ vendor/     other projects' files, copied at one version and left as written
   begins to compute hands that part to a tool in `code/tools/`.
 - **The root holds the three workspaces' manifests and no package**: `Cargo.toml`, `package.json`
   with `pnpm-workspace.yaml`, and `rescript.json`, each list held by the check to what `code/` holds.
-- **No directory holds more than 16 entries or lies more than 5 deep**, from a top-level directory
-  or a package's root; the check holds both.
+- **No directory but the root holds more than 16 entries, and none lies more than 5 deep**, from a
+  top-level directory or a package's root; the check holds both.
 
 ## Commands
 

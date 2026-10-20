@@ -623,6 +623,15 @@ let components: dict<component> = dict{
 
 let globalOpen: array<string> = []
 
+/** The platform's control plane, licensed AGPL-3.0-only; every other component and every library
+ * is MIT OR Apache-2.0, RFC fhg6w. */
+let agpl = ["control(platform)", "control(organization)", "anchor", "console"]
+
+let permissive = "MIT OR Apache-2.0"
+
+/** The license a component's code is under, as its manifests declare it. */
+let licenseOf = name => agpl->Array.includes(name) ? "AGPL-3.0-only" : permissive
+
 /**
  * The contracts an edge names that are not yet declared in the subset, by the name it gives each
  * after `?`, and the row that declares them. A tablet's copies speak among themselves -- WAL frames

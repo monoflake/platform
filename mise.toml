@@ -3,6 +3,9 @@
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 
+[tools]
+cargo-deny = "0.20.2"
+
 [tasks.fmt]
 description = "Format the model with ReScript's formatter and the prose, the product and the samples with oxfmt: `fmt [--check]`"
 usage = 'flag "--check" help="Report what is not formatted and write nothing"'
@@ -21,5 +24,9 @@ description = "Compile the model and run its check: `check [--ready[=N]] [--s1] 
 run = "rescript build && node model/check.res.mjs"
 
 [tasks.verify]
-description = "What a commit has to pass: everything formatted, and the check"
-run = ["mise run fmt --check", "mise run check"]
+description = "What a commit has to pass: everything formatted, the check, and the crates' dependencies once there are crates"
+run = [
+	"mise run fmt --check",
+	"mise run check",
+	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
+]

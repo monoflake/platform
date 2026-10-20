@@ -1,5 +1,5 @@
 /**
- * The tree, `docs/method.md`: no directory holds more than 16 entries, and none lies more than 5
+ * The tree, `docs/method.md`: no directory but the root holds more than 16 entries, and none lies more than 5
  * deep, counted from a top-level directory or a package's root, its first subdirectory 1. Either
  * limit reached asks first whether it still fits, then whether the tree is cut where it should be.
  */
@@ -34,7 +34,9 @@ let run = () => {
     if count > Pair.second(wide.contents) {
       wide := (path, count)
     }
-    if count > widest {
+
+    // The root is exempt: what tools ask to find there is no part of the tree.
+    if count > widest && path != "." {
       found->Array.push(`${path}: ${int(count)} entries, past ${int(widest)}`)
     }
     let names = listed->Array.map(entryName)

@@ -5,14 +5,16 @@
  * implementations, one a kind its grounds give, each in its own, and of its management, in the
  * language its ground asks, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
  * for each of its languages. A package is named as the model names what it holds, `@blueprint/` led
- * where it is ReScript's, and namespaced. Anything not yet written is noted, never refused.
+ * where it is ReScript's, and namespaced, and under the license the model gives it,
+ * `model/graph/components.res`, which the root's `LICENSE` names by directory. Anything not yet
+ * written is noted, never refused.
  */
 open Base
 
 type lang = [#rust | #rescript]
 
 /** What a directory is to hold: what of the model, in which languages, under which package name. */
-type held = {name: string, languages: array<lang>, package: string}
+type held = {name: string, languages: array<lang>, package: string, license: string}
 
 /** The directory each layer's components lie in. */
 let group = layer =>
@@ -53,8 +55,8 @@ let jsonName = path =>
   | _ => (None, None)
   }
 
-/** The name in a Cargo.toml's `[package]`, read a line at a time, as nothing else of it is asked. */
-let crateName = path => {
+/** A key's text in a Cargo.toml's `[package]`, read a line at a time, as nothing else of it is asked. */
+let crateKey = (path, key) => {
   let section = ref("")
   let found = ref(None)
   readFileSync(urlIn(path, root))
@@ -63,12 +65,23 @@ let crateName = path => {
     let line = line->String.trim
     if line->String.startsWith("[") {
       section := line
-    } else if section.contents == "[package]" && line->String.startsWith("name") {
+    } else if (
+      section.contents == "[package]" &&
+        line->String.split("=")->Array.get(0)->Option.map(String.trim) == Some(key)
+    ) {
       found := line->String.split("\"")->Array.get(1)
     }
   })
   found.contents
 }
+
+let crateName = path => crateKey(path, "name")
+
+let jsonLicense = path =>
+  switch JSON.parseOrThrow(readFileSync(urlIn(path, root))) {
+  | Object(d) => d->Dict.get("license")
+  | _ => None
+  }
 
 let run = () => {
   let found = []
@@ -87,6 +100,7 @@ let run = () => {
               name: `${name} ${(i.kind :> string)}`,
               languages: [i.language],
               package: `${packageName(name)}-${(i.kind :> string)}`,
+              license: Components.permissive,
             },
           )
         )
@@ -96,6 +110,7 @@ let run = () => {
             name: `${name} management`,
             languages: [d.management],
             package: `${packageName(name)}-management`,
+            license: Components.permissive,
           },
         )
         let given = Set.fromArray(
@@ -126,7 +141,12 @@ let run = () => {
       | Some(g) =>
         expected->Map.set(
           `code/${g}/${dirName(name)}`,
-          {name, languages: [language], package: packageName(name)},
+          {
+            name,
+            languages: [language],
+            package: packageName(name),
+            license: Components.licenseOf(name),
+          },
         )
       }
       c.uses->Array.forEach(u =>
@@ -145,7 +165,7 @@ let run = () => {
   Libraries.libraries->Dict.forEachWithKey((l, name) =>
     expected->Map.set(
       `code/libs/${libraryDir(name)}`,
-      {name, languages: l.languages, package: libraryDir(name)},
+      {name, languages: l.languages, package: libraryDir(name), license: Components.permissive},
     )
   )
   let written = []
@@ -171,6 +191,15 @@ let run = () => {
         | Some(n) if n == h.package => ()
         | _ => found->Array.push(`${path}/Cargo.toml: no crate named ${h.package}`)
         }
+        if crateKey(`${path}/Cargo.toml`, "license") != Some(h.license) {
+          found->Array.push(`${path}/Cargo.toml: no license ${h.license}`)
+        }
+      }
+      if (
+        files->Array.includes("package.json") &&
+          jsonLicense(`${path}/package.json`) != Some(JSON.String(h.license))
+      ) {
+        found->Array.push(`${path}/package.json: no license ${h.license}`)
       }
       if files->Array.includes("rescript.json") {
         let scoped = `@blueprint/${h.package}`
@@ -238,6 +267,99 @@ let run = () => {
       })
     }
   })
+  // The root's LICENSE names by directory what is AGPL-3.0-only, and LICENSES/ holds each text by
+  // its SPDX identifier.
+  let texts = ["AGPL-3.0-only.txt", "Apache-2.0.txt", "MIT.txt"]
+  if existsSync(urlIn("LICENSES/", root)) {
+    let held = entries(urlIn("LICENSES/", root), {withFileTypes: true})->Array.map(entryName)
+    texts->Array.forEach(t =>
+      if !(held->Array.includes(t)) {
+        found->Array.push(`LICENSES/: no ${t}`)
+      }
+    )
+    held->Array.forEach(t =>
+      if !(texts->Array.includes(t)) {
+        found->Array.push(`LICENSES/${t}: a text no package is licensed under`)
+      }
+    )
+  } else {
+    found->Array.push("no LICENSES/ at the root")
+  }
+  let agplDirs = Components.agpl->Array.filterMap(n =>
+    switch Components.components->Dict.get(n) {
+    | Some(c) => group(c.layer)->Option.map(g => `code/${g}/${dirName(n)}`)
+    | None =>
+      found->Array.push(`${n}: AGPL-3.0-only, yet no component of the model`)
+      None
+    }
+  )
+  if existsSync(urlIn("LICENSE", root)) {
+    let license = readFileSync(urlIn("LICENSE", root))->String.replaceAll("\n", " ")
+    agplDirs->Array.forEach(d =>
+      if !(license->String.includes(d)) {
+        found->Array.push(`LICENSE: names not ${d}, which is AGPL-3.0-only`)
+      }
+    )
+    license
+    ->String.split(" ")
+    ->Array.map(w => w->String.replaceAll(",", ""))
+    ->Array.filter(w => w->String.startsWith("code/"))
+    ->Array.forEach(w =>
+      if !(agplDirs->Array.includes(w)) {
+        found->Array.push(`LICENSE: names ${w}, which the model licenses not AGPL-3.0-only`)
+      }
+    )
+  } else {
+    found->Array.push("no LICENSE at the root")
+  }
+
+  // REUSE.toml says the same, REUSE 3.3: every path MIT OR Apache-2.0, and after it, so it wins,
+  // each AGPL-3.0-only directory.
+  if existsSync(urlIn("REUSE.toml", root)) {
+    let tables =
+      readFileSync(urlIn("REUSE.toml", root))
+      ->String.split("[[annotations]]")
+      ->Array.slice(~start=1)
+      ->Array.map(t => {
+        let quoted = line =>
+          line->String.split("\"")->Array.filterWithIndex((_, i) => mod(i, 2) == 1)
+        let lines = t->String.split("\n")->Array.map(String.trim)
+        let paths = []
+        let license = ref(None)
+        let inPath = ref(false)
+        lines->Array.forEach(l =>
+          if l->String.startsWith("path") || inPath.contents {
+            inPath := !(l->String.includes("]")) && (l->String.includes("[") || inPath.contents)
+            quoted(l)->Array.forEach(q => paths->Array.push(q))
+          } else if l->String.startsWith("SPDX-License-Identifier") {
+            license := quoted(l)->Array.get(0)
+          }
+        )
+        (paths, license.contents)
+      })
+    let wanted = [
+      (["**"], Components.permissive),
+      (agplDirs->Array.map(d => `${d}/**`)->Array.toSorted(String.compare), "AGPL-3.0-only"),
+    ]
+    let got = tables->Array.map(((ps, l)) => (ps->Array.toSorted(String.compare), l))
+    if (
+      got->Array.length != 2 ||
+        wanted->Array.someWithIndex(((ps, l), i) =>
+          switch got[i] {
+          | Some((gps, Some(gl))) => gps != ps || gl != l
+          | _ => true
+          }
+        )
+    ) {
+      found->Array.push(
+        `REUSE.toml: not every path ${Components.permissive}, then ${agplDirs->Array.join(
+            ", ",
+          )} AGPL-3.0-only`,
+      )
+    }
+  } else {
+    found->Array.push("no REUSE.toml at the root")
+  }
   let unwritten =
     expected
     ->Map.values

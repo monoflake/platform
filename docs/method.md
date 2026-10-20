@@ -60,7 +60,8 @@ sources, and none of the design.
 
 ## The tree grows by nesting, never by spreading
 
-Agreed with the author on 2026-10-19. A directory holds at most 16 entries and lies at most 5 deep,
+Agreed with the author on 2026-10-19. A directory holds at most 16 entries, the root excepted, decided
+by the author on 2026-10-20, and lies at most 5 deep,
 counted from a top-level directory or a package's root -- a directory with a `Cargo.toml`, a
 `package.json` or a `rescript.json` -- its first subdirectory 1. What outgrows a directory is nested
 in it as its abstraction rises, never laid beside the rest. Both numbers are for now: one reached

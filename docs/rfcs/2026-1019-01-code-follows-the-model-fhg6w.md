@@ -41,6 +41,13 @@ components, libraries and edges, each with its contract:
   points to its own layer or below, a library uses libraries alone -- so the check proves the code's
   boundaries where the code keeps the model's.
 
+**The platform's control plane is AGPL-3.0-only, and the rest MIT OR Apache-2.0**, decided by the
+author on 2026-10-20: `control(platform)`, `control(organization)`, `anchor` and `console` are under
+the first, every other component, driver and library under the second, `model/graph/components.res`.
+The root's `LICENSE` names the first by directory, `REUSE.toml` says the same as REUSE 3.3 asks, and
+`LICENSES/` holds each text by its SPDX identifier; a manifest declares its package's,
+`model/checks/layout/code.res`.
+
 **A language is chosen by three measures, in order**, worked out with the author on 2026-10-19:
 
 1. **What is bound by the CPU is Rust**, near C's speed and collected by nothing.
