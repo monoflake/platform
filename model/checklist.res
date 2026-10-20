@@ -524,6 +524,13 @@ let checklist: array<item> = [
     done: "fhg6w: moot, OCaml is not written",
   },
   {
+    id: "C34",
+    group: #C,
+    what: "a domain's TXT record, _monoflake-challenge.{domain}: what its value holds -- the organization's scope id, as a CNAME's target names it, or a token -- and whether it proves every name beneath its domain",
+    from: "vr5lw",
+    step: 6,
+  },
+  {
     id: "D1",
     group: #D,
     what: "the app that charges, an organization's on the internal platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
@@ -683,6 +690,7 @@ let checklist: array<item> = [
     group: #E,
     what: "vr5lw's entry reads a name alone and carries the rest of a request unread, yet a domain's challenge asks an entry to answer /.well-known/monoflake-challenge/ for a name bound to an app past the gateway",
     from: "found",
+    done: "vr5lw: a TXT record, a CNAME, then an HTTP challenge, tried in order; the entry's one path written into its rule and its contract",
   },
   {
     id: "E10",

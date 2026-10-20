@@ -531,8 +531,9 @@ out with the author on 2026-10-18.
   the deployments, as it deploys an adapter, so data still goes past the driver, ends TLS with the
   machine's certificate and hands a request to the deployment its name is bound to; a Worker is its
   own entry. No route table stands beside the names. An entry reads the name alone and carries the rest
-  unread, answers unavailable while what the name is bound to is down, and never authenticates an
-  app's users.
+  unread, but for one path: while it holds a challenge's id unanswered, a few seconds, it answers
+  `/.well-known/monoflake-challenge/{id}` itself, below. It answers unavailable while what the name is
+  bound to is down, and never authenticates an app's users.
 - **An organization's gateway is its own, never an app**, worked out with the author on
   2026-10-19: every organization has one, part of what the platform gives it, never among its apps
   and configured only through its organization's control, RFC v7v3w. It is bound to the
@@ -570,23 +571,31 @@ out with the author on 2026-10-18.
   holds, RFC v7v3w. What it is bound to is the organization's own, a `name`: the domain, its target
   written by type as a binding is, `{ app: id }` or `{ storage }`, RFC 49qyg, and whether it is the
   storage's preferred.
-  - **A CNAME is the proof**, followed to its end: only who keeps a domain's records can point it at
-    `{scope-id}.mofl.fyi`, an organization's name by its scope's id, which is never given again. One
-    at a label proves nothing, since a label let go may be another's.
-  - **Where no CNAME is seen** -- a domain's apex, flattened to addresses, or a name behind its own
-    proxy -- **a challenge is the proof**: the platform fetches
-    `/.well-known/monoflake-challenge/{id}` of the name, and only the claiming organization's entry,
-    holding that id, answers it, as ACME's HTTP challenge proves a name, `docs/lessons/`. An entry
-    takes the path only while it holds an id unanswered, a few seconds, and passes it to the app
-    otherwise, so no app loses it. The suffix is minted unregistered, which RFC 8615 asks of a new
-    one.
+  - **Three proofs are tried in order, and the first that holds is enough**, worked out with the
+    author on 2026-10-19:
+    1. **A TXT record, `_monoflake-challenge.{domain}`, is read first.** It is optional, and every
+       proof the platform checks reads it: written once by who keeps the domain's records and left,
+       it stands for every claim and every check after, as a site verification of Google's does.
+       What its value holds, and whether it proves the names beneath its domain, is open. [C34]
+    2. **A CNAME, followed to its end**: only who keeps a domain's records can point it at
+       `{scope-id}.mofl.fyi`, an organization's name by its scope's id, which is never given again.
+       One at a label proves nothing, since a label let go may be another's.
+    3. **An HTTP challenge, where neither is seen** -- a domain's apex, flattened to addresses, or a
+       name behind its own proxy -- so a name already pointed at the platform is proven with no
+       change to its records: the platform fetches `/.well-known/monoflake-challenge/{id}` of the
+       name, and only the claiming organization's entry, holding that id, answers it, as ACME's HTTP
+       challenge proves a name, `docs/lessons/`. An entry takes the path only while it holds an id
+       unanswered, a few seconds, and passes it to the app otherwise; an app's own use of a suffix
+       minted for this is taken as never. The suffix is minted unregistered, which RFC 8615 asks of
+       a new one.
   - **A proof holds at most until the domain's registration expires**, read by RDAP, its
     `expiration` event, from the registry IANA's bootstrap names, `docs/lessons/`. A registry RDAP
     does not reach gives no end, and the proof holds until the domain is let go.
   - **A domain held is locked to its organization** until that organization lets it go, or its
     proof's end passes; only then may another claim it, which clears the first's binding. One held
     past its registration with no end known is the operator's to settle by hand.
-  - **Every proof is checked again weekly**, a CNAME by a lookup, a challenge by its few seconds.
+  - **Every proof is checked again weekly**, in the same order: the record read, the CNAME looked
+    up, the challenge's few seconds.
     One that still holds changes nothing, but its end moves to a registration renewed; one that
     fails raises a warning, RFC v7v3w, unbinds nothing, since a failure may pass and the end is what
     releases, and is checked again the next week. **A registration within 30 days of expiring
@@ -660,6 +669,8 @@ third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
+- A domain's TXT record: what its value holds, and whether it proves every name beneath its domain.
+  [C34]
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]
