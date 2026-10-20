@@ -658,7 +658,7 @@ out with the author on 2026-10-18.
     hands the app `/v{n}/...`, the rest unread.
   - **An app is mounted by a row of its organization's `scope` table**, worked out with the author
     on 2026-10-19: a scope to the app's id, written as a label is, never one reserved, unique by
-    the table's key; unmounting is the row deleted. The mount is the gateway's configuration, never
+    the table's key, `model/contracts/records/control.res`; unmounting is the row deleted. The mount is the gateway's configuration, never
     the app's, since an app may never be mounted, or be reached by a name of its own instead, which
     passes the gateway by.
   - **The version is each scope's own**, an integer written with its `v`: put first, it lets all
@@ -683,9 +683,9 @@ out with the author on 2026-10-18.
 - **A name of the organization's own is claimed before it is bound**, worked out with the author on
   2026-10-19. Which organization holds a domain is unique across the platform, since an entry routes
   by `Host`: the platform's `domain` table, a domain to its organization and until when its proof
-  holds, RFC v7v3w. What it is bound to is the organization's own, a `name`: the domain, its target
-  written by type as a binding is, `{ app: id }` or `{ storage }`, RFC 49qyg, and whether it is the
-  storage's preferred.
+  holds, RFC v7v3w. What it is bound to is the organization's own, a `name`,
+  `model/contracts/records/control.res`: the domain, its target written by type as a binding is, an
+  app by its id or the storage, RFC 49qyg, and whether it is the storage's preferred.
   - **Three proofs are tried in order, and the first that holds is enough**, worked out with the
     author on 2026-10-19:
     1. **A TXT record, `_monoflake-challenge.{domain}`, is read first.** It is optional, and every

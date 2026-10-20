@@ -365,6 +365,578 @@
 				}
 			]
 		},
+		"database-kind": {
+			"enum": [
+				{
+					"name": "transactional",
+					"code": 1
+				}
+			],
+			"ordered": false
+		},
+		"database-levels": {
+			"record": [
+				{
+					"name": "availability",
+					"key": 1,
+					"shape": {
+						"type": "availability"
+					}
+				},
+				{
+					"name": "custody",
+					"key": 2,
+					"shape": {
+						"type": "custody"
+					}
+				}
+			]
+		},
+		"database": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"type": "database-kind"
+					}
+				},
+				{
+					"name": "app",
+					"key": 2,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "replicas",
+					"key": 3,
+					"shape": {
+						"prim": "bool"
+					},
+					"optional": true
+				},
+				{
+					"name": "copies",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "placement",
+					"key": 5,
+					"shape": {
+						"type": "placement"
+					},
+					"optional": true
+				},
+				{
+					"name": "levels",
+					"key": 6,
+					"shape": {
+						"type": "database-levels"
+					}
+				}
+			]
+		},
+		"app-env": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "config",
+						"code": 1,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "secret",
+						"code": 2,
+						"fields": [
+							{
+								"name": "sealed",
+								"key": 1,
+								"shape": {
+									"prim": "bytes"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"app-bindings": {
+			"record": [
+				{
+					"name": "app",
+					"key": 1,
+					"shape": {
+						"map": {
+							"id": "app"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "database",
+					"key": 2,
+					"shape": {
+						"map": {
+							"id": "database"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "bucket",
+					"key": 3,
+					"shape": {
+						"map": {
+							"id": "bucket"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		"app": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "version",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "bindings",
+					"key": 2,
+					"shape": {
+						"type": "app-bindings"
+					}
+				},
+				{
+					"name": "env",
+					"key": 3,
+					"shape": {
+						"map": {
+							"type": "app-env"
+						}
+					}
+				}
+			]
+		},
+		"tree-type": {
+			"enum": [
+				{
+					"name": "folder",
+					"code": 1
+				},
+				{
+					"name": "app",
+					"code": 2
+				},
+				{
+					"name": "database",
+					"code": 3
+				},
+				{
+					"name": "bucket",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"tree": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "parent",
+					"key": 1,
+					"shape": {
+						"id": "tree"
+					},
+					"optional": true
+				},
+				{
+					"name": "type",
+					"key": 2,
+					"shape": {
+						"type": "tree-type"
+					}
+				},
+				{
+					"name": "slug",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "name",
+					"key": 4,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"name-target": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "app",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							}
+						]
+					},
+					{
+						"name": "storage",
+						"code": 2,
+						"fields": []
+					}
+				]
+			}
+		},
+		"name": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "domain",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "target",
+					"key": 2,
+					"shape": {
+						"type": "name-target"
+					}
+				},
+				{
+					"name": "preferred",
+					"key": 3,
+					"shape": {
+						"prim": "bool"
+					},
+					"optional": true
+				}
+			]
+		},
+		"scope": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "scope",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "app",
+					"key": 2,
+					"shape": {
+						"id": "app"
+					}
+				}
+			]
+		},
+		"extension-driver": {
+			"enum": [
+				{
+					"name": "cloudflare",
+					"code": 1
+				},
+				{
+					"name": "machine",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"extension-host": {
+			"record": [
+				{
+					"name": "driver",
+					"key": 1,
+					"shape": {
+						"type": "extension-driver"
+					}
+				},
+				{
+					"name": "identifier",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"extension-place": {
+			"record": [
+				{
+					"name": "node",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "site",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "account",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "zone",
+					"key": 4,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "region",
+					"key": 5,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"extension-relays": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "all",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "some",
+						"code": 2,
+						"fields": [
+							{
+								"name": "extensions",
+								"key": 1,
+								"shape": {
+									"list": {
+										"id": "extension(organization)"
+									}
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"extension": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "host",
+					"key": 1,
+					"shape": {
+						"type": "extension-host"
+					}
+				},
+				{
+					"name": "endpoint",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "token",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "levels",
+					"key": 4,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "place",
+					"key": 5,
+					"shape": {
+						"type": "extension-place"
+					}
+				},
+				{
+					"name": "quota",
+					"key": 6,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "grace",
+					"key": 7,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "relays",
+					"key": 8,
+					"shape": {
+						"type": "extension-relays"
+					}
+				},
+				{
+					"name": "address",
+					"key": 9,
+					"shape": {
+						"prim": "bool"
+					}
+				},
+				{
+					"name": "management",
+					"key": 10,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				},
+				{
+					"name": "shell",
+					"key": 11,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				},
+				{
+					"name": "dismissed",
+					"key": 12,
+					"shape": {
+						"list": {
+							"prim": "string"
+						}
+					}
+				}
+			]
+		},
+		"capacity": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "extension",
+					"key": 1,
+					"shape": {
+						"id": "extension(organization)"
+					}
+				},
+				{
+					"name": "capacity",
+					"key": 2,
+					"shape": {
+						"type": "management-capacity"
+					}
+				},
+				{
+					"name": "credentials",
+					"key": 3,
+					"shape": {
+						"list": {
+							"prim": "bytes"
+						}
+					}
+				}
+			]
+		},
 		"object-name": {
 			"record": [
 				{
@@ -1532,6 +2104,55 @@
 			"writes": ["control(organization)"],
 			"version": 1,
 			"content": "bucket"
+		},
+		{
+			"kind": "database",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "database"
+		},
+		{
+			"kind": "app",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "app"
+		},
+		{
+			"kind": "tree",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "tree"
+		},
+		{
+			"kind": "name",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "name"
+		},
+		{
+			"kind": "scope",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "scope"
+		},
+		{
+			"kind": "extension(organization)",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "extension"
+		},
+		{
+			"kind": "capacity",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "capacity"
 		}
 	]
 }

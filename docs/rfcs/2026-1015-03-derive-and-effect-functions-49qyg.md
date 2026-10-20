@@ -157,8 +157,9 @@ object bucket -- the env keys it reads, each `config` or `secret`, and its sched
 owner configures what fills it, and goes with the organization. So one build deploys anywhere its
 slots are filled, and going back a version takes its whole shape back and leaves what fills it.
 
-**An app's record holds**: its `version`, the hash of the build deployed, whose manifest is found by
-it; its `bindings`; and its `env`, each key's value, a secret's sealed. **Nothing in it makes the app
+**An app's record holds**, `model/contracts/records/compute.res`: its `version`, the hash of the
+build deployed, whose manifest is found by it; its `bindings`; and its `env`, each key's value, a
+secret's sealed. **Nothing in it makes the app
 public**: an app is reached from outside only once it is mounted under its organization's gateway or
 a name of the organization's own is bound to it, each an act of its own, RFC vr5lw, and it is
 neither as it is made.

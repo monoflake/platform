@@ -118,13 +118,8 @@ in the platform's control, an organization's and the extensions each binds.
     shown on one tree, so what belongs to one project sits together however its owner likes, and
     nothing bound moves.
 
-    | A node's | Holds                                                          |
-    | -------- | -------------------------------------------------------------- |
-    | `id`     | the resource's own, or a folder's, drawn from the same space   |
-    | `parent` | the folder it sits in, empty at the top                        |
-    | `type`   | `folder`, `app`, `database` or `bucket`                        |
-    | `slug`   | its part of a path, written as a label is                      |
-    | `name`   | the name shown, written as an account's is, repeated as freely |
+    A node is a `tree` record, `model/contracts/records/control.res`: its id the resource's own or
+    a folder's, the folder it sits in, its type, its slug and the name shown.
 
   - **A path is the slugs from the top joined by `/`**, `shop/api`, as a file's path is written,
     RFC 13ixj; never eight hex digits a part, so wherever an id is taken a path may be taken
@@ -282,23 +277,13 @@ service's, or a node.
   each host's binding and its credentials, the binding's quota, levels and grace, the relays and
   private networks its hosts may use, the capacity lists sent to each driver and what each driver
   reports -- so it is written once and runs in both.
-  - **A binding's record holds**, kind `binding`, worked out with the author on 2026-10-19:
-
-    | Field        | Holds                                                                                                                                          |
-    | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `host`       | what is bound: the driver's kind, `cloudflare` or `machine`, and the host's own identifier, an account's id or what a machine's driver reports |
-    | `endpoint`   | where the driver's management answers                                                                                                          |
-    | `token`      | the binding token, sealed, which every call to the driver carries, RFC vr5lw                                                                   |
-    | `levels`     | availability, durability and custody, copied from the host as it is bound and its own from then, RFC vr5lw                                     |
-    | `place`      | the node, site, account, zone and region the host declares as it is bound, RFC 13ixj                                                           |
-    | `quota`      | none unless set                                                                                                                                |
-    | `grace`      | empty, inheriting the organization's, or its own seconds, RFC vr5lw                                                                            |
-    | `relays`     | the relays its host may use, bindings by id, or `all`                                                                                          |
-    | `address`    | whether its host is declared to have a public address, which the driver checks by a relay dialing back                                         |
-    | `management` | a management token, sealed, if given                                                                                                           |
-    | `shell`      | a shell key's private half, sealed, if made                                                                                                    |
-    | `dismissed`  | the warnings its admin dismissed, a dismissal being configuration                                                                              |
-
+  - **An extension's record is `model/contracts/records/control.res`**, kind `extension`,
+    worked out with the author on 2026-10-19: an extension is a host injected from outside, never
+    made within, and what is made within binds it. Its record holds where its driver's
+    management answers and the binding token, sealed; the levels and place copied from its host as
+    it is bound and its own from then; its quota, grace and relays; whether its host is declared to
+    have a public address; a management token and a shell key, sealed, where given; and the
+    warnings its admin dismissed, a dismissal being configuration.
   - **An organization's `grace` is what its bindings inherit**, a week unless set, RFC vr5lw.
 - **A control may lease what it binds, and then manages what it leased and nothing more.** It opens
   a binding of its own host for the lessee, sets its quota, and hands over that binding's token;
@@ -307,8 +292,8 @@ service's, or a node.
   records, its shell, its grace -- and touches nothing else of the lessee's. A driver is told
   nothing of a lease: it sees one binding more. The platform leases to its organizations.
   - **A lease is a record on either side**, worked out with the author on 2026-10-19: the lessor's
-    `lease` names the binding it opened, the lessee organization and the quota; the lessee's is a
-    `binding` like any, whose `lessor` names who leased it, so its control knows the host's
+    `lease` names the binding it opened, the lessee organization and the quota; the lessee's is an
+    `extension` like any, whose `lessor` names who leased it, so its control knows the host's
     management token and shell key are the lessor's, never its own, and the console shows it
     leased.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC

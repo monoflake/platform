@@ -54,11 +54,10 @@ organization's tree, RFC v7v3w, a path only as it is drawn. Renaming or moving i
 else; **policy and binding belong to the id**. Deleting the database deletes its id and its place in
 the tree, refused while an app is bound to it, RFC 49qyg.
 
-**A database's record holds**, worked out with the author on 2026-10-19: its `kind`,
-`transactional`; its `app`, the one it is bound to, set as it is made; `replicas`, whether read
-copies are on, off unless set; `copies` and `placement`, for its log's archive and snapshots, one
-copy unless asked and placed as a bucket is, RFC 13ixj; and `levels`, the availability and custody
-the compute its writer runs on needs, RFC vuanj.
+**A database's record is `model/contracts/records/database.res`**, worked out with the author on
+2026-10-19: bound to one app as it is made, read copies off unless set, its log's archive and
+snapshots placed as a bucket is, RFC 13ixj, and the levels the compute its writer runs on needs,
+RFC vuanj.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second

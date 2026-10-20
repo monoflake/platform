@@ -9,12 +9,20 @@ open Subset
 let types: array<declared> = Array.flat([
   Calls.types,
   Storage.types,
+  Database.types,
+  Compute.types,
+  Control.types,
   Objects.types,
   Databases.types,
   Management.types,
   Deployments.types,
 ])
-let contents: array<content> = Storage.contents
+let contents: array<content> = Array.flat([
+  Storage.contents,
+  Database.contents,
+  Compute.contents,
+  Control.contents,
+])
 let interfaces: array<interface_> = [
   Objects.interface_,
   Databases.interface_,
