@@ -128,7 +128,7 @@ bundle's.
   | `s64`, `u64`                 | a decimal string                                                         | an integer           |
   | `f32`, `f64`                 | a number; `"not_a_number"`, `"positive_infinity"`, `"negative_infinity"` | a float, any of them |
   | `char`, `string`             | a string                                                                 | a text string        |
-  | `list<u8>`                   | base64, RFC 4648's alphabet, padded                                      | a byte string        |
+  | `list<u8>`                   | base64url, unpadded, as the subset's bytes                               | a byte string        |
   | any other `list`, a `tuple`  | an array                                                                 | an array             |
   | `record`                     | an object in its fields' order, an `option` that is none left out        | a map, the same      |
   | `option` elsewhere           | `null`, or the value                                                     | null, or the value   |
@@ -137,6 +137,9 @@ bundle's.
   | `result`                     | `{"kind": "success" or "failure", "value": payload}`                     | a map, the same      |
   | `flags`                      | an array of the names set, in their order                                | an array, the same   |
 
+  Bytes are one text across the platform, decided by the author on 2026-10-19: base64url without
+  padding, RFC 4648's fifth section, as the model's subset writes them, RFC fhg6w, so a value read
+  from an app's export and from a database is written alike, and fits a URL or a header unescaped.
   An `option` within an `option`, which neither form tells from none, and a resource's handle,
   which means nothing past its process, are refused as they are deployed.
 

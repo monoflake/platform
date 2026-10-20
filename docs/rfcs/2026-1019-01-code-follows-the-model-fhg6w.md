@@ -198,6 +198,11 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
 - **A version is raised for anything but an optional field added to a record**: the check refuses
   to write a product whose type, reached from a record's content, changed otherwise while its
   version stayed.
+- **Bytes are read in one text alone**, decided by the author on 2026-10-19: base64url, unpadded,
+  its unused last bits zero, and any other -- base64's own alphabet, a padding, a bit set past the
+  last byte -- refused as `rejected`, naming the text expected. A value has one text, as it has one
+  CBOR, and a client's mistake shows on its first call, while tightening later would break what
+  was let in. WIT's `list<u8>` is written so as well, RFC vr5lw.
 
 **CBOR, COSE's `Sign1` and CWT are held to their standards' tests**, worked out with the author on
 2026-10-19: each is small and public with its own tests, so an implementation is held to all of
