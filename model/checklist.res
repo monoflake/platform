@@ -700,10 +700,4 @@ let checklist: array<item> = [
     from: "found",
     done: "v7v3w: reserved means kept for the platform, given by the operator alone; model/names/reserved.res and its check",
   },
-  {
-    id: "E11",
-    group: #E,
-    what: "94y0d's table gives the foundation platform monoflake.net and the production platform monoflake.com, while vr5lw serves every organization at {organization}.mofl.fyi, the platform's one domain",
-    from: "found",
-  },
 ]

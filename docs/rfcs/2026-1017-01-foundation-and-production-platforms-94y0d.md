@@ -23,6 +23,11 @@ The shape the discussion has reached so far:
 | foundation platform | `monoflake.net` | third-party vendors alone                                   | the platform's own organizations: the console's, the production platform's |
 | production platform | `monoflake.com` | the foundation platform's three products, and users' clouds | users, who start on the foundation platform's products or bring their own  |
 
+**Each deployment's domain is its controls'**, as the author has it: the platform's control at the
+domain itself, `monoflake.net` or `monoflake.com`, and each organization's control at a name beneath
+it. What organizations deploy is served apart, at `mofl.fyi`, RFC vr5lw, so neither a page an app
+serves nor an API it answers, nor what an organization exports, reaches a control's domain.
+
 The foundation platform is for the platform's own use, as a company's own systems are, used by those who build the
 platform and reached over the public network; it is no private network. **The two are named by
 their places**, by the author on 2026-10-19, and neither by a network: the foundation platform, which
