@@ -62,9 +62,8 @@ let run = () => {
   // What the platform's half holds is configuration, written on the control plane alone, so the data
   // plane runs on while the control plane is lost, `docs/scope.md`.
   let isControl = n => component(n)->Option.flatMap(p => p.control)->Option.getOr(false)
-  Records.records
-  ->Dict.toArray
-  ->Array.forEach(((name, r)) => {
+  Records.records->Array.forEach(r => {
+    let name = r.kind
     let config = r.half == #platform || r.writes->Array.some(isControl)
     r.writes->Array.forEach(w =>
       switch component(w) {

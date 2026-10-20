@@ -31,7 +31,7 @@ let interfaces: array<interface_> = [
 ]
 
 /** The product: what every language reads, and nothing of the model's code. */
-let product = (~half: string => string, ~writes: string => array<string>): JSON.t => Object(
+let product = (~writes: (half, string) => array<string>): JSON.t => Object(
   dict{
     "version": Number(1.),
     "shell": fieldsJson(shell),
@@ -58,8 +58,8 @@ let product = (~half: string => string, ~writes: string => array<string>): JSON.
       contents->Array.map(c => JSON.Object(
         dict{
           "kind": String(c.kind),
-          "half": String(half(c.kind)),
-          "writes": Array(writes(c.kind)->Array.map(w => JSON.String(w))),
+          "half": String((c.half :> string)),
+          "writes": Array(writes(c.half, c.kind)->Array.map(w => JSON.String(w))),
           "version": Number(Int.toFloat(c.version)),
           "content": String(c.content),
         },

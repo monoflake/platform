@@ -34,13 +34,19 @@ let types: array<declared> = [
   // organization holds one admin at least, which its control holds as it writes.
   {
     name: "member",
-    def: Record([field("account", 1, Id("account")), field("role", 2, Type("role"))]),
+    def: Record([
+      field("account", 1, Across(#platform, "account")),
+      field("role", 2, Type("role")),
+    ]),
     from: "v7v3w",
   },
   // An invitation offers an account a role, and lapses seven days after the generation that wrote it.
   {
     name: "invitation",
-    def: Record([field("account", 1, Id("account")), field("role", 2, Type("role"))]),
+    def: Record([
+      field("account", 1, Across(#platform, "account")),
+      field("role", 2, Type("role")),
+    ]),
     from: "v7v3w",
   },
   {
@@ -126,7 +132,7 @@ let types: array<declared> = [
         {
           name: "some",
           code: 2,
-          fields: [field("extensions", 1, List(Id("extension(organization)")))],
+          fields: [field("extensions", 1, List(Id("extension")))],
         },
       ],
     }),
@@ -161,7 +167,7 @@ let types: array<declared> = [
   {
     name: "capacity",
     def: Record([
-      field("extension", 1, Id("extension(organization)")),
+      field("extension", 1, Id("extension")),
       field("capacity", 2, Type("management-capacity")),
       field("credentials", 3, List(Prim(#bytes))),
     ]),
@@ -170,12 +176,12 @@ let types: array<declared> = [
 ]
 
 let contents: array<content> = [
-  {kind: "organization", version: 1, content: "organization"},
-  {kind: "member", version: 1, content: "member"},
-  {kind: "invitation", version: 1, content: "invitation"},
-  {kind: "tree", version: 1, content: "tree"},
-  {kind: "name", version: 1, content: "name"},
-  {kind: "scope", version: 1, content: "scope"},
-  {kind: "extension(organization)", version: 1, content: "extension"},
-  {kind: "capacity", version: 1, content: "capacity"},
+  {half: #organization, kind: "organization", version: 1, content: "organization"},
+  {half: #organization, kind: "member", version: 1, content: "member"},
+  {half: #organization, kind: "invitation", version: 1, content: "invitation"},
+  {half: #organization, kind: "tree", version: 1, content: "tree"},
+  {half: #organization, kind: "name", version: 1, content: "name"},
+  {half: #organization, kind: "scope", version: 1, content: "scope"},
+  {half: #organization, kind: "extension", version: 1, content: "extension"},
+  {half: #organization, kind: "capacity", version: 1, content: "capacity"},
 ]

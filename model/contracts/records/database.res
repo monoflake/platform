@@ -33,4 +33,6 @@ let types: array<declared> = [
   },
 ]
 
-let contents: array<content> = [{kind: "database", version: 1, content: "database"}]
+let contents: array<content> = [
+  {half: #organization, kind: "database", version: 1, content: "database"},
+]

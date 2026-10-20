@@ -38,4 +38,4 @@ let types: array<declared> = [
   },
 ]
 
-let contents: array<content> = [{kind: "app", version: 1, content: "app"}]
+let contents: array<content> = [{half: #organization, kind: "app", version: 1, content: "app"}]

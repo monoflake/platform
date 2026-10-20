@@ -18,10 +18,16 @@
  */
 type prim = [#bool | #string | #float64 | #int32 | #uint32 | #int64 | #uint53 | #bytes | #hash]
 
+/** The half a record is kept in, its footing's, v7v3w. */
+type half = [#platform | #organization]
+
 type rec shape =
   | Prim(prim)
-  /** An id of a record kind, stored as its integer, 8 hex digits shown, b8f35. */
+  /** An id of a record kind of the half the record holding it is kept in, stored as its integer, 8
+   * hex digits shown, b8f35: within one footing, so its control checks it exists and guards it. */
   | Id(string)
+  /** An id of a kind of the other half, which its control never checks nor guards, kept by another. */
+  | Across(half, string)
   /** A type declared below, by its name. */
   | Type(string)
   | List(shape)
@@ -44,7 +50,7 @@ type def =
 type declared = {name: string, def: def, from: string}
 
 /** A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu. */
-type content = {kind: string, version: int, content: string}
+type content = {half: half, kind: string, version: int, content: string}
 
 /**
  * An operation's failure, RFC 49qyg's outcomes but `success`: what a caller acts on, whatever the
@@ -99,10 +105,11 @@ let shell = [
 let description = optional("description", 0, Prim(#string))
 
 /** Every name a shape refers to, the declared types' and the record kinds' its ids name. */
-let rec refers = (s: shape): array<[#type_(string) | #id(string)]> =>
+let rec refers = (s: shape): array<[#type_(string) | #id(string) | #across(half, string)]> =>
   switch s {
   | Prim(_) => []
   | Id(kind) => [#id(kind)]
+  | Across(half, kind) => [#across(half, kind)]
   | Type(name) => [#type_(name)]
   | List(s) | Map(s) => refers(s)
   }
@@ -118,6 +125,7 @@ let rec shapeJson = (s: shape): JSON.t =>
   switch s {
   | Prim(p) => Object(dict{"prim": String((p :> string))})
   | Id(kind) => Object(dict{"id": String(kind)})
+  | Across(half, kind) => Object(dict{"id": String(kind), "half": String((half :> string))})
   | Type(name) => Object(dict{"type": String(name)})
   | List(s) => Object(dict{"list": shapeJson(s)})
   | Map(s) => Object(dict{"map": shapeJson(s)})

@@ -39,8 +39,14 @@ let run = () => {
             contractRules->Array.push(`${where}.${f.name}: no type ${n}`)
           }
         | #id(k) =>
-          if Records.records->Dict.get(k) == None {
+          if !(Records.records->Array.some(r => r.kind == k)) {
             contractRules->Array.push(`${where}.${f.name}: an id of ${k}, no kind of record`)
+          }
+        | #across(h, k) =>
+          if Records.find(h, k) == None {
+            contractRules->Array.push(
+              `${where}.${f.name}: an id of the ${(h :> string)}'s ${k}, no kind of its`,
+            )
           }
         }
       )
@@ -70,9 +76,51 @@ let run = () => {
       })
     }
   )
-  unique(Contracts.contents->Array.map(c => c.kind), "a record's content")
+  unique(
+    Contracts.contents->Array.map(c => `the ${(c.half :> string)}'s ${c.kind}`),
+    "a record's content",
+  )
+  // An id within a content names a kind of the content's own half, which its control checks: every
+  // type a content reaches is read so, wherever else it is used.
+  let rec reached = (name, seen: Set.t<string>) =>
+    if !(seen->Set.has(name)) {
+      seen->Set.add(name)
+      declared
+      ->Dict.get(name)
+      ->Option.mapOr([], t => Subset.fieldsOf(t.def))
+      ->Array.forEach(f =>
+        Subset.refers(f.shape)->Array.forEach(r =>
+          switch r {
+          | #type_(n) => reached(n, seen)
+          | _ => ()
+          }
+        )
+      )
+    }
   Contracts.contents->Array.forEach(c => {
-    if Records.records->Dict.get(c.kind) == None {
+    let seen = Set.make()
+    reached(c.content, seen)
+    seen->Set.forEach(n =>
+      declared
+      ->Dict.get(n)
+      ->Option.mapOr([], t => Subset.fieldsOf(t.def))
+      ->Array.forEach(
+        f =>
+          Subset.refers(f.shape)->Array.forEach(
+            r =>
+              switch r {
+              | #id(k) if Records.find(c.half, k) == None =>
+                contractRules->Array.push(
+                  `the ${(c.half :> string)}'s ${c.kind}: ${n}.${f.name} names ${k}, no kind of its half; an id across halves is Across`,
+                )
+              | _ => ()
+              },
+          ),
+      )
+    )
+  })
+  Contracts.contents->Array.forEach(c => {
+    if Records.find(c.half, c.kind) == None {
       contractRules->Array.push(`${c.kind}'s content: no such kind of record`)
     }
     switch declared->Dict.get(c.content) {
@@ -146,9 +194,8 @@ let run = () => {
       contractRules->Array.push(`deployment-form ${f}: taken by no runtime`)
     }
   )
-  let made = Contracts.product(
-    ~half=k => Records.records->Dict.get(k)->Option.mapOr("", r => (r.half :> string)),
-    ~writes=k => Records.records->Dict.get(k)->Option.mapOr([], r => r.writes),
+  let made = Contracts.product(~writes=(h, k) =>
+    Records.find(h, k)->Option.mapOr([], r => r.writes)
   )
   let productUrl = urlIn("model/contracts.json", root)
   let kept = existsSync(productUrl) ? Some(JSON.parseOrThrow(readFileSync(productUrl))) : None
@@ -198,6 +245,16 @@ let run = () => {
   // record's fields that are new and optional, and an interface's operation gone.
   let breaks = (old: JSON.t, now: JSON.t) => {
     let found = []
+    // An id is an integer on the wire whatever kind and half it names, so naming them otherwise
+    // breaks no reader: what is compared is what is written.
+    let rec wire = (j: JSON.t): JSON.t =>
+      switch j {
+      | Object(d) if d->Dict.get("id") != None => Object(dict{"id": String("*")})
+      | Object(d) => Object(d->Dict.mapValues(wire))
+      | Array(xs) => Array(xs->Array.map(wire))
+      | x => x
+      }
+    let text = j => text(wire(j))
     let same = (label, was, is) => {
       let before = reach(old, was)
       let after = reach(now, is)
@@ -235,7 +292,9 @@ let run = () => {
     let version = j => text(j->member("version")->Option.getOr(Null))
     items(old->member("records"))->Array.forEach(r => {
       let kind = r->named("kind")
-      switch items(now->member("records"))->Array.find(x => x->named("kind") == kind) {
+      switch items(now->member("records"))->Array.find(x =>
+        x->named("kind") == kind && x->named("half") == r->named("half")
+      ) {
       | Some(n) if version(n) == version(r) => same(kind, r->named("content"), n->named("content"))
       | _ => ()
       }
@@ -280,17 +339,22 @@ let run = () => {
     "Is every contract declared once in the subset, every name it uses resolved, and contracts.json what the model writes, never changed in place?",
     contractRules,
     ~notes=[
-      `declared: ${Contracts.contents
-        ->Array.map(c => `${c.kind} v${int(c.version)}`)
-        ->orNone(", ")}`,
+      ...([#organization, #platform]: array<Subset.half>)->Array.map(h =>
+        `declared, the ${(h :> string)}'s: ${Contracts.contents
+          ->Array.filter(c => c.half == h)
+          ->Array.map(c => `${c.kind} v${int(c.version)}`)
+          ->orNone(", ")}`
+      ),
       `interfaces: ${Contracts.interfaces
         ->Array.map(i => `${i.name} v${int(i.version)}`)
         ->orNone(
           ", ",
         )}; function, instance and container are deployed by deployments and called by an app's WIT; volume has none but its files`,
       `to declare: ${Records.records
-        ->Dict.keysToArray
-        ->Array.filter(k => !(Contracts.contents->Array.some(c => c.kind == k)))
+        ->Array.filter(r =>
+          !(Contracts.contents->Array.some(c => c.kind == r.kind && c.half == r.half))
+        )
+        ->Array.map(r => `the ${(r.half :> string)}'s ${r.kind}`)
         ->orNone(", ")}`,
     ],
     (),

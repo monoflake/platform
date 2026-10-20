@@ -234,6 +234,14 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
 - **A version is raised for anything but an optional field added to a record**: the check refuses
   to write a product whose type, reached from a record's content, changed otherwise while its
   version stayed.
+- **A kind of record is named within its half**, decided by the author on 2026-10-20, as each
+  footing's shell writes it: one name may be a kind of each half, one concept kept in both, as an
+  extension, or two, as an organization, `model/graph/records.res`. **An id names a kind of its own
+  record's half**, within one footing, which its control checks exists and guards; **one across
+  halves is written `Across`**, as a member's account is the platform's, which its control can
+  neither check nor guard. A type two halves share names its ids so, each read in the half of the
+  record holding it. On the wire either is an integer, so naming its kind otherwise breaks no
+  reader, and the check compares what is written.
 - **A reader passes over a field it does not know**, decided by the author on 2026-10-19, as the
   rule above asks: an optional field added keeps its version, so a reader of that version meets
   it, and refusing it would break what the version promises. A sample written in `tests/` is held
