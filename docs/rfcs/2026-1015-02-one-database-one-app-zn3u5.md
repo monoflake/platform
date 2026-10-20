@@ -78,7 +78,12 @@ app's own interface, never directly: its schema is an agreement only its app kno
 reader would be broken by the first one's migration without being told. A bucket can be shared
 because a file has no schema; a database cannot.
 
-**A schema is changed in a migration, a time a deployment opens**, and not while an app runs. A
+**A schema is changed in a migration, a time a deployment opens**, and not while an app runs.
+**While the window is open the database is read-only**, decided by the author on 2026-10-20: the
+version running reads as before and its writes answer `unavailable`, worth a retry, and the window
+closes once the migration's script has run and the new version is ready. A change kept online in
+two steps, the schema widened before it is narrowed, is the app's to make where it wants one, never
+asked of it. A
 migration may run a script of the user's own to carry data through a change that destroys its old
 shape. **A database's rights are one**, worked out with the author on 2026-10-19: a capability to a
 database grants reading, writing and changing the schema together, since D1, behind its adapter,

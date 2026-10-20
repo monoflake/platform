@@ -1,0 +1,682 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "a file written is read whole and described by its hash and size",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "notes/a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "files",
+						"path": "notes/a.txt"
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG8",
+							"size": 5,
+							"hash": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": "files",
+						"path": "notes/a.txt"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a write that expects the path new is refused once a file is there, and one naming its hash replaces it",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "d29ybGQ",
+						"expected": {
+							"name": "absent"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expectation_failed"
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "d29ybGQ",
+						"expected": {
+							"name": "hash",
+							"hash": "0000000000000000000000000000000000000000000000000000000000000000"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expectation_failed"
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "d29ybGQ",
+						"expected": {
+							"name": "hash",
+							"hash": {
+								"$use": "a"
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt"
+					},
+					"expect": {
+						"output": {
+							"content": "d29ybGQ",
+							"size": 5,
+							"hash": {
+								"$any": true
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "deleting removes a file, one naming another hash is refused, and deleting one absent succeeds",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_delete",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"expected": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expectation_failed"
+					}
+				},
+				{
+					"call": "file_delete",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"expected": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "file_delete",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "a file absent is not found, and described as absent",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "files",
+						"path": "missing.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": "files",
+						"path": "missing.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "a directory is listed one level at a time, a directory with its size and count, a page at a time",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "notes/a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "notes/b/c.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "top.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": "files",
+						"directory": ""
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"type": "directory",
+									"name": "notes",
+									"size": 10,
+									"count": 2
+								},
+								{
+									"type": "file",
+									"name": "top.txt",
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": "files",
+						"directory": "notes/"
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"type": "file",
+									"name": "a.txt",
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								},
+								{
+									"type": "directory",
+									"name": "b",
+									"size": 5,
+									"count": 1
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": "files",
+						"directory": "",
+						"limit": 1
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"type": "directory",
+									"name": "notes",
+									"size": 10,
+									"count": 2
+								}
+							],
+							"next": {
+								"$capture": "next"
+							}
+						}
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": "files",
+						"directory": "",
+						"after": {
+							"$use": "next"
+						}
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"type": "file",
+									"name": "top.txt",
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a write past its bucket's quota is refused, and nothing is written",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private",
+							"quota": 4
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "quota_exceeded"
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "past the room its stores hold, a write fails for room",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				],
+				"room": 1024
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"content": {
+							"$bytes": {
+								"length": 2048
+							}
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				}
+			]
+		},
+		{
+			"description": "a file past an opaque bucket's bound is refused, and one at it is written",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "opaque"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "opaque",
+									"plus": 1
+								}
+							}
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "full.bin",
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "opaque",
+									"plus": 0
+								}
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 16777216
+						}
+					}
+				}
+			]
+		}
+	]
+}

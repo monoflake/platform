@@ -108,14 +108,14 @@ let own: dict<component> = dict{
         replaces: true,
       },
       e("compute", #serve, hard, "it runs as functions", ~contract=["wit"]),
-      e("storage", #serve, hard, "the buckets it is bound to", ~contract=["?storage"]),
+      e("storage", #serve, hard, "the buckets it is bound to", ~contract=["storage"]),
       e("database", #serve, hard, "the database bound to it", ~contract=["database"]),
       e(
         "control(organization)",
         #deploy,
         hard,
         "opens buckets and databases through its organization's control",
-        ~contract=["?control(organization)"],
+        ~contract=["configuration"],
       ),
     ],
     uses: [],
@@ -634,13 +634,8 @@ let permissive = "MIT OR Apache-2.0"
  * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
  */
 let ownUndeclared: array<(string, string)> = [
-  (
-    "storage",
-    "the storage product's interface, an app's: buckets, files and objects, and publish, vr5lw [B32]",
-  ),
   ("compute", "the compute product's deployment of an app, its types and call graph checked [B32]"),
   ("migration", "a database's migration window, which a deployment opens, zn3u5 [B32]"),
-  ("control(organization)", "an organization's control's configuration API, v7v3w [B32]"),
   ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
   (
     "blob",

@@ -90,6 +90,21 @@ in every control and the extensions each binds.
   given again.
 - **Accepted and deployed are told apart**: the API reports a generation accepted, and deployed
   wherever it goes as each driver or bundle reports it.
+- **The configuration API is one set of operations over every kind a control writes**, decided by
+  the author on 2026-10-20, `model/contracts/products/generations.res`: `change` a batch of
+  records, as a dry run or taken, or going back to a generation; `read` and `list` a kind's
+  records, at the current generation or one named; `generations` and `generation`, each with where
+  it is deployed; `warnings`, and `dismiss` one. Each kind is a case, so a kind added is a case
+  more; making one resource, as a bucket, is a client's to draw. The footing's own tables, a
+  `generation` and a `store`, are no kind of it.
+- **A record changed names the generation it was read at**, decided by the author on 2026-10-20,
+  and the change is refused as `stale` where that record changed since, so two admins changing one
+  record never overwrite each other unseen, as a file's write names the hash it saw, RFC 13ixj.
+- **A handle is resolved as it is received**, decided by the author on 2026-10-20: wherever an id
+  is sent, a handle may stand for it -- a path in the tree, or a name a change gives a record it
+  makes -- and the control resolves it to the id then, giving a record made its id at once. A
+  handle lasts that one request; nothing past the control sees one, and every component speaks id
+  to id.
 - **Every record is a row of a kind, an id and the generation that wrote it**, worked out with the
   author on 2026-10-19, in the footing's `configuration` table, RFC b8f35: its `version` and its
   `content`. **A record deleted is a row whose content is empty**, so going back and looking back

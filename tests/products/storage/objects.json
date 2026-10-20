@@ -1,0 +1,745 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "an object is named by its content and extension, and read and described by that name",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$capture": "o"
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG8",
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"output": {
+							"size": 5
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "the same content under two extensions is two objects, and written again it is the one there",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "md"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects"
+					},
+					"expect": {
+						"output": {
+							"objects": [
+								{
+									"object": {
+										"$any": true
+									},
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								},
+								{
+									"object": {
+										"$any": true
+									},
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an extension is made standard before it names anything, so two spellings of one format are one object",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "JPG"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "jpeg"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects"
+					},
+					"expect": {
+						"output": {
+							"objects": [
+								{
+									"object": {
+										"$any": true
+									},
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an extension that breaks an object's rules is refused",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "-x"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "extension_invalid"
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "a..b"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "extension_invalid"
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "abcdefghijklmnopq"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "extension_invalid"
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects"
+					},
+					"expect": {
+						"output": {
+							"objects": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an object absent is not found, described as absent, and deleted as absent",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": "objects",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": "objects",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "object_delete",
+					"input": {
+						"bucket": "objects",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000.txt"
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "deleting removes an object",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$capture": "o"
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_delete",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "objects are listed by name, a page at a time",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "d29ybGQ",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$any": true
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects",
+						"limit": 1
+					},
+					"expect": {
+						"output": {
+							"objects": [
+								{
+									"object": {
+										"$any": true
+									},
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							],
+							"next": {
+								"$capture": "next"
+							}
+						}
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects",
+						"after": {
+							"$use": "next"
+						}
+					},
+					"expect": {
+						"output": {
+							"objects": [
+								{
+									"object": {
+										"$any": true
+									},
+									"hash": {
+										"$any": true
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an object past its bucket's quota is refused",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private",
+							"quota": 4
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "quota_exceeded"
+					}
+				}
+			]
+		},
+		{
+			"description": "past the room its stores hold, an object fails for room",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				],
+				"room": 1024
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": {
+							"$bytes": {
+								"length": 2048
+							}
+						},
+						"extension": "bin"
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				}
+			]
+		},
+		{
+			"description": "an object past an opaque bucket's bound is refused",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "opaque"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "opaque",
+									"plus": 1
+								}
+							}
+						},
+						"extension": "bin"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				}
+			]
+		}
+	]
+}

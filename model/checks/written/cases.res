@@ -124,7 +124,12 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
       if !fits {
         fail(`no ${(p :> string)}`)
       }
-    | Id(kind) | Across(_, kind) =>
+    // An id sent may be a handle, resolved as it is received, v7v3w; one given back never is.
+    | Id(kind) =>
+      if !(within(0., 4294967295.) || (mode == Input && t != None)) {
+        fail(`no id of ${kind}`)
+      }
+    | Across(_, kind) =>
       if !within(0., 4294967295.) {
         fail(`no id of ${kind}`)
       }
@@ -235,6 +240,19 @@ let items = j => list(j)->Option.getOr([])
  */
 let capacityOf = name => name == "deployments" ? "container" : name
 
+/** The products' interfaces, whose cases are given configuration rather than capacity. */
+let products = [Buckets.interface_.name, Generations.interface_.name]
+
+/**
+ * What a product's case is given before its first step: the records changed first, through its
+ * organization's control, each with its handle; and the room of the one store the runner binds, at
+ * a bucket's default levels, `best_effort`, `persistent` and no custody.
+ */
+let productGiven = [
+  Subset.optional("records", 1, List(Type("change-item"))),
+  Subset.optional("room", 2, Prim(#uint53)),
+]
+
 /**
  * How a fixture is served: as it was built, under a hash not its own, or from where nothing
  * answers.
@@ -333,7 +351,7 @@ let run = () => {
       }
     | _ => found->Array.push(`${at}: expects an output, or a failure and its reason`)
     }
-  let behavior = files("tests/kinds")
+  let behavior = Array.concat(files("tests/kinds"), files("tests/products"))
   behavior->Array.forEach(path => {
     let j = read(path)
     switch text(j->member("interface")) {
@@ -356,6 +374,11 @@ let run = () => {
           // What the runner holds for the case before its first step, as capacity of its kind.
           switch c->member("given") {
           | None => ()
+          | Some(g) if products->Array.includes(name) =>
+            switch g->JSON.Decode.object {
+            | Some(d) => record(s, productGiven, d, [], Input, `${at}.given`)
+            | None => found->Array.push(`${at}: given, no object`)
+            }
           | Some(g) =>
             switch declared->Dict.get("management-capacity") {
             | Some({def: Union({cases})}) =>

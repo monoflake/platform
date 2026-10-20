@@ -1,0 +1,448 @@
+{
+	"interface": "configuration",
+	"cases": [
+		{
+			"description": "a kind's records are listed by id, a page at a time",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "a",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							},
+							{
+								"kind": "bucket",
+								"handle": "b",
+								"content": {
+									"type": "object",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {
+								"a": {
+									"$any": true
+								},
+								"b": {
+									"$any": true
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								},
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"kind": "bucket",
+						"limit": 1
+					},
+					"expect": {
+						"output": {
+							"records": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									},
+									"generation": {
+										"$any": true
+									},
+									"version": 1,
+									"content": {
+										"$any": true
+									}
+								}
+							],
+							"next": {
+								"$capture": "next"
+							}
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"kind": "bucket",
+						"after": {
+							"$use": "next"
+						}
+					},
+					"expect": {
+						"output": {
+							"records": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									},
+									"generation": {
+										"$any": true
+									},
+									"version": 1,
+									"content": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a record is read as a generation named holds it",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "first"
+							},
+							"ids": {
+								"files": {
+									"$capture": "b"
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"id": {
+									"$use": "b"
+								},
+								"read": {
+									"$use": "first"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "read",
+					"input": {
+						"kind": "bucket",
+						"id": {
+							"$use": "b"
+						},
+						"generation": {
+							"$use": "first"
+						}
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"kind": "bucket",
+								"id": {
+									"$any": true
+								},
+								"generation": {
+									"$any": true
+								},
+								"version": 1,
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "read",
+					"input": {
+						"kind": "bucket",
+						"id": {
+							"$use": "b"
+						}
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"kind": "bucket",
+								"id": {
+									"$any": true
+								},
+								"generation": {
+									"$any": true
+								},
+								"version": 1
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a kind the control does not write is refused",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "read",
+					"input": {
+						"kind": "lease",
+						"id": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "no_kind"
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"kind": "lease"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "no_kind"
+					}
+				}
+			]
+		},
+		{
+			"description": "a record that is not there is not found",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "read",
+					"input": {
+						"kind": "bucket",
+						"id": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "generations are listed, and a generation not there is not found",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {
+								"files": {
+									"$any": true
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "generations",
+					"input": {},
+					"expect": {
+						"output": {
+							"generations": [
+								{
+									"number": {
+										"$any": true
+									},
+									"time": {
+										"$any": true
+									},
+									"actor": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "generation",
+					"input": {
+						"number": 9007199254740991
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		}
+	]
+}

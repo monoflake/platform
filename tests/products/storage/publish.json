@@ -1,0 +1,259 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "a file published is an object of the content its path names, under the path's extension",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "site/app.min.js",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "publish",
+					"input": {
+						"from": "files",
+						"path": "site/app.min.js",
+						"to": "objects"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$capture": "o"
+							},
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "site/app.min.js",
+						"content": "d29ybGQ"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG8",
+							"size": 5
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "publishing a path that names nothing is not found",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "publish",
+					"input": {
+						"from": "files",
+						"path": "missing.txt",
+						"to": "objects"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "publishing into an object bucket past its quota is refused",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private",
+							"quota": 4
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "publish",
+					"input": {
+						"from": "files",
+						"path": "a.txt",
+						"to": "objects"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "quota_exceeded"
+					}
+				}
+			]
+		}
+	]
+}

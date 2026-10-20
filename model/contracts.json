@@ -2947,6 +2947,1720 @@
 		},
 		"deployment-deleted": {
 			"record": []
+		},
+		"file-expected": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "absent",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "hash",
+						"code": 2,
+						"fields": [
+							{
+								"name": "hash",
+								"key": 1,
+								"shape": {
+									"prim": "hash"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"file-write": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "content",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "expected",
+					"key": 4,
+					"shape": {
+						"type": "file-expected"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-written": {
+			"record": [
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"file-read": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "range",
+					"key": 3,
+					"shape": {
+						"type": "object-range"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-content": {
+			"record": [
+				{
+					"name": "content",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 3,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"file-path": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"file-described": {
+			"record": [
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					},
+					"optional": true
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-delete": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "expected",
+					"key": 3,
+					"shape": {
+						"prim": "hash"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-deleted": {
+			"record": []
+		},
+		"file-list": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "directory",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "after",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-entry": {
+			"union": {
+				"tag": "type",
+				"cases": [
+					{
+						"name": "file",
+						"code": 1,
+						"fields": [
+							{
+								"name": "name",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "hash",
+								"key": 2,
+								"shape": {
+									"prim": "hash"
+								}
+							},
+							{
+								"name": "size",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "directory",
+						"code": 2,
+						"fields": [
+							{
+								"name": "name",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "size",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "count",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"file-listed": {
+			"record": [
+				{
+					"name": "entries",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "file-entry"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"bucket-object-write": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "content",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "extension",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"bucket-object": {
+			"record": [
+				{
+					"name": "object",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "size",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"bucket-object-name": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "object",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"bucket-object-read": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "object",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "range",
+					"key": 3,
+					"shape": {
+						"type": "object-range"
+					},
+					"optional": true
+				}
+			]
+		},
+		"bucket-object-list": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "after",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"bucket-object-listed": {
+			"record": [
+				{
+					"name": "objects",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "bucket-object"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"publish": {
+			"record": [
+				{
+					"name": "from",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "to",
+					"key": 3,
+					"shape": {
+						"id": "bucket"
+					}
+				}
+			]
+		},
+		"change-item": {
+			"union": {
+				"tag": "kind",
+				"cases": [
+					{
+						"name": "bucket",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "bucket"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "bucket"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "database",
+						"code": 2,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "database"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "database"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "app",
+						"code": 3,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "app"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "name",
+						"code": 4,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "name"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "name"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "member",
+						"code": 5,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "member"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "member"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "invitation",
+						"code": 6,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "invitation"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "invitation"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "organization",
+						"code": 7,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "organization"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "organization"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "tree",
+						"code": 8,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "tree"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "tree"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "scope",
+						"code": 9,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "scope"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "scope"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "extension",
+						"code": 10,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "extension"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "extension"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "capacity",
+						"code": 11,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "capacity"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "capacity"
+								},
+								"optional": true
+							}
+						]
+					}
+				]
+			}
+		},
+		"change": {
+			"record": [
+				{
+					"name": "items",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "change-item"
+						}
+					}
+				},
+				{
+					"name": "reverts",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "dry_run",
+					"key": 3,
+					"shape": {
+						"prim": "bool"
+					},
+					"optional": true
+				}
+			]
+		},
+		"warning": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "about",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "raised",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "says",
+					"key": 4,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "dismissible",
+					"key": 5,
+					"shape": {
+						"prim": "bool"
+					}
+				},
+				{
+					"name": "dismissed",
+					"key": 6,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"record-key": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "id",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				}
+			]
+		},
+		"changed": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "ids",
+					"key": 2,
+					"shape": {
+						"map": {
+							"prim": "uint32"
+						}
+					}
+				},
+				{
+					"name": "changed",
+					"key": 3,
+					"shape": {
+						"list": {
+							"type": "record-key"
+						}
+					}
+				},
+				{
+					"name": "warnings",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "warning"
+						}
+					}
+				},
+				{
+					"name": "deployed",
+					"key": 5,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"record": {
+			"union": {
+				"tag": "kind",
+				"cases": [
+					{
+						"name": "bucket",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "bucket"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "bucket"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "database",
+						"code": 2,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "database"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "database"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "app",
+						"code": 3,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "app"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "name",
+						"code": 4,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "name"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "name"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "member",
+						"code": 5,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "member"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "member"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "invitation",
+						"code": 6,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "invitation"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "invitation"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "organization",
+						"code": 7,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "organization"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "organization"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "tree",
+						"code": 8,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "tree"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "tree"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "scope",
+						"code": 9,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "scope"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "scope"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "extension",
+						"code": 10,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "extension"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "extension"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "capacity",
+						"code": 11,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "capacity"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "capacity"
+								},
+								"optional": true
+							}
+						]
+					}
+				]
+			}
+		},
+		"record-read": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "id",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "path",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "generation",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"record-found": {
+			"record": [
+				{
+					"name": "record",
+					"key": 1,
+					"shape": {
+						"type": "record"
+					}
+				}
+			]
+		},
+		"record-list": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "after",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "generation",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"record-listed": {
+			"record": [
+				{
+					"name": "records",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "record"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"generation-row": {
+			"record": [
+				{
+					"name": "number",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "time",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "actor",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "reverts",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"generation-list": {
+			"record": [
+				{
+					"name": "after",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"generation-listed": {
+			"record": [
+				{
+					"name": "generations",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "generation-row"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"generation-of": {
+			"record": [
+				{
+					"name": "number",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"deployment-target": {
+			"record": [
+				{
+					"name": "target",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "deployed",
+					"key": 2,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"generation-status": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"type": "generation-row"
+					}
+				},
+				{
+					"name": "targets",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "deployment-target"
+						}
+					}
+				}
+			]
+		},
+		"warning-list": {
+			"record": [
+				{
+					"name": "about",
+					"key": 1,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"warning-listed": {
+			"record": [
+				{
+					"name": "warnings",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "warning"
+						}
+					}
+				}
+			]
+		},
+		"warning-dismiss": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "about",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				}
+			]
+		},
+		"warning-dismissed": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
 		}
 	},
 	"reasons": [
@@ -3235,6 +4949,330 @@
 					"reasons": [
 						{
 							"name": "still_running",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"storage": {
+			"version": 1,
+			"bounds": {
+				"opaque": 16777216
+			},
+			"declared": [],
+			"operations": [
+				{
+					"name": "file_write",
+					"input": "file-write",
+					"output": "file-written",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "expectation_failed",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "quota_exceeded",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "file_read",
+					"input": "file-read",
+					"output": "file-content",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "file_describe",
+					"input": "file-path",
+					"output": "file-described",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "file_delete",
+					"input": "file-delete",
+					"output": "file-deleted",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "expectation_failed",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "file_list",
+					"input": "file-list",
+					"output": "file-listed",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "object_write",
+					"input": "bucket-object-write",
+					"output": "bucket-object",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "extension_invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "quota_exceeded",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "object_read",
+					"input": "bucket-object-read",
+					"output": "object-content",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "object_describe",
+					"input": "bucket-object-name",
+					"output": "object-described",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "object_delete",
+					"input": "bucket-object-name",
+					"output": "object-deleted",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "object_list",
+					"input": "bucket-object-list",
+					"output": "bucket-object-listed",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "publish",
+					"input": "publish",
+					"output": "bucket-object",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "quota_exceeded",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"configuration": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "change",
+					"input": "change",
+					"output": "changed",
+					"reasons": [
+						{
+							"name": "stale",
+							"failure": "rejected"
+						},
+						{
+							"name": "unresolved",
+							"failure": "rejected"
+						},
+						{
+							"name": "depended_on",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "unplaceable",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "read",
+					"input": "record-read",
+					"output": "record-found",
+					"reasons": [
+						{
+							"name": "no_kind",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "list",
+					"input": "record-list",
+					"output": "record-listed",
+					"reasons": [
+						{
+							"name": "no_kind",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "generations",
+					"input": "generation-list",
+					"output": "generation-listed",
+					"reasons": []
+				},
+				{
+					"name": "generation",
+					"input": "generation-of",
+					"output": "generation-status",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "warnings",
+					"input": "warning-list",
+					"output": "warning-listed",
+					"reasons": []
+				},
+				{
+					"name": "dismiss",
+					"input": "warning-dismiss",
+					"output": "warning-dismissed",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_dismissible",
 							"failure": "rejected"
 						}
 					]

@@ -159,11 +159,11 @@ bundle's.
 **Layer 0's operations are named in whole words, neutral and formal**, worked out with the author on
 2026-10-18, each product an interface of the platform's own:
 
-| Product  | Operations                                                                                                                                     |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| storage  | on a bucket `create`, `describe`, `list`, `delete`; on a file or an object `write`, `read`, `describe`, `list`, `delete`; `publish`, RFC 13ixj |
-| database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                                |
-| compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                                |
+| Product  | Operations                                                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| storage  | on a file or an object `write`, `read`, `describe`, `list`, `delete`; `publish`; a bucket through its organization's control, RFC 13ixj |
+| database | `execute`, one statement or several, atomic together, RFC zn3u5                                                                         |
+| compute  | an app's own exports; `status`, the one taking an id; `submit`, a message to a queue, RFC 49qyg                                         |
 
 The rights a capability grants stay `read`, `create`, `replace`, `delete`, `alter` and `call`, RFC vuanj, so
 a `write` asks `create` where its path is new and `replace` where it is not; and an `effect`'s

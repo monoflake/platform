@@ -1,0 +1,817 @@
+{
+	"interface": "configuration",
+	"cases": [
+		{
+			"description": "a change makes a record, gives its handle the record's id, and is a generation",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "g"
+							},
+							"ids": {
+								"files": {
+									"$capture": "b"
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "read",
+					"input": {
+						"kind": "bucket",
+						"id": {
+							"$use": "b"
+						}
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"kind": "bucket",
+								"id": {
+									"$any": true
+								},
+								"generation": {
+									"$any": true
+								},
+								"version": 1,
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a dry run is compiled and answered, and nothing is taken",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						],
+						"dry_run": true
+					},
+					"expect": {
+						"output": {
+							"ids": {
+								"$any": true
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": false
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"kind": "bucket"
+					},
+					"expect": {
+						"output": {
+							"records": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a record and its node in the tree are made together, the node named by the record's handle, and read by its path",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							},
+							{
+								"kind": "tree",
+								"id": "files",
+								"content": {
+									"type": "bucket",
+									"slug": "files",
+									"name": "Files"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {
+								"files": {
+									"$any": true
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								},
+								{
+									"kind": "tree",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "read",
+					"input": {
+						"kind": "tree",
+						"path": "files"
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"kind": "tree",
+								"id": {
+									"$any": true
+								},
+								"generation": {
+									"$any": true
+								},
+								"version": 1,
+								"content": {
+									"type": "bucket",
+									"slug": "files",
+									"name": "Files"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a record changed names the generation it was read at, and one read before a later change is refused as stale",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "first"
+							},
+							"ids": {
+								"files": {
+									"$capture": "b"
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"id": {
+									"$use": "b"
+								},
+								"read": {
+									"$use": "first"
+								},
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private",
+									"quota": 100
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"id": {
+									"$use": "b"
+								},
+								"read": {
+									"$use": "first"
+								},
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private",
+									"quota": 200
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "stale"
+					}
+				}
+			]
+		},
+		{
+			"description": "a handle that names nothing is refused, and nothing is taken",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private",
+									"bindable": ["nowhere"]
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unresolved"
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"kind": "bucket"
+					},
+					"expect": {
+						"output": {
+							"records": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a folder that still holds a node is not deleted",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "tree",
+								"handle": "shop",
+								"content": {
+									"type": "folder",
+									"slug": "shop",
+									"name": "Shop"
+								}
+							},
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							},
+							{
+								"kind": "tree",
+								"id": "files",
+								"content": {
+									"parent": "shop",
+									"type": "bucket",
+									"slug": "files",
+									"name": "Files"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "g"
+							},
+							"ids": {
+								"shop": {
+									"$capture": "shop"
+								},
+								"files": {
+									"$any": true
+								}
+							},
+							"changed": [
+								{
+									"kind": "tree",
+									"id": {
+										"$any": true
+									}
+								},
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								},
+								{
+									"kind": "tree",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "tree",
+								"id": {
+									"$use": "shop"
+								},
+								"read": {
+									"$use": "g"
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "depended_on"
+					}
+				}
+			]
+		},
+		{
+			"description": "content that breaks its kind's rules is refused",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "tree",
+								"handle": "shop",
+								"content": {
+									"type": "folder",
+									"slug": "Not A Slug",
+									"name": "Shop"
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		},
+		{
+			"description": "a placement the scope's stores cannot meet is refused",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "multiregion",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unplaceable"
+					}
+				}
+			]
+		},
+		{
+			"description": "going back is a change of its own, giving an older generation's records again",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "files",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "first"
+							},
+							"ids": {
+								"files": {
+									"$capture": "b"
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"id": {
+									"$use": "b"
+								},
+								"read": {
+									"$use": "first"
+								},
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "packed"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private",
+									"quota": 100
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "change",
+					"input": {
+						"items": [],
+						"reverts": {
+							"$use": "first"
+						}
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$capture": "back"
+							},
+							"ids": {},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "generation",
+					"input": {
+						"number": {
+							"$use": "back"
+						}
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"number": {
+									"$any": true
+								},
+								"time": {
+									"$any": true
+								},
+								"actor": {
+									"$any": true
+								},
+								"reverts": {
+									"$any": true
+								}
+							},
+							"targets": {
+								"$any": true
+							}
+						}
+					}
+				}
+			]
+		}
+	]
+}

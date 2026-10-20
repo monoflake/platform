@@ -1,0 +1,169 @@
+{
+	"interface": "configuration",
+	"cases": [
+		{
+			"description": "a bucket unsealed off its organization's custody is warned of, and the warning is never dismissed",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "change",
+					"input": {
+						"items": [
+							{
+								"kind": "bucket",
+								"handle": "raw",
+								"content": {
+									"type": "file",
+									"kind": {
+										"name": "opaque"
+									},
+									"placement": {
+										"availability": "best_effort",
+										"durability": "persistent",
+										"custody": "false"
+									},
+									"spread": {
+										"copies": 1,
+										"distinct": {}
+									},
+									"access": "private"
+								}
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"generation": {
+								"$any": true
+							},
+							"ids": {
+								"raw": {
+									"$capture": "b"
+								}
+							},
+							"changed": [
+								{
+									"kind": "bucket",
+									"id": {
+										"$any": true
+									}
+								}
+							],
+							"warnings": [
+								{
+									"kind": "unsealed_outside_custody",
+									"about": {
+										"$any": true
+									},
+									"raised": {
+										"$any": true
+									},
+									"says": {
+										"$any": true
+									},
+									"dismissible": false
+								}
+							],
+							"deployed": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "warnings",
+					"input": {},
+					"expect": {
+						"output": {
+							"warnings": [
+								{
+									"kind": "unsealed_outside_custody",
+									"about": {
+										"$any": true
+									},
+									"raised": {
+										"$any": true
+									},
+									"says": {
+										"$any": true
+									},
+									"dismissible": false
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "warnings",
+					"input": {
+						"about": {
+							"$use": "b"
+						}
+					},
+					"expect": {
+						"output": {
+							"warnings": [
+								{
+									"kind": "unsealed_outside_custody",
+									"about": {
+										"$any": true
+									},
+									"raised": {
+										"$any": true
+									},
+									"says": {
+										"$any": true
+									},
+									"dismissible": false
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "dismiss",
+					"input": {
+						"kind": "unsealed_outside_custody",
+						"about": {
+							"$use": "b"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_dismissible"
+					}
+				}
+			]
+		},
+		{
+			"description": "dismissing a warning that is not there is not found",
+			"given": {
+				"room": 1073741824
+			},
+			"steps": [
+				{
+					"call": "warnings",
+					"input": {},
+					"expect": {
+						"output": {
+							"warnings": []
+						}
+					}
+				},
+				{
+					"call": "dismiss",
+					"input": {
+						"kind": "unsealed_outside_custody",
+						"about": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		}
+	]
+}

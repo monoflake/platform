@@ -1,0 +1,305 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "an id that names no bucket is refused, by every operation",
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": 4294967295,
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": 4294967295,
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": 4294967295,
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "file_delete",
+					"input": {
+						"bucket": 4294967295,
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": 4294967295,
+						"directory": ""
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": 4294967295,
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": 4294967295,
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": 4294967295,
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "object_delete",
+					"input": {
+						"bucket": 4294967295,
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "publish",
+					"input": {
+						"from": 4294967295,
+						"path": "a.txt",
+						"to": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				}
+			]
+		},
+		{
+			"description": "a bucket of the other type is refused, by every operation",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "objects",
+						"path": "a.txt",
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "objects",
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "file_describe",
+					"input": {
+						"bucket": "objects",
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "file_delete",
+					"input": {
+						"bucket": "objects",
+						"path": "a.txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "file_list",
+					"input": {
+						"bucket": "objects",
+						"directory": ""
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "files",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": "files",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": "files",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "object_delete",
+					"input": {
+						"bucket": "files",
+						"object": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "files"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				},
+				{
+					"call": "publish",
+					"input": {
+						"from": "objects",
+						"path": "a.txt",
+						"to": "files"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				}
+			]
+		}
+	]
+}

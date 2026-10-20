@@ -23,8 +23,8 @@ code/       the code, a component placed by its layer: apps/, products/, primiti
             and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
             scope.md, what the model covers
-tests/      the samples, data alone: codec/, values in both forms; kinds/, each interface's cases;
-            properties/, what only a history shows
+tests/      the samples, data alone: codec/, values in both forms; kinds/ and products/, each
+            interface's cases; properties/, what only a history shows; cbor/, a standard's own
 scripts/    the entries that drive the rest, in order: no logic of their own
 vendor/     other projects' files, copied at one version and left as written
 ```

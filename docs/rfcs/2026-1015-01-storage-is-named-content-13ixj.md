@@ -127,6 +127,13 @@ storage (one an organization, its own unique salt)
 | object, in an object bucket | `write(bucket, content, extension) -> object`, `read`, `describe`, `list`, `delete`               |
 | publish                     | `publish(file bucket, path, object bucket) -> object`, the content the path names at this moment  |
 
+- **The storage's interface is the data's alone**, decided by the author on 2026-10-20,
+  `model/contracts/products/buckets.res`: a file's and an object's operations and `publish`; a
+  bucket is made, described, listed and deleted through its organization's control, its
+  configuration API, RFC v7v3w. A write may name what it expects there, nothing or the hash it
+  last saw, and a delete the hash it removes; a file bucket is listed a directory at a time, each
+  entry with its size and a directory with its count as well, and an object bucket by name. The
+  most one write carries in a `packed` bucket is a bound still open. [D4]
 - **A bucket is configuration; a file and an object are data.** Creating or deleting a bucket
   changes the organization's configuration, through its organization's own control, which an app
   may call as any client does, RFC v7v3w; a file's and an object's operations are the data plane's.
