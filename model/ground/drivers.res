@@ -14,8 +14,14 @@ type implementation = {kind: Resources.kind, language: [#rust | #rescript], as_:
  */
 type runtime = {name: string, takes: string, stands: array<string>}
 
+/**
+ * A driver is its implementations and its management, `management/` beside them: the process that
+ * answers the management interface and hands each call to the implementation of its kind, in the
+ * language the driver's ground asks, vr5lw.
+ */
 type driver = {
   grounds: array<Steps.ground>,
+  management: [#rust | #rescript],
   implements: array<implementation>,
   runtimes: array<runtime>,
 }
@@ -23,6 +29,7 @@ type driver = {
 let drivers: dict<driver> = dict{
   "cloudflare-driver": {
     grounds: [#cloudflare],
+    management: #rescript,
     implements: [
       {
         kind: #function,
@@ -37,6 +44,7 @@ let drivers: dict<driver> = dict{
   },
   "machine-driver": {
     grounds: [#provider, #home],
+    management: #rust,
     implements: [
       {kind: #function, language: #rust, as_: "workerd, run for each deployment"},
       {kind: #instance, language: #rust, as_: "a process"},

@@ -33,6 +33,8 @@ vendor/     other projects' files, copied at one version and left as written
   why. `model/contracts.json` is what every language reads.
 - **A mise task is five lines at most**; past that it is a script in `scripts/`, and a script that
   begins to compute hands that part to a tool in `code/tools/`.
+- **The root holds the three workspaces' manifests and no package**: `Cargo.toml`, `package.json`
+  with `pnpm-workspace.yaml`, and `rescript.json`, each list held by the check to what `code/` holds.
 - **No directory holds more than 16 entries or lies more than 5 deep**, from a top-level directory
   or a package's root; the check holds both.
 

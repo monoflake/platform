@@ -1,61 +1,71 @@
-/** Every library the drafts name: a package of one language, used by every component of it that needs it, RFC fhg6w. */
+/**
+ * Every library the drafts name, RFC fhg6w: one subject, in one language or several, each
+ * language's manifest beside the others' in its one directory, `code/libs/{name}`, and used by every
+ * component of any of them that needs it.
+ */
 type library = {
   what: string,
-  /** The language it is written in, a component using only libraries of its own, RFC fhg6w. */
-  language: [#rust | #rescript],
+  /** The languages it is written in, a component using only a library written in its own, RFC fhg6w. */
+  languages: array<[#rust | #rescript]>,
   /** Whether its output must agree between components, so its version goes into what it writes. */
   agrees: bool,
   uses: array<string>,
 }
 
 let libraries: dict<library> = dict{
+  "envelope*": {
+    languages: [#rust, #rescript],
+    what: "the contracts' types and their JSON and CBOR, generated from model/contracts.json by code/tools/envelope, fhg6w",
+    agrees: true,
+    uses: [],
+  },
   "compat*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "versions: a frozen core, and ranges, features and refusals on it, wnqvu",
     agrees: true,
     uses: [],
   },
   "capability*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "a capability and its chain to the root, checked, vuanj",
     agrees: false,
     uses: ["compat*"],
   },
   "vocabulary*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "capabilities by name, type and rule; declared, allowed, offered compared, 49qyg",
     agrees: false,
     uses: ["compat*"],
   },
   "placement*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "where anything is placed among what meets its needs, scored by rendezvous over each one's weight: a parcel among stores, a deployment among hosts, b8f35, vr5lw",
     agrees: true,
     uses: ["compat*"],
   },
   "layout*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "content cut by FastCDC into pieces, packed into parcels, parity, b8f35",
     agrees: true,
     uses: ["compat*"],
   },
   "keys*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "a scope's salt and key, derived from the masters and its id, b8f35",
     agrees: true,
     uses: ["compat*"],
   },
   "wit*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "an export's types, and a call checked against them, 49qyg",
     agrees: false,
     uses: ["compat*"],
   },
   "extensions*": {
-    language: #rescript,
+    languages: [#rescript],
     what: "a control's extensions: each host's binding, its credentials, quota, levels and grace, the networks its hosts may use, the capacity lists sent to drivers, and what it leases, the same code in both controls, v7v3w",
     agrees: false,
     uses: ["compat*"],
   },
-  "sqlite*": {what: "the engine a tablet runs", language: #rescript, agrees: false, uses: []},
+  "sqlite*": {what: "the engine a tablet runs", languages: [#rescript], agrees: false, uses: []},
 }

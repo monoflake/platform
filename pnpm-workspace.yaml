@@ -1,1 +1,3 @@
+packages:
+  - "code/**"
 minimumReleaseAge: 1440

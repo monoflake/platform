@@ -118,7 +118,12 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 - **A half is never a directory**, since the layers already part them: layer -3 is the platform's
   half and every layer above it the organization's, so `control(organization)` is
   `products/control` and `control(platform)` `platform/control`.
-- **A library's language is a property the model declares, never a directory.**
+- **A library's languages are a property the model declares, never a directory**: a library is
+  one subject, and one written in two languages is one directory holding each language's
+  manifest beside the other's, decided by the author on 2026-10-19 with `envelope`, the
+  contracts' types and their encoding, which cargo and ReScript each take as their own package
+  there. Its generators are one tool so too, `code/tools/envelope/`, each written in the language
+  it writes.
 - **Each component declares its language in the model**, decided by the author on 2026-10-19, and
   the language follows from where it must run: ReScript for what must run on a Worker, which then
   runs in `workerd` on a machine alike, and Rust for what runs only natively on a machine. Since an
@@ -132,6 +137,31 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   `model/checks/layout/code.res` holds that each component's code lies in its layer's directory, named as
   the model names it, that its manifest is its language's, and that it uses only libraries of its
   own language.
+
+**The tree builds as three workspaces at its root**, decided by the author on 2026-10-19:
+
+- **The root holds their manifests and no package**: `Cargo.toml`, a virtual manifest, its members
+  listed one by one, `[workspace.package]` and `[workspace.dependencies]` shared, one `Cargo.lock`
+  and one `target/`; `package.json`, the tools alone; `pnpm-workspace.yaml`, taking all beneath
+  `code/`; and `rescript.json`, the model its own sources, every ReScript package listed as a
+  dependency, and what a package cannot set -- its module format and suffix -- set once. Cargo
+  and ReScript take no recursive glob, so `model/checks/layout/workspace.res` holds each list to
+  what is there.
+- **A package is named as the model names what it holds**: a component by its name, a half
+  written after a hyphen, `control-organization`; a driver's implementation and its management
+  by the driver's name and theirs, `machine-driver-object`, `machine-driver-management`; a library
+  by its subject. A ReScript package is `@blueprint/` led in its `package.json` and its
+  `rescript.json` alike, which pnpm links it by, and **namespaced**, so two packages' modules of one
+  name never meet. Its sources are `src/`; a setting such as its warnings is its own to write, as
+  ReScript inherits none. `model/checks/layout/code.res` holds the names and the manifests.
+- **A driver holds its management beside its implementations**, `management/`, in the language
+  its ground asks, `model/ground/drivers.res`: the process that answers the management interface
+  and hands each call to the implementation of its kind.
+- **What is generated is never committed**: `model/contracts.json` is the one product committed,
+  and an envelope generated from it would be a second copy to drift. A build writes it again
+  first, into `generated/`, then compiles ReScript, then cargo, then bundles each Worker by
+  tsdown; the order is a script's, `scripts/`. Every output -- `.res.mjs` beside its source,
+  `target/`, each package's `dist/`, `generated/` -- is ignored.
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
 a claim of a CWT**, in one shape a contract at a time, its CBOR deterministic by RFC 8949's 4.2.
@@ -234,6 +264,3 @@ them, whoever wrote it.
 - **None is begun yet**: this is the plan.
 
 Open, for the discussion that follows:
-
-- How the repository is laid out past what is drawn, so cargo, ReScript's compiler and the
-  JavaScript tools build one tree. [B26]

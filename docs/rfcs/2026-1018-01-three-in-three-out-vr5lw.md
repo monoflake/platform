@@ -359,7 +359,8 @@ one code is both.
 **A driver is a component of its vendor's own, made of implementations**, worked out with the author
 on 2026-10-19: `machine-driver` and `cloudflare-driver`, at layer -2 beside the host they run,
 `model/graph/components.res`. Neither does the other's work, since neither vendor has the other's
-abstractions.
+abstractions. Each holds its management beside its implementations, the process that answers the
+management interface below, RFC fhg6w.
 
 - **A kind is a contract, and has no language**: each of the six a resource gives -- function,
   instance, container, object, volume, database, `model/ground/resources.res` -- is declared once by

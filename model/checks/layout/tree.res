@@ -10,8 +10,16 @@ let widest = 16
 
 /** What is generated or installed, never written, and so never counted. */
 let ignored = name =>
-  [".git", ".jj", "node_modules", "lib", ".DS_Store"]->Array.includes(name) ||
-    name->String.endsWith(".res.mjs")
+  [
+    ".git",
+    ".jj",
+    "node_modules",
+    "lib",
+    "target",
+    "dist",
+    "generated",
+    ".DS_Store",
+  ]->Array.includes(name) || name->String.endsWith(".res.mjs")
 
 /** A directory whose manifest makes it a package, so its tree counts from 1 again. */
 let manifests = ["Cargo.toml", "package.json", "rescript.json"]

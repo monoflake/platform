@@ -273,6 +273,7 @@ let checklist: array<item> = [
     group: #B,
     what: "how the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one tree, fhg6w",
     from: "fhg6w",
+    done: "fhg6w: three workspaces at the root, packages named by the model, held by the check",
   },
   {
     id: "B27",
