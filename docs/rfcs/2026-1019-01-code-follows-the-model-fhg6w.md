@@ -107,7 +107,7 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 | `apps/`       | 1     | the platform's own apps, the console; a user's are not here |
 | `products/`   | 0     | the three products and the control that configures them     |
 | `primitives/` | -1    | the five components the products are built from, RFC vuanj  |
-| `substrate/`  | -2    | what those stand on: backings, the extent, hosts            |
+| `substrate/`  | -2    | what those stand on: backings, the extent, hosts, drivers   |
 | `platform/`   | -3    | the platform's half, which layer -3 is whole                |
 | `libs/`       | --    | the libraries, placed by subject, a library having no layer |
 | `tools/`      | --    | programs run while the platform is built: the generators    |
@@ -123,7 +123,9 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   user's and the root runs nothing, so neither declares one. **Where the platform meets a vendor, a
   kind is a contract with an implementation a vendor**, and the language is the implementation's:
   a driver declares none, and lies as a directory of its implementations, `machine-driver`'s Rust
-  and `cloudflare-driver`'s ReScript, RFC vr5lw.
+  and `cloudflare-driver`'s ReScript, RFC vr5lw. **The drivers lie together in `substrate/driver/`**,
+  decided by the author on 2026-10-19, each named without the word its parent says,
+  `driver/cloudflare` and `driver/machine`, as a half is dropped from a name.
   `model/checks/code.res` holds that each component's code lies in its layer's directory, named as
   the model names it, that its manifest is its language's, and that it uses only libraries of its
   own language.

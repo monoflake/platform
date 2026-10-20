@@ -1,9 +1,9 @@
 /**
  * The code held to the model, RFC fhg6w: a component's code lies in its layer's directory under the
  * name the model gives it, in the language the model declares, and uses only libraries of that
- * language. A driver declares none: it lies there as a directory of its implementations, one a kind
- * its grounds give, each in its own, `model/ground/drivers.res`. A component not yet written is
- * noted, never refused.
+ * language. A driver declares none: it lies in its layer's `driver/` as a directory of its
+ * implementations, one a kind its grounds give, each in its own, `model/ground/drivers.res`. A
+ * component not yet written is noted, never refused.
  */
 open Base
 
@@ -21,6 +21,13 @@ let group = layer =>
 /** A half in a name is the layer's already, so it is no part of the directory's. */
 let dirName = name => name->String.replace("(organization)", "")->String.replace("(platform)", "")
 
+/** A driver's directory is its name without the word its parent already says: `cloudflare-driver`
+ * lies at `driver/cloudflare`. A driver whose name ends otherwise has none. */
+let driverDir = name =>
+  name->String.endsWith("-driver")
+    ? Some(name->String.slice(~start=0, ~end=String.length(name) - String.length("-driver")))
+    : None
+
 let manifests = [("Cargo.toml", #rust), ("rescript.json", #rescript)]
 
 let run = () => {
@@ -30,11 +37,12 @@ let run = () => {
   designed->Array.forEach(((name, c)) =>
     switch c.language {
     | None if Drivers.drivers->Dict.get(name) != None =>
-      switch (group(c.layer), Drivers.drivers->Dict.get(name)) {
-      | (Some(g), Some(d)) =>
+      switch (group(c.layer), Drivers.drivers->Dict.get(name), driverDir(name)) {
+      | (_, _, None) => found->Array.push(`${name}: a driver whose name does not end in -driver`)
+      | (Some(g), Some(d), Some(dir)) =>
         d.implements->Array.forEach(i =>
           expected->Map.set(
-            `code/${g}/${name}/${(i.kind :> string)}`,
+            `code/${g}/driver/${dir}/${(i.kind :> string)}`,
             (`${name} ${(i.kind :> string)}`, i.language),
           )
         )
@@ -99,21 +107,40 @@ let run = () => {
               },
           )
         }
+        let inside = path => entries(urlIn(`${path}/`, root), {withFileTypes: true})
         switch expected->Map.get(path) {
-        | None if Drivers.drivers->Dict.get(e->entryName) != None =>
-          entries(urlIn(`${path}/`, root), {withFileTypes: true})->Array.forEach(
-            k =>
-              if k->isDirectory {
-                let inner = `${path}/${k->entryName}`
-                switch expected->Map.get(inner) {
-                | Some((name, language)) => check(inner, name, language)
-                | None => found->Array.push(`${inner}: no kind its driver implements`)
-                }
-              } else {
-                found->Array.push(
-                  `${path}/${k->entryName}: a driver holds its implementations alone`,
+        | None if e->entryName == "driver" =>
+          inside(path)->Array.forEach(
+            v => {
+              let at = `${path}/${v->entryName}`
+              if !(v->isDirectory) {
+                found->Array.push(`${at}: driver/ holds drivers alone`)
+              } else if (
+                !(
+                  expected
+                  ->Map.keys
+                  ->Array.fromIterator
+                  ->Array.some(k => k->String.startsWith(`${at}/`))
                 )
-              },
+              ) {
+                found->Array.push(`${at}: no driver of the model lies here`)
+              } else {
+                inside(at)->Array.forEach(
+                  k =>
+                    if k->isDirectory {
+                      let inner = `${at}/${k->entryName}`
+                      switch expected->Map.get(inner) {
+                      | Some((name, language)) => check(inner, name, language)
+                      | None => found->Array.push(`${inner}: no kind its driver implements`)
+                      }
+                    } else {
+                      found->Array.push(
+                        `${at}/${k->entryName}: a driver holds its implementations alone`,
+                      )
+                    },
+                )
+              }
+            },
           )
         | None => found->Array.push(`${path}: no component of the model lies here`)
         | Some((name, language)) => check(path, name, language)
