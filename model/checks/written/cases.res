@@ -10,7 +10,6 @@ open Base
 let declared = Dict.fromArray(Contracts.types->Array.map(t => (t.name, t)))
 
 let base64urlText = /^[A-Za-z0-9_-]*$/
-let int64Text = /^-?(0|[1-9][0-9]{0,18})$/
 let hexText = /^([0-9a-f]{2})*$/
 let hashText = /^[0-9a-f]{64}$/
 
@@ -25,13 +24,8 @@ let isBase64url = s => {
   (rest == 0 || mod(alphabet->String.indexOf(s->String.charAt(n - 1)), rest == 2 ? 16 : 4) == 0)
 }
 
-/** A decimal string of a signed 64-bit integer, no sign but a minus, no leading zero. */
-let isInt64 = s =>
-  int64Text->RegExp.test(s) && {
-      let digits = s->String.startsWith("-") ? s->String.slice(~start=1) : s
-      let most = s->String.startsWith("-") ? "9223372036854775808" : "9223372036854775807"
-      String.length(digits) < 19 || digits <= most
-    }
+/** The largest integer a JavaScript number holds exactly, either way. */
+let safe = 9007199254740991.
 
 let isInteger = (x, lo, hi) => Math.floor(x) == x && x >= lo && x <= hi
 
@@ -120,7 +114,7 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
     | (Prim(#uint32), Number(n)) | (Id(_) | Across(_), Number(n))
       if isInteger(n, 0., 4294967295.) => ()
     | (Prim(#uint53), Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
-    | (Prim(#int64), String(t)) if isInt64(t) => ()
+    | (Prim(#int53), Number(n)) if isInteger(n, -.safe, safe) => ()
     | (Prim(#bytes), String(t)) if isBase64url(t) => ()
     | (Prim(#hash), String(t)) if hashText->RegExp.test(t) => ()
     | (Prim(p), _) => fail(`no ${(p :> string)}`)

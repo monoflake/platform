@@ -9,14 +9,14 @@
  * An enumeration is written as its name in JSON and as its code in CBOR, 13ixj's levels among them.
  */
 /**
- * A primitive: a 32-bit integer, signed or not; a 64-bit signed one, SQLite's, a decimal string in
- * JSON, since a JavaScript number holds it not, and an integer in CBOR; one exact in a JavaScript number, under 2^53, for a
- * time in milliseconds or a size in bytes, b8f35; a 64-bit float; bytes, base64url and unpadded in
+ * A primitive: a 32-bit integer, signed or not; one exact in a JavaScript number, under 2^53, for a
+ * time in milliseconds or a size in bytes, b8f35; a signed one within 2^53 either way, SQLite's as
+ * the platform holds it, fhg6w, a number in JSON as any; a 64-bit float; bytes, base64url and unpadded in
  * JSON, RFC 4648's fifth section, and read in that text alone, fhg6w; and a content's hash, 32 bytes in CBOR and its 64 lowercase hex
  * digits in JSON, as b8f35 writes it wherever it is text. An id is never one of these: it is `Id`,
  * typed by the kind it names.
  */
-type prim = [#bool | #string | #float64 | #int32 | #uint32 | #int64 | #uint53 | #bytes | #hash]
+type prim = [#bool | #string | #float64 | #int32 | #uint32 | #int53 | #uint53 | #bytes | #hash]
 
 /** The half a record is kept in, its footing's, v7v3w. */
 type half = [#platform | #organization]

@@ -87,8 +87,8 @@ components, libraries and edges, each with its contract:
   JavaScript component runs in `workerd`, so one bundle runs on both, vr5lw.
 - **ReScript is never written inside a `.svelte` file**, which it does not read; a page's logic is a
   `.res` module the page imports compiled.
-- **ReScript's `int` is 32 bits**, so a 64-bit integer crossing into it, or into TypeScript, is a
-  JavaScript `bigint`.
+- **ReScript's `int` is 32 bits**, so an integer past it crossing into it is a `float`, exact
+  within 2^53, the most the platform's contracts hold.
 - **A library that runs as JavaScript runs on a Worker, in `workerd` and in a browser alike**, so it
   uses the web's standard APIs alone, never node's; I/O stands at a component's edge.
 - **The tools are cargo, node, ReScript's compiler, vite and tsdown on rolldown, oxlint and oxfmt**,
@@ -203,14 +203,20 @@ author on 2026-10-19:
 | a closed set of names                               | an enum without data       | a variant without payloads |
 | a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
 | a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
-| a signed 64-bit integer, a decimal string in JSON   | `i64`                      | `bigint`                   |
+| a signed integer within 2^53, a number in JSON      | `i64`, checked within 2^53 | `float`, exact             |
 | a set of names, each a bit, an integer in CBOR      | `u32` with a constant each | `array` of a variant       |
 
 Left out: generics, functions, `null`, and whatever one language alone has, decided by the author
 on 2026-10-19 with the four below, from the bucket's trial, `model/contracts/`. **An integer of 64
-bits was left out until something asked one**: SQLite's does, so it came in with the database's
-interface, decided by the author on 2026-10-19, written as a decimal string in JSON, which a
-JavaScript number cannot hold exactly, and as an integer in CBOR.
+bits is left out**, decided by the author on 2026-10-20: a database's integer is held within 2^53
+either way, as a JavaScript number holds one exactly, so it is a number in JSON as every other is.
+What asks more than that is an identifier or a hash -- a snowflake id, a 64-bit fingerprint, a time
+in nanoseconds -- never a sum, and is kept as text or bytes, as the services that hand such ids out
+already write them. A Durable Object hands JavaScript every SQLite integer as a double and D1
+rounds past 52 bits, `docs/lessons/cloudflare.md`, so a wider integer would be either a wrapping on
+every query of those or a value coerced unseen; one read past the range fails instead, as
+`beyond_range`, on every implementation alike, a machine's among them, so a database moved keeps
+its answers.
 
 **An interface is a set of operations in the subset**, decided by the author on 2026-10-19 with the
 database's interface: each operation its input and its output, records declared, and the reasons it

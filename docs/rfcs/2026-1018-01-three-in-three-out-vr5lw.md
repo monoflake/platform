@@ -114,7 +114,8 @@ among them, are the model's subset, RFC fhg6w. How a record at rest is kept is R
 bundle's.
 
 - **A value of SQLite's an app passes is a WIT variant**,
-  `variant value { null, integer(s64), real(f64), text(string), bytes(list<u8>) }`.
+  `variant value { null, integer(s64), real(f64), text(string), bytes(list<u8>) }`, its integer
+  held within 2^53 either way by the database, which refuses one past it, RFC fhg6w.
 - **A name is its owner's**: a user's, of a function, a field, a case or a flag, is written as the
   user wrote it, since changing it changes what they meant; the platform's own interfaces are
   written in `snake_case`, their words whole, neutral and formal, nested by aspect; and so are the

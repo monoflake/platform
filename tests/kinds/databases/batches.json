@@ -18,7 +18,7 @@
 							"results": [
 								{ "columns": [], "rows": [], "changed": 0 },
 								{ "columns": [], "rows": [], "changed": 1 },
-								{ "columns": ["i"], "rows": [[{ "kind": "integer", "value": "7" }]], "changed": 0 }
+								{ "columns": ["i"], "rows": [[{ "kind": "integer", "value": 7 }]], "changed": 0 }
 							]
 						}
 					}
@@ -49,7 +49,7 @@
 					"expect": {
 						"output": {
 							"results": [
-								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "0" }]], "changed": 0 }
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": 0 }]], "changed": 0 }
 							]
 						}
 					}
@@ -75,7 +75,7 @@
 					"expect": {
 						"output": {
 							"results": [
-								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "0" }]], "changed": 0 }
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": 0 }]], "changed": 0 }
 							]
 						}
 					}

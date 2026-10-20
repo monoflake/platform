@@ -1,11 +1,16 @@
 {
 	"samples": [
 		{ "type": "database-value", "json": { "kind": "null" }, "cbor": "a10001" },
-		{ "type": "database-value", "json": { "kind": "integer", "value": "5" }, "cbor": "a200020105" },
+		{ "type": "database-value", "json": { "kind": "integer", "value": 5 }, "cbor": "a200020105" },
 		{
 			"type": "database-value",
-			"json": { "kind": "integer", "value": "-9223372036854775808" },
-			"cbor": "a20002013b7fffffffffffffff"
+			"json": { "kind": "integer", "value": -9007199254740991 },
+			"cbor": "a20002013b001ffffffffffffe"
+		},
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": 9007199254740991 },
+			"cbor": "a20002011b001fffffffffffff"
 		},
 		{
 			"type": "database-value",
@@ -14,15 +19,24 @@
 		}
 	],
 	"refused": [
-		{ "type": "database-value", "json": { "kind": "integer", "value": 5 }, "reason": "malformed" },
 		{
 			"type": "database-value",
-			"json": { "kind": "integer", "value": "9223372036854775808" },
+			"json": { "kind": "integer", "value": "5" },
 			"reason": "malformed"
 		},
 		{
 			"type": "database-value",
-			"json": { "kind": "integer", "value": "05" },
+			"json": { "kind": "integer", "value": 9007199254740992 },
+			"reason": "malformed"
+		},
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": -9007199254740992 },
+			"reason": "malformed"
+		},
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": 1.5 },
 			"reason": "malformed"
 		},
 		{ "type": "database-value", "json": { "kind": "decimal", "value": "1" }, "reason": "malformed" }

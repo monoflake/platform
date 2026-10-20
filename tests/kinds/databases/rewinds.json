@@ -39,7 +39,7 @@
 					"expect": {
 						"output": {
 							"results": [
-								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "1" }]], "changed": 0 }
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": 1 }]], "changed": 0 }
 							]
 						}
 					}
@@ -56,7 +56,7 @@
 					"expect": {
 						"output": {
 							"results": [
-								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "2" }]], "changed": 0 }
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": 2 }]], "changed": 0 }
 							]
 						}
 					}

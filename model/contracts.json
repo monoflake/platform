@@ -2298,7 +2298,7 @@
 								"name": "value",
 								"key": 1,
 								"shape": {
-									"prim": "int64"
+									"prim": "int53"
 								}
 							}
 						]
@@ -3181,7 +3181,7 @@
 			]
 		},
 		"database": {
-			"version": 1,
+			"version": 2,
 			"bounds": {},
 			"declared": ["statement"],
 			"operations": [
@@ -3200,6 +3200,10 @@
 						},
 						{
 							"name": "beyond_limit",
+							"failure": "rejected"
+						},
+						{
+							"name": "beyond_range",
 							"failure": "rejected"
 						},
 						{

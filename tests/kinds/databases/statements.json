@@ -18,7 +18,7 @@
 							{
 								"sql": "INSERT INTO t VALUES (?, ?, ?, ?), (?, ?, ?, ?)",
 								"parameters": [
-									{ "kind": "integer", "value": "1" },
+									{ "kind": "integer", "value": 1 },
 									{ "kind": "real", "value": 1.5 },
 									{ "kind": "text", "value": "a" },
 									{ "kind": "bytes", "value": "aGVsbG8" },
@@ -42,7 +42,7 @@
 									"columns": ["i", "r", "s", "b"],
 									"rows": [
 										[
-											{ "kind": "integer", "value": "1" },
+											{ "kind": "integer", "value": 1 },
 											{ "kind": "real", "value": 1.5 },
 											{ "kind": "text", "value": "a" },
 											{ "kind": "bytes", "value": "aGVsbG8" }
@@ -58,7 +58,7 @@
 			]
 		},
 		{
-			"description": "an integer is carried at its whole 64 bits, both ends",
+			"description": "an integer is carried whole to the edge of what a JavaScript number holds, both ends",
 			"steps": [
 				{
 					"call": "execute",
@@ -67,8 +67,8 @@
 							{
 								"sql": "SELECT ? AS lo, ? AS hi",
 								"parameters": [
-									{ "kind": "integer", "value": "-9223372036854775808" },
-									{ "kind": "integer", "value": "9223372036854775807" }
+									{ "kind": "integer", "value": -9007199254740991 },
+									{ "kind": "integer", "value": 9007199254740991 }
 								]
 							}
 						]
@@ -80,8 +80,8 @@
 									"columns": ["lo", "hi"],
 									"rows": [
 										[
-											{ "kind": "integer", "value": "-9223372036854775808" },
-											{ "kind": "integer", "value": "9223372036854775807" }
+											{ "kind": "integer", "value": -9007199254740991 },
+											{ "kind": "integer", "value": 9007199254740991 }
 										]
 									],
 									"changed": 0
@@ -89,6 +89,21 @@
 							]
 						}
 					}
+				}
+			]
+		},
+		{
+			"description": "an integer read past what a JavaScript number holds fails, and is never coerced",
+			"steps": [
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT 9007199254740992 AS big" }] },
+					"expect": { "failure": "rejected", "reason": "beyond_range" }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT -9007199254740992 AS small" }] },
+					"expect": { "failure": "rejected", "reason": "beyond_range" }
 				}
 			]
 		},
@@ -124,7 +139,7 @@
 						"output": {
 							"results": [
 								{ "columns": [], "rows": [], "changed": 2 },
-								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "3" }]], "changed": 0 }
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": 3 }]], "changed": 0 }
 							]
 						}
 					}

@@ -190,3 +190,43 @@ available for free to all Workers plans"; "Features and APIs may change before g
 availability". Its price after the beta and its limits are not on the page. Asked of a Worker's way
 into a private network, RFC vr5lw. Sources: https://developers.cloudflare.com/workers-vpc/ and
 https://developers.cloudflare.com/changelog/product/workers-vpc/
+
+## SQLite in Durable Objects and D1, read 2026-10-20
+
+**A Durable Object's SQLite has no session extension, so no changeset.** workerd's
+`build/BUILD.sqlite3` defines `SQLITE_ENABLE_FTS5`, `SQLITE_ENABLE_NORMALIZE`,
+`SQLITE_ENABLE_MATH_FUNCTIONS`, `SQLITE_ENABLE_RTREE`, `SQLITE_ENABLE_UPDATE_DELETE_LIMIT` and
+`SQLITE_DEFAULT_FOREIGN_KEYS=1`, and neither `SQLITE_ENABLE_SESSION` nor
+`SQLITE_ENABLE_PREUPDATE_HOOK`, which the session extension needs. A proposal to add `node:sqlite`'s
+`Session` notes it "may not be safe in a multi-tenant environment", unanswered. Asked by the
+tablet's log. Sources: https://github.com/cloudflare/workerd/blob/main/build/BUILD.sqlite3,
+https://sqlite.org/sessionintro.html, https://github.com/cloudflare/workerd/issues/6878
+
+**workerd's authorizer allows a trigger and refuses a temporary one, and allows `random()` and the
+time.** `src/workerd/util/sqlite.c++`, at its commit of 2026-10-12, lets `SQLITE_CREATE_TRIGGER`
+through where both names are allowed and refuses every `SQLITE_CREATE_TEMP_*` and `ATTACH`; its
+function allowlist holds `random`, `randomblob`, `datetime`, `unixepoch`, `current_timestamp` and
+the rest, so a statement run again may answer otherwise. Source:
+https://github.com/cloudflare/workerd/blob/main/src/workerd/util/sqlite.c++
+
+**A Durable Object hands JavaScript every SQLite integer as a double.** `src/workerd/api/sql.c++`,
+at its commit of 2026-10-12: "int64 will become BigInt, but most applications won't want all their
+integers to be BigInt. We will coerce to a double here", `static_cast<double>(i)`, so one past 2^53
+is rounded unseen. Source: https://github.com/cloudflare/workerd/blob/main/src/workerd/api/sql.c++
+
+**D1's export blocks the database, refuses virtual tables and rounds past 52 bits.** It writes a
+`.sql` file of schema and data; "A running export will block other database requests"; "Export is
+not supported for virtual tables, including databases with virtual tables"; numeric values "are
+subject to JavaScript's 52-bit precision limit". Import takes SQL alone, never a SQLite file, at
+most 5 GiB a file. The REST API runs it as a task at a Time Travel bookmark, polled, its result a
+signed URL for an hour. Whether the free plan has it is not said. Sources:
+https://developers.cloudflare.com/d1/best-practices/import-export-data/,
+https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/export/
+
+**D1 and a Durable Object each rewind to any minute of the last 30 days.** D1's Time Travel is on
+always, at no cost, restored in place, in-flight queries cancelled, and answers a bookmark that
+undoes it. A Durable Object's `getBookmarkForTime()` and `onNextSessionRestoreBookmark()` restore its
+whole storage at its next start, `ctx.abort()` restarting it, and answer one that undoes it too; not
+locally. A Durable Object has no export. Sources:
+https://developers.cloudflare.com/d1/reference/time-travel/,
+https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/

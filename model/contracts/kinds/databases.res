@@ -1,7 +1,10 @@
 /**
  * The `database` kind's contract, RFCs zn3u5 and vr5lw: SQLite's dialect, one statement or a batch
  * atomic together, each with its parameters, answered with each one's rows. No interactive
- * transaction. A database's limits are its driver's to declare, vr5lw [C23]. Every implementation
+ * transaction. A database's limits are its driver's to declare, vr5lw [C23]. An integer is held
+ * within 2^53 either way, as a JavaScript number holds one exactly: one past it as a parameter is
+ * malformed, and one read past it, as SQLite's own `random()` makes, fails as `beyond_range`, never
+ * coerced, on every implementation alike, fhg6w. Every implementation
  * keeps each minute of the last 30 days and rewinds to any of them, by what it keeps itself: D1's
  * Time Travel, a Durable Object's recovery, a machine's WAL archived and its volume's snapshots.
  */
@@ -15,7 +18,7 @@ let types: array<declared> = [
       tag: "kind",
       cases: [
         {name: "null", code: 1, fields: []},
-        {name: "integer", code: 2, fields: [field("value", 1, Prim(#int64))]},
+        {name: "integer", code: 2, fields: [field("value", 1, Prim(#int53))]},
         {name: "real", code: 3, fields: [field("value", 1, Prim(#float64))]},
         {name: "text", code: 4, fields: [field("value", 1, Prim(#string))]},
         {name: "bytes", code: 5, fields: [field("value", 1, Prim(#bytes))]},
@@ -64,7 +67,7 @@ let types: array<declared> = [
 /** A batch that fails changes nothing, zn3u5; `index` of the failing statement is in the message. */
 let interface_: interface_ = {
   name: "database",
-  version: 1,
+  version: 2,
   declared: ["statement"],
   from: "zn3u5, vr5lw",
   operations: [
@@ -76,6 +79,7 @@ let interface_: interface_ = {
         ("invalid", #rejected),
         ("constraint", #rejected),
         ("beyond_limit", #rejected),
+        ("beyond_range", #rejected),
         ("storage_full", #unavailable),
       ],
     ),
