@@ -2,10 +2,12 @@
 open Subset
 
 /** The reasons every operation may fail for, none of which an operation declares again: a
- * credential missing or wrong, and bytes in any text but base64url unpadded, fhg6w. */
+ * credential missing or wrong; an input that does not parse, bytes in any text but base64url
+ * unpadded among them, fhg6w; and an implementation overloaded for a moment, worth a retry. */
 let common: array<reason> = [
   {name: "denied", failure: #rejected},
   {name: "malformed", failure: #rejected},
+  {name: "overloaded", failure: #unavailable},
 ]
 
 let types: array<declared> = [

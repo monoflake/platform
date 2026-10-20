@@ -1,0 +1,46 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a statement past its driver's bound is refused before it is parsed",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": {
+									"$text": { "start": "SELECT 1", "length": { "bound": "statement", "plus": 1 } }
+								}
+							}
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "beyond_limit" }
+				}
+			]
+		},
+		{
+			"description": "past the capacity held, a write fails for room",
+			"given": { "size": 65536 },
+			"steps": [
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "CREATE TABLE t (b BLOB)" }] },
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 0 }] } }
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "INSERT INTO t VALUES (?)",
+								"parameters": [{ "kind": "bytes", "value": { "$bytes": { "length": 131072 } } }]
+							}
+						]
+					},
+					"expect": { "failure": "unavailable", "reason": "storage_full" }
+				}
+			]
+		}
+	]
+}

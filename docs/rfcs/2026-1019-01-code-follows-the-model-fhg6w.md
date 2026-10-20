@@ -184,8 +184,10 @@ JavaScript number cannot hold exactly, and as an integer in CBOR.
 **An interface is a set of operations in the subset**, decided by the author on 2026-10-19 with the
 database's interface: each operation its input and its output, records declared, and the reasons it
 may fail for, each a failure of RFC 49qyg's -- `rejected`, `unavailable` or `unknown` -- that a
-caller acts on, the reason only told. Two reasons are every operation's and declared by none,
-`denied`, a credential missing or wrong, and `malformed`, an input that does not parse. An operation is reached at `POST /{interface}/{operation}`,
+caller acts on, the reason only told. Three reasons are every operation's and declared by none:
+`denied`, a credential missing or wrong; `malformed`, an input that does not parse; and
+`overloaded`, an implementation that cannot answer for a moment, `unavailable` and worth a retry,
+since a database's one writer keeps its callers from meeting a lock, and what is left is load. An operation is reached at `POST /{interface}/{operation}`,
 its input the body, its output or an `error` the answer, JSON or CBOR by the request; an
 interface's version is raised as a record's is, and the check refuses an operation gone or a type
 it reaches changed while the version stayed. **The platform's own interfaces are all of the
@@ -202,6 +204,10 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
 - **A version is raised for anything but an optional field added to a record**: the check refuses
   to write a product whose type, reached from a record's content, changed otherwise while its
   version stayed.
+- **A reader passes over a field it does not know**, decided by the author on 2026-10-19, as the
+  rule above asks: an optional field added keeps its version, so a reader of that version meets
+  it, and refusing it would break what the version promises. A sample written in `tests/` is held
+  otherwise, a field it does not know taken as a mistake in writing it.
 - **Bytes are read in one text alone**, decided by the author on 2026-10-19: base64url, unpadded,
   its unused last bits zero, and any other -- base64's own alphabet, a padding, a bit set past the
   last byte -- refused as `rejected` for `malformed`, naming the text expected. A value has one text, as it has one

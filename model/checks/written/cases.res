@@ -44,6 +44,7 @@ type scope = {
   found: array<string>,
   captured: Set.t<string>,
   bounds: dict<int>,
+  declared: array<string>,
 }
 
 let isContent = n => Contracts.contents->Array.some(c => c.content == n)
@@ -69,25 +70,32 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
     if !(s.captured->Set.has(n)) {
       fail(`uses ${n}, captured by no step before`)
     }
-  | (Some(("$bytes", spec)), Input | Expected) =>
-    if shape != Prim(#bytes) {
-      fail("$bytes where no bytes are")
+  // Bytes of a length, or a text its `start` led and spaces filled to a length, either a number or
+  // a bound and how many past it: a bound of the interface's, or one each driver declares.
+  | (Some((("$bytes" | "$text") as k, spec)), Input | Expected) =>
+    if shape != (k == "$bytes" ? Prim(#bytes) : Prim(#string)) {
+      fail(`${k} where its kind of value is not`)
     }
     switch spec {
     | Object(d) =>
+      switch d->Dict.get("start") {
+      | None | Some(String(_)) if k == "$text" => ()
+      | None => ()
+      | Some(_) => fail(`${k} takes no start but a text's`)
+      }
       switch d->Dict.get("length") {
       | Some(Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
       | Some(Object(b)) =>
         switch (b->Dict.get("bound"), b->Dict.get("plus")) {
         | (Some(String(name)), Some(Number(p))) if isInteger(p, -1e9, 1e9) =>
-          if s.bounds->Dict.get(name) == None {
-            fail(`$bytes past ${name}, no bound of its interface`)
+          if s.bounds->Dict.get(name) == None && !(s.declared->Array.includes(name)) {
+            fail(`${k} past ${name}, no bound of its interface`)
           }
-        | _ => fail("$bytes' length is a bound and how many past it")
+        | _ => fail(`${k}'s length is a bound and how many past it`)
         }
-      | _ => fail("$bytes without a length")
+      | _ => fail(`${k} without a length`)
       }
-    | _ => fail("$bytes takes a length")
+    | _ => fail(`${k} takes a length`)
     }
   | (Some((k, _)), _) => fail(`placeholder ${k}, not taken here`)
   | (None, _) =>
@@ -200,7 +208,12 @@ let run = () => {
         sampled->Set.add(name)
         items(j->member("cases"))->Array.forEachWithIndex((c, n) => {
           let at = `${path}#${int(n)}`
-          let s = {found, captured: Set.make(), bounds: i.bounds->Option.getOr(dict{})}
+          let s = {
+            found,
+            captured: Set.make(),
+            bounds: i.bounds->Option.getOr(dict{}),
+            declared: i.declared->Option.getOr([]),
+          }
           switch c->member("description") {
           | Some(String(_)) => ()
           | _ => found->Array.push(`${at}: no description`)
@@ -304,7 +317,7 @@ let run = () => {
       switch typed(x, n, "sample") {
       | Some(t) =>
         pairs := pairs.contents + 1
-        let s = {found, captured: Set.make(), bounds: dict{}}
+        let s = {found, captured: Set.make(), bounds: dict{}, declared: []}
         conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, `${path}#${int(n)}`)
         switch x->member("cbor") {
         | Some(String(h)) if isHex(h) && h != "" => ()
@@ -317,7 +330,7 @@ let run = () => {
       switch typed(x, n, "refused") {
       | Some(t) =>
         refused := refused.contents + 1
-        let s = {found: [], captured: Set.make(), bounds: dict{}}
+        let s = {found: [], captured: Set.make(), bounds: dict{}, declared: []}
         conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, "")
         if s.found == [] {
           found->Array.push(`${path}: refused ${int(n)} is read, yet every reader must refuse it`)

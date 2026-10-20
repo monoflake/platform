@@ -1,0 +1,86 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a batch answers each statement, in order, each seeing those before it",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "CREATE TABLE t (i INTEGER)" },
+							{ "sql": "INSERT INTO t VALUES (7)" },
+							{ "sql": "SELECT i FROM t" }
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": [], "rows": [], "changed": 0 },
+								{ "columns": [], "rows": [], "changed": 1 },
+								{ "columns": ["i"], "rows": [[{ "kind": "integer", "value": "7" }]], "changed": 0 }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a batch that breaks a constraint changes nothing",
+			"steps": [
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "CREATE TABLE t (i INTEGER PRIMARY KEY)" }] },
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 0 }] } }
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "INSERT INTO t VALUES (1)" },
+							{ "sql": "INSERT INTO t VALUES (1)" }
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "constraint" }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT count(*) AS n FROM t" }] },
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "0" }]], "changed": 0 }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a statement that does not parse is invalid, and its batch changes nothing",
+			"steps": [
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "CREATE TABLE t (i INTEGER)" }] },
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 0 }] } }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "INSERT INTO t VALUES (1)" }, { "sql": "SELEKT 1" }] },
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT count(*) AS n FROM t" }] },
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "0" }]], "changed": 0 }
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

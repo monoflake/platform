@@ -55,6 +55,7 @@ let types: array<declared> = [
 let interface_: interface_ = {
   name: "database",
   version: 1,
+  declared: ["statement"],
   from: "zn3u5, vr5lw",
   operations: [
     op(
@@ -65,7 +66,7 @@ let interface_: interface_ = {
         ("invalid", #rejected),
         ("constraint", #rejected),
         ("beyond_limit", #rejected),
-        ("busy", #unavailable),
+        ("storage_full", #unavailable),
       ],
     ),
   ],

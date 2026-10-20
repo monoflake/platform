@@ -373,15 +373,17 @@ abstractions.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
   `model/contracts/`: `object`, `database`, the drivers' management and `deployments`, which function,
-  instance and container share, are declared; `object` alone is sampled so far. [B30]
+  instance and container share, are declared; `object` and `database` are sampled so far. [B30]
 - **The cases are data in `tests/`, three of a kind**, decided by the author on 2026-10-19:
   `codec/`, a value in JSON beside its CBOR, and inputs every reader refuses; `kinds/`, each
   interface's cases, a case a list of steps -- an operation called, its output or its failure and
   reason expected -- as WebAssembly's `.wast` scripts are; and `properties/`, what no fixed answer
   shows, a history checked by a named checker, as Jepsen's are: one instance for a key, and a read
   seeing every write before it, alone in v0. A step may expect any value with `$any`, keep one with
-  `$capture` for a later step's `$use`, and write bytes of a length with `$bytes`, a length past a
-  bound of its interface among them, so a case past a driver's bound is written once for every
+  `$capture` for a later step's `$use`, and write bytes of a length with `$bytes`, or a text led
+  by a statement and filled with spaces with `$text`, a length past a bound among them -- one the
+  contract fixes, as an object's 16 MiB, or one each driver declares, as a statement's size, which
+  a runner asks the driver under test for [D8] -- so a case past a bound is written once for every
   driver; a case may be `given` the capacity of its kind it starts with. Each case starts from
   nothing, and an output expected is the whole output.
 - **The check holds the samples to the contracts**, `model/checks/written/cases.res`: each step

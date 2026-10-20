@@ -1304,6 +1304,10 @@
 		{
 			"name": "malformed",
 			"failure": "rejected"
+		},
+		{
+			"name": "overloaded",
+			"failure": "unavailable"
 		}
 	],
 	"interfaces": {
@@ -1312,6 +1316,7 @@
 			"bounds": {
 				"content": 16777216
 			},
+			"declared": [],
 			"operations": [
 				{
 					"name": "write",
@@ -1362,6 +1367,7 @@
 		"database": {
 			"version": 1,
 			"bounds": {},
+			"declared": ["statement"],
 			"operations": [
 				{
 					"name": "execute",
@@ -1381,7 +1387,7 @@
 							"failure": "rejected"
 						},
 						{
-							"name": "busy",
+							"name": "storage_full",
 							"failure": "unavailable"
 						}
 					]
@@ -1391,6 +1397,7 @@
 		"management": {
 			"version": 2,
 			"bounds": {},
+			"declared": [],
 			"operations": [
 				{
 					"name": "apply",
@@ -1440,6 +1447,7 @@
 		"deployments": {
 			"version": 1,
 			"bounds": {},
+			"declared": [],
 			"operations": [
 				{
 					"name": "deploy",

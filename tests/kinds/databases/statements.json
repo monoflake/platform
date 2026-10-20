@@ -1,0 +1,135 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a table made, rows inserted by parameters, and read back as each value's kind",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [{ "sql": "CREATE TABLE t (i INTEGER, r REAL, s TEXT, b BLOB)" }]
+					},
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 0 }] } }
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "INSERT INTO t VALUES (?, ?, ?, ?), (?, ?, ?, ?)",
+								"parameters": [
+									{ "kind": "integer", "value": "1" },
+									{ "kind": "real", "value": 1.5 },
+									{ "kind": "text", "value": "a" },
+									{ "kind": "bytes", "value": "aGVsbG8" },
+									{ "kind": "null" },
+									{ "kind": "null" },
+									{ "kind": "null" },
+									{ "kind": "null" }
+								]
+							}
+						]
+					},
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 2 }] } }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT i, r, s, b FROM t ORDER BY rowid" }] },
+					"expect": {
+						"output": {
+							"results": [
+								{
+									"columns": ["i", "r", "s", "b"],
+									"rows": [
+										[
+											{ "kind": "integer", "value": "1" },
+											{ "kind": "real", "value": 1.5 },
+											{ "kind": "text", "value": "a" },
+											{ "kind": "bytes", "value": "aGVsbG8" }
+										],
+										[{ "kind": "null" }, { "kind": "null" }, { "kind": "null" }, { "kind": "null" }]
+									],
+									"changed": 0
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an integer is carried at its whole 64 bits, both ends",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "SELECT ? AS lo, ? AS hi",
+								"parameters": [
+									{ "kind": "integer", "value": "-9223372036854775808" },
+									{ "kind": "integer", "value": "9223372036854775807" }
+								]
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{
+									"columns": ["lo", "hi"],
+									"rows": [
+										[
+											{ "kind": "integer", "value": "-9223372036854775808" },
+											{ "kind": "integer", "value": "9223372036854775807" }
+										]
+									],
+									"changed": 0
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a statement counts the rows it changed, and one that only reads changes none",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "CREATE TABLE t (i INTEGER)" },
+							{ "sql": "INSERT INTO t VALUES (1), (2), (3)" }
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": [], "rows": [], "changed": 0 },
+								{ "columns": [], "rows": [], "changed": 3 }
+							]
+						}
+					}
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "UPDATE t SET i = i + 10 WHERE i > 1" },
+							{ "sql": "SELECT count(*) AS n FROM t" }
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": [], "rows": [], "changed": 2 },
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "3" }]], "changed": 0 }
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

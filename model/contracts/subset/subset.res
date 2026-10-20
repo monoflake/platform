@@ -68,6 +68,8 @@ type interface_ = {
   operations: array<operation>,
   /** The bounds a sample may be written against, by name, each an integer. */
   bounds?: dict<int>,
+  /** The bounds each driver declares of its own, by name, which a runner asks the driver for [D8]. */
+  declared?: array<string>,
   from: string,
 }
 
@@ -178,6 +180,7 @@ let interfaceJson = (i: interface_): JSON.t => Object(
     "bounds": Object(
       i.bounds->Option.getOr(dict{})->Dict.mapValues(b => JSON.Number(Int.toFloat(b))),
     ),
+    "declared": Array(i.declared->Option.getOr([])->Array.map(d => JSON.String(d))),
     "operations": Array(
       i.operations->Array.map(o => JSON.Object(
         dict{
