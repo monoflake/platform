@@ -549,6 +549,13 @@ let checklist: array<item> = [
     step: 6,
   },
   {
+    id: "C36",
+    group: #C,
+    what: "how soon a component sees a newer bundle -- the issuer above all, so a grant removed stops being signed -- and what each caches of one; a capability already signed lives out its short life",
+    from: "vuanj, b8f35",
+    step: 8,
+  },
+  {
     id: "D1",
     group: #D,
     what: "the app that charges, an organization's on the foundation platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
