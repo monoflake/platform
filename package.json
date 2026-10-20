@@ -1,5 +1,5 @@
 {
-	"name": "blueprint",
+	"name": "@monoflake/platform",
 	"private": true,
 	"type": "module",
 	"devDependencies": {

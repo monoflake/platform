@@ -4,7 +4,7 @@
  * that language. A driver declares none: it lies in its layer's `driver/` as a directory of its
  * implementations, one a kind its grounds give, each in its own, and of its management, in the
  * language its ground asks, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
- * for each of its languages. A package is named as the model names what it holds, `@blueprint/` led
+ * for each of its languages. A package is named as the model names what it holds, `@monoflake/` led
  * where it is ReScript's, and namespaced, and MIT OR Apache-2.0, the root's two texts. What
  * `monoflake/cloud` keeps lies nowhere here. Anything not yet written is noted, never refused.
  */
@@ -207,7 +207,7 @@ let run = () => {
         found->Array.push(`${path}/package.json: no license ${h.license}`)
       }
       if files->Array.includes("rescript.json") {
-        let scoped = `@blueprint/${h.package}`
+        let scoped = `@monoflake/${h.package}`
         switch jsonName(`${path}/rescript.json`) {
         | (Some(n), Some(true)) if n == scoped => ()
         | _ => found->Array.push(`${path}/rescript.json: no package named ${scoped} and namespaced`)

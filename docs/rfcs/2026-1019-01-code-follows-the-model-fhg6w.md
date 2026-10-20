@@ -169,7 +169,7 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 - **A package is named as the model names what it holds**: a component by its name, a half
   written after a hyphen, `control-organization`; a driver's implementation and its management
   by the driver's name and theirs, `driver-machine-object`, `driver-machine-management`; a library
-  by its subject. A ReScript package is `@blueprint/` led in its `package.json` and its
+  by its subject. A ReScript package is `@monoflake/` led in its `package.json` and its
   `rescript.json` alike, which pnpm links it by, and **namespaced**, so two packages' modules of one
   name never meet. Its sources are `src/`; a setting such as its warnings is its own to write, as
   ReScript inherits none. `model/checks/layout/code.res` holds the names and the manifests.

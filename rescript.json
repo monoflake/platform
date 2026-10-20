@@ -1,5 +1,5 @@
 {
-	"name": "blueprint",
+	"name": "@monoflake/platform",
 	"sources": [{ "dir": "model", "subdirs": true }],
 	"dependencies": [],
 	"package-specs": [{ "module": "esmodule", "in-source": true }],

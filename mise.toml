@@ -1,4 +1,4 @@
-# The blueprint's own tasks; its tools are the workspace's, read by walking up.
+# This repository's own tasks; its tools are the workspace's, read by walking up.
 [env]
 _.path = ["{{config_root}}/node_modules/.bin"]
 

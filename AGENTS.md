@@ -1,9 +1,9 @@
 # AGENTS.md
 
 What anyone working here reads after the workspace's `AGENTS.md`, whose rules hold here as in every
-repository below it; this file adds only what is the blueprint's own. The blueprint is the paper
-model of the platform's next architecture: the design worked out from what an app needs down to
-what the real world already provides, checked by a model, before any of it is built.
+repository below it; this file adds only what is this repository's own. It holds the platform: its
+design, worked out from what an app needs down to what the real world already provides and checked
+by a model, and the code that follows the model.
 
 It is public at `monoflake/platform`, listed in the workspace's `repos/registry.toml` as
 `monoflake/platform`, beside the private `monoflake/cloud`. Nothing here deploys anything or touches another repository.
