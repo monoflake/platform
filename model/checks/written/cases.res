@@ -116,7 +116,7 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
       if isInteger(n, 0., 4294967295.) => ()
     | (Prim(#uint53), Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
     | (Prim(#int53), Number(n)) if isInteger(n, -.safe, safe) => ()
-    | (Prim(#bytes), String(t)) if isBase64url(t) => ()
+    | (Prim(#bytes) | Prim(#secret), String(t)) if isBase64url(t) => ()
     | (Prim(#hash), String(t)) if hashText->RegExp.test(t) => ()
     | (Prim(p), _) => fail(`no ${(p :> string)}`)
     | (Id(kind) | Across(_, kind), _) => fail(`no id of ${kind}`)

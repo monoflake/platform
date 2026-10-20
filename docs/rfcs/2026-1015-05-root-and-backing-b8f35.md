@@ -293,6 +293,16 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
     leaked is worth, RFC vuanj; one bound to a key its holder proves would cost a signature a call.
   - **No signed record holds a secret**: a certificate is public and travels in a bundle.
+  - **A bundle's body is a section for each reader of its organization's configuration**, decided
+    by the author on 2026-10-20, `model/contracts/signed/signed.res`: `issuer`, the grants, the
+    allowance and the organization's `security`; `storage`, each bucket; `database`, each
+    database, its copies among it; `compute`, each app but its env, and the hosts its deployment
+    was placed on; `gateway`, every name and mount; and `hosts`, the relays each host may use. What
+    a control alone reads -- members, invitations, the tree -- is in none. **A section is compiled
+    from the records, never one of them**, so a record holding a secret gives the rest; each kind
+    of record lies in one section at most, and **no secret reaches one**, since a bundle is copied
+    to every host of its organization: a secret reaches its deployment alone. The model refuses
+    either, `model/checks/written/wire.res`.
   - **The rights are a set of bits in one unsigned integer**, worked out with the author on
     2026-10-19: `read` 1, `create` 2, `replace` 4, `delete` 8, `alter` 16, `call` 32, RFC vuanj.
     An operation asks for the bits it needs and no others, so a bit a verifier does not know is a

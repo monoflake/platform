@@ -13,10 +13,23 @@
  * time in milliseconds or a size in bytes, b8f35; a signed one within 2^53 either way, SQLite's as
  * the platform holds it, fhg6w, a number in JSON as any; a 64-bit float; bytes, base64url and unpadded in
  * JSON, RFC 4648's fifth section, and read in that text alone, fhg6w; and a content's hash, 32 bytes in CBOR and its 64 lowercase hex
- * digits in JSON, as b8f35 writes it wherever it is text. An id is never one of these: it is `Id`,
- * typed by the kind it names.
+ * digits in JSON, as b8f35 writes it wherever it is text; and a secret, written as bytes are, sealed
+ * under its control's key where it is kept and plain only in the call that hands it to what uses
+ * it, which no signed record and no section of a bundle reaches, fhg6w. An id is never one of these:
+ * it is `Id`, typed by the kind it names.
  */
-type prim = [#bool | #string | #float64 | #int32 | #uint32 | #int53 | #uint53 | #bytes | #hash]
+type prim = [
+  | #bool
+  | #string
+  | #float64
+  | #int32
+  | #uint32
+  | #int53
+  | #uint53
+  | #bytes
+  | #hash
+  | #secret
+]
 
 /** The half a record is kept in, its footing's, v7v3w. */
 type half = [#platform | #organization]

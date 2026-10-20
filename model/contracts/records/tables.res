@@ -25,7 +25,7 @@ let types: array<declared> = [
     def: Record([
       field("store", 1, Prim(#string)),
       field("address", 2, Prim(#string)),
-      field("secret", 3, Prim(#bytes)),
+      field("secret", 3, Prim(#secret)),
       field("weight", 4, Prim(#uint32)),
       field("levels", 5, Type("placement")),
       field("place", 6, Type("extension-place")),
@@ -99,7 +99,7 @@ let contents: array<content> = [
     content: "generation",
     unique: [["generation"]],
   },
-  {half: #organization, kind: "store", version: 1, content: "store", unique: [["store"]]},
+  {half: #organization, kind: "store", version: 2, content: "store", unique: [["store"]]},
   {half: #organization, kind: "content", version: 1, content: "content", unique: [["hash"]]},
   {half: #organization, kind: "piece", version: 1, content: "piece", unique: [["hash"]]},
   {half: #organization, kind: "parcel", version: 1, content: "parcel", unique: [["parcel"]]},

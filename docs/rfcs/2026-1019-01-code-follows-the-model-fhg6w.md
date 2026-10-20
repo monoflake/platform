@@ -207,9 +207,13 @@ author on 2026-10-19:
 | a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
 | a signed integer within 2^53, a number in JSON      | `i64`, checked within 2^53 | `float`, exact             |
 | a set of names, each a bit, an integer in CBOR      | `u32` with a constant each | `array` of a variant       |
+| a secret, written as bytes are                      | `Vec<u8>`                  | `Uint8Array.t`             |
 
 Left out: generics, functions, `null`, and whatever one language alone has, decided by the author
-on 2026-10-19 with the four below, from the bucket's trial, `model/contracts/`. **An integer of 64
+on 2026-10-19 with the four below, from the bucket's trial, `model/contracts/`. **A secret is a
+shape of its own**, decided by the author on 2026-10-20: written as bytes are, sealed under its
+control's key where it is kept and plain only in the call that hands it to what uses it, so the
+model sees where every one lies and refuses one that a signed record or a bundle's section reaches. **An integer of 64
 bits is left out**, decided by the author on 2026-10-20: a database's integer is held within 2^53
 either way, as a JavaScript number holds one exactly, so it is a number in JSON as every other is.
 What asks more than that is an identifier or a hash -- a snowflake id, a 64-bit fingerprint, a time

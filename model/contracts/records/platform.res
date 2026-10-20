@@ -19,8 +19,8 @@ let types: array<declared> = [
       field("factors", 2, Prim(#uint32)),
       field("security", 3, Type("security")),
       field("email", 4, Prim(#string)),
-      optional("password", 5, Prim(#bytes)),
-      optional("totp", 6, Prim(#bytes)),
+      optional("password", 5, Prim(#secret)),
+      optional("totp", 6, Prim(#secret)),
     ]),
     from: "v7v3w",
   },
@@ -109,9 +109,9 @@ let types: array<declared> = [
 ]
 
 let contents: array<content> = [
-  {half: #platform, kind: "account", version: 1, content: "account"},
+  {half: #platform, kind: "account", version: 2, content: "account"},
   {half: #platform, kind: "organization", version: 2, content: "platform-organization"},
-  {half: #platform, kind: "extension", version: 2, content: "extension"},
+  {half: #platform, kind: "extension", version: 3, content: "extension"},
   {half: #platform, kind: "loan", version: 1, content: "loan"},
   {half: #platform, kind: "label", version: 1, content: "label", unique: [["label"]]},
   {half: #platform, kind: "username", version: 1, content: "username", unique: [["username"]]},

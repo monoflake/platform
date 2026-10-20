@@ -9,7 +9,7 @@ let types: array<declared> = [
       tag: "name",
       cases: [
         {name: "config", code: 1, fields: [field("value", 1, Prim(#string))]},
-        {name: "secret", code: 2, fields: [field("sealed", 1, Prim(#bytes))]},
+        {name: "secret", code: 2, fields: [field("sealed", 1, Prim(#secret))]},
       ],
     }),
     from: "49qyg, v7v3w",
@@ -36,6 +36,23 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
+  // An app as its bundle holds it: its record but its env, whose secrets reach its deployment
+  // alone; and the hosts its deployment was placed on, compiled as configuration is applied, vr5lw.
+  {
+    name: "bundle-app",
+    def: Record([
+      field("version", 1, Prim(#hash)),
+      field("bindings", 2, Type("app-bindings")),
+      field("hosts", 3, List(Id("extension"))),
+    ]),
+    from: "49qyg, vr5lw",
+  },
+  // The compute's section of a bundle: each app by its id.
+  {
+    name: "bundle-compute",
+    def: Record([field("apps", 1, Map(Type("bundle-app")))]),
+    from: "vuanj",
+  },
 ]
 
-let contents: array<content> = [{half: #organization, kind: "app", version: 1, content: "app"}]
+let contents: array<content> = [{half: #organization, kind: "app", version: 2, content: "app"}]

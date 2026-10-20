@@ -67,7 +67,7 @@ let types: array<declared> = [
       field("isolation", 5, List(Type("deployment-isolation"))),
       field("artifact", 6, Type("deployment-artifact")),
       field("footing", 7, Prim(#string)),
-      field("secrets", 8, Map(Prim(#bytes))),
+      field("secrets", 8, Map(Prim(#secret))),
       field("network", 9, List(Type("deployment-network"))),
       optional("into", 10, Id("capacity")),
       optional("port", 11, Prim(#uint32)),
@@ -116,7 +116,7 @@ let types: array<declared> = [
 /** Stopping, resuming and describing what was never deployed fail as `not_found`; deleting it succeeds. */
 let interface_: interface_ = {
   name: "deployments",
-  version: 1,
+  version: 2,
   declared: ["artifact"],
   from: "vr5lw",
   operations: [

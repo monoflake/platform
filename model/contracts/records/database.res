@@ -42,6 +42,13 @@ let types: array<declared> = [
     ]),
     from: "zn3u5, vuanj",
   },
+  // The database product's section of a bundle: each database by its id, as its record holds it,
+  // the one app it belongs to and its copies among it, vuanj.
+  {
+    name: "bundle-database",
+    def: Record([field("databases", 1, Map(Type("database")))]),
+    from: "vuanj",
+  },
 ]
 
 let contents: array<content> = [

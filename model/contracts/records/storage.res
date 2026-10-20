@@ -106,6 +106,12 @@ let types: array<declared> = [
     ]),
     from: "13ixj",
   },
+  // The storage's section of a bundle: each bucket by its id, as its record holds it, vuanj.
+  {
+    name: "bundle-storage",
+    def: Record([field("buckets", 1, Map(Type("bucket")))]),
+    from: "vuanj",
+  },
 ]
 
 let contents: array<content> = [

@@ -154,15 +154,15 @@ let types: array<declared> = [
     def: Record([
       field("host", 1, Type("extension-host")),
       field("endpoint", 2, Prim(#string)),
-      field("token", 3, Prim(#bytes)),
+      field("token", 3, Prim(#secret)),
       field("levels", 4, Type("placement")),
       field("place", 5, Type("extension-place")),
       optional("quota", 6, Prim(#uint53)),
       optional("grace", 7, Prim(#uint32)),
       field("relays", 8, Type("extension-relays")),
       field("address", 9, Prim(#bool)),
-      optional("management", 10, Prim(#bytes)),
-      optional("shell", 11, Prim(#bytes)),
+      optional("management", 10, Prim(#secret)),
+      optional("shell", 11, Prim(#secret)),
       field("dismissed", 12, List(Prim(#string))),
       optional("lender", 13, Type("extension-lender")),
     ]),
@@ -176,8 +176,27 @@ let types: array<declared> = [
     def: Record([
       field("extension", 1, Id("extension")),
       field("capacity", 2, Type("management-capacity")),
-      field("credentials", 3, List(Prim(#bytes))),
+      field("credentials", 3, List(Prim(#secret))),
     ]),
+    from: "vr5lw",
+  },
+  // The gateway's section of a bundle: every name bound and every mount, as the control holds them.
+  {
+    name: "bundle-gateway",
+    def: Record([field("names", 1, List(Type("name"))), field("scopes", 2, List(Type("scope")))]),
+    from: "vr5lw",
+  },
+  // A host as its bundle holds it: the relays it may use, and whether it has a public address, which
+  // a relay dialing back checks; nothing of the extension sealed.
+  {
+    name: "bundle-host",
+    def: Record([field("relays", 1, Type("extension-relays")), field("address", 2, Prim(#bool))]),
+    from: "vr5lw",
+  },
+  // The hosts' section of a bundle: each host by its extension's id.
+  {
+    name: "bundle-hosts",
+    def: Record([field("hosts", 1, Map(Type("bundle-host")))]),
     from: "vr5lw",
   },
 ]
@@ -195,6 +214,6 @@ let contents: array<content> = [
   },
   {half: #organization, kind: "name", version: 1, content: "name"},
   {half: #organization, kind: "scope", version: 1, content: "scope", unique: [["scope"]]},
-  {half: #organization, kind: "extension", version: 2, content: "extension"},
-  {half: #organization, kind: "capacity", version: 1, content: "capacity"},
+  {half: #organization, kind: "extension", version: 3, content: "extension"},
+  {half: #organization, kind: "capacity", version: 2, content: "capacity"},
 ]

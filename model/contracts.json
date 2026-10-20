@@ -365,6 +365,19 @@
 				}
 			]
 		},
+		"bundle-storage": {
+			"record": [
+				{
+					"name": "buckets",
+					"key": 1,
+					"shape": {
+						"map": {
+							"type": "bucket"
+						}
+					}
+				}
+			]
+		},
 		"database-kind": {
 			"enum": [
 				{
@@ -485,6 +498,19 @@
 				}
 			]
 		},
+		"bundle-database": {
+			"record": [
+				{
+					"name": "databases",
+					"key": 1,
+					"shape": {
+						"map": {
+							"type": "database"
+						}
+					}
+				}
+			]
+		},
 		"app-env": {
 			"union": {
 				"tag": "name",
@@ -510,7 +536,7 @@
 								"name": "sealed",
 								"key": 1,
 								"shape": {
-									"prim": "bytes"
+									"prim": "secret"
 								}
 							}
 						]
@@ -582,6 +608,46 @@
 					"shape": {
 						"map": {
 							"type": "app-env"
+						}
+					}
+				}
+			]
+		},
+		"bundle-app": {
+			"record": [
+				{
+					"name": "version",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "bindings",
+					"key": 2,
+					"shape": {
+						"type": "app-bindings"
+					}
+				},
+				{
+					"name": "hosts",
+					"key": 3,
+					"shape": {
+						"list": {
+							"id": "extension"
+						}
+					}
+				}
+			]
+		},
+		"bundle-compute": {
+			"record": [
+				{
+					"name": "apps",
+					"key": 1,
+					"shape": {
+						"map": {
+							"type": "bundle-app"
 						}
 					}
 				}
@@ -991,7 +1057,7 @@
 					"name": "token",
 					"key": 3,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					}
 				},
 				{
@@ -1042,7 +1108,7 @@
 					"name": "management",
 					"key": 10,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					},
 					"optional": true
 				},
@@ -1050,7 +1116,7 @@
 					"name": "shell",
 					"key": 11,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					},
 					"optional": true
 				},
@@ -1102,7 +1168,60 @@
 					"key": 3,
 					"shape": {
 						"list": {
-							"prim": "bytes"
+							"prim": "secret"
+						}
+					}
+				}
+			]
+		},
+		"bundle-gateway": {
+			"record": [
+				{
+					"name": "names",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "name"
+						}
+					}
+				},
+				{
+					"name": "scopes",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "scope"
+						}
+					}
+				}
+			]
+		},
+		"bundle-host": {
+			"record": [
+				{
+					"name": "relays",
+					"key": 1,
+					"shape": {
+						"type": "extension-relays"
+					}
+				},
+				{
+					"name": "address",
+					"key": 2,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"bundle-hosts": {
+			"record": [
+				{
+					"name": "hosts",
+					"key": 1,
+					"shape": {
+						"map": {
+							"type": "bundle-host"
 						}
 					}
 				}
@@ -1151,7 +1270,7 @@
 					"name": "password",
 					"key": 5,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					},
 					"optional": true
 				},
@@ -1159,7 +1278,7 @@
 					"name": "totp",
 					"key": 6,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					},
 					"optional": true
 				}
@@ -1526,7 +1645,7 @@
 					"name": "secret",
 					"key": 3,
 					"shape": {
-						"prim": "bytes"
+						"prim": "secret"
 					}
 				},
 				{
@@ -2117,6 +2236,13 @@
 						"map": {
 							"type": "allowance-value"
 						}
+					}
+				},
+				{
+					"name": "security",
+					"key": 3,
+					"shape": {
+						"type": "security"
 					}
 				}
 			]
@@ -2944,7 +3070,7 @@
 					"key": 8,
 					"shape": {
 						"map": {
-							"prim": "bytes"
+							"prim": "secret"
 						}
 					}
 				},
@@ -3133,7 +3259,12 @@
 			}
 		],
 		"sections": {
-			"issuer": "bundle-issuer"
+			"issuer": "bundle-issuer",
+			"storage": "bundle-storage",
+			"database": "bundle-database",
+			"compute": "bundle-compute",
+			"gateway": "bundle-gateway",
+			"hosts": "bundle-hosts"
 		}
 	},
 	"calling": [
@@ -3296,7 +3427,7 @@
 			]
 		},
 		"deployments": {
-			"version": 1,
+			"version": 2,
 			"bounds": {},
 			"declared": ["artifact"],
 			"operations": [
@@ -3391,7 +3522,7 @@
 			"kind": "app",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 1,
+			"version": 2,
 			"content": "app",
 			"unique": []
 		},
@@ -3447,7 +3578,7 @@
 			"kind": "extension",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 2,
+			"version": 3,
 			"content": "extension",
 			"unique": []
 		},
@@ -3455,7 +3586,7 @@
 			"kind": "capacity",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 1,
+			"version": 2,
 			"content": "capacity",
 			"unique": []
 		},
@@ -3463,7 +3594,7 @@
 			"kind": "account",
 			"half": "platform",
 			"writes": ["control(platform)"],
-			"version": 1,
+			"version": 2,
 			"content": "account",
 			"unique": []
 		},
@@ -3479,7 +3610,7 @@
 			"kind": "extension",
 			"half": "platform",
 			"writes": ["control(platform)"],
-			"version": 2,
+			"version": 3,
 			"content": "extension",
 			"unique": []
 		},
@@ -3543,7 +3674,7 @@
 			"kind": "store",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 1,
+			"version": 2,
 			"content": "store",
 			"unique": [["store"]]
 		},

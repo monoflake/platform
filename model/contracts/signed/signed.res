@@ -130,12 +130,14 @@ let types: array<declared> = [
     ]),
     from: "vuanj",
   },
-  // The issuer's section of a bundle: the grants, and the allowance it reads, vuanj.
+  // The issuer's section of a bundle: the grants, the allowance it reads, and the organization's
+  // `security`, by which it dates what it signs, vuanj.
   {
     name: "bundle-issuer",
     def: Record([
       field("grants", 1, List(Type("grant"))),
       field("allowance", 2, Map(Type("allowance-value"))),
+      field("security", 3, Type("security")),
     ]),
     from: "vuanj",
   },
@@ -148,5 +150,18 @@ let signed: array<signed> = [
   {name: "bundle", version: 1, form: #record, content: "bundle"},
 ]
 
-/** A bundle's sections, each a product's own format; the rest are each product's to declare. */
-let sections = [("issuer", "bundle-issuer")]
+/**
+ * A bundle's sections, by the name of what reads each, decided by the author on 2026-10-20, RFC
+ * b8f35: what the data plane reads of its organization's configuration and nothing a control alone
+ * reads, each kind of record in one section at most, and no secret, which reaches a deployment
+ * alone. A section is compiled from the records, never one of them: where a record holds a secret,
+ * the section holds the rest.
+ */
+let sections = [
+  ("issuer", "bundle-issuer"),
+  ("storage", "bundle-storage"),
+  ("database", "bundle-database"),
+  ("compute", "bundle-compute"),
+  ("gateway", "bundle-gateway"),
+  ("hosts", "bundle-hosts"),
+]

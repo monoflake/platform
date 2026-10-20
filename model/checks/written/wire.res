@@ -35,6 +35,54 @@ let run = () => {
     }
   Signed.signed->Array.forEach(r => reachSigned(r.content))
   Signed.sections->Array.forEach(((_, t)) => reachSigned(t))
+  // No secret is signed, nor travels in a bundle: it reaches a deployment alone, fhg6w.
+  let rec secret = (shape: Subset.shape) =>
+    switch shape {
+    | Prim(#secret) => true
+    | List(s) | Map(s) => secret(s)
+    | _ => false
+    }
+  signedReach->Set.forEach(name =>
+    declared
+    ->Dict.get(name)
+    ->Option.mapOr([], t => Subset.fieldsOf(t.def))
+    ->Array.forEach(f =>
+      if secret(f.shape) {
+        contractRules->Array.push(
+          `${name}.${f.name}: a secret, which a signed record or a bundle reaches`,
+        )
+      }
+    )
+  )
+  // Each kind of record in one section at most, so no two readers hold one configuration apart.
+  let sectionReach = Dict.make()
+  Signed.sections->Array.forEach(((n, t)) => {
+    let seen = Set.make()
+    let rec walk = name =>
+      if !(seen->Set.has(name)) {
+        seen->Set.add(name)
+        if Contracts.contents->Array.some(c => c.content == name) {
+          switch sectionReach->Dict.get(name) {
+          | Some(m) if m != n =>
+            contractRules->Array.push(`${name}: in the bundle's ${m} section and its ${n} both`)
+          | _ => sectionReach->Dict.set(name, n)
+          }
+        }
+        declared
+        ->Dict.get(name)
+        ->Option.mapOr([], t => Subset.fieldsOf(t.def))
+        ->Array.forEach(f =>
+          Subset.refers(f.shape)->Array.forEach(
+            r =>
+              switch r {
+              | #type_(x) => walk(x)
+              | _ => ()
+              },
+          )
+        )
+      }
+    walk(t)
+  })
   unique(Signed.signed->Array.map(r => r.name), "a signed record")
   Signed.signed->Array.forEach(r =>
     switch declared->Dict.get(r.content) {
@@ -461,7 +509,7 @@ let run = () => {
         ->Array.map(r => `${r.name} v${int(r.version)}, ${(r.form :> string)}`)
         ->orNone(", ")}; a bundle's sections: ${Signed.sections
         ->Array.map(((n, _)) => n)
-        ->orNone(", ")}, the rest each product's to declare`,
+        ->orNone(", ")}, no secret reaching any`,
       `to declare: ${Records.records
         ->Array.filter(r =>
           !(Contracts.contents->Array.some(c => c.kind == r.kind && c.half == r.half))
