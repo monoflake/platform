@@ -14,6 +14,22 @@ open Blocks
 
 let manifests: array<(string, lang)> = [("Cargo.toml", #rust), ("rescript.json", #rescript)]
 
+type stats
+@module("node:fs") external lstatSync: url => stats = "lstatSync"
+@send external isSymbolicLink: stats => bool = "isSymbolicLink"
+@module("node:fs") external realpathSync: url => string = "realpathSync"
+
+/** The root's two texts, which every package links beside its manifests, so each carries them. */
+let texts = ["LICENSE-MIT", "LICENSE-APACHE"]
+
+/** Whether a package's `text` is a link resolving to the root's own. */
+let linked = (path, text) => {
+  let at = urlIn(`${path}/${text}`, root)
+  existsSync(at) &&
+  lstatSync(at)->isSymbolicLink &&
+  realpathSync(at) == realpathSync(urlIn(text, root))
+}
+
 let jsonName = path => {
   let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
   (
@@ -197,6 +213,11 @@ let held = (path, h: held): option<array<string>> => {
         found->Array.push(`${manifest}: warnings not number ${number} and error ${error}`)
       }
     }
+    texts->Array.forEach(text =>
+      if !linked(path, text) {
+        found->Array.push(`${path}/${text}: no link to the root's ${text}`)
+      }
+    )
     found->Array.pushMany(unboundOf(path))
     Some(found)
   }

@@ -19,6 +19,10 @@ against it, and the whole is held by the conversation.
 - **`mise run accept <package> --from <revision>` is a block's whole acceptance**: its model half,
   `model/accept.res`, then its languages' formatting, lints and tests, in that order. It holds the
   block alone. The whole -- the graph, every contract, `mise run check` -- is the conversation's.
+- **A package links the root's two licenses beside its manifests**, `LICENSE-MIT` and
+  `LICENSE-APACHE`, each a link to the root's own, decided by the author on 2026-10-20: a package is
+  read apart from its tree, by a registry or a reader, and carries its terms with it while the texts
+  stay one.
 - **A package's version is `0.0.0` while nothing is published**, decided by the author on
   2026-10-20, `Blocks.unpublished`: a version is a promise to whoever takes a release, and none is
   made yet.
