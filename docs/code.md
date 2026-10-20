@@ -19,6 +19,9 @@ against it, and the whole is held by the conversation.
 - **`mise run accept <package> --from <revision>` is a block's whole acceptance**: its model half,
   `model/accept.res`, then its languages' formatting, lints and tests, in that order. It holds the
   block alone. The whole -- the graph, every contract, `mise run check` -- is the conversation's.
+- **A package's version is `0.0.0` while nothing is published**, decided by the author on
+  2026-10-20, `Blocks.unpublished`: a version is a promise to whoever takes a release, and none is
+  made yet.
 - **A block's tests read its samples as they stand**, each language the same files, the model's
   `samples`; a sample is never copied into a test, and accept refuses one no test of a language
   names, as it refuses an interface left unimplemented.

@@ -170,6 +170,9 @@ let expected = () => {
  */
 let rescriptWarnings = ("+4", "+a-110")
 
+/** The version every package holds while none is published, decided by the author on 2026-10-20. */
+let unpublished = "0.0.0"
+
 /**
  * The lints the root's `Cargo.toml` sets for every crate, each taking them by `[lints] workspace =
  * true`, `docs/code.md`: Rust's own, then Clippy's, each denied or forbidden.

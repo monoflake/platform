@@ -1,6 +1,6 @@
 [package]
 name = "codec"
-version = "0.1.0"
+version = "0.0.0"
 description = "CBOR written deterministically and read strictly, COSE's Sign1 and a CWT's claims, RFC fhg6w"
 edition.workspace = true
 publish.workspace = true

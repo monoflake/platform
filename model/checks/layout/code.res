@@ -146,6 +146,9 @@ let held = (path, h: held): option<array<string>> => {
       if crateKey(manifest, "license") != Some(h.license) {
         found->Array.push(`${manifest}: no license ${h.license}`)
       }
+      if crateKey(manifest, "version") != Some(unpublished) {
+        found->Array.push(`${manifest}: no version ${unpublished}, as nothing is published`)
+      }
       if !takesLints(manifest) {
         found->Array.push(`${manifest}: no [lints] workspace = true, so the root's lints miss it`)
       }
@@ -159,6 +162,13 @@ let held = (path, h: held): option<array<string>> => {
       let manifest = `${path}/package.json`
       if jsonLicense(manifest) != Some(h.license) {
         found->Array.push(`${manifest}: no license ${h.license}`)
+      }
+      let version =
+        JSON.parseOrThrow(readFileSync(urlIn(manifest, root)))
+        ->member("version")
+        ->Option.flatMap(JSON.Decode.string)
+      if version != Some(unpublished) {
+        found->Array.push(`${manifest}: no version ${unpublished}, as nothing is published`)
       }
       jsonDependencies(manifest)->Array.forEach(d =>
         if !(allowed(#rescript)->Array.includes(d)) {
