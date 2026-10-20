@@ -46,8 +46,25 @@ type def =
   | Enum({choices: array<choice>, ordered: bool})
   /** A union, its case named in the field `tag`, as ReScript's `@tag` lays it out. */
   | Union({tag: string, cases: array<case>})
+  /** A set of names, each a bit, its code a power of two: in CBOR the integer of the bits set, in
+   * JSON an array of the names set, as WIT's `flags` is written, vr5lw. */
+  | Flags(array<choice>)
 
-type declared = {name: string, def: def, from: string}
+/**
+ * Whose a record's keys are: the subset's own, from 1, key 0 reserved; CWT's, a claim registered by
+ * its number or one of the platform's own below -65536, RFC 8392, b8f35; or another standard's, as
+ * the RFC its type cites registers them, COSE's among them.
+ */
+type keys = [#subset | #cwt | #standard]
+
+type declared = {name: string, def: def, from: string, keys?: keys}
+
+/**
+ * A signed record, b8f35: a `COSE_Sign1` by Ed25519, its protected header derived -- `alg` -19, `kid`
+ * the first 16 bytes of the BLAKE3 of the signer's public key, `typ` `monoflake:{name}:{version}` --
+ * its content a claim set of CWT's, or a record of the subset's. None is a record of a footing.
+ */
+type signed = {name: string, version: int, form: [#claims | #record], content: string}
 
 /** A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu. */
 type content = {
@@ -126,7 +143,7 @@ let fieldsOf = (d: def) =>
   switch d {
   | Record(fields) => fields
   | Union({cases}) => cases->Array.flatMap(c => c.fields)
-  | Enum(_) => []
+  | Enum(_) | Flags(_) => []
   }
 
 let rec shapeJson = (s: shape): JSON.t =>
@@ -167,6 +184,16 @@ let defJson = (d: def, ~content): JSON.t =>
           )),
         ),
         "ordered": Boolean(ordered),
+      },
+    )
+  | Flags(choices) =>
+    Object(
+      dict{
+        "flags": Array(
+          choices->Array.map(c => JSON.Object(
+            dict{"name": String(c.name), "code": Number(Int.toFloat(c.code))},
+          )),
+        ),
       },
     )
   | Union({tag, cases}) =>

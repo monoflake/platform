@@ -141,6 +141,17 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
           }
         | (Record(_) | Union(_), _) => fail(`no object, as ${name} is`)
         | (Enum(_), _) => fail(`no name of ${name}`)
+        | (Flags(choices), Array(xs)) =>
+          let seen = Set.make()
+          xs->Array.forEach(x =>
+            switch x {
+            | String(c) if choices->Array.some(k => k.name == c) && !(seen->Set.has(c)) =>
+              seen->Set.add(c)
+            | String(c) => fail(`${c}, no flag of ${name} or one twice`)
+            | _ => fail(`a flag of ${name} is its name`)
+            }
+          )
+        | (Flags(_), _) => fail(`no array of ${name}'s names`)
         }
       }
     }

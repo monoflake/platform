@@ -1421,6 +1421,373 @@
 				}
 			]
 		},
+		"cose-key-type": {
+			"enum": [
+				{
+					"name": "okp",
+					"code": 1
+				}
+			],
+			"ordered": false
+		},
+		"cose-curve": {
+			"enum": [
+				{
+					"name": "ed25519",
+					"code": 6
+				}
+			],
+			"ordered": false
+		},
+		"cose-key": {
+			"record": [
+				{
+					"name": "kty",
+					"key": 1,
+					"shape": {
+						"type": "cose-key-type"
+					}
+				},
+				{
+					"name": "crv",
+					"key": -1,
+					"shape": {
+						"type": "cose-curve"
+					}
+				},
+				{
+					"name": "x",
+					"key": -2,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			],
+			"keys": "standard"
+		},
+		"confirmation": {
+			"record": [
+				{
+					"name": "key",
+					"key": 1,
+					"shape": {
+						"type": "cose-key"
+					}
+				}
+			],
+			"keys": "standard"
+		},
+		"rights": {
+			"flags": [
+				{
+					"name": "read",
+					"code": 1
+				},
+				{
+					"name": "create",
+					"code": 2
+				},
+				{
+					"name": "replace",
+					"code": 4
+				},
+				{
+					"name": "delete",
+					"code": 8
+				},
+				{
+					"name": "alter",
+					"code": 16
+				},
+				{
+					"name": "call",
+					"code": 32
+				}
+			]
+		},
+		"certificate-role": {
+			"enum": [
+				{
+					"name": "intermediate",
+					"code": 1
+				},
+				{
+					"name": "issuer",
+					"code": 2
+				},
+				{
+					"name": "bundle",
+					"code": 3
+				},
+				{
+					"name": "account",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"capability": {
+			"record": [
+				{
+					"name": "iat",
+					"key": 6,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "exp",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "sub",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "scope",
+					"key": -65537,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					}
+				},
+				{
+					"name": "resource",
+					"key": -65538,
+					"shape": {
+						"id": "*",
+						"half": "organization"
+					}
+				},
+				{
+					"name": "rights",
+					"key": -65539,
+					"shape": {
+						"type": "rights"
+					}
+				}
+			],
+			"keys": "cwt"
+		},
+		"certificate": {
+			"record": [
+				{
+					"name": "iat",
+					"key": 6,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "exp",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "cnf",
+					"key": 8,
+					"shape": {
+						"type": "confirmation"
+					}
+				},
+				{
+					"name": "scope",
+					"key": -65537,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					},
+					"optional": true
+				},
+				{
+					"name": "role",
+					"key": -65540,
+					"shape": {
+						"type": "certificate-role"
+					}
+				}
+			],
+			"keys": "cwt"
+		},
+		"account-credential": {
+			"record": [
+				{
+					"name": "iat",
+					"key": 6,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "exp",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "sub",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			],
+			"keys": "cwt"
+		},
+		"bundle": {
+			"record": [
+				{
+					"name": "version",
+					"key": 1,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "scope",
+					"key": 2,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "platform",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "certificates",
+					"key": 5,
+					"shape": {
+						"list": {
+							"prim": "bytes"
+						}
+					}
+				},
+				{
+					"name": "body",
+					"key": 6,
+					"shape": {
+						"map": {
+							"prim": "bytes"
+						}
+					}
+				}
+			]
+		},
+		"grant-target": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "app",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							}
+						]
+					},
+					{
+						"name": "bucket",
+						"code": 2,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "bucket"
+								}
+							}
+						]
+					},
+					{
+						"name": "database",
+						"code": 3,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "database"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"grant": {
+			"record": [
+				{
+					"name": "app",
+					"key": 1,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "target",
+					"key": 2,
+					"shape": {
+						"type": "grant-target"
+					}
+				},
+				{
+					"name": "rights",
+					"key": 3,
+					"shape": {
+						"type": "rights"
+					}
+				}
+			]
+		},
+		"bundle-issuer": {
+			"record": [
+				{
+					"name": "grants",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "grant"
+						}
+					}
+				},
+				{
+					"name": "allowance",
+					"key": 2,
+					"shape": {
+						"map": {
+							"type": "allowance-value"
+						}
+					}
+				}
+			]
+		},
 		"object-name": {
 			"record": [
 				{
@@ -2366,6 +2733,46 @@
 			"failure": "unavailable"
 		}
 	],
+	"signed": {
+		"header": {
+			"alg": -19,
+			"kid": "the first 16 bytes of the BLAKE3 of the signer's public key",
+			"typ": "monoflake:{name}:{version}"
+		},
+		"records": [
+			{
+				"name": "capability",
+				"version": 1,
+				"form": "claims",
+				"typ": "monoflake:capability:1",
+				"content": "capability"
+			},
+			{
+				"name": "certificate",
+				"version": 1,
+				"form": "claims",
+				"typ": "monoflake:certificate:1",
+				"content": "certificate"
+			},
+			{
+				"name": "account",
+				"version": 1,
+				"form": "claims",
+				"typ": "monoflake:account:1",
+				"content": "account-credential"
+			},
+			{
+				"name": "bundle",
+				"version": 1,
+				"form": "record",
+				"typ": "monoflake:bundle:1",
+				"content": "bundle"
+			}
+		],
+		"sections": {
+			"issuer": "bundle-issuer"
+		}
+	},
 	"calling": [
 		{
 			"name": "stopped",

@@ -13,6 +13,7 @@ let types: array<declared> = Array.flat([
   Compute.types,
   Control.types,
   Platform.types,
+  Signed.types,
   Objects.types,
   Databases.types,
   Management.types,
@@ -41,7 +42,12 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
       Dict.fromArray(
         types->Array.map(t => (
           t.name,
-          defJson(t.def, ~content=contents->Array.some(c => c.content == t.name)),
+          switch (defJson(t.def, ~content=contents->Array.some(c => c.content == t.name)), t.keys) {
+          | (Object(d), Some(k)) if k != #subset =>
+            d->Dict.set("keys", String((k :> string)))
+            JSON.Object(d)
+          | (j, _) => j
+          },
         )),
       ),
     ),
@@ -49,6 +55,31 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
       Calls.common->Array.map(r => JSON.Object(
         dict{"name": String(r.name), "failure": String((r.failure :> string))},
       )),
+    ),
+    "signed": Object(
+      dict{
+        "header": Object(
+          dict{
+            "alg": Number(-19.),
+            "kid": String("the first 16 bytes of the BLAKE3 of the signer's public key"),
+            "typ": String("monoflake:{name}:{version}"),
+          },
+        ),
+        "records": Array(
+          Signed.signed->Array.map(r => JSON.Object(
+            dict{
+              "name": String(r.name),
+              "version": Number(Int.toFloat(r.version)),
+              "form": String((r.form :> string)),
+              "typ": String(`monoflake:${r.name}:${Int.toString(r.version)}`),
+              "content": String(r.content),
+            },
+          )),
+        ),
+        "sections": Object(
+          Dict.fromArray(Signed.sections->Array.map(((n, t)) => (n, JSON.String(t)))),
+        ),
+      },
     ),
     "calling": Array(
       Calls.calling->Array.map(r => JSON.Object(

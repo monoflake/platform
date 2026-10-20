@@ -231,7 +231,8 @@ where it is shown, lowercase and at its full width, leading zeros kept:
   written.
 
 **A time is a count, never a text**, by the same rule as an id: stored and passed as an integer
-of milliseconds since the Unix epoch, which is UTC by its definition. Where a text must carry one,
+of milliseconds since the Unix epoch, which is UTC by its definition -- but a signed record's
+`iat` and `exp`, CWT's seconds, above. Where a text must carry one,
 it is ISO 8601 in UTC, ending in `Z`; a zone other than UTC, and a pretty format, appear only where
 a user is shown the time.
 
@@ -271,7 +272,9 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
     signer's public key; and `typ` of RFC 9596, `monoflake:{kind}:{version}`**, written as a context
     is, so a signature over one kind is never taken as another's.
   - **A capability, a certificate and an account credential are claim sets of CWT, RFC 8392**; a
-    bundle is a record, and no token.
+    bundle is a record, and no token. Each is declared in `model/contracts/signed/signed.res`,
+    decided by the author on 2026-10-20: a bundle carries the certificates a component reads a `kid`
+    in, as below, and its issuer's section holds the grants and the allowance, RFC vuanj.
 
     | Record             | Holds                                                                                                                                                                                      |
     | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -311,7 +314,9 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
     worked out with the author on 2026-10-19, so none is ever taken by a claim registered later:
     `scope` is taken already, 9, OAuth's, `docs/lessons/`. -65537 the scope's id, -65538 the resource's
     id, -65539 the rights, -65540 the role. **An id is written in them as its integer**, as it is
-    stored; `sub`, which CWT types as text, holds its 8 hex digits.
+    stored; `sub`, which CWT types as text, holds its 8 hex digits. **`iat` and `exp` count
+    seconds**, CWT's NumericDate, decided by the author on 2026-10-20: the one time the platform
+    counts so, below, as the standard is taken whole.
 - **The salt master never rotates**: a new one would change every scope's salt and so every hash,
   and it never leaves the platform, which keeps how it could leak to the platform itself broken.
 - **The encryption master carries a version.** A rotation writes new data under the new version and

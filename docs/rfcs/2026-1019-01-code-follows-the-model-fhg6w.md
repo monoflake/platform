@@ -204,6 +204,7 @@ author on 2026-10-19:
 | a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
 | a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
 | a signed 64-bit integer, a decimal string in JSON   | `i64`                      | `bigint`                   |
+| a set of names, each a bit, an integer in CBOR      | `u32` with a constant each | `array` of a variant       |
 
 Left out: generics, functions, `null`, and whatever one language alone has, decided by the author
 on 2026-10-19 with the four below, from the bucket's trial, `model/contracts/`. **An integer of 64
@@ -246,6 +247,14 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
   its content names each set of its fields unique, `unique`, which its footing keeps as a table's
   key, a field absent counting as one value, so a label, a username, a domain, a node of the tree
   and a mount are each unique and still a record of a generation, gone back to as any is.
+- **A record's keys are the subset's, CWT's or another standard's**, decided by the author on
+  2026-10-20: the subset's from 1, key 0 reserved; a claim set's CWT's, a claim registered by its
+  number, RFC 8392, or one of the platform's own below -65536, b8f35; and a type a standard
+  defines, as a `COSE_Key`, the labels its RFC registers. So a standard's structure is written in the
+  subset whole, and the check holds each key to whose it is. **A set of names, each a bit**, is
+  `Flags`: the integer of the bits set in CBOR, the names set in JSON, as WIT's `flags`, RFC vr5lw;
+  a capability's rights are one. **An id of any kind of a half** is written `Across` with `*`, a
+  capability's resource, and stands in a signed record alone.
 - **What is compiled or signed is no record**: a grant, a certificate, a bundle, a capability and an
   account credential are each made from what is written, never written themselves, RFC v7v3w, and
   are declared apart, with the signed records' own claims.

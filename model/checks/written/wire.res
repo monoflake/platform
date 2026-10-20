@@ -16,16 +16,69 @@ let run = () => {
     })
   }
   unique(Contracts.types->Array.map(t => t.name), "a type")
-  let checkFields = (where, fields: array<Subset.field>, ~content) => {
+  // What the signed records reach, where an id of any kind of a half may stand.
+  let signedReach = Set.make()
+  let rec reachSigned = name =>
+    if !(signedReach->Set.has(name)) {
+      signedReach->Set.add(name)
+      declared
+      ->Dict.get(name)
+      ->Option.mapOr([], t => Subset.fieldsOf(t.def))
+      ->Array.forEach(f =>
+        Subset.refers(f.shape)->Array.forEach(r =>
+          switch r {
+          | #type_(n) => reachSigned(n)
+          | _ => ()
+          }
+        )
+      )
+    }
+  Signed.signed->Array.forEach(r => reachSigned(r.content))
+  Signed.sections->Array.forEach(((_, t)) => reachSigned(t))
+  unique(Signed.signed->Array.map(r => r.name), "a signed record")
+  Signed.signed->Array.forEach(r =>
+    switch declared->Dict.get(r.content) {
+    | Some({def: Record(_), keys: #cwt}) if r.form == #claims => ()
+    | Some({def: Record(_), keys: #subset}) | Some({def: Record(_), keys: ?None})
+      if r.form == #record => ()
+    | Some(_) =>
+      contractRules->Array.push(
+        `signed ${r.name}: ${r.content} is no record of the keys its form asks, CWT's for claims`,
+      )
+    | None => contractRules->Array.push(`signed ${r.name}: no type ${r.content}`)
+    }
+  )
+  Signed.sections->Array.forEach(((n, t)) =>
+    switch declared->Dict.get(t) {
+    | Some({def: Record(_)}) => ()
+    | _ => contractRules->Array.push(`a bundle's ${n} section: ${t}, no record`)
+    }
+  )
+  // A key is the subset's from 1; a claim's is CWT's registered number for its name, or the
+  // platform's own below -65536, b8f35; another standard's is as its RFC registers it.
+  let checkFields = (where, fields: array<Subset.field>, ~content, ~keys: Subset.keys=#subset) => {
     unique(fields->Array.map(f => f.name), where)
     unique(fields->Array.map(f => int(f.key)), `${where}'s keys`)
     fields->Array.forEach(f => {
-      if f.key < 1 {
+      switch keys {
+      | #subset if f.key < 1 =>
         contractRules->Array.push(
           `${where}.${f.name}: key ${int(
               f.key,
             )}, below 1, which is the case's or the description's`,
         )
+      | #cwt =>
+        switch Signed.registered->Array.find(((n, _)) => n == f.name) {
+        | Some((_, k)) if k != f.key =>
+          contractRules->Array.push(`${where}.${f.name}: CWT registers it as ${int(k)}`)
+        | Some(_) => ()
+        | None if f.key >= -65536 =>
+          contractRules->Array.push(
+            `${where}.${f.name}: key ${int(f.key)}, a claim of the platform's own above -65537`,
+          )
+        | None => ()
+        }
+      | _ => ()
       }
       if content && f.name == "description" {
         contractRules->Array.push(
@@ -42,6 +95,12 @@ let run = () => {
           if !(Records.records->Array.some(r => r.kind == k)) {
             contractRules->Array.push(`${where}.${f.name}: an id of ${k}, no kind of record`)
           }
+        | #across(_, "*") =>
+          if !(signedReach->Set.has(where->String.split(".")->Array.getUnsafe(0))) {
+            contractRules->Array.push(
+              `${where}.${f.name}: an id of any kind, which a signed record alone holds`,
+            )
+          }
         | #across(h, k) =>
           if Records.find(h, k) == None {
             contractRules->Array.push(
@@ -55,7 +114,16 @@ let run = () => {
   let isContent = n => Contracts.contents->Array.some(c => c.content == n)
   Contracts.types->Array.forEach(t =>
     switch t.def {
-    | Record(fields) => checkFields(t.name, fields, ~content=isContent(t.name))
+    | Record(fields) =>
+      checkFields(t.name, fields, ~content=isContent(t.name), ~keys=t.keys->Option.getOr(#subset))
+    | Flags(choices) =>
+      unique(choices->Array.map(c => c.name), t.name)
+      unique(choices->Array.map(c => int(c.code)), `${t.name}'s bits`)
+      choices->Array.forEach(c =>
+        if c.code < 1 || Int.bitwiseAnd(c.code, c.code - 1) != 0 {
+          contractRules->Array.push(`${t.name}.${c.name}: ${int(c.code)}, no single bit`)
+        }
+      )
     | Enum({choices, ordered}) =>
       unique(choices->Array.map(c => c.name), t.name)
       unique(choices->Array.map(c => int(c.code)), `${t.name}'s codes`)
@@ -373,6 +441,11 @@ let run = () => {
         ->orNone(
           ", ",
         )}; function, instance and container are deployed by deployments and called by an app's WIT; volume has none but its files`,
+      `signed: ${Signed.signed
+        ->Array.map(r => `${r.name} v${int(r.version)}, ${(r.form :> string)}`)
+        ->orNone(", ")}; a bundle's sections: ${Signed.sections
+        ->Array.map(((n, _)) => n)
+        ->orNone(", ")}, the rest each product's to declare`,
       `to declare: ${Records.records
         ->Array.filter(r =>
           !(Contracts.contents->Array.some(c => c.kind == r.kind && c.half == r.half))
