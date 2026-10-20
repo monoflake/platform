@@ -31,7 +31,7 @@ before the first of them moves onto it, a row of group D.
 
 A layer is worked out whole before the next is begun, every area together. A need found at one layer
 is written as an edge to a boundary of the next, a target beginning `?`, and is not followed down
-until the layer it was found at is finished. The workspace's `spec/planning.md` states the same rule.
+until the layer it was found at is finished. The workspace's `docs/planning.md` states the same rule.
 
 ## Only what the author decided
 
