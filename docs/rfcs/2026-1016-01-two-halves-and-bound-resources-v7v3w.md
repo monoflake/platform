@@ -56,6 +56,13 @@ the authority, RFC 8lkuv; and **each organization's control**, which the platfor
 footing it gives it, RFC vr5lw. No name is
 reserved: neither is an app, and neither lives in an organization's namespace.
 
+- **What an organization's control accepts it applies itself**, decided by the author on
+  2026-10-20: a task of its own, run on its footing's compute, its progress kept in its footing step
+  by step, so a control restarted takes the task up where it stopped. It places each deployment,
+  fetches its code by its hash from where it was built, deploys it through each driver's
+  `deployments`, RFC vr5lw, and reports each target deployed or failed, which `generation` answers,
+  `model/contracts/products/generations.res`. No other component deploys an app.
+
 - **An organization's control holds what is that organization's alone**: its products'
   configuration, the deployment of its apps, how its extensions are made into its three products,
   and the records its components keep. It answers that organization's admins, and reaches the

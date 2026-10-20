@@ -189,6 +189,10 @@ organization's container.
   declare, whose default, and whether it counts CPU or the clock, are open. [D8]
 - **A call that opens something waits on that task as any call waits on an outcome**, RFC 49qyg:
   looked up until a deadline, then `unknown` with its id.
+- **A new version takes calls once every host of its set holds it**, decided by the author on
+  2026-10-20, the bundle's generation moving them over together; where a host's deployment fails,
+  the version before serves on, a warning is raised, and the failed target is reported, so the
+  admin tries again or goes back. Its migrations run first, as RFC zn3u5 has them.
 - **Function, instance and container are deployed by one interface**, `deployments`, decided by the
   author on 2026-10-19 in `model/contracts/kinds/deployments.res`: `deploy`, `stop`, `resume`,
   `describe` and `delete`. **A deployment is of what it runs**: an app, by its id, or a component of

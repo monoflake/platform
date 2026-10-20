@@ -132,7 +132,11 @@ with until it is deployed again, as on Cloudflare and Vercel.
 **One app reaches another only through what the other exports, and both declare it.** B declares
 each function it exports: its name, its kind, its parameters' types, and how far it is shown --
 within its organization by default, or public, RFC vr5lw. A declares which of B's
-functions it calls. Deploying A is refused when what it calls does not match what B exports, by the
+functions it calls. **What a version declares is checked as its change is taken**, decided by the
+author on 2026-10-20: a change of configuration giving an app a version is refused there, by its
+organization's control, where the version asks past the allowance, a call matches no export, or the
+calls close a cycle, each a reason of its own once the build's manifest is declared [B32].
+Deploying A is refused when what it calls does not match what B exports, by the
 number of parameters and their types -- never their values, which are A's business. Deploying B is
 refused when it would take away or change a function something still calls, and deleting B is
 refused while anything calls it, naming the caller: the callers go first. **The calls form a graph

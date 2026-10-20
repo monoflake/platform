@@ -78,14 +78,16 @@ app's own interface, never directly: its schema is an agreement only its app kno
 reader would be broken by the first one's migration without being told. A bucket can be shared
 because a file has no schema; a database cannot.
 
-**A schema is changed in a migration, a time a deployment opens**, and not while an app runs.
-**While the window is open the database is read-only**, decided by the author on 2026-10-20: the
-version running reads as before and its writes answer `unavailable`, worth a retry, and the window
-closes once the migration's script has run and the new version is ready. A change kept online in
-two steps, the schema widened before it is narrowed, is the app's to make where it wants one, never
-asked of it. A
-migration may run a script of the user's own to carry data through a change that destroys its old
-shape. **A database's rights are one**, worked out with the author on 2026-10-19: a capability to a
+**A schema is changed by the migrations a build carries, run as it is deployed**, decided by the
+author on 2026-10-20 in place of a window kept read-only, as Cloudflare's D1 runs them: each push
+runs those not yet run, in order, once each, and nothing is promised of them. **The new version runs
+them before it takes a call, the old one serving on, both bound to the one database**: a query met
+while a migration holds the database waits, and is never refused for it; once it is done, the old
+version's queries answer as the new schema still lets them, and fail where it does not. So staying
+up through a change is the app's, by migrations both versions read, the schema widened before it is
+narrowed in a later one, and never the platform's to promise. On Cloudflare, Workers are deployed
+so by Cloudflare itself. A migration may run a script of the user's own to carry data through a
+change that destroys its old shape. **A database's rights are one**, worked out with the author on 2026-10-19: a capability to a
 database grants reading, writing and changing the schema together, since D1, behind its adapter,
 tells no statement's kind before it runs, RFC vr5lw, `docs/lessons/`. So that no app drops a table in
 the course of its work is the app's own discipline, never the platform's to enforce.

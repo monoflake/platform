@@ -111,6 +111,14 @@ let own: dict<component> = dict{
       e("storage", #serve, hard, "the buckets it is bound to", ~contract=["storage"]),
       e("database", #serve, hard, "the database bound to it", ~contract=["database"]),
       e(
+        "database",
+        #deploy,
+        hard,
+        "a new version runs its build's migrations before it takes a call, the old serving on, zn3u5",
+        ~contract=["database"],
+        ~open_="whether the call graph also holds bindings is open, 49qyg [C11]",
+      ),
+      e(
         "control(organization)",
         #deploy,
         hard,
@@ -142,13 +150,6 @@ let own: dict<component> = dict{
         ~contract=["?authority"],
       ),
       e(
-        "compute",
-        #deploy,
-        hard,
-        "deploys its organization's apps, their types and call graph checked",
-        ~contract=["?compute"],
-      ),
-      e(
         "authority",
         #deploy,
         hard,
@@ -161,6 +162,26 @@ let own: dict<component> = dict{
         hard,
         "applies the capacity it opens on each machine extension, vr5lw",
         ~contract=["management"],
+      ),
+      e(
+        "driver(machine)",
+        #deploy,
+        hard,
+        "deploys each version onto every host its placement chose, before it takes a call, vr5lw",
+        ~contract=["deployments"],
+      ),
+      e(
+        "driver(cloudflare)",
+        #deploy,
+        hard,
+        "deploys each version onto the account its placement chose, before it takes a call, vr5lw",
+        ~contract=["deployments"],
+      ),
+      e(
+        "?builder",
+        #deploy,
+        hard,
+        "where each version's code is fetched from by its hash, asked as configuration is applied, vr5lw",
       ),
       e(
         "driver(cloudflare)",
@@ -257,24 +278,10 @@ let own: dict<component> = dict{
         "calls and status(id), queues' messages, schedules' repeats, the derive index",
         ~contract=["database"],
       ),
-      e(
-        "?builder",
-        #deploy,
-        hard,
-        "code by its hash, fetched from where it was built as its configuration is applied, vr5lw",
-      ),
       e("blob", #serve, soft, "derive outputs: a miss runs it again", ~contract=["?blob"]),
       e("scope", #deploy, hard, "the allowance a declaration must fit", ~contract=["?scope"]),
       e("?entry", #serve, hard, "a request trigger: HTTP reaches an app's function, 49qyg"),
       e("?entry", #deploy, hard, "binds an app's names, from the bundle, vr5lw"),
-      e(
-        "database",
-        #deploy,
-        hard,
-        "a deployment opens the migration window",
-        ~contract=["?migration"],
-        ~open_="not in the old graph; whether the call graph also holds bindings is open, 49qyg [C11]",
-      ),
       key(),
       e("?clock", #serve, hard, "schedule fires at set times, queue retries wait between tries"),
       e("?clock", #deploy, hard, "writes an app's schedules, in the clock's format"),
@@ -634,8 +641,6 @@ let permissive = "MIT OR Apache-2.0"
  * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
  */
 let ownUndeclared: array<(string, string)> = [
-  ("compute", "the compute product's deployment of an app, its types and call graph checked [B32]"),
-  ("migration", "a database's migration window, which a deployment opens, zn3u5 [B32]"),
   ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
   (
     "blob",

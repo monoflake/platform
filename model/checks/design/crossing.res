@@ -71,6 +71,25 @@ let run = () => {
       found->Array.push(`${c}: marked undeclared, yet declared`)
     }
   )
+  // What runs is deployed by someone: each driver giving a kind of compute is reached at deployment
+  // through `deployments`, by what places it, vr5lw, v7v3w.
+  Drivers.drivers->Dict.forEachWithKey((d, driver) =>
+    if (
+      d.implements->Array.some(i => [#function, #instance, #container]->Array.includes(i.kind)) &&
+        !(
+          designed->Array.some(((_, p)) =>
+            p.edges->Array.some(
+              x =>
+                x.to_ == driver &&
+                x.when_ == #deploy &&
+                x.contract->Option.getOr([])->Array.includes("deployments"),
+            )
+          )
+        )
+    ) {
+      found->Array.push(`${driver}: gives compute, yet nothing deploys onto it through deployments`)
+    }
+  )
   dimension(
     "Crossing",
     "Does every edge between two of the platform's processes name the contract it carries, declared or filed?",
