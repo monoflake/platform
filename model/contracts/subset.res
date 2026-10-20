@@ -10,10 +10,12 @@
  */
 /**
  * A primitive: a 32-bit integer, signed or not; one exact in a JavaScript number, under 2^53, for a
- * time in milliseconds or a size in bytes, b8f35; a 64-bit float; bytes. An id is never one of
- * these: it is `Id`, typed by the kind it names.
+ * time in milliseconds or a size in bytes, b8f35; a 64-bit float; bytes, base64url and unpadded in
+ * JSON, RFC 4648's fifth section; and a content's hash, 32 bytes in CBOR and its 64 lowercase hex
+ * digits in JSON, as b8f35 writes it wherever it is text. An id is never one of these: it is `Id`,
+ * typed by the kind it names.
  */
-type prim = [#bool | #string | #float64 | #int32 | #uint32 | #uint53 | #bytes]
+type prim = [#bool | #string | #float64 | #int32 | #uint32 | #uint53 | #bytes | #hash]
 
 type rec shape =
   | Prim(prim)

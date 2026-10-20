@@ -162,7 +162,8 @@ author on 2026-10-19:
 | a signed 32-bit integer                             | `i32`                      | `int`                      |
 | an unsigned one, as an id, b8f35                    | `u32`                      | `float`, exact             |
 | one under 2^53, a time in milliseconds or a size    | `u64`, checked below 2^53  | `float`, exact             |
-| bytes                                               | `Vec<u8>`                  | `Uint8Array.t`             |
+| bytes, base64url unpadded in JSON, RFC 4648's 5     | `Vec<u8>`                  | `Uint8Array.t`             |
+| a content's hash, 32 bytes; 64 hex digits in JSON   | `[u8; 32]`                 | `Uint8Array.t`             |
 | a record, a field absent when it has nothing to say | a struct, `Option` fields  | a record, optional fields  |
 | a closed set of names                               | an enum without data       | a variant without payloads |
 | a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
@@ -196,7 +197,10 @@ them, whoever wrote it.
 
 - **Rust's CBOR is minicbor**, worked out with the author on 2026-10-19, maintained, its 2.3.1 of
   2026-10-18: neither it nor ciborium promises deterministic encoding, so what the platform's own
-  cases find decides whether it is patched, forked or built. JavaScript's is open [B29].
+  cases find decides whether it is patched, forked or built. **JavaScript's is cbor2, its `cde` on**,
+  decided by the author on 2026-10-19: the Common Deterministic Encoding, RFC 8949's 4.2.1, the rule
+  minicbor is held to, so the two write the same bytes, and it reaches for no module of node's,
+  `docs/lessons/languages.md`; held to the same tests.
 - **Every test runs in CI**, so what is taken or built stays whole.
 - **None is begun yet**: this is the plan.
 
@@ -204,4 +208,3 @@ Open, for the discussion that follows:
 
 - How the repository is laid out past what is drawn, so cargo, ReScript's compiler and the
   JavaScript tools build one tree. [B26]
-- How bytes are written in JSON, and which library is JavaScript's CBOR. [B29]

@@ -129,3 +129,11 @@ payload compiles to an object tagged `TAG`, `{ TAG: "A"; _0: number }` in genTyp
 genType exports ReScript's values and types to TypeScript and imports TypeScript's into ReScript.
 Asked by RFC fhg6w. Sources: https://rescript-lang.org/docs/manual/latest/shared-data-types and
 https://www.rescript-lang.org/docs/manual/typescript-integration
+
+**JavaScript's CBOR, read 2026-10-19**: cbor2 2.4.0, of 2026-10-01, MIT, by hildjj, depends on
+`@cto.af/wtf8` alone and imports no `node:` module; its encoder and decoder take `cde`, "all options
+for draft-ietf-cbor-cde-05", and `dcbor`, with `rejectDuplicateKeys` and `sortKeys` apart. cbor-x
+1.6.7, MIT, is fast and documents no deterministic encoding; its record extension, on by default,
+changes how an object is written. Asked by RFC fhg6w. Sources: https://www.npmjs.com/package/cbor2,
+https://github.com/hildjj/cbor2, the package's `lib/options.d.ts`, and
+https://depscope.dev/pkg/npm/cbor-x

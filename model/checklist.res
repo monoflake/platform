@@ -293,6 +293,7 @@ let checklist: array<item> = [
     group: #B,
     what: "how bytes are written in a contract's JSON, and which library is JavaScript's CBOR, held to the standards' tests; the subset's integers are decided, fhg6w",
     from: "fhg6w",
+    done: "fhg6w: base64url unpadded, a hash its 64 hex digits; cbor2 with cde on",
   },
   {
     id: "B30",
