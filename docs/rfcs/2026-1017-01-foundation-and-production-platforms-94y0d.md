@@ -34,7 +34,7 @@ their places**, by the author on 2026-10-19, and neither by a network: the found
 everything of the platform's stands on and which takes a version last, and the production platform,
 which users use and which takes a version first. **The internal platform and the external platform
 name the same two**, and the four words stand only before platform, never alone, which
-`model/checks/words.res` holds.
+`model/checks/written/words.res` holds.
 
 - **The foundation platform runs a version no newer than the production platform's**, and keeps off by
   configuration what it does not need -- bringing one's own cloud, selling, signing up. The

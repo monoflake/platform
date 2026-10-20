@@ -126,7 +126,7 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   and `cloudflare-driver`'s ReScript, RFC vr5lw. **The drivers lie together in `substrate/driver/`**,
   decided by the author on 2026-10-19, each named without the word its parent says,
   `driver/cloudflare` and `driver/machine`, as a half is dropped from a name.
-  `model/checks/code.res` holds that each component's code lies in its layer's directory, named as
+  `model/checks/layout/code.res` holds that each component's code lies in its layer's directory, named as
   the model names it, that its manifest is its language's, and that it uses only libraries of its
   own language.
 

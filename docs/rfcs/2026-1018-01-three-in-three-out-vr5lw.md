@@ -97,7 +97,7 @@ as it stands on a vendor, RFC 94y0d.
   Worker, a machine's SQLite is a file -- so every driver adapts whatever is chosen, and the least
   leaves nothing to adapt that the contract forbids. **The interface is the model's subset, never
   WIT**, decided by the author on 2026-10-19, since it is the platform's own, RFC fhg6w:
-  `model/contracts/database.res`, a value of SQLite's a union tagged by `kind`, its payload in
+  `model/contracts/kinds/databases.res`, a value of SQLite's a union tagged by `kind`, its payload in
   `value`, as an app's typed value is written below.
 - **Each host's driver declares its databases' limits** -- a statement's size, its parameters, how
   long a query may run -- as it declares its levels: a vendor's in the code, which knows the vendor,
@@ -395,7 +395,7 @@ abstractions.
 - **A driver keeps the least state it must**: its credentials, the policy and list it last took,
   and when each difference was first found. Everything else it reads from its host, so a driver
   lost and installed again is whole once its control sends the list again.
-- **Its management is an interface of the subset**, `model/contracts/management.res`: `apply` a
+- **Its management is an interface of the subset**, `model/contracts/kinds/management.res`: `apply` a
   list, `set_policy` the grace, `describe` what it holds, each item `making`, `made` at an address,
   `failed` for a reason, or `unasked` since a time, and `end` an item the list no longer asks. A
   list older than the one held is dropped and answered with the generation held, never failed;

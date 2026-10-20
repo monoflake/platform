@@ -259,7 +259,7 @@ let checklist: array<item> = [
     group: #B,
     what: "which language of three each component of the model is written in, declared in the model beside the component, and the check that a component uses only libraries of its own language, fhg6w",
     from: "fhg6w",
-    done: "fhg6w: ReScript beside each component; a driver's implementations each their own, model/ground/drivers.res; model/checks/code.res",
+    done: "fhg6w: ReScript beside each component; a driver's implementations each their own, model/ground/drivers.res; model/checks/layout/code.res",
   },
   {
     id: "B25",

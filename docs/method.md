@@ -65,7 +65,7 @@ counted from a top-level directory or a package's root -- a directory with a `Ca
 `package.json` or a `rescript.json` -- its first subdirectory 1. What outgrows a directory is nested
 in it as its abstraction rises, never laid beside the rest. Both numbers are for now: one reached
 asks first whether it still fits the platform, and only then how the tree is cut below it.
-`model/checks/tree.res` holds both.
+`model/checks/layout/tree.res` holds both.
 
 ## A task is an entry, a script an order, a tool a program
 

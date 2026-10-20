@@ -1,15 +1,24 @@
-/** Every product's contracts together, and the product written from them, RFC fhg6w. */
+/**
+ * Every contract together, and the product written from them, RFC fhg6w: `subset/`, the language
+ * they are written in; `kinds/`, the interfaces the drivers give, each named in the plural; and
+ * `records/`, the records' contents by product, each in the singular, so no two modules share a
+ * name, ReScript's being one space across the model.
+ */
 open Subset
 
 let types: array<declared> = Array.flat([
   Calls.types,
   Storage.types,
   Objects.types,
-  Database.types,
+  Databases.types,
   Management.types,
 ])
 let contents: array<content> = Storage.contents
-let interfaces: array<interface_> = [Objects.interface_, Database.interface_, Management.interface_]
+let interfaces: array<interface_> = [
+  Objects.interface_,
+  Databases.interface_,
+  Management.interface_,
+]
 
 /** The product: what every language reads, and nothing of the model's code. */
 let product = (~half: string => string, ~writes: string => array<string>): JSON.t => Object(
