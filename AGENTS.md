@@ -38,8 +38,9 @@ vendor/     other projects' files, copied at one version and left as written
   why. `model/contracts.json` is what every language reads.
 - **A script in `scripts/` decides only order**; one that begins to compute hands that part to a
   tool in `code/tools/`.
-- **The root's three workspaces list what `code/` holds**: `Cargo.toml`, `package.json` with
-  `pnpm-workspace.yaml`, and `rescript.json`, each list held to it by the check.
+- **The root's workspaces take what `code/` holds**: `Cargo.toml` lists every crate and
+  `pnpm-workspace.yaml` takes `code/**`, while the root's `rescript.json` and `package.json` list
+  no block, since each builds alone, [docs/code.md](docs/code.md); the check holds all four.
 
 ## Commands
 
