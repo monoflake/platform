@@ -41,11 +41,16 @@ components, libraries and edges, each with its contract:
   points to its own layer or below, a library uses libraries alone -- so the check proves the code's
   boundaries where the code keeps the model's.
 
-**The platform's control plane is AGPL-3.0-only, and the rest MIT OR Apache-2.0**, decided by the
-author on 2026-10-20: `control(platform)`, `control(organization)`, `anchor` and `console` are under
-the first, every other component, driver and library under the second, `model/graph/components.res`.
-The root's `LICENSE` names the first by directory, `REUSE.toml` says the same as REUSE 3.3 asks, and
-`LICENSES/` holds each text by its SPDX identifier; a manifest declares its package's,
+**What a user runs is MIT OR Apache-2.0, and what stands it up as the hosted platform is kept
+apart**, decided by the author on 2026-10-20, replacing an AGPL-3.0-only control plane decided
+earlier that day. `control(platform)`, `anchor` and `console`, with the two deployments'
+configuration and their operation, are the private `monoflake/cloud`'s and no directory here;
+every other component, `control(organization)` among them, every driver and every library is MIT
+OR Apache-2.0, `model/graph/components.res`. So a team can stand its own platform up from this
+repository with a little glue of its own, and the glue and the running of it are what the hosted
+platform offers -- as Tailscale keeps its coordination server and opens the rest, a bet that most
+would rather use it than write and run their own. The root holds the two texts as Rust's projects
+do, `LICENSE-MIT` and `LICENSE-APACHE`, and a manifest declares its package's,
 `model/checks/layout/code.res`.
 
 **A language is chosen by three measures, in order**, worked out with the author on 2026-10-19:

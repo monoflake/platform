@@ -18,8 +18,8 @@ question touches. Decisions are the author's: one question at a time, the most u
 ```
 model/      the spec: graph/, ground/, bootstrap/, names/; contracts/, in subset/, kinds/ and
             records/; plan/, the checklist; checks/, in design/, written/ and layout/
-code/       the code, a component placed by its layer: apps/, products/, primitives/, substrate/,
-            platform/; and libs/, tools/
+code/       the code, a component placed by its layer: apps/, products/, primitives/, substrate/;
+            and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
             scope.md, what the model covers
 tests/      the samples, data alone: codec/, values in both forms; kinds/, each interface's cases;
@@ -28,6 +28,9 @@ scripts/    the entries that drive the rest, in order: no logic of their own
 vendor/     other projects' files, copied at one version and left as written
 ```
 
+- **What a user runs is here, MIT OR Apache-2.0; what runs it as the hosted platform is not**:
+  `control(platform)`, `anchor`, `console` and the two deployments' configuration are the private
+  `monoflake/cloud`'s, RFC fhg6w.
 - **The model is the spec**: what a draft decides is written once in `model/`, and the draft keeps
   why. `model/contracts.json` is what every language reads.
 - **A script in `scripts/` decides only order**; one that begins to compute hands that part to a
