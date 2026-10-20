@@ -511,16 +511,16 @@ out with the author on 2026-10-18.
 - **Each export declares how far it is shown**: within its organization, the default, called by its
   organization's apps with a capability at its deployment's address; or public, which it is
   exactly when a name is bound to it or it is mounted under its organization's gateway. Nothing is
-  public that neither reaches.
+  public that neither reaches. Within an organization an address may still stand on the public
+  network, where a path to it crosses it, and every call to it without a capability of its
+  organization's is refused.
 - **An app has no way in until one is given, and one that nothing reaches is warned of**, worked
   out with the author on 2026-10-19. It is reached in three ways, any of them enough: another app
   binding it and calling it through the binding, RFC 49qyg; mounted under its organization's
   gateway, at a fixed address; or a domain of its own bound to it, as many as it likes. An app
   reached by none of them raises a warning, RFC v7v3w, that it can be reached by nothing, and the
   warning clears as soon as one is given. One reached only by binding is reached as it is meant to
-  be, and is not warned of. Within an
-  organization an address may still stand on the public network, where a path to it crosses it,
-  and every call to it without a capability of its organization's is refused.
+  be, and is not warned of.
 - **A machine's driver keeps its firewall**, in software, so no hardware firewall is needed: what
   comes in is let in only at the driver's own port and where a path compiled to the machine crosses
   the public network, so what every caller reaches by a private path is not on the public network at
