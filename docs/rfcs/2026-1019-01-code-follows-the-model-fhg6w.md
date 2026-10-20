@@ -28,7 +28,11 @@ components, libraries and edges, each with its contract:
 
 - **An edge within one process is a call**, never serialized: ReScript compiled to JavaScript calls
   a library of JavaScript's, and is called by it, in one memory.
-- **An edge between processes or hosts is a wire contract**, and only it.
+- **An edge between processes or hosts is a wire contract**, and only it. **Each names the one it
+  carries**, decided by the author on 2026-10-20: an interface, a signed record, a bundle's
+  section, a footing's record, an app's own WIT, or one not yet declared, filed with the row that
+  declares it, `model/checks/design/crossing.res`; an edge to the ground carries the vendor's, and
+  one to a boundary not yet drawn its boundary's. [B32]
 - **A browser computes nothing of the platform's**: a page draws what its API returns. So what a
   server and a browser share is the contracts alone, generated, and no logic is written to run in
   both. Logic that components of

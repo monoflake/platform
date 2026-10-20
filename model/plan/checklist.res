@@ -283,6 +283,12 @@ let checklist: array<item> = [
     done: "vuanj, b8f35, zn3u5",
   },
   {
+    id: "B32",
+    group: #B,
+    what: "the interfaces between the platform's own components, and the products' an app calls, declared in the subset with samples as the kinds' are: every contract an edge names after `?`, model/graph/components.res's undeclared",
+    from: "found, fhg6w",
+  },
+  {
     id: "B27",
     group: #B,
     what: "where ReScript ends and TypeScript begins, on a Worker and on a page, so neither spreads by habit, fhg6w",

@@ -77,6 +77,9 @@ let run = () => {
     )
   )
   Components.globalOpen->Array.forEach(g => marks->Array.push({where: "globalOpen", text: g}))
+  Components.undeclared->Array.forEach(((n, t)) =>
+    marks->Array.push({where: `contract ?${n}`, text: t})
+  )
   Footing.kept
   ->Dict.toArray
   ->Array.forEach(((name, k)) => {

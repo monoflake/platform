@@ -28,6 +28,13 @@ type edge = {
   reads?: string,
   /** Whether this edge is how its component is itself replaced by a new version, D3. */
   replaces?: bool,
+  /**
+   * What crosses this edge between two processes, RFC fhg6w: an interface of `model/contracts/`, a
+   * signed record, a bundle's section as `bundle.{section}`, a record kind of the footing as
+   * `record.{kind}`, or `records`, every kind the source writes there; `wit`, an app's own exports;
+   * or `?{name}`, a contract not yet declared, `undeclared` below.
+   */
+  contract?: array<string>,
 }
 
 type component = {
@@ -55,7 +62,7 @@ type component = {
   uses: array<string>,
 }
 
-let e = (to_, when_, hard, why, ~open_=?) => {to_, when_, hard, why, ?open_}
+let e = (to_, when_, hard, why, ~open_=?, ~contract=?) => {to_, when_, hard, why, ?open_, ?contract}
 let hard = true
 let soft = false
 let replaced = {
@@ -63,7 +70,13 @@ let replaced = {
   replaces: true,
 }
 let key = (~to_="root", ()) =>
-  e(to_, #start, hard, "the root public key, deployed, to verify capabilities")
+  e(
+    to_,
+    #start,
+    hard,
+    "the root public key, deployed, to verify capabilities",
+    ~contract=["certificate"],
+  )
 
 /*
  * Of the components: `console` is a dashboard in an ordinary organization named `console`, holding no
@@ -81,14 +94,15 @@ let components: dict<component> = dict{
         ...e("compute", #deploy, hard, "an app is deployed as functions, its types checked"),
         replaces: true,
       },
-      e("compute", #serve, hard, "it runs as functions"),
-      e("storage", #serve, hard, "the buckets it is bound to"),
-      e("database", #serve, hard, "the database bound to it"),
+      e("compute", #serve, hard, "it runs as functions", ~contract=["wit"]),
+      e("storage", #serve, hard, "the buckets it is bound to", ~contract=["?storage"]),
+      e("database", #serve, hard, "the database bound to it", ~contract=["database"]),
       e(
         "control(organization)",
         #deploy,
         hard,
         "opens buckets and databases through its organization's control",
+        ~contract=["?control(organization)"],
       ),
     ],
     uses: [],
@@ -103,18 +117,20 @@ let components: dict<component> = dict{
         ...e("compute", #deploy, hard, "an app like any other, deployed as functions"),
         replaces: true,
       },
-      e("compute", #serve, hard, "an app like any other"),
+      e("compute", #serve, hard, "an app like any other", ~contract=["wit"]),
       e(
         "control(platform)",
         #deploy,
         hard,
         "calls the platform's control with its user's credential",
+        ~contract=["?control(platform)"],
       ),
       e(
         "control(organization)",
         #deploy,
         hard,
         "calls an organization's control with its user's credential",
+        ~contract=["?control(organization)"],
       ),
     ],
     uses: [],
@@ -131,24 +147,41 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "its products' configuration and the bundle it compiles",
+        ~contract=["records", "bundle"],
       ),
       e(
         "control(platform)",
         #deploy,
         hard,
         "its certificate, allowance and loans, copied down each day and on a change",
+        ~contract=["?control(platform)"],
       ),
       e(
         "compute",
         #deploy,
         hard,
         "deploys its organization's apps, their types and call graph checked",
+        ~contract=["?compute"],
       ),
       e(
         "?intermediate",
         #deploy,
         hard,
         "its bundle's signing key, its alone, certified for seven days and renewed each day, v7v3w",
+      ),
+      e(
+        "driver(machine)",
+        #deploy,
+        hard,
+        "applies the capacity it opens on each machine extension, vr5lw",
+        ~contract=["management"],
+      ),
+      e(
+        "driver(cloudflare)",
+        #deploy,
+        hard,
+        "applies the capacity it opens on each Cloudflare extension, vr5lw",
+        ~contract=["management"],
       ),
     ],
     uses: ["capability*", "vocabulary*", "wit*", "extensions*", "placement*", "compat*"],
@@ -165,12 +198,25 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "its buckets and their policies, in the bundle, v7v3w",
+        ~contract=["bundle.storage"],
       ),
-      e("tablet", #serve, hard, "its metadata per scope: paths, objects, hashes, references"),
-      e("blob", #serve, hard, "content"),
-      e("scope", #serve, hard, "a bucket belongs to one"),
+      e(
+        "tablet",
+        #serve,
+        hard,
+        "its metadata per scope: paths, objects, hashes, references",
+        ~contract=["database"],
+      ),
+      e("blob", #serve, hard, "content", ~contract=["?blob"]),
+      e("scope", #serve, hard, "a bucket belongs to one", ~contract=["?scope"]),
       key(),
-      e("blob", #background, soft, "sweep: bytes nothing names, hashes nothing counts"),
+      e(
+        "blob",
+        #background,
+        soft,
+        "sweep: bytes nothing names, hashes nothing counts",
+        ~contract=["?blob"],
+      ),
       e("?clock", #background, soft, "starts the sweep at set times"),
       e(
         "?entry",
@@ -194,9 +240,10 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "its directory of names and ids, in the bundle, v7v3w",
+        ~contract=["bundle.database"],
       ),
-      e("tablet", #serve, hard, "a database is a tablet"),
-      e("scope", #serve, hard, "ids belong to one"),
+      e("tablet", #serve, hard, "a database is a tablet", ~contract=["database"]),
+      e("scope", #serve, hard, "ids belong to one", ~contract=["?scope"]),
       key(),
     ],
     uses: ["capability*", "compat*"],
@@ -208,19 +255,21 @@ let components: dict<component> = dict{
     edges: [
       replaced,
       e("?runner", #serve, hard, "where a tablet's writer and copies are"),
-      e("issuer", #serve, hard, "a call's capabilities"),
-      e("executor", #serve, hard, "runs the code"),
+      e("issuer", #serve, hard, "a call's capabilities", ~contract=["?issuer"]),
+      e("executor", #serve, hard, "runs the code", ~contract=["?executor"]),
       e(
         "footing(organization)",
         #serve,
         hard,
         "its apps, versions, declarations, bindings, env, queues and schedules, in the bundle, v7v3w",
+        ~contract=["bundle.compute"],
       ),
       e(
         "tablet",
         #serve,
         hard,
         "calls and status(id), queues' messages, schedules' repeats, the derive index",
+        ~contract=["database"],
       ),
       e(
         "?builder",
@@ -228,8 +277,8 @@ let components: dict<component> = dict{
         hard,
         "code by its hash, fetched from where it was built as its configuration is applied, vr5lw",
       ),
-      e("blob", #serve, soft, "derive outputs: a miss runs it again"),
-      e("scope", #deploy, hard, "the allowance a declaration must fit"),
+      e("blob", #serve, soft, "derive outputs: a miss runs it again", ~contract=["?blob"]),
+      e("scope", #deploy, hard, "the allowance a declaration must fit", ~contract=["?scope"]),
       e("?entry", #serve, hard, "a request trigger: HTTP reaches an app's function, 49qyg"),
       e("?entry", #deploy, hard, "binds an app's names, from the bundle, vr5lw"),
       e(
@@ -237,6 +286,7 @@ let components: dict<component> = dict{
         #deploy,
         hard,
         "a deployment opens the migration window",
+        ~contract=["?migration"],
         ~open_="not in the old graph; whether the call graph also holds bindings is open, 49qyg [C11]",
       ),
       key(),
@@ -256,12 +306,14 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "its configuration and allowance, in the bundle, v7v3w",
+        ~contract=["bundle.issuer"],
       ),
       e(
         "anchor",
         #deploy,
         hard,
-        "its anchor row, compiled into the bundle; it exists by its certificate",
+        "its anchor row, which names where its backing is kept; it exists by its certificate",
+        ~contract=["?anchor"],
       ),
     ],
     uses: ["compat*"],
@@ -277,6 +329,7 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "reads the scope's grants and allowance in the bundle, in its own format, vuanj",
+        ~contract=["bundle.issuer"],
       ),
       e(
         "?intermediate",
@@ -294,14 +347,33 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("backing", #start, hard, "its copies' stores and what each declares"),
-      e("footing(organization)", #serve, hard, "its log, until a snapshot in the blob holds it"),
-      e("blob", #background, soft, "archives its log and snapshots"),
+      e(
+        "backing",
+        #start,
+        hard,
+        "its copies' stores and what each declares",
+        ~contract=["?backing"],
+      ),
+      e(
+        "footing(organization)",
+        #start,
+        hard,
+        "which copies hold a tablet on machines, its primary and generation, raised only as one is taken over, vuanj",
+        ~contract=["record.writer"],
+      ),
+      e(
+        "blob",
+        #background,
+        soft,
+        "archives a machine copy's WAL and its snapshots, vuanj",
+        ~contract=["?blob"],
+      ),
       e(
         "blob",
         #start,
         hard,
-        "a writer or read copy starts from the last snapshot and the log after it, which the footing keeps until it is archived, at 16 MiB, vuanj",
+        "a copy added starts from its volume's last snapshot, then takes what is after from its primary, vuanj",
+        ~contract=["?blob"],
       ),
       key(),
       e("?runner", #start, hard, "its writer and read copies are placed, and a handover decided"),
@@ -315,9 +387,21 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("backing", #serve, hard, "the scope's stores"),
-      e("extent", #serve, hard, "which pieces a content is made of, and where each is packed"),
-      e("footing(organization)", #serve, hard, "which journal each placement writes"),
+      e("backing", #serve, hard, "the scope's stores", ~contract=["?backing"]),
+      e(
+        "extent",
+        #serve,
+        hard,
+        "which pieces a content is made of, and where each is packed",
+        ~contract=["?extent"],
+      ),
+      e(
+        "footing(organization)",
+        #serve,
+        hard,
+        "which journal each placement writes",
+        ~contract=["record.journal"],
+      ),
       e(
         "vendor",
         #serve,
@@ -329,6 +413,7 @@ let components: dict<component> = dict{
         #start,
         hard,
         "a scope's salt and key, derived from the masters and deployed beside it as secrets, never in the bundle, v7v3w",
+        ~contract=["deployments"],
       ),
       key(),
       e(
@@ -336,6 +421,7 @@ let components: dict<component> = dict{
         #background,
         hard,
         "repair after a store is lost: until done, data is held below its placement",
+        ~contract=["?extent"],
       ),
       e("?clock", #background, soft, "paces a migration the control plane started, b8f35"),
     ],
@@ -347,7 +433,13 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("host", #serve, hard, "hands each call to the deployment that runs it, vr5lw"),
+      e(
+        "host",
+        #serve,
+        hard,
+        "hands each call to the deployment that runs it, vr5lw",
+        ~contract=["wit"],
+      ),
       e("?roster", #start, hard, "which hosts exist, what each offers"),
       e(
         "?egress",
@@ -366,13 +458,26 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("anchor", #deploy, hard, "its backing, compiled into the bundle the footing keeps, v7v3w"),
-      e("footing(organization)", #serve, hard, "kept in the scope's footing"),
+      e(
+        "anchor",
+        #deploy,
+        hard,
+        "its scope's row, which names where its backing is kept, b8f35",
+        ~contract=["?anchor"],
+      ),
+      e(
+        "footing(organization)",
+        #serve,
+        hard,
+        "kept in the scope's footing",
+        ~contract=["record.store"],
+      ),
       e(
         "root",
         #start,
         hard,
         "the platform's own stores' secrets; an organization's are deployed beside what reads them, never in its bundle, v7v3w",
+        ~contract=["deployments"],
       ),
       key(),
     ],
@@ -385,8 +490,20 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("backing", #serve, hard, "a parcel's place from the scope's stores"),
-      e("footing(organization)", #serve, hard, "its records, in the scope's footing"),
+      e(
+        "backing",
+        #serve,
+        hard,
+        "a parcel's place from the scope's stores",
+        ~contract=["?backing"],
+      ),
+      e(
+        "footing(organization)",
+        #serve,
+        hard,
+        "its records, in the scope's footing",
+        ~contract=["record.content", "record.piece", "record.parcel"],
+      ),
     ],
     uses: ["placement*", "compat*"],
   },
@@ -396,8 +513,20 @@ let components: dict<component> = dict{
     half: #organization,
     edges: [
       replaced,
-      e("driver(machine)", #serve, hard, "on a machine, the processes its driver runs, vr5lw"),
-      e("driver(cloudflare)", #serve, hard, "on Cloudflare, the Workers its driver makes, b8f35"),
+      e(
+        "driver(machine)",
+        #serve,
+        hard,
+        "on a machine, the processes its driver runs, vr5lw",
+        ~contract=["deployments"],
+      ),
+      e(
+        "driver(cloudflare)",
+        #serve,
+        hard,
+        "on Cloudflare, the Workers its driver makes, b8f35",
+        ~contract=["deployments"],
+      ),
     ],
     uses: ["vocabulary*", "compat*"],
   },
@@ -435,7 +564,16 @@ let components: dict<component> = dict{
     layer: -3,
     keeps: true,
     half: #platform,
-    edges: [replaced, e("footing(platform)", #serve, hard, "its rows, in the platform's footing")],
+    edges: [
+      replaced,
+      e(
+        "footing(platform)",
+        #serve,
+        hard,
+        "its rows, in the platform's footing",
+        ~contract=["?anchor"],
+      ),
+    ],
     uses: ["compat*"],
   },
   "control(platform)": {
@@ -450,9 +588,22 @@ let components: dict<component> = dict{
         #serve,
         hard,
         "configuration spanning organizations, in the platform's footing",
+        ~contract=["records", "bundle"],
       ),
-      e("anchor", #serve, hard, "opens, suspends and deletes organizations by their rows"),
-      e("root", #start, hard, "the masters, to derive each organization's salt and key"),
+      e(
+        "anchor",
+        #serve,
+        hard,
+        "opens, suspends and deletes organizations by their rows",
+        ~contract=["?anchor"],
+      ),
+      e(
+        "root",
+        #start,
+        hard,
+        "the masters, to derive each organization's salt and key",
+        ~contract=["deployments"],
+      ),
       e("?intermediate", #deploy, hard, "certifies each organization's key"),
     ],
     uses: ["capability*", "keys*", "extensions*", "compat*"],
@@ -471,3 +622,45 @@ let components: dict<component> = dict{
 }
 
 let globalOpen: array<string> = []
+
+/**
+ * The contracts an edge names that are not yet declared in the subset, by the name it gives each
+ * after `?`, and the row that declares them. A tablet's copies speak among themselves -- WAL frames
+ * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
+ */
+let undeclared: array<(string, string)> = [
+  (
+    "storage",
+    "the storage product's interface, an app's: buckets, files and objects, and publish, vr5lw [B32]",
+  ),
+  ("compute", "the compute product's deployment of an app, its types and call graph checked [B32]"),
+  ("migration", "a database's migration window, which a deployment opens, zn3u5 [B32]"),
+  ("control(organization)", "an organization's control's configuration API, v7v3w [B32]"),
+  (
+    "control(platform)",
+    "the platform's control's API, and what an organization's copies down each day, v7v3w [B32]",
+  ),
+  (
+    "blob",
+    "the blob's interface: content put and read by its hash, a sweep, an archive, b8f35 [B32]",
+  ),
+  ("scope", "the scope's interface: what belongs to one, and its allowance, vuanj [B32]"),
+  ("issuer", "the issuer's interface: a capability asked for and signed, vuanj [B32]"),
+  (
+    "executor",
+    "the executor's interface: a code's hash, an input and a sandbox, given back an output or a panic, vuanj [B32]",
+  ),
+  ("backing", "the backing's interface: a scope's stores and what each declares, b8f35 [B32]"),
+  (
+    "extent",
+    "the extent's interface: which pieces a content is made of and where each is packed, b8f35 [B32]",
+  ),
+  (
+    "anchor",
+    "the anchor's interface and its rows, a scope's id and where its backing is kept, b8f35 [B32]",
+  ),
+  (
+    "copies",
+    "a tablet's copies among themselves: WAL frames from a primary, a generation taken by a majority, vuanj [B32]",
+  ),
+]
