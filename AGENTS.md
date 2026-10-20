@@ -11,7 +11,8 @@ It is public at `monoflake/platform`, listed in the workspace's `repos/registry.
 ## Start here
 
 Read [docs/method.md](docs/method.md), how work is done here, then the drafts in `docs/rfcs/` your
-question touches. Decisions are the author's: one question at a time, the most urgent first.
+question touches. Decisions are the author's: a block's questions together, the most urgent block
+first.
 
 ## The tree
 

@@ -38,13 +38,13 @@ until the layer it was found at is finished. The workspace's `docs/planning.md` 
 A draft records what the author decided. A proposal they have not confirmed goes under Open, and so
 does anything not discussed -- with no numbers in it.
 
-## One decision at a time, the most urgent first
+## A block's decisions in one round, the most urgent block first
 
-Agreed with the author on 2026-10-18. A question is brought to the author one at a time, in plain
-words: what it is, why it must be decided now, the choices and what each costs, and a
-recommendation. New questions are looked for only once the open one is decided.
+Agreed with the author on 2026-10-18, and since 2026-10-20 a block's questions are brought
+together, as the workspace's `docs/agent-protocol.md` has it, "The questions of one block are asked
+together".
 
-The most urgent is chosen in this order: a contradiction in the core the model passes, since that
+The most urgent block is chosen in this order: a contradiction in the core the model passes, since that
 is a false proof; then what the most other questions wait on; then the rest. A detail -- a name, a
 constant, a command -- waits until the structure it sits in is settled, however long the checklist
 lists it. When the model passes what is a contradiction, the dimension or record that would catch
