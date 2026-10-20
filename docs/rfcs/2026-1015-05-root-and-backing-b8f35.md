@@ -483,7 +483,7 @@ write(bucket, path, content)
   own WebCrypto; where a CPU has none, the same bytes are computed in software, more slowly.
 
 - **Each parcel is sealed under a key of its own**, `derive_key("monoflake:parcel:key:1",
-organization key || seed)`, so the same header always gives it back. Its header is 41 bytes, and
+  organization key || seed)`, so the same header always gives it back. Its header is 41 bytes, and
   nothing but segments follows:
 
   | Offset | Bytes      | Field                           | Value                                                                   |
