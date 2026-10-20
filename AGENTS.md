@@ -6,7 +6,7 @@ model of the platform's next architecture: the design worked out from what an ap
 what the real world already provides, checked by a model, before any of it is built.
 
 It is public at `monoflake/platform`, listed in the workspace's `repos/registry.toml` as
-`monoflake`. Nothing here deploys anything or touches another repository.
+`monoflake/platform`, beside the private `monoflake/cloud`. Nothing here deploys anything or touches another repository.
 
 ## Start here
 
