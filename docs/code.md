@@ -48,6 +48,8 @@ against it, and the whole is held by the conversation.
 - **An invariant is a type**: abstract or `private`, made by the one function that checks it.
 - **`%raw`, `Obj.magic` and `external` stand in `src/bindings/` alone**, as Rust's `unsafe` would,
   RFC fhg6w: one module a library bound, so what is taken on trust is gathered where it is seen.
+  A test's own, `node:test` and `node:fs` among them, stand in `test/bindings/`, since a library
+  runs on the web's APIs alone and never node's.
 - **Tests are `test/`, run by `node --test`**, so no framework is taken for them; a package lists
   `test` among its sources once it has one, as a `.resi` alone is passed over until its `.res` is
   written.

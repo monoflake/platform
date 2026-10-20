@@ -195,8 +195,12 @@ let find = package => {
 /** Whether a file of a block, by its path within it, is its interface, the model's to write. */
 let isInterface = file => file->String.endsWith(".resi") || file == "src/interface.rs"
 
-/** Whether a file of a block may cross into JavaScript unchecked, as Rust's `unsafe` does. */
-let isBinding = file => file->String.startsWith("src/bindings/")
+/**
+ * Whether a file of a block may cross into JavaScript unchecked, as Rust's `unsafe` does: its own
+ * bindings, or its tests', which bind what a test runs on and the code never may.
+ */
+let isBinding = file =>
+  file->String.startsWith("src/bindings/") || file->String.startsWith("test/bindings/")
 
 /** Every open row of the checklist, the one thing a `%todo` or a `todo!` may name. */
 let openRows = () => Checklist.checklist->Array.filter(i => i.done == None)->Array.map(i => i.id)
@@ -247,7 +251,7 @@ let unboundOf = path =>
     ->String.split("\n")
     ->Array.flatMapWithIndex((line, at) =>
       /%%?raw\b|\bObj\.magic\b|^\s*(@[^\n]*\s)?external\s/->RegExp.test(line)
-        ? [`${path}/${f}:${int(at + 1)}: crosses into JavaScript unchecked outside src/bindings/`]
+        ? [`${path}/${f}:${int(at + 1)}: crosses into JavaScript unchecked outside its bindings`]
         : []
     )
   )
