@@ -7,6 +7,7 @@
  * open, or an open question names no row. Exits 1 when any dimension finds a violation.
  */
 Rules.run()
+Roles.run()
 Dimensions.run()
 Path.run()
 Load.run()

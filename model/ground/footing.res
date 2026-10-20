@@ -24,7 +24,7 @@ type kept = {
   open_?: string,
 }
 
-let kept: dict<kept> = dict{
+let own: dict<kept> = dict{
   "backing": {
     of_: #organization,
     what: "a scope's stores",
@@ -60,14 +60,12 @@ let kept: dict<kept> = dict{
     grows: #bounded,
     bound: "the footing's 10 GB, about 35 million pieces, an organization's 30 TB reached before it; past either it is split",
   },
-  "anchor": {
-    of_: #platform,
-    what: "a row for every scope there has been, the platform's footing alone",
-    from: "b8f35",
-    grows: #owners,
-    open_: "the anchor keeps a row for every scope ever made, never removed: how many the platform's footing holds, and what comes after [D7]",
-  },
 }
+
+/** What the platform's footing keeps, given with what fills the roles, RFC 8lkuv. */
+let kept: dict<kept> = Dict.fromArray(
+  Array.concat(own->Dict.toArray, Fill.part("kept")->Option.getOr(Dict.make())->Dict.toArray),
+)
 
 /**
  * Rows written for one of each operation, as RFCs b8f35 and vuanj lay a write out: a tablet's

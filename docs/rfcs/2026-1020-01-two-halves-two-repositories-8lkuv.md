@@ -47,10 +47,20 @@ anything moves, is the report the two together give after, line for line.
 both are worked on, so which version of the platform a deployment runs is a commit the other
 repository records, RFC 94y0d.
 
+**The roles are `authority` and `directory`**, decided by the author on 2026-10-20: `authority`
+for what the platform's control is to an organization's, `directory` for what the anchor is to a
+scope and its backing. Each answers one contract of its name, `?authority` and `?directory`, while
+the platform half keeps its own -- the console's calls on the platform's control, the platform's
+control's writes to the anchor -- as `?control(platform)` and `?anchor` beside them. A role is
+`model/graph/components.res`'s, the roles check `model/checks/design/roles.res`, and what the other
+repository gives arrives as the file `MONOFLAKE_FILL` names, `model/graph/fill.res`.
+
+**The proof held on 2026-10-20**: with the graph walked by name, so no order rests on where a part
+is declared, the whole model's report from both repositories is the report before the split, line
+for line, but for the roles check and the two contracts each split in two.
+
 ## Open, for the discussion that follows:
 
-- The two roles' names: `authority` for what the platform's control is to an organization's, and
-  `directory` for what the anchor is to a scope and its backing, or others. [B33]
 - Which of `model/graph/records.res`'s records, which rows of the checklist, and which of the
   bootstrap steps and the reserved names are the platform half's alone, and so the other
   repository's. [B34]

@@ -352,7 +352,7 @@ let run = () => {
     }
   })
   let made = Contracts.product(~writes=(h, k) =>
-    Records.find(h, k)->Option.mapOr([], r => r.writes)
+    Records.declared(h, k)->Option.mapOr([], r => r.writes)
   )
   let productUrl = urlIn("model/contracts.json", root)
   let kept = existsSync(productUrl) ? Some(JSON.parseOrThrow(readFileSync(productUrl))) : None

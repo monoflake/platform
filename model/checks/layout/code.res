@@ -91,7 +91,7 @@ let run = () => {
   let none = []
   designed->Array.forEach(((name, c)) =>
     switch c.language {
-    | _ if Components.cloud->Array.includes(name) => ()
+    | _ if Components.elsewhere(name) => ()
     | None if Drivers.drivers->Dict.get(name) != None =>
       switch (group(c.layer), Drivers.drivers->Dict.get(name), driverDir(name)) {
       | (_, _, None) => found->Array.push(`${name}: a driver not named driver(...)`)

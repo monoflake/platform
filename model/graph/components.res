@@ -40,8 +40,15 @@ type edge = {
 
 type component = {
   layer: int,
-  /** The ground and the operator are outside the design: trusted as written, never built. */
-  kind?: [#ground | #operator],
+  /**
+   * The ground and the operator are outside the design: trusted as written, never built. A role
+   * is what this half needs of the platform half, built in another repository, RFC 8lkuv.
+   */
+  kind?: [#ground | #operator | #provided],
+  /** For a role, the contracts it answers, which every edge to it names. */
+  answers?: array<string>,
+  /** For a component another repository gives, the role it fills, RFC 8lkuv. */
+  fills?: string,
   /** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
   keeps?: bool,
   /**
@@ -86,7 +93,7 @@ let key = (~to_="root", ()) =>
  * organizations, as an HTTPS API in no organization, v7v3w; `footing(organization)` and
  * `footing(platform)` what the platform, or the layer beneath, gives a control to stand on, vr5lw.
  */
-let components: dict<component> = dict{
+let own: dict<component> = dict{
   "app": {
     layer: 1,
     half: #organization,
@@ -108,34 +115,6 @@ let components: dict<component> = dict{
     ],
     uses: [],
   },
-  "console": {
-    language: #rescript,
-    layer: 1,
-    asOwner: true,
-    half: #organization,
-    edges: [
-      {
-        ...e("compute", #deploy, hard, "an app like any other, deployed as functions"),
-        replaces: true,
-      },
-      e("compute", #serve, hard, "an app like any other", ~contract=["wit"]),
-      e(
-        "control(platform)",
-        #deploy,
-        hard,
-        "calls the platform's control with its user's credential",
-        ~contract=["?control(platform)"],
-      ),
-      e(
-        "control(organization)",
-        #deploy,
-        hard,
-        "calls an organization's control with its user's credential",
-        ~contract=["?control(organization)"],
-      ),
-    ],
-    uses: [],
-  },
   "control(organization)": {
     language: #rescript,
     layer: 0,
@@ -151,11 +130,11 @@ let components: dict<component> = dict{
         ~contract=["records", "bundle"],
       ),
       e(
-        "control(platform)",
+        "authority",
         #deploy,
         hard,
         "its certificate, allowance and loans, copied down each day and on a change",
-        ~contract=["?control(platform)"],
+        ~contract=["?authority"],
       ),
       e(
         "compute",
@@ -310,11 +289,11 @@ let components: dict<component> = dict{
         ~contract=["bundle.issuer"],
       ),
       e(
-        "anchor",
+        "directory",
         #deploy,
         hard,
         "its anchor row, which names where its backing is kept; it exists by its certificate",
-        ~contract=["?anchor"],
+        ~contract=["?directory"],
       ),
     ],
     uses: ["compat*"],
@@ -460,11 +439,11 @@ let components: dict<component> = dict{
     edges: [
       replaced,
       e(
-        "anchor",
+        "directory",
         #deploy,
         hard,
         "its scope's row, which names where its backing is kept, b8f35",
-        ~contract=["?anchor"],
+        ~contract=["?directory"],
       ),
       e(
         "footing(organization)",
@@ -563,55 +542,6 @@ let components: dict<component> = dict{
     ],
     uses: [],
   },
-  "anchor": {
-    language: #rescript,
-    layer: -3,
-    keeps: true,
-    half: #platform,
-    edges: [
-      replaced,
-      e(
-        "footing(platform)",
-        #serve,
-        hard,
-        "its rows, in the platform's footing",
-        ~contract=["?anchor"],
-      ),
-    ],
-    uses: ["compat*"],
-  },
-  "control(platform)": {
-    language: #rescript,
-    layer: -3,
-    control: true,
-    half: #platform,
-    edges: [
-      replaced,
-      e(
-        "footing(platform)",
-        #serve,
-        hard,
-        "configuration spanning organizations, in the platform's footing",
-        ~contract=["records", "bundle"],
-      ),
-      e(
-        "anchor",
-        #serve,
-        hard,
-        "opens, suspends and deletes organizations by their rows",
-        ~contract=["?anchor"],
-      ),
-      e(
-        "root",
-        #start,
-        hard,
-        "the masters, to derive each organization's salt and key",
-        ~contract=["deployments"],
-      ),
-      e("?intermediate", #deploy, hard, "certifies each organization's key"),
-    ],
-    uses: ["capability*", "keys*", "extensions*", "compat*"],
-  },
   "root": {
     layer: -4,
     edges: [
@@ -619,19 +549,69 @@ let components: dict<component> = dict{
     ],
     uses: [],
   },
+  /*
+   * The roles the platform half fills, RFC 8lkuv: `authority`, what the platform's control is to an
+   * organization's, RFC 7xpd3, and `directory`, what the anchor is to a scope and its backing, RFC
+   * 4dijn.
+   */
+  "authority": {
+    layer: -3,
+    kind: #provided,
+    control: true,
+    half: #platform,
+    answers: ["?authority"],
+    edges: [],
+    uses: [],
+  },
+  "directory": {
+    layer: -3,
+    kind: #provided,
+    half: #platform,
+    answers: ["?directory"],
+    edges: [],
+    uses: [],
+  },
   "footing(organization)": {layer: vendor, kind: #ground, half: #organization, edges: [], uses: []},
-  "footing(platform)": {layer: vendor, kind: #ground, half: #platform, edges: [], uses: []},
   "vendor": {layer: vendor, kind: #ground, edges: [], uses: []},
   "operator": {layer: vendor, kind: #operator, edges: [], uses: []},
 }
 
-let globalOpen: array<string> = []
+/** What another repository gives this model, RFC 8lkuv: none when this one is checked alone. */
+let given: dict<component> = Fill.part("components")->Option.getOr(Dict.make())
+
+/** Each role filled, to the component filling it. */
+let filler: dict<string> =
+  given
+  ->Dict.toArray
+  ->Array.filterMap(((name, c)) => c.fills->Option.map(role => (role, name)))
+  ->Dict.fromArray
 
 /**
- * What stands the components up as the hosted platform, its code kept in the private
- * `monoflake/cloud` and no directory here, RFC fhg6w. Everything else is MIT OR Apache-2.0.
+ * The whole graph: this model's own, each filled role replaced by what fills it and every edge to
+ * the role pointed at its filler, and what was given beside.
  */
-let cloud = ["control(platform)", "anchor", "console"]
+/** A name as the whole graph knows it: a filled role by its filler, any other as it is. */
+let named = name => filler->Dict.get(name)->Option.getOr(name)
+
+let components: dict<component> = {
+  let to_ = named
+  own
+  ->Dict.toArray
+  ->Array.filter(((name, _)) => filler->Dict.get(name)->Option.isNone)
+  ->Array.concat(given->Dict.toArray)
+  // By name, so what the checks walk is the graph and not where each part was declared.
+  ->Array.toSorted(((a, _), (b, _)) => a < b ? -1. : a > b ? 1. : 0.)
+  ->Array.map(((name, c)) => (
+    name,
+    {...c, edges: c.edges->Array.map(edge => {...edge, to_: to_(edge.to_)})},
+  ))
+  ->Dict.fromArray
+}
+
+let globalOpen: array<string> = []
+
+/** Whether a component's code is another repository's, so none of it lies here, RFC fhg6w. */
+let elsewhere = name => given->Dict.get(name)->Option.isSome
 
 let permissive = "MIT OR Apache-2.0"
 
@@ -640,7 +620,7 @@ let permissive = "MIT OR Apache-2.0"
  * after `?`, and the row that declares them. A tablet's copies speak among themselves -- WAL frames
  * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
  */
-let undeclared: array<(string, string)> = [
+let ownUndeclared: array<(string, string)> = [
   (
     "storage",
     "the storage product's interface, an app's: buckets, files and objects, and publish, vr5lw [B32]",
@@ -648,10 +628,7 @@ let undeclared: array<(string, string)> = [
   ("compute", "the compute product's deployment of an app, its types and call graph checked [B32]"),
   ("migration", "a database's migration window, which a deployment opens, zn3u5 [B32]"),
   ("control(organization)", "an organization's control's configuration API, v7v3w [B32]"),
-  (
-    "control(platform)",
-    "the platform's control's API, and what an organization's copies down each day, v7v3w [B32]",
-  ),
+  ("authority", "what an organization's control copies down of its authority, 7xpd3 [B35]"),
   (
     "blob",
     "the blob's interface: content put and read by its hash, a sweep, an archive, b8f35 [B32]",
@@ -668,11 +645,14 @@ let undeclared: array<(string, string)> = [
     "the extent's interface: which pieces a content is made of and where each is packed, b8f35 [B32]",
   ),
   (
-    "anchor",
-    "the anchor's interface and its rows, a scope's id and where its backing is kept, b8f35 [B32]",
+    "directory",
+    "the directory's rows: a scope's id, its status and where its backing is, 4dijn [B39]",
   ),
   (
     "copies",
     "a tablet's copies among themselves: WAL frames from a primary, a generation taken by a majority, vuanj [B32]",
   ),
 ]
+
+/** Every contract undeclared, with those the platform half's own components name, RFC 8lkuv. */
+let undeclared = Array.concat(ownUndeclared, Fill.part("undeclared")->Option.getOr([]))

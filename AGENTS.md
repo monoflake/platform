@@ -30,7 +30,9 @@ vendor/     other projects' files, copied at one version and left as written
 
 - **What a user runs is here, MIT OR Apache-2.0; what runs it as the hosted platform is not**:
   `control(platform)`, `anchor`, `console` and the two deployments' configuration are the private
-  `monoflake/cloud`'s, RFC fhg6w.
+  `monoflake/cloud`'s, RFC fhg6w. Here the platform half is two roles, `authority` and
+  `directory`, assumptions on their contracts; cloud fills them, and its `mise run check` is the
+  whole model, RFC 8lkuv.
 - **The model is the spec**: what a draft decides is written once in `model/`, and the draft keeps
   why. `model/contracts.json` is what every language reads.
 - **A script in `scripts/` decides only order**; one that begins to compute hands that part to a

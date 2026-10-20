@@ -76,7 +76,10 @@ let order = (when_: Components.edge => bool): array<string> => {
     }
   components
   ->Dict.keysToArray
-  ->Array.toSorted((a, b) => Int.toFloat(layerOf(a) - layerOf(b)))
+  // By layer, then by name, so the order is the graph's and not where each part was declared.
+  ->Array.toSorted((a, b) =>
+    layerOf(a) == layerOf(b) ? byText(a, b) : Int.toFloat(layerOf(a) - layerOf(b))
+  )
   ->Array.forEach(visit)
   out
 }

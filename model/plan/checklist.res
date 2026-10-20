@@ -293,6 +293,7 @@ let checklist: array<item> = [
     group: #B,
     what: "the two roles' names: `authority` for what the platform's control is to an organization's, `directory` for what the anchor is to a scope and its backing, or others",
     from: "8lkuv",
+    done: "8lkuv",
   },
   {
     id: "B34",
