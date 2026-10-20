@@ -1,0 +1,50 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a database writes while a majority of its copies is alive, and is read-only below it",
+			"copies": 3,
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "CREATE TABLE t (i INTEGER)" },
+							{ "sql": "INSERT INTO t VALUES (1)" }
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": [], "rows": [], "changed": 0 },
+								{ "columns": [], "rows": [], "changed": 1 }
+							]
+						}
+					}
+				},
+				{ "lose": 1 },
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "INSERT INTO t VALUES (2)" }] },
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 1 }] } }
+				},
+				{ "lose": 1 },
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "INSERT INTO t VALUES (3)" }] },
+					"expect": { "failure": "unavailable", "reason": "read_only" }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT count(*) AS n FROM t" }] },
+					"expect": {
+						"output": {
+							"results": [{ "columns": ["n"], "rows": { "$any": null }, "changed": 0 }],
+							"behind": true
+						}
+					}
+				}
+			]
+		}
+	]
+}

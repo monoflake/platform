@@ -2450,6 +2450,14 @@
 							"type": "database-result"
 						}
 					}
+				},
+				{
+					"name": "behind",
+					"key": 2,
+					"shape": {
+						"prim": "bool"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -3189,7 +3197,7 @@
 			]
 		},
 		"database": {
-			"version": 2,
+			"version": 3,
 			"bounds": {},
 			"declared": ["statement"],
 			"operations": [
@@ -3216,6 +3224,10 @@
 						},
 						{
 							"name": "storage_full",
+							"failure": "unavailable"
+						},
+						{
+							"name": "read_only",
 							"failure": "unavailable"
 						}
 					]

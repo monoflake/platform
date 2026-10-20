@@ -391,7 +391,9 @@ management interface below, RFC fhg6w.
   by a statement and filled with spaces with `$text`, a length past a bound among them -- one the
   contract fixes, as an object's 16 MiB, or one each driver declares, as a statement's size, which
   a runner asks the driver under test for [D8] -- so a case past a bound is written once for every
-  driver; a case may be `given` the capacity of its kind it starts with; and a step
+  driver; a case may be `given` the capacity of its kind it starts with; a database's case may be
+  held on `copies`, run where a tablet's copies stand on machines, and a step may `lose` some of
+  them, RFC vuanj; and a step
   may be answered `within` some milliseconds, called again until it is answered as expected, as
   what a driver makes is made in a while. Each case starts from nothing, and an output expected is
   the whole output.

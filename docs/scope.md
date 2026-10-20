@@ -37,6 +37,12 @@ operator's mistake is out of the model.
 What is already running needs nothing from the control plane to go on running; when the control
 plane returns, it takes over again.
 
+**Idle costs nothing beneath.** Decided by the author on 2026-10-20: what runs keeps its steady
+state among its own parts, and asks what lies beneath it only when something changes or fails,
+never polling it while all is well -- a tablet's copies keep their primary's lease among
+themselves, and reach the footing only to take one over, RFC vuanj. So a platform at rest writes
+no row of any footing, which `model/checks/design/load.res` holds.
+
 **What a problem is.** A rule of a dimension broken, within the failure model of the version in
 force. What lies outside the failure model is out of the model, written down and not designed for;
 what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a problem.

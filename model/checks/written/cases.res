@@ -2,8 +2,9 @@
  * The samples in `tests/`, RFC vr5lw: data alone, which any language reads, held here to the
  * contracts they sample. A behavior file is an interface's cases, each a list of steps -- an
  * operation called with an input, and its output or its failure expected; a codec file is values in
- * JSON beside their CBOR, and inputs every reader must refuse. Every operation and every reason of
- * an interface with samples must be sampled.
+ * JSON beside their CBOR, and inputs every reader must refuse. A database's case may be held on
+ * `copies`, and a step `lose` some of them. Every operation and every reason of an interface with
+ * samples must be sampled.
  */
 open Base
 
@@ -345,6 +346,19 @@ let run = () => {
             | _ => ()
             }
           }
+          // The copies a database's case is held on, which a step may then lose, vuanj.
+          let copies = switch c->member("copies") {
+          | None => None
+          | Some(Number(n))
+            if name == "database" && isInteger(n, 1., Int.toFloat(Database.copiesMost)) =>
+            Some(n)
+          | Some(_) =>
+            found->Array.push(
+              `${at}: copies, from 1 to ${int(Database.copiesMost)} and a database's alone`,
+            )
+            None
+          }
+          let lost = ref(0.)
           let steps = items(c->member("steps"))
           if steps == [] {
             found->Array.push(`${at}: no steps`)
@@ -449,6 +463,13 @@ let run = () => {
                   | _ => expectFailure(at, Array.concat(Calls.calling, Calls.common), e, "calling")
                   }
                 | None => found->Array.push(`${at}: expects nothing`)
+                }
+              // A step that loses some of the copies its case is held on, so a sample may ask of fewer.
+              | (None, None) if st->member("lose") != None =>
+                switch (st->member("lose"), copies) {
+                | (Some(Number(k)), Some(n)) if isInteger(k, 1., n -. lost.contents) =>
+                  lost := lost.contents +. k
+                | _ => found->Array.push(`${at}: lose, more copies than the case holds alive`)
                 }
               // A step that only waits, so a sample may ask of a time past.
               | (None, None) if st->member("wait") != None =>

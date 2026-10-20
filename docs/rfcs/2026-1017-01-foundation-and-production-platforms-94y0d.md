@@ -79,8 +79,8 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 - What the driver runs for the foundation platform is given reserved CPU and memory, so the
   production platform's cannot starve it.
 - The foundation platform's `instance` compute is the hosts on machines a provider runs, never a
-  vendor's runtime that offers it, and stands on at least two machines, so a writer can be handed
-  over when one is lost or slowed.
+  vendor's runtime that offers it, and stands on at least three machines, so a majority of a
+  tablet's copies outlives one lost and a primary is handed over, RFC vuanj.
 
 **The platform is built in steps, each first making the next move of the pin cheaper**, and
 `model/bootstrap/steps.res` checks every step and every move, `docs/scope.md`:
@@ -108,9 +108,11 @@ its own bundle, credentials and directory, sharing nothing but the machine.
   control makes and a command or secret the operator enters, RFC vr5lw, so day one runs the code a
   user's binding runs and no path used once. The platform's own vendor accounts are never bound,
   RFC v7v3w, which is why they alone are by hand.
-- **Step 0 binds three machines**: two of four cores and 24 GB, the two `instance` needs so a
-  writer is handed over when one is lost, and one of 1 to 2 GB, since most machines a small team
-  brings are that size, and a driver that fails on one should fail on day one. The author holds
+- **Step 0 binds three machines**: two of four cores and 24 GB and one of 1 to 2 GB, since most
+  machines a small team brings are that size, and a driver that fails on one should fail on day
+  one. **Each of the foundation platform's tablets on machines keeps three copies, one on each**,
+  the small one among them, decided by the author on 2026-10-20: what step 0 holds is small, and
+  proves the shape, so a majority of two outlives any one machine lost, RFC vuanj. The author holds
   about ten more, kept for the steps that ask for them.
 - **The vendor's paid plan is held from step 0**: the author took Cloudflare's on 2026-10-19, $5 a
   month and use past it, which brings D1 at 10 GB and CPU time past 10 ms, `docs/lessons/`; more is

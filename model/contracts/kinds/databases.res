@@ -57,17 +57,25 @@ let types: array<declared> = [
     def: Record([field("before", 1, Prim(#uint53))]),
     from: "zn3u5, vr5lw",
   },
+  // `behind` where read from fewer copies than a majority, which may lack a write done, vuanj.
   {
     name: "database-executed",
-    def: Record([field("results", 1, List(Type("database-result")))]),
-    from: "zn3u5",
+    def: Record([
+      field("results", 1, List(Type("database-result"))),
+      optional("behind", 2, Prim(#bool)),
+    ]),
+    from: "zn3u5, vuanj",
   },
 ]
 
-/** A batch that fails changes nothing, zn3u5; `index` of the failing statement is in the message. */
+/**
+ * A batch that fails changes nothing, zn3u5; `index` of the failing statement is in the message.
+ * A database on fewer of its copies alive than a majority is read-only, vuanj: a batch that writes
+ * fails as `read_only`, and one that only reads is answered `behind`.
+ */
 let interface_: interface_ = {
   name: "database",
-  version: 2,
+  version: 3,
   declared: ["statement"],
   from: "zn3u5, vr5lw",
   operations: [
@@ -81,6 +89,7 @@ let interface_: interface_ = {
         ("beyond_limit", #rejected),
         ("beyond_range", #rejected),
         ("storage_full", #unavailable),
+        ("read_only", #unavailable),
       ],
     ),
     op("rewind", "database-rewind", "database-rewound", [("beyond_window", #rejected)]),

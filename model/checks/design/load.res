@@ -3,7 +3,7 @@ open Base
 
 let run = () => {
   // The footing, RFC b8f35: what it keeps must be bounded, and what each step asks of the vendor's
-  // plan is counted in rows a day, the load of an idle platform alone a violation past the plan.
+  // plan is counted in rows a day, an idle platform's any row at all a violation, docs/scope.md.
   let rows = Footing.rows
   let assumed = Footing.assumed
   let footing = []
@@ -29,11 +29,13 @@ let run = () => {
     let idle = own +. theirs
     let plan = step.foundation.plan->Option.getOr(#free)
     let allowed = Footing.allowed(plan)
-    if idle > allowed {
+
+    // Idle costs nothing beneath, docs/scope.md: a platform at rest writes no row of a footing.
+    if idle > 0. {
       footing->Array.push(
         `step ${int(i)}: an idle platform writes ${round(
             idle,
-          )} rows a day, past the ${(plan :> string)} plan's ${round(allowed)}`,
+          )} rows a day of the ${(plan :> string)} plan's ${round(allowed)}, where none is asked`,
       )
     }
     let left = Math.max(allowed -. idle, 0.)
@@ -45,7 +47,7 @@ let run = () => {
   })
   dimension(
     "Footing",
-    "Is what each footing keeps bounded, and does each step fit the rows a day its plan allows?",
+    "Is what each footing keeps bounded, and does an idle platform write none of its rows at any step?",
     footing,
     ~notes=[
       Footing.kept
