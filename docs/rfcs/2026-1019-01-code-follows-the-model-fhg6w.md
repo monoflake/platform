@@ -116,6 +116,14 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   half and every layer above it the organization's, so `control(organization)` is
   `products/control` and `control(platform)` `platform/control`.
 - **A library's language is a property the model declares, never a directory.**
+- **Each component declares its language in the model**, decided by the author on 2026-10-19, and
+  the language follows from where it must run: ReScript for what must run on a Worker, which then
+  runs in `workerd` on a machine alike, and Rust for what runs only natively on a machine. Since an
+  organization's resources may be Cloudflare's, every component but `machine-driver` is ReScript;
+  an app's code is its user's and the root runs nothing, so neither declares one.
+  `model/checks/code.res` holds that each component's code lies in its layer's directory, named as
+  the model names it, that its manifest is its language's, and that it uses only libraries of its
+  own language.
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
 a claim of a CWT**, in one shape a contract at a time, its CBOR deterministic by RFC 8949's 4.2.
@@ -191,8 +199,6 @@ them, whoever wrote it.
 
 Open, for the discussion that follows:
 
-- Which language each component of the model is written in, declared in the model beside the component, and
-  the check that a component uses only libraries of its own language. [B24]
 - How the repository is laid out past what is drawn, so cargo, ReScript's compiler and the
   JavaScript tools build one tree. [B26]
 - How bytes are written in JSON, and which library is JavaScript's CBOR. [B29]

@@ -313,6 +313,15 @@ one code is both.
   database keeps, and remove the driver, which nothing prevents; only what storage keeps is sealed
   against them, RFC b8f35.
 
+**A driver is a component of its vendor's own**, worked out with the author on 2026-10-19:
+`machine-driver` in Rust, for what a machine gives by its own APIs, and `cloudflare-driver` in
+ReScript, for what an account gives by Cloudflare's, each at layer -2 beside the host they run,
+`model/graph/components.res`. Neither does the other's work, since neither vendor has the other's
+abstractions: they are two components, never one written twice. **What both answer the
+organization's half is one contract the model declares**, generated for each, and a test runs that
+contract's cases against both drivers' HTTP APIs, so the two are held to one interface; the contract
+itself is open. [B30]
+
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.
 
@@ -672,6 +681,8 @@ third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
+- The drivers' contract: what the organization's half calls a driver for, declared in
+  `model/contracts/`, and the test that runs its cases against both drivers. [B30]
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]

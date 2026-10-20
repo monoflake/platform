@@ -259,6 +259,7 @@ let checklist: array<item> = [
     group: #B,
     what: "which language of three each component of the model is written in, declared in the model beside the component, and the check that a component uses only libraries of its own language, fhg6w",
     from: "fhg6w",
+    done: "fhg6w: declared beside each component, ReScript but machine-driver's Rust; model/checks/code.res",
   },
   {
     id: "B25",
@@ -292,6 +293,12 @@ let checklist: array<item> = [
     group: #B,
     what: "how bytes are written in a contract's JSON, and which library is JavaScript's CBOR, held to the standards' tests; the subset's integers are decided, fhg6w",
     from: "fhg6w",
+  },
+  {
+    id: "B30",
+    group: #B,
+    what: "the drivers' contract: what the organization's half calls machine-driver and cloudflare-driver for, declared in model/contracts/, and the test that runs its cases against both drivers' HTTP APIs, vr5lw",
+    from: "vr5lw",
   },
   {
     id: "C1",

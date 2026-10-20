@@ -45,6 +45,12 @@ type component = {
   asOwner?: bool,
   /** Which half runs it, RFC v7v3w; the root runs nothing, so it has none. */
   half?: half,
+  /**
+   * The language its code is written in, RFC fhg6w: ReScript for what must run on a Worker, which
+   * runs in `workerd` on a machine alike, and Rust for what runs only natively on one. None where
+   * the code is not the platform's: an app is its user's, and the root runs nothing.
+   */
+  language?: [#rust | #rescript],
   edges: array<edge>,
   uses: array<string>,
 }
@@ -88,6 +94,7 @@ let components: dict<component> = dict{
     uses: [],
   },
   "console": {
+    language: #rescript,
     layer: 1,
     asOwner: true,
     half: #organization,
@@ -113,6 +120,7 @@ let components: dict<component> = dict{
     uses: [],
   },
   "control(organization)": {
+    language: #rescript,
     layer: 0,
     control: true,
     half: #organization,
@@ -146,6 +154,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "vocabulary*", "wit*", "extensions*", "placement*", "compat*"],
   },
   "storage": {
+    language: #rescript,
     layer: 0,
     half: #organization,
     edges: [
@@ -174,6 +183,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "compat*"],
   },
   "database": {
+    language: #rescript,
     layer: 0,
     half: #organization,
     edges: [
@@ -192,6 +202,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "compat*"],
   },
   "compute": {
+    language: #rescript,
     layer: 0,
     half: #organization,
     edges: [
@@ -235,6 +246,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "vocabulary*", "wit*", "compat*"],
   },
   "scope": {
+    language: #rescript,
     layer: -1,
     half: #organization,
     edges: [
@@ -255,6 +267,7 @@ let components: dict<component> = dict{
     uses: ["compat*"],
   },
   "issuer": {
+    language: #rescript,
     layer: -1,
     half: #organization,
     edges: [
@@ -275,6 +288,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "vocabulary*", "compat*"],
   },
   "tablet": {
+    language: #rescript,
     layer: -1,
     keeps: true,
     half: #organization,
@@ -295,6 +309,7 @@ let components: dict<component> = dict{
     uses: ["sqlite*", "capability*", "compat*"],
   },
   "blob": {
+    language: #rescript,
     layer: -1,
     keeps: true,
     half: #organization,
@@ -327,6 +342,7 @@ let components: dict<component> = dict{
     uses: ["placement*", "layout*", "keys*", "capability*", "compat*"],
   },
   "executor": {
+    language: #rescript,
     layer: -1,
     half: #organization,
     edges: [
@@ -344,6 +360,7 @@ let components: dict<component> = dict{
     uses: ["vocabulary*", "compat*"],
   },
   "backing": {
+    language: #rescript,
     layer: -2,
     keeps: true,
     half: #organization,
@@ -362,6 +379,7 @@ let components: dict<component> = dict{
     uses: ["capability*", "compat*"],
   },
   "extent": {
+    language: #rescript,
     layer: -2,
     keeps: true,
     half: #organization,
@@ -373,12 +391,49 @@ let components: dict<component> = dict{
     uses: ["placement*", "compat*"],
   },
   "host": {
+    language: #rescript,
     layer: -2,
     half: #organization,
-    edges: [replaced, e("vendor", #serve, hard, "runs sandboxes on a machine or a runtime")],
+    edges: [
+      replaced,
+      e("machine-driver", #serve, hard, "on a machine, the processes its driver runs, vr5lw"),
+      e("cloudflare-driver", #serve, hard, "on Cloudflare, the Workers its driver makes, b8f35"),
+    ],
     uses: ["vocabulary*", "compat*"],
   },
+  /* A driver of each kind keeps what its vendor gives and nothing of the other's: the two answer the organization's half by one contract the model declares [B30]. */
+  "machine-driver": {
+    language: #rust,
+    layer: -2,
+    half: #organization,
+    edges: [
+      replaced,
+      e(
+        "vendor",
+        #serve,
+        hard,
+        "a machine's containerd, its firewall and its disk, by their own APIs, vr5lw",
+      ),
+    ],
+    uses: [],
+  },
+  "cloudflare-driver": {
+    language: #rescript,
+    layer: -2,
+    half: #organization,
+    edges: [
+      replaced,
+      e(
+        "vendor",
+        #serve,
+        hard,
+        "an account's Workers, D1 and R2, made and bound through Cloudflare's API, b8f35",
+      ),
+    ],
+    uses: [],
+  },
   "anchor": {
+    language: #rescript,
     layer: -3,
     keeps: true,
     half: #platform,
@@ -386,6 +441,7 @@ let components: dict<component> = dict{
     uses: ["compat*"],
   },
   "control(platform)": {
+    language: #rescript,
     layer: -3,
     control: true,
     half: #platform,
