@@ -51,13 +51,13 @@ let types: array<declared> = [
     ]),
     from: "v7v3w, vuanj, 94y0d",
   },
-  // The lessor's side of a lease: the extension it leased of, the organization it leased to, and the
-  // quota; the lessee holds it as an extension, its lessor named.
+  // The lender's side of a loan: the extension it lent of, the organization it lent to, and the
+  // quota; the borrower holds it as an extension, its lender named. A lease is a clock's lock.
   {
-    name: "lease",
+    name: "loan",
     def: Record([
       field("extension", 1, Id("extension")),
-      field("lessee", 2, Id("organization")),
+      field("borrower", 2, Id("organization")),
       field("quota", 3, Prim(#uint53)),
     ]),
     from: "v7v3w",
@@ -111,8 +111,8 @@ let types: array<declared> = [
 let contents: array<content> = [
   {half: #platform, kind: "account", version: 1, content: "account"},
   {half: #platform, kind: "organization", version: 2, content: "platform-organization"},
-  {half: #platform, kind: "extension", version: 1, content: "extension"},
-  {half: #platform, kind: "lease", version: 1, content: "lease"},
+  {half: #platform, kind: "extension", version: 2, content: "extension"},
+  {half: #platform, kind: "loan", version: 1, content: "loan"},
   {half: #platform, kind: "label", version: 1, content: "label", unique: [["label"]]},
   {half: #platform, kind: "username", version: 1, content: "username", unique: [["username"]]},
   {

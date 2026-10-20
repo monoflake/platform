@@ -13,6 +13,7 @@ let types: array<declared> = Array.flat([
   Compute.types,
   Control.types,
   Platform.types,
+  Tables.types,
   Signed.types,
   Objects.types,
   Databases.types,
@@ -25,6 +26,7 @@ let contents: array<content> = Array.flat([
   Compute.contents,
   Control.contents,
   Platform.contents,
+  Tables.contents,
 ])
 let interfaces: array<interface_> = [
   Objects.interface_,

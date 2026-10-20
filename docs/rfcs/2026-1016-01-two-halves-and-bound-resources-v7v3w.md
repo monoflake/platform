@@ -21,11 +21,11 @@ The shape the discussion has reached so far:
 **Layer 0 is a contract, and runs nowhere itself.** The components that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                             |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it leases of them, the deployer, the intermediate, the anchor, the root        |
-| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those leased to it, and the records its components keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
-| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                                       |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                           |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it lends of them, the deployer, the intermediate, the anchor, the root       |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those lent to it, and the records its components keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                                     |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -276,7 +276,7 @@ service's, or a node.
   is made.
 - **An organization has at least one admin.** The last admin leaving is the organization dissolved,
   done only once everything running in it has been removed, from the leaves inward, RFC vuanj.
-- **An organization runs nothing until a resource is bound or leased to it.**
+- **An organization runs nothing until a resource is bound or lent to it.**
 - **Both controls bind extensions, by one piece of code**, worked out with the author on
   2026-10-18. The platform's control and each organization's hold their own extensions alike --
   each host's binding and its credentials, the binding's quota, levels and grace, the relays and
@@ -290,17 +290,18 @@ service's, or a node.
     have a public address; a management token and a shell key, sealed, where given; and the
     warnings its admin dismissed, a dismissal being configuration.
   - **An organization's `grace` is what its bindings inherit**, a week unless set, RFC vr5lw.
-- **A control may lease what it binds, and then manages what it leased and nothing more.** It opens
-  a binding of its own host for the lessee, sets its quota, and hands over that binding's token;
-  the lessee holds the lease as any binding, by the same code, and reaches the host only within it.
-  The lessor keeps the host's management token, and with it the host's own configuration -- its
-  records, its shell, its grace -- and touches nothing else of the lessee's. A driver is told
-  nothing of a lease: it sees one binding more. The platform leases to its organizations.
-  - **A lease is a record on either side**, worked out with the author on 2026-10-19: the lessor's
-    `lease` names the extension it leased of, the lessee organization and the quota; the lessee's is an
-    `extension` like any, whose `lessor` names who leased it, so its control knows the host's
-    management token and shell key are the lessor's, never its own, and the console shows it
-    leased.
+- **A control may lend what it binds, and then manages what it lent and nothing more.** It opens
+  a binding of its own host for the borrower, sets its quota, and hands over that binding's token;
+  the borrower holds the loan as any binding, by the same code, and reaches the host only within it.
+  The lender keeps the host's management token, and with it the host's own configuration -- its
+  records, its shell, its grace -- and touches nothing else of the borrower's. A driver is told
+  nothing of a loan: it sees one binding more. The platform lends to its organizations. **It is
+  named a loan**, decided by the author on 2026-10-20, as a lease is a clock's lock, b8f35.
+  - **A loan is a record on either side**, worked out with the author on 2026-10-19: the lender's
+    `loan` names the extension it lent of, the borrower organization and the quota; the borrower's
+    is an `extension` like any, whose `lender` names who lent it, so its control knows the host's
+    management token and shell key are the lender's, never its own, and the console shows it
+    lent.
 - **Each organization's control stands on its footing; its apps stand on its extensions**, RFC
   vr5lw. Its footing is one compute, one storage and one database the platform gives it, never an
   extension; its extensions give compute, storage and databases, a database only in the platform's
@@ -355,13 +356,13 @@ configuration; its extensions hold its data and run it.**
   run time, RFC zn3u5 -- and an extension bound, through the control that binds it. Data is only what
   lives inside what was opened.
 - **Two truths, each changed in one place.** The platform's control holds each organization's
-  existence, allowance and certificate, and what it leases it; the organization's own control
+  existence, allowance and certificate, and what it lends it; the organization's own control
   holds its products' configuration and its own extensions, and makes its three products of them as
   it likes, which is the organization's business and none of the platform's. The platform's control
-  lost, no organization is added and nothing is leased anew, and nothing else stops: an
+  lost, no organization is added and nothing is lent anew, and nothing else stops: an
   organization's control goes on binding its own extensions and opening what they can hold.
 - **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the
-  root. The platform's gives an organization its certificate, allowance and leases, each day
+  root. The platform's gives an organization its certificate, allowance and loans, each day
   and on a change; the organization's control compiles its own configuration with it into the
   bundle its components serve from and from nothing else -- its grants, its allowance, its schedules, its
   backing, the policy placement follows. **Both are kept in the organization's footing**, and a

@@ -28,7 +28,7 @@ let records: array<held> = [
   {half: #organization, kind: "extension", writes: ["control(organization)"], from: "v7v3w"},
   /* A share of what an extension holds, an item of its driver's list, vr5lw. */
   {half: #organization, kind: "capacity", writes: ["control(organization)"], from: "vr5lw"},
-  {half: #platform, kind: "lease", writes: ["control(platform)"], from: "v7v3w"},
+  {half: #platform, kind: "loan", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "account", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "organization", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "label", writes: ["control(platform)"], from: "v7v3w, vr5lw"},
@@ -36,13 +36,24 @@ let records: array<held> = [
   {half: #platform, kind: "sign-in", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "membership", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "domain", writes: ["control(platform)"], from: "vr5lw"},
-  {half: #organization, kind: "file", writes: ["storage"], from: "13ixj"},
-  {half: #organization, kind: "row", writes: ["database"], from: "zn3u5"},
-  {half: #organization, kind: "log", writes: ["tablet"], from: "vuanj"},
-  {half: #organization, kind: "extent", writes: ["blob"], from: "b8f35"},
-  {half: #organization, kind: "call", writes: ["compute"], from: "49qyg"},
-  {half: #organization, kind: "message", writes: ["compute"], from: "49qyg"},
-  {half: #organization, kind: "repeat", writes: ["compute"], from: "49qyg, v7v3w"},
+  /* A footing's own tables, b8f35, each its keys and one versioned record; a product's tablet
+   * holds rows of its own schema, a migration's to change, and an app's database its app's, so
+   * neither is a kind of record here. */
+  {
+    half: #organization,
+    kind: "generation",
+    writes: ["control(organization)"],
+    from: "b8f35, v7v3w",
+  },
+  {half: #organization, kind: "store", writes: ["control(organization)"], from: "b8f35"},
+  {half: #organization, kind: "content", writes: ["blob"], from: "b8f35"},
+  {half: #organization, kind: "piece", writes: ["blob"], from: "b8f35"},
+  {half: #organization, kind: "parcel", writes: ["blob"], from: "b8f35"},
+  {half: #organization, kind: "journal", writes: ["blob"], from: "b8f35"},
+  {half: #organization, kind: "log", writes: ["tablet"], from: "b8f35, vuanj"},
+  {half: #organization, kind: "writer", writes: ["tablet"], from: "b8f35, vuanj"},
+  /* A clock's lock: who holds a name, and until when, v7v3w, vr5lw. */
+  {half: #organization, kind: "lease", writes: ["compute", "executor"], from: "b8f35, v7v3w"},
 ]
 
 /** The kind of record of a half by its name. */

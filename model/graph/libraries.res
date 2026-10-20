@@ -63,7 +63,7 @@ let libraries: dict<library> = dict{
   },
   "extensions*": {
     languages: [#rescript],
-    what: "a control's extensions: each host's binding, its credentials, quota, levels and grace, the networks its hosts may use, the capacity lists sent to drivers, and what it leases, the same code in both controls, v7v3w",
+    what: "a control's extensions: each host's binding, its credentials, quota, levels and grace, the networks its hosts may use, the capacity lists sent to drivers, and what it lends, the same code in both controls, v7v3w",
     agrees: false,
     uses: ["compat*"],
   },

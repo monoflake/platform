@@ -113,8 +113,8 @@ full, and SQLite's default page of 4 KiB, which D1 does not say it departs from,
 | restored from a snapshot at 200 MB a second       | under a minute                                                          |
 
 - **This is the one bound the platform sets of itself**: the footing is what an organization's
-  control stands on, the platform's to give, RFC vr5lw; whatever else it uses is leased or its own,
-  and the platform counts neither, a resource leased and one brought alike. What a platform
+  control stands on, the platform's to give, RFC vr5lw; whatever else it uses is lent or its own,
+  and the platform counts neither, a resource lent and one brought alike. What a platform
   beneath exports is bounded there, by an app of its organizations', RFC vr5lw.
 - **An organization holds at most 30 TB in all**, on every resource it uses together, every copy
   counted as the bytes it takes, so 30 TB is reached before the footing's pieces for files of the
@@ -149,7 +149,10 @@ move by a sweep, and the old one is dropped once no reader running needs it, RFC
 
 The platform's footing holds the same, and `anchor`, `account`, `label`, `username`, `sign-in`,
 `membership` and `domain` beside them, RFC v7v3w. The tables are the
-footing's own, and published nowhere.
+footing's own, and published nowhere. Each is declared in `model/contracts/records/`, its key the fields its
+content names `unique`, decided by the author on 2026-10-20: the control's records in the rest,
+these others in `tables.res`. **A tablet's rows are no table of a footing's**, its product's own
+schema in SQLite's dialect, changed by a migration; nor is an app's database, its app's.
 
 **On Cloudflare a footing is D1 behind a footing Worker of the same account.** A Worker reaches it
 by a service binding, a host on a machine over HTTPS with a capability, and nothing by D1's REST

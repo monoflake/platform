@@ -136,7 +136,7 @@ let components: dict<component> = dict{
         "control(platform)",
         #deploy,
         hard,
-        "its certificate, allowance and leases, copied down each day and on a change",
+        "its certificate, allowance and loans, copied down each day and on a change",
       ),
       e(
         "compute",

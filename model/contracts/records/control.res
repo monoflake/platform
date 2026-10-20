@@ -123,9 +123,9 @@ let types: array<declared> = [
     ]),
     from: "13ixj, v7v3w",
   },
-  // Who leased the extension, whose management token and shell key are the lessor's and never its own.
+  // Who lent the extension, whose management token and shell key are the lender's and never its own.
   {
-    name: "extension-lessor",
+    name: "extension-lender",
     def: Union({tag: "name", cases: [{name: "platform", code: 1, fields: []}]}),
     from: "v7v3w",
   },
@@ -164,7 +164,7 @@ let types: array<declared> = [
       optional("management", 10, Prim(#bytes)),
       optional("shell", 11, Prim(#bytes)),
       field("dismissed", 12, List(Prim(#string))),
-      optional("lessor", 13, Type("extension-lessor")),
+      optional("lender", 13, Type("extension-lender")),
     ]),
     from: "v7v3w, vr5lw",
   },
@@ -195,6 +195,6 @@ let contents: array<content> = [
   },
   {half: #organization, kind: "name", version: 1, content: "name"},
   {half: #organization, kind: "scope", version: 1, content: "scope", unique: [["scope"]]},
-  {half: #organization, kind: "extension", version: 1, content: "extension"},
+  {half: #organization, kind: "extension", version: 2, content: "extension"},
   {half: #organization, kind: "capacity", version: 1, content: "capacity"},
 ]

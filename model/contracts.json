@@ -888,7 +888,7 @@
 				}
 			]
 		},
-		"extension-lessor": {
+		"extension-lender": {
 			"union": {
 				"tag": "name",
 				"cases": [
@@ -1028,10 +1028,10 @@
 					}
 				},
 				{
-					"name": "lessor",
+					"name": "lender",
 					"key": 13,
 					"shape": {
-						"type": "extension-lessor"
+						"type": "extension-lender"
 					},
 					"optional": true
 				}
@@ -1219,7 +1219,7 @@
 				}
 			]
 		},
-		"lease": {
+		"loan": {
 			"record": [
 				{
 					"name": "description",
@@ -1237,7 +1237,7 @@
 					}
 				},
 				{
-					"name": "lessee",
+					"name": "borrower",
 					"key": 2,
 					"shape": {
 						"id": "organization"
@@ -1410,6 +1410,303 @@
 					"key": 2,
 					"shape": {
 						"id": "organization"
+					}
+				},
+				{
+					"name": "until",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"generation": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "time",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "actor",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "reverts",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"store": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "store",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "address",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "secret",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "weight",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "levels",
+					"key": 5,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "place",
+					"key": 6,
+					"shape": {
+						"type": "extension-place"
+					}
+				}
+			]
+		},
+		"content": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "pieces",
+					"key": 2,
+					"shape": {
+						"list": {
+							"prim": "hash"
+						}
+					}
+				}
+			]
+		},
+		"piece": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "parcel",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "offset",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "length",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "compressed",
+					"key": 5,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"parcel": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "parcel",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "store",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"journal": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "placement",
+					"key": 1,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "open",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "frozen",
+					"key": 3,
+					"shape": {
+						"prim": "hash"
+					},
+					"optional": true
+				}
+			]
+		},
+		"writer": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "tablet",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "holder",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"lease": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "holder",
+					"key": 2,
+					"shape": {
+						"prim": "string"
 					}
 				},
 				{
@@ -3065,7 +3362,7 @@
 			"kind": "extension",
 			"half": "organization",
 			"writes": ["control(organization)"],
-			"version": 1,
+			"version": 2,
 			"content": "extension",
 			"unique": []
 		},
@@ -3097,16 +3394,16 @@
 			"kind": "extension",
 			"half": "platform",
 			"writes": ["control(platform)"],
-			"version": 1,
+			"version": 2,
 			"content": "extension",
 			"unique": []
 		},
 		{
-			"kind": "lease",
+			"kind": "loan",
 			"half": "platform",
 			"writes": ["control(platform)"],
 			"version": 1,
-			"content": "lease",
+			"content": "loan",
 			"unique": []
 		},
 		{
@@ -3148,6 +3445,70 @@
 			"version": 1,
 			"content": "domain",
 			"unique": [["domain"]]
+		},
+		{
+			"kind": "generation",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "generation",
+			"unique": [["generation"]]
+		},
+		{
+			"kind": "store",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "store",
+			"unique": [["store"]]
+		},
+		{
+			"kind": "content",
+			"half": "organization",
+			"writes": ["blob"],
+			"version": 1,
+			"content": "content",
+			"unique": [["hash"]]
+		},
+		{
+			"kind": "piece",
+			"half": "organization",
+			"writes": ["blob"],
+			"version": 1,
+			"content": "piece",
+			"unique": [["hash"]]
+		},
+		{
+			"kind": "parcel",
+			"half": "organization",
+			"writes": ["blob"],
+			"version": 1,
+			"content": "parcel",
+			"unique": [["parcel"]]
+		},
+		{
+			"kind": "journal",
+			"half": "organization",
+			"writes": ["blob"],
+			"version": 1,
+			"content": "journal",
+			"unique": [["placement"]]
+		},
+		{
+			"kind": "writer",
+			"half": "organization",
+			"writes": ["tablet"],
+			"version": 1,
+			"content": "writer",
+			"unique": [["tablet"]]
+		},
+		{
+			"kind": "lease",
+			"half": "organization",
+			"writes": ["compute", "executor"],
+			"version": 1,
+			"content": "lease",
+			"unique": [["name"]]
 		}
 	]
 }
