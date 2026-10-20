@@ -74,7 +74,7 @@ as it stands on a vendor, RFC 94y0d.
 
   The bridge runs cases of its own, by an S3 client. A store that speaks S3 taken from beneath, as
   a footing's snapshots are written to, RFC v7v3w, is the bridge the other way: an S3 client
-  wrapped as an `object` store, built with the snapshots.
+  wrapped as an `object` store, wanted by the author and not yet urgent. [C35]
 
 - **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
   compute and a volume, below; a bucket of compute, `object` stores and a database, its records'

@@ -540,6 +540,13 @@ let checklist: array<item> = [
     done: "vr5lw: the scope id, and every name beneath its domain",
   },
   {
+    id: "C35",
+    group: #C,
+    what: "the S3 bridge the other way: an S3 client wrapped as an object store, for a footing's snapshots and for a store that speaks S3 bound from beneath, held to object's cases",
+    from: "vr5lw, v7v3w",
+    step: 6,
+  },
+  {
     id: "D1",
     group: #D,
     what: "the app that charges, an organization's on the foundation platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
