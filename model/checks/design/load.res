@@ -63,6 +63,7 @@ let run = () => {
           )} organizations of the foundation platform's own`,
       ],
       load,
+      steps == [] ? ["no step given: each step's load is read where the path is, RFC 8lkuv"] : [],
     ]->Array.flat,
     (),
   )

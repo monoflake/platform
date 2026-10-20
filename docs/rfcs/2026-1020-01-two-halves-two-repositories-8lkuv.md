@@ -35,7 +35,8 @@ a scope and its backing, RFC 4dijn. Their contracts are drafts until each questi
 and a role's contract left open is listed as undeclared, as one is today.
 
 **`monoflake/cloud`'s model depends on this one's and fills each role exactly once**, by a component
-of the same layer, half and contracts, which brings its own edges, language and records. The whole
+of the same layer and half that implements the role's contracts, and brings its own edges,
+language and records. The whole
 model is the two together, a role replaced by what fills it, and is checked there by every
 dimension. This repository's model names nothing only the other holds, the roles aside; what earlier
 drafts here say of the platform half stays as it was written.
@@ -55,10 +56,14 @@ control's writes to the anchor -- as `?control(platform)` and `?anchor` beside t
 `model/graph/components.res`'s, the roles check `model/checks/design/roles.res`, and what the other
 repository gives arrives as the file `MONOFLAKE_FILL` names, `model/graph/fill.res`.
 
-**A role declares what it needs of this half, and its filler reaches this half by those edges
-alone**, decided by the author on 2026-10-20: `authority` the root and the intermediate, both roles
-the deployer. Into its own repository a filler reaches as it likes, which is what is kept private,
-and the cycles a whole graph could close are checked where the whole graph is.
+**This half knows of the other only the edges it has into a role; the other knows this half
+whole, and proves those edges carried**, decided by the author on 2026-10-20. A role here is its
+name, layer and half and the contracts it answers, and nothing of what it needs: how what fills it
+is built, and what it stands on, is the other repository's. That repository imports this model's
+edges into the roles and proves each in its own flow -- a component of its own fills the role,
+implements every contract the edge names, and stands, on the whole graph, without the component
+the edge comes from, `model/proof.res` there -- while the whole graph's cycles and every dimension
+are checked where both are.
 
 **What crosses the line is public, and how it is made is not**, decided by the author on
 2026-10-20. Of the platform half's records an organization's half reads two: an organization's,
@@ -68,12 +73,15 @@ others the platform's control alone keeps -- its extension, loan, label, usernam
 membership and domain -- are monoflake/cloud's, and `contracts.json`, which every language reads,
 is written from this repository's own alone.
 
+**The rest of the line runs the same way**, decided by the author on 2026-10-20. The reserved
+names stay here, since an organization's control refuses them for a mount as the platform's does
+for a label. What each version of the Platform can do is the code's, and stays; the bootstrap path
+-- each step's deployments, their ground and plan, how each came to it -- is how the hosted
+platform is stood up, and is the other repository's, with the checklist's group D, its commercial
+and operational questions. Checked alone, this repository reads no path and accepts a mark naming a
+row of group D; a row of group C is held to a step where the path is.
+
 **The proof held on 2026-10-20**: with the graph walked by name, so no order rests on where a part
 is declared, the whole model's report from both repositories is the report before the split, line
 for line, but for the roles check, the two contracts each split in two, and one list of declared
 records now given in two parts.
-
-## Open, for the discussion that follows:
-
-- Which rows of the checklist, which of the bootstrap steps and which of the reserved names are the
-  platform half's alone, and so the other repository's. [B34]

@@ -122,7 +122,7 @@ let run = () => {
     if !(item.id->String.startsWith((item.group :> string))) {
       rowsWrong->Array.push(`${item.id}: filed under ${(item.group :> string)}`)
     }
-    if item.group == #C && item.step->Option.mapOr(true, s => steps[s] == None) {
+    if item.group == #C && steps != [] && item.step->Option.mapOr(true, s => steps[s] == None) {
       rowsWrong->Array.push(`${item.id}: names no step of the bootstrap path`)
     }
     if item.group != #C && item.step != None {
@@ -137,6 +137,8 @@ let run = () => {
     }
     named->Array.forEach(id =>
       switch checklist->Array.find(x => x.id == id) {
+      // Group D is the hosted platform's, given with its rows; alone, a mark may name one.
+      | None if Checklist.given == [] && id->String.startsWith("D") => ()
       | None => rowsWrong->Array.push(`${m.where} names ${id}, no row of the checklist`)
       | Some({done: d}) =>
         rowsWrong->Array.push(`${m.where} still lists ${id} open, though it was decided in ${d}`)
@@ -151,7 +153,7 @@ let run = () => {
   | Some(a) if a->String.includes("=") => number(a->String.split("=")->Array.getUnsafe(1))
   | _ => 0.
   }
-  if ready && (!isInteger(upTo) || steps[upTo->Float.toInt] == None) {
+  if ready && (!isInteger(upTo) || (steps != [] && steps[upTo->Float.toInt] == None)) {
     rowsWrong->Array.push(`--ready=${num(upTo)} names no step of the bootstrap path`)
   }
   let open_ = checklist->Array.filter(x => x.done == None)

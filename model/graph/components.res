@@ -45,7 +45,10 @@ type component = {
    * is what this half needs of the platform half, built in another repository, RFC 8lkuv.
    */
   kind?: [#ground | #operator | #provided],
-  /** For a role, the contracts it answers, which every edge to it names. */
+  /**
+   * For a role, the contracts it answers, which every edge to it names; for what fills a role, the
+   * contracts it implements.
+   */
   answers?: array<string>,
   /** For a component another repository gives, the role it fills, RFC 8lkuv. */
   fills?: string,
@@ -560,19 +563,7 @@ let own: dict<component> = dict{
     control: true,
     half: #platform,
     answers: ["?authority"],
-    // What it needs of this half, whoever fills it: the masters to derive each organization's
-    // salt and key, and the intermediate to certify each organization's key.
-    edges: [
-      replaced,
-      e(
-        "root",
-        #start,
-        hard,
-        "the masters, to derive each organization's salt and key",
-        ~contract=["deployments"],
-      ),
-      e("?intermediate", #deploy, hard, "certifies each organization's key"),
-    ],
+    edges: [],
     uses: [],
   },
   "directory": {
@@ -580,7 +571,7 @@ let own: dict<component> = dict{
     kind: #provided,
     half: #platform,
     answers: ["?directory"],
-    edges: [replaced],
+    edges: [],
     uses: [],
   },
   "footing(organization)": {layer: vendor, kind: #ground, half: #organization, edges: [], uses: []},
@@ -598,15 +589,20 @@ let filler: dict<string> =
   ->Array.filterMap(((name, c)) => c.fills->Option.map(role => (role, name)))
   ->Dict.fromArray
 
-/**
- * The whole graph: this model's own, each filled role replaced by what fills it and every edge to
- * the role pointed at its filler, and what was given beside.
- */
 /** A name as the whole graph knows it: a filled role by its filler, any other as it is. */
 let named = name => filler->Dict.get(name)->Option.getOr(name)
 
-let components: dict<component> = {
-  let to_ = named
+/**
+ * The whole graph of `own` and `given`: each role a component of `given` fills replaced by it, every
+ * edge to the role pointed at its filler, and the rest of `given` beside.
+ */
+let merge = (own: dict<component>, given: dict<component>): dict<component> => {
+  let filler =
+    given
+    ->Dict.toArray
+    ->Array.filterMap(((name, c)) => c.fills->Option.map(role => (role, name)))
+    ->Dict.fromArray
+  let to_ = name => filler->Dict.get(name)->Option.getOr(name)
   own
   ->Dict.toArray
   ->Array.filter(((name, _)) => filler->Dict.get(name)->Option.isNone)
@@ -619,6 +615,8 @@ let components: dict<component> = {
   ))
   ->Dict.fromArray
 }
+
+let components: dict<component> = merge(own, given)
 
 let globalOpen: array<string> = []
 

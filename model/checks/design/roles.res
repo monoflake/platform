@@ -1,8 +1,9 @@
 /**
  * The roles this half needs of the platform half, RFC 8lkuv: an edge to one names a contract it
  * answers, and what fills one stands where it does -- its layer, its half, a control as it is --
- * with the role's own edges into this half exactly, the rest of its edges the other repository's.
- * One filler a role; checked alone, a role unfilled is an assumption, and given a fill, a gap.
+ * and implements every contract the role answers. How it is built is the other repository's, which
+ * proves there that each edge to a role is carried. One filler a role; checked alone, a role
+ * unfilled is an assumption, and given a fill, a gap.
  */
 open Base
 
@@ -37,25 +38,11 @@ let run = () => {
       if c.layer != r.layer || c.half != r.half || c.control != r.control {
         found->Array.push(`${name} fills ${role} at another layer, half or control than it has`)
       }
-      // Into this half the filler reaches exactly as the role says; within its own, as it likes.
-      let key = (edge: Components.edge) =>
-        `${edge.to_} ${(edge.when_ :> string)}/${edge.hard ? "hard" : "soft"}${edge.replaces ==
-            Some(true)
-            ? " replaces"
-            : ""}`
-      let own =
-        c.edges
-        ->Array.filter(edge => Components.given->Dict.get(edge.to_)->Option.isNone)
-        ->Array.map(key)
-      let declared = r.edges->Array.map(key)
-      own->Array.forEach(k =>
-        if !(declared->Array.includes(k)) {
-          found->Array.push(`${name} -> ${k}: an edge into this half ${role} does not declare`)
-        }
-      )
-      declared->Array.forEach(k =>
-        if !(own->Array.includes(k)) {
-          found->Array.push(`${name} lacks ${role}'s edge ${k}`)
+      r.answers
+      ->Option.getOr([])
+      ->Array.forEach(named =>
+        if !(c.answers->Option.getOr([])->Array.includes(named)) {
+          found->Array.push(`${name} fills ${role} and implements not ${named}`)
         }
       )
     | many =>

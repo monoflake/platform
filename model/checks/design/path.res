@@ -207,6 +207,9 @@ let run = () => {
           }}`
       ),
       [`planned stops: ${stops->orNone("; ")}`],
+      steps == []
+        ? ["no path given: it is the hosted platform's, monoflake/cloud's, RFC 8lkuv"]
+        : [],
     ]->Array.flat,
     (),
   )

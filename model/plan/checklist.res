@@ -24,7 +24,7 @@ type item = {
   done?: string,
 }
 
-let checklist: array<item> = [
+let own: array<item> = [
   {
     id: "A1",
     group: #A,
@@ -300,6 +300,7 @@ let checklist: array<item> = [
     group: #B,
     what: "which checklist rows, bootstrap steps and reserved names are the platform half's alone, and so monoflake/cloud's; the records are decided, 8lkuv",
     from: "8lkuv",
+    done: "8lkuv",
   },
   {
     id: "B35",
@@ -639,105 +640,6 @@ let checklist: array<item> = [
     done: "zn3u5, vuanj: none unless turned on; a day to 90 days, a week to 180, a month to a year, changed within a year and an hour; restored as a new database unless asked over; one logical dump, declared with its code",
   },
   {
-    id: "D1",
-    group: #D,
-    what: "the app that charges, an organization's on the foundation platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
-    from: "v7v3w",
-  },
-  {
-    id: "D2",
-    group: #D,
-    what: "what becomes of a revoked organization's sealed data in cells the platform pays for",
-    from: "94y0d",
-    done: "94y0d",
-  },
-  {
-    id: "D3",
-    group: #D,
-    what: "how often the intermediate key is rotated, whether a machine of the author may rotate it unattended, and how a leaked one is revoked",
-    from: "b8f35",
-  },
-  {
-    id: "D4",
-    group: #D,
-    what: "every other bound past v0's constants: an id's life, a derive's budget, a lock's wait and hold, a dead-letter list",
-    from: "49qyg, vuanj",
-  },
-  {
-    id: "D5",
-    group: #D,
-    what: "a host's way to a footing kept short where the vendor's routing lands a connection far: one connection dialed again, reads from replicas, the paid plan's routing measured",
-    from: "docs/lessons/",
-  },
-  {
-    id: "D6",
-    group: #D,
-    what: "the background collection: what it repacks below the threshold, how often, and in what order it walks parcels",
-    from: "b8f35",
-  },
-  {
-    id: "D7",
-    group: #D,
-    what: "the anchor's rows, one for every scope ever made: how many the platform's footing holds, and what comes after",
-    from: "model/ground/footing.res",
-  },
-  {
-    id: "D8",
-    group: #D,
-    what: "how a machine's driver bounds what it holds by how full the machine is, beyond a count, and the default it starts from; and how long a call may run on a machine, a field its driver declares, its default and whether it counts CPU or the clock",
-    from: "vr5lw",
-  },
-  {
-    id: "D9",
-    group: #D,
-    what: "the domains organizations' public names and their storage's names are of, apart from the platform's own and from each other, and asking the Public Suffix List to take them once the platform serves thousands",
-    from: "vr5lw, docs/lessons/",
-    done: "vr5lw: mofl.fyi, one name an organization at its gateway; the list asked before the platform opens",
-  },
-  {
-    id: "D10",
-    group: #D,
-    what: "the platform signing people in to others' apps itself, by OAuth",
-    from: "v7v3w",
-  },
-  {
-    id: "D11",
-    group: #D,
-    what: "the platform's own CI: what it runs on, and how long it keeps what it builds",
-    from: "vr5lw",
-  },
-  {
-    id: "D12",
-    group: #D,
-    what: "exporting a bucket, to another object store, a file system or an archive: plaintext, and a right of its own",
-    from: "13ixj",
-  },
-  {
-    id: "D13",
-    group: #D,
-    what: "holding an organization's DNS for it, so a domain's apex is pointed by the platform itself",
-    from: "vr5lw",
-  },
-  {
-    id: "D14",
-    group: #D,
-    what: "delivering a warning outside the API, by email first, and to whom: what sends it, which kinds are sent, and how a person turns them off",
-    from: "v7v3w",
-  },
-  {
-    id: "D15",
-    group: #D,
-    what: "comparison, docs/method.md, before the first service that exists moves onto the platform: every component of what exists -- repos/platform and repos/infra, their code and designs -- given a fate, kept, replaced by what, or dropped",
-    from: "docs/method.md",
-  },
-  {
-    id: "D16",
-    group: #D,
-    what: "how long a package version waits before it can be installed, raised from the 12 hours pnpm-workspace.yaml sets while the author alone builds, before the platform opens to the public",
-    from: "found",
-    done: "pnpm-workspace.yaml: pnpm's default, 1440 minutes, written out so a change of default moves nothing",
-  },
-  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",
@@ -808,3 +710,7 @@ let checklist: array<item> = [
     done: "v7v3w: reserved means kept for the platform, given by the operator alone; model/names/reserved.res and its check",
   },
 ]
+
+/** Every row, with group D's given beside: the hosted platform's, monoflake/cloud's, RFC 8lkuv. */
+let given: array<item> = Fill.part("checklist")->Option.getOr([])
+let checklist: array<item> = Array.concat(own, given)
