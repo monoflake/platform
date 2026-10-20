@@ -125,21 +125,28 @@ its content in its blob space. A write puts the bytes first and then changes the
 batch, so a fault leaves at most bytes nothing names, which a sweep removes, and never a name
 without its bytes. A hash nothing names is marked and removed later, never in the write.
 
-**A tablet is a log and a snapshot.** Its one writer runs each batch on its SQLite and turns it
-into an entry of a log, numbered in order, and that number is the cursor a write returns. The log
-is kept in the scope's footing, RFC b8f35: **a write is done once the footing has confirmed it**,
-and the log is archived to the blob in batches, with a snapshot of the whole now and then, and
-removed from the footing once archived. From there the rest
-follows:
+**A tablet is its implementation's SQLite, and its history is the implementation's own**, decided
+by the author on 2026-10-20. Its one writer runs each batch there, and **a write is done once the
+implementation has confirmed it**; nothing of it is written again to be kept. A history kept as
+pages, never as statements replayed, holds what was written whatever wrote it -- a random value,
+the time -- so no input is refused and no write costs twice. From there the rest follows:
 
-- **A read copy** applies the log as it comes and knows the number it has reached; a read with a
-  cursor goes to a copy that has reached it, the next if not, and the writer if none has.
-- **Returning to an earlier time** is the snapshot before it and the log replayed up to it.
+- **Returning to an earlier time** is the implementation's own: **every one keeps each minute of
+  the last 30 days and rewinds to any**, D1's Time Travel, a Durable Object's recovery, and a
+  machine's WAL archived with its volume's snapshots, `model/contracts/kinds/databases.res`. It
+  takes a while, and is rare.
+- **Past 30 days nothing is kept unless asked**: a database may keep snapshots by tiers, each
+  sparser as it grows older, its `retention`, whose rules are open [C38]; and snapshots kept apart
+  from its implementation, so it outlives losing a vendor, only where its `copies` and `placement`
+  ask, RFC zn3u5. A database moved from one implementation to another goes by a snapshot taken then.
+- **A read copy** is its implementation's, where one offers it: D1's replicas, read by a session's
+  bookmark, and a machine's copies of its WAL; the cursor a write returns is the implementation's
+  own.
 - **A batch's id and expiry** are written in the tablet's own system table in the same transaction
   as the batch, so whether one was applied is answered exactly, and an expired one is refused.
 - **A writer handed over** is fenced by the footing: the new one catches up and is made writer at
   the next generation, and the old can write nothing after; writes wait the few seconds it takes,
-  and reads go on from the copies.
+  and reads go on from the copies; how, now that its writes reach the footing no more, is open. [B31]
 - **Where a writer runs is placed at run time**, since a database may be created at any time, never
   only at a deployment. What places it promises at least one writer and never exactly one: two may
   run for a moment, and the generation the footing keeps refuses all but one.

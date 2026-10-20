@@ -17,8 +17,16 @@ let types: array<declared> = [
     ]),
     from: "zn3u5, vuanj",
   },
-  // Bound to one app as it is made, never another after; read copies off unless set; its log's
-  // archive and snapshots one copy unless asked, placed as a bucket is, 13ixj.
+  // A tier of what is kept past the 30 days every implementation rewinds within: a snapshot every
+  // so many milliseconds, kept so long. Its rules are open [C38].
+  {
+    name: "database-retention",
+    def: Record([field("every", 1, Prim(#uint53)), field("keep", 2, Prim(#uint53))]),
+    from: "zn3u5",
+  },
+  // Bound to one app as it is made, never another after; read copies off unless set; its snapshots
+  // kept apart from its implementation, one copy unless asked, so none beyond it, placed as a bucket
+  // is, 13ixj; and kept past 30 days by its tiers, none unless set, so nothing older is kept.
   {
     name: "database",
     def: Record([
@@ -28,6 +36,7 @@ let types: array<declared> = [
       optional("copies", 4, Prim(#uint32)),
       optional("placement", 5, Type("placement")),
       field("levels", 6, Type("database-levels")),
+      optional("retention", 7, List(Type("database-retention"))),
     ]),
     from: "zn3u5",
   },

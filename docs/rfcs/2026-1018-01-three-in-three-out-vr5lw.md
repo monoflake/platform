@@ -99,6 +99,10 @@ as it stands on a vendor, RFC 94y0d.
   WIT**, decided by the author on 2026-10-19, since it is the platform's own, RFC fhg6w:
   `model/contracts/kinds/databases.res`, a value of SQLite's a union tagged by `kind`, its payload in
   `value`, as an app's typed value is written below.
+- **Whatever gives a database keeps each minute of its last 30 days and rewinds to any**, decided by
+  the author on 2026-10-20, by what it keeps of its own pages, `rewind` in its contract: D1 and a
+  Durable Object by their own recovery, a machine by its WAL archived and its volume's snapshots,
+  how written with the code. A rewind is slow and rare.
 - **Each host's driver declares its databases' limits** -- a statement's size, its parameters, how
   long a query may run -- as it declares its levels: a vendor's in the code, which knows the vendor,
   as D1's from `docs/lessons/`; a machine's from a default the platform gives, which its holder may

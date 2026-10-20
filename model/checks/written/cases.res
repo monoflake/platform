@@ -66,6 +66,19 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
   switch (placeholder(j), mode) {
   | (Some(("$any", _)), Expected) => ()
   | (Some(("$capture", String(n))), Expected) => s.captured->Set.add(n)
+  // A moment so many milliseconds before the step is sent, where a time is asked.
+  | (Some(("$time", spec)), Input) =>
+    if shape != Prim(#uint53) {
+      fail("$time where no time is")
+    }
+    switch spec {
+    | Object(d) =>
+      switch d->Dict.get("ago") {
+      | Some(Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
+      | _ => fail("$time takes how many milliseconds ago")
+      }
+    | _ => fail("$time takes how many milliseconds ago")
+    }
   | (Some(("$use", String(n))), Input) =>
     if !(s.captured->Set.has(n)) {
       fail(`uses ${n}, captured by no step before`)
@@ -442,6 +455,12 @@ let run = () => {
                   | _ => expectFailure(at, Array.concat(Calls.calling, Calls.common), e, "calling")
                   }
                 | None => found->Array.push(`${at}: expects nothing`)
+                }
+              // A step that only waits, so a sample may ask of a time past.
+              | (None, None) if st->member("wait") != None =>
+                switch st->member("wait") {
+                | Some(Number(ms)) if isInteger(ms, 1., 3600000.) => ()
+                | _ => found->Array.push(`${at}: wait, no milliseconds up to an hour`)
                 }
               | _ => found->Array.push(`${at}: calls nothing, or sends and calls at once`)
               }

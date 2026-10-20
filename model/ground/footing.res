@@ -38,13 +38,6 @@ let kept: dict<kept> = dict{
     grows: #bounded,
     bound: "a row for each placement a scope writes, which the levels' product bounds",
   },
-  "logs": {
-    of_: #organization,
-    what: "each tablet's log until the blob archives it",
-    from: "vuanj, b8f35",
-    grows: #bounded,
-    bound: "archived in batches at 16 MiB, a parcel's size, vuanj",
-  },
   "writers": {
     of_: #organization,
     what: "which writer holds each tablet, and at which generation",
@@ -77,32 +70,33 @@ let kept: dict<kept> = dict{
 
 /**
  * Rows written for one of each operation, as RFCs b8f35 and vuanj lay a write out: a tablet's
- * batch is one entry of its log, however many of its rows it changes, and the extent's rows are the
- * footing's own. A row written and later removed counts twice, since a deletion is a write.
+ * batch is its implementation's own, kept by it and rewound by it, so it writes no row of the
+ * footing, and the extent's rows are the footing's own. A row written and later removed counts
+ * twice, since a deletion is a write.
  */
 type rows = {
-  /** A file of one new piece: its log entry and its extent's two rows, its bytes put to the stores
-   * as a journal's object; then the piece's parcel written as the journal is exported, and the
-   * log entry removed once archived. */
+  /** A file of one new piece: its extent's two rows, its bytes put to the stores as a journal's
+   * object; then the piece's parcel written as the journal is exported. Its name and the count
+   * its content is held by are the storage's tablet's. */
   smallWrite: float,
-  /** A file whose content is held already: its log entry, the count raised, the entry removed. */
+  /** A file whose content is held already: the count raised, in the storage's tablet alone. */
   duplicate: float,
-  /** A MiB of a large file sealed at once: about one piece's two extent rows, a parcel's row and
-   * the log entry spread over the 16 pieces of a parcel. */
+  /** A MiB of a large file sealed at once: about one piece's two extent rows and a parcel's row
+   * spread over the 16 pieces of a parcel. */
   largeMiB: float,
-  /** An app's database commit: its log entry, and its removal once archived. */
+  /** An app's database commit: none, its tablet's own. */
   commit: float,
-  /** A tablet a day while idle: none, since a writer's lease is dated by its last entry, b8f35. */
+  /** A tablet a day while idle: none, how a writer holds it being open [B31]. */
   idleTablet: float,
   /** A tablet taken over by another writer: its generation raised. */
   takeover: float,
 }
 
 let rows = {
-  smallWrite: 5.,
-  duplicate: 3.,
-  largeMiB: 2.2,
-  commit: 2.,
+  smallWrite: 3.,
+  duplicate: 0.,
+  largeMiB: 2.06,
+  commit: 0.,
   idleTablet: 0.,
   takeover: 1.,
 }

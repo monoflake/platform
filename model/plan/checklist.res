@@ -230,7 +230,7 @@ let checklist: array<item> = [
   {
     id: "B20",
     group: #B,
-    what: "where an ordinary organization's own records are kept -- each tablet's log, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
+    what: "where an ordinary organization's own records are kept -- each tablet's writer, the extent's records, its backing, its bundle -- now only the console stands on a footing: a database made of its extensions, placed by configuration; where what manages extensions runs; a database's sizes",
     from: "vr5lw, v7v3w, b8f35",
     done: "v7v3w, vr5lw: each organization has a control of its own on a footing the platform gives it",
   },
@@ -274,6 +274,12 @@ let checklist: array<item> = [
     what: "how the repository is laid out, so cargo, ReScript's compiler and the JavaScript tools build one tree, fhg6w",
     from: "fhg6w",
     done: "fhg6w: three workspaces at the root, packages named by the model, held by the check",
+  },
+  {
+    id: "B31",
+    group: #B,
+    what: "how a tablet's writer holds it and is fenced, now that its writes no longer reach the footing to date its lease: what a Durable Object promises of one instance, a volume of one container mounting it, and what is handed over when a machine is lost",
+    from: "b8f35, vuanj",
   },
   {
     id: "B27",
@@ -561,6 +567,13 @@ let checklist: array<item> = [
     what: "what an organization may export to another platform, each an amount of the allowance's export capability -- compute, storage, databases -- and the app of its own that exports it, speaking a driver's contract",
     from: "94y0d, 49qyg",
     step: 1,
+  },
+  {
+    id: "C38",
+    group: #C,
+    what: "the tiers a database keeps its snapshots by past the 30 days every implementation rewinds within -- how sparse each, how long, the defaults -- none unless set",
+    from: "vuanj, zn3u5",
+    step: 8,
   },
   {
     id: "D1",

@@ -95,7 +95,7 @@ are marked `*`.
 organization's for its scope, the platform's for the anchor, D1 on the foundation platform's own
 account -- a database in SQLite's dialect that is ground, `docs/scope.md`: trusted to be up and to keep
 what it confirmed, its redundancy its own and never the platform's. **It coordinates its owner**: it
-holds the backing, the extent's records, each tablet's log until a snapshot holds it, which journal
+holds the backing, the extent's records, which journal
 each placement writes, which writer holds what and at which generation, and the bundle. A writer of
 an older generation is refused by the footing, so two never write at once. It holds no content, yet
 the extent's records grow with the pieces a scope holds, about 200 bytes each.
@@ -143,7 +143,6 @@ move by a sweep, and the old one is dropped once no reader running needs it, RFC
 | `piece`         | a piece's hash               | its parcel, offset, length and whether compressed              | the blob                    |
 | `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place    | the blob                    |
 | `journal`       | a placement                  | the journal it writes                                          | the blob                    |
-| `log`           | a tablet, a number           | an entry not yet archived                                      | the tablet                  |
 | `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet                  |
 | `lease`         | a name                       | who holds it, and until when                                   | the component that takes it |
 
@@ -162,15 +161,12 @@ what one does, `docs/lessons/`. Every write it takes is a conditional statement 
 by `WHERE`, a writer taken over only past its lease, a count raised only while it is above zero --
 so no transaction ever reads before it decides.
 
-**A writer's lease is its writing.** Each entry of a tablet's log carries the time the footing gives
-it, by the footing's own clock, so no host's clock is trusted. A writer holds its tablet while its
-last entry is younger than the lease; idle, it renews nothing and writes no row, and writes on when
-it next has something, as long as no one has taken the tablet over. Another writer takes it over
-only past the lease, by one conditional statement that raises the generation where the last entry is
-older than that; it then catches up, and the old writer's next entry is refused by the generation.
-So an idle tablet costs its footing nothing, a taking over one row, and a write after a writer is
-lost waits at most the lease. When a log is archived, its newest entry stays, since it dates the
-lease.
+**A tablet's log is no longer the footing's**, decided by the author on 2026-10-20: a tablet's
+history is its implementation's own, kept and rewound by it, RFC vuanj, so a write is never
+written twice to be kept, and the footing holds no row of one. **The footing still keeps which
+writer holds each tablet, and at which generation**, raised by one conditional statement as one
+takes it over. How a writer holds its tablet and is fenced, now that its writes no longer reach
+the footing to date its lease, is open. [B31]
 
 **The backing is per scope; what finds it is not, and goes one layer down.** A scope at this layer
 still has storage of its own, so something must say where each scope's is. That is the **`anchor`**,

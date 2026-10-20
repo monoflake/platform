@@ -37,7 +37,8 @@ serves it without translation:
 
 - `execute(database, [statements])` runs one statement or several, each its SQL and parameters, and
   answers each one's rows; a call is atomic, all or nothing, with no state in between. **There is no interactive transaction.**
-- It keeps a write-ahead log and can be returned to an earlier time.
+- It can be returned to any minute of the last 30 days, by what its implementation keeps, and past
+  them to a snapshot it was asked to keep, RFC vuanj.
 - **Read copies are a switch on the database.** Off, every read is current. On, a read without a
   cursor is no longer promised current and may be behind by about a minute, the bound to be fixed
   later; a read with a cursor is promised to see at least what that cursor names.
@@ -55,9 +56,10 @@ else; **policy and binding belong to the id**. Deleting the database deletes its
 the tree, refused while an app is bound to it, RFC 49qyg.
 
 **A database's record is `model/contracts/records/database.res`**, worked out with the author on
-2026-10-19: bound to one app as it is made, read copies off unless set, its log's archive and
-snapshots placed as a bucket is, RFC 13ixj, and the levels the compute its writer runs on needs,
-RFC vuanj.
+2026-10-19: bound to one app as it is made, read copies off unless set, its snapshots kept apart
+from its implementation as many as its `copies` and placed as a bucket is, RFC 13ixj, one unless
+asked and so none beyond it, its snapshots past 30 days by its `retention`, none unless set, and
+the levels the compute its writer runs on needs, RFC vuanj.
 
 **A database is bound to one app alone.** Another app reads or writes it only through that
 app's own interface, never directly: its schema is an agreement only its app knows, and a second

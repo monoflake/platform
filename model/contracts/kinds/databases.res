@@ -1,7 +1,9 @@
 /**
  * The `database` kind's contract, RFCs zn3u5 and vr5lw: SQLite's dialect, one statement or a batch
  * atomic together, each with its parameters, answered with each one's rows. No interactive
- * transaction. A database's limits are its driver's to declare, vr5lw [C23].
+ * transaction. A database's limits are its driver's to declare, vr5lw [C23]. Every implementation
+ * keeps each minute of the last 30 days and rewinds to any of them, by what it keeps itself: D1's
+ * Time Travel, a Durable Object's recovery, a machine's WAL archived and its volume's snapshots.
  */
 open Subset
 
@@ -44,6 +46,14 @@ let types: array<declared> = [
     ]),
     from: "zn3u5",
   },
+  // A minute of the last 30 days to rewind to, in milliseconds; what is answered is the moment just
+  // before, which a rewind to undoes, as each implementation keeps every minute of 30 days.
+  {name: "database-rewind", def: Record([field("to", 1, Prim(#uint53))]), from: "zn3u5, vr5lw"},
+  {
+    name: "database-rewound",
+    def: Record([field("before", 1, Prim(#uint53))]),
+    from: "zn3u5, vr5lw",
+  },
   {
     name: "database-executed",
     def: Record([field("results", 1, List(Type("database-result")))]),
@@ -69,5 +79,6 @@ let interface_: interface_ = {
         ("storage_full", #unavailable),
       ],
     ),
+    op("rewind", "database-rewind", "database-rewound", [("beyond_window", #rejected)]),
   ],
 }

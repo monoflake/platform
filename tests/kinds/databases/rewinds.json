@@ -1,0 +1,77 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a database rewound to a minute past holds what it held then, and a rewind to the moment before undoes it",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{ "sql": "CREATE TABLE t (i INTEGER)" },
+							{ "sql": "INSERT INTO t VALUES (1)" }
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": [], "rows": [], "changed": 0 },
+								{ "columns": [], "rows": [], "changed": 1 }
+							]
+						}
+					}
+				},
+				{ "wait": 120000 },
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "INSERT INTO t VALUES (2)" }] },
+					"expect": { "output": { "results": [{ "columns": [], "rows": [], "changed": 1 }] } }
+				},
+				{
+					"call": "rewind",
+					"input": { "to": { "$time": { "ago": 60000 } } },
+					"expect": { "output": { "before": { "$capture": "before" } } }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT count(*) AS n FROM t" }] },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "1" }]], "changed": 0 }
+							]
+						}
+					}
+				},
+				{
+					"call": "rewind",
+					"input": { "to": { "$use": "before" } },
+					"expect": { "output": { "before": { "$any": null } } }
+				},
+				{
+					"call": "execute",
+					"input": { "statements": [{ "sql": "SELECT count(*) AS n FROM t" }] },
+					"within": 60000,
+					"expect": {
+						"output": {
+							"results": [
+								{ "columns": ["n"], "rows": [[{ "kind": "integer", "value": "2" }]], "changed": 0 }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a rewind past the 30 days every implementation keeps is refused",
+			"steps": [
+				{
+					"call": "rewind",
+					"input": { "to": { "$time": { "ago": 2678400000 } } },
+					"expect": { "failure": "rejected", "reason": "beyond_window" }
+				}
+			]
+		}
+	]
+}

@@ -392,6 +392,24 @@
 				}
 			]
 		},
+		"database-retention": {
+			"record": [
+				{
+					"name": "every",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "keep",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
 		"database": {
 			"record": [
 				{
@@ -446,6 +464,16 @@
 					"shape": {
 						"type": "database-levels"
 					}
+				},
+				{
+					"name": "retention",
+					"key": 7,
+					"shape": {
+						"list": {
+							"type": "database-retention"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -2382,6 +2410,28 @@
 				}
 			]
 		},
+		"database-rewind": {
+			"record": [
+				{
+					"name": "to",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"database-rewound": {
+			"record": [
+				{
+					"name": "before",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
 		"database-executed": {
 			"record": [
 				{
@@ -3155,6 +3205,17 @@
 						{
 							"name": "storage_full",
 							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "rewind",
+					"input": "database-rewind",
+					"output": "database-rewound",
+					"reasons": [
+						{
+							"name": "beyond_window",
+							"failure": "rejected"
 						}
 					]
 				}

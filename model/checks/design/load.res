@@ -40,8 +40,8 @@ let run = () => {
     `${int(i)}: idle ${round(idle)} of ${round(allowed)} rows a day (${round(
         idle /. allowed *. 100.,
       )}%); what is left holds ${floor(left /. rows.smallWrite)} small writes, or ${floor(
-        left /. rows.commit,
-      )} commits, or ${floor(left /. rows.largeMiB /. 1024.)} GiB written large`
+        left /. rows.largeMiB /. 1024.,
+      )} GiB written large; a database's commits write none of it`
   })
   dimension(
     "Footing",

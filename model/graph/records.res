@@ -50,7 +50,6 @@ let records: array<held> = [
   {half: #organization, kind: "piece", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "parcel", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "journal", writes: ["blob"], from: "b8f35"},
-  {half: #organization, kind: "log", writes: ["tablet"], from: "b8f35, vuanj"},
   {half: #organization, kind: "writer", writes: ["tablet"], from: "b8f35, vuanj"},
   /* A clock's lock: who holds a name, and until when, v7v3w, vr5lw. */
   {half: #organization, kind: "lease", writes: ["compute", "executor"], from: "b8f35, v7v3w"},
