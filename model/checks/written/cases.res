@@ -49,120 +49,143 @@ let isContent = n => Contracts.contents->Array.some(c => c.content == n)
 
 /** A sample's placeholder: an object of one key, `$`-led. */
 let placeholder = (j: JSON.t) =>
-  switch j {
-  | Object(d) =>
-    switch d->Dict.toArray {
-    | [(k, v)] if k->String.startsWith("$") => Some((k, v))
-    | _ => None
-    }
+  switch j->JSON.Decode.object->Option.map(Dict.toArray) {
+  | Some([(k, v)]) if k->String.startsWith("$") => Some((k, v))
   | _ => None
   }
 
 /** Every way a value fails its shape, as `at` names where; none is a value that conforms. */
 let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
   let fail = why => s.found->Array.push(`${at}: ${why}`)
-  switch (placeholder(j), mode) {
-  | (Some(("$any", _)), Expected) => ()
-  | (Some(("$capture", String(n))), Expected) => s.captured->Set.add(n)
-  // A moment so many milliseconds before the step is sent, where a time is asked.
-  | (Some(("$time", spec)), Input) =>
-    if shape != Prim(#uint53) {
-      fail("$time where no time is")
-    }
-    switch spec {
-    | Object(d) =>
-      switch d->Dict.get("ago") {
-      | Some(Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
+  switch placeholder(j) {
+  | Some((k, v)) =>
+    switch (k, mode, v->JSON.Decode.string) {
+    | ("$any", Expected, _) => ()
+    | ("$capture", Expected, Some(n)) => s.captured->Set.add(n)
+    // A moment so many milliseconds before the step is sent, where a time is asked.
+    | ("$time", Input, _) =>
+      if shape != Prim(#uint53) {
+        fail("$time where no time is")
+      }
+      switch numeric(v->member("ago")) {
+      | Some(n) if isInteger(n, 0., 9007199254740991.) => ()
       | _ => fail("$time takes how many milliseconds ago")
       }
-    | _ => fail("$time takes how many milliseconds ago")
-    }
-  | (Some(("$use", String(n))), Input) =>
-    if !(s.captured->Set.has(n)) {
-      fail(`uses ${n}, captured by no step before`)
-    }
-  // Bytes of a length, or a text its `start` led and spaces filled to a length, either a number or
-  // a bound and how many past it: a bound of the interface's, or one each driver declares.
-  | (Some((("$bytes" | "$text") as k, spec)), Input | Expected) =>
-    if shape != (k == "$bytes" ? Prim(#bytes) : Prim(#string)) {
-      fail(`${k} where its kind of value is not`)
-    }
-    switch spec {
-    | Object(d) =>
-      switch d->Dict.get("start") {
-      | None | Some(String(_)) if k == "$text" => ()
-      | None => ()
-      | Some(_) => fail(`${k} takes no start but a text's`)
+    | ("$use", Input, Some(n)) =>
+      if !(s.captured->Set.has(n)) {
+        fail(`uses ${n}, captured by no step before`)
       }
-      switch d->Dict.get("length") {
-      | Some(Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
-      | Some(Object(b)) =>
-        switch (b->Dict.get("bound"), b->Dict.get("plus")) {
-        | (Some(String(name)), Some(Number(p))) if isInteger(p, -1e9, 1e9) =>
-          if s.bounds->Dict.get(name) == None && !(s.declared->Array.includes(name)) {
-            fail(`${k} past ${name}, no bound of its interface`)
-          }
-        | _ => fail(`${k}'s length is a bound and how many past it`)
+    // Bytes of a length, or a text its `start` led and spaces filled to a length, either a number or
+    // a bound and how many past it: a bound of the interface's, or one each driver declares.
+    | (("$bytes" | "$text") as k, Input | Expected, _) =>
+      if shape != (k == "$bytes" ? Prim(#bytes) : Prim(#string)) {
+        fail(`${k} where its kind of value is not`)
+      }
+      switch v->JSON.Decode.object {
+      | Some(d) =>
+        let start = d->Dict.get("start")
+        if start != None && !(k == "$text" && text(start) != None) {
+          fail(`${k} takes no start but a text's`)
         }
-      | _ => fail(`${k} without a length`)
+        let length = d->Dict.get("length")
+        switch (numeric(length), object(length)) {
+        | (Some(n), _) if isInteger(n, 0., 9007199254740991.) => ()
+        | (_, Some(b)) =>
+          switch (text(b->Dict.get("bound")), numeric(b->Dict.get("plus"))) {
+          | (Some(name), Some(p)) if isInteger(p, -1e9, 1e9) =>
+            if s.bounds->Dict.get(name) == None && !(s.declared->Array.includes(name)) {
+              fail(`${k} past ${name}, no bound of its interface`)
+            }
+          | _ => fail(`${k}'s length is a bound and how many past it`)
+          }
+        | _ => fail(`${k} without a length`)
+        }
+      | None => fail(`${k} takes a length`)
       }
-    | _ => fail(`${k} takes a length`)
+    | (k, Input | Expected | Codec, _) => fail(`placeholder ${k}, not taken here`)
     }
-  | (Some((k, _)), _) => fail(`placeholder ${k}, not taken here`)
-  | (None, _) =>
-    switch (shape, j) {
-    | (Prim(#bool), Boolean(_)) => ()
-    | (Prim(#string), String(_)) => ()
-    | (Prim(#float64), Number(_)) => ()
-    | (Prim(#int32), Number(n)) if isInteger(n, -2147483648., 2147483647.) => ()
-    | (Prim(#uint32), Number(n)) | (Id(_) | Across(_), Number(n))
-      if isInteger(n, 0., 4294967295.) => ()
-    | (Prim(#uint53), Number(n)) if isInteger(n, 0., 9007199254740991.) => ()
-    | (Prim(#int53), Number(n)) if isInteger(n, -.safe, safe) => ()
-    | (Prim(#bytes) | Prim(#secret), String(t)) if isBase64url(t) => ()
-    | (Prim(#hash), String(t)) if hashText->RegExp.test(t) => ()
-    | (Prim(p), _) => fail(`no ${(p :> string)}`)
-    | (Id(kind) | Across(_, kind), _) => fail(`no id of ${kind}`)
-    | (List(inner), Array(items)) =>
-      items->Array.forEachWithIndex((v, i) => conforms(s, inner, v, mode, `${at}[${int(i)}]`))
-    | (List(_), _) => fail("no list")
-    | (Map(inner), Object(d)) =>
-      d->Dict.forEachWithKey((v, k) => conforms(s, inner, v, mode, `${at}.${k}`))
-    | (Map(_), _) => fail("no map")
-    | (Type(name), _) =>
+  | None =>
+    let n = j->JSON.Decode.float
+    let t = j->JSON.Decode.string
+    let within = (lo, hi) => n->Option.mapOr(false, n => isInteger(n, lo, hi))
+    switch shape {
+    | Prim(p) =>
+      let fits = switch p {
+      | #bool => j->JSON.Decode.bool != None
+      | #string => t != None
+      | #float64 => n != None
+      | #int32 => within(-2147483648., 2147483647.)
+      | #uint32 => within(0., 4294967295.)
+      | #uint53 => within(0., 9007199254740991.)
+      | #int53 => within(-.safe, safe)
+      | #bytes | #secret => t->Option.mapOr(false, isBase64url)
+      | #hash => t->Option.mapOr(false, t => hashText->RegExp.test(t))
+      }
+      if !fits {
+        fail(`no ${(p :> string)}`)
+      }
+    | Id(kind) | Across(_, kind) =>
+      if !within(0., 4294967295.) {
+        fail(`no id of ${kind}`)
+      }
+    | List(inner) =>
+      switch j->JSON.Decode.array {
+      | Some(items) =>
+        items->Array.forEachWithIndex((v, i) => conforms(s, inner, v, mode, `${at}[${int(i)}]`))
+      | None => fail("no list")
+      }
+    | Map(inner) =>
+      switch j->JSON.Decode.object {
+      | Some(d) => d->Dict.forEachWithKey((v, k) => conforms(s, inner, v, mode, `${at}.${k}`))
+      | None => fail("no map")
+      }
+    | Type(name) =>
       switch declared->Dict.get(name) {
       | None => fail(`no type ${name}`)
       | Some({def}) =>
-        switch (def, j) {
-        | (Record(fields), Object(d)) =>
-          let fields = isContent(name) ? Array.concat([Subset.description], fields) : fields
-          record(s, fields, d, [], mode, at)
-        | (Enum({choices}), String(c)) =>
-          if !(choices->Array.some(x => x.name == c)) {
-            fail(`${c}, no choice of ${name}`)
+        switch def {
+        | Record(fields) =>
+          switch j->JSON.Decode.object {
+          | Some(d) =>
+            let fields = isContent(name) ? Array.concat([Subset.description], fields) : fields
+            record(s, fields, d, [], mode, at)
+          | None => fail(`no object, as ${name} is`)
           }
-        | (Union({tag, cases}), Object(d)) =>
-          switch d->Dict.get(tag) {
-          | Some(String(c)) =>
-            switch cases->Array.find(x => x.name == c) {
-            | Some(case) => record(s, case.fields, d, [tag], mode, at)
-            | None => fail(`${c}, no case of ${name}`)
+        | Enum({choices}) =>
+          switch t {
+          | Some(c) =>
+            if !(choices->Array.some(x => x.name == c)) {
+              fail(`${c}, no choice of ${name}`)
             }
-          | _ => fail(`no ${tag}, which names ${name}'s case`)
+          | None => fail(`no name of ${name}`)
           }
-        | (Record(_) | Union(_), _) => fail(`no object, as ${name} is`)
-        | (Enum(_), _) => fail(`no name of ${name}`)
-        | (Flags(choices), Array(xs)) =>
-          let seen = Set.make()
-          xs->Array.forEach(x =>
-            switch x {
-            | String(c) if choices->Array.some(k => k.name == c) && !(seen->Set.has(c)) =>
-              seen->Set.add(c)
-            | String(c) => fail(`${c}, no flag of ${name} or one twice`)
-            | _ => fail(`a flag of ${name} is its name`)
+        | Union({tag, cases}) =>
+          switch j->JSON.Decode.object {
+          | Some(d) =>
+            switch text(d->Dict.get(tag)) {
+            | Some(c) =>
+              switch cases->Array.find(x => x.name == c) {
+              | Some(case) => record(s, case.fields, d, [tag], mode, at)
+              | None => fail(`${c}, no case of ${name}`)
+              }
+            | None => fail(`no ${tag}, which names ${name}'s case`)
             }
-          )
-        | (Flags(_), _) => fail(`no array of ${name}'s names`)
+          | None => fail(`no object, as ${name} is`)
+          }
+        | Flags(choices) =>
+          switch j->JSON.Decode.array {
+          | Some(xs) =>
+            let seen = Set.make()
+            xs->Array.forEach(x =>
+              switch x->JSON.Decode.string {
+              | Some(c) if choices->Array.some(k => k.name == c) && !(seen->Set.has(c)) =>
+                seen->Set.add(c)
+              | Some(c) => fail(`${c}, no flag of ${name} or one twice`)
+              | None => fail(`a flag of ${name} is its name`)
+              }
+            )
+          | None => fail(`no array of ${name}'s names`)
+          }
         }
       }
     }
@@ -204,17 +227,7 @@ let rec files = path => {
 
 let read = path => JSON.parseOrThrow(readFileSync(urlIn(path, root)))
 
-let member = (j: JSON.t, k) =>
-  switch j {
-  | Object(d) => d->Dict.get(k)
-  | _ => None
-  }
-
-let items = j =>
-  switch j {
-  | Some(JSON.Array(a)) => a
-  | _ => []
-  }
+let items = j => list(j)->Option.getOr([])
 
 /**
  * The capacity a case of an interface is `given`: its own kind's, and a container for what is
@@ -250,44 +263,42 @@ let run = () => {
   })
   let forms = switch declared->Dict.get("deployment-form") {
   | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
-  | _ => []
+  | Some({def: Record(_) | Union(_) | Flags(_)}) | None => []
   }
   fixtures->Dict.forEachWithKey((f, name) => {
     let at = `tests/fixtures/${name}`
-    switch f->member("description") {
-    | Some(String(_)) => ()
-    | _ => found->Array.push(`${at}: no description`)
+    if text(f->member("description")) == None {
+      found->Array.push(`${at}: no description`)
     }
-    switch f->member("of") {
-    | None =>
-      switch f->member("form") {
-      | Some(String(form)) if forms->Array.includes(form) => ()
+    switch (f->member("of"), text(f->member("of"))) {
+    | (None, _) =>
+      switch text(f->member("form")) {
+      | Some(form) if forms->Array.includes(form) => ()
       | _ => found->Array.push(`${at}: no form of deployment-form`)
       }
-      switch f->member("exports") {
-      | Some(Array(e)) if e != [] && e->Array.every(x => x->JSON.Decode.string != None) => ()
+      switch list(f->member("exports")) {
+      | Some(e) if e != [] && e->Array.every(x => x->JSON.Decode.string != None) => ()
       | _ => found->Array.push(`${at}: no exports`)
       }
-    | Some(String(base)) =>
+    | (Some(_), Some(base)) =>
       if fixtures->Dict.get(base) == None {
         found->Array.push(`${at}: of ${base}, no fixture`)
       }
-    | Some(_) => found->Array.push(`${at}: of names a fixture`)
+    | (Some(_), None) => found->Array.push(`${at}: of names a fixture`)
     }
-    switch f->member("instance") {
-    | None | Some(Boolean(_)) => ()
-    | Some(_) => found->Array.push(`${at}: instance is yes or no`)
+    if f->member("instance") != None && truth(f->member("instance")) == None {
+      found->Array.push(`${at}: instance is yes or no`)
     }
-    switch f->member("served") {
-    | None => ()
-    | Some(String(x)) if served->Array.includes(x) => ()
-    | Some(_) => found->Array.push(`${at}: served, none of ${served->Array.join(", ")}`)
+    switch (f->member("served"), text(f->member("served"))) {
+    | (None, _) => ()
+    | (Some(_), Some(x)) if served->Array.includes(x) => ()
+    | (Some(_), _) => found->Array.push(`${at}: served, none of ${served->Array.join(", ")}`)
     }
     switch f->member("padded") {
     | None => ()
     | Some(p) =>
-      switch (p->member("bound"), p->member("plus")) {
-      | (Some(String(b)), Some(Number(n))) if isInteger(n, 0., 1e9) =>
+      switch (text(p->member("bound")), numeric(p->member("plus"))) {
+      | (Some(b), Some(n)) if isInteger(n, 0., 1e9) =>
         if !(deployments->Option.flatMap(d => d.declared)->Option.getOr([])->Array.includes(b)) {
           found->Array.push(`${at}: padded past ${b}, no bound deployments declares`)
         }
@@ -299,10 +310,10 @@ let run = () => {
     let rec go = (n, depth) =>
       switch fixtures->Dict.get(n) {
       | Some(f) if depth < 4 =>
-        switch (f->member("form"), f->member("of")) {
-        | (Some(String(form)), _) => Some(form)
-        | (_, Some(String(b))) => go(b, depth + 1)
-        | _ => None
+        switch (text(f->member("form")), text(f->member("of"))) {
+        | (Some(form), _) => Some(form)
+        | (None, Some(b)) => go(b, depth + 1)
+        | (None, None) => None
         }
       | _ => None
       }
@@ -310,8 +321,8 @@ let run = () => {
   }
   // A reason a case expects, its operation's own or every operation's, held to the failure it is.
   let expectFailure = (at, reasons: array<Subset.reason>, e, key) =>
-    switch (e->member("failure"), e->member("reason")) {
-    | (Some(String(failure)), Some(String(reason))) =>
+    switch (text(e->member("failure")), text(e->member("reason"))) {
+    | (Some(failure), Some(reason)) =>
       switch reasons->Array.find(r => r.name == reason) {
       | Some(r) =>
         if (r.failure :> string) != failure {
@@ -325,8 +336,8 @@ let run = () => {
   let behavior = files("tests/kinds")
   behavior->Array.forEach(path => {
     let j = read(path)
-    switch j->member("interface") {
-    | Some(String(name)) =>
+    switch text(j->member("interface")) {
+    | Some(name) =>
       switch Contracts.interfaces->Array.find(i => i.name == name) {
       | None => found->Array.push(`${path}: no interface ${name}`)
       | Some(i) =>
@@ -339,9 +350,8 @@ let run = () => {
             bounds: i.bounds->Option.getOr(dict{}),
             declared: i.declared->Option.getOr([]),
           }
-          switch c->member("description") {
-          | Some(String(_)) => ()
-          | _ => found->Array.push(`${at}: no description`)
+          if text(c->member("description")) == None {
+            found->Array.push(`${at}: no description`)
           }
           // What the runner holds for the case before its first step, as capacity of its kind.
           switch c->member("given") {
@@ -349,20 +359,20 @@ let run = () => {
           | Some(g) =>
             switch declared->Dict.get("management-capacity") {
             | Some({def: Union({cases})}) =>
-              switch (cases->Array.find(x => x.name == capacityOf(name)), g) {
-              | (Some(k), Object(d)) => record(s, k.fields, d, [], Input, `${at}.given`)
+              switch (cases->Array.find(x => x.name == capacityOf(name)), g->JSON.Decode.object) {
+              | (Some(k), Some(d)) => record(s, k.fields, d, [], Input, `${at}.given`)
               | _ => found->Array.push(`${at}: given, which ${name} holds no capacity of`)
               }
-            | _ => ()
+            | Some({def: Record(_) | Enum(_) | Flags(_)}) | None => ()
             }
           }
           // The copies a database's case is held on, which a step may then lose, vuanj.
-          let copies = switch c->member("copies") {
-          | None => None
-          | Some(Number(n))
+          let copies = switch (c->member("copies"), numeric(c->member("copies"))) {
+          | (None, _) => None
+          | (Some(_), Some(n))
             if name == "database" && isInteger(n, 1., Int.toFloat(Database.copiesMost)) =>
             Some(n)
-          | Some(_) =>
+          | (Some(_), _) =>
             found->Array.push(
               `${at}: copies, from 1 to ${int(Database.copiesMost)} and a database's alone`,
             )
@@ -377,33 +387,36 @@ let run = () => {
             (st, k) => {
               let at = `${at}.${int(k)}`
               // A step `within` some milliseconds is called again until it is answered as expected.
-              switch st->member("within") {
-              | None => ()
-              | Some(Number(ms)) if isInteger(ms, 1., 3600000.) => ()
-              | Some(_) => found->Array.push(`${at}: within, no milliseconds up to an hour`)
+              switch (st->member("within"), numeric(st->member("within"))) {
+              | (None, _) => ()
+              | (Some(_), Some(ms)) if isInteger(ms, 1., 3600000.) => ()
+              | (Some(_), _) => found->Array.push(`${at}: within, no milliseconds up to an hour`)
               }
               let expect = st->member("expect")
-              switch (st->member("call"), st->member("send")) {
-              | (Some(String(call)), None) =>
+              let call = st->member("call")
+              let send = st->member("send")
+              switch (text(call), call, object(send), send) {
+              | (Some(call), _, _, None) =>
                 switch i.operations->Array.find(o => o.name == call) {
                 | None => found->Array.push(`${at}: ${call}, no operation of ${name}`)
                 | Some(o) =>
                   called->Set.add(`${name}.${call}`)
                   // A fixture's version, form and artifact are the runner's to write, where a step
                   // writes none.
-                  let input = switch (st->member("fixture"), st->member("input")) {
-                  | (None, Some(x)) => x
-                  | (None, None) => Null
-                  | (Some(String(f)), x) =>
-                    let d = switch x {
-                    | Some(Object(d)) => d->Dict.copy
-                    | _ => Dict.make()
+                  let fixture = st->member("fixture")
+                  let input = switch (fixture, text(fixture), st->member("input")) {
+                  | (None, _, Some(x)) => x
+                  | (None, _, None) => JSON.Null
+                  | (Some(_), Some(f), x) =>
+                    let d = switch object(x) {
+                    | Some(d) => d->Dict.copy
+                    | None => Dict.make()
                     }
                     switch formOf(f) {
                     | None => found->Array.push(`${at}: fixture ${f}, none in tests/fixtures/`)
                     | Some(form) =>
-                      switch d->Dict.get("form") {
-                      | Some(String(given)) if given != form =>
+                      switch text(d->Dict.get("form")) {
+                      | Some(given) if given != form =>
                         found->Array.push(`${at}: form ${given}, yet ${f} is ${form}`)
                       | _ => ()
                       }
@@ -420,9 +433,9 @@ let run = () => {
                       )
                     }
                     Object(d)
-                  | (Some(_), _) =>
+                  | (Some(_), None, _) =>
                     found->Array.push(`${at}: fixture names one`)
-                    Null
+                    JSON.Null
                   }
                   conforms(s, Type(o.input), input, Input, `${at}.input`)
                   switch expect {
@@ -438,27 +451,27 @@ let run = () => {
                 }
               // A call to what is deployed, in its app's own WIT: held to its shape alone, never a
               // contract's.
-              | (None, Some(Object(d))) =>
+              | (None, None, Some(d), _) =>
                 if name != "deployments" {
                   found->Array.push(`${at}: sends to what ${name} deploys not`)
                 }
                 sent := true
                 switch d->Dict.get("to") {
-                | Some(String(_)) => ()
+                | Some(x) if x->JSON.Decode.string != None => ()
                 | Some(x) =>
                   switch placeholder(x) {
-                  | Some(("$use", String(n))) if s.captured->Set.has(n) => ()
+                  | Some(("$use", v))
+                    if v->JSON.Decode.string->Option.mapOr(false, n => s.captured->Set.has(n)) => ()
                   | _ => found->Array.push(`${at}: sends to no address captured`)
                   }
                 | None => found->Array.push(`${at}: sends to nowhere`)
                 }
-                switch d->Dict.get("export") {
-                | Some(String(e)) if e != "" => ()
+                switch text(d->Dict.get("export")) {
+                | Some(e) if e != "" => ()
                 | _ => found->Array.push(`${at}: sends to no export`)
                 }
-                switch d->Dict.get("key") {
-                | None | Some(String(_)) => ()
-                | Some(_) => found->Array.push(`${at}: a key is text`)
+                if d->Dict.get("key") != None && text(d->Dict.get("key")) == None {
+                  found->Array.push(`${at}: a key is text`)
                 }
                 d
                 ->Dict.keysToArray
@@ -478,16 +491,16 @@ let run = () => {
                 }
               // A step that loses some of the copies its case is held on, so a sample may ask of
               // fewer.
-              | (None, None) if st->member("lose") != None =>
-                switch (st->member("lose"), copies) {
-                | (Some(Number(k)), Some(n)) if isInteger(k, 1., n -. lost.contents) =>
+              | (None, None, None, None) if st->member("lose") != None =>
+                switch (numeric(st->member("lose")), copies) {
+                | (Some(k), Some(n)) if isInteger(k, 1., n -. lost.contents) =>
                   lost := lost.contents +. k
                 | _ => found->Array.push(`${at}: lose, more copies than the case holds alive`)
                 }
               // A step that only waits, so a sample may ask of a time past.
-              | (None, None) if st->member("wait") != None =>
-                switch st->member("wait") {
-                | Some(Number(ms)) if isInteger(ms, 1., 3600000.) => ()
+              | (None, None, None, None) if st->member("wait") != None =>
+                switch numeric(st->member("wait")) {
+                | Some(ms) if isInteger(ms, 1., 3600000.) => ()
                 | _ => found->Array.push(`${at}: wait, no milliseconds up to an hour`)
                 }
               | _ => found->Array.push(`${at}: calls nothing, or sends and calls at once`)
@@ -526,34 +539,31 @@ let run = () => {
   let properties = files("tests/properties")
   properties->Array.forEach(path => {
     let p = read(path)
-    switch p->member("checker") {
-    | Some(String(c)) if checkers->Array.includes(c) => ()
+    switch text(p->member("checker")) {
+    | Some(c) if checkers->Array.includes(c) => ()
     | _ => found->Array.push(`${path}: no checker of ${checkers->Array.join(", ")}`)
     }
-    switch p->member("interfaces") {
-    | Some(Array(xs)) if xs != [] =>
+    switch list(p->member("interfaces")) {
+    | Some(xs) if xs != [] =>
       xs->Array.forEach(x =>
-        switch x {
-        | String(n) if Contracts.interfaces->Array.some(i => i.name == n) => ()
+        switch x->JSON.Decode.string {
+        | Some(n) if Contracts.interfaces->Array.some(i => i.name == n) => ()
         | _ => found->Array.push(`${path}: an interface not declared`)
         }
       )
     | _ => found->Array.push(`${path}: run on no interface`)
     }
-    switch p->member("fixture") {
-    | None => ()
-    | Some(String(f)) if fixtures->Dict.get(f) != None => ()
-    | Some(_) => found->Array.push(`${path}: a fixture not in tests/fixtures/`)
+    switch (p->member("fixture"), text(p->member("fixture"))) {
+    | (None, _) => ()
+    | (Some(_), Some(f)) if fixtures->Dict.get(f) != None => ()
+    | (Some(_), _) => found->Array.push(`${path}: a fixture not in tests/fixtures/`)
     }
-    switch p->member("load") {
-    | Some(Object(d))
+    switch object(p->member("load")) {
+    | Some(d)
       if d
       ->Dict.valuesToArray
       ->Array.every(v =>
-        switch v {
-        | Number(n) => isInteger(n, 1., 1e6)
-        | _ => false
-        }
+        v->JSON.Decode.float->Option.mapOr(false, n => isInteger(n, 1., 1e6))
       ) => ()
     | _ => found->Array.push(`${path}: load, counts of what the checker runs`)
     }
@@ -566,8 +576,8 @@ let run = () => {
   codec->Array.forEach(path => {
     let j = read(path)
     let typed = (x, n, what) =>
-      switch x->member("type") {
-      | Some(String(t)) if declared->Dict.get(t) != None => Some(t)
+      switch text(x->member("type")) {
+      | Some(t) if declared->Dict.get(t) != None => Some(t)
       | _ =>
         found->Array.push(`${path}: ${what} ${int(n)}, no type declared`)
         None
@@ -578,8 +588,8 @@ let run = () => {
         pairs := pairs.contents + 1
         let s = {found, captured: Set.make(), bounds: dict{}, declared: []}
         conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, `${path}#${int(n)}`)
-        switch x->member("cbor") {
-        | Some(String(h)) if isHex(h) && h != "" => ()
+        switch text(x->member("cbor")) {
+        | Some(h) if isHex(h) && h != "" => ()
         | _ => found->Array.push(`${path}#${int(n)}: no CBOR in lowercase hex`)
         }
       | None => ()

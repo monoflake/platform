@@ -8,10 +8,7 @@
 
 let given: Dict.t<JSON.t> = switch env->Dict.get("MONOFLAKE_FILL") {
 | Some(path) if path != "" =>
-  switch JSON.parseOrThrow(read(path)) {
-  | Object(parts) => parts
-  | _ => Dict.make()
-  }
+  JSON.parseOrThrow(read(path))->JSON.Decode.object->Option.getOr(Dict.make())
 | _ => Dict.make()
 }
 

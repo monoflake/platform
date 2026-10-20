@@ -48,11 +48,13 @@ let manifests: array<(string, lang)> = [("Cargo.toml", #rust), ("rescript.json",
 
 let text = (l: lang) => (l :> string)
 
-let jsonName = path =>
-  switch JSON.parseOrThrow(readFileSync(urlIn(path, root))) {
-  | Object(d) => (d->Dict.get("name"), d->Dict.get("namespace"))
-  | _ => (None, None)
-  }
+let jsonName = path => {
+  let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
+  (
+    j->member("name")->Option.flatMap(JSON.Decode.string),
+    j->member("namespace")->Option.flatMap(JSON.Decode.bool),
+  )
+}
 
 /**
  * A key's text in a Cargo.toml's `[package]`, read a line at a time, as nothing else of it is
@@ -80,10 +82,9 @@ let crateKey = (path, key) => {
 let crateName = path => crateKey(path, "name")
 
 let jsonLicense = path =>
-  switch JSON.parseOrThrow(readFileSync(urlIn(path, root))) {
-  | Object(d) => d->Dict.get("license")
-  | _ => None
-  }
+  JSON.parseOrThrow(readFileSync(urlIn(path, root)))
+  ->member("license")
+  ->Option.flatMap(JSON.Decode.string)
 
 let run = () => {
   let found = []
@@ -201,20 +202,20 @@ let run = () => {
       }
       if (
         files->Array.includes("package.json") &&
-          jsonLicense(`${path}/package.json`) != Some(JSON.String(h.license))
+          jsonLicense(`${path}/package.json`) != Some(h.license)
       ) {
         found->Array.push(`${path}/package.json: no license ${h.license}`)
       }
       if files->Array.includes("rescript.json") {
         let scoped = `@blueprint/${h.package}`
         switch jsonName(`${path}/rescript.json`) {
-        | (Some(String(n)), Some(Boolean(true))) if n == scoped => ()
+        | (Some(n), Some(true)) if n == scoped => ()
         | _ => found->Array.push(`${path}/rescript.json: no package named ${scoped} and namespaced`)
         }
         switch files->Array.includes("package.json")
           ? jsonName(`${path}/package.json`)
           : (None, None) {
-        | (Some(String(n)), _) if n == scoped => ()
+        | (Some(n), _) if n == scoped => ()
         | _ => found->Array.push(`${path}: no package.json named ${scoped}, which pnpm links by`)
         }
       }

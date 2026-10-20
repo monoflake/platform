@@ -78,19 +78,16 @@ let run = () => {
     found->Array.push("no Cargo.toml at the root")
   }
   let names = packages->Array.filterMap(p =>
-    switch JSON.parseOrThrow(readFileSync(urlIn(`${p}/rescript.json`, root))) {
-    | Object(d) => d->Dict.get("name")->Option.flatMap(JSON.Decode.string)
-    | _ => None
-    }
+    JSON.parseOrThrow(readFileSync(urlIn(`${p}/rescript.json`, root)))
+    ->member("name")
+    ->Option.flatMap(JSON.Decode.string)
   )
-  switch JSON.parseOrThrow(readFileSync(urlIn("rescript.json", root))) {
-  | Object(d) =>
-    let listed = switch d->Dict.get("dependencies") {
-    | Some(Array(xs)) => xs->Array.filterMap(JSON.Decode.string)
-    | _ => []
-    }
+  switch JSON.parseOrThrow(readFileSync(urlIn("rescript.json", root)))->JSON.Decode.object {
+  | Some(d) =>
+    let listed =
+      list(d->Dict.get("dependencies"))->Option.getOr([])->Array.filterMap(JSON.Decode.string)
     differ(found, "rescript.json", listed, names)
-  | _ => found->Array.push("rescript.json: no object")
+  | None => found->Array.push("rescript.json: no object")
   }
   let pnpm = readFileSync(urlIn("pnpm-workspace.yaml", root))
   if !(pnpm->String.includes("\"code/**\"")) {

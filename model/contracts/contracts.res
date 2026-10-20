@@ -48,14 +48,14 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
       Dict.fromArray(
         ownTypes->Array.map(t => (
           t.name,
-          switch (
-            defJson(t.def, ~content=ownContents->Array.some(c => c.content == t.name)),
-            t.keys,
-          ) {
-          | (Object(d), Some(k)) if k != #subset =>
-            d->Dict.set("keys", String((k :> string)))
-            JSON.Object(d)
-          | (j, _) => j
+          {
+            let j = defJson(t.def, ~content=ownContents->Array.some(c => c.content == t.name))
+            switch (j->JSON.Decode.object, t.keys) {
+            | (Some(d), Some(k)) if k != #subset =>
+              d->Dict.set("keys", String((k :> string)))
+              JSON.Object(d)
+            | _ => j
+            }
           },
         )),
       ),

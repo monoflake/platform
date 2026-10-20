@@ -15,9 +15,9 @@ let run = () => {
   let found = []
   let vendored: array<string> = switch JSON.parseOrThrow(
     readFileSync(urlIn(Reserved.vendored, root)),
-  ) {
-  | Array(names) => names->Array.filterMap(JSON.Decode.string)
-  | _ =>
+  )->JSON.Decode.array {
+  | Some(names) => names->Array.filterMap(JSON.Decode.string)
+  | None =>
     found->Array.push(`${Reserved.vendored}: no list of names`)
     []
   }

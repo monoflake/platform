@@ -120,6 +120,19 @@ let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
   }
 }
 
+/**
+ * A value of JSON read as one kind, or none: a match on JSON's own cases leaves a wildcard over them,
+ * which warning 4 refuses, so every read goes through one of these.
+ */
+let text = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.string)
+let numeric = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.float)
+let object = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.object)
+let list = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.array)
+let truth = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.bool)
+
+/** A member of an object, or none where the value is no object. */
+let member = (j: JSON.t, k) => j->JSON.Decode.object->Option.flatMap(d => d->Dict.get(k))
+
 let orNone = (xs, sep) => xs->Array.length > 0 ? xs->Array.join(sep) : "none"
 let serve = (x: Components.edge) => x.when_ == #serve
 let ons = (d: Steps.deployment, f) => d.on->Array.includes(f)

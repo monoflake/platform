@@ -4,5 +4,5 @@
 	"dependencies": [],
 	"package-specs": [{ "module": "esmodule", "in-source": true }],
 	"suffix": ".res.mjs",
-	"warnings": { "error": "+a" }
+	"warnings": { "number": "+4", "error": "+a" }
 }

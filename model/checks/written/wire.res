@@ -41,7 +41,7 @@ let run = () => {
     switch shape {
     | Prim(#secret) => true
     | List(s) | Map(s) => secret(s)
-    | _ => false
+    | Prim(_) | Id(_) | Across(_) | Type(_) => false
     }
   signedReach->Set.forEach(name =>
     declared
@@ -90,7 +90,7 @@ let run = () => {
     | Some({def: Record(_), keys: #cwt}) if r.form == #claims => ()
     | Some({def: Record(_), keys: #subset}) | Some({def: Record(_), keys: ?None})
       if r.form == #record => ()
-    | Some(_) =>
+    | Some({def: Record(_) | Enum(_) | Union(_) | Flags(_)}) =>
       contractRules->Array.push(
         `signed ${r.name}: ${r.content} is no record of the keys its form asks, CWT's for claims`,
       )
@@ -100,7 +100,8 @@ let run = () => {
   Signed.sections->Array.forEach(((n, t)) =>
     switch declared->Dict.get(t) {
     | Some({def: Record(_)}) => ()
-    | _ => contractRules->Array.push(`a bundle's ${n} section: ${t}, no record`)
+    | Some({def: Enum(_) | Union(_) | Flags(_)}) | None =>
+      contractRules->Array.push(`a bundle's ${n} section: ${t}, no record`)
     }
   )
   // A key is the subset's from 1; a claim's is CWT's registered number for its name, or the
@@ -243,7 +244,7 @@ let run = () => {
     ->Array.forEach(key => {
       let fields = switch declared->Dict.get(c.content) {
       | Some({def: Record(fs)}) => fs->Array.map(f => f.name)
-      | _ => []
+      | Some({def: Enum(_) | Union(_) | Flags(_)}) | None => []
       }
       if key == [] {
         contractRules->Array.push(`the ${(c.half :> string)}'s ${c.kind}: a key of no field`)
@@ -265,7 +266,8 @@ let run = () => {
     }
     switch declared->Dict.get(c.content) {
     | Some({def: Record(_)}) => ()
-    | Some(_) => contractRules->Array.push(`${c.kind}'s content, ${c.content}, is no record`)
+    | Some({def: Enum(_) | Union(_) | Flags(_)}) =>
+      contractRules->Array.push(`${c.kind}'s content, ${c.content}, is no record`)
     | None => contractRules->Array.push(`${c.kind}'s content: no type ${c.content}`)
     }
   })
@@ -284,7 +286,8 @@ let run = () => {
         n =>
           switch declared->Dict.get(n) {
           | Some({def: Record(_)}) => ()
-          | Some(_) => contractRules->Array.push(`${at}: ${n} is no record`)
+          | Some({def: Enum(_) | Union(_) | Flags(_)}) =>
+            contractRules->Array.push(`${at}: ${n} is no record`)
           | None => contractRules->Array.push(`${at}: no type ${n}`)
           },
       )
@@ -307,7 +310,7 @@ let run = () => {
   let choices = n =>
     switch declared->Dict.get(n) {
     | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
-    | _ => []
+    | Some({def: Record(_) | Union(_) | Flags(_)}) | None => []
     }
   let given =
     Drivers.drivers->Dict.toArray->Array.flatMap(((d, v)) => v.runtimes->Array.map(r => (d, r)))
@@ -357,16 +360,7 @@ let run = () => {
   let productUrl = urlIn("model/contracts.json", root)
   let kept = existsSync(productUrl) ? Some(JSON.parseOrThrow(readFileSync(productUrl))) : None
   let text = (j: JSON.t) => JSON.stringify(j)
-  let member = (j: JSON.t, k) =>
-    switch j {
-    | Object(d) => d->Dict.get(k)
-    | _ => None
-    }
-  let items = (j: option<JSON.t>) =>
-    switch j {
-    | Some(Array(a)) => a
-    | _ => []
-    }
+  let items = (j: option<JSON.t>) => list(j)->Option.getOr([])
   let named = (j: JSON.t, k) => j->member(k)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
   // The types a record's content reaches, by name, each with its definition.
   let reach = (p: JSON.t, root) => {
@@ -378,10 +372,14 @@ let run = () => {
         | Some(d) =>
           found->Map.set(n, d)
           let rec names = (s: JSON.t) =>
-            switch (s->member("type"), s->member("list"), s->member("map")) {
-            | (Some(String(t)), _, _) => [t]
-            | (_, Some(inner), _) | (_, _, Some(inner)) => names(inner)
-            | _ => []
+            switch (
+              s->member("type")->Option.flatMap(JSON.Decode.string),
+              s->member("list"),
+              s->member("map"),
+            ) {
+            | (Some(t), _, _) => [t]
+            | (None, Some(inner), _) | (None, _, Some(inner)) => names(inner)
+            | (None, None, None) => []
             }
           let fields = Array.concat(
             items(d->member("record")),
@@ -409,7 +407,7 @@ let run = () => {
       | Object(d) if d->Dict.get("id") != None => Object(dict{"id": String("*")})
       | Object(d) => Object(d->Dict.mapValues(wire))
       | Array(xs) => Array(xs->Array.map(wire))
-      | x => x
+      | Null | Boolean(_) | Number(_) | String(_) => j
       }
     let text = j => text(wire(j))
     let same = (label, was, is) => {
@@ -419,8 +417,8 @@ let run = () => {
         switch after->Map.get(name) {
         | None => found->Array.push(`${label}: ${name} gone, its version kept`)
         | Some(a) =>
-          switch (d->member("record"), a->member("record")) {
-          | (Some(Array(was)), Some(Array(is))) =>
+          switch (list(d->member("record")), list(a->member("record"))) {
+          | (Some(was), Some(is)) =>
             was->Array.forEach(f =>
               if !(is->Array.some(g => text(g) == text(f))) {
                 found->Array.push(
@@ -457,8 +455,8 @@ let run = () => {
       }
     })
     let interface_ = (j: JSON.t, i) => j->member("interfaces")->Option.flatMap(x => x->member(i))
-    switch old->member("interfaces") {
-    | Some(Object(d)) =>
+    switch object(old->member("interfaces")) {
+    | Some(d) =>
       d->Dict.forEachWithKey((o, i) =>
         switch interface_(now, i) {
         | Some(n) if version(n) == version(o) =>
