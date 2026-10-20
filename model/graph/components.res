@@ -71,6 +71,10 @@ type component = {
   language?: [#rust | #rescript],
   edges: array<edge>,
   uses: array<string>,
+  /** What of others' its code may take, as a library's, `model/graph/libraries.res`. */
+  takes?: array<Libraries.taken>,
+  /** The samples its code is held to, as a library's. */
+  samples?: array<string>,
 }
 
 let e = (to_, when_, hard, why, ~open_=?, ~contract=?) => {to_, when_, hard, why, ?open_, ?contract}

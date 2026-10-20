@@ -3,6 +3,9 @@
  * language's manifest beside the others' in its one directory, `code/libs/{name}`, and used by
  * every component of any of them that needs it.
  */
+/** A package of another project's a library may take, in one of its languages, at a major version. */
+type taken = {language: [#rust | #rescript], name: string, major: string}
+
 type library = {
   what: string,
   /**
@@ -12,6 +15,13 @@ type library = {
   /** Whether its output must agree between components, so its version goes into what it writes. */
   agrees: bool,
   uses: array<string>,
+  /** What of others' it may take; a manifest taking anything else is refused, its brief says so. */
+  takes?: array<taken>,
+  /**
+   * The samples it is held to, each a path under `tests/` or `vendor/`, which its own tests read in
+   * every language it is written in.
+   */
+  samples?: array<string>,
 }
 
 let libraries: dict<library> = dict{
@@ -19,7 +29,23 @@ let libraries: dict<library> = dict{
     languages: [#rust, #rescript],
     what: "the contracts' types and their JSON and CBOR, generated from model/contracts.json by code/tools/envelope, fhg6w",
     agrees: true,
+    uses: ["codec*"],
+  },
+  "codec*": {
+    languages: [#rust, #rescript],
+    what: "CBOR written deterministically by RFC 8949's 4.2.1 and read strictly, COSE's Sign1 by RFC 9052 and a CWT's claims by RFC 8392, the signature made and checked by what the caller gives, fhg6w",
+    agrees: true,
     uses: [],
+    takes: [
+      {language: #rust, name: "minicbor", major: "2"},
+      {language: #rescript, name: "cbor2", major: "2"},
+    ],
+    samples: [
+      "vendor/cose-examples/sign1-tests",
+      "vendor/cose-examples/eddsa-examples/eddsa-sig-01.json",
+      "vendor/cose-examples/eddsa-examples/eddsa-sig-02.json",
+      "vendor/cose-examples/CWT/A_3.json",
+    ],
   },
   "compat*": {
     languages: [#rescript],
