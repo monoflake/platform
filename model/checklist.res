@@ -529,6 +529,7 @@ let checklist: array<item> = [
     what: "a domain's TXT record, _monoflake-challenge.{domain}: what its value holds -- the organization's scope id, as a CNAME's target names it, or a token -- and whether it proves every name beneath its domain",
     from: "vr5lw",
     step: 6,
+    done: "vr5lw: the scope id, and every name beneath its domain",
   },
   {
     id: "D1",

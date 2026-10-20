@@ -576,7 +576,10 @@ out with the author on 2026-10-18.
     1. **A TXT record, `_monoflake-challenge.{domain}`, is read first.** It is optional, and every
        proof the platform checks reads it: written once by who keeps the domain's records and left,
        it stands for every claim and every check after, as a site verification of Google's does.
-       What its value holds, and whether it proves the names beneath its domain, is open. [C34]
+       **Its value is the organization's scope id**, 8 hex digits, as a CNAME's target names it:
+       only who keeps the domain's records can write it, so it asks no secret. **It proves its domain
+       and every name beneath it**, so one record at `example.com` stands for `api.example.com` and
+       the rest.
     2. **A CNAME, followed to its end**: only who keeps a domain's records can point it at
        `{scope-id}.mofl.fyi`, an organization's name by its scope's id, which is never given again.
        One at a label proves nothing, since a label let go may be another's.
@@ -669,8 +672,6 @@ third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
-- A domain's TXT record: what its value holds, and whether it proves every name beneath its domain.
-  [C34]
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]
