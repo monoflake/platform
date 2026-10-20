@@ -698,5 +698,6 @@ let checklist: array<item> = [
     group: #E,
     what: "v7v3w's console is an organization named console by being opened first, yet console is among the names v7v3w reserves from every organization",
     from: "found",
+    done: "v7v3w: reserved means kept for the platform, given by the operator alone; model/names/reserved.res and its check",
   },
 ]

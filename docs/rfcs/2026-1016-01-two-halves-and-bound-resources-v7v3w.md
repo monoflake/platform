@@ -72,8 +72,9 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   configuration, the deployment of its apps, how its extensions are made into its three products,
   and the records its components keep. It answers that organization's admins, and reaches the platform's
   control only for what the platform holds of it.
-- **The console is a dashboard, an ordinary app in an ordinary organization**, which is named
-  `console` by being opened first and holds no privilege: whatever it does it does through the two
+- **The console is a dashboard, an ordinary app in an ordinary organization**, named `console`, a
+  name reserved for the platform that the operator gives it as it is opened at step 0, and holding
+  no privilege: whatever it does it does through the two
   APIs, with the credential of whoever uses it. The APIs are what is kept; a dashboard, a client or
   neither is for later. **A dashboard draws, and computes nothing**: every warning, every choice
   offered and whether a warning was dismissed comes from the API, which keeps a dismissal as
@@ -220,14 +221,15 @@ down a layer at a time, each holding its own range alone.
     unasked, and none is listed among an account's that it never joined. An invitation lasts seven
     days, as a certificate does, and is sent again once it lapses.
   - **No username or label is given that the platform reserves**, worked out with the author on
-    2026-10-19: one list for both, since either may stand in a domain name, kept as a constant in
-    the code and merged from three sources -- the names a site keeps from its users, as
-    `shouldbee/reserved-usernames` lists them, `vendor/`; the mailboxes RFC 2142 names, so no one
-    holds `abuse`, `noc` or `security` of a domain the platform serves; and the platform's own words:
-    `monoflake`, `mofl`, `platform`, `console`, `gateway`, `storage`, `database`, `compute`,
-    `footing`, `anchor`, `issuer`, `deployer`, `operator`, and the providers a sign-in shows,
-    `cloudflare`, `google`, `apple`, `github`. **The list only grows**, and a name added that someone
+    2026-10-19: one list for both, since either may stand in a domain name, `model/names/reserved.res`,
+    merged from the names a site keeps from its users, `vendor/`, the mailboxes RFC 2142 names, and
+    the platform's own words and providers. **The list only grows**, and a name added that someone
     holds stays theirs: it keeps the name from whoever would take it next.
+  - **Reserved means kept for the platform**, worked out with the author on 2026-10-19: the
+    ordinary flow refuses a reserved name to whoever asks, on the internal platform and the external
+    alike, and the operator alone gives one, by hand, to an organization of the platform's own. The
+    check holds that every label the platform's own organizations hold is reserved, so no one takes
+    it first.
   - **Its contact `email` is required and verified**, and unique to no one, so one person may have
     two accounts reached at one address: where the platform reaches the person, as an organization
     is deleted, the account revoked or a security event comes. An address one signs in by is a row
