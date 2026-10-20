@@ -25,6 +25,27 @@ run = "rescript format --check && oxfmt --check {{vars.formatted}}"
 description = "Compile the model and run its check: `check [--ready[=N]] [--s1] [--write]`"
 run = "rescript build && node model/check.res.mjs"
 
+[tasks.brief]
+description = "Print one block's brief, read from the model: `brief <package> [--path]`"
+usage = '''
+arg "<package>" help="The block, by its package name"
+flag "--path" help="Its directory alone"
+'''
+run = 'rescript build > /dev/null && node model/brief.res.mjs "$usage_package" ${usage_path:+--path}'
+
+[tasks.accept]
+description = "Hold one block to its brief, alone: `accept <package> [--from <revision>]`"
+usage = '''
+arg "<package>" help="The block, by its package name"
+flag "--from <revision>" help="The revision its work began at"
+'''
+run = """
+rescript build && node model/accept.res.mjs "$usage_package" ${usage_from:+--from "$usage_from"} || exit 1
+d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package"
+[ ! -f "$d/Cargo.toml" ] || { cargo fmt --check -p "$p" && cargo clippy -p "$p" --all-targets -- -D warnings && cargo test -p "$p"; } || exit 1
+[ ! -f "$d/rescript.json" ] || { cd "$d" && rescript format --check && node --test 'test/**/*.mjs'; }
+"""
+
 [tasks.verify]
 description = "What a commit has to pass: everything formatted, the check, and the crates' dependencies once there are crates"
 run = [

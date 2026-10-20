@@ -10,43 +10,9 @@
  */
 open Base
 
-type lang = [#rust | #rescript]
-
-/** What a directory is to hold: what of the model, in which languages, under which package name. */
-type held = {name: string, languages: array<lang>, package: string, license: string}
-
-/** The directory each layer's components lie in. */
-let group = layer =>
-  switch layer {
-  | 1 => Some("apps")
-  | 0 => Some("products")
-  | -1 => Some("primitives")
-  | -2 => Some("substrate")
-  | -3 => Some("platform")
-  | _ => None
-  }
-
-/** A half in a name is the layer's already, so it is no part of the directory's. */
-let dirName = name => name->String.replace("(organization)", "")->String.replace("(platform)", "")
-
-/** A package's name is the model's, what is in parentheses written after a hyphen, as no package
- * name holds a parenthesis: `control-organization`, `driver-machine`. */
-let packageName = name => name->String.replace("(", "-")->String.replace(")", "")
-
-/** A driver is named `driver(...)`, its vendor in parentheses, and lies at `driver/` and that name,
- * as `control(organization)` names what it is first and which after: `driver(cloudflare)` lies at
- * `driver/cloudflare`. A driver named otherwise has none. */
-let driverDir = name =>
-  name->String.startsWith("driver(") && name->String.endsWith(")")
-    ? Some(name->String.slice(~start=String.length("driver("), ~end=String.length(name) - 1))
-    : None
-
-/** A library's name in the model carries a mark, which its directory does not. */
-let libraryDir = name => name->String.replace("*", "")
+open Blocks
 
 let manifests: array<(string, lang)> = [("Cargo.toml", #rust), ("rescript.json", #rescript)]
-
-let text = (l: lang) => (l :> string)
 
 let jsonName = path => {
   let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
@@ -86,141 +52,156 @@ let jsonLicense = path =>
   ->member("license")
   ->Option.flatMap(JSON.Decode.string)
 
-let run = () => {
+/** The names a manifest's tables of dependencies list: package.json's, or a Cargo.toml's. */
+let jsonDependencies = path => {
+  let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
+  ["dependencies", "devDependencies", "peerDependencies"]->Array.flatMap(k =>
+    j->member(k)->Option.flatMap(JSON.Decode.object)->Option.mapOr([], Dict.keysToArray)
+  )
+}
+
+let crateDependencies = path => {
+  let section = ref("")
   let found = []
-  let expected: Map.t<string, held> = Map.make()
-  let none = []
-  designed->Array.forEach(((name, c)) =>
-    switch c.language {
-    | _ if Components.elsewhere(name) => ()
-    | None if Drivers.drivers->Dict.get(name) != None =>
-      switch (group(c.layer), Drivers.drivers->Dict.get(name), driverDir(name)) {
-      | (_, _, None) => found->Array.push(`${name}: a driver not named driver(...)`)
-      | (Some(g), Some(d), Some(dir)) =>
-        d.implements->Array.forEach(i =>
-          expected->Map.set(
-            `code/${g}/driver/${dir}/${(i.kind :> string)}`,
-            {
-              name: `${name} ${(i.kind :> string)}`,
-              languages: [i.language],
-              package: `${packageName(name)}-${(i.kind :> string)}`,
-              license: Components.permissive,
-            },
-          )
-        )
-        expected->Map.set(
-          `code/${g}/driver/${dir}/management`,
-          {
-            name: `${name} management`,
-            languages: [d.management],
-            package: `${packageName(name)}-management`,
-            license: Components.permissive,
-          },
-        )
-        let given = Set.fromArray(
-          d.grounds
-          ->Array.flatMap(Resources.groundOf)
-          ->Array.flatMap(n => Resources.get(Resources.resources, n).gives),
-        )
-        let made = Set.fromArray(d.implements->Array.map(i => i.kind))
-        given->Set.forEach(k =>
-          if !(made->Set.has(k)) {
-            found->Array.push(`${name}: its grounds give ${(k :> string)}, which it implements not`)
-          }
-        )
-        made->Set.forEach(k =>
-          if !(given->Set.has(k)) {
-            found->Array.push(`${name}: implements ${(k :> string)}, which its grounds give not`)
-          }
-        )
-      | _ => found->Array.push(`${name}: a driver at layer ${int(c.layer)}, which has no directory`)
+  readFileSync(urlIn(path, root))
+  ->String.split("\n")
+  ->Array.forEach(line => {
+    let line = line->String.trim
+    switch /^\[((?:dev-|build-)?dependencies)(?:\.([\w-]+))?\]$/->RegExp.exec(line) {
+    | Some(m) =>
+      switch m->RegExp.Result.matches {
+      | [Some(_), Some(name)] =>
+        found->Array.push(name)
+        section := ""
+      | _ => section := "dependencies"
       }
-    | None => none->Array.push(name)
-    | Some(language) =>
-      switch group(c.layer) {
-      | None =>
+    | None if line->String.startsWith("[") => section := ""
+    | None =>
+      if section.contents != "" && line != "" && !(line->String.startsWith("#")) {
+        line
+        ->String.split("=")
+        ->Array.get(0)
+        ->Option.forEach(k => found->Array.push(k->String.trim))
+      }
+    }
+  })
+  found
+}
+
+/** Whether a Cargo.toml takes the root's lints, `[lints]` with `workspace = true`. */
+let takesLints = path => {
+  let section = ref("")
+  let found = ref(false)
+  readFileSync(urlIn(path, root))
+  ->String.split("\n")
+  ->Array.forEach(line => {
+    let line = line->String.trim
+    if line->String.startsWith("[") {
+      section := line
+    } else if section.contents == "[lints]" && /^workspace\s*=\s*true$/->RegExp.test(line) {
+      found := true
+    }
+  })
+  found.contents
+}
+
+/**
+ * What a block's directory breaks of what the model asks, or none where nothing is written there
+ * yet: each language's manifest it is declared in and no other, each naming it, its license, its
+ * warnings and lints, and only the packages its `uses` and `takes` allow.
+ */
+let held = (path, h: held): option<array<string>> => {
+  let at = urlIn(`${path}/`, root)
+  let files = existsSync(at) ? entries(at, {withFileTypes: true})->Array.map(entryName) : []
+  if files->Array.length == 0 {
+    None
+  } else {
+    let found = []
+    let allowed = (l: lang) =>
+      Array.concat(
+        h.uses->Array.map(u => {
+          let dir = libraryDir(u)
+          l == #rescript ? `@monoflake/${dir}` : dir
+        }),
+        h.takes->Array.filter(t => t.language == l)->Array.map(t => t.name),
+      )
+    manifests->Array.forEach(((m, l)) =>
+      switch (files->Array.includes(m), h.languages->Array.includes(l)) {
+      | (true, false) =>
         found->Array.push(
-          `${name}: written in a language, yet layer ${int(c.layer)} has no directory`,
+          `${path}: a ${m}, yet ${h.name} is declared ${h.languages
+            ->Array.map(languageName)
+            ->Array.join(" and ")}`,
         )
-      | Some(g) =>
-        expected->Map.set(
-          `code/${g}/${dirName(name)}`,
-          {
-            name,
-            languages: [language],
-            package: packageName(name),
-            license: Components.permissive,
-          },
-        )
+      | (false, true) => found->Array.push(`${path}: no ${m}, yet ${h.name} is ${languageName(l)}`)
+      | _ => ()
       }
-      c.uses->Array.forEach(u =>
-        switch Libraries.libraries->Dict.get(u) {
-        | Some(l) if !(l.languages->Array.includes(language)) =>
-          found->Array.push(
-            `${name} uses ${u}, of ${l.languages->Array.map(text)->Array.join(" and ")}, not ${text(
-                language,
-              )}`,
-          )
-        | _ => ()
-        }
-      )
-    }
-  )
-  Libraries.libraries->Dict.forEachWithKey((l, name) =>
-    expected->Map.set(
-      `code/libs/${libraryDir(name)}`,
-      {name, languages: l.languages, package: libraryDir(name), license: Components.permissive},
     )
-  )
-  let written = []
-  // A directory written holds each language's manifest it is declared in, and no other, each naming
-  // it.
-  let check = (path, h: held) => {
-    let files = entries(urlIn(`${path}/`, root), {withFileTypes: true})->Array.map(entryName)
-    if files->Array.length > 0 {
-      written->Array.push(h.name)
-      manifests->Array.forEach(((m, l)) =>
-        switch (files->Array.includes(m), h.languages->Array.includes(l)) {
-        | (true, false) =>
-          found->Array.push(
-            `${path}: a ${m}, yet ${h.name} is declared ${h.languages
-              ->Array.map(text)
-              ->Array.join(" and ")}`,
-          )
-        | (false, true) => found->Array.push(`${path}: no ${m}, yet ${h.name} is ${text(l)}`)
-        | _ => ()
+    if files->Array.includes("Cargo.toml") {
+      let manifest = `${path}/Cargo.toml`
+      switch crateName(manifest) {
+      | Some(n) if n == h.package => ()
+      | _ => found->Array.push(`${manifest}: no crate named ${h.package}`)
+      }
+      if crateKey(manifest, "license") != Some(h.license) {
+        found->Array.push(`${manifest}: no license ${h.license}`)
+      }
+      if !takesLints(manifest) {
+        found->Array.push(`${manifest}: no [lints] workspace = true, so the root's lints miss it`)
+      }
+      crateDependencies(manifest)->Array.forEach(d =>
+        if !(allowed(#rust)->Array.includes(d)) {
+          found->Array.push(`${manifest}: takes ${d}, which ${h.name} neither uses nor takes`)
         }
       )
-      if files->Array.includes("Cargo.toml") {
-        switch crateName(`${path}/Cargo.toml`) {
-        | Some(n) if n == h.package => ()
-        | _ => found->Array.push(`${path}/Cargo.toml: no crate named ${h.package}`)
-        }
-        if crateKey(`${path}/Cargo.toml`, "license") != Some(h.license) {
-          found->Array.push(`${path}/Cargo.toml: no license ${h.license}`)
-        }
+    }
+    if files->Array.includes("package.json") {
+      let manifest = `${path}/package.json`
+      if jsonLicense(manifest) != Some(h.license) {
+        found->Array.push(`${manifest}: no license ${h.license}`)
       }
-      if (
-        files->Array.includes("package.json") &&
-          jsonLicense(`${path}/package.json`) != Some(h.license)
-      ) {
-        found->Array.push(`${path}/package.json: no license ${h.license}`)
+      jsonDependencies(manifest)->Array.forEach(d =>
+        if !(allowed(#rescript)->Array.includes(d)) {
+          found->Array.push(`${manifest}: takes ${d}, which ${h.name} neither uses nor takes`)
+        }
+      )
+    }
+    if files->Array.includes("rescript.json") {
+      let manifest = `${path}/rescript.json`
+      let scoped = `@monoflake/${h.package}`
+      switch jsonName(manifest) {
+      | (Some(n), Some(true)) if n == scoped => ()
+      | _ => found->Array.push(`${manifest}: no package named ${scoped} and namespaced`)
       }
-      if files->Array.includes("rescript.json") {
-        let scoped = `@monoflake/${h.package}`
-        switch jsonName(`${path}/rescript.json`) {
-        | (Some(n), Some(true)) if n == scoped => ()
-        | _ => found->Array.push(`${path}/rescript.json: no package named ${scoped} and namespaced`)
-        }
-        switch files->Array.includes("package.json")
-          ? jsonName(`${path}/package.json`)
-          : (None, None) {
-        | (Some(n), _) if n == scoped => ()
-        | _ => found->Array.push(`${path}: no package.json named ${scoped}, which pnpm links by`)
-        }
+      switch files->Array.includes("package.json")
+        ? jsonName(`${path}/package.json`)
+        : (None, None) {
+      | (Some(n), _) if n == scoped => ()
+      | _ => found->Array.push(`${path}: no package.json named ${scoped}, which pnpm links by`)
+      }
+      let (number, error) = rescriptWarnings
+      let warnings = JSON.parseOrThrow(readFileSync(urlIn(manifest, root)))->member("warnings")
+      let read = k =>
+        warnings->Option.flatMap(w => w->member(k))->Option.flatMap(JSON.Decode.string)
+      if read("number") != Some(number) || read("error") != Some(error) {
+        found->Array.push(`${manifest}: warnings not number ${number} and error ${error}`)
       }
     }
+    found->Array.pushMany(unboundOf(path))
+    Some(found)
   }
+}
+
+let run = () => {
+  let (expected, problems, none) = Blocks.expected()
+  let found = problems
+  let written = []
+  // A directory written holds what the model asks of it.
+  let check = (path, h: held) =>
+    held(path, h)->Option.forEach(problems => {
+      written->Array.push(h.name)
+      found->Array.pushMany(problems)
+    })
   let inside = path => entries(urlIn(`${path}/`, root), {withFileTypes: true})
   ["apps", "products", "primitives", "substrate", "platform", "libs"]->Array.forEach(g => {
     let at = urlIn(`code/${g}/`, root)
@@ -283,6 +264,20 @@ let run = () => {
       found->Array.push(`${t}: the two texts at the root say all of it`)
     }
   )
+  // Each `%todo` and `todo!` names a row still open, so closing one lists the code that waited on it.
+  let rows = openRows()
+  let waiting = []
+  expected->Map.forEachWithKey((h, path) =>
+    if written->Array.includes(h.name) {
+      todosOf(path)->Array.forEach(((at, named)) =>
+        switch named {
+        | Some(id) if rows->Array.includes(id) => waiting->Array.push(`${at}: ${id}`)
+        | Some(id) => found->Array.push(`${at}: waits on ${id}, which is no open row`)
+        | None => found->Array.push(`${at}: a todo naming no row of the checklist`)
+        }
+      )
+    }
+  )
   let unwritten =
     expected
     ->Map.values
@@ -294,6 +289,7 @@ let run = () => {
     found,
     ~notes=[
       `written: ${written->orNone(", ")}`,
+      `waiting on an open row: ${waiting->orNone("; ")}`,
       `not yet written: ${int(
           unwritten->Array.length,
         )}, components, implementations, managements and libraries`,
@@ -301,8 +297,8 @@ let run = () => {
       ...Drivers.drivers
       ->Dict.toArray
       ->Array.map(((n, d)) =>
-        `${n}: management in ${text(d.management)}; ${d.implements
-          ->Array.map(i => `${(i.kind :> string)} in ${text(i.language)}`)
+        `${n}: management in ${languageName(d.management)}; ${d.implements
+          ->Array.map(i => `${(i.kind :> string)} in ${languageName(i.language)}`)
           ->Array.join(", ")}`
       ),
     ],

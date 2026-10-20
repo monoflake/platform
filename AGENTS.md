@@ -11,7 +11,7 @@ It is public at `monoflake/platform`, listed in the workspace's `repos/registry.
 ## Start here
 
 Read [docs/method.md](docs/method.md), how work is done here, then the drafts in `docs/rfcs/` your
-question touches. Decisions are the author's: a block's questions together, the most urgent block
+question touches; to write code, [docs/code.md](docs/code.md) and the block's brief. Decisions are the author's: a block's questions together, the most urgent block
 first.
 
 ## The tree
@@ -56,6 +56,8 @@ alone.
 | `mise run check --write` | writes `model/contracts.json` again from the model    |
 | `mise run fmt`           | formats the ReScript, the prose and the JSON          |
 | `mise run verify`        | everything formatted, the check, and the crates' deny |
+| `mise run brief <name>`  | one block's brief, read from the model                |
+| `mise run accept <name>` | one block held to its brief, alone                    |
 
 A commit waits on `mise run check monoflake`, run from the workspace: this verify, then the
 workspace's rules over the tree.

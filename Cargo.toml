@@ -10,3 +10,18 @@ publish = false
 
 [workspace.dependencies]
 minicbor = { version = "2", features = ["alloc", "derive"] }
+
+# Every crate takes these by `[lints] workspace = true`, held by model/checks/layout/workspace.res.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+as_conversions = "deny"
+unimplemented = "deny"
+wildcard_enum_match_arm = "deny"
+dbg_macro = "deny"

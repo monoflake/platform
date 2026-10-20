@@ -1,0 +1,86 @@
+/**
+ * One block held to its brief, its model half, `mise run accept <package> [--from <revision>]`:
+ * what the model asks of its directory, as `code.res` holds every one; its samples there; each todo
+ * naming an open row; nothing crossing into JavaScript unchecked outside its bindings; and, from
+ * the revision its work began at, no change outside its directory or to its interface. Its
+ * languages' builds, lints and tests are the task's to run after, in order, `docs/code.md`.
+ */
+open Base
+open Blocks
+
+type spawned = {status: Nullable.t<int>, stdout: string}
+type options = {cwd: string, encoding: string}
+@module("node:child_process")
+external spawnSync: (string, array<string>, options) => spawned = "spawnSync"
+@get external pathname: url => string = "pathname"
+
+/** The files changed since `from`, by their paths from the repository's root, or why not. */
+let changed = from => {
+  let run = spawnSync(
+    "jj",
+    ["diff", "--from", from, "--to", "@", "--name-only"],
+    {cwd: root->pathname, encoding: "utf8"},
+  )
+  switch run.status->Nullable.toOption {
+  | Some(0) => Ok(run.stdout->String.split("\n")->Array.filter(l => l != ""))
+  | _ => Error(`jj diff --from ${from} answers nothing; is ${from} a revision here?`)
+  }
+}
+
+let given = args->Array.slice(~start=2)
+let fromAt = given->Array.findIndex(a => a == "--from")
+let from = fromAt >= 0 ? given->Array.get(fromAt + 1) : None
+let named = given->Array.filterWithIndex((a, i) => !(a->String.startsWith("--")) && i != fromAt + 1)
+
+switch (named, find(named->Array.get(0)->Option.getOr(""))) {
+| ([], _) =>
+  Console.error("accept <package> [--from <revision>]: which block, by its package's name")
+  process->setExitCode(2)
+| (_, None) =>
+  Console.error(`no block's package is named ${named->Array.join(" ")}`)
+  process->setExitCode(2)
+| (_, Some((path, h))) =>
+  let found = switch Code.held(path, h) {
+  | Some(problems) => problems
+  | None => [`${path}: nothing written yet`]
+  }
+  h.samples->Array.forEach(s =>
+    if !existsSync(urlIn(s, root)) {
+      found->Array.push(`${s}: a sample the model names, not there`)
+    }
+  )
+  let rows = openRows()
+  todosOf(path)->Array.forEach(((at, row)) =>
+    switch row {
+    | Some(id) if rows->Array.includes(id) => ()
+    | Some(id) => found->Array.push(`${at}: waits on ${id}, which is no open row`)
+    | None => found->Array.push(`${at}: a todo naming no row of the checklist`)
+    }
+  )
+  let notes = switch from {
+  | None => [`no --from, so what changed outside ${path}/ is not read`]
+  | Some(revision) =>
+    switch changed(revision) {
+    | Error(why) =>
+      found->Array.push(why)
+      []
+    | Ok(files) =>
+      files->Array.forEach(f =>
+        if !(f->String.startsWith(`${path}/`)) {
+          found->Array.push(`${f}: changed, outside ${path}/`)
+        } else if isInterface(f->String.slice(~start=String.length(path) + 1)) {
+          found->Array.push(`${f}: the interface changed, which is the model's`)
+        }
+      )
+      [`changed since ${revision}: ${int(files->Array.length)} files`]
+    }
+  }
+  dimension(
+    `Accept ${h.name}`,
+    `Does ${path} hold what the model asks of it, and change nothing that is not its own?`,
+    found,
+    ~notes,
+    (),
+  )
+  process->setExitCode(failed.contents ? 1 : 0)
+}

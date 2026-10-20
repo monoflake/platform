@@ -49,6 +49,26 @@ let tomlList = (text, section, key) => {
   got
 }
 
+/** Each `key = "value"` of a section of a TOML text, as the root's manifest writes them. */
+let tomlValues = (text, section) => {
+  let at = ref("")
+  let got = []
+  text
+  ->String.split("\n")
+  ->Array.forEach(raw => {
+    let line = raw->String.trim
+    if line->String.startsWith("[") {
+      at := line
+    } else if at.contents == section {
+      switch line->String.split("=")->Array.map(String.trim) {
+      | [k, v] => got->Array.push((k, v->String.replaceAll("\"", "")))
+      | _ => ()
+      }
+    }
+  })
+  got
+}
+
 let differ = (found, what, listed, there) => {
   listed->Array.forEach(x =>
     if !(there->Array.includes(x)) {
@@ -69,6 +89,19 @@ let run = () => {
   if existsSync(urlIn("Cargo.toml", root)) {
     let cargo = readFileSync(urlIn("Cargo.toml", root))
     differ(found, "Cargo.toml", tomlList(cargo, "[workspace]", "members"), crates)
+    // Every crate takes the same lints from here, `docs/code.md`.
+    let rust = tomlValues(cargo, "[workspace.lints.rust]")
+    let clippy = tomlValues(cargo, "[workspace.lints.clippy]")
+    Blocks.rustLints->Array.forEach(((k, level)) =>
+      if !(rust->Array.some(((n, v)) => n == k && v == level)) {
+        found->Array.push(`Cargo.toml: no ${k} = "${level}" in [workspace.lints.rust]`)
+      }
+    )
+    Blocks.clippyLints->Array.forEach(k =>
+      if !(clippy->Array.some(((n, v)) => n == k && v == "deny")) {
+        found->Array.push(`Cargo.toml: no ${k} = "deny" in [workspace.lints.clippy]`)
+      }
+    )
     if !(cargo->String.includes("[package]")) {
       ()
     } else {
