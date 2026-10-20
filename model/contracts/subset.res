@@ -9,13 +9,14 @@
  * An enumeration is written as its name in JSON and as its code in CBOR, 13ixj's levels among them.
  */
 /**
- * A primitive: a 32-bit integer, signed or not; one exact in a JavaScript number, under 2^53, for a
+ * A primitive: a 32-bit integer, signed or not; a 64-bit signed one, SQLite's, a decimal string in
+ * JSON, since a JavaScript number holds it not, and an integer in CBOR; one exact in a JavaScript number, under 2^53, for a
  * time in milliseconds or a size in bytes, b8f35; a 64-bit float; bytes, base64url and unpadded in
  * JSON, RFC 4648's fifth section; and a content's hash, 32 bytes in CBOR and its 64 lowercase hex
  * digits in JSON, as b8f35 writes it wherever it is text. An id is never one of these: it is `Id`,
  * typed by the kind it names.
  */
-type prim = [#bool | #string | #float64 | #int32 | #uint32 | #uint53 | #bytes | #hash]
+type prim = [#bool | #string | #float64 | #int32 | #uint32 | #int64 | #uint53 | #bytes | #hash]
 
 type rec shape =
   | Prim(prim)
@@ -45,8 +46,32 @@ type declared = {name: string, def: def, from: string}
 /** A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu. */
 type content = {kind: string, version: int, content: string}
 
+/**
+ * An operation's failure, RFC 49qyg's outcomes but `success`: what a caller acts on, whatever the
+ * reason, which is the operation's own and only told.
+ */
+type failure = [#rejected | #unavailable | #unknown]
+
+type reason = {name: string, failure: failure}
+
+/** An operation: its input and its output, each a record declared, and the reasons it may fail for. */
+type operation = {name: string, input: string, output: string, reasons: array<reason>}
+
+/**
+ * An interface, a kind's contract among them, vr5lw: each operation reached at `POST
+ * /{interface}/{operation}`, its input the body and its output or an `error` the answer, in JSON or
+ * CBOR as the request chooses. Its version is raised as a record's is, wnqvu.
+ */
+type interface_ = {name: string, version: int, operations: array<operation>, from: string}
+
 let field = (name, key, shape) => {name, key, shape}
 let optional = (name, key, shape) => {name, key, shape, optional: true}
+let op = (name, input, output, reasons) => {
+  name,
+  input,
+  output,
+  reasons: reasons->Array.map(((name, failure)) => {name, failure}),
+}
 let codes = names => names->Array.mapWithIndex((name, i) => {name, code: i + 1})
 
 /**
@@ -139,3 +164,23 @@ let defJson = (d: def, ~content): JSON.t =>
       },
     )
   }
+
+let interfaceJson = (i: interface_): JSON.t => Object(
+  dict{
+    "version": Number(Int.toFloat(i.version)),
+    "operations": Array(
+      i.operations->Array.map(o => JSON.Object(
+        dict{
+          "name": String(o.name),
+          "input": String(o.input),
+          "output": String(o.output),
+          "reasons": Array(
+            o.reasons->Array.map(r => JSON.Object(
+              dict{"name": String(r.name), "failure": String((r.failure :> string))},
+            )),
+          ),
+        },
+      )),
+    ),
+  },
+)

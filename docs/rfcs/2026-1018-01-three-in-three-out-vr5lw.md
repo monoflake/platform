@@ -95,18 +95,21 @@ as it stands on a vendor, RFC 94y0d.
   with the author on 2026-10-18: one statement, or one batch, each SQL with its parameters, answered
   with each statement's rows. No vendor here speaks a common protocol for it -- D1 is reached from a
   Worker, a machine's SQLite is a file -- so every driver adapts whatever is chosen, and the least
-  leaves nothing to adapt that the contract forbids. A value of SQLite's is written in it as any
-  typed value is, below.
+  leaves nothing to adapt that the contract forbids. **The interface is the model's subset, never
+  WIT**, decided by the author on 2026-10-19, since it is the platform's own, RFC fhg6w:
+  `model/contracts/database.res`, a value of SQLite's a union tagged by `kind`, its payload in
+  `value`, as an app's typed value is written below.
 - **Each host's driver declares its databases' limits** -- a statement's size, its parameters, how
   long a query may run -- as it declares its levels: a vendor's in the code, which knows the vendor,
   as D1's from `docs/lessons/`; a machine's from a default the platform gives, which its holder may
   change. The platform holds each database to what is declared of it.
 
 **A typed value is written by its WIT type, in JSON or in CBOR: one model, two forms**, worked out
-with the author on 2026-10-18, for calls and for the database's interface alike; how a record at
-rest is kept is RFC b8f35's and the bundle's.
+with the author on 2026-10-18, for an app's calls; the platform's own interfaces, the database's
+among them, are the model's subset, RFC fhg6w. How a record at rest is kept is RFC b8f35's and the
+bundle's.
 
-- **A value of SQLite's is a WIT variant**, so the database's interface is WIT as every other is:
+- **A value of SQLite's an app passes is a WIT variant**,
   `variant value { null, integer(s64), real(f64), text(string), bytes(list<u8>) }`.
 - **A name is its owner's**: a user's, of a function, a field, a case or a flag, is written as the
   user wrote it, since changing it changes what they meant; the platform's own interfaces are
@@ -344,7 +347,9 @@ abstractions.
 - **Nothing calls an implementation but through its kind's contract**, and no implementation calls
   another, so above the drivers a product speaks of `object` and never of R2 or a disk.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
-  are held to one interface; the six contracts and their cases are open. [B30]
+  are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
+  `model/contracts/`: `object` and `database` are declared; function, instance and container, the
+  drivers' management, and every kind's cases are open. [B30]
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.

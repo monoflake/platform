@@ -39,6 +39,49 @@
 		}
 	],
 	"types": {
+		"failure": {
+			"enum": [
+				{
+					"name": "rejected",
+					"code": 1
+				},
+				{
+					"name": "unavailable",
+					"code": 2
+				},
+				{
+					"name": "unknown",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"error": {
+			"record": [
+				{
+					"name": "failure",
+					"key": 1,
+					"shape": {
+						"type": "failure"
+					}
+				},
+				{
+					"name": "reason",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "message",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
 		"bucket-type": {
 			"enum": [
 				{
@@ -319,6 +362,395 @@
 						}
 					},
 					"optional": true
+				}
+			]
+		},
+		"object-name": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"object-write": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "content",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"object-written": {
+			"record": []
+		},
+		"object-range": {
+			"record": [
+				{
+					"name": "start",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "length",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"object-read": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "range",
+					"key": 2,
+					"shape": {
+						"type": "object-range"
+					},
+					"optional": true
+				}
+			]
+		},
+		"object-content": {
+			"record": [
+				{
+					"name": "content",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"object-described": {
+			"record": [
+				{
+					"name": "size",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"object-deleted": {
+			"record": []
+		},
+		"object-list": {
+			"record": [
+				{
+					"name": "prefix",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "after",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"object-listed-one": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"object-listed": {
+			"record": [
+				{
+					"name": "objects",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "object-listed-one"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				}
+			]
+		},
+		"database-value": {
+			"union": {
+				"tag": "kind",
+				"cases": [
+					{
+						"name": "null",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "integer",
+						"code": 2,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "int64"
+								}
+							}
+						]
+					},
+					{
+						"name": "real",
+						"code": 3,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "float64"
+								}
+							}
+						]
+					},
+					{
+						"name": "text",
+						"code": 4,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "bytes",
+						"code": 5,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "bytes"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"database-statement": {
+			"record": [
+				{
+					"name": "sql",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "parameters",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "database-value"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		"database-execute": {
+			"record": [
+				{
+					"name": "statements",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "database-statement"
+						}
+					}
+				}
+			]
+		},
+		"database-result": {
+			"record": [
+				{
+					"name": "columns",
+					"key": 1,
+					"shape": {
+						"list": {
+							"prim": "string"
+						}
+					}
+				},
+				{
+					"name": "rows",
+					"key": 2,
+					"shape": {
+						"list": {
+							"list": {
+								"type": "database-value"
+							}
+						}
+					}
+				},
+				{
+					"name": "changed",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"database-executed": {
+			"record": [
+				{
+					"name": "results",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "database-result"
+						}
+					}
+				}
+			]
+		}
+	},
+	"interfaces": {
+		"object": {
+			"version": 1,
+			"operations": [
+				{
+					"name": "write",
+					"input": "object-write",
+					"output": "object-written",
+					"reasons": [
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "read",
+					"input": "object-read",
+					"output": "object-content",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "describe",
+					"input": "object-name",
+					"output": "object-described",
+					"reasons": []
+				},
+				{
+					"name": "delete",
+					"input": "object-name",
+					"output": "object-deleted",
+					"reasons": []
+				},
+				{
+					"name": "list",
+					"input": "object-list",
+					"output": "object-listed",
+					"reasons": []
+				}
+			]
+		},
+		"database": {
+			"version": 1,
+			"operations": [
+				{
+					"name": "execute",
+					"input": "database-execute",
+					"output": "database-executed",
+					"reasons": [
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "constraint",
+							"failure": "rejected"
+						},
+						{
+							"name": "beyond_limit",
+							"failure": "rejected"
+						},
+						{
+							"name": "busy",
+							"failure": "unavailable"
+						}
+					]
 				}
 			]
 		}

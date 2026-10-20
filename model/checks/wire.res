@@ -56,7 +56,7 @@ let run = () => {
       if ordered && choices->Array.some(c => c.code < 1) {
         contractRules->Array.push(`${t.name}: an ordered level coded below 1, 13ixj`)
       }
-    | Union({cases}) =>
+    | Union({tag, cases}) =>
       unique(cases->Array.map(c => c.name), t.name)
       unique(cases->Array.map(c => int(c.code)), `${t.name}'s codes`)
       cases->Array.forEach(c => {
@@ -64,6 +64,9 @@ let run = () => {
           contractRules->Array.push(`${t.name}.${c.name}: coded below 1`)
         }
         checkFields(`${t.name}.${c.name}`, c.fields, ~content=false)
+        if c.fields->Array.some(f => f.name == tag) {
+          contractRules->Array.push(`${t.name}.${c.name}: a field named ${tag}, its union's tag`)
+        }
       })
     }
   )
@@ -77,6 +80,34 @@ let run = () => {
     | Some(_) => contractRules->Array.push(`${c.kind}'s content, ${c.content}, is no record`)
     | None => contractRules->Array.push(`${c.kind}'s content: no type ${c.content}`)
     }
+  })
+  // An interface's operations, RFC vr5lw: named in whole words, snake_case, each input and output a
+  // record declared, and each reason its own.
+  let snake = n => /^[a-z]+(_[a-z]+)*$/->RegExp.test(n)
+  unique(Contracts.interfaces->Array.map(i => i.name), "an interface")
+  Contracts.interfaces->Array.forEach(i => {
+    unique(i.operations->Array.map(o => o.name), `${i.name}'s operations`)
+    i.operations->Array.forEach(o => {
+      let at = `${i.name}.${o.name}`
+      if !snake(o.name) {
+        contractRules->Array.push(`${at}: no snake_case name`)
+      }
+      [o.input, o.output]->Array.forEach(
+        n =>
+          switch declared->Dict.get(n) {
+          | Some({def: Record(_)}) => ()
+          | Some(_) => contractRules->Array.push(`${at}: ${n} is no record`)
+          | None => contractRules->Array.push(`${at}: no type ${n}`)
+          },
+      )
+      unique(o.reasons->Array.map(r => r.name), `${at}'s reasons`)
+      o.reasons->Array.forEach(
+        r =>
+          if !snake(r.name) {
+            contractRules->Array.push(`${at}: reason ${r.name}, no snake_case name`)
+          },
+      )
+    })
   })
   let made = Contracts.product(
     ~half=k => Records.records->Dict.get(k)->Option.mapOr("", r => (r.half :> string)),
@@ -127,53 +158,74 @@ let run = () => {
     found
   }
   // What an old reader of a version can no longer read: a type it reached gone or changed, past a
-  // record's fields that are new and optional.
+  // record's fields that are new and optional, and an interface's operation gone.
   let breaks = (old: JSON.t, now: JSON.t) => {
     let found = []
+    let same = (label, was, is) => {
+      let before = reach(old, was)
+      let after = reach(now, is)
+      before->Map.forEachWithKey((d, name) =>
+        switch after->Map.get(name) {
+        | None => found->Array.push(`${label}: ${name} gone, its version kept`)
+        | Some(a) =>
+          switch (d->member("record"), a->member("record")) {
+          | (Some(Array(was)), Some(Array(is))) =>
+            was->Array.forEach(f =>
+              if !(is->Array.some(g => text(g) == text(f))) {
+                found->Array.push(
+                  `${label}: ${name}.${f->named("name")} removed or changed, its version kept`,
+                )
+              }
+            )
+            is->Array.forEach(g =>
+              if (
+                !(was->Array.some(f => f->named("name") == g->named("name"))) &&
+                g->member("optional") == None
+              ) {
+                found->Array.push(
+                  `${label}: ${name}.${g->named("name")} added and required, its version kept`,
+                )
+              }
+            )
+          | _ =>
+            if text(d) != text(a) {
+              found->Array.push(`${label}: ${name} changed, its version kept`)
+            }
+          }
+        }
+      )
+    }
+    let version = j => text(j->member("version")->Option.getOr(Null))
     items(old->member("records"))->Array.forEach(r => {
       let kind = r->named("kind")
       switch items(now->member("records"))->Array.find(x => x->named("kind") == kind) {
-      | Some(n)
-        if text(n->member("version")->Option.getOr(Null)) ==
-          text(r->member("version")->Option.getOr(Null)) =>
-        let before = reach(old, r->named("content"))
-        let after = reach(now, n->named("content"))
-        before->Map.forEachWithKey((d, name) =>
-          switch after->Map.get(name) {
-          | None => found->Array.push(`${kind}: ${name} gone, its version kept`)
-          | Some(a) =>
-            switch (d->member("record"), a->member("record")) {
-            | (Some(Array(was)), Some(Array(is))) =>
-              was->Array.forEach(
-                f =>
-                  if !(is->Array.some(g => text(g) == text(f))) {
-                    found->Array.push(
-                      `${kind}: ${name}.${f->named("name")} removed or changed, its version kept`,
-                    )
-                  },
-              )
-              is->Array.forEach(
-                g =>
-                  if (
-                    !(was->Array.some(f => f->named("name") == g->named("name"))) &&
-                    g->member("optional") == None
-                  ) {
-                    found->Array.push(
-                      `${kind}: ${name}.${g->named("name")} added and required, its version kept`,
-                    )
-                  },
-              )
-            | _ =>
-              if text(d) != text(a) {
-                found->Array.push(`${kind}: ${name} changed, its version kept`)
-              }
-            }
-          }
-        )
+      | Some(n) if version(n) == version(r) => same(kind, r->named("content"), n->named("content"))
       | _ => ()
       }
     })
-    found
+    let interface_ = (j: JSON.t, i) => j->member("interfaces")->Option.flatMap(x => x->member(i))
+    switch old->member("interfaces") {
+    | Some(Object(d)) =>
+      d->Dict.forEachWithKey((o, i) =>
+        switch interface_(now, i) {
+        | Some(n) if version(n) == version(o) =>
+          items(o->member("operations"))->Array.forEach(op => {
+            let at = `${i}.${op->named("name")}`
+            switch items(n->member("operations"))->Array.find(
+              x => x->named("name") == op->named("name"),
+            ) {
+            | None => found->Array.push(`${at} gone, its version kept`)
+            | Some(x) =>
+              same(at, op->named("input"), x->named("input"))
+              same(at, op->named("output"), x->named("output"))
+            }
+          })
+        | _ => ()
+        }
+      )
+    | _ => ()
+    }
+    Set.fromArray(found)->Set.values->Array.fromIterator
   }
   let write = args->Array.includes("--write")
   switch kept {
@@ -194,6 +246,11 @@ let run = () => {
       `declared: ${Contracts.contents
         ->Array.map(c => `${c.kind} v${int(c.version)}`)
         ->orNone(", ")}`,
+      `interfaces: ${Contracts.interfaces
+        ->Array.map(i => `${i.name} v${int(i.version)}`)
+        ->orNone(
+          ", ",
+        )}; to declare: function, instance, container, the drivers' management; volume has none but its files`,
       `to declare: ${Records.records
         ->Dict.keysToArray
         ->Array.filter(k => !(Contracts.contents->Array.some(c => c.kind == k)))

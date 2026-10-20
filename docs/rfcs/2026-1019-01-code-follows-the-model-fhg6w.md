@@ -170,10 +170,22 @@ author on 2026-10-19:
 | a closed set of names                               | an enum without data       | a variant without payloads |
 | a union tagged by a field, with payloads            | an enum, tagged internally | a variant under `@tag`     |
 | a list; a map keyed by string                       | `Vec`; `BTreeMap`          | `array`; `dict`            |
+| a signed 64-bit integer, a decimal string in JSON   | `i64`                      | `bigint`                   |
 
-Left out: generics, functions, `null`, and whatever one language alone has, and an integer of 64
-bits, since ReScript's is a `bigint` and nothing asks one yet, decided by the author on 2026-10-19
-with the four below, from the bucket's trial, `model/contracts/`:
+Left out: generics, functions, `null`, and whatever one language alone has, decided by the author
+on 2026-10-19 with the four below, from the bucket's trial, `model/contracts/`. **An integer of 64
+bits was left out until something asked one**: SQLite's does, so it came in with the database's
+interface, decided by the author on 2026-10-19, written as a decimal string in JSON, which a
+JavaScript number cannot hold exactly, and as an integer in CBOR.
+
+**An interface is a set of operations in the subset**, decided by the author on 2026-10-19 with the
+database's interface: each operation its input and its output, records declared, and the reasons it
+may fail for, each a failure of RFC 49qyg's -- `rejected`, `unavailable` or `unknown` -- that a
+caller acts on, the reason only told. An operation is reached at `POST /{interface}/{operation}`,
+its input the body, its output or an `error` the answer, JSON or CBOR by the request; an
+interface's version is raised as a record's is, and the check refuses an operation gone or a type
+it reaches changed while the version stayed. **The platform's own interfaces are all of the
+subset**, a kind's and the database's among them; WIT is an app's alone.
 
 - **A union is a field's value, its case named inside it**: a bucket's kind is
   `{"name": "packed", "compress": true}`, so a field belongs to its case alone. It is written as
