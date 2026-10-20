@@ -72,7 +72,7 @@ let interface_: interface_ = {
       "write",
       "object-write",
       "object-written",
-      [("too_large", #rejected), ("full", #unavailable)],
+      [("too_large", #rejected), ("storage_full", #unavailable)],
     ),
     op("read", "object-read", "object-content", [("not_found", #rejected)]),
     op("describe", "object-name", "object-described", []),

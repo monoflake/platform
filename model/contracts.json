@@ -690,7 +690,7 @@
 							"failure": "rejected"
 						},
 						{
-							"name": "full",
+							"name": "storage_full",
 							"failure": "unavailable"
 						}
 					]
