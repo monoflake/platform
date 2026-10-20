@@ -43,23 +43,39 @@ as it stands on a vendor, RFC 94y0d.
 
 **Storage is of two uses, and only one is offered above as it is.**
 
-| Use      | What it is                                                                                      |
-| -------- | ----------------------------------------------------------------------------------------------- |
-| `object` | the storage's own: buckets of files by path and of objects by hash, RFC 13ixj, narrower than S3 |
-| `volume` | a disk: bytes changed in place and flushed, mounted by one `container` at a time                |
+| Use      | What it is                                                                                         |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| `object` | the storage's own: buckets of files by path and of objects by hash, RFC 13ixj, in its own protocol |
+| `volume` | a disk: bytes changed in place and flushed, mounted by one `container` at a time                   |
 
 - **A volume can give `object`; `object` never gives a volume.** Buckets can be kept on a disk,
   but a disk cannot be made of files written whole, however fast: a database changes a few bytes
   of a file and must have them flushed at once, one writer at a time.
-- **`object` is a contract of the platform's own, written as a subset of S3**, worked out with the
-  author on 2026-10-18: putting an object whole, getting it whole or by a range, asking whether one
-  is there, deleting it and listing by a prefix, each read seeing every write before it -- what the
-  blob asks, RFC vuanj, and no more. Every object is at most 16 MiB. It needs no condition on a
+- **`object` is a contract of the platform's own, in a protocol of its own and never S3's**,
+  decided by the author on 2026-10-19 in place of the subset of S3 worked out on 2026-10-18:
+  `write` an object whole, `read` it whole or by a range, `describe` whether one is there, `delete`
+  it and `list` by a prefix, each read seeing every write before it -- what the blob asks, RFC
+  vuanj, and no more, in the storage's own words below. Every object is at most 16 MiB. It needs no condition on a
   write, since a parcel is named by its content and a journal's object by a seed drawn at
   random, no rename and no upload in parts. **What takes it and what gives it are one**: a store
   is reached by it, and a platform gives an `opaque` bucket by it, RFC 13ixj, so one platform's
-  storage is the next one's `object`, RFC 94y0d. A `packed` bucket may be given by the same
-  subset without the 16 MiB bound, for a client that speaks S3.
+  storage is the next one's `object`, RFC 94y0d.
+- **S3 is a bridge wrapped around the platform's own operations, never beneath them**, decided by
+  the author on 2026-10-19, for a client that speaks S3. Each request it takes is mapped onto a
+  bucket's operation, and every other is refused as S3's `NotImplemented`, never served as nearly
+  as it can be:
+
+  | S3's request                                                    | A file bucket                                      | An object bucket                                                  |
+  | --------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------- |
+  | `GetObject`, whole or by a range; `HeadObject`; `ListObjectsV2` | `read`, `describe`, `list`                         | the same                                                          |
+  | `PutObject`, whole                                              | `write`, with no 16 MiB bound where it is `packed` | refused: S3's key is the client's, an object's name its content's |
+  | `DeleteObject`                                                  | `delete`                                           | refused: an object bucket is written through the platform alone   |
+  | any other: uploads in parts, conditions, versions, ACLs, tags   | refused                                            | refused                                                           |
+
+  The bridge runs cases of its own, by an S3 client. A store that speaks S3 taken from beneath, as
+  a footing's snapshots are written to, RFC v7v3w, is the bridge the other way: an S3 client
+  wrapped as an `object` store, built with the snapshots.
+
 - **Each is made of what is beneath it**: an `object` store of compute and a volume; a database of
   compute and a volume, below; a bucket of compute, `object` stores and a database, its records'
   home, RFC b8f35.
@@ -141,7 +157,7 @@ rest is kept is RFC b8f35's and the bundle's.
 The rights a capability grants stay `read`, `create`, `replace`, `delete`, `alter` and `call`, RFC vuanj, so
 a `write` asks `create` where its path is new and `replace` where it is not; and an `effect`'s
 outcomes stay `success`, `rejected`, `unavailable` and `unknown`, RFC 49qyg. `put`, `get` and `head`
-are S3's and HTTP's, and stay only where S3's subset is spoken, the `object` contract above.
+are S3's and HTTP's, and stay in the S3 bridge above alone.
 
 **Whatever runs is deployed as its configuration is applied, never loaded as a call comes**,
 worked out with the author on 2026-10-18. Since opening anything is a change of configuration, RFC

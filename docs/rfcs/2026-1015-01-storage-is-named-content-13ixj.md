@@ -35,8 +35,9 @@ storage (one an organization, its own unique salt)
   content         hash -> its pieces, RFC b8f35
 ```
 
-- **A file bucket is a subset of S3**: files by path, each written and read whole, and no
-  versioning. It is never served: what is shown outside is an object, published from it.
+- **A file bucket is files by path**, each written and read whole, and no versioning, which a
+  client that speaks S3 reads and writes through a bridge, an object bucket being only read there,
+  RFC vr5lw. It is never served: what is shown outside is an object, published from it.
 - **An object bucket holds objects named by their content.** An object is a hash and an
   extension, `{hash}.{extension}`, the least a name can carry: an app gives content and an
   extension, never a name, a path or a media type, and the platform computes the hash. **The same
