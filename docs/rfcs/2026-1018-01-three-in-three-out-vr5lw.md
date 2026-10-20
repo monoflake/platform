@@ -313,14 +313,22 @@ one code is both.
   database keeps, and remove the driver, which nothing prevents; only what storage keeps is sealed
   against them, RFC b8f35.
 
-**A driver is a component of its vendor's own**, worked out with the author on 2026-10-19:
-`machine-driver` in Rust, for what a machine gives by its own APIs, and `cloudflare-driver` in
-ReScript, for what an account gives by Cloudflare's, each at layer -2 beside the host they run,
+**A driver is a component of its vendor's own, made of implementations**, worked out with the author
+on 2026-10-19: `machine-driver` and `cloudflare-driver`, at layer -2 beside the host they run,
 `model/graph/components.res`. Neither does the other's work, since neither vendor has the other's
-abstractions: they are two components, never one written twice. **What both answer the
-organization's half is one contract the model declares**, generated for each, and a test runs that
-contract's cases against both drivers' HTTP APIs, so the two are held to one interface; the contract
-itself is open. [B30]
+abstractions.
+
+- **A kind is a contract, and has no language**: each of the six a resource gives -- function,
+  instance, container, object, volume, database, `model/ground/resources.res` -- is declared once by
+  the model. **An implementation of a kind has one**: a Worker over R2 and a process over a
+  machine's file system both give `object`, on grounds that share nothing, so each is written as its
+  ground asks, `model/ground/drivers.res`. A driver implements every kind its vendor's resources
+  give and no other: `cloudflare-driver` function, instance, object and database, in ReScript;
+  `machine-driver` all six, in Rust.
+- **Nothing calls an implementation but through its kind's contract**, and no implementation calls
+  another, so above the drivers a product speaks of `object` and never of R2 or a disk.
+- **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
+  are held to one interface; the six contracts and their cases are open. [B30]
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.
@@ -681,8 +689,8 @@ third-party vendors and the author's machines.
 
 Open, for the discussion that follows:
 
-- The drivers' contract: what the organization's half calls a driver for, declared in
-  `model/contracts/`, and the test that runs its cases against both drivers. [B30]
+- The six kinds' contracts, declared in `model/contracts/`, and the cases each runs against every
+  implementation of it. [B30]
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]

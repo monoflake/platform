@@ -401,9 +401,8 @@ let components: dict<component> = dict{
     ],
     uses: ["vocabulary*", "compat*"],
   },
-  /* A driver of each kind keeps what its vendor gives and nothing of the other's: the two answer the organization's half by one contract the model declares [B30]. */
+  /* A driver is made of implementations, one for each kind its vendor gives, each in its own language, `model/ground/drivers.res`. */
   "machine-driver": {
-    language: #rust,
     layer: -2,
     half: #organization,
     edges: [
@@ -418,7 +417,6 @@ let components: dict<component> = dict{
     uses: [],
   },
   "cloudflare-driver": {
-    language: #rescript,
     layer: -2,
     half: #organization,
     edges: [

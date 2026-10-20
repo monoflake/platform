@@ -1,7 +1,9 @@
 /**
  * The code held to the model, RFC fhg6w: a component's code lies in its layer's directory under the
  * name the model gives it, in the language the model declares, and uses only libraries of that
- * language. A component not yet written is noted, never refused.
+ * language. A driver declares none: it lies there as a directory of its implementations, one a kind
+ * its grounds give, each in its own, `model/ground/drivers.res`. A component not yet written is
+ * noted, never refused.
  */
 open Base
 
@@ -27,6 +29,33 @@ let run = () => {
   let none = []
   designed->Array.forEach(((name, c)) =>
     switch c.language {
+    | None if Drivers.drivers->Dict.get(name) != None =>
+      switch (group(c.layer), Drivers.drivers->Dict.get(name)) {
+      | (Some(g), Some(d)) =>
+        d.implements->Array.forEach(i =>
+          expected->Map.set(
+            `code/${g}/${name}/${(i.kind :> string)}`,
+            (`${name} ${(i.kind :> string)}`, i.language),
+          )
+        )
+        let given = Set.fromArray(
+          d.grounds
+          ->Array.flatMap(Resources.groundOf)
+          ->Array.flatMap(n => Resources.get(Resources.resources, n).gives),
+        )
+        let made = Set.fromArray(d.implements->Array.map(i => i.kind))
+        given->Set.forEach(k =>
+          if !(made->Set.has(k)) {
+            found->Array.push(`${name}: its grounds give ${(k :> string)}, which it implements not`)
+          }
+        )
+        made->Set.forEach(k =>
+          if !(given->Set.has(k)) {
+            found->Array.push(`${name}: implements ${(k :> string)}, which its grounds give not`)
+          }
+        )
+      | _ => found->Array.push(`${name}: a driver at layer ${int(c.layer)}, which has no directory`)
+      }
     | None => none->Array.push(name)
     | Some(language) =>
       switch group(c.layer) {
@@ -55,9 +84,7 @@ let run = () => {
       ->Array.filter(e => e->isDirectory)
       ->Array.forEach(e => {
         let path = `code/${g}/${e->entryName}`
-        switch expected->Map.get(path) {
-        | None => found->Array.push(`${path}: no component of the model lies here`)
-        | Some((name, language)) =>
+        let check = (path, name, language: [#rust | #rescript]) => {
           let inside = urlIn(`${path}/`, root)
           let files = entries(inside, {withFileTypes: true})->Array.map(entryName)
           if files->Array.length > 0 {
@@ -71,6 +98,25 @@ let run = () => {
                 )
               },
           )
+        }
+        switch expected->Map.get(path) {
+        | None if Drivers.drivers->Dict.get(e->entryName) != None =>
+          entries(urlIn(`${path}/`, root), {withFileTypes: true})->Array.forEach(
+            k =>
+              if k->isDirectory {
+                let inner = `${path}/${k->entryName}`
+                switch expected->Map.get(inner) {
+                | Some((name, language)) => check(inner, name, language)
+                | None => found->Array.push(`${inner}: no kind its driver implements`)
+                }
+              } else {
+                found->Array.push(
+                  `${path}/${k->entryName}: a driver holds its implementations alone`,
+                )
+              },
+          )
+        | None => found->Array.push(`${path}: no component of the model lies here`)
+        | Some((name, language)) => check(path, name, language)
         }
       })
     }
@@ -87,8 +133,15 @@ let run = () => {
     found,
     ~notes=[
       `written: ${written->orNone(", ")}`,
-      `not yet written: ${int(unwritten->Array.length)} components`,
+      `not yet written: ${int(unwritten->Array.length)}, components and implementations`,
       `no code of the platform's: ${none->orNone(", ")}`,
+      ...Drivers.drivers
+      ->Dict.toArray
+      ->Array.map(((n, d)) =>
+        `${n}: ${d.implements
+          ->Array.map(i => `${(i.kind :> string)} in ${(i.language :> string)}`)
+          ->Array.join(", ")}`
+      ),
     ],
     (),
   )

@@ -119,8 +119,11 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 - **Each component declares its language in the model**, decided by the author on 2026-10-19, and
   the language follows from where it must run: ReScript for what must run on a Worker, which then
   runs in `workerd` on a machine alike, and Rust for what runs only natively on a machine. Since an
-  organization's resources may be Cloudflare's, every component but `machine-driver` is ReScript;
-  an app's code is its user's and the root runs nothing, so neither declares one.
+  organization's resources may be Cloudflare's, every component is ReScript; an app's code is its
+  user's and the root runs nothing, so neither declares one. **Where the platform meets a vendor, a
+  kind is a contract with an implementation a vendor**, and the language is the implementation's:
+  a driver declares none, and lies as a directory of its implementations, `machine-driver`'s Rust
+  and `cloudflare-driver`'s ReScript, RFC vr5lw.
   `model/checks/code.res` holds that each component's code lies in its layer's directory, named as
   the model names it, that its manifest is its language's, and that it uses only libraries of its
   own language.
