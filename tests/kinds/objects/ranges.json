@@ -1,0 +1,40 @@
+{
+	"interface": "object",
+	"cases": [
+		{
+			"description": "a range is read from its first byte, as many as asked, beside the whole size",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a", "range": { "start": 1, "length": 3 } },
+					"expect": { "output": { "content": "ZWxs", "size": 5 } }
+				}
+			]
+		},
+		{
+			"description": "a range past the end is cut there",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a", "range": { "start": 3, "length": 10 } },
+					"expect": { "output": { "content": "bG8", "size": 5 } }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a", "range": { "start": 5, "length": 1 } },
+					"expect": { "output": { "content": "", "size": 5 } }
+				}
+			]
+		}
+	]
+}

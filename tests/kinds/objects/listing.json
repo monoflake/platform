@@ -1,0 +1,77 @@
+{
+	"interface": "object",
+	"cases": [
+		{
+			"description": "a list holds the names under its prefix, in byte order, and no next once none is left",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a/2", "content": "d29ybGQ" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "write",
+					"input": { "name": "a/1", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "write",
+					"input": { "name": "b/1", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "list",
+					"input": { "prefix": "a/" },
+					"expect": {
+						"output": {
+							"objects": [
+								{ "name": "a/1", "size": 5 },
+								{ "name": "a/2", "size": 5 }
+							]
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": { "prefix": "" },
+					"expect": {
+						"output": {
+							"objects": [
+								{ "name": "a/1", "size": 5 },
+								{ "name": "a/2", "size": 5 },
+								{ "name": "b/1", "size": 5 }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a list is read a page at a time, each from the name the last ended at",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a/1", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "write",
+					"input": { "name": "a/2", "content": "d29ybGQ" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "list",
+					"input": { "prefix": "a/", "limit": 1 },
+					"expect": {
+						"output": { "objects": [{ "name": "a/1", "size": 5 }], "next": { "$capture": "next" } }
+					}
+				},
+				{
+					"call": "list",
+					"input": { "prefix": "a/", "after": { "$use": "next" }, "limit": 1 },
+					"expect": { "output": { "objects": [{ "name": "a/2", "size": 5 }] } }
+				}
+			]
+		}
+	]
+}

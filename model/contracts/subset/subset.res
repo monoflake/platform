@@ -62,7 +62,14 @@ type operation = {name: string, input: string, output: string, reasons: array<re
  * /{interface}/{operation}`, its input the body and its output or an `error` the answer, in JSON or
  * CBOR as the request chooses. Its version is raised as a record's is, wnqvu.
  */
-type interface_ = {name: string, version: int, operations: array<operation>, from: string}
+type interface_ = {
+  name: string,
+  version: int,
+  operations: array<operation>,
+  /** The bounds a sample may be written against, by name, each an integer. */
+  bounds?: dict<int>,
+  from: string,
+}
 
 let field = (name, key, shape) => {name, key, shape}
 let optional = (name, key, shape) => {name, key, shape, optional: true}
@@ -168,6 +175,9 @@ let defJson = (d: def, ~content): JSON.t =>
 let interfaceJson = (i: interface_): JSON.t => Object(
   dict{
     "version": Number(Int.toFloat(i.version)),
+    "bounds": Object(
+      i.bounds->Option.getOr(dict{})->Dict.mapValues(b => JSON.Number(Int.toFloat(b))),
+    ),
     "operations": Array(
       i.operations->Array.map(o => JSON.Object(
         dict{

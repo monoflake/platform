@@ -1,0 +1,30 @@
+{
+	"samples": [
+		{ "type": "database-value", "json": { "kind": "null" }, "cbor": "a10001" },
+		{ "type": "database-value", "json": { "kind": "integer", "value": "5" }, "cbor": "a200020105" },
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": "-9223372036854775808" },
+			"cbor": "a20002013b7fffffffffffffff"
+		},
+		{
+			"type": "database-value",
+			"json": { "kind": "bytes", "value": "aGVsbG8" },
+			"cbor": "a20005014568656c6c6f"
+		}
+	],
+	"refused": [
+		{ "type": "database-value", "json": { "kind": "integer", "value": 5 }, "reason": "malformed" },
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": "9223372036854775808" },
+			"reason": "malformed"
+		},
+		{
+			"type": "database-value",
+			"json": { "kind": "integer", "value": "05" },
+			"reason": "malformed"
+		},
+		{ "type": "database-value", "json": { "kind": "decimal", "value": "1" }, "reason": "malformed" }
+	]
+}

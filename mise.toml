@@ -4,15 +4,15 @@
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tasks.fmt]
-description = "Format the model with ReScript's formatter and the prose and JSON with oxfmt: `fmt [--check]`"
+description = "Format the model with ReScript's formatter and the prose, the product and the samples with oxfmt: `fmt [--check]`"
 usage = 'flag "--check" help="Report what is not formatted and write nothing"'
 run = '''
 if [ -n "${usage_check:-}" ]; then
 	rescript format --check
-	oxfmt --check '*.md' '*.json' 'docs/**/*.md' 'model/*.json'
+	oxfmt --check '*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'
 else
 	rescript format
-	oxfmt '*.md' '*.json' 'docs/**/*.md' 'model/*.json'
+	oxfmt '*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'
 fi
 '''
 

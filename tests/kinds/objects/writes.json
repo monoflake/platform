@@ -1,0 +1,118 @@
+{
+	"interface": "object",
+	"cases": [
+		{
+			"description": "an object written is read whole",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a" },
+					"expect": { "output": { "content": "aGVsbG8", "size": 5 } }
+				}
+			]
+		},
+		{
+			"description": "written again, an object is replaced whole",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "d29ybGQ" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a" },
+					"expect": { "output": { "content": "d29ybGQ", "size": 5 } }
+				}
+			]
+		},
+		{
+			"description": "an object past the bound is refused, and nothing is written",
+			"steps": [
+				{
+					"call": "write",
+					"input": {
+						"name": "big",
+						"content": { "$bytes": { "length": { "bound": "content", "plus": 1 } } }
+					},
+					"expect": { "failure": "rejected", "reason": "too_large" }
+				},
+				{ "call": "describe", "input": { "name": "big" }, "expect": { "output": {} } }
+			]
+		},
+		{
+			"description": "an object at the bound is written",
+			"steps": [
+				{
+					"call": "write",
+					"input": {
+						"name": "full",
+						"content": { "$bytes": { "length": { "bound": "content", "plus": 0 } } }
+					},
+					"expect": { "output": {} }
+				},
+				{
+					"call": "describe",
+					"input": { "name": "full" },
+					"expect": { "output": { "size": 16777216 } }
+				}
+			]
+		},
+		{
+			"description": "past the capacity held, a write fails for room",
+			"given": { "size": 1024 },
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": { "$bytes": { "length": 2048 } } },
+					"expect": { "failure": "unavailable", "reason": "storage_full" }
+				}
+			]
+		},
+		{
+			"description": "an object absent is not found, and described as absent",
+			"steps": [
+				{
+					"call": "read",
+					"input": { "name": "missing" },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				},
+				{ "call": "describe", "input": { "name": "missing" }, "expect": { "output": {} } }
+			]
+		},
+		{
+			"description": "an object described gives its size",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{ "call": "describe", "input": { "name": "a" }, "expect": { "output": { "size": 5 } } }
+			]
+		},
+		{
+			"description": "deleting removes an object, and deleting one absent succeeds",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{ "call": "delete", "input": { "name": "a" }, "expect": { "output": {} } },
+				{ "call": "describe", "input": { "name": "a" }, "expect": { "output": {} } },
+				{ "call": "delete", "input": { "name": "a" }, "expect": { "output": {} } }
+			]
+		}
+	]
+}

@@ -146,7 +146,7 @@ bundle's.
 - **Each request chooses its form**, by `Content-Type` and `Accept`, `application/json` or
   `application/cbor`, JSON where it names neither; the platform's components speak CBOR among
   themselves. Both are built in v0, and run one set of examples, each in both forms, which every
-  codec must judge alike, as the workspace's `spec/json.md` has every contract do.
+  codec must judge alike, `tests/codec/`.
 - **A value's hash is the platform's alone, and is of its structure, never its bytes**: values equal
   in structure are one value however they were written, in either form, in any order of a record's
   fields. A caller computes none, and a `derive`'s outputs are cached by it, RFC vuanj.
@@ -373,7 +373,24 @@ abstractions.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
   `model/contracts/`: `object`, `database`, the drivers' management and `deployments`, which function,
-  instance and container share, are declared; every kind's cases are open. [B30]
+  instance and container share, are declared; `object` alone is sampled so far. [B30]
+- **The cases are data in `tests/`, three of a kind**, decided by the author on 2026-10-19:
+  `codec/`, a value in JSON beside its CBOR, and inputs every reader refuses; `kinds/`, each
+  interface's cases, a case a list of steps -- an operation called, its output or its failure and
+  reason expected -- as WebAssembly's `.wast` scripts are; and `properties/`, what no fixed answer
+  shows, a history checked by a named checker, as Jepsen's are: one instance for a key, and a read
+  seeing every write before it, alone in v0. A step may expect any value with `$any`, keep one with
+  `$capture` for a later step's `$use`, and write bytes of a length with `$bytes`, a length past a
+  bound of its interface among them, so a case past a driver's bound is written once for every
+  driver; a case may be `given` the capacity of its kind it starts with. Each case starts from
+  nothing, and an output expected is the whole output.
+- **The check holds the samples to the contracts**, `model/checks/written/cases.res`: each step
+  calls an operation that exists, with an input that parses, expecting an output that parses or a
+  reason its operation has and the failure that reason is; every operation and every reason of an
+  interface sampled is met; and every input a codec sample refuses is refused by the reader the
+  check holds. **One runner reads them all**, in `code/tools/`: it takes an address and a
+  credential, never an implementation's code, and speaks HTTP itself, so no client hides what an
+  implementation answers.
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.

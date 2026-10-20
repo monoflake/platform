@@ -1309,6 +1309,9 @@
 	"interfaces": {
 		"object": {
 			"version": 1,
+			"bounds": {
+				"content": 16777216
+			},
 			"operations": [
 				{
 					"name": "write",
@@ -1358,6 +1361,7 @@
 		},
 		"database": {
 			"version": 1,
+			"bounds": {},
 			"operations": [
 				{
 					"name": "execute",
@@ -1386,6 +1390,7 @@
 		},
 		"management": {
 			"version": 2,
+			"bounds": {},
 			"operations": [
 				{
 					"name": "apply",
@@ -1434,6 +1439,7 @@
 		},
 		"deployments": {
 			"version": 1,
+			"bounds": {},
 			"operations": [
 				{
 					"name": "deploy",

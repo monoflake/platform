@@ -96,8 +96,11 @@ components, libraries and edges, each with its contract:
 
 **The model and the code are one repository**, decided by the author on 2026-10-19, so the check
 reads the code it holds to the model's boundaries, `model/contracts.json` reaches its generators
-unpublished, and a change to both is one commit. Its top is five directories: `model/`, the spec;
-`code/`; `docs/`, what is read; `scripts/`, the entries that drive the rest; and `vendor/`.
+unpublished, and a change to both is one commit. Its top is six directories: `model/`, the spec;
+`code/`; `docs/`, what is read; `tests/`, the samples every implementation is held to; `scripts/`,
+the entries that drive the rest; and `vendor/`. **The samples stand apart from what runs them**,
+decided by the author on 2026-10-19: `tests/` holds what is tested, by subject, as data any language
+reads, and `code/tools/` the runner, which holds no sample.
 
 **A component's code is placed by its layer, in a directory named as the model names it**, worked out
 with the author on 2026-10-19, so where code goes follows from the model and is never argued again:

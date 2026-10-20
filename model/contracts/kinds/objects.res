@@ -66,6 +66,7 @@ let types: array<declared> = [
 let interface_: interface_ = {
   name: "object",
   version: 1,
+  bounds: dict{"content": most},
   from: "vr5lw",
   operations: [
     op(
