@@ -55,9 +55,11 @@ alone.
 | `mise run check --ready` | asks whether building may begin                       |
 | `mise run check --write` | writes `model/contracts.json` again from the model    |
 | `mise run fmt`           | formats the ReScript, the prose and the JSON          |
-| `mise run verify`        | everything formatted, the check, and the crates' deny |
+| `mise run verify`        | everything formatted, the check, the blocks, the deny |
 | `mise run brief <name>`  | one block's brief, read from the model                |
 | `mise run accept <name>` | one block held to its brief, alone                    |
+| `mise run built <name>`  | one block built, formatted, linted and tested alone   |
+| `mise run blocks`        | every written block built alone, as verify asks       |
 
 A commit waits on `mise run check monoflake`, run from the workspace: this verify, then the
 workspace's rules over the tree.

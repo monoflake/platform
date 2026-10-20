@@ -2,7 +2,8 @@
  * One block held to its brief, its model half, `mise run accept <package> [--from <revision>]`:
  * what the model asks of its directory, as `code.res` holds every one; its samples there; each todo
  * naming an open row; nothing crossing into JavaScript unchecked outside its bindings; and, from
- * the revision its work began at, no change outside its directory or to its interface. Its
+ * the revision its work began at, no change outside its directory but another in work, nor to its
+ * interface, the conversation's to run as it reads the diff, since a worker runs no jj. Its
  * languages' builds, lints and tests are the task's to run after, in order, `docs/code.md`.
  */
 open Base
@@ -126,14 +127,29 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       found->Array.push(why)
       []
     | Ok(files) =>
+      // Workers share one tree, so another block in work changes beside this one, its own to hold.
+      let (blocks, _, _) = Blocks.expected()
+      let beside =
+        blocks
+        ->Map.entries
+        ->Array.fromIterator
+        ->Array.filter(((p, o)) => p != path && Work.blocks->Dict.get(o.package) == Some(InWork))
+        ->Array.map(((p, _)) => `${p}/`)
+      let theirs = files->Array.filter(f => beside->Array.some(b => f->String.startsWith(b)))
       files->Array.forEach(f =>
-        if !(f->String.startsWith(`${path}/`)) {
+        if f->String.startsWith(`${path}/`) {
+          if isInterface(f->String.slice(~start=String.length(path) + 1)) {
+            found->Array.push(`${f}: the interface changed, which is the model's`)
+          }
+        } else if !(theirs->Array.includes(f)) {
           found->Array.push(`${f}: changed, outside ${path}/`)
-        } else if isInterface(f->String.slice(~start=String.length(path) + 1)) {
-          found->Array.push(`${f}: the interface changed, which is the model's`)
         }
       )
-      [`changed since ${revision}: ${int(files->Array.length)} files`]
+      [
+        `changed since ${revision}: ${int(files->Array.length)} files, ${int(
+            theirs->Array.length,
+          )} of them another block's in work`,
+      ]
     }
   }
   dimension(

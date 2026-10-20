@@ -1,8 +1,8 @@
 /**
  * The tree's three workspaces, RFC fhg6w: the root's `Cargo.toml` lists every crate beneath `code/`
- * as a member and nothing else, its `rescript.json` every ReScript package as a dependency, and
- * `pnpm-workspace.yaml` takes all beneath `code/`, where every package that pnpm links lies. Cargo
- * and ReScript take no recursive glob, so each list is written out and held here.
+ * as a member and nothing else, its `rescript.json` and `package.json` no ReScript package, as each
+ * builds alone, and `pnpm-workspace.yaml` takes all beneath `code/`, where every package that pnpm
+ * links lies. Cargo takes no recursive glob, so its list is written out and held here.
  */
 open Base
 
@@ -115,22 +115,26 @@ let run = () => {
     ->member("name")
     ->Option.flatMap(JSON.Decode.string)
   )
+  // A block builds alone, so one failing fails no other and never the model, `docs/code.md`.
   switch JSON.parseOrThrow(readFileSync(urlIn("rescript.json", root)))->JSON.Decode.object {
   | Some(d) =>
-    let listed =
-      list(d->Dict.get("dependencies"))->Option.getOr([])->Array.filterMap(JSON.Decode.string)
-    differ(found, "rescript.json", listed, names)
+    list(d->Dict.get("dependencies"))
+    ->Option.getOr([])
+    ->Array.filterMap(JSON.Decode.string)
+    ->Array.filter(n => names->Array.includes(n))
+    ->Array.forEach(n =>
+      found->Array.push(`rescript.json: ${n} as a dependency, so a block failing fails the model`)
+    )
   | None => found->Array.push("rescript.json: no object")
   }
-  // pnpm links a package where ReScript looks only as a dependency of the root's.
   let linked =
     JSON.parseOrThrow(readFileSync(urlIn("package.json", root)))
     ->member("devDependencies")
     ->Option.flatMap(JSON.Decode.object)
     ->Option.getOr(Dict.make())
   names->Array.forEach(n =>
-    if linked->Dict.get(n)->Option.flatMap(JSON.Decode.string) != Some("workspace:*") {
-      found->Array.push(`package.json: no ${n} as workspace:*, so pnpm links it not`)
+    if linked->Dict.get(n) != None {
+      found->Array.push(`package.json: ${n}, which the root builds not and so needs not`)
     }
   )
   let pnpm = readFileSync(urlIn("pnpm-workspace.yaml", root))
@@ -139,7 +143,7 @@ let run = () => {
   }
   dimension(
     "Workspaces",
-    "Does the root's Cargo.toml list every crate beneath code/, its rescript.json every ReScript package, and pnpm take code/**?",
+    "Does the root's Cargo.toml list every crate beneath code/, its rescript.json and package.json no ReScript package, and pnpm take code/**?",
     found,
     ~notes=[`crates: ${crates->orNone(", ")}`, `ReScript packages: ${names->orNone(", ")}`],
     (),

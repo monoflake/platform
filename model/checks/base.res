@@ -106,6 +106,24 @@ let atBoundaries = (when_: Components.edge => bool): split => {
 }
 
 let failed = ref(false)
+
+/** What a block in work fails, `model/plan/work.res`: listed in red after every dimension, failing
+ * nothing. */
+let inWork: array<string> = []
+
+@val @scope(("process", "env")) external noColor: Nullable.t<string> = "NO_COLOR"
+let red = text => noColor->Nullable.toOption != None ? text : `\u001b[31m${text}\u001b[0m`
+
+let shownInWork = () =>
+  if inWork->Array.length > 0 {
+    Console.log(
+      red(
+        `\n# In work, failing nothing until accepted\n${inWork
+          ->Array.map(l => `  ! ${l}`)
+          ->Array.join("\n")}`,
+      ),
+    )
+  }
 let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
   Console.log(`\n# ${title}\n${question}`)
   Console.log(

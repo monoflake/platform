@@ -17,8 +17,25 @@ against it, and the whole is held by the conversation.
   `docs/`, the root's manifests and the interface are asked about, never changed; registering a
   block in the root's manifests is the conversation's.
 - **`mise run accept <package> --from <revision>` is a block's whole acceptance**: its model half,
-  `model/accept.res`, then its languages' formatting, lints and tests, in that order. It holds the
-  block alone. The whole -- the graph, every contract, `mise run check` -- is the conversation's.
+  `model/accept.res`, then `mise run built <package>`, its languages' build, formatting, lints and
+  tests, in that order. It holds the block alone. The whole -- the graph, every contract, `mise run
+  check` -- is the conversation's. A worker runs it without `--from`, and the conversation with it
+  as it reads the diff, since a worker runs no jj: jj snapshots the one tree, and two snapshotting
+  at once diverge, the workspace's `docs/delegation.md`.
+- **A block builds alone, so one failing fails no other**, decided by the author on 2026-10-20.
+  The root's `rescript.json` and `package.json` list no block, so `rescript build` at the root
+  compiles the model alone, and each package is built by `rescript build <its directory>`, its own
+  root, inheriting nothing: its `rescript.json` writes its output itself, `Blocks.rescriptOutput`.
+  Cargo builds a crate alone already, by `-p`. Accept builds no model: the model is the
+  conversation's, compiled before it dispatches, and two builds of one package at once collide on
+  its lock.
+- **A written block is in work or accepted**, `model/plan/work.res`, decided by the author on
+  2026-10-20. The conversation marks it in work as it dispatches a worker or changes its interface,
+  and accepted once accept passed and the diff was read. Whatever an accepted block fails -- its
+  model half in `mise run check`, its build in `mise run blocks` -- fails verify; what one in work
+  fails is listed in red after both and refuses no commit. Accept passes over changes inside
+  another block in work, since workers share one tree; a change anywhere else outside the block is
+  refused.
 - **A package links the root's two licenses beside its manifests**, `LICENSE-MIT` and
   `LICENSE-APACHE`, each a link to the root's own, decided by the author on 2026-10-20: a package is
   read apart from its tree, by a registry or a reader, and carries its terms with it while the texts

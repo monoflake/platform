@@ -3,7 +3,6 @@
 	"private": true,
 	"type": "module",
 	"devDependencies": {
-		"@monoflake/codec": "workspace:*",
 		"@rescript/runtime": "^12.3.1",
 		"rescript": "^12.3.1"
 	}

@@ -8,9 +8,6 @@ importers:
 
   .:
     devDependencies:
-      '@monoflake/codec':
-        specifier: workspace:*
-        version: link:code/libs/codec
       '@rescript/runtime':
         specifier: ^12.3.1
         version: 12.3.1

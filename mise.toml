@@ -34,22 +34,31 @@ flag "--path" help="Its directory alone"
 run = 'rescript build > /dev/null && node model/brief.res.mjs "$usage_package" ${usage_path:+--path}'
 
 [tasks.accept]
-description = "Hold one block to its brief, alone: `accept <package> [--from <revision>]`"
+description = "Hold one block to its brief, alone, the model compiled before: `accept <package> [--from <revision>]`"
 usage = '''
 arg "<package>" help="The block, by its package name"
 flag "--from <revision>" help="The revision its work began at"
 '''
+run = 'node model/accept.res.mjs "$usage_package" ${usage_from:+--from "$usage_from"} && mise run built "$usage_package"'
+
+[tasks.built]
+description = "Build, format, lint and test one block alone, as accept and verify each ask: `built <package>`"
+usage = 'arg "<package>" help="The block, by its package name"'
 run = """
-rescript build && node model/accept.res.mjs "$usage_package" ${usage_from:+--from "$usage_from"} || exit 1
-d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package"
+d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || exit 1
 [ ! -f "$d/Cargo.toml" ] || { cargo fmt --check -p "$p" && cargo clippy -p "$p" --all-targets -- -D warnings && cargo test -p "$p"; } || exit 1
-[ ! -f "$d/rescript.json" ] || { cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; }
+[ ! -f "$d/rescript.json" ] || { rescript build "$d" && cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; }
 """
 
+[tasks.blocks]
+description = "Build, format, lint and test every written block alone; one in work fails nothing"
+run = "rescript build > /dev/null && node model/built.res.mjs"
+
 [tasks.verify]
-description = "What a commit has to pass: everything formatted, the check, and the crates' dependencies once there are crates"
+description = "What a commit has to pass: everything formatted, the check, every block alone, and the crates' dependencies once there are crates"
 run = [
 	"mise run formatted",
 	"mise run check",
+	"mise run blocks",
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]

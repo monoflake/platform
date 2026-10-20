@@ -212,6 +212,19 @@ let held = (path, h: held): option<array<string>> => {
       if read("number") != Some(number) || read("error") != Some(error) {
         found->Array.push(`${manifest}: warnings not number ${number} and error ${error}`)
       }
+      let (module_, suffix) = rescriptOutput
+      let config = JSON.parseOrThrow(readFileSync(urlIn(manifest, root)))
+      let specs = list(config->member("package-specs"))->Option.getOr([])
+      let inSource = s => truth(s->member("in-source")) == Some(true)
+      if (
+        !(
+          specs->Array.length == 1 &&
+            specs->Array.every(s => text(s->member("module")) == Some(module_) && inSource(s))
+        ) ||
+        text(config->member("suffix")) != Some(suffix)
+      ) {
+        found->Array.push(`${manifest}: no ${module_} beside its sources as ${suffix}`)
+      }
     }
     texts->Array.forEach(text =>
       if !linked(path, text) {
@@ -227,11 +240,18 @@ let run = () => {
   let (expected, problems, none) = Blocks.expected()
   let found = problems
   let written = []
+  // What a block fails is the check's once it is accepted, and listed in red while it is in work.
+  let into = (h: held) => Work.blocks->Dict.get(h.package) == Some(InWork) ? inWork : found
   // A directory written holds what the model asks of it.
   let check = (path, h: held) =>
     held(path, h)->Option.forEach(problems => {
       written->Array.push(h.name)
-      found->Array.pushMany(problems)
+      if Work.blocks->Dict.get(h.package) == None {
+        found->Array.push(
+          `${path}: written, yet model/plan/work.res has it neither in work nor accepted`,
+        )
+      }
+      into(h)->Array.pushMany(problems)
     })
   let inside = path => entries(urlIn(`${path}/`, root), {withFileTypes: true})
   ["apps", "products", "primitives", "substrate", "platform", "libs"]->Array.forEach(g => {
@@ -303,10 +323,21 @@ let run = () => {
       todosOf(path)->Array.forEach(((at, named)) =>
         switch named {
         | Some(id) if rows->Array.includes(id) => waiting->Array.push(`${at}: ${id}`)
-        | Some(id) => found->Array.push(`${at}: waits on ${id}, which is no open row`)
-        | None => found->Array.push(`${at}: a todo naming no row of the checklist`)
+        | Some(id) => into(h)->Array.push(`${at}: waits on ${id}, which is no open row`)
+        | None => into(h)->Array.push(`${at}: a todo naming no row of the checklist`)
         }
       )
+    }
+  )
+  Work.blocks->Dict.forEachWithKey((state, package) =>
+    switch (
+      state,
+      expected->Map.values->Array.fromIterator->Array.find(h => h.package == package),
+    ) {
+    | (_, None) => found->Array.push(`model/plan/work.res: ${package}, which is no block's package`)
+    | (Accepted, Some(h)) if !(written->Array.includes(h.name)) =>
+      found->Array.push(`model/plan/work.res: ${package} accepted, yet nothing of it is written`)
+    | (Accepted | InWork, Some(_)) => ()
     }
   )
   let unwritten =
@@ -320,6 +351,11 @@ let run = () => {
     found,
     ~notes=[
       `written: ${written->orNone(", ")}`,
+      `in work: ${Work.blocks
+        ->Dict.toArray
+        ->Array.filter(((_, s)) => s == InWork)
+        ->Array.map(((p, _)) => p)
+        ->orNone(", ")}`,
       `waiting on an open row: ${waiting->orNone("; ")}`,
       `not yet written: ${int(
           unwritten->Array.length,

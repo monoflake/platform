@@ -146,3 +146,14 @@ for draft-ietf-cbor-cde-05", and `dcbor`, with `rejectDuplicateKeys` and `sortKe
 changes how an object is written. Asked by RFC fhg6w. Sources: https://www.npmjs.com/package/cbor2,
 https://github.com/hildjj/cbor2, the package's `lib/options.d.ts`, and
 https://depscope.dev/pkg/npm/cbor-x
+
+## ReScript's packages built alone, found 2026-10-20
+
+**A package built as its own root inherits nothing of the monorepo root's**: built by `rescript
+build <its directory>` and listed by no root, codec wrote CommonJS `.js` beside its sources, since
+its `package-specs` and `suffix` had come from the root's; each package now writes its own. Its
+incremental state, left by a build as a dependency of the root, failed it with `Missing dependency
+... in search path` until `rescript clean <its directory>`. Two `rescript build` of one package at
+once collide on its lock, the second failing with `cannot parse integer from empty string`; builds
+of two packages at once do not. Found on ReScript 12.3.1 while making each block build alone,
+`docs/code.md`.

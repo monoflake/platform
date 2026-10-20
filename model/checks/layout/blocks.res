@@ -2,7 +2,7 @@
  * Every block the model asks code of, RFC fhg6w: a component in its layer's directory, a driver's
  * implementation of a kind and its management in `driver/`, and a library in `code/libs/`, each
  * by the directory it lies in. `code.res` holds the code to them, and a brief and an acceptance are
- * each one block's, `model/blocks.res`.
+ * each one block's, `model/brief.res` and `model/accept.res`.
  */
 open Base
 
@@ -169,6 +169,10 @@ let expected = () => {
  * every warning an error but 110, a `%todo`, which `--ready` refuses instead, `docs/code.md`.
  */
 let rescriptWarnings = ("+4", "+a-110")
+
+/** What every ReScript package writes, beside its sources, as it builds alone and inherits nothing
+ * of the root's: an ES module, by this suffix. */
+let rescriptOutput = ("esmodule", ".res.mjs")
 
 /** The version every package holds while none is published, decided by the author on 2026-10-20. */
 let unpublished = "0.0.0"
