@@ -20,14 +20,24 @@ What the role does for one organization is settled by the drafts already: it ope
 restores and deletes the organization, certifies its key under the intermediate, sets its allowance,
 RFC vuanj, and lends it what it binds, RFC v7v3w. What is not settled is what crosses.
 
+## Decided
+
+**What the authority decides of an organization travels one way, pulled by the organization's
+control**, decided by the author on 2026-10-20: the control pulls once when it holds nothing yet,
+and again whenever the authority notices it of a change. A notice is a call the other way that
+carries nothing but that there is something to pull, as a webhook does; the data never moves but
+by the pull. So an idle platform sends nothing between the two, and a team running its own writes
+the authority as the pulled end, noticing the control as it changes something.
+
+**What is pulled is one record the authority signs**, decided by the author on 2026-10-20: the
+organization's certificate, its allowance, its loans and its status. Its salt and key are no part
+of it: they are delivered once, at opening, as every secret is.
+
 ## Open, for the discussion that follows:
 
-- What crosses, and in which direction: the organization's certificate, its allowance, its loans
-  and its status, and its salt and key at opening, each pulled by the organization's control or
-  pushed to it. [B35]
-- How a change reaches the organization's control between the daily copies, and what it does while
-  the role cannot be reached: serving from its last copy until its certificate expires, or less.
-  [B36]
+- How the authority knows a notice reached the organization's control, whether by seeing it pull
+  what the notice named; and when the control pulls with no notice, as before its certificate
+  expires; and what it does while the authority cannot be reached. [B36]
 - How the organization's control proves who it is to the role, and how it knows an answer is the
   role's: records signed beneath the root, RFC b8f35, or the connection alone. [B37]
 - The least a role must do for a platform of one organization -- one certificate, an allowance

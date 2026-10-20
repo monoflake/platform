@@ -136,7 +136,7 @@ let own: dict<component> = dict{
         "authority",
         #deploy,
         hard,
-        "its certificate, allowance and loans, copied down each day and on a change",
+        "its certificate, allowance, loans and status, pulled when it holds none and on a notice",
         ~contract=["?authority"],
       ),
       e(
@@ -638,7 +638,7 @@ let ownUndeclared: array<(string, string)> = [
   ("compute", "the compute product's deployment of an app, its types and call graph checked [B32]"),
   ("migration", "a database's migration window, which a deployment opens, zn3u5 [B32]"),
   ("control(organization)", "an organization's control's configuration API, v7v3w [B32]"),
-  ("authority", "what an organization's control copies down of its authority, 7xpd3 [B35]"),
+  ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
   (
     "blob",
     "the blob's interface: content put and read by its hash, a sweep, an archive, b8f35 [B32]",

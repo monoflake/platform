@@ -307,11 +307,12 @@ let own: array<item> = [
     group: #B,
     what: "what crosses between an organization's control and the authority, and in which direction: certificate, allowance, loans, status, salt and key",
     from: "7xpd3",
+    done: "7xpd3",
   },
   {
     id: "B36",
     group: #B,
-    what: "how a change reaches an organization's control between the daily copies, and what it does while the authority cannot be reached",
+    what: "how the authority knows a notice reached, when an organization's control pulls with no notice, and what it does while the authority cannot be reached",
     from: "7xpd3",
   },
   {
