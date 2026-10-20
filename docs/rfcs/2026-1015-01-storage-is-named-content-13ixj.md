@@ -55,7 +55,7 @@ storage (one an organization, its own unique salt)
   `packed`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,
   RFC b8f35. `opaque` is passed through raw, each file or object at most 16 MiB -- never cut,
   compressed or sealed, since whether it is either already is not the platform's to know -- as
-  what the external platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the
+  what the production platform seals is, RFC 94y0d. The placement, the quota, who may bind it and the
   description are every kind's. The two are named for what is done to the bytes, worked out with
   the author on 2026-10-19: `packed`, its pieces packed into parcels, RFC b8f35, and `opaque`, left
   as they came; content names what lies beneath every bucket of either.

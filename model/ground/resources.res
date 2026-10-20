@@ -69,8 +69,8 @@ let resources: dict<resource> = dict{
   /* Reached at the adapter its driver deploys, which is its address, vr5lw. */
   "d1": {gives: [#database], in_: [#public, #cloudflare], from: "vr5lw"},
   "r2": {gives: [#object], in_: [#public, #cloudflare], from: "vr5lw"},
-  /* The internal platform's three products, given the external one through the driver's interface. */
-  "internal products": {
+  /* The foundation platform's three products, given the production platform through the driver's interface. */
+  "foundation products": {
     gives: [#function, #instance, #container, #object, #database],
     in_: [#public],
     from: "vr5lw, 94y0d",
@@ -83,7 +83,7 @@ let groundOf = (g: Steps.ground) =>
   | #cloudflare => ["worker", "durable object", "d1", "r2"]
   | #provider => ["machine"]
   | #home => ["machine at home"]
-  | #internal => ["internal products"]
+  | #foundation => ["foundation products"]
   }
 
 /** What cutting and sealing a parcel takes of CPU in a call, in milliseconds: assumed, an order

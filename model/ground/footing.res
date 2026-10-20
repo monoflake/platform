@@ -116,21 +116,21 @@ let allowed = (plan: Steps.plan) =>
   }
 
 /**
- * What the model assumes of the internal platform's account at each step, until it is measured
- * [C7]: how many organizations the external platform holds, each standing on a cell of its own
+ * What the model assumes of the foundation platform's account at each step, until it is measured
+ * [C7]: how many organizations the production platform holds, each standing on a cell of its own
  * while cells are one each; how many tablets each organization keeps -- the storage's metadata, the
  * functions', and its apps' databases.
  */
 type assumed = {
-  /** The external organizations at each step, the author's own until users come at step 8. */
-  external_: int => float,
-  /** The internal platform's own organizations: the console's dashboard's and the external platform's. */
-  internal: float,
+  /** The production organizations at each step, the author's own until users come at step 8. */
+  production: int => float,
+  /** The foundation platform's own organizations: the console's dashboard's and the production platform's. */
+  foundation: float,
   tablets: float,
 }
 
 let assumed = {
-  external_: step => step < 1 ? 0. : step < 8 ? 5. : 20.,
-  internal: 2.,
+  production: step => step < 1 ? 0. : step < 8 ? 5. : 20.,
+  foundation: 2.,
   tablets: 4.,
 }

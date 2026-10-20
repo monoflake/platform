@@ -1,6 +1,6 @@
 /**
- * The names no username or label is given by the ordinary flow, on the internal platform and the
- * external alike, since either may stand in a domain name, v7v3w. Reserved means kept for the
+ * The names no username or label is given by the ordinary flow, on the foundation platform and the
+ * production platform alike, since either may stand in a domain name, v7v3w. Reserved means kept for the
  * platform: the operator alone gives one, by hand, to an organization of the platform's own. The
  * list only grows, and a name added that someone holds stays theirs.
  */
@@ -41,6 +41,8 @@ let words = [
   "issuer",
   "deployer",
   "operator",
+  "foundation",
+  "production",
 ]
 
 /** The providers a sign-in shows. */
@@ -49,4 +51,10 @@ let providers = ["cloudflare", "google", "apple", "github"]
 type own = {label: string, what: string}
 
 /** The platform's own organizations, each given its reserved label by the operator. */
-let own: array<own> = [{label: "console", what: "the console's dashboard, opened first, v7v3w"}]
+let own: array<own> = [
+  {label: "console", what: "the console's dashboard, opened first, v7v3w"},
+  {
+    label: "production",
+    what: "the production platform, an organization of the foundation platform, 94y0d",
+  },
+]

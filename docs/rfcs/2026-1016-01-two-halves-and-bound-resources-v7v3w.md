@@ -52,8 +52,8 @@ a machine given both to the platform and to its users is the problem this avoids
 - **The platform can always be stood up again** from its source and the state it keeps, on a new
   account, by the operator.
 
-**The platform runs as two deployments of one code**, an internal platform on third-party vendors
-and an external platform standing on it, RFC 94y0d; what follows holds of each.
+**The platform runs as two deployments of one code**, a foundation platform on third-party vendors
+and a production platform standing on it, RFC 94y0d; what follows holds of each.
 
 **A control is an HTTPS API, and nothing else**, worked out with the author on 2026-10-18. There
 are two: **the platform's control**, the platform's half, which runs in no organization and stands on
@@ -67,7 +67,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   revoking one, setting its allowance, certifying its key, leasing it what it binds. Its privilege is
   where it stands, never a permission granted: only it reaches the platform's footing, and the
   secrets are deployed to it alone, `?source`. On the platform beneath, it is an ordinary client:
-  the external platform's control opens its shadows on the internal one as any admin would.
+  the production platform's control opens its shadows on the foundation platform as any admin would.
 - **An organization's control holds what is that organization's alone**: its products'
   configuration, the deployment of its apps, how its extensions are made into its three products,
   and the records its components keep. It answers that organization's admins, and reaches the platform's
@@ -165,7 +165,7 @@ down a layer at a time, each holding its own range alone.
   naming the account alone. An organization's control checks it by the platform's public key,
   without reaching the platform, checks the account against its own members, and its issuer signs
   the capabilities a member or an admin is given. Past that, both controls take capabilities alone,
-  as every component does, so a person, an app's code and the external platform's control are checked
+  as every component does, so a person, an app's code and the production platform's control are checked
   alike.
 - **The platform's control lost, no one signs in anew**: a credential already given serves until it
   expires, and every organization goes on running.
@@ -226,7 +226,7 @@ down a layer at a time, each holding its own range alone.
     the platform's own words and providers. **The list only grows**, and a name added that someone
     holds stays theirs: it keeps the name from whoever would take it next.
   - **Reserved means kept for the platform**, worked out with the author on 2026-10-19: the
-    ordinary flow refuses a reserved name to whoever asks, on the internal platform and the external
+    ordinary flow refuses a reserved name to whoever asks, on the foundation platform and the production platform
     alike, and the operator alone gives one, by hand, to an organization of the platform's own. The
     check holds that every label the platform's own organizations hold is reserved, so no one takes
     it first.
@@ -243,7 +243,7 @@ down a layer at a time, each holding its own range alone.
   - **`deleting` is when an organization's deletion was asked**, empty unless asked, and emptied as
     it is withdrawn; it is the platform's, which carries it out even with the organization's own
     control gone, RFC b8f35. **`shadow` is the id of an organization's shadow** on the platform
-    beneath, RFC 94y0d, empty on the internal platform.
+    beneath, RFC 94y0d, empty on the foundation platform.
 
 - **The platform keeps which organizations each account is in, and nothing of what it is there**:
   a pair of an account and an organization a row of `membership`, reported by the organization's
@@ -338,7 +338,7 @@ service's, or a node.
   deployed and run by it on those resources, and never shown: an organization sees the three
   products, and, as usage, what the components beneath them cost on its own resources.
   **A platform sells by opening a shadow organization on the platform beneath.** An organization the
-  external platform opens has a shadow on the internal one, opened through the internal platform's
+  production platform opens has a shadow on the foundation platform, opened through the foundation platform's
   control's API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
   what each shadow uses is reported, and charged by an app, RFC vr5lw. A user account buys nothing, since it holds
   nothing.
@@ -391,8 +391,8 @@ configuration; its extensions hold its data and run it.**
     host it never reached waits for its control.
   - **The host that runs a deployment sees its secrets**, as whoever controls a resource sees what
     runs on it, above. Sealing keeps them from whoever holds the data alone -- the footing's vendor,
-    a token leaked, a snapshot -- and so keeps the internal platform's data from opening the
-    external platform's parcels, RFC 94y0d.
+    a token leaked, a snapshot -- and so keeps the foundation platform's data from opening the
+    production platform's parcels, RFC 94y0d.
 - **An organization signs its own capabilities**, with a key of its own that the intermediate
   certifies for seven days and renews every day. So an organization runs on its own for at least six
   days while the platform's half cannot be reached, and only its configuration cannot change; the

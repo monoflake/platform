@@ -11,8 +11,8 @@ let run = () => {
     let at = `step ${int(i)}`
     let before = steps[i - 1]
     let sides = [
-      ("internal", Some(step.internal), before->Option.map(b => b.internal)),
-      ("external", step.external_, before->Option.flatMap(b => b.external_)),
+      ("foundation", Some(step.foundation), before->Option.map(b => b.foundation)),
+      ("production", step.production, before->Option.flatMap(b => b.production)),
     ]
     sides->Array.forEach(((name, d, was)) =>
       switch d {
@@ -30,7 +30,7 @@ let run = () => {
         )
         switch was {
         | None =>
-          let first: Steps.move = name == "internal" ? #"by hand" : #"new organization"
+          let first: Steps.move = name == "foundation" ? #"by hand" : #"new organization"
           if d.move != first {
             path->Array.push(
               `${at}: the ${name} platform first comes up by ${(d.move :> string)}, not ${(first :> string)}`,
@@ -112,27 +112,27 @@ let run = () => {
         )
       }
     )
-    let a = step.internal
-    let b = step.external_
+    let a = step.foundation
+    let b = step.production
     a.ground->Array.forEach(g =>
-      if g == #home || g == #internal {
-        path->Array.push(`${at}: the internal platform stands on ${(g :> string)}`)
+      if g == #home || g == #foundation {
+        path->Array.push(`${at}: the foundation platform stands on ${(g :> string)}`)
       }
     )
     switch b {
     | Some(b) =>
       if a.version > b.version {
         path->Array.push(
-          `${at}: the internal platform runs v${int(a.version)}, newer than the external's v${int(
-              b.version,
-            )}`,
+          `${at}: the foundation platform runs v${int(
+              a.version,
+            )}, newer than the production platform's v${int(b.version)}`,
         )
       }
       if b.version - a.version > Steps.window {
         path->Array.push(
-          `${at}: the external platform runs more than ${int(
+          `${at}: the production platform runs more than ${int(
               Steps.window,
-            )} ahead of the internal's pin`,
+            )} ahead of the foundation's pin`,
         )
       }
     | None => ()
@@ -140,36 +140,36 @@ let run = () => {
     let ran = steps->Array.slice(~start=0, ~end=i)
     switch before {
     | Some(before) =>
-      if a.version != before.internal.version {
-        if !(ran->Array.some(s => s.external_->Option.mapOr(false, e => e.version == a.version))) {
+      if a.version != before.foundation.version {
+        if !(ran->Array.some(s => s.production->Option.mapOr(false, e => e.version == a.version))) {
           path->Array.push(
-            `${at}: the pin moves to v${int(a.version)}, which the external platform never ran`,
+            `${at}: the pin moves to v${int(a.version)}, which the production platform never ran`,
           )
         }
       }
       a.on->Array.forEach(f =>
         if (
-          !ons(before.internal, f) &&
-          !(ran->Array.some(s => s.external_->Option.mapOr(false, e => ons(e, f))))
+          !ons(before.foundation, f) &&
+          !(ran->Array.some(s => s.production->Option.mapOr(false, e => ons(e, f))))
         ) {
           path->Array.push(
-            `${at}: the internal platform turns on ${(f :> string)}, never proven on the external`,
+            `${at}: the foundation platform turns on ${(f :> string)}, never proven on the production platform`,
           )
         }
       )
     | None => ()
     }
     if step.users == Some(#invited) && !ons(a, #metering) {
-      path->Array.push(`${at}: others invited before the internal platform meters its use`)
+      path->Array.push(`${at}: others invited before the foundation platform meters its use`)
     }
     if before->Option.flatMap(b => b.users) == Some(#invited) && step.users != Some(#invited) {
       path->Array.push(`${at}: the invited sent away again`)
     }
-    if before->Option.flatMap(b => b.internal.plan) == Some(#paid) && a.plan != Some(#paid) {
+    if before->Option.flatMap(b => b.foundation.plan) == Some(#paid) && a.plan != Some(#paid) {
       path->Array.push(`${at}: the paid plan given up again`)
     }
     if step.cells != None && b == None {
-      path->Array.push(`${at}: cells, with no external platform`)
+      path->Array.push(`${at}: cells, with no production platform`)
     }
     if step.cells == Some(#"database organization") && !ons(a, #replicated) {
       path->Array.push(
@@ -195,10 +195,10 @@ let run = () => {
     path,
     ~notes=[
       steps->Array.mapWithIndex((s, i) =>
-        `${int(i)}: internal v${int(s.internal.version)}${s.internal.plan == Some(#paid)
+        `${int(i)}: foundation v${int(s.foundation.version)}${s.foundation.plan == Some(#paid)
             ? " paid"
-            : ""}${switch s.external_ {
-          | Some(e) => `, external v${int(e.version)}`
+            : ""}${switch s.production {
+          | Some(e) => `, production v${int(e.version)}`
           | None => ""
           }}${switch s.cells {
           | Some(c) => `, cells ${(c :> string)}`
@@ -206,8 +206,8 @@ let run = () => {
           }} -- ${s.what}`
       ),
       steps->Array.mapWithIndex((s, i) =>
-        `${int(i)}: extensions give, internal ${kindsGiven(s.internal)}${switch s.external_ {
-          | Some(e) => `; external ${kindsGiven(e)}`
+        `${int(i)}: extensions give, foundation ${kindsGiven(s.foundation)}${switch s.production {
+          | Some(e) => `; production ${kindsGiven(e)}`
           | None => ""
           }}`
       ),

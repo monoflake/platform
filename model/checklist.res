@@ -140,7 +140,7 @@ let checklist: array<item> = [
   {
     id: "B7",
     group: #B,
-    what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory reserved for the internal platform's; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
+    what: "the driver: how a machine's driver and Cloudflare's are enrolled by hand at step 0, and the CPU and memory reserved for the foundation platform's; the primitives' contracts, code's delivery and how a typed value is written are vr5lw's",
     from: "94y0d, vr5lw",
     done: "94y0d: the platform's own half alone by hand, three machines; vr5lw: the machine's own memory and 64 MiB kept back, no CPU",
   },
@@ -303,7 +303,7 @@ let checklist: array<item> = [
   {
     id: "C2",
     group: #C,
-    what: "what the model's stages past s0 take in, now the internal and external platforms changed what they must cover",
+    what: "what the model's stages past s0 take in, now the foundation and production platforms changed what they must cover",
     from: "docs/scope.md",
     step: 9,
   },
@@ -417,7 +417,7 @@ let checklist: array<item> = [
   {
     id: "C19",
     group: #C,
-    what: "whether an organization keeps one scope id on both the internal and the external platform",
+    what: "whether an organization keeps one scope id on both the foundation platform and the production platform platform",
     from: "b8f35",
     step: 1,
   },
@@ -445,7 +445,7 @@ let checklist: array<item> = [
   {
     id: "C22",
     group: #C,
-    what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it: the internal platform has hosts from step 0",
+    what: "how an organization with no compute offering instance keeps the data its products hold in tablets -- the storage's paths, the function product's calls and messages -- since a footing may not grow with content; configuration is read from the bundle already. Only an organization bringing its own cloud meets it: the foundation platform has hosts from step 0",
     from: "vuanj, v7v3w; B1 before",
     step: 6,
     done: "vr5lw: an extension gives a database in the platform's own contract",
@@ -534,7 +534,7 @@ let checklist: array<item> = [
   {
     id: "D1",
     group: #D,
-    what: "the app that charges, an organization's on the internal platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
+    what: "the app that charges, an organization's on the foundation platform: what it reads of use and how it acts on an organization; charging is no part of the platform and quotas are the binding's, vr5lw, v7v3w",
     from: "v7v3w",
   },
   {
@@ -647,7 +647,7 @@ let checklist: array<item> = [
   {
     id: "E3",
     group: #E,
-    what: "which database is the platform's footing: D1 on the internal platform's own account, so close b8f35's Open",
+    what: "which database is the platform's footing: D1 on the foundation platform's own account, so close b8f35's Open",
     from: "b8f35",
     done: "b8f35",
   },
@@ -668,7 +668,7 @@ let checklist: array<item> = [
   {
     id: "E6",
     group: #E,
-    what: "v7v3w's heading that the platform runs on serverless vendors only, while the internal platform's hosts are machines from step 0: the heading means the platform's half",
+    what: "v7v3w's heading that the platform runs on serverless vendors only, while the foundation platform's hosts are machines from step 0: the heading means the platform's half",
     from: "v7v3w",
     done: "v7v3w",
   },
@@ -699,5 +699,11 @@ let checklist: array<item> = [
     what: "v7v3w's console is an organization named console by being opened first, yet console is among the names v7v3w reserves from every organization",
     from: "found",
     done: "v7v3w: reserved means kept for the platform, given by the operator alone; model/names/reserved.res and its check",
+  },
+  {
+    id: "E11",
+    group: #E,
+    what: "94y0d's table gives the foundation platform monoflake.net and the production platform monoflake.com, while vr5lw serves every organization at {organization}.mofl.fyi, the platform's one domain",
+    from: "found",
   },
 ]

@@ -11,7 +11,7 @@ or structure brings its questions in. A later step is gated the same way, `--rea
 
 **Two numberings, never one.** A stage, `s0`, `s1`, is how far the paper model reaches; a version,
 `v0`, `v1`, is a release of the Platform, RFC 94y0d. What each stage takes in beyond `s0` is to be
-discussed again, since the internal and external platforms changed what it must cover.
+discussed again, since the foundation and production platforms changed what it must cover.
 
 ## Decided
 

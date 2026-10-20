@@ -212,11 +212,11 @@ was built**, worked out with the author on 2026-10-18.
   binding may hold in all, its quota, RFC v7v3w; and how much the machine has free now, as its
   driver reports. A deployment past any of them is refused, naming which.
 - **Charging is no part of the platform**, worked out with the author on 2026-10-18: what one
-  platform takes as a resource another sells -- the internal platform's own cloud is the external
-  one's resource, and the external one's user's own cloud is theirs -- so what is a cost depends on
+  platform takes as a resource another sells -- the foundation platform's own cloud is the production platform
+  one's resource, and the production platform's user's own cloud is theirs -- so what is a cost depends on
   who looks. The platform keeps bounds and reports use, each binding's own; what a vendor charges
   is between it and its account; and what charges on a platform is an app of an organization's on
-  the internal one, which reads use through the controls' APIs as any client does, and acts through
+  the foundation platform, which reads use through the controls' APIs as any client does, and acts through
   them as its capability allows, bounding or suspending an organization.
 
 **Availability and durability are one model, applied to compute, databases and storage alike**,
@@ -283,7 +283,7 @@ definition:
 
 **A platform's footing is one of each, and for its control alone.** Beneath every platform is one
 compute, one storage and one database, each meeting one kind of its class at least -- a Worker's
-function, R2's `object` and D1 give the internal platform's -- trusted as ideal, `docs/scope.md`. Its
+function, R2's `object` and D1 give the foundation platform's -- trusted as ideal, `docs/scope.md`. Its
 compute must give a function, and `effect` among it, since a control writes and answers an API; it
 needs no `instance`, keeping its state in its database alone. Only the platform's control uses
 them, RFC v7v3w.
@@ -300,8 +300,8 @@ gives as many of the three as it has organizations to give them through.
 itself: on a machine as a process, on an account as what that account runs. One driver gives every
 kind its host can, of compute, storage and databases, in the platform's terms; it serves every
 binding of it, of any organization on any platform, and keeps them apart, RFC v7v3w; and its own
-management it shows to no binding. The internal platform gives an organization's three products to
-the external one through the same interface, so one platform's output is the next one's input, and
+management it shows to no binding. The foundation platform gives an organization's three products to
+the production platform through the same interface, so one platform's output is the next one's input, and
 one code is both.
 
 - **A driver manages, and data goes past it.** It opens, lists and ends what it gives, and reports
@@ -647,7 +647,7 @@ out with the author on 2026-10-18.
     a name added, made preferred, and the old unbound when the user likes; **unbinding is what
     breaks a link, and is warned of as such**, a preferred name changed is not.
 - **A certificate service gives a machine its names' certificate**, worked out with the author on
-  2026-10-18: an app like any other, in an organization of the internal platform's own, which asks a
+  2026-10-18: an app like any other, in an organization of the foundation platform's own, which asks a
   public CA by ACME and its DNS challenge -- Google's first, which counts no domain's certificates;
   Let's Encrypt beside it -- and renews and, where its CA allows, revokes.
   - **A key never leaves its machine**: the driver makes it and hands the service a request for a
@@ -663,11 +663,11 @@ out with the author on 2026-10-18.
     adds five machines a week at most, `docs/lessons/`.
   - A driver asks for a name's certificate with a capability naming it.
 
-**So one platform is built on another by an organization.** The external platform's footing is the
-three that one organization of the internal platform gives; its control stands on them alone. An
-organization opened on the external platform has its footing, and the compute and storage it buys,
-from a shadow organization the external platform opens on the internal one through the internal
-platform's control; what else it extends comes from the user's own clouds. The internal platform's own extensions come from
+**So one platform is built on another by an organization.** The production platform's footing is the
+three that one organization of the foundation platform gives; its control stands on them alone. An
+organization opened on the production platform has its footing, and the compute and storage it buys,
+from a shadow organization the production platform opens on the foundation platform through the foundation
+platform's control; what else it extends comes from the user's own clouds. The foundation platform's own extensions come from
 third-party vendors and the author's machines.
 
 Open, for the discussion that follows:

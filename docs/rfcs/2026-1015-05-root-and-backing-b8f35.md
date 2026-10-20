@@ -92,7 +92,7 @@ are marked `*`.
   it.
 
 **Every log is kept in a footing, and v0 has no quorum.** Each owner stands on one, RFC v7v3w -- an
-organization's for its scope, the platform's for the anchor, D1 on the internal platform's own
+organization's for its scope, the platform's for the anchor, D1 on the foundation platform's own
 account -- a database in SQLite's dialect that is ground, `docs/scope.md`: trusted to be up and to keep
 what it confirmed, its redundancy its own and never the platform's. **It coordinates its owner**: it
 holds the backing, the extent's records, each tablet's log until a snapshot holds it, which journal
@@ -221,7 +221,7 @@ where it is shown, lowercase and at its full width, leading zeros kept:
 - **An id drawn is checked as it is inserted**, by a conditional insert, and drawn again on a
   conflict. It is unique within its kind alone -- accounts among accounts, and a scope's resources
   among all of its resources, whatever their kind, so an id names one resource and carries its
-  type, worked out with the author on 2026-10-18 -- and the internal and external platforms check theirs apart, RFC 94y0d, so
+  type, worked out with the author on 2026-10-18 -- and the foundation and production platforms check theirs apart, RFC 94y0d, so
   one id may name different things on each. Whether an organization keeps one scope id on both is
   decided when it arises. [C19]
 - **An id derived is never checked and never shortened**: 256 bits are taken as never colliding,

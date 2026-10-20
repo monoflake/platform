@@ -4,7 +4,7 @@
  * staler, more garbage, never wrong. A `hard` edge points to its own layer or below; a `soft` one
  * may point up. A target beginning `?` is something the drafts need and no component is yet: a boundary
  * not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj components, b8f35 root and
- * backing, wnqvu compat; v7v3w the two halves; 94y0d the internal and external platforms; the rules
+ * backing, wnqvu compat; v7v3w the two halves; 94y0d the foundation and production platforms; the rules
  * they are checked by, `docs/scope.md`. Every `hard`/`soft` here is proposed, not decided; `open_` marks
  * the ones in question.
  */

@@ -17,16 +17,17 @@ let run = () => {
   let round = x => num(Math.round(x))
   let floor = x => num(Math.floor(x))
   let load = steps->Array.mapWithIndex((step, i) => {
-    let external_ = assumed.external_(i)
-    let replicated = step.cells == Some(#"database organization") && ons(step.internal, #replicated)
+    let production = assumed.production(i)
+    let replicated =
+      step.cells == Some(#"database organization") && ons(step.foundation, #replicated)
     let organizations =
-      assumed.internal +. (step.cells == Some(#"one each") ? external_ : replicated ? 1. : 0.)
+      assumed.foundation +. (step.cells == Some(#"one each") ? production : replicated ? 1. : 0.)
     let own = organizations *. assumed.tablets *. rows.idleTablet
-    // An external organization's footing is a database of its cell, so each of its writes is a commit
+    // A production organization's footing is a database of its cell, so each of its writes is a commit
     // there, until a replicated log keeps it off the vendor's footing.
-    let theirs = replicated ? 0. : external_ *. assumed.tablets *. rows.idleTablet *. rows.commit
+    let theirs = replicated ? 0. : production *. assumed.tablets *. rows.idleTablet *. rows.commit
     let idle = own +. theirs
-    let plan = step.internal.plan->Option.getOr(#free)
+    let plan = step.foundation.plan->Option.getOr(#free)
     let allowed = Footing.allowed(plan)
     if idle > allowed {
       footing->Array.push(
@@ -59,8 +60,8 @@ let run = () => {
         `assumed: ${num(assumed.tablets)} tablets an organization, each writing ${num(
             rows.idleTablet,
           )} rows a day idle, ${num(
-            assumed.internal,
-          )} organizations of the internal platform's own`,
+            assumed.foundation,
+          )} organizations of the foundation platform's own`,
       ],
       load,
     ]->Array.flat,
