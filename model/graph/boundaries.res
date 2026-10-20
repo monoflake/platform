@@ -13,10 +13,9 @@ type boundary = {
   half?: Components.half,
 }
 
-let boundaries: dict<boundary> = dict{
+let own: dict<boundary> = dict{
   "?deployer": {
-    half: #platform,
-    keptBy: "the operator, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every component can stand on none of them",
+    keptBy: "this repository's, a component still to be written here, RFC 8lkuv; the operator runs it, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every component can stand on none of them",
     triage: #"by hand on day one",
     contract: "installs each component the first time, in the order bootstrap allows, and replaces one component's build by a new one while the rest run, one component at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each component back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a component never needs that component, so neither its records nor the builds it delivers rest on any component it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a component may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
   },
@@ -31,12 +30,6 @@ let boundaries: dict<boundary> = dict{
     keptBy: "the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by the scheduler of the resource bound to the organization it fires on, written there at deployment, the platform firing it only where a resource has none, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
     triage: #later,
     contract: "at the times a schedule sets, and once at a time asked for, a tick is delivered to the component that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that component, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the component it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open [C14]",
-  },
-  "?intermediate": {
-    half: #platform,
-    keptBy: "the platform's half, since what it holds spans organizations; it certifies each organization's own signing key for seven days and renews it every day, v7v3w; on day one the operator certifies the intermediate with the root private key, and renews each organization's certificate every day, by hand",
-    triage: #"by hand on day one",
-    contract: "certifies each new working key the issuer gives it, with an expiry, in a chain to the root,. Its own private key and the certificate the root signed for it come from what the root delivers, put there by the operator. It is the platform's half's: an organization's issuer signs on without it for seven days, and it is needed once a day and never on a call. It starts without the issuer; its key and certificate are kept as secrets on disk; its program is replaced by the deployer. The intermediate key itself is rotated by the operator, offline, with the root private key. Open: how often it is rotated; whether a system apart from the platform, such as a machine the author keeps, may rotate it unattended on the author's authority; how a leaked intermediate key is revoked, s1's; how long a working key lives [D3]",
   },
   "?runner": {
     half: #organization,
@@ -67,3 +60,8 @@ let boundaries: dict<boundary> = dict{
     contract: "what the root holds reaches each component that reads it: the root public key every component in both halves, the organization's inside what the platform deploys there; the intermediate's key and certificate, the masters, the platform's own stores and their secrets, and the roster of the platform's own vendor accounts, the platform's half alone. All but the root private key and the masters' shares, held offline, is kept on the platform's own vendor accounts as secrets deployed with the components that read them, through a vendor contract the platform writes, never in a repository or in a store the platform runs, which needs them to start. A change is the operator's, by hand, and deploys again what reads it. It is the control plane's: while it is lost, every component keeps what it was given",
   },
 }
+
+/** Every boundary, with the platform half's own given beside, RFC 8lkuv. */
+let boundaries: dict<boundary> = Dict.fromArray(
+  Array.concat(own->Dict.toArray, Fill.part("boundaries")->Option.getOr(Dict.make())->Dict.toArray),
+)

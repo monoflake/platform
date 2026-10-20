@@ -44,9 +44,18 @@ drafts here say of the platform half stays as it was written.
 **The split is proven by the check, not by reading it**: the whole model's report, taken before
 anything moves, is the report the two together give after, line for line.
 
-**`monoflake/cloud` builds on a commit of this repository it names**, this checkout beside it while
-both are worked on, so which version of the platform a deployment runs is a commit the other
-repository records, RFC 94y0d.
+**`monoflake/cloud` builds on this checkout beside it**, decided by the author on 2026-10-20: while
+both are developed they move together, and a pin would only hold them apart. When it starts naming
+the commit it builds on, so a deployment's version is one it records, RFC 94y0d, is the hosted
+platform's question, filed there. The whole model is checked on the author's machine, where both
+are; a check in CI waits for code in either.
+
+**The deployer and every feature of a version are this half's**, decided by the author on
+2026-10-20. The deployer installs and replaces every component, and a team running its own needs
+it, so it is a component still to be written here, `?deployer` until then. What a version can do
+is the components': a user's own cloud bound, an organization's extensions spread over vendors so
+losing one is survived, and its use counted and cut off short of its allowance; what is charged
+for that use is the hosted platform's.
 
 **The roles are `authority` and `directory`**, decided by the author on 2026-10-20: `authority`
 for what the platform's control is to an organization's, `directory` for what the anchor is to a

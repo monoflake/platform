@@ -16,12 +16,20 @@ its id, its status of `active`, `suspended` or `deleted`, and a reference to whe
 never removed so an id is never given twice. The edges from `scope` and `backing` to it are drawn,
 and their contract is undeclared, `?anchor`.
 
-## Open, for the discussion that follows:
+## Decided
 
-- A row as it crosses: the id's form, RFC b8f35, the status, and what a reference to a backing is,
-  as an address a scope's components can reach. [B39]
-- When it is read and how fresh a reading must be: at deployment, as the edges have it, and how
-  soon a suspension stops what it suspends. [B40]
-- Whether opening, suspending, restoring and deleting are this contract's too, so a team running its
-  own writes them against it, or only the platform's control calls them and the contract is the
-  reading alone. [B41]
+**The contract is the reading alone**, decided by the author on 2026-10-20: this half reads the
+directory and never writes it. Opening, suspending, restoring and deleting a scope are the
+authority's own writes to its directory, the platform half's `?anchor`, so a team running its own
+writes the one row its one scope needs, once.
+
+**A row crosses as the scope's id, its status and where its backing is**, decided by the author on
+2026-10-20: the id in RFC b8f35's form of eight hex digits, one of the three statuses, and the
+place in a footing where the scope's backing is kept, which the scope's components can reach. A row
+is signed in a chain to the root, as the authority's record is, RFC 7xpd3; its fields are written
+as the contract is declared.
+
+**It is read at deployment, and only then**, decided by the author on 2026-10-20: a suspension
+reaches an organization by the authority's record, its status there and a notice of the change,
+RFC 7xpd3, never by the directory, which answers where a backing is, and that changes only as a
+backing moves, when what reads it is deployed again.

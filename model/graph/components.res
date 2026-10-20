@@ -147,10 +147,11 @@ let own: dict<component> = dict{
         ~contract=["?compute"],
       ),
       e(
-        "?intermediate",
+        "authority",
         #deploy,
         hard,
         "its bundle's signing key, its alone, certified for seven days and renewed each day, v7v3w",
+        ~contract=["?authority"],
       ),
       e(
         "driver(machine)",
@@ -315,10 +316,11 @@ let own: dict<component> = dict{
         ~contract=["bundle.issuer"],
       ),
       e(
-        "?intermediate",
+        "authority",
         #deploy,
         hard,
         "its signing key, certified for seven days and renewed each day, the certificate in the bundle and the key a secret deployed beside it, v7v3w",
+        ~contract=["?authority"],
       ),
     ],
     uses: ["capability*", "vocabulary*", "compat*"],
@@ -656,7 +658,7 @@ let ownUndeclared: array<(string, string)> = [
   ),
   (
     "directory",
-    "the directory's rows: a scope's id, its status and where its backing is, 4dijn [B39]",
+    "the directory's rows as they cross, signed: a scope's id, its status and where its backing is, 4dijn [B32]",
   ),
   (
     "copies",

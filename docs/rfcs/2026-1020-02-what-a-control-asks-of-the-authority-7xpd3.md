@@ -50,11 +50,18 @@ who it is, and no secret is shared between the two. A notice is not signed: it c
 a generation, so a false one costs one pull, which is signed, and the control limits how often it
 is called.
 
+**The authority certifies the organization's working keys too**, decided by the author on
+2026-10-20, as the intermediate did: the key an organization's issuer signs with, and the key its
+control signs its bundle with, each certified in a chain to the root and renewed before it expires,
+RFC v7v3w. The intermediate is how the authority does it, the platform half's, and an edge of this
+half to it is an edge to the authority.
+
 **The least an authority does, for a platform of one organization, is the glue a team running its
 own writes**, decided by the author on 2026-10-20: a root of its own, kept offline, certifying the
 key the authority signs with; at opening, the organization's key and salt, delivered once; the
 pulled end, answering a signed pull with the organization's certificate, an allowance without
-bounds, no loans and its status; and an account credential signed for each person who signs in,
+bounds, no loans and its status; the organization's working keys, certified as they are renewed;
+and an account credential signed for each person who signs in,
 however they sign in. It need send no notice: with nothing changing, the control pulls only before
 its certificate expires.
 

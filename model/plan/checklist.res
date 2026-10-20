@@ -335,18 +335,21 @@ let own: array<item> = [
     group: #B,
     what: "a directory row as it crosses: the id's form, the status, and what a reference to a backing is",
     from: "4dijn",
+    done: "4dijn",
   },
   {
     id: "B40",
     group: #B,
     what: "when the directory is read and how fresh a reading must be, and how soon a suspension stops what it suspends",
     from: "4dijn",
+    done: "4dijn",
   },
   {
     id: "B41",
     group: #B,
     what: "whether opening, suspending, restoring and deleting a scope are the directory's contract too, or the reading alone",
     from: "4dijn",
+    done: "4dijn",
   },
   {
     id: "B27",
