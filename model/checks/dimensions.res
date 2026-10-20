@@ -11,15 +11,15 @@ let run = () => {
     (),
   )
 
-  let firstUp = (x: Parts.edge) => x.when_ == #start || x.when_ == #deploy
+  let firstUp = (x: Components.edge) => x.when_ == #start || x.when_ == #deploy
   let d1 = atBoundaries(firstUp)
   dimension(
     "D1 Bootstrap",
-    "From the ground and the operator alone, can every part come up the first time?",
+    "From the ground and the operator alone, can every component come up the first time?",
     Array.concat(
       cycles(
         n => edgesOf(n)->Array.filter(x => firstUp(x) && known(x.to_))->Array.map(x => x.to_),
-        parts->Dict.keysToArray,
+        components->Dict.keysToArray,
       )->Array.map(c => `cycle: ${c}`),
       d1.violations,
     ),
@@ -28,7 +28,7 @@ let run = () => {
     (),
   )
 
-  let start = (x: Parts.edge) => x.when_ == #start
+  let start = (x: Components.edge) => x.when_ == #start
   let d2 = atBoundaries(start)
   let rec reachesGround = (n, seen) =>
     if seen->Set.has(n) {
@@ -39,10 +39,10 @@ let run = () => {
         x.hard && known(x.to_) && (isGround(x.to_) || reachesGround(x.to_, seen))
       )
     }
-  let keeps = (p: Parts.part) => p.keeps->Option.getOr(false)
+  let keeps = (p: Components.component) => p.keeps->Option.getOr(false)
   dimension(
     "D2 Restart",
-    "After a planned stop of everything, can every part come back from what it kept?",
+    "After a planned stop of everything, can every component come back from what it kept?",
     Array.concat(
       designed
       ->Array.filter(((n, p)) => keeps(p) && !reachesGround(n, Set.make()))
@@ -64,12 +64,12 @@ let run = () => {
     designed->Array.flatMap(((n, p)) =>
       p.edges->Array.filterMap(x => x.reads->Option.map(reads => (n, x, reads)))
     )
-  let replaces = (x: Parts.edge) => x.replaces->Option.getOr(false)
-  // What replaces a part is the edge marked `replaces`; an edge it deploys others by says nothing.
+  let replaces = (x: Components.edge) => x.replaces->Option.getOr(false)
+  // What replaces a component is the edge marked `replaces`; an edge it deploys others by says nothing.
   let d3 = atBoundaries(replaces)
   dimension(
     "D3 Upgrade",
-    "While the rest runs, can one part be replaced by a new version?",
+    "While the rest runs, can one component be replaced by a new version?",
     [
       designed
       ->Array.filter(((_, p)) => !(p.edges->Array.some(replaces)))
@@ -82,18 +82,18 @@ let run = () => {
       d3.violations,
       crossing
       ->Array.filter(((from, _, _)) =>
-        !(part(from)->Option.mapOr([], p => p.uses)->Array.includes("compat*"))
+        !(component(from)->Option.mapOr([], p => p.uses)->Array.includes("compat*"))
       )
       ->Array.map(((from, _, reads)) => `${from} reads ${reads}'s format without compat*`),
     ]->Array.flat,
-    ~notes=Parts.globalOpen->Array.map(g => `open: ${g}`),
+    ~notes=Components.globalOpen->Array.map(g => `open: ${g}`),
     ~assumed=d3.assumed,
     (),
   )
 
   dimension(
     "D5 Contract",
-    "Is every format a part reads defined at its own layer or below? Carried unread is exempt.",
+    "Is every format a component reads defined at its own layer or below? Carried unread is exempt.",
     crossing
     ->Array.filter(((from, _, reads)) => layerOf(reads) > layerOf(from))
     ->Array.map(((from, edge, reads)) =>

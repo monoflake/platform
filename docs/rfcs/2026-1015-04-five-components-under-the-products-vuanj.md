@@ -1,6 +1,6 @@
 ---
-name: 'Five Parts Under the Products'
-title: 'The storage, the database and functions are built side by side from five parts -- scope, issuer, tablet, blob and executor -- and never from one another, so nothing beneath an app depends on itself'
+name: 'Five Components Under the Products'
+title: 'The storage, the database and functions are built side by side from five components -- scope, issuer, tablet, blob and executor -- and never from one another, so nothing beneath an app depends on itself'
 status: draft
 supersedes: []
 blocked-by: []
@@ -14,7 +14,7 @@ RFCs 13ixj, zn3u5 and 49qyg settled what an app sees: a storage, databases and f
 Working one layer further down with the author on 2026-10-15, each seemed to need the others -- the
 storage's metadata a database, a database a file in the storage, a function's cache both -- and
 a platform that depends on itself is the problem this design began from. The question is what the
-products are made of, and in what order, one layer only: where each part runs is layer -2's.
+products are made of, and in what order, one layer only: where each component runs is layer -2's.
 Names are chosen for what they mean, apart from the names the platform uses now; a clash is settled
 when this lands.
 
@@ -27,8 +27,8 @@ to what the platform is made of:
 | --------- | -------------------------------------------------------------------------- |
 | +1 and up | Users' apps, the console's dashboard among them, an app like any other     |
 | 0         | The products an app sees: the storage, databases and functions             |
-| -1        | The parts the products are made of, this RFC                               |
-| -2        | What the parts stand on: backings, the extent and hosts, RFC b8f35         |
+| -1        | The components the products are made of, this RFC                          |
+| -2        | What the components stand on: backings, the extent and hosts, RFC b8f35    |
 | -3        | The anchor, the one global state, on a vendor's primitive, RFC b8f35       |
 | -4        | The root, which depends on nothing and everything needs, RFC b8f35         |
 | ground    | Each owner's footing, one database, and the vendors' primitives, RFC b8f35 |
@@ -43,28 +43,28 @@ three kinds:
   so nothing on that path has to tell a privileged request from another, or can let one leak. It
   runs apart, beneath that path. The platform's control is one, and the only one known: an HTTPS API on the platform's footing, in
   no organization, RFC v7v3w.
-- **The parts at layer -1 and below**, which keep the platform up and place what owners run. They
+- **The components at layer -1 and below**, which keep the platform up and place what owners run. They
   are no app, and are never placed among apps.
 
 This holds only while the graph is clean: nothing the platform needs to start, restart or come back
 stands on what it runs as an owner.
 
-**The cycle came from drawing one layer where there are two.** Beneath the products are parts, each
-smaller than any product, and **the three products stand side by side on the parts and never on
+**The cycle came from drawing one layer where there are two.** Beneath the products are components, each
+smaller than any product, and **the three products stand side by side on the components and never on
 one another**. A product that looks like another -- a database's name pointing at an id, a
 file's path pointing at a hash -- shares a pattern with it, never a dependency.
 
-| Part       | What it is                                                         |
+| Component  | What it is                                                         |
 | ---------- | ------------------------------------------------------------------ |
 | `scope`    | Whose data this is: an opaque id, what it holds, what it may use   |
-| `issuer`   | Signs the capabilities every other part checks                     |
+| `issuer`   | Signs the capabilities every other component checks                |
 | `tablet`   | One small SQLite with one writer: SQL, and an atomic batch         |
 | `blob`     | Bytes by the hash of their content: put, get, delete               |
 | `executor` | Runs a function's code on an input, in the sandbox its kind allows |
 
-**A part knows a scope and never a user.** A scope is an organization's, RFC v7v3w; accounts and
+**A component knows a scope and never a user.** A scope is an organization's, RFC v7v3w; accounts and
 logins are above; which user owns
-which scope is not a part's to know. Every tablet and every blob belongs to exactly one scope and
+which scope is not a component's to know. Every tablet and every blob belongs to exactly one scope and
 never crosses it, so a product with a fault cannot reach another scope, a scope's usage is counted
 where it is kept, and a scope is deleted whole. A scope's salt and key, and the stores its bytes go
 to, are its physical half, the backing at layer -2 -- RFC b8f35 -- which the blob reads downward;
@@ -79,12 +79,12 @@ then may the owner close their account, which is above. The operator, revoking a
 once everything it holds and deletes nothing, RFC v7v3w: a privilege of the platform's, never an
 owner's. A scope so suspended is deleted after seven days unless it is restored, RFC b8f35.
 
-**No part trusts its caller: it checks a capability.** A capability names a scope, a resource, an
-operation and when it expires, and is signed by the issuer alone, through a chain parts verify
+**No component trusts its caller: it checks a capability.** A capability names a scope, a resource, an
+operation and when it expires, and is signed by the issuer alone, through a chain components verify
 with the root's public key and never call at run time -- RFC b8f35. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
-the resource -- a bucket, whether writes are allowed -- and a part checks the scope. The issuer is
-its own part, reading each scope's grants from its organization's bundle, in the footing, RFC
+the resource -- a bucket, whether writes are allowed -- and a component checks the scope. The issuer is
+its own component, reading each scope's grants from its organization's bundle, in the footing, RFC
 v7v3w. Authenticating the
 people who use an app is another matter, above.
 
@@ -181,7 +181,7 @@ or a panic.
   checks a declaration against. Code is deployed before any call reaches it, as its configuration
   is applied, and never fetched as a call comes, RFC vr5lw.
 
-**What the products ask of the parts:**
+**What the products ask of the components:**
 
 - A tablet runs SQL and atomic batches; returns a cursor with every write; keeps read copies and
   answers a read with a cursor no older than it; returns to an earlier time; archives itself to its
@@ -220,5 +220,5 @@ a release:
 
 Open, for the discussion that follows:
 
-- How a private link's reader proves they may read it: the authentication of people, not parts.
+- How a private link's reader proves they may read it: the authentication of people, not components.
   [C10]

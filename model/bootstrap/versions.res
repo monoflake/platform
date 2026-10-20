@@ -2,7 +2,7 @@
 /**
  * What a version of the Platform can do. A deployment turns on some of what its version has:
  * `products`, the three products, standing on a footing; `hosts`, a machine a provider runs, bound
- * as a host by the ordinary flow, its commands the operator's; `rolling`, an upgrade by D3, one part
+ * as a host by the ordinary flow, its commands the operator's; `rolling`, an upgrade by D3, one component
  * replaced while the rest run; `deployer`, the deployer, in place of day one's commands; `byoc`, a
  * user binding a cloud of their own; `vendors`, an organization's extensions spread over vendors, so
  * losing one is survived; `metering`, what each resource is used for counted, and cut off short of a

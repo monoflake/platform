@@ -66,7 +66,7 @@ let run = () => {
       }
     }
   })
-  parts
+  components
   ->Dict.toArray
   ->Array.forEach(((name, p)) =>
     p.edges->Array.forEach(edge =>
@@ -76,7 +76,7 @@ let run = () => {
       }
     )
   )
-  Parts.globalOpen->Array.forEach(g => marks->Array.push({where: "globalOpen", text: g}))
+  Components.globalOpen->Array.forEach(g => marks->Array.push({where: "globalOpen", text: g}))
   Footing.kept
   ->Dict.toArray
   ->Array.forEach(((name, k)) => {

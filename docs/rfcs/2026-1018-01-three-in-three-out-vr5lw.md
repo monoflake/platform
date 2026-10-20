@@ -122,7 +122,7 @@ rest is kept is RFC b8f35's and the bundle's.
   which means nothing past its process, are refused as they are deployed.
 
 - **Each request chooses its form**, by `Content-Type` and `Accept`, `application/json` or
-  `application/cbor`, JSON where it names neither; the platform's parts speak CBOR among
+  `application/cbor`, JSON where it names neither; the platform's components speak CBOR among
   themselves. Both are built in v0, and run one set of examples, each in both forms, which every
   codec must judge alike, as the workspace's `spec/json.md` has every contract do.
 - **A value's hash is the platform's alone, and is of its structure, never its bytes**: values equal
@@ -146,7 +146,7 @@ are S3's and HTTP's, and stay only where S3's subset is spoken, the `object` con
 **Whatever runs is deployed as its configuration is applied, never loaded as a call comes**,
 worked out with the author on 2026-10-18. Since opening anything is a change of configuration, RFC
 v7v3w, each has a moment it is applied, and a task, which no one waits on in a dashboard, deploys
-it then: an app's version, a database's writer, an `object` store made of a volume, a part of the
+it then: an app's version, a database's writer, an `object` store made of a volume, a component of the
 platform's own. Compute is reached by two operations, deploying code into what is held already --
 never a change to a driver's list -- and calling what was deployed. On Cloudflare a deployment is a
 Worker of its own, made through the vendor's API; on a machine, an isolate or a process in its

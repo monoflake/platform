@@ -34,7 +34,7 @@ platform and reached over the public network; it is no private network.
   user's own cloud is.
 - **The internal platform never stands on the external.** The external reaches it through layer 0's
   contracts alone, RFCs 13ixj, zn3u5 and 49qyg: to the external platform the internal one is one
-  more vendor, whose formats it never reads and whose parts it never calls.
+  more vendor, whose formats it never reads and whose components it never calls.
 - **The boundary is the contract, never the route.** A call between the two takes the nearest way,
   RFC v7v3w -- inline, or over the loopback of a machine both run on -- through the same interface
   and the same capability checks it would meet across the world. What is forbidden is a shortcut
@@ -42,7 +42,7 @@ platform and reached over the public network; it is no private network.
 
 **The internal platform is pinned to a version the external has run.**
 
-- Moving the pin is an upgrade by D3, one part at a time while the rest run, and it can be moved
+- Moving the pin is an upgrade by D3, one component at a time while the rest run, and it can be moved
   back, since every format is written at the lowest version its readers all read, RFC wnqvu.
 - The external platform's newest version must run on the internal's pinned one, so the pin never
   falls further behind than that.
@@ -79,7 +79,7 @@ its own bundle, credentials and directory, sharing nothing but the machine.
 | 10   | the pin moves: cells move onto a database organization                                                                    | v4 / v4             |
 
 - **The bootstrap stops twice, and only then**: each deployment once, moving from v0, which cannot
-  replace a part while the rest run. The external platform's stop comes first, while only the
+  replace a component while the rest run. The external platform's stop comes first, while only the
   author's organizations are on it.
 - **Only the platform's own half is installed by hand**, worked out with the author on 2026-10-19:
   the operator deploys the platform's control and footing and opens the internal platform's
@@ -142,7 +142,7 @@ only parcels written and deleted. **An external organization revoked is suspende
 the internal organization beneath it**; both are deleted seven days after unless restored, RFC
 b8f35, so the platform pays for what it sealed no longer than that.
 
-**Once a deployment runs a version that replaces a part while the rest run, it never stops again on
+**Once a deployment runs a version that replaces a component while the rest run, it never stops again on
 the correct path**, and the bootstrap stops at most five times; `model/bootstrap/steps.res` checks both. A
 stop after that is a failure, which the correct path cannot produce: a capability proven too
 briefly on the external platform and taken by the pin, say, which a later stage of the model takes

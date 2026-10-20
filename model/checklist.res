@@ -126,7 +126,7 @@ let checklist: array<item> = [
   {
     id: "B5",
     group: #B,
-    what: "which vendor primitive each part stands on in v0, behind which contract: a Worker, D1, R2, a host on a machine a provider runs",
+    what: "which vendor primitive each component stands on in v0, behind which contract: a Worker, D1, R2, a host on a machine a provider runs",
     from: "vuanj, v7v3w",
     done: "vr5lw: a platform takes nothing but what a driver gives, in its own contract",
   },
@@ -257,7 +257,7 @@ let checklist: array<item> = [
   {
     id: "B24",
     group: #B,
-    what: "which language of three each part of the model is written in, declared in the model beside the part, and the check that a part uses only libraries of its own language, fhg6w",
+    what: "which language of three each component of the model is written in, declared in the model beside the component, and the check that a component uses only libraries of its own language, fhg6w",
     from: "fhg6w",
   },
   {

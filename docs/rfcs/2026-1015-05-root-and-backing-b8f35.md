@@ -1,6 +1,6 @@
 ---
 name: 'Root and Backing'
-title: 'Beneath the parts, layer -2 holds a root nothing can start without and a backing per scope -- where its bytes are kept and with which keys -- which the blob reads downward and no capability carries'
+title: 'Beneath the components, layer -2 holds a root nothing can start without and a backing per scope -- where its bytes are kept and with which keys -- which the blob reads downward and no capability carries'
 status: draft
 supersedes: []
 blocked-by: []
@@ -10,14 +10,14 @@ references: []
 
 ## Question
 
-RFC vuanj built the products from five parts at layer -1 and left for layer -2 where they stand,
+RFC vuanj built the products from five components at layer -1 and left for layer -2 where they stand,
 control among them. Starting layer -2 with the author on 2026-10-15, the first question is its
 bottom: what nothing can start without, and where a scope's bytes go, which a user may now choose
 by bringing an object store of their own.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
 
-**Control is not a part.** What it held is taken apart by what each piece is, and each goes to the
+**Control is not a component.** What it held is taken apart by what each piece is, and each goes to the
 layer it belongs to. The name is now the two controls', the platform's and each organization's, HTTPS APIs that reserve no name, RFC v7v3w.
 
 **Each product reads its own configuration from its organization's bundle, in the footing, never
@@ -40,7 +40,7 @@ The blob reads a scope's backing, a dependency that points down. **A capability 
 configuration**: it proves what its holder may do, and a store's address and secret are not that;
 carried in one, a change would not reach the capabilities still alive.
 
-**Layer -2 has four parts, and a library is none of them:**
+**Layer -2 has four components, and a library is none of them:**
 
 - **`root`**: what nothing can start without, and nothing else. It changes rarely and by an
   operator.
@@ -82,10 +82,10 @@ carried in one, a change would not reach the capabilities still alive.
   handed at run time, `docs/lessons/`; it is given only the bindings its capabilities allow, and its
   network only through the platform's own request interface. On a machine, a host is a process.
 
-**A library is no layer.** Shared code is not a dependency: each part that needs a library runs its
+**A library is no layer.** Shared code is not a dependency: each component that needs a library runs its
 own copy of it, so it is no node in the graph of layers and may be used at any of them. **A library
-depends on no part**: what it needs, its caller hands it. A thing is a library only when each caller
-may have an instance of its own; one whose state two callers must see the same is a part. Libraries
+depends on no component**: what it needs, its caller hands it. A thing is a library only when each caller
+may have an instance of its own; one whose state two callers must see the same is a component. Libraries
 are marked `*`.
 
 - **The root stands at the bottom**, below the anchor: it depends on nothing, and everything needs
@@ -133,19 +133,19 @@ a footing is versioned as a value on the wire and a bundle are. **A key changed 
 deployer makes the new table before the build that writes it is deployed, both are read while rows
 move by a sweep, and the old one is dropped once no reader running needs it, RFC wnqvu.
 
-| Table           | Looked up by                 | Holds                                                          | Written by             |
-| --------------- | ---------------------------- | -------------------------------------------------------------- | ---------------------- |
-| `configuration` | kind, identifier, generation | each record a control holds, its secrets sealed, RFC v7v3w     | the control            |
-| `generation`    | a generation                 | when it was taken, its actor and what it reverts to, RFC v7v3w | the control            |
-| `bundle`        | origin, generation           | a bundle as signed                                             | the control            |
-| `store`         | a store's identifier         | the backing's store                                            | the control            |
-| `content`       | a content's hash             | the pieces it is made of                                       | the blob               |
-| `piece`         | a piece's hash               | its parcel, offset, length and whether compressed              | the blob               |
-| `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place    | the blob               |
-| `journal`       | a placement                  | the journal it writes                                          | the blob               |
-| `log`           | a tablet, a number           | an entry not yet archived                                      | the tablet             |
-| `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet             |
-| `lease`         | a name                       | who holds it, and until when                                   | the part that takes it |
+| Table           | Looked up by                 | Holds                                                          | Written by                  |
+| --------------- | ---------------------------- | -------------------------------------------------------------- | --------------------------- |
+| `configuration` | kind, identifier, generation | each record a control holds, its secrets sealed, RFC v7v3w     | the control                 |
+| `generation`    | a generation                 | when it was taken, its actor and what it reverts to, RFC v7v3w | the control                 |
+| `bundle`        | origin, generation           | a bundle as signed                                             | the control                 |
+| `store`         | a store's identifier         | the backing's store                                            | the control                 |
+| `content`       | a content's hash             | the pieces it is made of                                       | the blob                    |
+| `piece`         | a piece's hash               | its parcel, offset, length and whether compressed              | the blob                    |
+| `parcel`        | a parcel's identifier        | the parcel, and where it lies apart from its computed place    | the blob                    |
+| `journal`       | a placement                  | the journal it writes                                          | the blob                    |
+| `log`           | a tablet, a number           | an entry not yet archived                                      | the tablet                  |
+| `writer`        | a tablet                     | which writer holds it, at which generation                     | the tablet                  |
+| `lease`         | a name                       | who holds it, and until when                                   | the component that takes it |
 
 The platform's footing holds the same, and `anchor`, `account`, `label`, `username`, `sign-in`,
 `membership` and `domain` beside them, RFC v7v3w. The tables are the
@@ -235,7 +235,7 @@ of milliseconds since the Unix epoch, which is UTC by its definition. Where a te
 it is ISO 8601 in UTC, ending in `Z`; a zone other than UTC, and a pretty format, appear only where
 a user is shown the time.
 
-A user appears this low only as configuration: a store given to their own scope. The parts' logic
+A user appears this low only as configuration: a store given to their own scope. The components' logic
 does not change for it.
 
 **Whose a record is and where it is kept are two questions.** A record an owner's act brought
@@ -245,17 +245,17 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
 
 **The root is no running service, so it has no uptime to lose.** What it holds is of two kinds:
 
-| Held                                        | Used by                                    | Where                   |
-| ------------------------------------------- | ------------------------------------------ | ----------------------- |
-| the root private key                        | an operator, certifying the issuer's keys  | offline, never deployed |
-| the root public key                         | every part, verifying a capability's chain | deployed to every part  |
-| the salt master                             | the one part that derives a scope's salt   | deployed there alone    |
-| the encryption master                       | the one part that derives a scope's key    | deployed there alone    |
-| the platform's own stores and their secrets | the backing                                | deployed there alone    |
+| Held                                        | Used by                                         | Where                       |
+| ------------------------------------------- | ----------------------------------------------- | --------------------------- |
+| the root private key                        | an operator, certifying the issuer's keys       | offline, never deployed     |
+| the root public key                         | every component, verifying a capability's chain | deployed to every component |
+| the salt master                             | the one component that derives a scope's salt   | deployed there alone        |
+| the encryption master                       | the one component that derives a scope's key    | deployed there alone        |
+| the platform's own stores and their secrets | the backing                                     | deployed there alone        |
 
 - **A capability is signed through three levels**: the root private key, offline, certifies an
   intermediate key for a long time; the intermediate, online, certifies the issuer's working keys
-  for a short one and rotates them unattended; a working key signs capabilities. A part holds the
+  for a short one and rotates them unattended; a working key signs capabilities. A component holds the
   root's public key alone and checks the chain, so a leaked working key is worth a short while, and
   the root private key is used rarely. **The intermediate key is rotated by the operator, offline,
   with the root private key**; what holds it online is the data plane's, since the issuer cannot
@@ -283,7 +283,7 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   - **A capability is refused unless its signer's certificate names the role `issuer` and the
     capability's own scope**, so one organization's issuer never signs for another.
   - **A capability carries its signer's `kid` alone, never the chain**: the certificates come in the
-    bundle a part reads anyway, the platform's copied down each day, and a `kid` a part does not know
+    bundle a component reads anyway, the platform's copied down each day, and a `kid` a component does not know
     sends it to read the bundle again. A call carries the capability alone.
   - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
     leaked is worth, RFC vuanj; one bound to a key its holder proves would cost a signature a call.
@@ -331,12 +331,12 @@ as its backing is. The scope itself -- its row in the anchor, its allowance -- i
   - **Each master is split apart**, the salt master once for good and the encryption master once a
     version, so a place holds one share of each.
   - **A share is written on paper, and the three lie where no one disaster reaches two**: on paper,
-    since it needs no device to be read; never in a password manager, which is online. A part starts from
+    since it needs no device to be read; never in a password manager, which is online. A component starts from
     its deployed secrets and never waits for a share; the shares are used only when a master is lost
     with what it was deployed to, since a master lost is every scope's data lost.
 - **What the root holds is kept two ways.** The root private key and the masters' shares are held
   by the operator, offline. Everything else is kept on the platform's own vendor accounts, as the
-  secrets deployed with the parts that read them -- never in a repository, and never in a store the
+  secrets deployed with the components that read them -- never in a repository, and never in a store the
   platform itself runs, since what runs needs them to start.
 
 **How content is cut, named and sealed is decided now**, since each is written into every piece of
@@ -529,7 +529,7 @@ Open, for the discussion that follows:
 - How often the operator rotates the intermediate key, and how long a working key lives. [D3]
 - Whether a system apart from the platform -- a machine the author keeps, signing on the author's
   authority -- may rotate the intermediate key unattended in the operator's place. [D3]
-- How a leaked intermediate key is revoked, while every part holds the root's public key alone; a
+- How a leaked intermediate key is revoked, while every component holds the root's public key alone; a
   failure, and so s1's. [D3]
 - How a host keeps its way to a footing short, where the vendor's routing lands a connection far:
   one connection dialed again while it lands far, reads from replicas, a paid plan's routing

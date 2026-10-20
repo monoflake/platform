@@ -9,8 +9,8 @@ let run = () => {
   designed->Array.forEach(((name, p)) => {
     p.edges->Array.forEach(edge =>
       if known(edge.to_) {
-        switch part(edge.to_) {
-        | None => rules->Array.push(`${name} -> ${edge.to_}: no such part`)
+        switch component(edge.to_) {
+        | None => rules->Array.push(`${name} -> ${edge.to_}: no such component`)
         | Some(target) =>
           if target.layer > p.layer && target.kind == None {
             (edge.hard ? rules : softUp)->Array.push(line(name, edge))
@@ -29,7 +29,7 @@ let run = () => {
   ->Array.forEach(((name, lib)) =>
     lib.uses->Array.forEach(use =>
       if Libraries.libraries->Dict.get(use) == None {
-        rules->Array.push(`${name} uses ${use}: a part`)
+        rules->Array.push(`${name} uses ${use}: a component`)
       }
     )
   )
@@ -38,16 +38,18 @@ let run = () => {
   designed->Array.forEach(((name, p)) =>
     if p.layer <= 0 {
       p.edges->Array.forEach(edge =>
-        if part(edge.to_)->Option.flatMap(t => t.asOwner)->Option.getOr(false) {
+        if component(edge.to_)->Option.flatMap(t => t.asOwner)->Option.getOr(false) {
           rules->Array.push(`runs as an owner, needed below: ${line(name, edge)}`)
         }
       )
     }
   )
-  // The organization's half runs on while the platform's cannot be reached: none of its parts needs the
+  // The organization's half runs on while the platform's cannot be reached: none of its components needs the
   // platform's to serve or to start, and reads a bundle instead, RFC v7v3w.
   let halfOf = to_ =>
-    known(to_) ? part(to_)->Option.flatMap(p => p.half) : boundary(to_)->Option.flatMap(b => b.half)
+    known(to_)
+      ? component(to_)->Option.flatMap(p => p.half)
+      : boundary(to_)->Option.flatMap(b => b.half)
   designed->Array.forEach(((name, p)) =>
     if p.half == Some(#organization) {
       p.edges->Array.forEach(edge =>
@@ -59,14 +61,14 @@ let run = () => {
   )
   // What the platform's half holds is configuration, written on the control plane alone, so the data
   // plane runs on while the control plane is lost, `docs/scope.md`.
-  let isControl = n => part(n)->Option.flatMap(p => p.control)->Option.getOr(false)
+  let isControl = n => component(n)->Option.flatMap(p => p.control)->Option.getOr(false)
   Records.records
   ->Dict.toArray
   ->Array.forEach(((name, r)) => {
     let config = r.half == #platform || r.writes->Array.some(isControl)
     r.writes->Array.forEach(w =>
-      switch part(w) {
-      | None => rules->Array.push(`${w} writes ${name}: no such part`)
+      switch component(w) {
+      | None => rules->Array.push(`${w} writes ${name}: no such component`)
       | Some(writer) =>
         if config && !isControl(w) {
           rules->Array.push(`the data plane writes configuration: ${w} writes ${name}, ${r.from}`)
@@ -80,7 +82,7 @@ let run = () => {
   // edge, RFC vr5lw.
   designed->Array.forEach(((name, p)) =>
     p.edges->Array.forEach(edge =>
-      switch part(edge.to_) {
+      switch component(edge.to_) {
       | Some(t) if t.kind == Some(#ground) && t.half != None && t.half != p.half =>
         rules->Array.push(`stands on the other half's footing: ${line(name, edge)}`)
       | _ => ()
@@ -88,7 +90,7 @@ let run = () => {
     )
   )
   let hardNext = n => edgesOf(n)->Array.filter(x => x.hard && known(x.to_))->Array.map(x => x.to_)
-  cycles(hardNext, parts->Dict.keysToArray)->Array.forEach(c =>
+  cycles(hardNext, components->Dict.keysToArray)->Array.forEach(c =>
     rules->Array.push(`hard cycle: ${c}`)
   )
   cycles(

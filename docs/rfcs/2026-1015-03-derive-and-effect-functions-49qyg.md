@@ -146,7 +146,7 @@ other exports a public API, and the caller reaches it over the network as an `ef
 `unavailable` the caller's to handle -- as any dependency on someone else should be.
 
 **A parameter's type is described in WIT**, the WebAssembly component model's interface language, or
-a subset of it taken when this lands: it was made for typed exports and imports between parts
+a subset of it taken when this lands: it was made for typed exports and imports between components
 written in different languages, which is what A and B declare to each other.
 
 **What a build declares and what its owner configures are apart**, worked out with the author on

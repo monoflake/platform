@@ -9,19 +9,19 @@ one is made to hold together on paper first.
 A phase is a step of this work; a stage, `s0`, is how far the model reaches, `docs/scope.md`. The two
 words are kept apart, worked out with the author on 2026-10-19.
 
-| Phase        | What is done                                                                                    | Done when                                        |
-| ------------ | ----------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| Theory       | Drafts in `docs/rfcs/`, and the model in `model/`                                               | `mise run check --ready` passes, `docs/scope.md` |
-| Simulation   | The model run through scenarios: a cold start, a part lost, a part upgraded, a contract changed | The same, since `check.res` runs them            |
-| Comparison   | The design diffed against the code and designs that exist                                       | Every component that exists has a fate           |
-| Construction | Built from the ground up, in the order the bootstrap check gives                                | The cold start is walked through once for real   |
-| Hardening    | The error paths, the irreversible first                                                         | Never                                            |
+| Phase        | What is done                                                                                              | Done when                                        |
+| ------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Theory       | Drafts in `docs/rfcs/`, and the model in `model/`                                                         | `mise run check --ready` passes, `docs/scope.md` |
+| Simulation   | The model run through scenarios: a cold start, a component lost, a component upgraded, a contract changed | The same, since `check.res` runs them            |
+| Comparison   | The design diffed against the code and designs that exist                                                 | Every component that exists has a fate           |
+| Construction | Built from the ground up, in the order the bootstrap check gives                                          | The cold start is walked through once for real   |
+| Hardening    | The error paths, the irreversible first                                                                   | Never                                            |
 
 **One gate stands before construction, `--ready`**, worked out with the author on 2026-10-19: every
 row blocking step 0 crossed off and every check holding, which is theory's completion -- every edge
 reaching what the real world already provides, or marked by hand on day one or for later.
 **Simulation runs inside it**: a cold start is D1, an upgrade D3, a contract changed D5, each run by
-every check; a part lost is D4, a stage's later than `s0`, and is taken in with that stage.
+every check; a component lost is D4, a stage's later than `s0`, and is taken in with that stage.
 **Comparison is a row of the checklist, and comes before a cutover, not before building**: the
 platform is built from nothing on an account of its own and touches nothing that runs, so what each
 service, Worker and store that exists becomes -- kept, replaced, moved or retired -- is settled

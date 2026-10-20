@@ -15,22 +15,22 @@ type process
 @val @scope("Number") external isInteger: float => bool = "isInteger"
 
 let args = process->argv
-let parts = Parts.parts
-let part = n => parts->Dict.get(n)
-let edgesOf = n => part(n)->Option.mapOr([], p => p.edges)
+let components = Components.components
+let component = n => components->Dict.get(n)
+let edgesOf = n => component(n)->Option.mapOr([], p => p.edges)
 let boundary = n => Boundaries.boundaries->Dict.get(n)
 let num = Float.toString
 let int = Int.toString
 let byText = (a: string, b: string) => a < b ? -1. : a > b ? 1. : 0.
 
 let layerName = layer =>
-  layer == Parts.vendor ? "ground" : layer > 0 ? `+${int(layer)}` : int(layer)
+  layer == Components.vendor ? "ground" : layer > 0 ? `+${int(layer)}` : int(layer)
 let known = to_ => !(to_->String.startsWith("?"))
-let tag = (edge: Parts.edge) => `${(edge.when_ :> string)}/${edge.hard ? "hard" : "soft"}`
-let designed = parts->Dict.toArray->Array.filter(((_, p)) => p.kind == None)
-let line = (from, edge: Parts.edge) => `${from} -> ${edge.to_} ${tag(edge)}: ${edge.why}`
+let tag = (edge: Components.edge) => `${(edge.when_ :> string)}/${edge.hard ? "hard" : "soft"}`
+let designed = components->Dict.toArray->Array.filter(((_, p)) => p.kind == None)
+let line = (from, edge: Components.edge) => `${from} -> ${edge.to_} ${tag(edge)}: ${edge.why}`
 let contracted = to_ => boundary(to_)->Option.flatMap(b => b.contract)->Option.isSome
-let isGround = n => part(n)->Option.flatMap(p => p.kind) == Some(#ground)
+let isGround = n => component(n)->Option.flatMap(p => p.kind) == Some(#ground)
 
 /** Every cycle `next` closes among `names`, by a depth-first walk that remembers its path. */
 let cycles = (next: string => array<string>, names: array<string>): array<string> => {
@@ -55,10 +55,10 @@ let cycles = (next: string => array<string>, names: array<string>): array<string
   found
 }
 
-let layerOf = n => part(n)->Option.mapOr(0, p => p.layer)
+let layerOf = n => component(n)->Option.mapOr(0, p => p.layer)
 
 /** The order the edges `when_` selects allow, the ground first. */
-let order = (when_: Parts.edge => bool): array<string> => {
+let order = (when_: Components.edge => bool): array<string> => {
   let out = []
   let seen = Set.make()
   let rec visit = n =>
@@ -71,7 +71,7 @@ let order = (when_: Parts.edge => bool): array<string> => {
       )
       out->Array.push(n)
     }
-  parts
+  components
   ->Dict.keysToArray
   ->Array.toSorted((a, b) => Int.toFloat(layerOf(a) - layerOf(b)))
   ->Array.forEach(visit)
@@ -81,7 +81,7 @@ let order = (when_: Parts.edge => bool): array<string> => {
 type split = {violations: array<string>, assumed: array<string>}
 
 /** The edges `when_` selects that end at a boundary, split by whether its contract is written. */
-let atBoundaries = (when_: Parts.edge => bool): split => {
+let atBoundaries = (when_: Components.edge => bool): split => {
   let hits =
     designed->Array.flatMap(((n, p)) =>
       p.edges->Array.filter(x => when_(x) && !known(x.to_))->Array.map(x => (n, x))
@@ -114,7 +114,7 @@ let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
 }
 
 let orNone = (xs, sep) => xs->Array.length > 0 ? xs->Array.join(sep) : "none"
-let serve = (x: Parts.edge) => x.when_ == #serve
+let serve = (x: Components.edge) => x.when_ == #serve
 let ons = (d: Steps.deployment, f) => d.on->Array.includes(f)
 
 /** The repository's root, which every path a check reads is taken from. */

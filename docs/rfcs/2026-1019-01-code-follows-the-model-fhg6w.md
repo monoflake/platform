@@ -1,6 +1,6 @@
 ---
 name: 'Code Follows the Model'
-title: "The platform's code is cut where the model is: a part is a deployable in one language of three, a library a package of one language, and only an edge between processes is a wire contract"
+title: "The platform's code is cut where the model is: a component is a deployable in one language of three, a library a package of one language, and only an edge between processes is a wire contract"
 status: draft
 supersedes: []
 blocked-by: []
@@ -18,20 +18,20 @@ this lands is for then.
 The shape the discussion has reached so far:
 
 **The model's boundaries are the code's**, since `model/graph/` already cuts the platform into
-parts, libraries and edges, each with its contract:
+components, libraries and edges, each with its contract:
 
-| In the model           | In the code                                                              |
-| ---------------------- | ------------------------------------------------------------------------ |
-| a part, `PARTS`        | a deployable -- a process, a Worker, a binary -- written in one language |
-| a library, `LIBRARIES` | a package of one language, used by every part of it that needs it        |
-| an edge                | an interface between two parts                                           |
+| In the model                              | In the code                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| a component, `model/graph/components.res` | a deployable -- a process, a Worker, a binary -- written in one language |
+| a library, `model/graph/libraries.res`    | a package of one language, used by every component of it that needs it   |
+| an edge                                   | an interface between two components                                      |
 
 - **An edge within one process is a call**, never serialized: ReScript compiled to JavaScript calls
   a library of JavaScript's, and is called by it, in one memory.
 - **An edge between processes or hosts is a wire contract**, and only it.
 - **A browser computes nothing of the platform's**: a page draws what its API returns. So what a
   server and a browser share is the contracts alone, generated, and no logic is written to run in
-  both. Logic that parts of
+  both. Logic that components of
   two languages both need is written in each and held to one set of cases kept beside it.
 - **The rules the model checks of its graph are the code's rules of dependency** -- a `hard` edge
   points to its own layer or below, a library uses libraries alone -- so the check proves the code's
@@ -52,8 +52,8 @@ parts, libraries and edges, each with its contract:
 | as JavaScript: on a Worker, in `workerd`, in a browser     | ReScript   | Hono          |
 | as glue, where a library's surface is too wide to bind     | TypeScript | --            |
 
-- **A part on a machine is Rust whole, its orchestration among it**: its libraries are Rust already,
-  and a build that keeps every library's compiled output in a cache rebuilds only the part, within
+- **A component on a machine is Rust whole, its orchestration among it**: its libraries are Rust already,
+  and a build that keeps every library's compiled output in a cache rebuilds only the component, within
   two or three times a JavaScript build's seconds, the author's estimate, to be measured once code is.
 - **What the platform writes to run as JavaScript is ReScript**: of ML's family, its types sound, so
   no `any` passes its compiler. Its ceiling is TypeScript's, since both end as JavaScript, and its
@@ -82,23 +82,23 @@ parts, libraries and edges, each with its contract:
   what stays is a third native toolchain -- opam, dune's package management, which calls itself not
   final, Eio -- beside Rust's. ReScript keeps OCaml's types where JavaScript runs and rides npm,
   `docs/lessons/`.
-- **A part on a Worker is never Rust compiled to WebAssembly**: a Worker's ground is JavaScript,
+- **A component on a Worker is never Rust compiled to WebAssembly**: a Worker's ground is JavaScript,
   Rust there crosses into it by copying at every call and runs without tokio, and a machine's
-  JavaScript part runs in `workerd`, so one bundle runs on both, vr5lw.
+  JavaScript component runs in `workerd`, so one bundle runs on both, vr5lw.
 - **ReScript is never written inside a `.svelte` file**, which it does not read; a page's logic is a
   `.res` module the page imports compiled.
 - **ReScript's `int` is 32 bits**, so a 64-bit integer crossing into it, or into TypeScript, is a
   JavaScript `bigint`.
 - **A library that runs as JavaScript runs on a Worker, in `workerd` and in a browser alike**, so it
-  uses the web's standard APIs alone, never node's; I/O stands at a part's edge.
+  uses the web's standard APIs alone, never node's; I/O stands at a component's edge.
 - **The tools are cargo, node, ReScript's compiler, vite and tsdown on rolldown, oxlint and oxfmt**,
   and TypeScript 6 and 7 side by side.
 
 **The model and the code are one repository**, decided by the author on 2026-10-19, so the check
 reads the code it holds to the model's boundaries, `model/contracts.json` reaches its generators
 unpublished, and a change to both is one commit. Its top is four directories, drawn for the author
-to judge: `model/`, the spec; `code/`, with `parts/<half>/<part>` named as the model names each
-part, `libs/` and `tools/`; `docs/`, what is read; and `vendor/`. A library is placed by its subject,
+to judge: `model/`, the spec; `code/`, with `components/<half>/<component>` named as the model names each
+component, `libs/` and `tools/`; `docs/`, what is read; and `vendor/`. A library is placed by its subject,
 its language a property the model declares and never a directory.
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and
@@ -175,8 +175,8 @@ them, whoever wrote it.
 
 Open, for the discussion that follows:
 
-- Which language each part of the model is written in, declared in the model beside the part, and
-  the check that a part uses only libraries of its own language. [B24]
+- Which language each component of the model is written in, declared in the model beside the component, and
+  the check that a component uses only libraries of its own language. [B24]
 - How the repository is laid out past what is drawn, so cargo, ReScript's compiler and the
   JavaScript tools build one tree. [B26]
 - How bytes are written in JSON, and which library is JavaScript's CBOR. [B29]

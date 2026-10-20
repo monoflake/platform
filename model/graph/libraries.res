@@ -1,7 +1,7 @@
-/** Every library the drafts name: a package of one language, used by every part of it that needs it, RFC fhg6w. */
+/** Every library the drafts name: a package of one language, used by every component of it that needs it, RFC fhg6w. */
 type library = {
   what: string,
-  /** Whether its output must agree between parts, so its version goes into what it writes. */
+  /** Whether its output must agree between components, so its version goes into what it writes. */
   agrees: bool,
   uses: array<string>,
 }

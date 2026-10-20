@@ -10,22 +10,22 @@ references: []
 
 ## Question
 
-RFCs 13ixj, zn3u5 and 49qyg give an app three abstractions, and RFCs vuanj and b8f35 the parts
-beneath them. Worked out with the author on 2026-10-16: where those parts run, on whose resources,
+RFCs 13ixj, zn3u5 and 49qyg give an app three abstractions, and RFCs vuanj and b8f35 the components
+beneath them. Worked out with the author on 2026-10-16: where those components run, on whose resources,
 and how the platform borrows a vendor's infrastructure without being bound to it. A vendor's
 serverless offering is good, but it lets a customer neither use another's resources nor bring their
 own; the platform exists to schedule across them.
 
 The shape the discussion has reached so far:
 
-**Layer 0 is a contract, and runs nowhere itself.** The parts that keep it are split by whose things
+**Layer 0 is a contract, and runs nowhere itself.** The components that keep it are split by whose things
 they hold:
 
-| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                        |
-| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it leases of them, the deployer, the intermediate, the anchor, the root   |
-| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those leased to it, and the records its parts keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
-| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                                  |
+| Who                    | Its control                                        | Stands on                                | Holds                                                                                                                                                                                                             |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the platform           | its control, an HTTPS API in no organization       | the platform's footing, from beneath     | what spans organizations: the accounts, each organization's existence, allowance and certificate, the extensions it binds and what it leases of them, the deployer, the intermediate, the anchor, the root        |
+| an organization        | its control, an HTTPS API the platform runs for it | its footing, which the platform gives it | its products' configuration, the extensions it binds and those leased to it, and the records its components keep: its bundle, its backing, the extent's records, each tablet's writer and log, the clock's leases |
+| an organization's apps | --                                                 | its extensions, compute and storage      | its data and what runs it: each database's tablet, the blob's bytes, the sandboxes, its requests in and out                                                                                                       |
 
 Worked out with the author on 2026-10-18: the platform and each organization are kept apart the same
 way, a control on a footing of its own and what it runs apart from it. The platform's half is the
@@ -70,7 +70,7 @@ reserved: neither is an app, and neither lives in an organization's namespace.
   the external platform's control opens its shadows on the internal one as any admin would.
 - **An organization's control holds what is that organization's alone**: its products'
   configuration, the deployment of its apps, how its extensions are made into its three products,
-  and the records its parts keep. It answers that organization's admins, and reaches the platform's
+  and the records its components keep. It answers that organization's admins, and reaches the platform's
   control only for what the platform holds of it.
 - **The console is a dashboard, an ordinary app in an ordinary organization**, which is named
   `console` by being opened first and holds no privilege: whatever it does it does through the two
@@ -113,7 +113,7 @@ in the platform's control, an organization's and the extensions each binds.
     common.
   - **A resource is its id; where it is shown is apart**, worked out with the author on
     2026-10-19: an app, a database and a bucket of either type hold no name, and what binds or calls
-    one is resolved to its id, so parts speak id to id. An organization's resources and folders are
+    one is resolved to its id, so components speak id to id. An organization's resources and folders are
     shown on one tree, so what belongs to one project sits together however its owner likes, and
     nothing bound moves.
 
@@ -164,7 +164,7 @@ down a layer at a time, each holding its own range alone.
   naming the account alone. An organization's control checks it by the platform's public key,
   without reaching the platform, checks the account against its own members, and its issuer signs
   the capabilities a member or an admin is given. Past that, both controls take capabilities alone,
-  as every part does, so a person, an app's code and the external platform's control are checked
+  as every component does, so a person, an app's code and the external platform's control are checked
   alike.
 - **The platform's control lost, no one signs in anew**: a credential already given serves until it
   expires, and every organization goes on running.
@@ -334,7 +334,7 @@ service's, or a node.
 - **A primitive is whatever keeps its contract**, a vendor's or a product of the platform's own.
 - **What stands between an organization's resources and its three products is the platform's**,
   deployed and run by it on those resources, and never shown: an organization sees the three
-  products, and, as usage, what the parts beneath them cost on its own resources.
+  products, and, as usage, what the components beneath them cost on its own resources.
   **A platform sells by opening a shadow organization on the platform beneath.** An organization the
   external platform opens has a shadow on the internal one, opened through the internal platform's
   control's API, whose products are given it as its footing and as the extensions it buys, RFC 94y0d;
@@ -371,7 +371,7 @@ configuration; its extensions hold its data and run it.**
 - **Each truth is copied down as a bundle**, numbered by generation and signed in the chain to the
   root. The platform's gives an organization its certificate, allowance and leases, each day
   and on a change; the organization's control compiles its own configuration with it into the
-  bundle its parts serve from and from nothing else -- its grants, its allowance, its schedules, its
+  bundle its components serve from and from nothing else -- its grants, its allowance, its schedules, its
   backing, the policy placement follows. **Both are kept in the organization's footing**, and a
   compute's deployment says only where that is, so a compute that starts reads the newest bundle it
   can verify there, and starts while either control cannot be reached.
@@ -400,11 +400,11 @@ configuration; its extensions hold its data and run it.**
   platform's control, which the intermediate certifies for a short while, the intermediate itself
   certifying keys and signing nothing else; an organization's by a key its control alone holds,
   apart from the key its issuer signs capabilities with, certified as that one is, for seven days
-  and renewed every day. So a part of the data plane taken over can sign a capability and never a
+  and renewed every day. So a component of the data plane taken over can sign a capability and never a
   configuration.
 - **A bundle is kept as CBOR**, its `version` read first, as the workspace's `spec/json.md` has every
   record, with its generation; an organization's names the generation of the platform's it was
-  compiled with. **A part refuses a generation lower than one it has read.** Starting cold it knows
+  compiled with. **A component refuses a generation lower than one it has read.** Starting cold it knows
   none, so whoever can write the footing could hand it an older bundle still signed: only the
   footing's vendor, trusted as ground, and never past the certificate's seven days.
 - **A timer is written into the scheduler of the resource it fires on**, at deployment, as

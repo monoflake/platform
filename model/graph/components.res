@@ -1,9 +1,9 @@
 /**
- * Every part and every library the drafts name, each part's dependencies as typed edges. An edge
+ * Every component and every library the drafts name, each component's dependencies as typed edges. An edge
  * says when it is needed and whether its loss is `hard` -- wrong or stopped -- or `soft` -- slower,
  * staler, more garbage, never wrong. A `hard` edge points to its own layer or below; a `soft` one
- * may point up. A target beginning `?` is something the drafts need and no part is yet: a boundary
- * not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj parts, b8f35 root and
+ * may point up. A target beginning `?` is something the drafts need and no component is yet: a boundary
+ * not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj components, b8f35 root and
  * backing, wnqvu compat; v7v3w the two halves; 94y0d the internal and external platforms; the rules
  * they are checked by, `docs/scope.md`. Every `hard`/`soft` here is proposed, not decided; `open_` marks
  * the ones in question.
@@ -23,14 +23,14 @@ type edge = {
   open_?: string,
   /**
    * Who defines the format the source reads across this edge, when it is not the target. A format
-   * carried unread is no one's to name here: a tablet holding another part's rows reads none of them.
+   * carried unread is no one's to name here: a tablet holding another component's rows reads none of them.
    */
   reads?: string,
-  /** Whether this edge is how its part is itself replaced by a new version, D3. */
+  /** Whether this edge is how its component is itself replaced by a new version, D3. */
   replaces?: bool,
 }
 
-type part = {
+type component = {
   layer: int,
   /** The ground and the operator are outside the design: trusted as written, never built. */
   kind?: [#ground | #operator],
@@ -60,13 +60,13 @@ let key = (~to_="root", ()) =>
   e(to_, #start, hard, "the root public key, deployed, to verify capabilities")
 
 /*
- * Of the parts: `console` is a dashboard in an ordinary organization named `console`, holding no
+ * Of the components: `console` is a dashboard in an ordinary organization named `console`, holding no
  * privilege, v7v3w; `control(organization)` an organization's control, its products' configuration
  * as an HTTPS API, v7v3w; `control(platform)` the platform's, what spans organizations, as an HTTPS
  * API in no organization, v7v3w; `footing(organization)` and `footing(platform)` what the platform,
  * or the layer beneath, gives a control to stand on, vr5lw.
  */
-let parts: dict<part> = dict{
+let components: dict<component> = dict{
   "app": {
     layer: 1,
     half: #organization,
@@ -338,7 +338,7 @@ let parts: dict<part> = dict{
         #serve,
         hard,
         "an effect's http leaves through the platform's own request interface",
-        ~open_="that interface is no part, 49qyg [C14]",
+        ~open_="that interface is no component, 49qyg [C14]",
       ),
     ],
     uses: ["vocabulary*", "compat*"],
@@ -405,7 +405,9 @@ let parts: dict<part> = dict{
   },
   "root": {
     layer: -4,
-    edges: [{...e("?source", #deploy, hard, "what it holds reaches each part"), replaces: true}],
+    edges: [
+      {...e("?source", #deploy, hard, "what it holds reaches each component"), replaces: true},
+    ],
     uses: [],
   },
   "footing(organization)": {layer: vendor, kind: #ground, half: #organization, edges: [], uses: []},

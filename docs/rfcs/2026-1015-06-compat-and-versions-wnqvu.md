@@ -11,7 +11,7 @@ references: []
 ## Question
 
 Taking a consensus algorithm out of the layers as a library, RFC b8f35, raised what every library
-shared by many parts must face: they are deployed one by one, so old and new run side by side, and
+shared by many components must face: they are deployed one by one, so old and new run side by side, and
 what one writes another must read. Worked out with the author on 2026-10-15, as part of rebuilding
 the platform's libraries with its apps rather than inheriting them.
 
@@ -45,12 +45,12 @@ nothing anywhere has seen it: a version is spent only when it is released.
   not known to be supported by asking its number; where a new feature must be supported by both
   sides and not merely ignored, each declares the features it has, and what both have is used, as
   the vocabulary of capabilities compares a set, RFC 49qyg.
-- **A library whose output must agree between parts -- where a parcel goes, how content is cut,
-  how a key is derived -- breaks with any change to its output**, since two parts computing it
+- **A library whose output must agree between components -- where a parcel goes, how content is cut,
+  how a key is derived -- breaks with any change to its output**, since two components computing it
   differently would lose data between them; it raises its version for every such change and writes
   that version into what it produces.
 
-**`compat`, a library, is the one way all of this is done**, so every part and library versions
+**`compat`, a library, is the one way all of this is done**, so every component and library versions
 alike: the stamp, the range, the features, choosing what is written, and the reason a version is
 refused. **Its core is frozen and so needs no version**: a version is one non-negative integer, the
 first thing read, compared by its value -- nothing more, and never changed, as the version field
@@ -62,11 +62,11 @@ more versions than a format will break in its life.
 table's schema changes only where a key does.
 
 **The deployer keeps every running build's range and computes what is written**, since it alone
-knows what is deployed where: before it replaces a part, the new build must read what its neighbors
+knows what is deployed where: before it replaces a component, the new build must read what its neighbors
 write now, and they must read what it will write; and the version written moves to the lowest of
 every running reader's highest once a replacement lands.
 
 Open, for the discussion that follows:
 
-- How the data kept in each version on disk is counted, and by which part, so that a reader knows
+- How the data kept in each version on disk is counted, and by which component, so that a reader knows
   when it may drop an old one. [C13]

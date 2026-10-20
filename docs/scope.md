@@ -73,9 +73,9 @@ owner holds, nor with time: a journal is kept in the stores, a log bounded by it
 reads and writes may grow with use, and how far each step of the bootstrap path asks of its
 vendor's plan is counted, `model/ground/footing.res`.
 
-**The model holds five kinds of thing**: a part, which runs and has a layer; a library, code with no
+**The model holds five kinds of thing**: a component, which runs and has a layer; a library, code with no
 layer that uses only libraries; the ground; the operator; and a boundary, written `?name`, something
-a part needs that no part is yet.
+a component needs that no component is yet.
 
 **Each edge carries three attributes**: when it is needed, `start`, `serve`, `deploy` or
 `background`; what its loss does, `hard`, wrong or stopped, or `soft`, slower or staler and never
@@ -84,30 +84,30 @@ wrong; and its contract, who defines the format crossing it.
 **A format carried unread is exempt from the contract.** A tablet holding the function product's
 rows runs SQL, whose rules are its own, and reads nothing of what the rows mean: a renamed column
 changes nothing for it. The issuer reading the same rows to decide what to sign must know each
-column, and a renamed one breaks it. A lower part may carry an upper part's format, never read it;
-an upper part may write into a format a lower one defines.
+column, and a renamed one breaks it. A lower component may carry an upper component's format, never read it;
+an upper component may write into a format a lower one defines.
 
 **Six dimensions**, each a question, the edges it reads, and what violates it:
 
-| Dimension    | Question                                                                           | Reads                             | Violated by                                                                                    |
-| ------------ | ---------------------------------------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
-| D0 serve     | On the correct path, does every operation the products promise reach the ground?   | `serve`                           | a `serve` edge to a boundary with no contract                                                  |
-| D1 bootstrap | From the ground and the operator alone, can every part come up the first time?     | `start`, `deploy`                 | a cycle; an edge to a boundary with no contract; a `hard` edge pointing up                     |
-| D2 restart   | After everything stops, can every part come back from what it kept?                | `start`, and what each part keeps | a part whose restart needs what lives only in another's memory; a cycle                        |
-| D3 upgrade   | While the rest runs, can one part be replaced by a new version?                    | `deploy`, and the contracts       | replacing a part needs itself; two ends of an edge with no version in common; no `deploy` edge |
-| D4 recovery  | With one part lost, does the data plane keep serving, and does the part come back? | `hard` `serve`                    | a part lost stops the data plane; its way back needs what has stopped                          |
-| D5 contract  | Is every format a part reads defined at its own layer or below?                    | the contracts                     | a lower part reading an upper part's format                                                    |
+| Dimension    | Question                                                                                     | Reads                                  | Violated by                                                                                         |
+| ------------ | -------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| D0 serve     | On the correct path, does every operation the products promise reach the ground?             | `serve`                                | a `serve` edge to a boundary with no contract                                                       |
+| D1 bootstrap | From the ground and the operator alone, can every component come up the first time?          | `start`, `deploy`                      | a cycle; an edge to a boundary with no contract; a `hard` edge pointing up                          |
+| D2 restart   | After everything stops, can every component come back from what it kept?                     | `start`, and what each component keeps | a component whose restart needs what lives only in another's memory; a cycle                        |
+| D3 upgrade   | While the rest runs, can one component be replaced by a new version?                         | `deploy`, and the contracts            | replacing a component needs itself; two ends of an edge with no version in common; no `deploy` edge |
+| D4 recovery  | With one component lost, does the data plane keep serving, and does the component come back? | `hard` `serve`                         | a component lost stops the data plane; its way back needs what has stopped                          |
+| D5 contract  | Is every format a component reads defined at its own layer or below?                         | the contracts                          | a lower component reading an upper component's format                                               |
 
-**A lower part may deliver to an upper one: the envelope points down, the letter may mean
+**A lower component may deliver to an upper one: the envelope points down, the letter may mean
 something only above.** Delivering is not depending. What a delivery travels by -- a route table,
 an address's prefix -- is an envelope, and its format is defined below, so the structure depends only
 downward. What it carries is a letter, carried unread, which may mean something only at a layer
-above, as IP reads its own header and carries a TCP segment as bytes. A part that delivers upward
+above, as IP reads its own header and carries a TCP segment as bytes. A component that delivers upward
 keeps running when what it delivers to is down, and answers that it is unavailable; the table it
-delivers by is written by the upper part, at deployment, in the lower part's format.
+delivers by is written by the upper component, at deployment, in the lower component's format.
 
 **A boundary is a contract, and a layer is checked against it.** A boundary `?name` states what it
-must guarantee: what it provides, and what the dimensions require of it through the parts that need
+must guarantee: what it provides, and what the dimensions require of it through the components that need
 it -- one an executor needs to start must itself start before the executor and without it. A layer is
 then checked as it stands: if every boundary beneath it keeps its contract, does the layer satisfy
 every dimension? An edge to a boundary with a contract is an assumption, passed and listed; one to a
@@ -127,7 +127,7 @@ may point up. A library uses only libraries. Nothing at layer 0 or below has an 
 `soft`, to what the platform runs as an owner, so the graph stays clean while the platform runs on
 itself, RFC vuanj. The data plane writes no configuration: whatever an organization opens -- a bucket, a
 database, an app -- is configuration, the platform's half, written on the control plane alone,
-whoever asks, RFC v7v3w; `RECORDS` in `model/graph/` lists each kind of record.
+whoever asks, RFC v7v3w; `model/graph/records.res` lists each kind of record.
 
 **Dimensions run.** D0 serve, D1 bootstrap, D2 restart of a planned stop, D3 upgrade and D5
 contract, by `mise run check`, and then the bootstrap path, `model/bootstrap/steps.res`: every step of
@@ -138,9 +138,9 @@ RFC vr5lw; and the footing,
 `model/ground/footing.res`: what each keeps is bounded, and each step fits the rows a day its plan allows. D4 recovery models a failure
 and is s1's, run with `--s1`.
 
-**Out of the model in s0:** every failure, including one part crashing and one store lost, which
+**Out of the model in s0:** every failure, including one component crashing and one store lost, which
 are the first a later stage takes in; a replacement that fails, and rolling it back; replacing
-more than one part at once; performance, and cost past a footing's rows; an operator's mistake.
+more than one component at once; performance, and cost past a footing's rows; an operator's mistake.
 
 **Each contract is sorted** into one of three: decided now, since a mistake is written into data
 and cannot be undone; kept by hand on day one, with its command; or left for later, with what brings

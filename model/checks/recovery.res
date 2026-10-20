@@ -3,7 +3,9 @@ open Base
 
 let run = () => {
   if args->Array.includes("--s1") {
-    Console.log("\n# D4 Recovery (s1): lose one running part, and what stops by hard serve edges")
+    Console.log(
+      "\n# D4 Recovery (s1): lose one running component, and what stops by hard serve edges",
+    )
     designed->Array.forEach(((lost, _)) => {
       let down = Set.fromArray([lost])
       let grew = ref(true)

@@ -1,6 +1,6 @@
 /**
  * Every boundary, and the contract it must keep once written: what it provides, and what the
- * dimensions require of it through the parts that need it. Without a contract an edge to it is a
+ * dimensions require of it through the components that need it. Without a contract an edge to it is a
  * violation; with one it is an assumption the next layer down must keep. See `docs/scope.md`.
  */
 type boundary = {
@@ -10,15 +10,15 @@ type boundary = {
   /** Decided now, since a mistake is written into data; by hand on day one; or later. */
   triage?: [#"decided now" | #"by hand on day one" | #later],
   /** Which half keeps it, where one does, RFC v7v3w. */
-  half?: Parts.half,
+  half?: Components.half,
 }
 
 let boundaries: dict<boundary> = dict{
   "?deployer": {
     half: #platform,
-    keptBy: "the operator, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every part can stand on none of them",
+    keptBy: "the operator, standing on the ground: on day one the deployment the operator runs by hand, since what replaces every component can stand on none of them",
     triage: #"by hand on day one",
-    contract: "installs each part the first time, in the order bootstrap allows, and replaces one part's build by a new one while the rest run, one part at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each part back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a part never needs that part, so neither its records nor the builds it delivers rest on any part it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a part may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
+    contract: "installs each component the first time, in the order bootstrap allows, and replaces one component's build by a new one while the rest run, one component at a time. It keeps which build runs where and the version range each reads, on disk, so a planned restart brings each component back at the build recorded, and computes the version each format is written at, wnqvu. Before a replacement it checks the new build reads what its neighbors write now and they read what it will write, and refuses naming the format when either fails. Replacing a component never needs that component, so neither its records nor the builds it delivers rest on any component it replaces. It reads a build's manifest, in compat's format, and carries the build unread. It reads where a component may go from the roster. It starts from the ground and the operator alone; the operator installs it and replaces it. It is the control plane's: while it is lost, everything running goes on running",
   },
   "?entry": {
     half: #organization,
@@ -30,7 +30,7 @@ let boundaries: dict<boundary> = dict{
     half: #organization,
     keptBy: "the organization's half: its table is configuration the platform keeps and copies down, and each tick is fired by the scheduler of the resource bound to the organization it fires on, written there at deployment, the platform firing it only where a resource has none, v7v3w; later: until it is built no schedule or retry is offered, and the storage's sweep waits, which costs only garbage kept longer",
     triage: #later,
-    contract: "at the times a schedule sets, and once at a time asked for, a tick is delivered to the part that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that part, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the part it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open [C14]",
+    contract: "at the times a schedule sets, and once at a time asked for, a tick is delivered to the component that wrote it -- a function's schedule, a queue's retry, the storage's sweep. It delivers by a table of schedules and timers in its own format, written by that component, at deployment for a schedule; a tick carries only the row's id, unread. Times missed are merged in it, one tick pending per schedule however many passed. A tick is delivered at least once, never exactly once; the component it reaches drops a repeat by the schedule and the time it was due. Its table is kept in the footing, so a restart loses no schedule; it starts without anything it delivers to. How precise its times are is open [C14]",
   },
   "?intermediate": {
     half: #platform,
@@ -64,6 +64,6 @@ let boundaries: dict<boundary> = dict{
   "?source": {
     keptBy: "the operator, standing on the ground: the root private key and the masters' shares held offline by hand, and the rest deployed by the operator as secrets on the platform's own vendor accounts, b8f35",
     triage: #"by hand on day one",
-    contract: "what the root holds reaches each part that reads it: the root public key every part in both halves, the organization's inside what the platform deploys there; the intermediate's key and certificate, the masters, the platform's own stores and their secrets, and the roster of the platform's own vendor accounts, the platform's half alone. All but the root private key and the masters' shares, held offline, is kept on the platform's own vendor accounts as secrets deployed with the parts that read them, through a vendor contract the platform writes, never in a repository or in a store the platform runs, which needs them to start. A change is the operator's, by hand, and deploys again what reads it. It is the control plane's: while it is lost, every part keeps what it was given",
+    contract: "what the root holds reaches each component that reads it: the root public key every component in both halves, the organization's inside what the platform deploys there; the intermediate's key and certificate, the masters, the platform's own stores and their secrets, and the roster of the platform's own vendor accounts, the platform's half alone. All but the root private key and the masters' shares, held offline, is kept on the platform's own vendor accounts as secrets deployed with the components that read them, through a vendor contract the platform writes, never in a repository or in a store the platform runs, which needs them to start. A change is the operator's, by hand, and deploys again what reads it. It is the control plane's: while it is lost, every component keeps what it was given",
   },
 }

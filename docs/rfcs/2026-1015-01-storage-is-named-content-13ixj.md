@@ -49,7 +49,7 @@ storage (one an organization, its own unique salt)
 - **A bucket's id is drawn from the one space of its organization's resources**, RFC b8f35, and
   carries its type: an operation on a bucket of the other type is refused as `rejected`, saying so.
 - **A bucket is one level only and never nested.** It is the scope of a policy: its placement, its
-  kind, a quota, who may bind it, a description, and deletion of the whole. A part that needs
+  kind, a quota, who may bind it, a description, and deletion of the whole. A component that needs
   another policy is another bucket.
 - **A bucket's policy is chosen by its kind, never set flat**: what a kind lacks cannot be set.
   `packed`, the default, is cut and deduplicated, and compressed and sealed unless set otherwise,

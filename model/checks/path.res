@@ -47,7 +47,7 @@ let run = () => {
             path->Array.push(
               `${at}: the ${name} platform rolls from v${int(
                   was.version,
-                )}, which cannot replace a part while the rest run`,
+                )}, which cannot replace a component while the rest run`,
             )
           } else if d.move == #"planned stop" {
             stops->Array.push(
