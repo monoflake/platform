@@ -25,13 +25,13 @@ let types: array<declared> = [
     }),
     from: "vr5lw",
   },
-  // An item's name is the control's, unique in its binding and kept across generations, so the
-  // driver diffs by it. Each credential is the BLAKE3 of a random secret of 32 bytes the control
+  // An item is a `capacity` record, so the driver diffs by its id, which is never renamed. Each
+  // credential is the BLAKE3 of a random secret of 32 bytes the control
   // made, which needs no salt; two while one replaces the other, and the driver makes none.
   {
     name: "management-item",
     def: Record([
-      field("name", 1, Prim(#string)),
+      field("id", 1, Id("capacity")),
       field("capacity", 2, Type("management-capacity")),
       field("credentials", 3, List(Prim(#hash))),
     ]),
@@ -80,7 +80,7 @@ let types: array<declared> = [
   {
     name: "management-holding",
     def: Record([
-      field("name", 1, Prim(#string)),
+      field("id", 1, Id("capacity")),
       field("capacity", 2, Type("management-capacity")),
       field("state", 3, Type("management-state")),
     ]),
@@ -98,14 +98,14 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  {name: "management-end", def: Record([field("name", 1, Prim(#string))]), from: "vr5lw"},
+  {name: "management-end", def: Record([field("id", 1, Id("capacity"))]), from: "vr5lw"},
   {name: "management-ended", def: Record([]), from: "vr5lw"},
 ]
 
 /** Ending what is not there succeeds; what the list still asks is ended only by a list without it. */
 let interface_: interface_ = {
   name: "management",
-  version: 1,
+  version: 2,
   from: "vr5lw",
   operations: [
     op(

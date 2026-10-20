@@ -744,10 +744,10 @@
 		"management-item": {
 			"record": [
 				{
-					"name": "name",
+					"name": "id",
 					"key": 1,
 					"shape": {
-						"prim": "string"
+						"id": "capacity"
 					}
 				},
 				{
@@ -890,10 +890,10 @@
 		"management-holding": {
 			"record": [
 				{
-					"name": "name",
+					"name": "id",
 					"key": 1,
 					"shape": {
-						"prim": "string"
+						"id": "capacity"
 					}
 				},
 				{
@@ -949,15 +949,350 @@
 		"management-end": {
 			"record": [
 				{
-					"name": "name",
+					"name": "id",
 					"key": 1,
 					"shape": {
-						"prim": "string"
+						"id": "capacity"
 					}
 				}
 			]
 		},
 		"management-ended": {
+			"record": []
+		},
+		"deployment-form": {
+			"enum": [
+				{
+					"name": "modules",
+					"code": 1
+				},
+				{
+					"name": "component",
+					"code": 2
+				},
+				{
+					"name": "image",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"deployment-runtime": {
+			"enum": [
+				{
+					"name": "workers",
+					"code": 1
+				},
+				{
+					"name": "workerd",
+					"code": 2
+				},
+				{
+					"name": "wasmtime",
+					"code": 3
+				},
+				{
+					"name": "runc",
+					"code": 4
+				},
+				{
+					"name": "crun",
+					"code": 5
+				},
+				{
+					"name": "youki",
+					"code": 6
+				}
+			],
+			"ordered": false
+		},
+		"deployment-isolation": {
+			"enum": [
+				{
+					"name": "isolate",
+					"code": 1
+				},
+				{
+					"name": "kernel",
+					"code": 2
+				},
+				{
+					"name": "userspace",
+					"code": 3
+				},
+				{
+					"name": "vm",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"deployment-network": {
+			"enum": [
+				{
+					"name": "http",
+					"code": 1
+				},
+				{
+					"name": "tcp",
+					"code": 2
+				},
+				{
+					"name": "udp",
+					"code": 3
+				},
+				{
+					"name": "icmp",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"deployment-runs": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "app",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							}
+						]
+					},
+					{
+						"name": "component",
+						"code": 2,
+						"fields": [
+							{
+								"name": "component",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"deployment-artifact": {
+			"record": [
+				{
+					"name": "address",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"deployment-deploy": {
+			"record": [
+				{
+					"name": "runs",
+					"key": 1,
+					"shape": {
+						"type": "deployment-runs"
+					}
+				},
+				{
+					"name": "version",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "form",
+					"key": 3,
+					"shape": {
+						"type": "deployment-form"
+					}
+				},
+				{
+					"name": "runtime",
+					"key": 4,
+					"shape": {
+						"type": "deployment-runtime"
+					},
+					"optional": true
+				},
+				{
+					"name": "isolation",
+					"key": 5,
+					"shape": {
+						"list": {
+							"type": "deployment-isolation"
+						}
+					}
+				},
+				{
+					"name": "artifact",
+					"key": 6,
+					"shape": {
+						"type": "deployment-artifact"
+					}
+				},
+				{
+					"name": "footing",
+					"key": 7,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "secrets",
+					"key": 8,
+					"shape": {
+						"map": {
+							"prim": "bytes"
+						}
+					}
+				},
+				{
+					"name": "network",
+					"key": 9,
+					"shape": {
+						"list": {
+							"type": "deployment-network"
+						}
+					}
+				},
+				{
+					"name": "into",
+					"key": 10,
+					"shape": {
+						"id": "capacity"
+					},
+					"optional": true
+				},
+				{
+					"name": "port",
+					"key": 11,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"deployment-of": {
+			"record": [
+				{
+					"name": "runs",
+					"key": 1,
+					"shape": {
+						"type": "deployment-runs"
+					}
+				}
+			]
+		},
+		"deployment-state": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "making",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "running",
+						"code": 2,
+						"fields": [
+							{
+								"name": "address",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "runtime",
+								"key": 2,
+								"shape": {
+									"type": "deployment-runtime"
+								}
+							},
+							{
+								"name": "isolation",
+								"key": 3,
+								"shape": {
+									"list": {
+										"type": "deployment-isolation"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "stopped",
+						"code": 3,
+						"fields": []
+					},
+					{
+						"name": "failed",
+						"code": 4,
+						"fields": [
+							{
+								"name": "reason",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "message",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							}
+						]
+					}
+				]
+			}
+		},
+		"deployment-described": {
+			"record": [
+				{
+					"name": "runs",
+					"key": 1,
+					"shape": {
+						"type": "deployment-runs"
+					}
+				},
+				{
+					"name": "version",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "state",
+					"key": 3,
+					"shape": {
+						"type": "deployment-state"
+					}
+				}
+			]
+		},
+		"deployment-deleted": {
 			"record": []
 		}
 	},
@@ -1050,7 +1385,7 @@
 			]
 		},
 		"management": {
-			"version": 1,
+			"version": 2,
 			"operations": [
 				{
 					"name": "apply",
@@ -1091,6 +1426,78 @@
 					"reasons": [
 						{
 							"name": "still_asked",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"deployments": {
+			"version": 1,
+			"operations": [
+				{
+					"name": "deploy",
+					"input": "deployment-deploy",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "beyond_host",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "hash_mismatch",
+							"failure": "rejected"
+						},
+						{
+							"name": "unfetchable",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "stop",
+					"input": "deployment-of",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "resume",
+					"input": "deployment-of",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "describe",
+					"input": "deployment-of",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "delete",
+					"input": "deployment-of",
+					"output": "deployment-deleted",
+					"reasons": [
+						{
+							"name": "still_running",
 							"failure": "rejected"
 						}
 					]

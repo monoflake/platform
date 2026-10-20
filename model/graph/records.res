@@ -28,6 +28,8 @@ let records: dict<held> = dict{
     writes: ["control(organization)"],
     from: "v7v3w",
   },
+  /* A share of what an extension holds, an item of its driver's list, vr5lw. */
+  "capacity": {half: #organization, writes: ["control(organization)"], from: "vr5lw"},
   "lease": {half: #platform, writes: ["control(platform)"], from: "v7v3w"},
   "account": {half: #platform, writes: ["control(platform)"], from: "v7v3w"},
   "organization(platform)": {half: #platform, writes: ["control(platform)"], from: "v7v3w"},

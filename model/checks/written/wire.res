@@ -113,6 +113,39 @@ let run = () => {
       )
     })
   })
+  // The drivers' runtimes, RFC vr5lw: each a runtime the deployments' contract names, taking one of its
+  // forms and standing on its isolations, every runtime given by some driver and every form taken.
+  let choices = n =>
+    switch declared->Dict.get(n) {
+    | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
+    | _ => []
+    }
+  let given =
+    Drivers.drivers->Dict.toArray->Array.flatMap(((d, v)) => v.runtimes->Array.map(r => (d, r)))
+  given->Array.forEach(((d, r)) => {
+    let at = `${d}'s ${r.name}`
+    if !(choices("deployment-runtime")->Array.includes(r.name)) {
+      contractRules->Array.push(`${at}: no runtime of deployment-runtime`)
+    }
+    if !(choices("deployment-form")->Array.includes(r.takes)) {
+      contractRules->Array.push(`${at}: takes ${r.takes}, no deployment-form`)
+    }
+    r.stands->Array.forEach(i =>
+      if !(choices("deployment-isolation")->Array.includes(i)) {
+        contractRules->Array.push(`${at}: stands on ${i}, no deployment-isolation`)
+      }
+    )
+  })
+  choices("deployment-runtime")->Array.forEach(n =>
+    if !(given->Array.some(((_, r)) => r.name == n)) {
+      contractRules->Array.push(`deployment-runtime ${n}: given by no driver`)
+    }
+  )
+  choices("deployment-form")->Array.forEach(f =>
+    if !(given->Array.some(((_, r)) => r.takes == f)) {
+      contractRules->Array.push(`deployment-form ${f}: taken by no runtime`)
+    }
+  )
   let made = Contracts.product(
     ~half=k => Records.records->Dict.get(k)->Option.mapOr("", r => (r.half :> string)),
     ~writes=k => Records.records->Dict.get(k)->Option.mapOr([], r => r.writes),
@@ -252,7 +285,9 @@ let run = () => {
         ->orNone(", ")}`,
       `interfaces: ${Contracts.interfaces
         ->Array.map(i => `${i.name} v${int(i.version)}`)
-        ->orNone(", ")}; to declare: function, instance, container; volume has none but its files`,
+        ->orNone(
+          ", ",
+        )}; function, instance and container are deployed by deployments and called by an app's WIT; volume has none but its files`,
       `to declare: ${Records.records
         ->Dict.keysToArray
         ->Array.filter(k => !(Contracts.contents->Array.some(c => c.kind == k)))

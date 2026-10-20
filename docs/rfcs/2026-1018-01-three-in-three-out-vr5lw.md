@@ -184,17 +184,38 @@ organization's container.
   declare, whose default, and whether it counts CPU or the clock, are open. [D8]
 - **A call that opens something waits on that task as any call waits on an outcome**, RFC 49qyg:
   looked up until a deadline, then `unknown` with its id.
+- **Function, instance and container are deployed by one interface**, `deployments`, decided by the
+  author on 2026-10-19 in `model/contracts/kinds/deployments.res`: `deploy`, `stop`, `resume`,
+  `describe` and `delete`. **A deployment is of what it runs**: an app, by its id, or a component of
+  the platform's own, by the name the model gives it, so neither is renamed. Deploying is
+  idempotent -- this version runs, sent again the same -- and carries what no bundle may: the code
+  by its hash and where to fetch it, the footing's address, the deployment's secrets, the networks
+  it may reach, and on a machine the container it runs in. The rest it reads from its bundle.
+- **The three differ in how what is deployed is called**, which is an app's own exports in WIT, RFC
+  49qyg, never the platform's subset: a function at `POST {address}/{export}`; an instance at
+  `POST {address}/{key}/{export}`, every call for one key delivered to one instance running; a
+  container at the one port its image is deployed with, over HTTP. A driver passes a call through
+  as it came, and its cases hold that, and that a stopped deployment answers `unavailable`.
 
 **Code is delivered in its sandbox's own form, built by what its target allows, and kept where it
 was built**, worked out with the author on 2026-10-18.
 
-- **Each sandbox takes its own form**: V8 a bundle of JavaScript modules, WebAssembly within it as
-  it likes; WebAssembly a component; a process an image, whose format waits on the container
-  [C11]. WIT keeps the types one however it runs, RFC vuanj. Each driver declares the sandboxes it
-  gives: Cloudflare's V8 alone; a machine's all three, V8 by `workerd`, Cloudflare's own runtime
-  under an open license, so one bundle runs alike on both. `workerd` is no hardened sandbox and asks
-  for one around it where code may be hostile, `docs/lessons/`: on a machine it runs inside its
-  organization's container, whose isolation from other bindings is not promised, RFC v7v3w.
+- **Each runtime takes one form**: modules, a bundle of JavaScript modules, WebAssembly within it as
+  it likes, run by V8; a component, WebAssembly's, run by wasmtime; an image, whose format waits on
+  the container [C11], run by an OCI runtime. WIT keeps the types one however it runs, RFC vuanj.
+  Each driver declares the runtimes it gives, `model/ground/drivers.res`: Cloudflare's own alone; a
+  machine's `workerd`, Cloudflare's runtime under an open license, so one bundle runs alike on both,
+  `wasmtime`, and runc, crun and youki. `workerd` is no hardened sandbox and asks for one around it
+  where code may be hostile, `docs/lessons/`: on a machine it runs inside its organization's
+  container, whose isolation from other bindings is not promised, RFC v7v3w.
+- **Form, runtime and isolation are three things**, decided by the author on 2026-10-19, as the three
+  layers below have them: the form is what a builder makes; the runtime what runs it; the isolation
+  what keeps it apart -- an isolate within its process, the kernel's namespaces and cgroups, and
+  later a kernel in user space and a virtual machine, each standing on its own and none above
+  another. A runtime stands on a list of isolations, so `workerd` in a container stands on
+  `isolate` and `kernel` both. A deployment names its form, the isolations it must stand on, which
+  its control asks by what its scope may risk, and a runtime only where it must: unnamed, the
+  driver chooses among those that take the form and stand on every isolation asked.
 - **Source is the Git provider's, GitHub alone for now**, and the platform keeps no source.
 - **What builds is chosen by the target**:
 
@@ -351,8 +372,8 @@ abstractions.
   another, so above the drivers a product speaks of `object` and never of R2 or a disk.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
-  `model/contracts/`: `object`, `database` and the drivers' management are declared; function,
-  instance and container, and every kind's cases, are open. [B30]
+  `model/contracts/`: `object`, `database`, the drivers' management and `deployments`, which function,
+  instance and container share, are declared; every kind's cases are open. [B30]
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.
@@ -374,8 +395,10 @@ abstractions.
   small, a few kilobytes, and changes only when what is extended does.
 - **The list holds four kinds, each with its capacity**, decided by the author on 2026-10-19:
   `container`, its cores and memory; `volume`, `object` and `database`, a size each. Function and
-  instance are never in it: they are deployed into what it holds, by compute's interface. Each item
-  carries a name the control gives it, kept across generations, which the driver diffs by.
+  instance are never in it: they are deployed into what it holds, by compute's interface. **Each
+  item is a `capacity` record**, decided by the author on 2026-10-19, so the driver diffs by its id,
+  drawn from its scope's one space, RFC b8f35, and never renamed, as every resource is its id, RFC
+  v7v3w.
 - **An item's credential is the control's, as the binding token is**, decided by the author on
   2026-10-19: a random secret of 32 bytes the control makes, its BLAKE3 alone sent in the list, two
   while one replaces the other. The driver makes none and shows none, so a list sent again is the

@@ -12,12 +12,14 @@ let types: array<declared> = Array.flat([
   Objects.types,
   Databases.types,
   Management.types,
+  Deployments.types,
 ])
 let contents: array<content> = Storage.contents
 let interfaces: array<interface_> = [
   Objects.interface_,
   Databases.interface_,
   Management.interface_,
+  Deployments.interface_,
 ]
 
 /** The product: what every language reads, and nothing of the model's code. */
