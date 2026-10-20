@@ -6,8 +6,8 @@ world already provides, checked by a model, before any of it is built. It is the
 attempt, and the workspace above it is to be rebuilt on what it settles, so a rule of the
 workspace's is never a reason here; its tools are borrowed only where nothing conflicts.
 
-It is local only: no remote, not in the workspace's `repos.toml`, never pushed until the design
-lands, so nothing here deploys anything or touches another repository.
+It is public at `monoflake/platform`, listed in the workspace's `repos/registry.toml` as
+`monoflake`. Nothing here deploys anything or touches another repository.
 
 ## Start here
 
