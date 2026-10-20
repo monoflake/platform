@@ -1,0 +1,47 @@
+{
+	"interface": "management",
+	"cases": [
+		{
+			"description": "an item the list still asks is never ended; one unasked is, at once; one absent succeeds",
+			"steps": [
+				{
+					"call": "set_policy",
+					"input": { "generation": 1, "grace": 3600 },
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "end",
+					"input": { "id": 1 },
+					"expect": { "failure": "rejected", "reason": "still_asked" }
+				},
+				{
+					"call": "apply",
+					"input": { "generation": 2, "items": [] },
+					"expect": { "output": { "generation": 2 } }
+				},
+				{ "call": "end", "input": { "id": 1 }, "expect": { "output": {} } },
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": { "output": { "generation": 2, "policy": 1, "grace": 3600, "items": [] } }
+				},
+				{ "call": "end", "input": { "id": 9 }, "expect": { "output": {} } }
+			]
+		}
+	]
+}

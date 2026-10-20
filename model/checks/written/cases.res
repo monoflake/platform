@@ -238,6 +238,12 @@ let run = () => {
           steps->Array.forEachWithIndex(
             (st, k) => {
               let at = `${at}.${int(k)}`
+              // A step `within` some milliseconds is called again until it is answered as expected.
+              switch st->member("within") {
+              | None => ()
+              | Some(Number(ms)) if isInteger(ms, 1., 3600000.) => ()
+              | Some(_) => found->Array.push(`${at}: within, no milliseconds up to an hour`)
+              }
               switch st->member("call") {
               | Some(String(call)) =>
                 switch i.operations->Array.find(o => o.name == call) {

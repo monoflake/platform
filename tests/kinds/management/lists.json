@@ -1,0 +1,233 @@
+{
+	"interface": "management",
+	"cases": [
+		{
+			"description": "a binding new holds nothing, and its grace is a week",
+			"steps": [
+				{
+					"call": "describe",
+					"input": {},
+					"expect": { "output": { "generation": 0, "policy": 0, "grace": 604800, "items": [] } }
+				}
+			]
+		},
+		{
+			"description": "a list applied is held, and each item is made at an address, its credentials never shown",
+			"steps": [
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"generation": 1,
+							"policy": 0,
+							"grace": 604800,
+							"items": [
+								{
+									"id": 1,
+									"capacity": { "name": "object", "size": 1048576 },
+									"state": { "name": "made", "address": { "$any": null } }
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a list sent again is the same list",
+			"steps": [
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"generation": 1,
+							"policy": 0,
+							"grace": 604800,
+							"items": [
+								{
+									"id": 1,
+									"capacity": { "name": "object", "size": 1048576 },
+									"state": { "name": "made", "address": { "$any": null } }
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a list older than the one held is dropped, and answered with the one held",
+			"steps": [
+				{
+					"call": "apply",
+					"input": {
+						"generation": 2,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 2,
+								"capacity": { "name": "database", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"generation": 2,
+							"policy": 0,
+							"grace": 604800,
+							"items": [
+								{
+									"id": 1,
+									"capacity": { "name": "object", "size": 1048576 },
+									"state": { "name": "made", "address": { "$any": null } }
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a list the host cannot hold is refused, and nothing of it is held",
+			"steps": [
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 9007199254740991 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "beyond_host" }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"expect": { "output": { "generation": 0, "policy": 0, "grace": 604800, "items": [] } }
+				}
+			]
+		},
+		{
+			"description": "a list naming one item twice, or an item with no credential or three, is invalid",
+			"steps": [
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1024 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							},
+							{
+								"id": 1,
+								"capacity": { "name": "database", "size": 1024 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{ "id": 1, "capacity": { "name": "object", "size": 1024 }, "credentials": [] }
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1024 },
+								"credentials": [
+									"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+									"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262",
+									"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"
+								]
+							}
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				}
+			]
+		}
+	]
+}

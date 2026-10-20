@@ -373,7 +373,7 @@ abstractions.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
   `model/contracts/`: `object`, `database`, the drivers' management and `deployments`, which function,
-  instance and container share, are declared; `object` and `database` are sampled so far. [B30]
+  instance and container share, are declared; `object`, `database` and the management are sampled so far. [B30]
 - **The cases are data in `tests/`, three of a kind**, decided by the author on 2026-10-19:
   `codec/`, a value in JSON beside its CBOR, and inputs every reader refuses; `kinds/`, each
   interface's cases, a case a list of steps -- an operation called, its output or its failure and
@@ -384,8 +384,10 @@ abstractions.
   by a statement and filled with spaces with `$text`, a length past a bound among them -- one the
   contract fixes, as an object's 16 MiB, or one each driver declares, as a statement's size, which
   a runner asks the driver under test for [D8] -- so a case past a bound is written once for every
-  driver; a case may be `given` the capacity of its kind it starts with. Each case starts from
-  nothing, and an output expected is the whole output.
+  driver; a case may be `given` the capacity of its kind it starts with; and a step
+  may be answered `within` some milliseconds, called again until it is answered as expected, as
+  what a driver makes is made in a while. Each case starts from nothing, and an output expected is
+  the whole output.
 - **The check holds the samples to the contracts**, `model/checks/written/cases.res`: each step
   calls an operation that exists, with an input that parses, expecting an output that parses or a
   reason its operation has and the failure that reason is; every operation and every reason of an
@@ -441,7 +443,9 @@ abstractions.
   list, `set_policy` the grace, `describe` what it holds, each item `making`, `made` at an address,
   `failed` for a reason, or `unasked` since a time, and `end` an item the list no longer asks. A
   list older than the one held is dropped and answered with the generation held, never failed;
-  what it reports of use is open. [C18]
+  what it reports of use is open. [C18] A binding new holds generation 0 of both, and a week's
+  grace; a list refused holds nothing of itself; an item carries one credential or two, and names
+  itself once; and an item ended goes at once, `tests/kinds/management/`.
 - **A machine's driver keeps back only what the machine and the driver need**, worked out with the
   author on 2026-10-19, since most machines a small team brings have 1 or 2 GB, and a driver written
   in Rust takes tens of megabytes. Memory kept back is the machine's own, measured as the

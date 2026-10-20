@@ -1,0 +1,122 @@
+{
+	"interface": "management",
+	"cases": [
+		{
+			"description": "a grace of 0 removes what the list no longer asks at once",
+			"steps": [
+				{
+					"call": "set_policy",
+					"input": { "generation": 1, "grace": 0 },
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": { "generation": 2, "items": [] },
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": { "output": { "generation": 2, "policy": 1, "grace": 0, "items": [] } }
+				}
+			]
+		},
+		{
+			"description": "within a grace an item unasked is kept, since when it was found so",
+			"steps": [
+				{
+					"call": "set_policy",
+					"input": { "generation": 1, "grace": 3600 },
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": {
+						"generation": 1,
+						"items": [
+							{
+								"id": 1,
+								"capacity": { "name": "object", "size": 1048576 },
+								"credentials": ["af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262"]
+							}
+						]
+					},
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "apply",
+					"input": { "generation": 2, "items": [] },
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"generation": 2,
+							"policy": 1,
+							"grace": 3600,
+							"items": [
+								{
+									"id": 1,
+									"capacity": { "name": "object", "size": 1048576 },
+									"state": {
+										"name": "unasked",
+										"since": { "$any": null },
+										"address": { "$any": null }
+									}
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a policy older than the one held is dropped",
+			"steps": [
+				{
+					"call": "set_policy",
+					"input": { "generation": 2, "grace": 60 },
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "set_policy",
+					"input": { "generation": 1, "grace": 0 },
+					"expect": { "output": { "generation": 2 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"expect": { "output": { "generation": 0, "policy": 2, "grace": 60, "items": [] } }
+				}
+			]
+		},
+		{
+			"description": "a grace past a year is invalid",
+			"steps": [
+				{
+					"call": "set_policy",
+					"input": { "generation": 1, "grace": 31536001 },
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				}
+			]
+		}
+	]
+}
