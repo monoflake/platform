@@ -122,6 +122,17 @@ let run = () => {
     differ(found, "rescript.json", listed, names)
   | None => found->Array.push("rescript.json: no object")
   }
+  // pnpm links a package where ReScript looks only as a dependency of the root's.
+  let linked =
+    JSON.parseOrThrow(readFileSync(urlIn("package.json", root)))
+    ->member("devDependencies")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.getOr(Dict.make())
+  names->Array.forEach(n =>
+    if linked->Dict.get(n)->Option.flatMap(JSON.Decode.string) != Some("workspace:*") {
+      found->Array.push(`package.json: no ${n} as workspace:*, so pnpm links it not`)
+    }
+  )
   let pnpm = readFileSync(urlIn("pnpm-workspace.yaml", root))
   if !(pnpm->String.includes("\"code/**\"")) {
     found->Array.push("pnpm-workspace.yaml takes not code/**")

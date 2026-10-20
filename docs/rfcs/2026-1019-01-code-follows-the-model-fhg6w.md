@@ -161,7 +161,8 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 
 - **The root holds their manifests and no package**: `Cargo.toml`, a virtual manifest, its members
   listed one by one, `[workspace.package]` and `[workspace.dependencies]` shared, one `Cargo.lock`
-  and one `target/`; `package.json`, the tools alone; `pnpm-workspace.yaml`, taking all beneath
+  and one `target/`; `package.json`, the tools and each package as `workspace:*`, which is how pnpm links it where
+  ReScript looks; `pnpm-workspace.yaml`, taking all beneath
   `code/`; and `rescript.json`, the model its own sources, every ReScript package listed as a
   dependency, and what a package cannot set -- its module format and suffix -- set once. Cargo
   and ReScript take no recursive glob, so `model/checks/layout/workspace.res` holds each list to

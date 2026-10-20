@@ -20,7 +20,16 @@ against it, and the whole is held by the conversation.
   `model/accept.res`, then its languages' formatting, lints and tests, in that order. It holds the
   block alone. The whole -- the graph, every contract, `mise run check` -- is the conversation's.
 - **A block's tests read its samples as they stand**, each language the same files, the model's
-  `samples`; a sample is never copied into a test.
+  `samples`; a sample is never copied into a test, and accept refuses one no test of a language
+  names, as it refuses an interface left unimplemented.
+- **A block's tests hold its own structure, never what it takes on trust.** Codec holds that a
+  signature's bytes go into a Sign1 and come out unchanged, and what is signed over is built byte for
+  byte; whether a signature verifies is its signing library's, already tested by its authors.
+  Running the real library through it is an end-to-end test, a further one, and never in place of
+  the block's. Decided by the author on 2026-10-20.
+- **A standard's own examples are taken from its text when nothing licensed holds them**: an RFC is
+  public, so they are copied into `tests/` with the RFC and its section named in the file, as
+  `tests/cbor/` is from RFC 8949. Decided by the author on 2026-10-20.
 - **What is not decided waits behind a row**: `%todo("B32")` in ReScript, `todo!("B32")` in Rust,
   naming a row of the checklist still open. One naming no row, or a row closed, fails the check,
   so closing a row lists the code that waited on it.
@@ -39,7 +48,9 @@ against it, and the whole is held by the conversation.
 - **An invariant is a type**: abstract or `private`, made by the one function that checks it.
 - **`%raw`, `Obj.magic` and `external` stand in `src/bindings/` alone**, as Rust's `unsafe` would,
   RFC fhg6w: one module a library bound, so what is taken on trust is gathered where it is seen.
-- **Tests are `test/`, run by `node --test`**, so no framework is taken for them.
+- **Tests are `test/`, run by `node --test`**, so no framework is taken for them; a package lists
+  `test` among its sources once it has one, as a `.resi` alone is passed over until its `.res` is
+  written.
 
 ## Rust
 

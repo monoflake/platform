@@ -30,7 +30,10 @@ let changed = from => {
 let given = args->Array.slice(~start=2)
 let fromAt = given->Array.findIndex(a => a == "--from")
 let from = fromAt >= 0 ? given->Array.get(fromAt + 1) : None
-let named = given->Array.filterWithIndex((a, i) => !(a->String.startsWith("--")) && i != fromAt + 1)
+let named =
+  given->Array.filterWithIndex((a, i) =>
+    !(a->String.startsWith("--")) && (fromAt < 0 || i != fromAt + 1)
+  )
 
 switch (named, find(named->Array.get(0)->Option.getOr(""))) {
 | ([], _) =>
@@ -49,6 +52,51 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       found->Array.push(`${s}: a sample the model names, not there`)
     }
   )
+  // Its interface is implemented whole, and its tests read every sample, in every language.
+  let files = filesOf(path)
+  let read = f => readFileSync(urlIn(`${path}/${f}`, root))
+  files
+  ->Array.filter(f => f->String.endsWith(".resi"))
+  ->Array.forEach(f => {
+    let implementation = f->String.slice(~start=0, ~end=-1)
+    if !(files->Array.includes(implementation)) {
+      found->Array.push(`${path}/${f}: no ${implementation} implements it`)
+    }
+  })
+  if files->Array.includes("src/interface.rs") {
+    let rust = files->Array.filter(f => f->String.endsWith(".rs") && f != "src/interface.rs")
+    let traits = /pub trait (\w+)/g
+    let text = read("src/interface.rs")
+    let go = ref(true)
+    while go.contents {
+      switch traits->RegExp.exec(text) {
+      | Some(m) =>
+        switch m->RegExp.Result.matches {
+        | [Some(t)] =>
+          if !(rust->Array.some(f => read(f)->String.includes(`impl ${t} for`))) {
+            found->Array.push(`${path}/src/interface.rs: ${t}, implemented for nothing`)
+          }
+        | _ => ()
+        }
+      | None => go := false
+      }
+    }
+  }
+  let tests = (l: lang) =>
+    files->Array.filter(f =>
+      switch l {
+      | #rust => f->String.endsWith(".rs") && f != "src/interface.rs"
+      | #rescript => f->String.startsWith("test/") && f->String.endsWith(".res")
+      }
+    )
+  h.languages->Array.forEach(l => {
+    let sources = tests(l)->Array.map(read)
+    h.samples->Array.forEach(s =>
+      if !(sources->Array.some(t => t->String.includes(s))) {
+        found->Array.push(`${s}: read by no test in ${languageName(l)}`)
+      }
+    )
+  })
   let rows = openRows()
   todosOf(path)->Array.forEach(((at, row)) =>
     switch row {

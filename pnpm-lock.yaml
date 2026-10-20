@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:code/libs/codec
       '@rescript/runtime':
         specifier: ^12.3.1
         version: 12.3.1
@@ -15,7 +18,17 @@ importers:
         specifier: ^12.3.1
         version: 12.3.1
 
+  code/libs/codec:
+    dependencies:
+      cbor2:
+        specifier: ^2.4.0
+        version: 2.4.0
+
 packages:
+
+  '@cto.af/wtf8@0.0.6':
+    resolution: {integrity: sha512-xp/zbWLXuh2WBxi9tIc+Jep7BAwLu8ETTI8xN68ks10bxOBMISs/jcu9DBEkOeGXLaTKUbA0Y2Ficx/jmmPABg==}
+    engines: {node: '>=20'}
 
   '@rescript/darwin-arm64@12.3.1':
     resolution: {integrity: sha512-pwdnHhuIMH4Y5nuEwBLAMOYvGIcAVgnSZq/DWUNZJWoUr7YZpNkABJp0TFGiyYePT5ld+nvjQ40oI0rKjEWK8w==}
@@ -50,12 +63,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  cbor2@2.4.0:
+    resolution: {integrity: sha512-s6+CPoEI6tgwasK2cWMTXt5sy8Yxo4vgRmKgkJSCdKDL/0bHU3aYJoYeHRX7/oywKYA3bxcpqEYkXkrdHe0+0Q==}
+    engines: {node: '>=22'}
+
   rescript@12.3.1:
     resolution: {integrity: sha512-Q4y0SQ7EUShiX1ymEG5iOCGzbVSOh7CCLEnQUkq19FX2i64eQ2uEGeMCKFl0AsL7TcK5pS+66QTSP6jf6LSgaA==}
     engines: {node: '>=20.11.0'}
     hasBin: true
 
 snapshots:
+
+  '@cto.af/wtf8@0.0.6': {}
 
   '@rescript/darwin-arm64@12.3.1':
     optional: true
@@ -73,6 +92,10 @@ snapshots:
 
   '@rescript/win32-x64@12.3.1':
     optional: true
+
+  cbor2@2.4.0:
+    dependencies:
+      '@cto.af/wtf8': 0.0.6
 
   rescript@12.3.1:
     dependencies:

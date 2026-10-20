@@ -16,6 +16,8 @@ allow = [
 	"Apache-2.0 WITH LLVM-exception",
 	"BSD-2-Clause",
 	"BSD-3-Clause",
+	# minicbor's, RFC fhg6w: permissive, OSI approved, read 2026-10-19 in docs/lessons/languages.md.
+	"BlueOak-1.0.0",
 	"CC0-1.0",
 	"ISC",
 	"MIT",
