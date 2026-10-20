@@ -189,6 +189,8 @@ down a layer at a time, each holding its own range alone.
   | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |
   | its certificate                            | compiled           | no record                                                                         |
 
+  What is its own is `model/contracts/records/control.res`.
+
   | Of an account                                      | Is                   | Kept                                                                                                                         |
   | -------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
   | `name`, `factors`, `security`, its contact `email` | its own              | the platform control's `configuration`, kind `account`                                                                       |
@@ -212,7 +214,7 @@ down a layer at a time, each holding its own range alone.
   - **A member is written only once it accepts**, worked out with the author on 2026-10-19: an
     admin invites an account, an `invitation` of the organization's own naming the account and the
     role offered, and the account's acceptance writes the `member`, its account and its role,
-    `member` or `admin`, and reports it to `membership`. So no one is put in an organization
+    `member` or `admin`, and reports it to `membership`, `model/contracts/records/control.res`. So no one is put in an organization
     unasked, and none is listed among an account's that it never joined. An invitation lasts seven
     days, as a certificate does, and is sent again once it lapses.
   - **No username or label is given that the platform reserves**, worked out with the author on

@@ -551,6 +551,119 @@
 				}
 			]
 		},
+		"security": {
+			"enum": [
+				{
+					"name": "default",
+					"code": 1
+				},
+				{
+					"name": "strict",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"organization": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "security",
+					"key": 2,
+					"shape": {
+						"type": "security"
+					}
+				},
+				{
+					"name": "grace",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"role": {
+			"enum": [
+				{
+					"name": "member",
+					"code": 1
+				},
+				{
+					"name": "admin",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"member": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "account",
+					"key": 1,
+					"shape": {
+						"id": "account"
+					}
+				},
+				{
+					"name": "role",
+					"key": 2,
+					"shape": {
+						"type": "role"
+					}
+				}
+			]
+		},
+		"invitation": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "account",
+					"key": 1,
+					"shape": {
+						"id": "account"
+					}
+				},
+				{
+					"name": "role",
+					"key": 2,
+					"shape": {
+						"type": "role"
+					}
+				}
+			]
+		},
 		"tree-type": {
 			"enum": [
 				{
@@ -2118,6 +2231,27 @@
 			"writes": ["control(organization)"],
 			"version": 1,
 			"content": "app"
+		},
+		{
+			"kind": "organization",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "organization"
+		},
+		{
+			"kind": "member",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "member"
+		},
+		{
+			"kind": "invitation",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "invitation"
 		},
 		{
 			"kind": "tree",

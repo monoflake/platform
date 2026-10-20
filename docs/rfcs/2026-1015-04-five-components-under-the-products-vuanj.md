@@ -110,7 +110,10 @@ issuer's format, and the new version takes a call only once its organization hol
 grants are derived from the bindings and never written otherwise, so what an app may reach is
 decided in one place, and the function product changes how it keeps bindings without anything
 beneath it changing. Grants are written as the control plane works,
-at deployment, and read as the data plane works, on each call.
+at deployment, and read as the data plane works, on each call. **A grant is no record**, decided
+by the author on 2026-10-19: what is compiled is never written, RFC v7v3w, so a binding changed is a
+generation, the bundle compiled again with the grants it comes to, and the app's version untouched;
+the grant's format is declared with the bundle's.
 
 **Inside a scope each product has its own blob space**, since what counts the references to a hash
 is the product's own tablet; two products sharing one would delete what the other still holds.

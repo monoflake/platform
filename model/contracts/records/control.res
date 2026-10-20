@@ -1,5 +1,6 @@
 /**
- * The records an organization's control keeps of its own, RFCs v7v3w and vr5lw: the tree its
+ * The records an organization's control keeps of its own, RFCs v7v3w and vr5lw: itself, its
+ * members and its invitations; the tree its
  * resources are shown on, the names bound to them, the gateway's mounts, the extensions it binds
  * and the capacity it opens on them. Every value sealed is sealed under a key deployed as a secret
  * of the control's own deployment, v7v3w.
@@ -7,6 +8,41 @@
 open Subset
 
 let types: array<declared> = [
+  {
+    name: "security",
+    def: Enum({choices: codes(["default", "strict"]), ordered: false}),
+    from: "v7v3w, vuanj",
+  },
+  // An organization's own: its name shown, at most 16 characters, empty unless written; how long its
+  // credentials live, vuanj; and the grace its extensions inherit, a week unless set, vr5lw. Its
+  // description is every record's.
+  {
+    name: "organization",
+    def: Record([
+      optional("name", 1, Prim(#string)),
+      field("security", 2, Type("security")),
+      optional("grace", 3, Prim(#uint32)),
+    ]),
+    from: "v7v3w",
+  },
+  {
+    name: "role",
+    def: Enum({choices: codes(["member", "admin"]), ordered: false}),
+    from: "v7v3w",
+  },
+  // A member is written once its account accepts, and reported to the platform's `membership`; an
+  // organization holds one admin at least, which its control holds as it writes.
+  {
+    name: "member",
+    def: Record([field("account", 1, Id("account")), field("role", 2, Type("role"))]),
+    from: "v7v3w",
+  },
+  // An invitation offers an account a role, and lapses seven days after the generation that wrote it.
+  {
+    name: "invitation",
+    def: Record([field("account", 1, Id("account")), field("role", 2, Type("role"))]),
+    from: "v7v3w",
+  },
   {
     name: "tree-type",
     def: Enum({choices: codes(["folder", "app", "database", "bucket"]), ordered: false}),
@@ -134,6 +170,9 @@ let types: array<declared> = [
 ]
 
 let contents: array<content> = [
+  {kind: "organization", version: 1, content: "organization"},
+  {kind: "member", version: 1, content: "member"},
+  {kind: "invitation", version: 1, content: "invitation"},
   {kind: "tree", version: 1, content: "tree"},
   {kind: "name", version: 1, content: "name"},
   {kind: "scope", version: 1, content: "scope"},

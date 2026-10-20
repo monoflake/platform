@@ -15,7 +15,6 @@ let records: dict<held> = dict{
   "bucket": {half: #organization, writes: ["control(organization)"], from: "13ixj, v7v3w"},
   "database": {half: #organization, writes: ["control(organization)"], from: "zn3u5, v7v3w"},
   "app": {half: #organization, writes: ["control(organization)"], from: "49qyg, v7v3w"},
-  "grant": {half: #organization, writes: ["control(organization)"], from: "vuanj, v7v3w"},
   "name": {half: #organization, writes: ["control(organization)"], from: "vr5lw"},
   "member": {half: #organization, writes: ["control(organization)"], from: "v7v3w"},
   "invitation": {half: #organization, writes: ["control(organization)"], from: "v7v3w"},
