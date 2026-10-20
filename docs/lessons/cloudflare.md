@@ -1,6 +1,6 @@
 # Cloudflare
 
-Facts on Cloudflare, its Workers, D1 and its plans, each with its source; see `README.md`.
+Facts on Cloudflare, its Workers, D1 and its plans, each with its source; see `docs/lessons.md`.
 
 ## Cloudflare, read 2026-10-17
 

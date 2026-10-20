@@ -1,6 +1,6 @@
 # Networks
 
-Facts on private networks between resources, each with its source; see `README.md`.
+Facts on private networks between resources, each with its source; see `docs/lessons.md`.
 
 ## Tailscale, read 2026-10-18
 

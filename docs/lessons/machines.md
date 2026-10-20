@@ -1,6 +1,6 @@
 # Machines
 
-Facts on the system a machine runs, each with its source; see `README.md`.
+Facts on the system a machine runs, each with its source; see `docs/lessons.md`.
 
 ## A machine's system, read 2026-10-19
 

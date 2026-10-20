@@ -1,6 +1,6 @@
 # Signing
 
-Facts on signed records and the shares a master is kept in, each with its source; see `README.md`.
+Facts on signed records and the shares a master is kept in, each with its source; see `docs/lessons.md`.
 
 ## COSE, read 2026-10-19
 

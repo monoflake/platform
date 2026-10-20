@@ -1,6 +1,6 @@
 # SQLite
 
-Facts on SQLite at the sizes a tablet reaches, each with its source; see `README.md`.
+Facts on SQLite at the sizes a tablet reaches, each with its source; see `docs/lessons.md`.
 
 ## SQLite at size, read 2026-10-18
 

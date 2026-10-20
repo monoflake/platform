@@ -1,6 +1,6 @@
 # Languages
 
-Facts on the languages, contracts and encodings the code is written in, each with its source; see `README.md`.
+Facts on the languages, contracts and encodings the code is written in, each with its source; see `docs/lessons.md`.
 
 ## Contracts and their encodings, read 2026-10-19
 

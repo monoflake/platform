@@ -1,6 +1,6 @@
 # Media types
 
-Facts on what an object is served as, each with its source; see `README.md`.
+Facts on what an object is served as, each with its source; see `docs/lessons.md`.
 
 ## Media types and extensions, read 2026-10-19
 

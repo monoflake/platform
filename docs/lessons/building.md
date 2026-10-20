@@ -1,6 +1,6 @@
 # Building
 
-Facts on where and how code is built, each with its source; see `README.md`.
+Facts on where and how code is built, each with its source; see `docs/lessons.md`.
 
 ## Building code, read 2026-10-18
 

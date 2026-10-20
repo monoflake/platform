@@ -1,6 +1,6 @@
 # Certificates
 
-Facts on the public certificate authorities a machine is certified by, each with its source; see `README.md`.
+Facts on the public certificate authorities a machine is certified by, each with its source; see `docs/lessons.md`.
 
 ## Let's Encrypt, read 2026-10-18
 
