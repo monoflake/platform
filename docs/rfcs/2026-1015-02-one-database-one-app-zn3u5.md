@@ -39,6 +39,15 @@ serves it without translation:
   answers each one's rows; a call is atomic, all or nothing, with no state in between. **There is no interactive transaction.**
 - It can be returned to any minute of the last 30 days, by what its implementation keeps, and past
   them to a snapshot it was asked to keep, RFC vuanj.
+- **Past 30 days nothing is kept until its owner turns it on**, decided by the author on
+  2026-10-20, so a database takes no more than it must. Turned on, it is given tiers each sparser
+  as it grows older -- a snapshot a day to 90 days, a week to 180, a month to a year, about 79 in
+  all -- which its owner changes as it likes within a year at most and one an hour at most,
+  `model/contracts/records/database.res`.
+- **A rewind within 30 days is in place**, undone by the moment its answer names. **A snapshot is
+  restored as a new database unless its owner asks it over the old one**, decided by the author on
+  2026-10-20: a new one is bound to the same app and shown beside it, so nothing is lost until the
+  owner chooses; over the old, what it held is lost, as the owner asked.
 - **Read copies are a switch on the database.** Off, every read is current. On, a read without a
   cursor is no longer promised current and may be behind by about a minute, the bound to be fixed
   later; a read with a cursor is promised to see at least what that cursor names.

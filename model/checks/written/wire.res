@@ -285,6 +285,22 @@ let run = () => {
       contractRules->Array.push(`deployment-form ${f}: taken by no runtime`)
     }
   )
+  // A database's preset tiers, zn3u5: within the bounds every set is held to, each sparser and kept
+  // longer than the one before.
+  Database.retentionPreset->Array.forEachWithIndex(((every, keep), i) => {
+    if every < Database.retentionFinest || keep > Database.retentionMost || every >= keep {
+      contractRules->Array.push(
+        `database's preset tier ${int(i)}: past the bounds every set is held to`,
+      )
+    }
+    switch Database.retentionPreset[i - 1] {
+    | Some((e, k)) if every <= e || keep <= k =>
+      contractRules->Array.push(
+        `database's preset tier ${int(i)}: no sparser and longer than the one before`,
+      )
+    | _ => ()
+    }
+  })
   let made = Contracts.product(~writes=(h, k) =>
     Records.find(h, k)->Option.mapOr([], r => r.writes)
   )

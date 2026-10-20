@@ -574,6 +574,7 @@ let checklist: array<item> = [
     what: "the tiers a database keeps its snapshots by past the 30 days every implementation rewinds within -- how sparse each, how long, the preset offered, how far a user may set them -- none unless set; whether a snapshot is restored over its database or as a new one; and the logical dump's format, declared with its code",
     from: "vuanj, zn3u5",
     step: 8,
+    done: "zn3u5, vuanj: none unless turned on; a day to 90 days, a week to 180, a month to a year, changed within a year and an hour; restored as a new database unless asked over; one logical dump, declared with its code",
   },
   {
     id: "D1",

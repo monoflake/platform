@@ -136,7 +136,7 @@ the time -- so no input is refused and no write costs twice. From there the rest
   machine's WAL archived with its volume's snapshots, `model/contracts/kinds/databases.res`. It
   takes a while, and is rare.
 - **Past 30 days nothing is kept unless asked**: a database may keep snapshots by tiers, each
-  sparser as it grows older, its `retention`, whose rules are open [C38]; and snapshots kept apart
+  sparser as it grows older, its `retention`, none unless set, RFC zn3u5; and snapshots kept apart
   from its implementation, so it outlives losing a vendor, only where its `copies` and `placement`
   ask, RFC zn3u5. A database moved from one implementation to another goes by a snapshot taken then.
 - **A snapshot is the platform's own logical dump, one form on every implementation**, decided by
@@ -148,7 +148,7 @@ the time -- so no input is refused and no write costs twice. From there the rest
   each restores alone. **What dumps never stops what writes, where it can**: a machine snapshots its
   volume, at once, and dumps that copy; a Durable Object and D1 serve one request at a time, so
   their dump holds them for its length, taken at a quiet hour and skipped where no batch was
-  written since the last. Its format is declared with its code. [C38]
+  written since the last. Its format is declared with its code.
 - **A read copy** is its implementation's, where one offers it: D1's replicas, read by a session's
   bookmark, and a machine's copies of its WAL; the cursor a write returns is the implementation's
   own.
