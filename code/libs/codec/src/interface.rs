@@ -1,5 +1,5 @@
-//! The interface of `codec*`, the model's, `docs/code.md`: the same contract as `src/Cbor.resi`,
-//! `src/Sign1.resi` and `src/Cwt.resi` hold in ReScript. This crate implements each trait for the
+//! The interface of `codec*`, the model's, `docs/code.md`: the same contract as `src/cbor.resi`,
+//! `src/sign1.resi` and `src/cwt.resi` hold in ReScript. This crate implements each trait for the
 //! type it names; whoever implements it never edits this file.
 
 /// One CBOR data item, RFC 8949's data model.
@@ -47,18 +47,28 @@ pub enum Refused {
 	Syntax,
 	/// Well formed yet not valid: text that is not UTF-8, or a map's key repeated, its 5.3 and 5.6.
 	Invalid,
+	/// Within more than [`DEPTH`] arrays, maps and tags, refused as soon as it is met, so no input can
+	/// nest a reader into running out of its stack.
+	TooDeep,
 	/// Well formed and valid, yet not as 4.2.1 writes it: an indefinite length, a head or a float
 	/// longer than it need be, a NaN but f97e00, or a map's keys out of the bytewise order of their
 	/// encodings. Only [`Cbor::decode_deterministic`] refuses this.
 	Nondeterministic,
 }
 
-/// Why a value could not be written: an integer, a tag or a simple value out of its range.
+/// Why a value could not be written, what [`Cbor::decode`] would refuse never being written.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Unwritable {
-	/// A value outside what CBOR can write.
+	/// An integer, a tag or a simple value out of its range.
 	OutOfRange,
+	/// A map holding two keys whose encodings are one.
+	RepeatedKey,
+	/// A value within more than [`DEPTH`] arrays, maps and tags.
+	TooDeep,
 }
+
+/// How many arrays, maps and tags an item may stand within.
+pub const DEPTH: usize = 128;
 
 /// CBOR written as RFC 8949's 4.2.1 writes it, and read strictly; implemented for [`Value`].
 pub trait Cbor: Sized {
@@ -94,8 +104,8 @@ pub struct Sign1 {
 pub enum Sign1Refused {
 	/// Not one CBOR data item, as [`Cbor::decode`] refuses it.
 	Cbor(Refused),
-	/// One data item, yet no Sign1: a tag other than 18, or not an array of a byte string, a map, a
-	/// byte string or nil, and a byte string.
+	/// One data item, yet no Sign1: a tag other than 18; not an array of a byte string, a map, a byte
+	/// string or nil, and a byte string; or protected bytes neither empty nor exactly one CBOR map.
 	Shape,
 }
 
@@ -103,7 +113,8 @@ pub enum Sign1Refused {
 pub trait CoseSign1: Sized {
 	/// The bytes a signature is made and checked over, the Sig_structure for "Signature1", RFC
 	/// 9052's 4.4: its context, the protected bytes, the external additional data and the payload,
-	/// written as [`Cbor::encode`] writes them.
+	/// written as [`Cbor::encode`] writes them. Protected bytes serializing an empty map, `h'a0'`,
+	/// are written as no bytes, as RFC 9052's 3 has every computation take them.
 	fn to_be_signed(protected: &[u8], aad: &[u8], payload: &[u8]) -> Vec<u8>;
 	/// The Sign1 written as [`Cbor::encode`] writes, under tag 18 where `tagged`.
 	fn encode(&self, tagged: bool) -> Result<Vec<u8>, Unwritable>;

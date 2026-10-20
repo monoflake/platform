@@ -3,8 +3,5 @@
 	"version": "0.1.0",
 	"private": true,
 	"license": "MIT OR Apache-2.0",
-	"type": "module",
-	"dependencies": {
-		"cbor2": "^2.4.0"
-	}
+	"type": "module"
 }

@@ -9,7 +9,7 @@ edition = "2024"
 publish = false
 
 [workspace.dependencies]
-minicbor = { version = "2", features = ["alloc", "derive"] }
+minicbor = { version = "2", features = ["alloc", "derive", "half"] }
 
 # Every crate takes these by `[lints] workspace = true`, held by model/checks/layout/workspace.res.
 [workspace.lints.rust]

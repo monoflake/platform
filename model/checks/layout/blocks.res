@@ -200,7 +200,7 @@ let isInterface = file => file->String.endsWith(".resi") || file == "src/interfa
  * bindings, or its tests', which bind what a test runs on and the code never may.
  */
 let isBinding = file =>
-  file->String.startsWith("src/bindings/") || file->String.startsWith("test/bindings/")
+  file->String.startsWith("src/bindings/") || file->String.startsWith("tests/bindings/")
 
 /** Every open row of the checklist, the one thing a `%todo` or a `todo!` may name. */
 let openRows = () => Checklist.checklist->Array.filter(i => i.done == None)->Array.map(i => i.id)

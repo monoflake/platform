@@ -22,15 +22,16 @@ type refused =
   /** Not one CBOR data item, as `Cbor.decode` refuses it. */
   | Cbor(Cbor.refused)
   /**
-   * One data item, yet no Sign1: a tag other than 18, or not an array of a byte string, a map, a
-   * byte string or nil, and a byte string.
+   * One data item, yet no Sign1: a tag other than 18; not an array of a byte string, a map, a byte
+   * string or nil, and a byte string; or protected bytes neither empty nor exactly one CBOR map.
    */
   | Shape
 
 /**
  * The bytes a signature is made and checked over, the Sig_structure for "Signature1", RFC 9052's
  * 4.4: its context, the protected bytes, the external additional data and the payload, written as
- * `Cbor.encode` writes them.
+ * `Cbor.encode` writes them. Protected bytes serializing an empty map, `h'a0'`, are written as no
+ * bytes, as RFC 9052's 3 has every computation take them.
  */
 let toBeSigned: (
   ~protected: Uint8Array.t,

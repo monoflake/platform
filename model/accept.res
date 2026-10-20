@@ -86,7 +86,7 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
     files->Array.filter(f =>
       switch l {
       | #rust => f->String.endsWith(".rs") && f != "src/interface.rs"
-      | #rescript => f->String.startsWith("test/") && f->String.endsWith(".res")
+      | #rescript => f->String.startsWith("tests/") && f->String.endsWith(".res")
       }
     )
   h.languages->Array.forEach(l => {
@@ -97,6 +97,19 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       }
     )
   })
+  // A test held back passes a run and holds nothing, so it is a question asked, never an answer.
+  h.languages->Array.forEach(l =>
+    tests(l)->Array.forEach(f =>
+      read(f)
+      ->String.split("\n")
+      ->Array.forEachWithIndex(
+        (line, at) =>
+          if /#\[ignore|\b(todo|skip)\s*:|\.(todo|skip)\(/->RegExp.test(line) {
+            found->Array.push(`${path}/${f}:${int(at + 1)}: a test held back`)
+          },
+      )
+    )
+  )
   let rows = openRows()
   todosOf(path)->Array.forEach(((at, row)) =>
     switch row {

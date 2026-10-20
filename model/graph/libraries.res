@@ -39,7 +39,6 @@ let libraries: dict<library> = dict{
     takes: [
       {language: #rust, name: "minicbor", major: "2"},
       {language: #rust, name: "serde_json", major: "1"},
-      {language: #rescript, name: "cbor2", major: "2"},
     ],
     samples: [
       "tests/cbor",

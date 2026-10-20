@@ -310,11 +310,15 @@ them, whoever wrote it.
 
 - **Rust's CBOR is minicbor**, worked out with the author on 2026-10-19, maintained, its 2.3.1 of
   2026-10-18: neither it nor ciborium promises deterministic encoding, so what the platform's own
-  cases find decides whether it is patched, forked or built. **JavaScript's is cbor2, its `cde` on**,
-  decided by the author on 2026-10-19: the Common Deterministic Encoding, RFC 8949's 4.2.1, the rule
-  minicbor is held to, so the two write the same bytes, and it reaches for no module of node's,
-  `docs/lessons/languages.md`; held to the same tests.
+  cases find decides whether it is patched, forked or built. **It is wrapped**, decided by the
+  author on 2026-10-20 once codec's cases were run: it reads `f8 00`, which RFC 8949's Appendix F
+  refuses, reports a head of one byte and one inline as one type, and reads a half only with its
+  `half` feature, so `codec*` holds what it misses on top of it and leaves it as its authors keep it.
+- **ReScript's CBOR is written to behave as the Rust side does**, decided by the author on
+  2026-10-20 in place of cbor2 with its `cde` on, decided on 2026-10-19: cbor2 reads into
+  JavaScript's own values, so a float of 1.0 comes back an integer and a tag a `Date`, losing what
+  `codec*`'s value keeps. It is held to the same samples, `docs/code.md`.
 - **Every test runs in CI**, so what is taken or built stays whole.
-- **None is begun yet**: this is the plan.
+- **`codec*` is begun**, the first block written against its brief, 2026-10-20.
 
 Open, for the discussion that follows:

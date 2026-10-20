@@ -31,6 +31,14 @@ short of their items, reserved values, chunks of the wrong type, unclosed indefi
 4.2 defines deterministic encoding. Asked by fhg6w. Sources:
 https://www.rfc-editor.org/rfc/rfc8949.txt and https://github.com/cbor/test-vectors
 
+**minicbor 2.3.1 reads less strictly than RFC 8949 asks, read 2026-10-20 in its source**: its
+`Decoder::simple` takes the byte after `0xf8` unchecked, so `f8 00`, not well formed by Appendix F,
+is read; its `datatype` reports `0x00` to `0x18` alike as `U8`, so a head's width is told only by
+`position()` before and after; and a half float is read only with its `half` feature. cbor2 reads
+into JavaScript's own values unless told otherwise: 1.0 comes back the integer 1, tag 0 a `Date`,
+tag 32 a `URL`. Asked by `codec*`. Sources: `minicbor-2.3.1/src/decode/decoder.rs` and the run
+against `tests/cbor/`.
+
 **COSE is RFC 9052, about 3600 lines, and CWT RFC 8392, 25 pages**; `cose-wg/Examples`, under the
 Unlicense, holds 306 JSON cases, `sign1-tests`, `eddsa-examples` and `CWT` among them, written
 before RFC 9864, so their EdDSA is -8. Asked by fhg6w. Sources:

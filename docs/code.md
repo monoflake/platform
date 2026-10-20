@@ -30,6 +30,8 @@ against it, and the whole is held by the conversation.
 - **A standard's own examples are taken from its text when nothing licensed holds them**: an RFC is
   public, so they are copied into `tests/` with the RFC and its section named in the file, as
   `tests/cbor/` is from RFC 8949. Decided by the author on 2026-10-20.
+- **A test held back is a question, never a pass**: `#[ignore]`, a `todo` or a `skip` fails
+  accept, so a block waiting on an answer is reported waiting rather than green.
 - **What is not decided waits behind a row**: `%todo("B32")` in ReScript, `todo!("B32")` in Rust,
   naming a row of the checklist still open. One naming no row, or a row closed, fails the check,
   so closing a row lists the code that waited on it.
@@ -48,11 +50,24 @@ against it, and the whole is held by the conversation.
 - **An invariant is a type**: abstract or `private`, made by the one function that checks it.
 - **`%raw`, `Obj.magic` and `external` stand in `src/bindings/` alone**, as Rust's `unsafe` would,
   RFC fhg6w: one module a library bound, so what is taken on trust is gathered where it is seen.
-  A test's own, `node:test` and `node:fs` among them, stand in `test/bindings/`, since a library
+  A test's own, `node:test` and `node:fs` among them, stand in `tests/bindings/`, since a library
   runs on the web's APIs alone and never node's.
-- **Tests are `test/`, run by `node --test`**, so no framework is taken for them; a package lists
-  `test` among its sources once it has one, as a `.resi` alone is passed over until its `.res` is
+- **Tests are `tests/`, run by `node --test`**, so no framework is taken for them; a package lists
+  `tests` among its sources once it has one, as a `.resi` alone is passed over until its `.res` is
   written.
+
+## Both in one block
+
+- **A block's tests share one `tests/`**, decided by the author on 2026-10-20: cargo takes each
+  `.rs` at its top as a test and passes over the rest, ReScript compiles the `.res` alone, and
+  `node --test` runs what ReScript writes. One subject's tests stand side by side, `cbor.rs` beside
+  `cbor_test.res`, the suffix keeping a test's module apart from the code's in ReScript's one space,
+  so a language missing a subject shows.
+- **What a maintained library gives, Rust takes, and ReScript follows it**, decided by the author on
+  2026-10-20: a library kept by others is worth more than one written here, so the Rust side wraps
+  it with what the platform asks beyond it and never edits it, `docs/vendor.md`; the ReScript side
+  is written to behave as that does, held to the same samples. One that cannot be wrapped is asked
+  about before it is forked.
 
 ## Rust
 

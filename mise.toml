@@ -43,7 +43,7 @@ run = """
 rescript build && node model/accept.res.mjs "$usage_package" ${usage_from:+--from "$usage_from"} || exit 1
 d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package"
 [ ! -f "$d/Cargo.toml" ] || { cargo fmt --check -p "$p" && cargo clippy -p "$p" --all-targets -- -D warnings && cargo test -p "$p"; } || exit 1
-[ ! -f "$d/rescript.json" ] || { cd "$d" && rescript format --check && node --test 'test/**/*.mjs'; }
+[ ! -f "$d/rescript.json" ] || { cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; }
 """
 
 [tasks.verify]

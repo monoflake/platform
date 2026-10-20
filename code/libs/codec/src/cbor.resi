@@ -37,14 +37,28 @@ type refused =
   /** Well formed yet not valid: text that is not UTF-8, or a map's key repeated, its 5.3 and 5.6. */
   | Invalid
   /**
+   * Within more than `depth` arrays, maps and tags, refused as soon as it is met, so no input can
+   * nest a reader into running out of its stack.
+   */
+  | TooDeep
+  /**
    * Well formed and valid, yet not as 4.2.1 writes it: an indefinite length, a head or a float
    * longer than it need be, a NaN but f97e00, or a map's keys out of the bytewise order of their
    * encodings. Only `decodeDeterministic` refuses this.
    */
   | Nondeterministic
 
-/** Why a value could not be written: an integer, a tag or a simple value out of its range. */
-type unwritable = OutOfRange
+/** Why a value could not be written, what `decode` would refuse never being written. */
+type unwritable =
+  /** An integer, a tag or a simple value out of its range. */
+  | OutOfRange
+  /** A map holding two keys whose encodings are one. */
+  | RepeatedKey
+  /** A value within more than `depth` arrays, maps and tags. */
+  | TooDeep
+
+/** How many arrays, maps and tags an item may stand within: 128, as `DEPTH` is in Rust. */
+let depth: int
 
 /**
  * The value written as RFC 8949's 4.2.1 writes it: definite lengths, every head and float in its
