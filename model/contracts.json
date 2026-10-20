@@ -674,8 +674,303 @@
 					}
 				}
 			]
+		},
+		"management-capacity": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "container",
+						"code": 1,
+						"fields": [
+							{
+								"name": "millicores",
+								"key": 1,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "memory",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "volume",
+						"code": 2,
+						"fields": [
+							{
+								"name": "size",
+								"key": 1,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "object",
+						"code": 3,
+						"fields": [
+							{
+								"name": "size",
+								"key": 1,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "database",
+						"code": 4,
+						"fields": [
+							{
+								"name": "size",
+								"key": 1,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"management-item": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "capacity",
+					"key": 2,
+					"shape": {
+						"type": "management-capacity"
+					}
+				},
+				{
+					"name": "credentials",
+					"key": 3,
+					"shape": {
+						"list": {
+							"prim": "hash"
+						}
+					}
+				}
+			]
+		},
+		"management-apply": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "items",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "management-item"
+						}
+					}
+				}
+			]
+		},
+		"management-held": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"management-policy": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "grace",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				}
+			]
+		},
+		"management-describe": {
+			"record": []
+		},
+		"management-state": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "making",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "made",
+						"code": 2,
+						"fields": [
+							{
+								"name": "address",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "failed",
+						"code": 3,
+						"fields": [
+							{
+								"name": "reason",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "message",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "unasked",
+						"code": 4,
+						"fields": [
+							{
+								"name": "since",
+								"key": 1,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "address",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							}
+						]
+					}
+				]
+			}
+		},
+		"management-holding": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "capacity",
+					"key": 2,
+					"shape": {
+						"type": "management-capacity"
+					}
+				},
+				{
+					"name": "state",
+					"key": 3,
+					"shape": {
+						"type": "management-state"
+					}
+				}
+			]
+		},
+		"management-described": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "policy",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "grace",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "items",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "management-holding"
+						}
+					}
+				}
+			]
+		},
+		"management-end": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"management-ended": {
+			"record": []
 		}
 	},
+	"reasons": [
+		{
+			"name": "denied",
+			"failure": "rejected"
+		},
+		{
+			"name": "malformed",
+			"failure": "rejected"
+		}
+	],
 	"interfaces": {
 		"object": {
 			"version": 1,
@@ -749,6 +1044,54 @@
 						{
 							"name": "busy",
 							"failure": "unavailable"
+						}
+					]
+				}
+			]
+		},
+		"management": {
+			"version": 1,
+			"operations": [
+				{
+					"name": "apply",
+					"input": "management-apply",
+					"output": "management-held",
+					"reasons": [
+						{
+							"name": "beyond_host",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "set_policy",
+					"input": "management-policy",
+					"output": "management-held",
+					"reasons": [
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "describe",
+					"input": "management-describe",
+					"output": "management-described",
+					"reasons": []
+				},
+				{
+					"name": "end",
+					"input": "management-end",
+					"output": "management-ended",
+					"reasons": [
+						{
+							"name": "still_asked",
+							"failure": "rejected"
 						}
 					]
 				}

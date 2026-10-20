@@ -327,8 +327,8 @@ the production platform through the same interface, so one platform's output is 
 one code is both.
 
 - **A driver manages, and data goes past it.** It opens, lists and ends what it gives, and reports
-  usage; for each thing opened it hands back an address and a credential for that thing alone,
-  which speaks the platform's contract -- the vendor's own interface where it already does, an
+  usage; for each thing opened it hands back an address, reached by a credential for that thing
+  alone that the control made, below, and which speaks the platform's contract -- the vendor's own interface where it already does, an
   adapter the driver deploys beside it where it does not, as a Worker in front of D1, RFC b8f35.
 - **A driver holds its host's credentials**, put there by whoever holds the host; a control holds
   none of them for what the driver gives, and takes one only to configure the host, below. Using a driver is trusting that holder, who can read what runs and what a
@@ -351,8 +351,8 @@ abstractions.
   another, so above the drivers a product speaks of `object` and never of R2 or a disk.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers
   are held to one interface. Each kind's contract is an interface of the subset, RFC fhg6w, in
-  `model/contracts/`: `object` and `database` are declared; function, instance and container, the
-  drivers' management, and every kind's cases are open. [B30]
+  `model/contracts/`: `object`, `database` and the drivers' management are declared; function,
+  instance and container, and every kind's cases, are open. [B30]
 
 **A driver is managed by a list, and keeps the least it must**, worked out with the author on
 2026-10-18. What follows is its management alone; each primitive's contract is above.
@@ -372,6 +372,14 @@ abstractions.
   storage. What an organization does within it -- which tablet's writer runs where, which app's code,
   how much of it an app may use -- is its own control's, and never reaches the list, so the list is
   small, a few kilobytes, and changes only when what is extended does.
+- **The list holds four kinds, each with its capacity**, decided by the author on 2026-10-19:
+  `container`, its cores and memory; `volume`, `object` and `database`, a size each. Function and
+  instance are never in it: they are deployed into what it holds, by compute's interface. Each item
+  carries a name the control gives it, kept across generations, which the driver diffs by.
+- **An item's credential is the control's, as the binding token is**, decided by the author on
+  2026-10-19: a random secret of 32 bytes the control makes, its BLAKE3 alone sent in the list, two
+  while one replaces the other. The driver makes none and shows none, so a list sent again is the
+  same list, its answers can be logged, and a credential is replaced by sending a list.
 - **The whole list is sent each time, numbered by generation**; a driver takes a newer one over what
   it holds and drops an older one that comes after. It compares the list with what its host holds,
   which is the truth of what exists, and acts on the difference alone: what runs as asked is left
@@ -385,7 +393,13 @@ abstractions.
   generation and kept there, so the driver goes on by the last policy while the control cannot be
   reached.
 - **A driver keeps the least state it must**: its credentials, the policy and list it last took,
-  and when each difference was first found. Everything else it reads from its host.
+  and when each difference was first found. Everything else it reads from its host, so a driver
+  lost and installed again is whole once its control sends the list again.
+- **Its management is an interface of the subset**, `model/contracts/management.res`: `apply` a
+  list, `set_policy` the grace, `describe` what it holds, each item `making`, `made` at an address,
+  `failed` for a reason, or `unasked` since a time, and `end` an item the list no longer asks. A
+  list older than the one held is dropped and answered with the generation held, never failed;
+  what it reports of use is open. [C18]
 - **A machine's driver keeps back only what the machine and the driver need**, worked out with the
   author on 2026-10-19, since most machines a small team brings have 1 or 2 GB, and a driver written
   in Rust takes tens of megabytes. Memory kept back is the machine's own, measured as the

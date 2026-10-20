@@ -102,10 +102,14 @@ let run = () => {
       )
       unique(o.reasons->Array.map(r => r.name), `${at}'s reasons`)
       o.reasons->Array.forEach(
-        r =>
+        r => {
           if !snake(r.name) {
             contractRules->Array.push(`${at}: reason ${r.name}, no snake_case name`)
-          },
+          }
+          if Calls.common->Array.some(c => c.name == r.name) {
+            contractRules->Array.push(`${at}: reason ${r.name}, which every operation has already`)
+          }
+        },
       )
     })
   })
@@ -248,9 +252,7 @@ let run = () => {
         ->orNone(", ")}`,
       `interfaces: ${Contracts.interfaces
         ->Array.map(i => `${i.name} v${int(i.version)}`)
-        ->orNone(
-          ", ",
-        )}; to declare: function, instance, container, the drivers' management; volume has none but its files`,
+        ->orNone(", ")}; to declare: function, instance, container; volume has none but its files`,
       `to declare: ${Records.records
         ->Dict.keysToArray
         ->Array.filter(k => !(Contracts.contents->Array.some(c => c.kind == k)))

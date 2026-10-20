@@ -181,7 +181,8 @@ JavaScript number cannot hold exactly, and as an integer in CBOR.
 **An interface is a set of operations in the subset**, decided by the author on 2026-10-19 with the
 database's interface: each operation its input and its output, records declared, and the reasons it
 may fail for, each a failure of RFC 49qyg's -- `rejected`, `unavailable` or `unknown` -- that a
-caller acts on, the reason only told. An operation is reached at `POST /{interface}/{operation}`,
+caller acts on, the reason only told. Two reasons are every operation's and declared by none,
+`denied`, a credential missing or wrong, and `malformed`, an input that does not parse. An operation is reached at `POST /{interface}/{operation}`,
 its input the body, its output or an `error` the answer, JSON or CBOR by the request; an
 interface's version is raised as a record's is, and the check refuses an operation gone or a type
 it reaches changed while the version stayed. **The platform's own interfaces are all of the
@@ -200,7 +201,7 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
   version stayed.
 - **Bytes are read in one text alone**, decided by the author on 2026-10-19: base64url, unpadded,
   its unused last bits zero, and any other -- base64's own alphabet, a padding, a bit set past the
-  last byte -- refused as `rejected`, naming the text expected. A value has one text, as it has one
+  last byte -- refused as `rejected` for `malformed`, naming the text expected. A value has one text, as it has one
   CBOR, and a client's mistake shows on its first call, while tightening later would break what
   was let in. WIT's `list<u8>` is written so as well, RFC vr5lw.
 
