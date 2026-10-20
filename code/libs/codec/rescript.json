@@ -1,7 +1,10 @@
 {
 	"name": "@monoflake/codec",
 	"namespace": true,
-	"sources": [{ "dir": "src", "subdirs": true }],
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
 	"dependencies": [],
 	"warnings": { "number": "+4", "error": "+a-110" }
 }
