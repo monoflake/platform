@@ -36,8 +36,6 @@ let records: array<held> = [
   {half: #platform, kind: "sign-in", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "membership", writes: ["control(platform)"], from: "v7v3w"},
   {half: #platform, kind: "domain", writes: ["control(platform)"], from: "vr5lw"},
-  {half: #platform, kind: "certificate", writes: ["control(platform)"], from: "v7v3w"},
-  {half: #platform, kind: "allowance", writes: ["control(platform)"], from: "vuanj"},
   {half: #organization, kind: "file", writes: ["storage"], from: "13ixj"},
   {half: #organization, kind: "row", writes: ["database"], from: "zn3u5"},
   {half: #organization, kind: "log", writes: ["tablet"], from: "vuanj"},

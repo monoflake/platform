@@ -50,7 +50,15 @@ type def =
 type declared = {name: string, def: def, from: string}
 
 /** A kind of record of `model/graph/records.res` with its content declared, and its version, wnqvu. */
-type content = {half: half, kind: string, version: int, content: string}
+type content = {
+  half: half,
+  kind: string,
+  version: int,
+  content: string,
+  /** Each set of its fields unique among its kind's rows, which its footing keeps as a table's key,
+   * since only a key keeps a value unique, v7v3w; a field absent counts as one value. */
+  unique?: array<array<string>>,
+}
 
 /**
  * An operation's failure, RFC 49qyg's outcomes but `success`: what a caller acts on, whatever the

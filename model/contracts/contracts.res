@@ -12,6 +12,7 @@ let types: array<declared> = Array.flat([
   Database.types,
   Compute.types,
   Control.types,
+  Platform.types,
   Objects.types,
   Databases.types,
   Management.types,
@@ -22,6 +23,7 @@ let contents: array<content> = Array.flat([
   Database.contents,
   Compute.contents,
   Control.contents,
+  Platform.contents,
 ])
 let interfaces: array<interface_> = [
   Objects.interface_,
@@ -62,6 +64,11 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
           "writes": Array(writes(c.half, c.kind)->Array.map(w => JSON.String(w))),
           "version": Number(Int.toFloat(c.version)),
           "content": String(c.content),
+          "unique": Array(
+            c.unique
+            ->Option.getOr([])
+            ->Array.map(u => JSON.Array(u->Array.map(f => JSON.String(f)))),
+          ),
         },
       )),
     ),

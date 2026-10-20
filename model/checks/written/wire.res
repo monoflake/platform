@@ -119,6 +119,29 @@ let run = () => {
       )
     )
   })
+  // A key is fields of the content itself, each named once, and no two keys of one kind alike.
+  Contracts.contents->Array.forEach(c =>
+    c.unique
+    ->Option.getOr([])
+    ->Array.forEach(key => {
+      let fields = switch declared->Dict.get(c.content) {
+      | Some({def: Record(fs)}) => fs->Array.map(f => f.name)
+      | _ => []
+      }
+      if key == [] {
+        contractRules->Array.push(`the ${(c.half :> string)}'s ${c.kind}: a key of no field`)
+      }
+      unique(key, `the ${(c.half :> string)}'s ${c.kind}'s key`)
+      key->Array.forEach(
+        f =>
+          if !(fields->Array.includes(f)) {
+            contractRules->Array.push(
+              `the ${(c.half :> string)}'s ${c.kind}: its key names ${f}, no field of ${c.content}`,
+            )
+          },
+      )
+    })
+  )
   Contracts.contents->Array.forEach(c => {
     if Records.find(c.half, c.kind) == None {
       contractRules->Array.push(`${c.kind}'s content: no such kind of record`)

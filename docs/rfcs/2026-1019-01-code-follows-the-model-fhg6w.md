@@ -242,6 +242,13 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
   neither check nor guard. A type two halves share names its ids so, each read in the half of the
   record holding it. On the wire either is an integer, so naming its kind otherwise breaks no
   reader, and the check compares what is written.
+- **A value unique among a kind's rows is that kind's key**, decided by the author on 2026-10-20:
+  its content names each set of its fields unique, `unique`, which its footing keeps as a table's
+  key, a field absent counting as one value, so a label, a username, a domain, a node of the tree
+  and a mount are each unique and still a record of a generation, gone back to as any is.
+- **What is compiled or signed is no record**: a grant, a certificate, a bundle, a capability and an
+  account credential are each made from what is written, never written themselves, RFC v7v3w, and
+  are declared apart, with the signed records' own claims.
 - **A reader passes over a field it does not know**, decided by the author on 2026-10-19, as the
   rule above asks: an optional field added keeps its version, so a reader of that version meets
   it, and refusing it would break what the version promises. A sample written in `tests/` is held

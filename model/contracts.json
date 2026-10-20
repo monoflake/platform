@@ -888,6 +888,18 @@
 				}
 			]
 		},
+		"extension-lessor": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "platform",
+						"code": 1,
+						"fields": []
+					}
+				]
+			}
+		},
 		"extension-relays": {
 			"union": {
 				"tag": "name",
@@ -1014,6 +1026,14 @@
 							"prim": "string"
 						}
 					}
+				},
+				{
+					"name": "lessor",
+					"key": 13,
+					"shape": {
+						"type": "extension-lessor"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -1048,6 +1068,364 @@
 						"list": {
 							"prim": "bytes"
 						}
+					}
+				}
+			]
+		},
+		"account": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "factors",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "security",
+					"key": 3,
+					"shape": {
+						"type": "security"
+					}
+				},
+				{
+					"name": "email",
+					"key": 4,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "password",
+					"key": 5,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				},
+				{
+					"name": "totp",
+					"key": 6,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				}
+			]
+		},
+		"allowance-value": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "flag",
+						"code": 1,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "bool"
+								}
+							}
+						]
+					},
+					{
+						"name": "amount",
+						"code": 2,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "one",
+						"code": 3,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "some",
+						"code": 4,
+						"fields": [
+							{
+								"name": "values",
+								"key": 1,
+								"shape": {
+									"list": {
+										"prim": "string"
+									}
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"platform-organization": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "allowance",
+					"key": 1,
+					"shape": {
+						"map": {
+							"type": "allowance-value"
+						}
+					}
+				},
+				{
+					"name": "shadow",
+					"key": 2,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					},
+					"optional": true
+				},
+				{
+					"name": "deleting",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"lease": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "extension",
+					"key": 1,
+					"shape": {
+						"id": "extension"
+					}
+				},
+				{
+					"name": "lessee",
+					"key": 2,
+					"shape": {
+						"id": "organization"
+					}
+				},
+				{
+					"name": "quota",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"label": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "label",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "organization",
+					"key": 2,
+					"shape": {
+						"id": "organization"
+					}
+				}
+			]
+		},
+		"username": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "username",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "account",
+					"key": 2,
+					"shape": {
+						"id": "account"
+					}
+				}
+			]
+		},
+		"sign-in-kind": {
+			"enum": [
+				{
+					"name": "passkey",
+					"code": 1
+				},
+				{
+					"name": "github",
+					"code": 2
+				},
+				{
+					"name": "google",
+					"code": 3
+				},
+				{
+					"name": "apple",
+					"code": 4
+				},
+				{
+					"name": "email",
+					"code": 5
+				}
+			],
+			"ordered": false
+		},
+		"sign-in": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"type": "sign-in-kind"
+					}
+				},
+				{
+					"name": "identifier",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "account",
+					"key": 3,
+					"shape": {
+						"id": "account"
+					}
+				}
+			]
+		},
+		"membership": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "account",
+					"key": 1,
+					"shape": {
+						"id": "account"
+					}
+				},
+				{
+					"name": "organization",
+					"key": 2,
+					"shape": {
+						"id": "organization"
+					}
+				}
+			]
+		},
+		"domain": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "domain",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "organization",
+					"key": 2,
+					"shape": {
+						"id": "organization"
+					}
+				},
+				{
+					"name": "until",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
 					}
 				}
 			]
@@ -2218,77 +2596,160 @@
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "bucket"
+			"content": "bucket",
+			"unique": []
 		},
 		{
 			"kind": "database",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "database"
+			"content": "database",
+			"unique": []
 		},
 		{
 			"kind": "app",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "app"
+			"content": "app",
+			"unique": []
 		},
 		{
 			"kind": "organization",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "organization"
+			"content": "organization",
+			"unique": []
 		},
 		{
 			"kind": "member",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "member"
+			"content": "member",
+			"unique": []
 		},
 		{
 			"kind": "invitation",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "invitation"
+			"content": "invitation",
+			"unique": []
 		},
 		{
 			"kind": "tree",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "tree"
+			"content": "tree",
+			"unique": [["parent", "type", "slug"]]
 		},
 		{
 			"kind": "name",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "name"
+			"content": "name",
+			"unique": []
 		},
 		{
 			"kind": "scope",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "scope"
+			"content": "scope",
+			"unique": [["scope"]]
 		},
 		{
 			"kind": "extension",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "extension"
+			"content": "extension",
+			"unique": []
 		},
 		{
 			"kind": "capacity",
 			"half": "organization",
 			"writes": ["control(organization)"],
 			"version": 1,
-			"content": "capacity"
+			"content": "capacity",
+			"unique": []
+		},
+		{
+			"kind": "account",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "account",
+			"unique": []
+		},
+		{
+			"kind": "organization",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "platform-organization",
+			"unique": []
+		},
+		{
+			"kind": "extension",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "extension",
+			"unique": []
+		},
+		{
+			"kind": "lease",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "lease",
+			"unique": []
+		},
+		{
+			"kind": "label",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "label",
+			"unique": [["label"]]
+		},
+		{
+			"kind": "username",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "username",
+			"unique": [["username"]]
+		},
+		{
+			"kind": "sign-in",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "sign-in",
+			"unique": [["kind", "identifier"]]
+		},
+		{
+			"kind": "membership",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "membership",
+			"unique": [["account", "organization"]]
+		},
+		{
+			"kind": "domain",
+			"half": "platform",
+			"writes": ["control(platform)"],
+			"version": 1,
+			"content": "domain",
+			"unique": [["domain"]]
 		}
 	]
 }

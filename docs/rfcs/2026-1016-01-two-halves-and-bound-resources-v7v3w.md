@@ -174,7 +174,8 @@ down a layer at a time, each holding its own range alone.
 - **Who holds a thing is told by who may change it**, worked out with the author on 2026-10-19:
   what an owner changes as it likes, touching no one else, is the owner's own record; what is unique
   across owners is the platform's, a table of its own whose key is that value, since only a key
-  keeps it unique, never a field in a record's content; and what the platform alone decides of an
+  keeps it unique, never a field in a record's content -- a kind whose content names its key,
+  `unique`, decided by the author on 2026-10-20, so each row is still a record of a generation; and what the platform alone decides of an
   owner is the platform's record of it.
 
   | Of an organization                         | Is                 | Kept                                                                              |
@@ -189,7 +190,8 @@ down a layer at a time, each holding its own range alone.
   | each label                                 | unique             | the platform's `label` table, a label to the organization holding it              |
   | its certificate                            | compiled           | no record                                                                         |
 
-  What is its own is `model/contracts/records/control.res`.
+  What is its own is `model/contracts/records/control.res`; what is the platform's say,
+  `model/contracts/records/platform.res`.
 
   | Of an account                                      | Is                   | Kept                                                                                                                         |
   | -------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
@@ -199,6 +201,8 @@ down a layer at a time, each holding its own range alone.
   | each way it is found by as it signs in             | unique               | the platform's `sign-in` table, a kind and an identifier to the account                                                      |
   | its username                                       | unique               | the platform's `username` table, a username to the account                                                                   |
   | the organizations it is in                         | the platform's index | the platform's `membership` table                                                                                            |
+
+  Each is `model/contracts/records/platform.res` but the status, the anchor's.
   - **A username and a label are written alike**, worked out with the author on 2026-10-19, since
     either may stand in a domain name, a label in `{organization}.mofl.fyi` now and a username
     later: lowercase ASCII letters, digits and the hyphen alone, beginning and ending with a letter
@@ -294,7 +298,7 @@ service's, or a node.
   records, its shell, its grace -- and touches nothing else of the lessee's. A driver is told
   nothing of a lease: it sees one binding more. The platform leases to its organizations.
   - **A lease is a record on either side**, worked out with the author on 2026-10-19: the lessor's
-    `lease` names the binding it opened, the lessee organization and the quota; the lessee's is an
+    `lease` names the extension it leased of, the lessee organization and the quota; the lessee's is an
     `extension` like any, whose `lessor` names who leased it, so its control knows the host's
     management token and shell key are the lessor's, never its own, and the console shows it
     leased.
