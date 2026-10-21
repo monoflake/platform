@@ -3608,6 +3608,115 @@
 		"file-deleted": {
 			"record": []
 		},
+		"file-upload-begin": {
+			"record": [
+				{
+					"name": "bucket",
+					"key": 1,
+					"shape": {
+						"id": "bucket"
+					}
+				},
+				{
+					"name": "path",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "size",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "expected",
+					"key": 4,
+					"shape": {
+						"type": "file-expected"
+					},
+					"optional": true
+				}
+			]
+		},
+		"file-upload": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "part",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"file-upload-append": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "offset",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "content",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"file-upload-name": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"file-upload-state": {
+			"record": [
+				{
+					"name": "received",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "durable",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"file-upload-aborted": {
+			"record": []
+		},
 		"file-list": {
 			"record": [
 				{
@@ -6115,7 +6224,8 @@
 		"storage": {
 			"version": 1,
 			"bounds": {
-				"opaque": 16777216
+				"opaque": 16777216,
+				"part": 16777216
 			},
 			"declared": [],
 			"operations": [
@@ -6149,6 +6259,96 @@
 							"failure": "unavailable"
 						}
 					]
+				},
+				{
+					"name": "file_upload_begin",
+					"input": "file-upload-begin",
+					"output": "file-upload",
+					"reasons": [
+						{
+							"name": "not_a_bucket",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_type",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "quota_exceeded",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "file_upload_append",
+					"input": "file-upload-append",
+					"output": "file-upload-state",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_offset",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "quota_exceeded",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "file_upload_describe",
+					"input": "file-upload-name",
+					"output": "file-upload-state",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "file_upload_finish",
+					"input": "file-upload-name",
+					"output": "file-written",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "size_differs",
+							"failure": "rejected"
+						},
+						{
+							"name": "expectation_failed",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "file_upload_abort",
+					"input": "file-upload-name",
+					"output": "file-upload-aborted",
+					"reasons": []
 				},
 				{
 					"name": "file_read",

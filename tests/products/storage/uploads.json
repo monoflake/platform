@@ -1,0 +1,814 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "a file uploaded in parts is written as one, read whole, and has the hash one write gives it",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"size": 10
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": 16777216
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_describe",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 5,
+						"content": "d29ybGQ"
+					},
+					"expect": {
+						"output": {
+							"received": 10,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "h"
+							},
+							"size": 10
+						}
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin"
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG93b3JsZA",
+							"size": 10,
+							"hash": {
+								"$use": "h"
+							}
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "small.bin",
+						"content": "aGVsbG93b3JsZA"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$use": "h"
+							},
+							"size": 10
+						}
+					}
+				},
+				{
+					"call": "file_upload_describe",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "an append anywhere but where what was received ends is refused, and an upload finished at another size",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"size": 6
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 3,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_offset"
+					}
+				},
+				{
+					"call": "file_upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "size_differs"
+					}
+				}
+			]
+		},
+		{
+			"description": "an upload expecting its path new is refused as it finishes once a file is there",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"expected": {
+							"name": "absent"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"content": "YQ"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 1
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expectation_failed"
+					}
+				},
+				{
+					"call": "file_read",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin"
+					},
+					"expect": {
+						"output": {
+							"content": "YQ",
+							"size": 1,
+							"hash": {
+								"$any": true
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an upload aborted, or never begun, is not found, and one begun in no file bucket is refused",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin"
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_abort",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "file_upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": 4294967295,
+						"path": "a.bin"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_a_bucket"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "objects",
+						"path": "a.bin"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_type"
+					}
+				}
+			]
+		},
+		{
+			"description": "a write past a part is refused, and an upload past an opaque bucket's bound, begun or appended",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					},
+					{
+						"kind": "bucket",
+						"handle": "opaque",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "opaque"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_write",
+					"input": {
+						"bucket": "files",
+						"path": "a.bin",
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 1
+								}
+							}
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "opaque",
+						"path": "a.bin",
+						"size": 16777217
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "b.bin"
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 1
+								}
+							}
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				}
+			]
+		},
+		{
+			"description": "an upload past its bucket's quota is refused, begun at its size or appended past it",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private",
+							"quota": 4
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin",
+						"size": 5
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "quota_exceeded"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin"
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "quota_exceeded"
+					}
+				}
+			]
+		},
+		{
+			"description": "past the room its stores hold, an upload fails for room, appended or finished",
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "files",
+						"content": {
+							"type": "file",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				],
+				"room": 1024
+			},
+			"steps": [
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "big.bin"
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": 2048
+							}
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				},
+				{
+					"call": "file_upload_begin",
+					"input": {
+						"bucket": "files",
+						"path": "c.bin"
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "v"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "v"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": 1000
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 1000,
+							"durable": 0
+						}
+					}
+				},
+				{
+					"call": "file_upload_append",
+					"input": {
+						"upload": {
+							"$use": "v"
+						},
+						"offset": 1000,
+						"content": {
+							"$bytes": {
+								"length": 100
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 1100,
+							"durable": 0
+						}
+					}
+				},
+				{
+					"call": "file_upload_finish",
+					"input": {
+						"upload": {
+							"$use": "v"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				}
+			]
+		}
+	]
+}

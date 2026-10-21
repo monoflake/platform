@@ -75,6 +75,44 @@ let types: array<declared> = [
     from: "13ixj",
   },
   {name: "file-deleted", def: Record([]), from: "13ixj"},
+  // A file of any size is written by an upload, as the blob's is, vuanj: begun at its path, its
+  // size held to where it is known and its expectation asked as it finishes, when the path is
+  // pointed at what it wrote.
+  {
+    name: "file-upload-begin",
+    def: Record([
+      field("bucket", 1, Id("bucket")),
+      field("path", 2, Prim(#string)),
+      optional("size", 3, Prim(#uint53)),
+      optional("expected", 4, Type("file-expected")),
+    ]),
+    from: "13ixj, vuanj",
+  },
+  {
+    name: "file-upload",
+    def: Record([field("upload", 1, Prim(#hash)), field("part", 2, Prim(#uint53))]),
+    from: "13ixj, vuanj",
+  },
+  {
+    name: "file-upload-append",
+    def: Record([
+      field("upload", 1, Prim(#hash)),
+      field("offset", 2, Prim(#uint53)),
+      field("content", 3, Prim(#bytes)),
+    ]),
+    from: "13ixj, vuanj",
+  },
+  {
+    name: "file-upload-name",
+    def: Record([field("upload", 1, Prim(#hash))]),
+    from: "13ixj, vuanj",
+  },
+  {
+    name: "file-upload-state",
+    def: Record([field("received", 1, Prim(#uint53)), field("durable", 2, Prim(#uint53))]),
+    from: "13ixj, vuanj",
+  },
+  {name: "file-upload-aborted", def: Record([]), from: "13ixj, vuanj"},
   // One level of a directory, `directory` empty for the top or a path ending in `/`; entries after
   // `after` in byte order, at most `limit`, a thousand unless set.
   {
@@ -191,13 +229,14 @@ let onBucket = [("not_a_bucket", #rejected), ("wrong_type", #rejected)]
 
 /**
  * Deleting what is not there, and describing it, succeed, as the object kind's do; a write meets the
- * bucket's quota and its kind's bound. The most a packed bucket's file carries in one write is a bound
- * still open [D4].
+ * bucket's quota and its kind's bound. One write carries a part at most, and a file past it is
+ * written by an upload, appended to in order and resumed from what is durable, as the blob's is,
+ * vuanj; an upload left a day expires, and one whose bucket is deleted ends, each then not found.
  */
 let interface_: interface_ = {
   name: "storage",
   version: 1,
-  bounds: dict{"opaque": Objects.most},
+  bounds: dict{"opaque": Objects.most, "part": Objects.most},
   from: "13ixj, vr5lw",
   operations: [
     op(
@@ -214,6 +253,37 @@ let interface_: interface_ = {
         ],
       ),
     ),
+    op(
+      "file_upload_begin",
+      "file-upload-begin",
+      "file-upload",
+      Array.concat(onBucket, [("too_large", #rejected), ("quota_exceeded", #rejected)]),
+    ),
+    op(
+      "file_upload_append",
+      "file-upload-append",
+      "file-upload-state",
+      [
+        ("not_found", #rejected),
+        ("wrong_offset", #rejected),
+        ("too_large", #rejected),
+        ("quota_exceeded", #rejected),
+        ("storage_full", #unavailable),
+      ],
+    ),
+    op("file_upload_describe", "file-upload-name", "file-upload-state", [("not_found", #rejected)]),
+    op(
+      "file_upload_finish",
+      "file-upload-name",
+      "file-written",
+      [
+        ("not_found", #rejected),
+        ("size_differs", #rejected),
+        ("expectation_failed", #rejected),
+        ("storage_full", #unavailable),
+      ],
+    ),
+    op("file_upload_abort", "file-upload-name", "file-upload-aborted", []),
     op(
       "file_read",
       "file-read",

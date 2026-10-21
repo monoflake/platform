@@ -132,8 +132,11 @@ storage (one an organization, its own unique salt)
   bucket is made, described, listed and deleted through its organization's control, its
   configuration API, RFC v7v3w. A write may name what it expects there, nothing or the hash it
   last saw, and a delete the hash it removes; a file bucket is listed a directory at a time, each
-  entry with its size and a directory with its count as well, and an object bucket by name. The
-  most one write carries in a `packed` bucket is a bound still open. [D4]
+  entry with its size and a directory with its count as well, and an object bucket by name. **One
+  write carries 16 MiB at most, and a file past it is written by an upload**, decided by the author
+  on 2026-10-20 with the blob's, RFC vuanj: begun at its path, appended to in order a part at a
+  time and resumed from what is durable, its expectation asked as it finishes, when the path is
+  pointed at what it wrote.
 - **A bucket is configuration; a file and an object are data.** Creating or deleting a bucket
   changes the organization's configuration, through its organization's own control, which an app
   may call as any client does, RFC v7v3w; a file's and an object's operations are the data plane's.
