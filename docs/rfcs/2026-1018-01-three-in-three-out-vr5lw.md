@@ -514,10 +514,14 @@ management interface below, RFC fhg6w.
     said on 2026-10-20, neither fish nor zsh on a server -- and all that grows with use is on
     btrfs, code built for a binding among it. A set measured 1.1 GiB trimmed, `docs/lessons/`.
     Generations share every path an update leaves alone, and only one that moves nixpkgs or a
-    library everything links costs a whole set. So **ext4 is 8 GB whatever the disk**, decided
-    with the author on 2026-10-20, a 20 GB disk among them, journald held to a bound: the driver
-    collects old generations, keeping as many as leave room for one whole set more, and never fewer
-    than the current and the one before it, and reports how many it keeps.
+    library everything links costs a whole set. So **ext4 is 5 GB whatever the disk, and btrfs the
+    rest**, decided by the author on 2026-10-20: the current set, the one before it and the one an
+    update brings, journald held to 256 MB; the driver collects every generation older than the one
+    before the current, and a machine downloads its sets and builds none. **The system is the
+    machine driver's `system/`, a NixOS module the root's `flake.nix` gives with the disk's layout
+    by disko and a template**, worked out with the author on 2026-10-20: a machine's own flake,
+    started from the template, adds its name, its disk's device and the keys that reach it, and is
+    installed by nixos-anywhere.
   - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, through containerd's
     btrfs snapshotter, every image layer and container layer a subvolume: a binding's volumes are
     subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup above them

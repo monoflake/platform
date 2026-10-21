@@ -5,3 +5,5 @@ lib/
 target/
 dist/
 generated/
+result
+result-*

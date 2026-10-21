@@ -7,7 +7,9 @@
  */
 open Base
 
-type lang = [#rust | #rescript]
+/** A block's language: Rust's and ReScript's for code, Nix for the system a driver's machine runs,
+ * `model/ground/drivers.res`. */
+type lang = [#rust | #rescript | #nix]
 
 /**
  * What a directory is to hold: what of the model, in which languages, under which package name; the
@@ -54,7 +56,12 @@ let driverDir = name =>
 /** A library's name in the model carries a mark, which its directory does not. */
 let libraryDir = name => name->String.replace("*", "")
 
-let languageName = (l: lang) => (l :> string)
+let languageName = (l: [< lang]) =>
+  switch l {
+  | #rust => "rust"
+  | #rescript => "rescript"
+  | #nix => "nix"
+  }
 
 /**
  * A ReScript package's namespace: its package's name in upper camel case, `envelope-generator` as
@@ -88,7 +95,7 @@ let expected = () => {
             `code/${g}/driver/${dir}/${(i.kind :> string)}`,
             {
               name: `${name} ${(i.kind :> string)}`,
-              languages: [i.language],
+              languages: [(i.language :> lang)],
               package: `${packageName(name)}-${(i.kind :> string)}`,
               license: Components.permissive,
               uses: [],
@@ -101,13 +108,27 @@ let expected = () => {
           `code/${g}/driver/${dir}/management`,
           {
             name: `${name} management`,
-            languages: [d.management],
+            languages: [(d.management :> lang)],
             package: `${packageName(name)}-management`,
             license: Components.permissive,
             uses: [],
             takes: [],
             samples: [],
           },
+        )
+        d.system->Option.forEach(as_ =>
+          expected->Map.set(
+            `code/${g}/driver/${dir}/system`,
+            {
+              name: `${name} system, ${as_}`,
+              languages: [#nix],
+              package: `${packageName(name)}-system`,
+              license: Components.permissive,
+              uses: [],
+              takes: [],
+              samples: [],
+            },
+          )
         )
         let given = Set.fromArray(
           d.grounds
@@ -139,7 +160,7 @@ let expected = () => {
           `code/${g}/${dirName(name)}`,
           {
             name,
-            languages: [language],
+            languages: [(language :> lang)],
             package: packageName(name),
             license: Components.permissive,
             uses: c.uses,
@@ -166,7 +187,7 @@ let expected = () => {
       `code/libs/${libraryDir(name)}`,
       {
         name,
-        languages: l.languages,
+        languages: l.languages->Array.map(l => (l :> lang)),
         package: libraryDir(name),
         license: Components.permissive,
         uses: l.uses,
@@ -181,7 +202,7 @@ let expected = () => {
       `code/tools/${name}`,
       {
         name,
-        languages: t.languages,
+        languages: t.languages->Array.map(l => (l :> lang)),
         package: name,
         license: Components.permissive,
         uses: [],

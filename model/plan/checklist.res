@@ -246,7 +246,7 @@ let own: array<item> = [
     group: #B,
     what: "a machine's disk past its two file systems, decided in vr5lw: where NixOS's store goes, and how a binding's share on btrfs is bounded",
     from: "vr5lw",
-    done: "vr5lw: /nix on ext4, 8 GB, the driver keeping the generations that fit; simple quotas through the btrfs snapshotter, images counted by the driver",
+    done: "vr5lw: /nix on ext4, 5 GB, the driver keeping the current generation and the one before; simple quotas through the btrfs snapshotter, images counted by the driver",
   },
   {
     id: "B23",

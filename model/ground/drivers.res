@@ -18,13 +18,16 @@ type runtime = {name: string, takes: string, stands: array<string>}
 /**
  * A driver is its implementations and its management, `management/` beside them: the process that
  * answers the management interface and hands each call to the implementation of its kind, in the
- * language the driver's ground asks, vr5lw.
+ * language the driver's ground asks, vr5lw. A driver whose ground is a machine holds its system as
+ * well, `system/`: what the machine runs beneath it, a NixOS module in Nix, its disk, and the template
+ * a machine's own flake starts from, which the root's `flake.nix` gives, vr5lw.
  */
 type driver = {
   grounds: array<Steps.ground>,
   management: [#rust | #rescript],
   implements: array<implementation>,
   runtimes: array<runtime>,
+  system?: string,
 }
 
 let drivers: dict<driver> = dict{
@@ -46,6 +49,7 @@ let drivers: dict<driver> = dict{
   "driver(machine)": {
     grounds: [#provider, #home],
     management: #rust,
+    system: "NixOS, with containerd",
     implements: [
       {kind: #function, language: #rust, as_: "workerd, run for each deployment"},
       {kind: #instance, language: #rust, as_: "a process"},

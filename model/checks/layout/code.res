@@ -2,8 +2,8 @@
  * The code held to the model, RFC fhg6w: a component's code lies in its layer's directory under the
  * name the model gives it, in the language the model declares, and uses only libraries written in
  * that language. A driver declares none: it lies in its layer's `driver/` as a directory of its
- * implementations, one a kind its grounds give, each in its own, and of its management, in the
- * language its ground asks, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
+ * implementations, one a kind its grounds give, each in its own, of its management, in the
+ * language its ground asks, and of its system where its ground is a machine, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
  * for each of its languages. A package is named as the model names what it holds, `@monoflake/` led
  * where it is ReScript's, and namespaced by its subject's name alone, never the project's, the
  * workspace's `docs/naming.md`, and MIT OR Apache-2.0, the root's two texts. What
@@ -13,7 +13,11 @@ open Base
 
 open Blocks
 
-let manifests: array<(string, lang)> = [("Cargo.toml", #rust), ("rescript.json", #rescript)]
+let manifests: array<(string, lang)> = [
+  ("Cargo.toml", #rust),
+  ("rescript.json", #rescript),
+  ("default.nix", #nix),
+]
 
 type stats
 @module("node:fs") external lstatSync: url => stats = "lstatSync"
@@ -142,7 +146,7 @@ let held = (path, h: held): option<array<string>> => {
             let dir = libraryDir(u)
             l == #rescript ? `@monoflake/${dir}` : dir
           }),
-          h.takes->Array.filter(t => t.language == l)->Array.map(t => t.name),
+          h.takes->Array.filter(t => (t.language :> lang) == l)->Array.map(t => t.name),
           l == #rust ? h.writtenBy->Option.mapOr([], w => [w]) : [],
         ],
       )
@@ -295,12 +299,12 @@ let run = () => {
                       | Some(h) => check(inner, h)
                       | None =>
                         found->Array.push(
-                          `${inner}: neither its management nor a kind it implements`,
+                          `${inner}: neither its management, its system nor a kind it implements`,
                         )
                       }
                     } else {
                       found->Array.push(
-                        `${at}/${k->entryName}: a driver holds its implementations and its management alone`,
+                        `${at}/${k->entryName}: a driver holds its implementations, its management and its system alone`,
                       )
                     },
                 )

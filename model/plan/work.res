@@ -14,6 +14,7 @@ let blocks: dict<state> = dict{
   "envelope": Accepted,
   "envelope-generator": Accepted,
   "capability": Accepted,
+  "driver-machine-system": Accepted,
   "keys": Accepted,
   "layout": Accepted,
   "placement": Accepted,

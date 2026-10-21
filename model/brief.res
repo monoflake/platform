@@ -11,12 +11,15 @@ let scoped = (h: held) => `@monoflake/${h.package}`
 
 let lines = (path, h: held) => {
   let has = (l: lang) => h.languages->Array.includes(l)
-  let packages = Array.concat(
-    has(#rust) ? [`the crate ${crate(h)}, Cargo.toml`] : [],
-    has(#rescript)
-      ? [`${scoped(h)}, package.json and rescript.json, namespaced ${namespaceOf(h.package)}`]
-      : [],
-  )
+  let packages =
+    Array.concat(
+      has(#rust) ? [`the crate ${crate(h)}, Cargo.toml`] : [],
+      has(#rescript)
+        ? [`${scoped(h)}, package.json and rescript.json, namespaced ${namespaceOf(h.package)}`]
+        : [],
+    )->Array.concat(
+      has(#nix) ? ["a NixOS module, default.nix, which the root's flake.nix gives"] : [],
+    )
   let uses = h.uses->Array.map(u => {
     let dir = libraryDir(u)
     `${u}: code/libs/${dir}, ${h.languages
