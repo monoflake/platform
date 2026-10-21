@@ -13,7 +13,7 @@ let blocks: dict<state> = dict{
   "compat": Accepted,
   "envelope": Accepted,
   "envelope-generator": Accepted,
-  "keys": InWork,
+  "keys": Accepted,
   "layout": InWork,
   "placement": InWork,
 }
