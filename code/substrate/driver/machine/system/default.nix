@@ -140,6 +140,18 @@ in
   };
 
   environment = {
+    # fastfetch's logo, `logo.nix`, in blue, pink and white.
+    etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
+      logo = {
+        type = "file";
+        source = "${pkgs.writeText "logo.txt" (import ./logo.nix)}";
+        color = {
+          "1" = "38;2;91;206;250";
+          "2" = "38;2;245;169;184";
+          "3" = "38;2;255;255;255";
+        };
+      };
+    };
     variables.CONTAINERD_SNAPSHOTTER = "btrfs";
     defaultPackages = [ ];
     systemPackages = [
