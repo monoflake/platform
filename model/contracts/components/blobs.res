@@ -97,7 +97,7 @@ let types: array<declared> = [
     from: "vuanj",
   },
   // Its size, when it was put, in milliseconds, the placement it has, and the one it is moving to
-  // while a raise moves it; all absent when nothing is there.
+  // while a place moves it; all absent when nothing is there.
   {
     name: "blob-described",
     def: Record([
@@ -109,7 +109,7 @@ let types: array<declared> = [
     from: "vuanj",
   },
   {
-    name: "blob-raise",
+    name: "blob-place",
     def: Record([
       field("space", 1, Type("blob-space")),
       field("hash", 2, Prim(#hash)),
@@ -117,7 +117,33 @@ let types: array<declared> = [
     ]),
     from: "vuanj",
   },
-  {name: "blob-raised", def: Record([]), from: "vuanj"},
+  {name: "blob-placed", def: Record([]), from: "vuanj"},
+  // A key's version retired: every parcel it sealed sealed again under the newest, b8f35.
+  {name: "blob-rekey", def: Record([field("from", 1, Prim(#uint32))]), from: "b8f35"},
+  // A task, by 32 random bytes, answered at once and told by `task`, RFC 49qyg.
+  {name: "blob-task", def: Record([field("task", 1, Prim(#hash))]), from: "b8f35, 49qyg"},
+  // How a task stands: running, done, or failed as an outcome of 49qyg's and its reason.
+  {
+    name: "blob-task-state",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "running", code: 1, fields: []},
+        {name: "succeeded", code: 2, fields: []},
+        {
+          name: "failed",
+          code: 3,
+          fields: [field("failure", 1, Type("failure")), field("reason", 2, Prim(#string))],
+        },
+      ],
+    }),
+    from: "b8f35, 49qyg",
+  },
+  {
+    name: "blob-task-of",
+    def: Record([field("state", 1, Type("blob-task-state"))]),
+    from: "b8f35, 49qyg",
+  },
   {name: "blob-deleted", def: Record([]), from: "vuanj"},
   // Hashes after `after`, in byte order, at most `limit`, a thousand unless set: for a sweep alone.
   {
@@ -146,14 +172,16 @@ let types: array<declared> = [
 let onWrite = [("unplaceable", #rejected), ("storage_full", #unavailable)]
 
 /**
- * Deleting what is not there, and describing it, succeed, as the object kind's do. An upload's
+ * Deleting what is not there, and describing it, succeed, as the object kind's do. A placement is
+ * set stricter or looser as the storage asks, the strictest of what names a content its to keep. A
+ * rekey names a version older than the newest, else it is not retiring. An upload's
  * placement is asked of its stores as it begins; what is left of a part past the last whole piece
  * is written only by the next, or by the finish. An upload left a day expires, the sweep's grace,
  * and is then not found.
  */
 let interface_: interface_ = {
   name: "blob",
-  version: 1,
+  version: 2,
   bounds: dict{"part": Objects.most},
   from: "vuanj, b8f35",
   operations: [
@@ -181,12 +209,14 @@ let interface_: interface_ = {
     op("get", "blob-get", "blob-content", [("not_found", #rejected)]),
     op("describe", "blob-name", "blob-described", []),
     op(
-      "raise",
-      "blob-raise",
-      "blob-raised",
+      "place",
+      "blob-place",
+      "blob-placed",
       [("not_found", #rejected), ("unplaceable", #rejected)],
     ),
     op("delete", "blob-name", "blob-deleted", []),
     op("list", "blob-list", "blob-listed", []),
+    op("rekey", "blob-rekey", "blob-task", [("not_retiring", #rejected)]),
+    op("task", "blob-task", "blob-task-of", [("not_found", #rejected)]),
   ],
 }

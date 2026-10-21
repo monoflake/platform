@@ -2404,6 +2404,68 @@
 				}
 			]
 		},
+		"backing-store": {
+			"record": [
+				{
+					"name": "store",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "address",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "weight",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "levels",
+					"key": 4,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "place",
+					"key": 5,
+					"shape": {
+						"type": "extension-place"
+					}
+				}
+			]
+		},
+		"bundle-backing": {
+			"record": [
+				{
+					"name": "stores",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "backing-store"
+						}
+					}
+				},
+				{
+					"name": "before",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "backing-store"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
 		"scope-status": {
 			"enum": [
 				{
@@ -5496,7 +5558,7 @@
 				}
 			]
 		},
-		"blob-raise": {
+		"blob-place": {
 			"record": [
 				{
 					"name": "space",
@@ -5521,8 +5583,78 @@
 				}
 			]
 		},
-		"blob-raised": {
+		"blob-placed": {
 			"record": []
+		},
+		"blob-rekey": {
+			"record": [
+				{
+					"name": "from",
+					"key": 1,
+					"shape": {
+						"prim": "uint32"
+					}
+				}
+			]
+		},
+		"blob-task": {
+			"record": [
+				{
+					"name": "task",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"blob-task-state": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "running",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "succeeded",
+						"code": 2,
+						"fields": []
+					},
+					{
+						"name": "failed",
+						"code": 3,
+						"fields": [
+							{
+								"name": "failure",
+								"key": 1,
+								"shape": {
+									"type": "failure"
+								}
+							},
+							{
+								"name": "reason",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"blob-task-of": {
+			"record": [
+				{
+					"name": "state",
+					"key": 1,
+					"shape": {
+						"type": "blob-task-state"
+					}
+				}
+			]
 		},
 		"blob-deleted": {
 			"record": []
@@ -5981,6 +6113,7 @@
 		],
 		"sections": {
 			"issuer": "bundle-issuer",
+			"backing": "bundle-backing",
 			"storage": "bundle-storage",
 			"database": "bundle-database",
 			"compute": "bundle-compute",
@@ -6649,7 +6782,7 @@
 			]
 		},
 		"blob": {
-			"version": 1,
+			"version": 2,
 			"bounds": {
 				"part": 16777216
 			},
@@ -6762,9 +6895,9 @@
 					"reasons": []
 				},
 				{
-					"name": "raise",
-					"input": "blob-raise",
-					"output": "blob-raised",
+					"name": "place",
+					"input": "blob-place",
+					"output": "blob-placed",
 					"reasons": [
 						{
 							"name": "not_found",
@@ -6787,6 +6920,28 @@
 					"input": "blob-list",
 					"output": "blob-listed",
 					"reasons": []
+				},
+				{
+					"name": "rekey",
+					"input": "blob-rekey",
+					"output": "blob-task",
+					"reasons": [
+						{
+							"name": "not_retiring",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "task",
+					"input": "blob-task",
+					"output": "blob-task-of",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
 				}
 			]
 		},

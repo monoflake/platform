@@ -102,8 +102,9 @@ people who use an app is another matter, above. Decided by the author on 2026-10
 - **A call's capabilities are kept by the compute for its app and resource**, asked again as they
   near their expiry, and **each call is given those its bindings allow alone**: what "for that call
   alone" holds is what is passed, never how often the issuer signs.
-- **A component's own work -- a sweep, a repair, a tablet's archive -- is given a capability by its
-  certificate's role**, no app asking, reaching its own blob space alone.
+- **A component's own work -- a sweep, a tablet's archive -- is given a capability by who its
+  certificate says it is**, no app asking, reaching its own blob space alone; the blob and the extent
+  reach the scope's stores by calls their certificates sign, and no capability, RFC b8f35.
 
 **The operations are six, each a right of its own**: read; create, which is refused where what it
 would write already exists; replace, which overwrites what exists and so can lose it as a deletion
@@ -278,9 +279,11 @@ executor never reads.
   removed moves only the parcels it wins or held. A write is done when every parcel the layout
   asks for has landed; a store down passes its parcel to the next in line, moved back by a repair
   later. **A repair must run on its own while the control plane is lost**, since until it does, data
-  is held below its placement. Decided by the author on 2026-10-20: **raising a hash answers at
-  once**, its parcels moved in the background and readable throughout, a describe showing the
-  placement it has and the one it is moving to; **a list is for a sweep alone**, by hash a page at a
+  is held below its placement. Decided by the author on 2026-10-20: **placing a hash answers at
+  once**, stricter or looser, as the storage asks from the strictest of what names it, its parcels
+  moved in the background and readable throughout, a describe showing the placement it has and the
+  one it is moving to; **a key's version retired is a task**, `rekey`, answering its id at once and
+  told by `task(id)`, RFC 49qyg; **a list is for a sweep alone**, by hash a page at a
   time, each with when it was put, against the sweep's grace.
 - **A machine tablet's copies carry SQLite's WAL frames as they are**, the primary's to the rest,
   decided by the author on 2026-10-20, never its statements; an append carrying no frame renews the

@@ -29,6 +29,10 @@ place in a footing where the scope's backing is kept, which the scope's componen
 is signed in a chain to the root, as the authority's record is, RFC 7xpd3; its fields are written
 as the contract is declared.
 
+**It is read by what reads a backing**, decided by the author on 2026-10-20: a scope and its
+backing are concepts and never processes, RFCs vuanj and b8f35, so the edges drawn from them are the
+blob's and the extent's, each reading where its scope's backing is kept.
+
 **It is read at deployment, and only then**, decided by the author on 2026-10-20: a suspension
 reaches an organization by the authority's record, its status there and a notice of the change,
 RFC 7xpd3, never by the directory, which answers where a backing is, and that changes only as a

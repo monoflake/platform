@@ -221,7 +221,7 @@
 			]
 		},
 		{
-			"description": "a hash is raised to a stricter placement its stores meet, and refused one they do not",
+			"description": "a hash is placed stricter or looser where its stores meet it, and refused where they do not",
 			"steps": [
 				{
 					"call": "put",
@@ -266,7 +266,7 @@
 					}
 				},
 				{
-					"call": "raise",
+					"call": "place",
 					"input": {
 						"space": "storage",
 						"hash": {
@@ -283,7 +283,24 @@
 					}
 				},
 				{
-					"call": "raise",
+					"call": "place",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						},
+						"placement": {
+							"availability": "opportunistic",
+							"durability": "ephemeral",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "place",
 					"input": {
 						"space": "storage",
 						"hash": {
@@ -301,7 +318,7 @@
 					}
 				},
 				{
-					"call": "raise",
+					"call": "place",
 					"input": {
 						"space": "storage",
 						"hash": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -407,6 +424,95 @@
 								}
 							]
 						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a key's version retired is sealed again by a task, told by its id; the newest is not retiring",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "rekey",
+					"input": {
+						"from": 1
+					},
+					"expect": {
+						"output": {
+							"task": {
+								"$capture": "t"
+							}
+						}
+					}
+				},
+				{
+					"call": "task",
+					"input": {
+						"task": {
+							"$use": "t"
+						}
+					},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"state": {
+								"name": "succeeded"
+							}
+						}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG8",
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "task",
+					"input": {
+						"task": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "rekey",
+					"input": {
+						"from": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_retiring"
 					}
 				}
 			]

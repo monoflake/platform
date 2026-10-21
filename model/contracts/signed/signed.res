@@ -152,6 +152,29 @@ let types: array<declared> = [
     ]),
     from: "vuanj",
   },
+  // A store as the blob and the extent reach it, its secret never here: its implementation of the
+  // object kind holds that, deployed for it, b8f35.
+  {
+    name: "backing-store",
+    def: Record([
+      field("store", 1, Prim(#string)),
+      field("address", 2, Prim(#string)),
+      field("weight", 3, Prim(#uint32)),
+      field("levels", 4, Type("placement")),
+      field("place", 5, Type("extension-place")),
+    ]),
+    from: "b8f35",
+  },
+  // A scope's backing, a concept and never a process: its stores, and while they change the stores
+  // before, read from until what those held has moved, b8f35.
+  {
+    name: "bundle-backing",
+    def: Record([
+      field("stores", 1, List(Type("backing-store"))),
+      optional("before", 2, List(Type("backing-store"))),
+    ]),
+    from: "b8f35",
+  },
   // Whether a scope runs, as its authority's record says; one deleted has no bundle, 4dijn.
   {
     name: "scope-status",
@@ -193,6 +216,7 @@ let signed: array<signed> = [
  */
 let sections = [
   ("issuer", "bundle-issuer"),
+  ("backing", "bundle-backing"),
   ("storage", "bundle-storage"),
   ("database", "bundle-database"),
   ("compute", "bundle-compute"),

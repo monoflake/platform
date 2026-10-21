@@ -31,24 +31,40 @@ format, RFC vuanj -- never a product's tables -- so nothing turns back up to the
 
 **A scope is two halves, and they live at different layers.**
 
-| Half     | What it holds                                                                                         | Layer         |
-| -------- | ----------------------------------------------------------------------------------------------------- | ------------- |
-| logical  | Its id, whether it exists, the buckets and databases it holds                                         | -1, `scope`   |
-| physical | The stores its bytes go to -- the platform's, or a user's own -- with their secrets, tags and weights | -2, `backing` |
+| Half     | What it holds                                                                                         | Layer                    |
+| -------- | ----------------------------------------------------------------------------------------------------- | ------------------------ |
+| logical  | Its id, whether it exists, the buckets and databases it holds                                         | -1, `scope`              |
+| physical | The stores its bytes go to -- the platform's, or a user's own -- with their secrets, tags and weights | -2, `backing`, a concept |
 
 The blob reads a scope's backing, a dependency that points down. **A capability never carries
 configuration**: it proves what its holder may do, and a store's address and secret are not that;
 carried in one, a change would not reach the capabilities still alive.
 
-**Layer -2 has four components, and a library is none of them:**
+**Layer -2 is decided anew by the author on 2026-10-20, as layer -1 was:** neither a scope nor its
+backing is a process, both concepts read from the bundle; every store is reached through the object
+kind, so no vendor's secret reaches the blob; packing is the blob's, by one writer for each scope and
+placement; and the extent repairs, holding no key. The bullets below say what each holds, the
+backing's and the extent's as decided then.
+
+**Layer -2 holds these, and a library is none of them:**
 
 - **`root`**: what nothing can start without, and nothing else. It changes rarely and by an
   operator.
 - **`backing`**: each scope's physical half, changed while the platform runs, as when a user adds a
-  store of their own. **It is kept in the scope's footing, never in a tablet**, since a tablet
-  stands on the blob and the blob on it. Who may change a scope's backing is decided by a
-  capability, checked against the root's public key alone, so the backing never reaches up to the
-  issuer. **It holds a scope's stores and nothing else**: each store's address, its secret, its
+  store of their own; **a concept, never a process**, decided by the author on 2026-10-20. **Its
+  stores are the control's records, kept in the scope's footing, never in a tablet**, since a tablet
+  stands on the blob and the blob on it; **all but their secrets are compiled into the bundle's
+  `backing` section**, which the blob and the extent read, the stores before a change beside the
+  stores after it until what the first held has moved. **Every store is reached through the object
+  kind**, its vendor's protocol and secret held by the driver's implementation of that kind deployed
+  for it, as a user's S3 is by the bridge C35 asks for, so a store's secret reaches that deployment
+  alone and never the blob. **The blob and the extent reach a store by a call signed by their own
+  certificates**, which the store's implementation checks to the root and holds to the scope's blob or
+  extent, so the extent, a layer below the issuer, never reaches up to it, and a component reaching
+  infrastructure is proven by who it is, never by what an app delegated. A store
+  attached or detached is a change of its organization's configuration, refused where a bucket's
+  placement would no longer hold, and its implementation deployed as the change is applied; a secret
+  rotated redeploys that alone. **It holds a scope's stores and nothing else**: each store's address, its secret, its
   weight, and what it declares as it is bound: its availability, durability and custody, and the
   node, site, account, zone and region it stands in, RFC 13ixj; never a store by name; and, while
   the stores change, the generation before, read from until what it held has moved. A scope's salt
@@ -70,7 +86,14 @@ carried in one, a change would not reach the capabilities still alive.
   parcel and every exception, it restores what a layout asks for after a store is lost or a
   parcel was passed on, and since parcels are sealed and named by an unkeyed hash it needs
   neither the key nor the salt to do it. It must repair on its own while the control plane is lost,
-  RFC vuanj. Packing is the extent's and sealing the blob's, which holds the scope's key in the
+  RFC vuanj. **Packing and sealing are the blob's**, decided by the author on 2026-10-20: a journal
+  takes its segments in order, so for each scope and placement one instance of the blob writes, held
+  as a tablet's writer is and placed at run time, a Durable Object on Cloudflare; it reads and writes
+  the extent's records in the footing itself, its places computed, nothing between. **The extent
+  repairs alone, and holds no key**: a parcel is sealed and named by an unkeyed hash, so it moves
+  parcels between stores, by their object kind and a call its certificate signs, and reads nothing
+  it carries; taken over, it reveals nothing. The rest of this bullet stands for its records. Sealing
+  is the blob's, which holds the scope's key in the
   organization's half, RFC v7v3w; a repack is the two together.
 - **`host`**: a place that runs sandboxes. A host says which sandboxes it offers -- a V8 isolate,
   WebAssembly -- and what they can reach, in the vocabulary of capabilities RFC 49qyg declares needs
@@ -190,11 +213,12 @@ same salt and key. Its status says what is left of it:
 **A control reaches beneath by these operations, as a caller and never a need of theirs**, worked
 out with the author on 2026-10-19:
 
-| Operation                              | On        | Called by                                                 | Does                                                                                                                                |
-| -------------------------------------- | --------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `open`, `suspend`, `restore`, `delete` | directory | the authority                                             | a scope opened, its status changed, it deleted: the platform half's own writes, RFC 4dijn                                           |
-| `attach`, `detach`                     | backing   | the control holding the store                             | adds a store to a scope or takes one off, refused where a bucket's placement would no longer hold without it                        |
-| `migrate`                              | blob      | a control starts it, the clock paces it, the blob does it | moves a bucket to a new layout as its placement changes, or to a new key as an old version retires, every piece readable throughout |
+| Operation                              | On        | Called by                                                   | Does                                                                                                                                   |
+| -------------------------------------- | --------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `open`, `suspend`, `restore`, `delete` | directory | the authority                                               | a scope opened, its status changed, it deleted: the platform half's own writes, RFC 4dijn                                              |
+| `attach`, `detach`                     | backing   | the control holding the store, as a change of configuration | adds a store to a scope or takes one off, refused where a bucket's placement would no longer hold without it                           |
+| `place`                                | blob      | the storage, for each content of a bucket                   | moves a content to the placement asked, stricter or looser, as the strictest of what names it changes, every piece readable throughout |
+| `rekey`                                | blob      | a control starts it, the clock paces it, the blob does it   | seals again, under the new version's key, every parcel an old version sealed, as that version retires, every piece readable throughout |
 
 - **A store is attached and detached, never deleted**, since `delete` is data's, RFC vr5lw, and a
   store taken off a scope is left as it is.
