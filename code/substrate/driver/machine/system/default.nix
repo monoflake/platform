@@ -12,6 +12,21 @@ let
   inherit (pkgs.unstable) crun youki;
   # The serial console: a PC's first UART, an Arm machine's PL011.
   serial = if pkgs.stdenv.hostPlatform.isAarch64 then "ttyAMA0" else "ttyS0";
+  hyfetch = pkgs.writeText "hyfetch.json" (
+    builtins.toJSON {
+      preset = "transgender";
+      mode = "rgb";
+      auto_detect_light_dark = false;
+      light_dark = "dark";
+      lightness = 0.65;
+      color_align.mode = "horizontal";
+      backend = "fastfetch";
+      args = null;
+      distro = null;
+      pride_month_disable = true;
+      custom_ascii_path = null;
+    }
+  );
   # The swap file, in MiB, by the memory, RFC vr5lw: 2 GiB up to 2, as much as the memory up to 8,
   # half of it beyond, never under 8 nor over 16.
   memory = config.machine.memory;
@@ -60,6 +75,8 @@ in
   ];
   systemd.tmpfiles.rules = [
     "w- /sys/module/zswap/parameters/compressor - - - - ${config.machine.swap.compressor}"
+    # hyfetch's settings, so it asks nothing on its first run: the transgender flag over fastfetch.
+    "L+ /root/.config/hyfetch.json - - - - ${hyfetch}"
   ];
 
   # A container's secrets, never swapped, root's alone, RFC vr5lw.
@@ -140,50 +157,6 @@ in
   };
 
   environment = {
-    # fastfetch's logo, `logo.nix`, in blue, pink and white; a configuration names every module it
-    # shows, so these are fastfetch's own defaults.
-    etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
-      modules = [
-        "title"
-        "separator"
-        "os"
-        "host"
-        "kernel"
-        "uptime"
-        "packages"
-        "shell"
-        "display"
-        "de"
-        "wm"
-        "wmtheme"
-        "theme"
-        "icons"
-        "font"
-        "cursor"
-        "terminal"
-        "terminalfont"
-        "cpu"
-        "gpu"
-        "memory"
-        "swap"
-        "disk"
-        "localip"
-        "battery"
-        "poweradapter"
-        "locale"
-        "break"
-        "colors"
-      ];
-      logo = {
-        type = "file";
-        source = "${pkgs.writeText "logo.txt" (import ./logo.nix)}";
-        color = {
-          "1" = "38;2;91;206;250";
-          "2" = "38;2;245;169;184";
-          "3" = "38;2;255;255;255";
-        };
-      };
-    };
     variables.CONTAINERD_SNAPSHOTTER = "btrfs";
     defaultPackages = [ ];
     systemPackages = [
@@ -192,6 +165,7 @@ in
       crun
       youki
       pkgs.unstable.fastfetch-unwrapped
+      pkgs.unstable.hyfetch
       pkgs.unstable.htop
     ];
   };
