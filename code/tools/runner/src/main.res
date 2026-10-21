@@ -4,8 +4,9 @@
  * outcome printed in each form and a summary after, the exit code 1 where any case failed. A bound
  * is the interface's own, as `model/contracts.json` writes it, or one the file given writes, which
  * stands in for a driver's own until D8. The chain signs as the components given and as every
- * component a step is called `as`; its root is printed, for the implementation to be started
- * trusting.
+ * component a step is called `as`; its root is printed, then each certificate above the
+ * components', one a line, for the implementation to be started trusting the one and holding the
+ * rest.
  */
 let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] <behavior file>..."
 
@@ -132,6 +133,9 @@ let main = async () => {
         | Some(chain) =>
           Console.log(
             `root: ${Web.base64url(Http.root(chain))}, signing as ${components->Array.join(", ")}`,
+          )
+          Http.certificates(chain)->Array.forEach(certificate =>
+            Console.log(`certificate: ${Web.base64url(certificate)}`)
           )
         | None => ()
         }

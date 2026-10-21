@@ -149,3 +149,44 @@ testAsync(
     )
   },
 )
+
+testAsync(
+  "a call made as a component verifies to the root, holding the chain's certificates",
+  async () => {
+    let bodies = []
+    let server = await Server.start(~bodies)
+    let chain = Http.chain(~components=["compute"], ~now=Date.now())
+    let target = Http.target(~base=address(server), ~chain=Some(chain), ~bounds=dict{})
+    let answered = await target.call(
+      ~interface="object",
+      ~operation="write",
+      ~input=JSON.parseOrThrow(`{"name": "a", "content": "AA"}`),
+      ~form=Json,
+      ~as_=Some("compute"),
+    )
+    await stop(server)
+    deepEqual(answered, Ok(Answered(JSON.parseOrThrow("{}"))))
+    let signed = bodies->Array.get(0)->Option.getOr(Uint8Array.fromLength(0))
+    deepEqual(Http.certificates(chain)->Array.length, 3)
+    let trust: Capability.Signed.trust = {
+      root: Http.root(chain),
+      certificates: Http.certificates(chain),
+      now: Date.now() /. 1000.,
+    }
+    switch Capability.Signed.verify(trust, Call, signed) {
+    | Ok({content, signer}) =>
+      deepEqual(signer, Signed({role: "component", scope: Some(1.), sub: Some("compute")}))
+      deepEqual(
+        Envelope.Contracts.callCborToJson("object", content),
+        Some(
+          Ok(
+            JSON.parseOrThrow(`{"interface": "object", "operation": "write", "input": {"name": "a", "content": "AA"}}`),
+          ),
+        ),
+      )
+    | Error(_) => ok(false, ~message="the signed call did not verify")
+    }
+    // The root alone does not reach the component's certificate.
+    ok(Capability.Signed.verify({...trust, certificates: []}, Call, signed)->Result.isError)
+  },
+)

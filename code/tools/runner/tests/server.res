@@ -2,7 +2,7 @@
  * A tiny implementation of `object` over HTTP, for the end-to-end test: each call read as its
  * `envelope` in the form its `Content-Type` names, a signed call's certificate kept as what it wrote,
  * and every answer the `answer` envelope in the form `Accept` names, RFC ge55b; `list` answers as a
- * proxy might, with no answer at all.
+ * proxy might, with no answer at all. Every call's body is kept, as it came, for a test to verify.
  */
 open Node
 module Cbor = Codec.Cbor
@@ -82,10 +82,11 @@ let respond = (response, ~cbor, answer) => {
   response->end(cbor ? written(value) : Web.utf8(JSON.stringify(json)))
 }
 
-let handle = (objects: dict<Uint8Array.t>) =>
+let handle = (objects: dict<Uint8Array.t>, bodies) =>
   (request, response) =>
     body(request)
     ->Promise.thenResolve(bytes => {
+      bodies->Array.push(bytes)
       let headers = request->requestHeaders
       let accept = headers->Dict.get("accept")->Option.getOr("application/cbor")
       let cbor = !(accept->String.startsWith("application/json"))
@@ -143,9 +144,12 @@ let handle = (objects: dict<Uint8Array.t>) =>
     })
     ->ignore
 
-/** The server started at `localhost`, on the port given or one of the system's choosing. */
-let start = (~port=0) =>
+/**
+ * The server started at `localhost`, on the port given or one of the system's choosing, keeping
+ * each body in `bodies`.
+ */
+let start = (~port=0, ~bodies=[]) =>
   Promise.make((resolve, _) => {
-    let server = createServer(handle(Dict.make()))
+    let server = createServer(handle(Dict.make(), bodies))
     server->listen(port, "localhost", () => resolve(server))
   })

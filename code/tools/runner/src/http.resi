@@ -17,5 +17,12 @@ let chain: (~components: array<string>, ~now: float) => chain
 /** The root's public key, which the implementation is started trusting. */
 let root: chain => Uint8Array.t
 
+/**
+ * Every certificate above the components', the intermediate's, the authority's and the
+ * organization's, as signed, which an implementation verifying to the root is started holding, as
+ * `capability*`'s `trust` takes them; a call carries its component's own in `kcwt`.
+ */
+let certificates: chain => array<Uint8Array.t>
+
 /** The target at a base URL, signing as a component by the chain given, its bounds as written. */
 let target: (~base: string, ~chain: option<chain>, ~bounds: dict<float>) => Run.target

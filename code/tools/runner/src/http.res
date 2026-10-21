@@ -106,6 +106,8 @@ let chain = (~components, ~now) => {
 
 let root = chain => chain.rootKey
 
+let certificates = chain => chain.certificates
+
 let media = (form: Run.form) =>
   switch form {
   | Cbor => "application/cbor"
