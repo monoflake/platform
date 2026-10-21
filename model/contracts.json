@@ -2115,9 +2115,47 @@
 				{
 					"name": "account",
 					"code": 4
+				},
+				{
+					"name": "component",
+					"code": 5
 				}
 			],
 			"ordered": false
+		},
+		"capability-target": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "resource",
+						"code": 1,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "*",
+									"half": "organization"
+								}
+							}
+						]
+					},
+					{
+						"name": "space",
+						"code": 2,
+						"fields": [
+							{
+								"name": "space",
+								"key": 1,
+								"shape": {
+									"type": "blob-space"
+								}
+							}
+						]
+					}
+				]
+			}
 		},
 		"capability": {
 			"record": [
@@ -2151,11 +2189,10 @@
 					}
 				},
 				{
-					"name": "resource",
+					"name": "target",
 					"key": -65538,
 					"shape": {
-						"id": "*",
-						"half": "organization"
+						"type": "capability-target"
 					}
 				},
 				{
@@ -2183,6 +2220,14 @@
 					"shape": {
 						"prim": "uint53"
 					}
+				},
+				{
+					"name": "sub",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
 				},
 				{
 					"name": "cnf",
@@ -5438,6 +5483,341 @@
 					"optional": true
 				}
 			]
+		},
+		"capabilities-for-app": {
+			"record": [
+				{
+					"name": "app",
+					"key": 1,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "targets",
+					"key": 2,
+					"shape": {
+						"list": {
+							"type": "grant-target"
+						}
+					},
+					"optional": true
+				}
+			]
+		},
+		"capability-issued": {
+			"record": [
+				{
+					"name": "target",
+					"key": 1,
+					"shape": {
+						"type": "grant-target"
+					}
+				},
+				{
+					"name": "capability",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "exp",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"capabilities-issued": {
+			"record": [
+				{
+					"name": "capabilities",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "capability-issued"
+						}
+					}
+				}
+			]
+		},
+		"capability-for-space": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "rights",
+					"key": 2,
+					"shape": {
+						"type": "rights"
+					}
+				}
+			]
+		},
+		"space-capability-issued": {
+			"record": [
+				{
+					"name": "capability",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "exp",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"sandbox": {
+			"enum": [
+				{
+					"name": "v8",
+					"code": 1
+				},
+				{
+					"name": "webassembly",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"run": {
+			"record": [
+				{
+					"name": "code",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "kind",
+					"key": 2,
+					"shape": {
+						"type": "function-kind"
+					}
+				},
+				{
+					"name": "export",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "input",
+					"key": 4,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "fuel",
+					"key": 5,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"panic-cause": {
+			"enum": [
+				{
+					"name": "fuel",
+					"code": 1
+				},
+				{
+					"name": "trap",
+					"code": 2
+				},
+				{
+					"name": "memory",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"run-outcome": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "returned",
+						"code": 1,
+						"fields": [
+							{
+								"name": "output",
+								"key": 1,
+								"shape": {
+									"prim": "bytes"
+								}
+							}
+						]
+					},
+					{
+						"name": "panicked",
+						"code": 2,
+						"fields": [
+							{
+								"name": "cause",
+								"key": 1,
+								"shape": {
+									"type": "panic-cause"
+								}
+							},
+							{
+								"name": "message",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"ran": {
+			"record": [
+				{
+					"name": "outcome",
+					"key": 1,
+					"shape": {
+						"type": "run-outcome"
+					}
+				}
+			]
+		},
+		"copies-append": {
+			"record": [
+				{
+					"name": "tablet",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "from",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "frames",
+					"key": 4,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "done",
+					"key": 5,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"copies-held": {
+			"record": [
+				{
+					"name": "held",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"copies-take": {
+			"record": [
+				{
+					"name": "tablet",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"copies-fetch": {
+			"record": [
+				{
+					"name": "tablet",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "from",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "limit",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"copies-fetched": {
+			"record": [
+				{
+					"name": "frames",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "through",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
 		}
 	},
 	"reasons": [
@@ -5463,9 +5843,9 @@
 		"records": [
 			{
 				"name": "capability",
-				"version": 1,
+				"version": 2,
 				"form": "claims",
-				"typ": "monoflake:capability:1",
+				"typ": "monoflake:capability:2",
 				"content": "capability"
 			},
 			{
@@ -6207,6 +6587,119 @@
 					"input": "blob-list",
 					"output": "blob-listed",
 					"reasons": []
+				}
+			]
+		},
+		"issuer": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "for_app",
+					"input": "capabilities-for-app",
+					"output": "capabilities-issued",
+					"reasons": [
+						{
+							"name": "not_granted",
+							"failure": "rejected"
+						},
+						{
+							"name": "suspended",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "for_space",
+					"input": "capability-for-space",
+					"output": "space-capability-issued",
+					"reasons": [
+						{
+							"name": "not_permitted",
+							"failure": "rejected"
+						},
+						{
+							"name": "suspended",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"executor": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "run",
+					"input": "run",
+					"output": "ran",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "no_export",
+							"failure": "rejected"
+						},
+						{
+							"name": "no_sandbox",
+							"failure": "unavailable"
+						}
+					]
+				}
+			]
+		},
+		"copies": {
+			"version": 1,
+			"bounds": {
+				"part": 16777216
+			},
+			"declared": [],
+			"operations": [
+				{
+					"name": "append",
+					"input": "copies-append",
+					"output": "copies-held",
+					"reasons": [
+						{
+							"name": "stale",
+							"failure": "rejected"
+						},
+						{
+							"name": "gap",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "take",
+					"input": "copies-take",
+					"output": "copies-held",
+					"reasons": [
+						{
+							"name": "stale",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "fetch",
+					"input": "copies-fetch",
+					"output": "copies-fetched",
+					"reasons": [
+						{
+							"name": "gap",
+							"failure": "rejected"
+						}
+					]
 				}
 			]
 		}

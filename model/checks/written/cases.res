@@ -43,6 +43,8 @@ type scope = {
   captured: Set.t<string>,
   bounds: dict<int>,
   declared: array<string>,
+  /** The fixtures in `tests/fixtures/`, by name. */
+  fixtures: array<string>,
 }
 
 let isContent = n => Contracts.contents->Array.some(c => c.content == n)
@@ -102,6 +104,38 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
         | _ => fail(`${k} without a length`)
         }
       | None => fail(`${k} takes a length`)
+      }
+    // Bytes that are a signed record, its claims or its content as expected, vuanj.
+    | ("$signed", Expected, _) =>
+      if shape != Prim(#bytes) {
+        fail("$signed where no bytes are")
+      }
+      switch Signed.signed->Array.find(r => Some(r.name) == text(v->member("record"))) {
+      | Some(r) =>
+        switch v->member("claims") {
+        | Some(claims) => conforms(s, Type(r.content), claims, Expected, `${at}.claims`)
+        | None => fail("$signed without its claims")
+        }
+      | None => fail("$signed names no signed record")
+      }
+    // The WAL frames a SQLite primary appends committing these statements in one transaction,
+    // after every earlier `$frames` of its case, made by the runner, vuanj.
+    | ("$frames", Input, _) =>
+      if shape != Prim(#bytes) {
+        fail("$frames where no bytes are")
+      }
+      switch list(v->member("writes")) {
+      | Some(writes)
+        if writes != [] && writes->Array.every(w => w->JSON.Decode.string != None) => ()
+      | _ => fail("$frames takes the statements it writes")
+      }
+    // The hash of a fixture's code as it was built, its hosts holding it deployed.
+    | ("$fixture", Input, Some(name)) =>
+      if shape != Prim(#hash) {
+        fail("$fixture where no hash is")
+      }
+      if !(s.fixtures->Array.includes(name)) {
+        fail(`$fixture ${name}, none in tests/fixtures/`)
       }
     | (k, Input | Expected | Codec, _) => fail(`placeholder ${k}, not taken here`)
     }
@@ -241,11 +275,16 @@ let items = j => list(j)->Option.getOr([])
  */
 let capacityOf = name => name == "deployments" ? "container" : name
 
-/**
- * The products' interfaces and the components' beneath them, whose cases are given configuration
- * rather than capacity.
- */
-let products = [Buckets.interface_.name, Generations.interface_.name, Blobs.interface_.name]
+/** The products' interfaces, whose cases are given configuration rather than capacity. */
+let products = [Buckets.interface_.name, Generations.interface_.name]
+
+/** The components' interfaces, beneath the products, whose cases are given what they read. */
+let components = [
+  Blobs.interface_.name,
+  Capabilities.interface_.name,
+  Runs.interface_.name,
+  Frames.interface_.name,
+]
 
 /**
  * What a product's case is given before its first step: the records changed first, through its
@@ -258,6 +297,19 @@ let productGiven = [
   Subset.optional("room", 2, Prim(#uint53)),
   Subset.optional("builds", 3, Map(Type("manifest"))),
   Subset.optional("allowance", 4, Map(Type("allowance-value"))),
+]
+
+/**
+ * What a component's case is given before its first step: the room of the one store its scope's
+ * backing holds, at a bucket's default levels; its organization's bundle's issuer section; the
+ * fixtures its hosts hold deployed, by name; and the sandboxes its hosts offer, both unless set. A step may be called `as` a component, by its name in
+ * the model, the runner signing the call by a certificate saying so, b8f35.
+ */
+let componentGiven = [
+  Subset.optional("room", 1, Prim(#uint53)),
+  Subset.optional("issuer", 2, Type("bundle-issuer")),
+  Subset.optional("deployed", 3, List(Prim(#string))),
+  Subset.optional("sandboxes", 4, List(Type("sandbox"))),
 ]
 
 /**
@@ -377,6 +429,7 @@ let run = () => {
             captured: Set.make(),
             bounds: i.bounds->Option.getOr(dict{}),
             declared: i.declared->Option.getOr([]),
+            fixtures: fixtures->Dict.keysToArray,
           }
           if text(c->member("description")) == None {
             found->Array.push(`${at}: no description`)
@@ -387,6 +440,21 @@ let run = () => {
           | Some(g) if products->Array.includes(name) =>
             switch g->JSON.Decode.object {
             | Some(d) => record(s, productGiven, d, [], Input, `${at}.given`)
+            | None => found->Array.push(`${at}: given, no object`)
+            }
+          | Some(g) if components->Array.includes(name) =>
+            switch g->JSON.Decode.object {
+            | Some(d) =>
+              record(s, componentGiven, d, [], Input, `${at}.given`)
+              list(d->Dict.get("deployed"))
+              ->Option.getOr([])
+              ->Array.filterMap(JSON.Decode.string)
+              ->Array.forEach(
+                f =>
+                  if !(s.fixtures->Array.includes(f)) {
+                    found->Array.push(`${at}.given: ${f}, no fixture in tests/fixtures/`)
+                  },
+              )
             | None => found->Array.push(`${at}: given, no object`)
             }
           | Some(g) =>
@@ -434,6 +502,15 @@ let run = () => {
                 | None => found->Array.push(`${at}: ${call}, no operation of ${name}`)
                 | Some(o) =>
                   called->Set.add(`${name}.${call}`)
+                  // A call made `as` a component, signed by its certificate, to a component alone.
+                  switch (st->member("as"), text(st->member("as"))) {
+                  | (None, _) => ()
+                  | (Some(_), Some(who))
+                    if components->Array.includes(name) &&
+                      Components.components->Dict.get(who) != None => ()
+                  | (Some(_), _) =>
+                    found->Array.push(`${at}: as, a component of the model and to a component`)
+                  }
                   // A fixture's version, form and artifact are the runner's to write, where a step
                   // writes none.
                   let fixture = st->member("fixture")
@@ -619,7 +696,7 @@ let run = () => {
       switch typed(x, n, "sample") {
       | Some(t) =>
         pairs := pairs.contents + 1
-        let s = {found, captured: Set.make(), bounds: dict{}, declared: []}
+        let s = {found, captured: Set.make(), bounds: dict{}, declared: [], fixtures: []}
         conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, `${path}#${int(n)}`)
         switch text(x->member("cbor")) {
         | Some(h) if isHex(h) && h != "" => ()
@@ -632,7 +709,7 @@ let run = () => {
       switch typed(x, n, "refused") {
       | Some(t) =>
         refused := refused.contents + 1
-        let s = {found: [], captured: Set.make(), bounds: dict{}, declared: []}
+        let s = {found: [], captured: Set.make(), bounds: dict{}, declared: [], fixtures: []}
         conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, "")
         if s.found == [] {
           found->Array.push(`${path}: refused ${int(n)} is read, yet every reader must refuse it`)

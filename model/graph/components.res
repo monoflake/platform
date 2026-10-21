@@ -274,8 +274,8 @@ let own: dict<component> = dict{
     edges: [
       replaced,
       e("?runner", #serve, hard, "where a tablet's writer and copies are"),
-      e("issuer", #serve, hard, "a call's capabilities", ~contract=["?issuer"]),
-      e("executor", #serve, hard, "runs the code", ~contract=["?executor"]),
+      e("issuer", #serve, hard, "a call's capabilities", ~contract=["issuer"]),
+      e("executor", #serve, hard, "runs the code", ~contract=["executor"]),
       e(
         "footing(organization)",
         #serve,
@@ -637,11 +637,6 @@ let permissive = "MIT OR Apache-2.0"
  */
 let ownUndeclared: array<(string, string)> = [
   ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
-  ("issuer", "the issuer's interface: a capability asked for and signed, vuanj [B32]"),
-  (
-    "executor",
-    "the executor's interface: a code's hash, an input and a sandbox, given back an output or a panic, vuanj [B32]",
-  ),
   ("backing", "the backing's interface: a scope's stores and what each declares, b8f35 [B32]"),
   (
     "extent",
@@ -650,10 +645,6 @@ let ownUndeclared: array<(string, string)> = [
   (
     "directory",
     "the directory's rows as they cross, signed: a scope's id, its status and where its backing is, 4dijn [B32]",
-  ),
-  (
-    "copies",
-    "a tablet's copies among themselves: WAL frames from a primary, a generation taken by a majority, vuanj [B32]",
   ),
 ]
 

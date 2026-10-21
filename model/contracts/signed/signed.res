@@ -55,11 +55,26 @@ let types: array<declared> = [
   },
   {
     name: "certificate-role",
-    def: Enum({choices: codes(["intermediate", "issuer", "bundle", "account"]), ordered: false}),
+    def: Enum({
+      choices: codes(["intermediate", "issuer", "bundle", "account", "component"]),
+      ordered: false,
+    }),
     from: "b8f35",
   },
-  // `sub` is the account or app it was given to, its 8 hex digits, logged and never checked; the
-  // resource's id carries its type, so any kind of the organization's it names.
+  // What a capability reaches: a resource, by its id, which carries its type, so any kind of the
+  // organization's; or a product's blob space, which a component's own work reaches alone, b8f35.
+  {
+    name: "capability-target",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "resource", code: 1, fields: [field("id", 1, Across(#organization, "*"))]},
+        {name: "space", code: 2, fields: [field("space", 1, Type("blob-space"))]},
+      ],
+    }),
+    from: "b8f35",
+  },
+  // `sub` is the account, app or component it was given to, logged and never checked.
   {
     name: "capability",
     def: Record([
@@ -67,18 +82,21 @@ let types: array<declared> = [
       field("exp", 4, Prim(#uint53)),
       field("sub", 2, Prim(#string)),
       field("scope", -65537, Across(#platform, "organization")),
-      field("resource", -65538, Across(#organization, "*")),
+      field("target", -65538, Type("capability-target")),
       field("rights", -65539, Type("rights")),
     ]),
     from: "b8f35",
     keys: #cwt,
   },
-  // A scope's own certificate names it; one of the platform's own names none.
+  // A scope's own certificate names it; one of the platform's own names none. A component's says
+  // who it is, its name in the model as `sub`, and never what it may do, which its verifier's rules
+  // say; each running instance holds a key of its own, b8f35.
   {
     name: "certificate",
     def: Record([
       field("iat", 6, Prim(#uint53)),
       field("exp", 4, Prim(#uint53)),
+      optional("sub", 2, Prim(#string)),
       field("cnf", 8, Type("confirmation")),
       optional("scope", -65537, Across(#platform, "organization")),
       field("role", -65540, Type("certificate-role")),
@@ -160,7 +178,7 @@ let types: array<declared> = [
 ]
 
 let signed: array<signed> = [
-  {name: "capability", version: 1, form: #claims, content: "capability"},
+  {name: "capability", version: 2, form: #claims, content: "capability"},
   {name: "certificate", version: 1, form: #claims, content: "certificate"},
   {name: "account", version: 1, form: #claims, content: "account-credential"},
   {name: "bundle", version: 1, form: #record, content: "bundle"},

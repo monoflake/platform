@@ -382,7 +382,7 @@ let own: array<item> = [
   {
     id: "C1",
     group: #C,
-    what: "a tablet's copies on machines, simulated on paper with their failures -- a primary lost, a copy lost, a partition, the read-only lock and its release -- so no write done is lost, before a platform holds its users' data",
+    what: "a tablet's copies on machines, specified for a model checker and run through every interleaving of their failures -- a primary lost, a copy lost, a partition, the read-only lock and its release -- so no write done is lost, before a platform holds its users' data; decided by the author on 2026-10-20 in place of a simulation on paper",
     from: "94y0d, vuanj",
     step: 1,
   },

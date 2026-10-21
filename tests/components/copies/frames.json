@@ -1,0 +1,259 @@
+{
+	"interface": "copies",
+	"cases": [
+		{
+			"description": "a copy takes the primary's frames in order, holds what it flushed, and gives them back",
+			"steps": [
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": 0,
+						"frames": {
+							"$frames": {
+								"writes": ["CREATE TABLE notes (body TEXT)"]
+							}
+						},
+						"done": 0
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$capture": "first"
+							},
+							"generation": 1
+						}
+					}
+				},
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": {
+							"$use": "first"
+						},
+						"frames": {
+							"$frames": {
+								"writes": ["INSERT INTO notes VALUES ('a')"]
+							}
+						},
+						"done": {
+							"$use": "first"
+						}
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$capture": "second"
+							},
+							"generation": 1
+						}
+					}
+				},
+				{
+					"call": "fetch",
+					"input": {
+						"tablet": "t",
+						"from": 0
+					},
+					"expect": {
+						"output": {
+							"frames": {
+								"$any": true
+							},
+							"through": {
+								"$use": "second"
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an append carrying no frame renews the lease and changes nothing held",
+			"steps": [
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": 0,
+						"frames": {
+							"$frames": {
+								"writes": ["CREATE TABLE notes (body TEXT)"]
+							}
+						},
+						"done": 0
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$capture": "held"
+							},
+							"generation": 1
+						}
+					}
+				},
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": {
+							"$use": "held"
+						},
+						"frames": "",
+						"done": {
+							"$use": "held"
+						}
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$use": "held"
+							},
+							"generation": 1
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a generation taken fences the old primary, whose appends are then stale",
+			"steps": [
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": 0,
+						"frames": {
+							"$frames": {
+								"writes": ["CREATE TABLE notes (body TEXT)"]
+							}
+						},
+						"done": 0
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$capture": "held"
+							},
+							"generation": 1
+						}
+					}
+				},
+				{
+					"call": "take",
+					"input": {
+						"tablet": "t",
+						"generation": 2
+					},
+					"expect": {
+						"output": {
+							"held": {
+								"$use": "held"
+							},
+							"generation": 2
+						}
+					}
+				},
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": {
+							"$use": "held"
+						},
+						"frames": {
+							"$frames": {
+								"writes": ["INSERT INTO notes VALUES ('a')"]
+							}
+						},
+						"done": {
+							"$use": "held"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "stale"
+					}
+				},
+				{
+					"call": "take",
+					"input": {
+						"tablet": "t",
+						"generation": 2
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "stale"
+					}
+				}
+			]
+		},
+		{
+			"description": "frames beginning past what a copy holds leave a gap, appended or fetched",
+			"steps": [
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": 1000000,
+						"frames": {
+							"$frames": {
+								"writes": ["CREATE TABLE notes (body TEXT)"]
+							}
+						},
+						"done": 0
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "gap"
+					}
+				},
+				{
+					"call": "fetch",
+					"input": {
+						"tablet": "t",
+						"from": 1000000
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "gap"
+					}
+				}
+			]
+		},
+		{
+			"description": "frames past a part's bound are refused",
+			"steps": [
+				{
+					"call": "append",
+					"input": {
+						"tablet": "t",
+						"generation": 1,
+						"from": 0,
+						"frames": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 1
+								}
+							}
+						},
+						"done": 0
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				}
+			]
+		}
+	]
+}

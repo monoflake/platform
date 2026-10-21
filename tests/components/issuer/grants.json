@@ -1,0 +1,473 @@
+{
+	"interface": "issuer",
+	"cases": [
+		{
+			"description": "an app is given a capability for each grant it holds, and for no other app's",
+			"given": {
+				"issuer": {
+					"grants": [
+						{
+							"app": 7,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read", "create"]
+						},
+						{
+							"app": 7,
+							"target": {
+								"name": "database",
+								"id": 4
+							},
+							"rights": ["read", "create", "replace", "delete", "alter"]
+						},
+						{
+							"app": 8,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read"]
+						}
+					],
+					"allowance": {},
+					"security": "default"
+				}
+			},
+			"steps": [
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 7
+					},
+					"expect": {
+						"output": {
+							"capabilities": [
+								{
+									"target": {
+										"name": "bucket",
+										"id": 3
+									},
+									"capability": {
+										"$signed": {
+											"record": "capability",
+											"claims": {
+												"iat": {
+													"$any": true
+												},
+												"exp": {
+													"$any": true
+												},
+												"sub": "00000007",
+												"scope": {
+													"$any": true
+												},
+												"target": {
+													"name": "resource",
+													"id": 3
+												},
+												"rights": ["read", "create"]
+											}
+										}
+									},
+									"exp": {
+										"$any": true
+									}
+								},
+								{
+									"target": {
+										"name": "database",
+										"id": 4
+									},
+									"capability": {
+										"$signed": {
+											"record": "capability",
+											"claims": {
+												"iat": {
+													"$any": true
+												},
+												"exp": {
+													"$any": true
+												},
+												"sub": "00000007",
+												"scope": {
+													"$any": true
+												},
+												"target": {
+													"name": "resource",
+													"id": 4
+												},
+												"rights": ["read", "create", "replace", "delete", "alter"]
+											}
+										}
+									},
+									"exp": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 8
+					},
+					"expect": {
+						"output": {
+							"capabilities": [
+								{
+									"target": {
+										"name": "bucket",
+										"id": 3
+									},
+									"capability": {
+										"$signed": {
+											"record": "capability",
+											"claims": {
+												"iat": {
+													"$any": true
+												},
+												"exp": {
+													"$any": true
+												},
+												"sub": "00000008",
+												"scope": {
+													"$any": true
+												},
+												"target": {
+													"name": "resource",
+													"id": 3
+												},
+												"rights": ["read"]
+											}
+										}
+									},
+									"exp": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 9
+					},
+					"expect": {
+						"output": {
+							"capabilities": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an app asking for targets is given those it holds a grant for, and refused one it holds none for",
+			"given": {
+				"issuer": {
+					"grants": [
+						{
+							"app": 7,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read", "create"]
+						},
+						{
+							"app": 7,
+							"target": {
+								"name": "database",
+								"id": 4
+							},
+							"rights": ["read", "create", "replace", "delete", "alter"]
+						},
+						{
+							"app": 8,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read"]
+						}
+					],
+					"allowance": {},
+					"security": "default"
+				}
+			},
+			"steps": [
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 7,
+						"targets": [
+							{
+								"name": "database",
+								"id": 4
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"capabilities": [
+								{
+									"target": {
+										"name": "database",
+										"id": 4
+									},
+									"capability": {
+										"$signed": {
+											"record": "capability",
+											"claims": {
+												"iat": {
+													"$any": true
+												},
+												"exp": {
+													"$any": true
+												},
+												"sub": "00000007",
+												"scope": {
+													"$any": true
+												},
+												"target": {
+													"name": "resource",
+													"id": 4
+												},
+												"rights": ["read", "create", "replace", "delete", "alter"]
+											}
+										}
+									},
+									"exp": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 8,
+						"targets": [
+							{
+								"name": "database",
+								"id": 4
+							}
+						]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_granted"
+					}
+				}
+			]
+		},
+		{
+			"description": "a component is given a capability for its own blob space, and refused another's",
+			"given": {
+				"issuer": {
+					"grants": [
+						{
+							"app": 7,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read", "create"]
+						},
+						{
+							"app": 7,
+							"target": {
+								"name": "database",
+								"id": 4
+							},
+							"rights": ["read", "create", "replace", "delete", "alter"]
+						},
+						{
+							"app": 8,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read"]
+						}
+					],
+					"allowance": {},
+					"security": "default"
+				}
+			},
+			"steps": [
+				{
+					"call": "for_space",
+					"as": "storage",
+					"input": {
+						"space": "storage",
+						"rights": ["read", "delete"]
+					},
+					"expect": {
+						"output": {
+							"capability": {
+								"$signed": {
+									"record": "capability",
+									"claims": {
+										"iat": {
+											"$any": true
+										},
+										"exp": {
+											"$any": true
+										},
+										"sub": "storage",
+										"scope": {
+											"$any": true
+										},
+										"target": {
+											"name": "space",
+											"space": "storage"
+										},
+										"rights": ["read", "delete"]
+									}
+								}
+							},
+							"exp": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "for_space",
+					"as": "tablet",
+					"input": {
+						"space": "database",
+						"rights": ["read", "create"]
+					},
+					"expect": {
+						"output": {
+							"capability": {
+								"$signed": {
+									"record": "capability",
+									"claims": {
+										"iat": {
+											"$any": true
+										},
+										"exp": {
+											"$any": true
+										},
+										"sub": "tablet",
+										"scope": {
+											"$any": true
+										},
+										"target": {
+											"name": "space",
+											"space": "database"
+										},
+										"rights": ["read", "create"]
+									}
+								}
+							},
+							"exp": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "for_space",
+					"as": "storage",
+					"input": {
+						"space": "compute",
+						"rights": ["read"]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_permitted"
+					}
+				},
+				{
+					"call": "for_space",
+					"as": "executor",
+					"input": {
+						"space": "compute",
+						"rights": ["read"]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_permitted"
+					}
+				}
+			]
+		},
+		{
+			"description": "a scope suspended is given no capability, an app's or a component's",
+			"given": {
+				"issuer": {
+					"grants": [
+						{
+							"app": 7,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read", "create"]
+						},
+						{
+							"app": 7,
+							"target": {
+								"name": "database",
+								"id": 4
+							},
+							"rights": ["read", "create", "replace", "delete", "alter"]
+						},
+						{
+							"app": 8,
+							"target": {
+								"name": "bucket",
+								"id": 3
+							},
+							"rights": ["read"]
+						}
+					],
+					"allowance": {},
+					"security": "default",
+					"status": "suspended"
+				}
+			},
+			"steps": [
+				{
+					"call": "for_app",
+					"as": "compute",
+					"input": {
+						"app": 7
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "suspended"
+					}
+				},
+				{
+					"call": "for_space",
+					"as": "storage",
+					"input": {
+						"space": "storage",
+						"rights": ["read"]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "suspended"
+					}
+				}
+			]
+		}
+	]
+}

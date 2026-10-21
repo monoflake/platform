@@ -226,7 +226,10 @@ the code's hash, the input and a sandbox -- for `derive` nothing at all, no capa
 time or randomness; for `effect` the call's capabilities and the network -- and gives back the output
 or a panic. Decided by the author on 2026-10-20: **a `derive`'s fuel is its declaration's, passed
 with each call**, metered on Cloudflare as C15 settles; **a panic is a reason -- fuel run out, a
-trap, memory past its bound -- and a message**.
+trap, memory past its bound -- and a message**; and **an input and an output cross as bytes, the CBOR
+of a WIT value**, RFC vr5lw, since a call must pass between JSON and CBOR knowing nothing past itself,
+and a WIT value's two forms are told apart by its type alone, which the compute holds and the
+executor never reads.
 
 **The executor runs code in one of two sandboxes, a V8 isolate or WebAssembly.**
 
@@ -281,7 +284,10 @@ trap, memory past its bound -- and a message**.
   time, each with when it was put, against the sweep's grace.
 - **A machine tablet's copies carry SQLite's WAL frames as they are**, the primary's to the rest,
   decided by the author on 2026-10-20, never its statements; an append carrying no frame renews the
-  lease.
+  lease. **Their rules are sampled at their own interface**, the frames a sample asks for made by a
+  real SQLite from the statements it names, beside the database's samples losing copies; and **the
+  protocol is proven by a model checker**, every interleaving of a primary lost, a copy lost and a
+  partition run against a specification, before a platform holds its users' data [C1].
 - An executor runs code in one of two sandboxes.
 
 **Every dependency points down**: a product reaches the issuer, the tablet, the blob and the

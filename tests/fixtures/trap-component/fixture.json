@@ -1,0 +1,5 @@
+{
+	"description": "traps on each call to trap, reaching an unreachable instruction",
+	"form": "component",
+	"exports": ["trap"]
+}

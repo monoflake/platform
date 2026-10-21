@@ -1,7 +1,15 @@
 {
 	"samples": [
-		{ "type": "rights", "json": ["read", "create"], "cbor": "03" },
-		{ "type": "rights", "json": [], "cbor": "00" },
+		{
+			"type": "rights",
+			"json": ["read", "create"],
+			"cbor": "03"
+		},
+		{
+			"type": "rights",
+			"json": [],
+			"cbor": "00"
+		},
 		{
 			"type": "capability",
 			"json": {
@@ -9,14 +17,44 @@
 				"exp": 1760000300,
 				"sub": "0a1b2c3d",
 				"scope": 1,
-				"resource": 2,
+				"target": {
+					"name": "resource",
+					"id": 2
+				},
 				"rights": ["read", "create"]
 			},
-			"cbor": "a602683061316232633364041a68e7792c061a68e778003a00010000013a00010001023a0001000203"
+			"cbor": "a602683061316232633364041a68e7792c061a68e778003a00010000013a00010001a2000101023a0001000203"
+		},
+		{
+			"type": "capability",
+			"json": {
+				"iat": 1760000000,
+				"exp": 1760000300,
+				"sub": "storage",
+				"scope": 1,
+				"target": {
+					"name": "space",
+					"space": "storage"
+				},
+				"rights": ["read", "delete"]
+			},
+			"cbor": "a6026773746f72616765041a68e7792c061a68e778003a00010000013a00010001a2000201013a0001000209"
+		},
+		{
+			"type": "capability-target",
+			"json": {
+				"name": "space",
+				"space": "database"
+			},
+			"cbor": "a200020103"
 		},
 		{
 			"type": "account-credential",
-			"json": { "iat": 1760000000, "exp": 1760000300, "sub": "0a1b2c3d" },
+			"json": {
+				"iat": 1760000000,
+				"exp": 1760000300,
+				"sub": "0a1b2c3d"
+			},
 			"cbor": "a302683061316232633364041a68e7792c061a68e77800"
 		},
 		{
@@ -38,9 +76,21 @@
 		}
 	],
 	"refused": [
-		{ "type": "rights", "json": 3, "reason": "malformed" },
-		{ "type": "rights", "json": ["read", "read"], "reason": "malformed" },
-		{ "type": "rights", "json": ["own"], "reason": "malformed" },
+		{
+			"type": "rights",
+			"json": 3,
+			"reason": "malformed"
+		},
+		{
+			"type": "rights",
+			"json": ["read", "read"],
+			"reason": "malformed"
+		},
+		{
+			"type": "rights",
+			"json": ["own"],
+			"reason": "malformed"
+		},
 		{
 			"type": "capability",
 			"json": {
@@ -48,7 +98,10 @@
 				"exp": 1760000300,
 				"sub": "0a1b2c3d",
 				"scope": 1,
-				"resource": 2
+				"target": {
+					"name": "resource",
+					"id": 2
+				}
 			},
 			"reason": "malformed"
 		},
@@ -65,6 +118,21 @@
 					}
 				},
 				"role": "issuer"
+			},
+			"reason": "malformed"
+		},
+		{
+			"type": "capability-target",
+			"json": {
+				"name": "space",
+				"space": "elsewhere"
+			},
+			"reason": "malformed"
+		},
+		{
+			"type": "capability-target",
+			"json": {
+				"name": "resource"
 			},
 			"reason": "malformed"
 		}

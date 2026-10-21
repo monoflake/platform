@@ -1,0 +1,192 @@
+{
+	"interface": "executor",
+	"cases": [
+		{
+			"description": "a derive and an effect run a code's export on an input and give back its output",
+			"given": {
+				"deployed": ["echo-component", "spin-component", "trap-component", "grow-component"]
+			},
+			"steps": [
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "echo-component"
+						},
+						"kind": "derive",
+						"export": "echo",
+						"input": "oWR0ZXh0ZWhlbGxv",
+						"fuel": 1000000
+					},
+					"expect": {
+						"output": {
+							"outcome": {
+								"name": "returned",
+								"output": "oWR0ZXh0ZWhlbGxv"
+							}
+						}
+					}
+				},
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "echo-component"
+						},
+						"kind": "effect",
+						"export": "echo",
+						"input": "oWR0ZXh0ZWhlbGxv"
+					},
+					"expect": {
+						"output": {
+							"outcome": {
+								"name": "returned",
+								"output": "oWR0ZXh0ZWhlbGxv"
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a run ends in a panic for fuel run out, a trap, or memory past its bound",
+			"given": {
+				"deployed": ["echo-component", "spin-component", "trap-component", "grow-component"]
+			},
+			"steps": [
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "spin-component"
+						},
+						"kind": "derive",
+						"export": "spin",
+						"input": "oA",
+						"fuel": 1000
+					},
+					"expect": {
+						"output": {
+							"outcome": {
+								"name": "panicked",
+								"cause": "fuel",
+								"message": {
+									"$any": true
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "trap-component"
+						},
+						"kind": "derive",
+						"export": "trap",
+						"input": "oA",
+						"fuel": 1000000
+					},
+					"expect": {
+						"output": {
+							"outcome": {
+								"name": "panicked",
+								"cause": "trap",
+								"message": {
+									"$any": true
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "grow-component"
+						},
+						"kind": "derive",
+						"export": "grow",
+						"input": "oA",
+						"fuel": 1000000000
+					},
+					"expect": {
+						"output": {
+							"outcome": {
+								"name": "panicked",
+								"cause": "memory",
+								"message": {
+									"$any": true
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a code no host holds is not found, and an export it lacks is refused",
+			"given": {
+				"deployed": ["echo-component"]
+			},
+			"steps": [
+				{
+					"call": "run",
+					"input": {
+						"code": "0000000000000000000000000000000000000000000000000000000000000000",
+						"kind": "derive",
+						"export": "echo",
+						"input": "oWR0ZXh0ZWhlbGxv",
+						"fuel": 1000000
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "echo-component"
+						},
+						"kind": "derive",
+						"export": "absent",
+						"input": "oWR0ZXh0ZWhlbGxv",
+						"fuel": 1000000
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "no_export"
+					}
+				}
+			]
+		},
+		{
+			"description": "a derive where its hosts offer no WebAssembly waits for a sandbox",
+			"given": {
+				"deployed": ["echo-component"],
+				"sandboxes": ["v8"]
+			},
+			"steps": [
+				{
+					"call": "run",
+					"input": {
+						"code": {
+							"$fixture": "echo-component"
+						},
+						"kind": "derive",
+						"export": "echo",
+						"input": "oWR0ZXh0ZWhlbGxv",
+						"fuel": 1000000
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "no_sandbox"
+					}
+				}
+			]
+		}
+	]
+}

@@ -24,6 +24,9 @@ let ownTypes: array<declared> = Array.flat([
   Buckets.types,
   Generations.types,
   Blobs.types,
+  Capabilities.types,
+  Runs.types,
+  Frames.types,
 ])
 let ownContents: array<content> = Array.flat([
   Storage.contents,
@@ -45,6 +48,9 @@ let interfaces: array<interface_> = [
   Buckets.interface_,
   Generations.interface_,
   Blobs.interface_,
+  Capabilities.interface_,
+  Runs.interface_,
+  Frames.interface_,
 ]
 
 /** The product: what every language reads, and nothing of the model's code. */

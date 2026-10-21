@@ -1,0 +1,5 @@
+{
+	"description": "grows its memory on each call to grow until no more is given",
+	"form": "component",
+	"exports": ["grow"]
+}

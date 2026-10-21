@@ -273,12 +273,12 @@ as its backing is. The scope itself -- its row in the directory, its allowance -
     decided by the author on 2026-10-20: a bundle carries the certificates a component reads a `kid`
     in, as below, and its issuer's section holds the grants and the allowance, RFC vuanj.
 
-    | Record             | Holds                                                                                                                                                                                      |
-    | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-    | capability         | `iat` and `exp`; `sub`, the account or app it was given to, logged and never checked; the scope's id; the resource's id within it, which carries its type; the rights it grants            |
-    | certificate        | `iat` and `exp`; `cnf` of RFC 8747, the key certified, as a `COSE_Key`; the scope's id, none for the platform's own; one role, `intermediate`, `issuer`, `bundle` or `account`             |
-    | account credential | `iat` and `exp`; `sub`, the account; no scope                                                                                                                                              |
-    | bundle             | `version`; the scope's id; its generation, and an organization's the generation of the platform's it was compiled with; the body, each product's configuration in the product's own format |
+    | Record             | Holds                                                                                                                                                                                                                             |
+    | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | capability         | `iat` and `exp`; `sub`, the account or app it was given to, logged and never checked; the scope's id; its target, a resource by its id or a product's blob space; the rights it grants                                            |
+    | certificate        | `iat` and `exp`; `cnf` of RFC 8747, the key certified, as a `COSE_Key`; the scope's id, none for the platform's own; one role, `intermediate`, `issuer`, `bundle`, `account` or `component`; and for a component, `sub`, its name |
+    | account credential | `iat` and `exp`; `sub`, the account; no scope                                                                                                                                                                                     |
+    | bundle             | `version`; the scope's id; its generation, and an organization's the generation of the platform's it was compiled with; the body, each product's configuration in the product's own format                                        |
 
   - **A capability is refused unless its signer's certificate names the role `issuer` and the
     capability's own scope**, so one organization's issuer never signs for another.
@@ -288,6 +288,22 @@ as its backing is. The scope itself -- its row in the directory, its allowance -
   - **A capability is a bearer's**: whoever holds it may use it, and its short life bounds what one
     leaked is worth, RFC vuanj; one bound to a key its holder proves would cost a signature a call.
   - **No signed record holds a secret**: a certificate is public and travels in a bundle.
+  - **A component's certificate says who it is, never what it may do**, decided by the author on
+    2026-10-20: the role `component`, and its name in the model as `sub`, so a component added
+    changes no role and a rule changed reissues no certificate; what each may ask is the
+    verifier's, written in the model. **Each running instance holds a key of its own**, certified by
+    the intermediate as the issuer's working keys are, for seven days and renewed each day, so one
+    host lost is one certificate revoked.
+  - **A capability's target is a union**, decided by the author on 2026-10-20: a resource, by its
+    id, which carries its type; or a product's blob space, which a component's own work -- a sweep,
+    a repair, an archive -- reaches and nothing else does. One kind of capability, one path signing
+    it, and no field whose absence means something; a target added is a case. Version 2, the first
+    released.
+  - **A call a certificate makes carries that certificate in its unprotected header, `kcwt`**, RFC
+    9528's header parameter 13 for a CWT confirming a `COSE_Key`, decided by the author on
+    2026-10-20: a capability's signer is found by its `kid` in the bundle, since every component
+    verifies one, but an instance's certificate changes each day and is verified by what it calls
+    alone, so it travels with the call.
   - **A bundle's body is a section for each reader of its organization's configuration**, decided
     by the author on 2026-10-20, `model/contracts/signed/signed.res`: `issuer`, the grants, the
     allowance and the organization's `security`; `storage`, each bucket; `database`, each

@@ -1,0 +1,5 @@
+{
+	"description": "loops forever on each call to spin, so it runs out of whatever fuel it is given",
+	"form": "component",
+	"exports": ["spin"]
+}
