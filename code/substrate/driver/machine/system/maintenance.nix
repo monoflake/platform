@@ -69,6 +69,7 @@ lib.mkIf config.machine.maintenance.enable {
     ];
     shellAliases = {
       c = "clear";
+      os = "fastfetch";
       ls = "eza";
       ll = "eza -l";
       la = "eza -la";
