@@ -1,0 +1,12 @@
+{
+	"name": "@monoflake/capability",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@monoflake/codec": "workspace:*",
+		"@monoflake/keys": "workspace:*",
+		"@noble/curves": "2.4.0"
+	}
+}

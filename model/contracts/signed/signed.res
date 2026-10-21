@@ -56,7 +56,15 @@ let types: array<declared> = [
   {
     name: "certificate-role",
     def: Enum({
-      choices: codes(["intermediate", "issuer", "bundle", "account", "component", "authority"]),
+      choices: codes([
+        "intermediate",
+        "issuer",
+        "bundle",
+        "account",
+        "component",
+        "authority",
+        "organization",
+      ]),
       ordered: false,
     }),
     from: "b8f35",

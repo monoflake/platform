@@ -1,0 +1,12 @@
+{
+	"name": "@monoflake/capability",
+	"namespace": "Capability",
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
+	"dependencies": ["@monoflake/codec", "@monoflake/keys"],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "number": "+4", "error": "+a-110" }
+}

@@ -15,6 +15,18 @@ importers:
         specifier: ^12.3.1
         version: 12.3.1
 
+  code/libs/capability:
+    dependencies:
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@monoflake/keys':
+        specifier: workspace:*
+        version: link:../keys
+      '@noble/curves':
+        specifier: 2.4.0
+        version: 2.4.0
+
   code/libs/codec: {}
 
   code/libs/compat: {}
@@ -50,6 +62,10 @@ importers:
   code/tools/envelope-generator: {}
 
 packages:
+
+  '@noble/curves@2.4.0':
+    resolution: {integrity: sha512-P4/62zrgfH33CneE3Dn4WhJVA22YUU0eR51wKIan4NVRvwsA0YnPTwWGpNbpuacSujmSFLvyzpyuR30+fbq2Ew==}
+    engines: {node: '>= 20.19.0'}
 
   '@noble/hashes@2.4.0':
     resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
@@ -94,6 +110,10 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@noble/curves@2.4.0':
+    dependencies:
+      '@noble/hashes': 2.4.0
 
   '@noble/hashes@2.4.0': {}
 

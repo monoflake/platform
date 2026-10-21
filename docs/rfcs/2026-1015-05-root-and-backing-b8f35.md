@@ -306,6 +306,16 @@ as its backing is. The scope itself -- its row in the directory, its allowance -
 
   - **A capability is refused unless its signer's certificate names the role `issuer` and the
     capability's own scope**, so one organization's issuer never signs for another.
+  - **Who signs what is one table, and nothing else is taken**, decided by the author on
+    2026-10-20, `code/libs/capability/src/signed.resi`: the root an intermediate; the intermediate
+    an authority; the authority an organization's, an issuer's, a bundle's and an account's key,
+    its record and the directory's rows; an organization its components' keys and its own calls;
+    an issuer capabilities; a bundle's key the bundle; an account's key account credentials; and a
+    component its calls. A signer holding a scope signs only what holds the same; what carries
+    `iat` and `exp` is refused from `exp` on and while its `iat` is more than 60 seconds ahead,
+    each certificate of a chain as much as what it signs. **A signature is verified strictly**, by
+    RFC 8032 and never ZIP-215's encodings, so every runtime answers one alike; a signed record is
+    a COSE Sign1 tagged 18. **An organization's own key holds the role `organization`.**
   - **A capability carries its signer's `kid` alone, never the chain**: the certificates come in the
     bundle a component reads anyway, the platform's copied down each day, and a `kid` a component does not know
     sends it to read the bundle again. A call carries the capability alone.

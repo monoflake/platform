@@ -69,7 +69,7 @@ let types: array<declared> = [
 /** A record whose generation is below what the control holds is never answered. */
 let interface_: interface_ = {
   name: "authority",
-  version: 1,
+  version: 2,
   from: "7xpd3",
   operations: [
     op("pull", "authority-pull", "authority-pulled", [("ahead", #rejected)]),

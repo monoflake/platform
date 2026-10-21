@@ -66,9 +66,11 @@ let libraries: dict<library> = dict{
   },
   "capability*": {
     languages: [#rescript],
-    what: "a capability and its chain to the root, checked, vuanj",
+    what: "every signed record verified, a capability, a certificate, an account credential, a bundle, an authority's record, a directory's row and a call, each by its chain to the root, strictly, vuanj, b8f35",
     agrees: false,
-    uses: ["compat*"],
+    uses: ["codec*", "keys*", "compat*"],
+    takes: [{language: #rescript, name: "@noble/curves", major: "2"}],
+    samples: ["tests/capability"],
   },
   "vocabulary*": {
     languages: [#rescript],

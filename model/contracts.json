@@ -2123,6 +2123,10 @@
 				{
 					"name": "authority",
 					"code": 6
+				},
+				{
+					"name": "organization",
+					"code": 7
 				}
 			],
 			"ordered": false
@@ -7285,7 +7289,7 @@
 			]
 		},
 		"authority": {
-			"version": 1,
+			"version": 2,
 			"bounds": {},
 			"declared": [],
 			"operations": [
