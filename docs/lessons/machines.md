@@ -40,3 +40,48 @@ extent for good to the subvolume that made it and cost about what no quota does,
 shared from exclusive use. Asked by B22. Sources: https://lwn.net/Articles/944371,
 https://blogs.oracle.com/linux/btrfs-qgroup-quota-vs-simple-quota and
 https://btrfs.readthedocs.io/en/latest/btrfs-quota.html
+
+## A machine tried, 2026-10-20
+
+Measured on one virtual machine, two cores and 3.4 GB of memory, BIOS, reinstalled to NixOS 26.05,
+Linux 6.18.57, btrfs-progs 6.19.1, to answer B23.
+
+**A NixOS set is about 1.1 GiB once trimmed**, `nix path-info -Sh` of the system: the installer's
+default 1.1 GiB; with containerd, runc, crun, nftables and the tailnet 1.4 GiB; trimmed -- no git, no
+documentation, crun built without criu and libkrun, no shell but bash -- 1.0 GiB, and 1.1 GiB with
+workerd. The largest paths left are the kernel's modules, 144 MiB, workerd, 133 MiB, containerd, 95
+MiB, and the CNI plugins, 71 MiB.
+
+**Python comes in through what a server does not need**: nixpkgs' crun links criu, which holds
+Python 3, 295 MiB in all against 76 MiB without it and libkrun; fish holds it too, for its
+completions, and git holds both it and perl. crun's derivation adds `-lcriu` to `NIX_LDFLAGS` whatever
+its inputs, so dropping criu means dropping that flag as well, or its configure finds no working C
+compiler.
+
+**A machine that boots by BIOS keeps perl**: NixOS installs GRUB by `install-grub.pl`, so the
+`perlless` profile's forbidden dependencies fail its build. Only `system.forbiddenDependenciesRegexes`
+need be lifted; the rest of the profile holds.
+
+**workerd is not in nixpkgs 26.05**: Cloudflare's own build, from the npm package
+`@cloudflare/workerd-linux-64`, is one 135 MiB executable linking glibc alone, which
+`autoPatchelfHook` makes run.
+
+**A qgroup above subvolumes holds their limit under simple quotas**: with `btrfs quota enable
+--simple`, a level-1 qgroup limited to 1 GiB over two subvolumes refuses the write that takes their
+sum past it, `EDQUOT`, and a level-2 qgroup above that one holds its own limit as well.
+
+**A subvolume joins a qgroup only when told**: `btrfs subvolume create` and `btrfs subvolume
+snapshot` take `-i <qgroup>`; without it a new subvolume, a snapshot of a member among them, is in
+none. `btrfs qgroup assign` adds one already made, and under simple quotas the parent's usage counts
+it at once, with no rescan.
+
+**An extent stays charged to the subvolume that wrote it**: a snapshot costs nothing when taken, and
+what is written into it is charged to it. Deleting the subvolume a snapshot came from leaves its
+qgroup, shown as `<squota space holder>`, and its charge in every parent, until the last extent it
+wrote is freed.
+
+**NixOS laid over a running Debian by `NIXOS_LUSTRATE` failed to boot** on a machine running Docker
+and a firewall of its own: Debian's units, `networking.service` among them, still started, found the
+loader replaced by NixOS's `stub-ld`, and the emergency shell could not start. A machine is
+reinstalled from the provider's image by https://github.com/bin456789/reinstall instead, `nixos
+26.05 --username root --ssh-key <key>`, which installs NixOS through its own netboot.

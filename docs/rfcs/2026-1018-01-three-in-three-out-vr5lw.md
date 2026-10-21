@@ -510,17 +510,29 @@ management interface below, RFC fhg6w.
   reaches the host.
   - **The system's store, `/nix`, is the host's, on ext4**, worked out with the author on
     2026-10-19: what the host holds is a set fixed whatever runs -- NixOS, containerd, the OCI and
-    isolate runtimes, the driver, the tailnet, the firewall -- and all that grows with use is on
-    btrfs, code built for a binding among it. So ext4 is the set's size times the generations kept,
-    each up to a whole set where an update moves nixpkgs, with journald held to a bound. **Until it
-    is measured** by `nix path-info -Sh /run/current-system` on a machine reinstalled to try it, a
-    set is taken as about 3 GB, and ext4 as 24 GB, five generations past the current, or 16 GB,
-    three, on a disk under 80 GB. The driver reports how many fit.
-  - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, `docs/lessons/`, through
-    containerd's btrfs snapshotter, every image layer and container layer a subvolume: a binding's
-    volumes are subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup
-    above them all holds the binding's limit. Whether simple quotas take a qgroup above others is to
-    be tried on the same machine first. [B23]
+    isolate runtimes, the driver, the tailnet, the firewall, and bash as its one shell, the author
+    said on 2026-10-20, neither fish nor zsh on a server -- and all that grows with use is on
+    btrfs, code built for a binding among it. A set measured 1.1 GiB trimmed, `docs/lessons/`.
+    Generations share every path an update leaves alone, and only one that moves nixpkgs or a
+    library everything links costs a whole set. So **ext4 is 8 GB whatever the disk**, decided
+    with the author on 2026-10-20, a 20 GB disk among them, journald held to a bound: the driver
+    collects old generations, keeping as many as leave room for one whole set more, and never fewer
+    than the current and the one before it, and reports how many it keeps.
+  - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, through containerd's
+    btrfs snapshotter, every image layer and container layer a subvolume: a binding's volumes are
+    subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup above them
+    all holds the binding's limit, tried on a machine on 2026-10-20, `docs/lessons/`. A subvolume
+    joins a qgroup only when told, and the snapshotter tells none, so the driver assigns a
+    container's layer to its binding's qgroup between preparing it and starting it, when nothing is
+    written yet, and makes each volume with `-i`.
+  - **A binding's images are counted by the driver, not by btrfs**, decided with the author on
+    2026-10-20: a layer is shared among bindings, and simple quotas charge it for good to the
+    subvolume that unpacked it, so layers are the host's. A layer never changes, so the driver
+    measures it once, when it is unpacked; a binding's images are the sum of its images' layers, a
+    layer two bindings share counted in each; the driver keeps a binding's images as its deployment
+    says, the current one and as many before it, collects the rest, and reports what each binding's
+    images hold. A binding's limit is one figure: the driver refuses a pull that would take its
+    images past it, and sets the qgroup's limit to what its images leave.
 - **What a driver has to tell, it pushes**, as events, each with an id: a difference found, a thing
   removed, a thing that cannot be made. It pushes to each binding's control what is that binding's
   alone; one it could not deliver it pushes again later, and hands back as well with the state a
