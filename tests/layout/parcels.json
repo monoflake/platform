@@ -1,0 +1,184 @@
+{
+	"from": "RFC b8f35: a parcel's header and its 256 segments sealed by AES-256-GCM; `sealed` and `opened` are the BLAKE3, unkeyed, of the parcel and of its capacity opened, `head` its first 64 bytes; computed by a reference apart from the code, cryptography 50.0.2's AES-GCM",
+	"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+	"header": {
+		"master": 1,
+		"seed": "6465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283"
+	},
+	"sealed": [
+		{
+			"pieces": {
+				"xof": "monoflake parcel sample",
+				"length": 0
+			},
+			"head": "4d4f464c01000000016465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182830ebcb5deb52c83bd08a8a935182c9199d2435653288160",
+			"sealed": "89b3cefdfb5f6d5ce6290ce97409f84e6c570fed07ef337645b2759f601a0a40",
+			"opened": "fdb2a7554b79e359d55fa345926ad9875702df239cf70959e8c421962463f4db"
+		},
+		{
+			"pieces": {
+				"xof": "monoflake parcel sample",
+				"length": 1000
+			},
+			"head": "4d4f464c01000000016465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283152801138ddb4bf5d728ead650833258b50a482691f697",
+			"sealed": "8ec2c3213deea1abafa7a2d80189bb7b55648ede8d1797e7f80aca87df5d7d0f",
+			"opened": "763f318e7ac8687250b2094fef1d19795093947f13054b23f9aa460980731525"
+		},
+		{
+			"pieces": {
+				"xof": "monoflake parcel sample",
+				"length": 16773079
+			},
+			"head": "4d4f464c01000000016465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283152801138ddb4bf5d728ead650833258b50a482691f697",
+			"sealed": "704812d508310558d0ffedfc494ff7cc022c08512eba7ae1e9be14cff1cc5f1c",
+			"opened": "4b50bf97d14b78c4b28b129cd54fbb4f2d6caf65cdfb4bf9eff805a1c9880d72"
+		}
+	],
+	"fits": [
+		{
+			"used": 0,
+			"length": 100,
+			"at": 0
+		},
+		{
+			"used": 16773069,
+			"length": 10,
+			"at": 16773069
+		},
+		{
+			"used": 16773069,
+			"length": 11
+		},
+		{
+			"used": 0,
+			"length": 16773079,
+			"at": 0
+		}
+	],
+	"unsealable": [
+		{
+			"key": "00000000000000000000000000000000000000000000000000000000000000",
+			"header": {
+				"master": 0,
+				"seed": "6465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283"
+			},
+			"length": 0,
+			"refused": "key"
+		},
+		{
+			"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+			"header": {
+				"master": 0,
+				"seed": "6465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283"
+			},
+			"length": 0,
+			"refused": "master"
+		},
+		{
+			"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+			"header": {
+				"master": 4294967296,
+				"seed": "6465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283"
+			},
+			"length": 0,
+			"refused": "master"
+		},
+		{
+			"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+			"header": {
+				"master": 1,
+				"seed": "00000000000000000000000000000000000000000000000000000000000000"
+			},
+			"length": 16773080,
+			"refused": "seed"
+		},
+		{
+			"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+			"header": {
+				"master": 1,
+				"seed": "6465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f80818283"
+			},
+			"length": 16773080,
+			"refused": "overfull"
+		}
+	],
+	"unopened": {
+		"of": "the parcel sealed of 1000 bytes of pieces, each case changing it so",
+		"cases": [
+			{
+				"truncate": 16777215,
+				"refused": "size"
+			},
+			{
+				"set": {
+					"at": 0,
+					"bytes": "4e"
+				},
+				"refused": "magic"
+			},
+			{
+				"set": {
+					"at": 4,
+					"bytes": "02"
+				},
+				"refused": "reserved"
+			},
+			{
+				"set": {
+					"at": 4,
+					"bytes": "00"
+				},
+				"refused": {
+					"revision": 0
+				}
+			},
+			{
+				"set": {
+					"at": 4,
+					"bytes": "03"
+				},
+				"refused": {
+					"revision": 3
+				}
+			},
+			{
+				"set": {
+					"at": 5,
+					"bytes": "00000000"
+				},
+				"refused": "master"
+			},
+			{
+				"key": "00000000000000000000000000000000000000000000000000000000000000",
+				"refused": "key"
+			},
+			{
+				"set": {
+					"at": 9,
+					"bytes": "ff"
+				},
+				"refused": {
+					"tag": 0
+				}
+			},
+			{
+				"set": {
+					"at": 458910,
+					"bytes": "ff"
+				},
+				"refused": {
+					"tag": 7
+				}
+			},
+			{
+				"set": {
+					"at": 16777215,
+					"bytes": "00"
+				},
+				"refused": {
+					"tag": 255
+				}
+			}
+		]
+	}
+}

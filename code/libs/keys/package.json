@@ -1,0 +1,10 @@
+{
+	"name": "@monoflake/keys",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@noble/hashes": "2.4.0"
+	}
+}

@@ -495,14 +495,23 @@ write(bucket, path, content)
   parcels a scope writes, and a parcel is read whole.
 
   **A journal draws its seed once, as it is opened**, and is named by it, 64 hex digits; its first
-  object begins with the revision and the master's version. Its segments are sealed as a
-  parcel's are, under the journal's key, each the next index and `final` `0x00` throughout, its
-  end what the footing records.
-  The parcel it becomes takes the same seed under the parcel's key, so the two keys differ
-  while every row and segment counts from zero, and **a journal exported again gives the same
-  bytes, and so the same id**: a parcel placed but not yet recorded is placed again over itself,
-  never left behind. **A key seals one content**: sealing the same bytes again under the same nonces
-  tells nothing, and whatever else is sealed draws a new seed.
+  object begins with the revision and the master's version, 5 bytes, as a parcel's header holds
+  them. Its segments are sealed as a parcel's are, under the journal's key, each the next index and
+  `final` `0x00` throughout, its end what the footing records. Decided by the author on 2026-10-20:
+
+  - **Its associated data is the header of the parcel it becomes**, the 41 bytes, then `u32_be(i)`
+    and `0x00`: the two share a header and are sealed under different keys, so a nonce they share
+    tells nothing.
+  - **A write's segments hold 64 KiB each but its last, which holds the rest**, each followed by its
+    tag, so an object is split into its segments by its length alone.
+  - **What a journal seals is the parcel's pieces as they will lie**, joined in the order written
+    and no more than a parcel holds, so exporting opens it, fills the rest with zeros and seals it
+    under the parcel's key, and every piece keeps its offset.
+    The parcel it becomes takes the same seed under the parcel's key, so the two keys differ
+    while every row and segment counts from zero, and **a journal exported again gives the same
+    bytes, and so the same id**: a parcel placed but not yet recorded is placed again over itself,
+    never left behind. **A key seals one content**: sealing the same bytes again under the same nonces
+    tells nothing, and whatever else is sealed draws a new seed.
 
 - **A parcel's place is computed, by rendezvous hashing over integers alone.** Among the stores
   that meet its placement, each store s scores the parcel by the highest, over k from 0 to its

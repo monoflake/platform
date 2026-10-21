@@ -11,6 +11,9 @@ type state = InWork | Accepted
 let blocks: dict<state> = dict{
   "codec": Accepted,
   "compat": Accepted,
-  "envelope": InWork,
-  "envelope-generator": InWork,
+  "envelope": Accepted,
+  "envelope-generator": Accepted,
+  "keys": InWork,
+  "layout": InWork,
+  "placement": InWork,
 }

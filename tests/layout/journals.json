@@ -1,0 +1,213 @@
+{
+	"from": "RFC b8f35, its journal as the author decided on 2026-10-20: a first object's prefix, a write's segments of 64 KiB but its last, the associated data the header of the parcel it becomes; `object` is the BLAKE3, unkeyed, of each object, `head` its first 48 bytes; computed by a reference apart from the code",
+	"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+	"header": {
+		"master": 1,
+		"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+	},
+	"writes": [
+		{
+			"first": 0,
+			"pieces": {
+				"xof": "monoflake journal write 0",
+				"length": 1000
+			},
+			"head": "010000000147dbb39d71b8625bd34f44a1cde34fffd82c57cbe235c421059cd9cb1acd6bbe4266cc102101f43762fb54",
+			"object": "61885c13fd8e6a64e97e0dc36df86b259a9675879803c23f738b6c6bf7a77762",
+			"length": 1021,
+			"next": 1
+		},
+		{
+			"first": 1,
+			"pieces": {
+				"xof": "monoflake journal write 1",
+				"length": 131077
+			},
+			"head": "e34323d461ce3b314c191aac0b5c170b9f55a45746284022c30f5deb631e489a3e0f0a913046aa58357e5929df076114",
+			"object": "2fd0db561b1dc21398767915b36fade0e912e306277dd7917e1e61510d424ffd",
+			"length": 131125,
+			"next": 4
+		},
+		{
+			"first": 4,
+			"pieces": {
+				"xof": "monoflake journal write 2",
+				"length": 65536
+			},
+			"head": "704995f94e244fd15f1cb46be95f4f86560aadfe2d1e081a2ca2cdb9fa39abe5d87be1881f965bf41f799d5f8d82aa69",
+			"object": "be7926da23fd931ac7336a3593e5a7587766807902ad3a051ce6ab42aa649092",
+			"length": 65552,
+			"next": 5
+		},
+		{
+			"first": 5,
+			"pieces": {
+				"xof": "monoflake journal write 3",
+				"length": 1
+			},
+			"head": "8aeb1683aad3de05200c74c9cf2e2b0f8d",
+			"object": "64d5d53af8aed0ed13e20b3402c9cad72fa1132444bb6625c936862cb1e7ced7",
+			"length": 17,
+			"next": 6
+		}
+	],
+	"exported": {
+		"of": "every write's pieces joined, sealed as a parcel under `key` with the same header",
+		"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+		"sealed": "e768b28df4fbc7f1454a0ee74a45b135e4991a128ea20b589b334f69f26372e8"
+	},
+	"unsealable": [
+		{
+			"key": "00000000000000000000000000000000000000000000000000000000000000",
+			"header": {
+				"master": 0,
+				"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+			},
+			"first": 0,
+			"length": 1,
+			"refused": "key"
+		},
+		{
+			"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+			"header": {
+				"master": 0,
+				"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+			},
+			"first": 0,
+			"length": 1,
+			"refused": "master"
+		},
+		{
+			"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+			"header": {
+				"master": 1,
+				"seed": "00000000000000000000000000000000000000000000000000000000000000"
+			},
+			"first": 0,
+			"length": 1,
+			"refused": "seed"
+		},
+		{
+			"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+			"header": {
+				"master": 1,
+				"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+			},
+			"first": -1,
+			"length": 1,
+			"refused": "first"
+		},
+		{
+			"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+			"header": {
+				"master": 1,
+				"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+			},
+			"first": 0,
+			"length": 0,
+			"refused": "empty"
+		},
+		{
+			"key": "c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7",
+			"header": {
+				"master": 1,
+				"seed": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+			},
+			"first": 0,
+			"length": 16773080,
+			"refused": "overfull"
+		}
+	],
+	"unopened": {
+		"of": "the first write's object where `first` is 0, the second's where it is 1, each case changing it so",
+		"cases": [
+			{
+				"first": 0,
+				"truncate": 4,
+				"refused": "prefix"
+			},
+			{
+				"first": 0,
+				"set": {
+					"at": 0,
+					"bytes": "02"
+				},
+				"refused": "reserved"
+			},
+			{
+				"first": 0,
+				"set": {
+					"at": 0,
+					"bytes": "00"
+				},
+				"refused": {
+					"revision": 0
+				}
+			},
+			{
+				"first": 0,
+				"set": {
+					"at": 1,
+					"bytes": "00000000"
+				},
+				"refused": "master"
+			},
+			{
+				"first": 0,
+				"set": {
+					"at": 1,
+					"bytes": "00000002"
+				},
+				"refused": "master"
+			},
+			{
+				"first": 0,
+				"key": "00000000000000000000000000000000000000000000000000000000000000",
+				"refused": "key"
+			},
+			{
+				"first": 0,
+				"truncate": 5,
+				"refused": "length"
+			},
+			{
+				"first": 0,
+				"truncate": 21,
+				"refused": "length"
+			},
+			{
+				"first": 0,
+				"set": {
+					"at": 8,
+					"bytes": "ff"
+				},
+				"refused": {
+					"tag": 0
+				}
+			},
+			{
+				"first": 1,
+				"set": {
+					"at": 65559,
+					"bytes": "ff"
+				},
+				"refused": {
+					"tag": 2
+				}
+			},
+			{
+				"first": 1,
+				"truncate": 131124,
+				"refused": {
+					"tag": 3
+				}
+			},
+			{
+				"first": 2,
+				"refused": {
+					"tag": 2
+				}
+			}
+		]
+	}
+}

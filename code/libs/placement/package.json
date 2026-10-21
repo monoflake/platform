@@ -1,0 +1,10 @@
+{
+	"name": "@monoflake/placement",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@monoflake/keys": "workspace:*"
+	}
+}

@@ -70,6 +70,12 @@ against it, and the whole is held by the conversation.
 - **A standard's own examples are taken from its text when nothing licensed holds them**: an RFC is
   public, so they are copied into `tests/` with the RFC and its section named in the file, as
   `tests/cbor/` is from RFC 8949. Decided by the author on 2026-10-20.
+- **A format of the platform's own is sampled by a reference apart from the code**, decided by
+  the author on 2026-10-20: where no standard holds its vectors -- a cut, a parcel, a score -- the
+  conversation computes them from the RFC's definition with other implementations of what it takes,
+  in another language, and commits the data alone, the reference named in the file. Two
+  implementations agreeing byte for byte is what says the definition was read one way; content too
+  large to keep is given by a seed and held by its hash.
 - **A test held back is a question, never a pass**: `#[ignore]`, a `todo` or a `skip` fails
   accept, so a block waiting on an answer is reported waiting rather than green.
 - **What is not decided waits behind a row**: `%todo("B32")` in ReScript, `todo!("B32")` in Rust,

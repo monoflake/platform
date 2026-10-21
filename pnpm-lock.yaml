@@ -25,9 +25,35 @@ importers:
         specifier: workspace:*
         version: link:../codec
 
+  code/libs/keys:
+    dependencies:
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+
+  code/libs/layout:
+    dependencies:
+      '@monoflake/keys':
+        specifier: workspace:*
+        version: link:../keys
+    devDependencies:
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
+
+  code/libs/placement:
+    dependencies:
+      '@monoflake/keys':
+        specifier: workspace:*
+        version: link:../keys
+
   code/tools/envelope-generator: {}
 
 packages:
+
+  '@noble/hashes@2.4.0':
+    resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
+    engines: {node: '>= 20.19.0'}
 
   '@rescript/darwin-arm64@12.3.1':
     resolution: {integrity: sha512-pwdnHhuIMH4Y5nuEwBLAMOYvGIcAVgnSZq/DWUNZJWoUr7YZpNkABJp0TFGiyYePT5ld+nvjQ40oI0rKjEWK8w==}
@@ -68,6 +94,8 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@noble/hashes@2.4.0': {}
 
   '@rescript/darwin-arm64@12.3.1':
     optional: true
