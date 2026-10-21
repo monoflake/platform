@@ -144,22 +144,20 @@ in
     # 4.0, from nixos-artwork's `nix-snowflake-rainbow.svg`, its legs recolored blue, pink and white
     # and drawn by chafa 1.18.3 in braille, 32 by 16, its output kept whole but for the cursor it
     # hid and showed, each line opening with the normal weight fastfetch's bold would replace. A
-    # configuration names every module it shows, so these are fastfetch's own defaults.
+    # configuration names every module it shows, so these are fastfetch's own defaults less the
+    # title and its separator, the display, the local address and the locale.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file-raw";
         source = "${./logo.txt}";
       };
       modules = [
-        "title"
-        "separator"
         "os"
         "host"
         "kernel"
         "uptime"
         "packages"
         "shell"
-        "display"
         "de"
         "wm"
         "wmtheme"
@@ -174,10 +172,8 @@ in
         "memory"
         "swap"
         "disk"
-        "localip"
         "battery"
         "poweradapter"
-        "locale"
         "break"
         "colors"
       ];
