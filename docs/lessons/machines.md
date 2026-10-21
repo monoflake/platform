@@ -142,3 +142,12 @@ youki in turn:
 - busybox httpd as PID 1 ignores SIGTERM, so a stop waits its whole grace before the kill.
 - A CNI bridge plugin run by hand leaves an nftables table, `cni_plugins_masquerade`, which its
   `DEL` does not remove when the bridge goes.
+
+**zswap on NixOS's kernel, read on 2026-10-21** from buf's `/proc/config.gz`, Linux 6.18: zswap and
+zsmalloc are built in, and so is zstd, its default compressor, while lz4 is a module; a compressor
+named on the kernel's line that is not yet loaded falls back to the default, so lz4 is written to
+`/sys/module/zswap/parameters/compressor` once the system is up, which loads the module. No
+`zpool` parameter is left, zsmalloc being the one pool. NixOS makes a swap file on btrfs by `btrfs
+filesystem mkswapfile`, which marks it no copy on write, and encrypts swap at random only through
+`cryptsetup` over what it names, a loop device for a file. A tmpfs holds pages swap can take unless
+it is mounted `noswap`, Linux 6.4 on.

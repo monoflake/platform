@@ -537,10 +537,19 @@ management interface below, RFC fhg6w.
     machine driver's `system/`, a NixOS module the root's `flake.nix` gives with the disk's layout
     by disko and a template**, worked out with the author on 2026-10-20: a machine's own flake,
     started from the template, adds its name and what the module's options ask -- `machine.disk`,
-    `machine.keys`, `machine.tailnet.authKeyFile`, and `monoflake.driver.bindings`, the files of the
+    `machine.keys`, `machine.memory`, `machine.tailnet.authKeyFile`, and `monoflake.driver.bindings`, the files of the
     binding tokens its driver takes -- in technical words but where they name the platform, and is
     installed by nixos-anywhere. A secret is a file the machine holds, never text in the Nix store,
     and how it comes there is the holder's.
+  - **Every machine swaps to a file behind zswap**, decided by the author on 2026-10-21: neither
+    zram nor a partition. The file is in `/data`, a subvolume of its own that no snapshot holds,
+    and its size is the platform's, worked from the memory the machine's flake states: 2 GiB up to
+    2 GiB of memory, as much as the memory up to 8, half of it beyond, at least 8 and at most 16.
+    zswap holds at most a fifth of the memory, compressed by zstd, or by lz4 on a weak processor,
+    `machine.swap.compressor`, its coldest written back to the file. A container's secrets are on
+    a tmpfs mounted `noswap`, so none reaches the disk; what a container holds in its own memory
+    may, since the machine is trusted, and a running container swaps none, its memory and swap
+    limits one.
   - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, through containerd's
     btrfs snapshotter, every image layer and container layer a subvolume: a binding's volumes are
     subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup above them

@@ -18,6 +18,19 @@ in
         type = types.listOf types.str;
         description = "SSH public keys authorized to log in as root.";
       };
+      memory = mkOption {
+        type = types.ints.positive;
+        description = "Memory installed, in MiB, from which the swap file's size is derived.";
+        example = 4096;
+      };
+      swap.compressor = mkOption {
+        type = types.enum [
+          "zstd"
+          "lz4"
+        ];
+        default = "zstd";
+        description = "Compressor zswap uses for swapped pages; lz4 for a weak processor.";
+      };
       tailnet.authKeyFile = mkOption {
         type = types.nullOr file;
         default = null;

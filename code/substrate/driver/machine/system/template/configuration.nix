@@ -4,6 +4,7 @@
   networking.hostName = "machine";
   machine = {
     disk = "/dev/vda";
+    memory = 4096;
     keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPlaceholderReplaceWithYourOwnPublicKey0000" ];
     # tailnet.authKeyFile = "/var/lib/secrets/tailnet";
   };
