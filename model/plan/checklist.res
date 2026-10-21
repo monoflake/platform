@@ -621,6 +621,13 @@ let own: array<item> = [
     done: "zn3u5, vuanj: none unless turned on; a day to 90 days, a week to 180, a month to a year, changed within a year and an hour; restored as a new database unless asked over; one logical dump, declared with its code",
   },
   {
+    id: "C39",
+    group: #C,
+    what: "a container checkpointed whole to disk by CRIU, a cold pause beside the warm one: freeing all its memory, outliving a reboot, and perhaps what carries it across a machine's upgrade, C32; crun's criu kept while it is open",
+    from: "vr5lw",
+    step: 2,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",

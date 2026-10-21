@@ -550,6 +550,10 @@ management interface below, RFC fhg6w.
     a tmpfs mounted `noswap`, so none reaches the disk; what a container holds in its own memory
     may, since the machine is trusted, and a running container swaps none, its memory and swap
     limits one.
+  - **A container paused is frozen and its memory written to the swap file**, decided by the
+    author on 2026-10-21: its cgroup frozen, its swap limit lifted and zswap passed by, its memory
+    reclaimed. It resumes where it was, and a reboot loses it, so it starts again from its image.
+    Checkpointing one whole to disk is open. [C39]
   - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, through containerd's
     btrfs snapshotter, every image layer and container layer a subvolume: a binding's volumes are
     subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup above them
@@ -850,3 +854,5 @@ Open, for the discussion that follows:
 - The database's sizes, a small one and a large one, and what each is made of. [C23]
 - A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
   [C32]
+- A container checkpointed whole to disk by CRIU, a cold pause that frees its memory and outlives a
+  reboot, and whether it carries a container across a machine's upgrade. [C39]
