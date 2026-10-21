@@ -20,10 +20,11 @@
     }:
     let
       system = ./code/substrate/driver/machine/system;
-      systems = [
+      linux = [
         "x86_64-linux"
-        "aarch64-darwin"
+        "aarch64-linux"
       ];
+      systems = linux ++ [ "aarch64-darwin" ];
       each = f: nixpkgs.lib.genAttrs systems (s: f nixpkgs.legacyPackages.${s});
     in
     {
@@ -45,15 +46,18 @@
         description = "NixOS configuration for a Linux container host";
       };
 
-      # The template, as it stands, built as a machine would be, so the module is held to it.
-      checks.x86_64-linux.machine =
-        (nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [
-            self.nixosModules.machine
-            (system + "/template/configuration.nix")
-          ];
-        }).config.system.build.toplevel;
+      # The template, as it stands, built as a machine of each system would be, so the module is
+      # held to it; the system is what a machine's hardware configuration names.
+      checks = nixpkgs.lib.genAttrs linux (s: {
+        machine =
+          (nixpkgs.lib.nixosSystem {
+            modules = [
+              self.nixosModules.machine
+              (system + "/template/configuration.nix")
+              { nixpkgs.hostPlatform = s; }
+            ];
+          }).config.system.build.toplevel;
+      });
 
       formatter = each (pkgs: pkgs.nixfmt);
     };

@@ -9,8 +9,9 @@
   ...
 }:
 let
-  crun = pkgs.unstable.callPackage ./crun.nix { };
-  workerd = pkgs.unstable.callPackage ./workerd.nix { };
+  inherit (pkgs.unstable) crun youki;
+  # The serial console: a PC's first UART, an Arm machine's PL011.
+  serial = if pkgs.stdenv.hostPlatform.isAarch64 then "ttyAMA0" else "ttyS0";
 in
 {
   imports = [
@@ -22,6 +23,7 @@ in
   nixpkgs.overlays = [ (final: _: { inherit (final.unstable) containerd; }) ];
 
   boot = {
+    # BIOS and EFI on a PC; EFI alone on Arm, which has no BIOS GRUB, so its partition idles.
     loader.grub = {
       enable = true;
       efiSupport = true;
@@ -29,7 +31,7 @@ in
       configurationLimit = 3;
     };
     kernelParams = [
-      "console=ttyS0,115200n8"
+      "console=${serial},115200n8"
       "console=tty0"
     ];
   };
@@ -70,7 +72,7 @@ in
     users.root.openssh.authorizedKeys.keys = config.machine.keys;
   };
 
-  # The btrfs snapshotter, so each layer is a subvolume a qgroup can hold, RFC vr5lw; crun beside runc.
+  # The btrfs snapshotter, each layer a subvolume a qgroup holds, RFC vr5lw; runc, crun and youki.
   virtualisation.containerd = {
     enable = true;
     settings = {
@@ -83,9 +85,15 @@ in
       ];
       plugins."io.containerd.grpc.v1.cri".containerd = {
         snapshotter = "btrfs";
-        runtimes.crun = {
-          runtime_type = "io.containerd.runc.v2";
-          options.BinaryName = "${crun}/bin/crun";
+        runtimes = {
+          crun = {
+            runtime_type = "io.containerd.runc.v2";
+            options.BinaryName = "${crun}/bin/crun";
+          };
+          youki = {
+            runtime_type = "io.containerd.runc.v2";
+            options.BinaryName = "${youki}/bin/youki";
+          };
         };
       };
     };
@@ -98,7 +106,7 @@ in
       pkgs.unstable.btrfs-progs
       pkgs.unstable.runc
       crun
-      workerd
+      youki
     ];
   };
   documentation.enable = false;

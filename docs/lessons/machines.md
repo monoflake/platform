@@ -18,8 +18,9 @@ vr5lw. Source: https://docs.rs/containerd-client
 
 **containerd runs crun through runc's shim**: `runtime_type` `io.containerd.runc.v2`, with
 `options.BinaryName` naming crun's binary. The shim calls its runtime as runc is called, so only a
-runtime compatible with it runs so; Kata brings a shim of its own. Whether youki does is not found.
-Asked by checklist C32. Sources: https://blog.nuvotex.de/crun/ and
+runtime compatible with it runs so; Kata brings a shim of its own. **youki does too**, tried on
+2026-10-21: youki 0.7.0 under containerd 2.4.1's `io.containerd.runc.v2`, by `BinaryName`, ran
+alpine on the btrfs snapshotter in cgroup v2, as runc and crun did beside it. Sources: https://blog.nuvotex.de/crun/ and
 https://git.causa-arcana.com/kotovalexarian-likes-github/moby--moby/commit/6de52a29a8e8fbe9639178a25f716bfe4532ff11
 
 **A container outlives containerd's restart**: its shim is its parent once runc has made it, so it
@@ -114,3 +115,15 @@ apart from it, and a layer pulled lands as a subvolume under `/data/containerd`.
 **Tailscale replaces `/etc/resolv.conf` with its own resolver**, `100.100.100.100`, which a
 container's network cannot reach; `tailscale set --accept-dns=false`, the module's `extraSetFlags`,
 leaves the machine's nameservers in place.
+
+**nixpkgs' crun carries criu, and criu Python**, measured 2026-10-21: the host without workerd and
+with crun as nixpkgs builds it weighed 1463.6 MiB against 1417.0 MiB before, workerd's 133.1 MiB
+gone and Python 3.14's 137.1 MiB, libkrunfw's 22.4 MiB, libkrun's 5.2 MiB and criu's 2.5 MiB come,
+crun's own closure 316.7 MiB. An override dropping criu and libkrun makes a crun no binary cache
+holds, which every machine would compile, so nixpkgs' stands until the system is reviewed whole.
+
+**workerd links glibc alone, wasmtime glibc and libgcc_s**, read from their ELF headers on
+2026-10-21: workerd 1.20261019.1 needs `libc.so.6` and `libm.so.6`, GLIBC_2.35, so distroless
+`base-nossl` holds it; wasmtime 49.0.4 needs `libgcc_s` beside glibc, GLIBC_2.28, so distroless
+`cc`. Both images build for arm64 on an amd64 builder with nothing emulated, since only the stage
+fetching the release runs a command, on the build's own platform.

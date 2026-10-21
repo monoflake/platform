@@ -571,7 +571,7 @@ let own: array<item> = [
   {
     id: "C32",
     group: #C,
-    what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a containerd one, and what is handed over first where a container would not outlive it; and whether youki runs under containerd's runc shim as crun does",
+    what: "a machine's own upgrades, run by its driver: staggered so no two machines one placement needs go at once, across a NixOS release and a containerd one, and what is handed over first where a container would not outlive it",
     from: "vr5lw",
     step: 2,
   },

@@ -1,5 +1,6 @@
 # What this machine is alone; the rest is the platform's module.
 {
+  imports = [ ./hardware-configuration.nix ];
   networking.hostName = "machine";
   machine = {
     disk = "/dev/vda";

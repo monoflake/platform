@@ -9,8 +9,8 @@
   outputs =
     { platform, nixpkgs, ... }:
     {
+      # The system is the hardware configuration's, `nixpkgs.hostPlatform`.
       nixosConfigurations.machine = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         modules = [
           platform.nixosModules.machine
           ./configuration.nix
