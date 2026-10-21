@@ -164,4 +164,6 @@ of each color, so a picture reduced to a few colors by nearest distance paints a
 where one sorted by hue, the grays first, keeps each edge with its own leg. A logo drawn in
 letters is matched cell by cell against the picture's shape, each letter drawn in the terminal's
 font, both softened first so a slanted edge does not flip on a pixel; a logo is drawn by a program
-from the picture, never by hand.
+from the picture, never by hand. Its columns are its rows times the picture's width over its height,
+divided by a cell's width over its height, 0.52 in Menlo -- not another drawing's proportions,
+which made one 6 percent too wide.
