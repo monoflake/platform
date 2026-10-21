@@ -3,6 +3,14 @@
 # permissive.
 [graph]
 all-features = true
+# The targets a crate is built for, the machines' two and the author's own; a crate only another
+# target pulls in, webpki-root-certs through rustls-platform-verifier on wasm32 among them, is not
+# linked into anything shipped.
+targets = [
+	"x86_64-unknown-linux-gnu",
+	"aarch64-unknown-linux-gnu",
+	"aarch64-apple-darwin",
+]
 
 [advisories]
 version = 2

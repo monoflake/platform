@@ -2,6 +2,7 @@
 
 use std::os::unix::fs::MetadataExt;
 use std::path::{Component, Path};
+use std::time::Duration;
 
 use sha2::{Digest, Sha256};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -15,6 +16,12 @@ const CHUNK: usize = 64 * 1024;
 const NOT_SERVED: &str = "a file: address names no artifact this machine serves";
 /// What a copy that failed is answered, as plainly.
 const UNREAD: &str = "the artifact could not be read whole";
+/// What an address that could not be reached is answered.
+const UNREACHED: &str = "the artifact's address could not be reached";
+
+/// How long a connection may take to open, and an artifact to arrive whole.
+const CONNECT: Duration = Duration::from_secs(10);
+const WHOLE: Duration = Duration::from_secs(600);
 
 fn unfetchable(why: impl Into<String>) -> Unfetched {
 	Unfetched::Unfetchable(why.into())
@@ -29,12 +36,34 @@ impl Fetch for Https {
 			return copied(file, into, most).await;
 		}
 		if address.starts_with("https://") {
-			// open: fetching over HTTPS waits on a client whose graph the license policy takes;
-			// reqwest 0.13 brings webpki-root-certs, CDLA-Permissive-2.0, through its verifier.
-			return Err(unfetchable("fetching over HTTPS is not built yet"));
+			return fetched(address, into, most).await;
 		}
 		Err(unfetchable("an artifact's address is https: or file:"))
 	}
+}
+
+/// An artifact over HTTPS, followed through no redirect to anything but HTTPS, refused before a
+/// byte is written where it says it is larger than the bound.
+async fn fetched(address: &str, into: &Path, most: u64) -> Result<[u8; 32], Unfetched> {
+	let client = reqwest::Client::builder()
+		.https_only(true)
+		.connect_timeout(CONNECT)
+		.timeout(WHOLE)
+		.build()
+		.map_err(|_| unfetchable(UNREACHED))?;
+	let mut response = client.get(address).send().await.map_err(|_| unfetchable(UNREACHED))?;
+	let status = response.status();
+	if !status.is_success() {
+		return Err(unfetchable(format!("the artifact's address answered {}", status.as_u16())));
+	}
+	if response.content_length().is_some_and(|size| size > most) {
+		return Err(Unfetched::TooLarge);
+	}
+	let mut sink = Sink::new(into, most).await?;
+	while let Some(chunk) = response.chunk().await.map_err(|_| unfetchable(UNREAD))? {
+		sink.take(&chunk).await?;
+	}
+	sink.done().await
 }
 
 /// The file a path names, opened, where it is a regular file, no link, and lies within the
