@@ -1,0 +1,13 @@
+[package]
+name = "compat"
+version = "0.0.0"
+description = "Versions on a frozen core: the range a reader reads, the version written, and features, RFC wnqvu"
+edition.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json = "1"

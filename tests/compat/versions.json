@@ -1,0 +1,22 @@
+{
+	"from": "RFC wnqvu; a version of 0 to 2^53 - 1, decided by the author on 2026-10-20",
+	"made": [0, 1, 9007199254740991],
+	"unmade": [-1, 1.5, 9007199254740992],
+	"ranges": {
+		"made": [
+			[0, 0],
+			[1, 2],
+			[0, 9007199254740991]
+		],
+		"unmade": [
+			[3, 2],
+			[1, 0]
+		]
+	},
+	"reads": [
+		{ "range": [1, 2], "version": 0, "refused": "older" },
+		{ "range": [1, 2], "version": 1 },
+		{ "range": [1, 2], "version": 2 },
+		{ "range": [1, 2], "version": 3, "refused": "newer" }
+	]
+}

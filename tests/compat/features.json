@@ -1,0 +1,34 @@
+{
+	"from": "RFC wnqvu, compared as RFC 49qyg compares a set; a name of lowercase ASCII letters, digits and hyphens",
+	"made": [
+		{ "has": ["b", "a", "a"], "needs": [], "made": { "has": ["a", "b"], "needs": [] } },
+		{ "has": ["x-1", "y"], "needs": ["y", "y"], "made": { "has": ["x-1", "y"], "needs": ["y"] } },
+		{ "has": [], "needs": [], "made": { "has": [], "needs": [] } }
+	],
+	"unmade": [
+		{ "has": [""], "needs": [], "malformed": { "name": "" } },
+		{ "has": ["A"], "needs": [], "malformed": { "name": "A" } },
+		{ "has": ["é"], "needs": [], "malformed": { "name": "é" } },
+		{ "has": ["a", "b c"], "needs": ["z"], "malformed": { "name": "b c" } },
+		{ "has": ["a"], "needs": ["b"], "malformed": { "unheld": "b" } },
+		{ "has": ["a"], "needs": ["B"], "malformed": { "name": "B" } }
+	],
+	"agreed": [
+		{
+			"first": { "has": ["a", "b"], "needs": [] },
+			"second": { "has": ["b", "c"], "needs": [] },
+			"agreed": ["b"]
+		},
+		{
+			"first": { "has": ["a", "b"], "needs": ["a"] },
+			"second": { "has": ["a"], "needs": ["a"] },
+			"agreed": ["a"]
+		},
+		{ "first": { "has": [], "needs": [] }, "second": { "has": [], "needs": [] }, "agreed": [] },
+		{
+			"first": { "has": ["a", "b"], "needs": ["b"] },
+			"second": { "has": ["a", "c"], "needs": ["c"] },
+			"missing": { "first": ["b"], "second": ["c"] }
+		}
+	]
+}

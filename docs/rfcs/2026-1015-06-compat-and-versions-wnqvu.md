@@ -55,8 +55,9 @@ alike: the stamp, the range, the features, choosing what is written, and the rea
 refused. **Its core is frozen and so needs no version**: a version is one non-negative integer, the
 first thing read, compared by its value -- nothing more, and never changed, as the version field
 at the front of a network packet has not. **The rest of `compat` is versioned by that core** like
-any other library, and so can change. An unsigned 32-bit integer, or a number in a text format, is
-more versions than a format will break in its life.
+any other library, and so can change. **A version is an integer of 0 to 2^53 - 1**, JavaScript's
+largest safe integer, so every language the platform is written in holds each one exactly; decided
+by the author on 2026-10-20, and more versions than a format will break in its life.
 
 **In a footing, what each row holds is such a record**, its keys alone columns, RFC b8f35, so a
 table's schema changes only where a key does.

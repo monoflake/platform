@@ -49,10 +49,12 @@ let libraries: dict<library> = dict{
     ],
   },
   "compat*": {
-    languages: [#rescript],
+    languages: [#rust, #rescript],
     what: "versions: a frozen core, and ranges, features and refusals on it, wnqvu",
     agrees: true,
     uses: [],
+    takes: [{language: #rust, name: "serde_json", major: "1"}],
+    samples: ["tests/compat"],
   },
   "capability*": {
     languages: [#rescript],

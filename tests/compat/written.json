@@ -1,0 +1,61 @@
+{
+	"from": "RFC wnqvu: the lowest of every running reader's highest, the writer's own range among them",
+	"cases": [
+		{ "what": "the writer alone", "ranges": [[1, 2]], "written": 2 },
+		{
+			"what": "a new build reads n to n+1 and still writes n while an old reader runs",
+			"ranges": [
+				[1, 2],
+				[1, 1]
+			],
+			"written": 1
+		},
+		{
+			"what": "the same whatever the order",
+			"ranges": [
+				[1, 1],
+				[1, 2]
+			],
+			"written": 1
+		},
+		{
+			"what": "every reader reads n+1, so writing moves to it",
+			"ranges": [
+				[1, 2],
+				[1, 2]
+			],
+			"written": 2
+		},
+		{
+			"what": "n dropped once nothing of it is left",
+			"ranges": [
+				[2, 2],
+				[1, 2]
+			],
+			"written": 2
+		},
+		{
+			"what": "the largest version",
+			"ranges": [[0, 9007199254740991]],
+			"written": 9007199254740991
+		},
+		{ "what": "no range", "ranges": [], "unchosen": "empty" },
+		{
+			"what": "no version read by all",
+			"ranges": [
+				[1, 1],
+				[2, 3]
+			],
+			"unchosen": { "highest": 1, "above": [1] }
+		},
+		{
+			"what": "every range above it named, ascending",
+			"ranges": [
+				[2, 3],
+				[1, 1],
+				[2, 2]
+			],
+			"unchosen": { "highest": 1, "above": [0, 2] }
+		}
+	]
+}
