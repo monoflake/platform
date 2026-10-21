@@ -67,7 +67,7 @@ test("each kind's typ", () =>
       Signed.typ,
     ),
     [
-      "monoflake:capability:2",
+      "monoflake:capability:3",
       "monoflake:certificate:1",
       "monoflake:account:1",
       "monoflake:bundle:1",

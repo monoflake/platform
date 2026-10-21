@@ -23,6 +23,7 @@ let ownTypes: array<declared> = Array.flat([
   Capabilities.types,
   Runs.types,
   Frames.types,
+  Footings.types,
   Authorities.types,
   Directories.types,
 ])
@@ -49,6 +50,7 @@ let interfaces: array<interface_> = [
   Capabilities.interface_,
   Runs.interface_,
   Frames.interface_,
+  Footings.interface_,
   Authorities.interface_,
   Authorities.notices,
   Directories.interface_,

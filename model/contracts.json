@@ -2160,6 +2160,21 @@
 								}
 							}
 						]
+					},
+					{
+						"name": "records",
+						"code": 3,
+						"fields": [
+							{
+								"name": "kinds",
+								"key": 1,
+								"shape": {
+									"list": {
+										"prim": "string"
+									}
+								}
+							}
+						]
 					}
 				]
 			}
@@ -3273,6 +3288,19 @@
 				]
 			}
 		},
+		"architecture": {
+			"enum": [
+				{
+					"name": "amd64",
+					"code": 1
+				},
+				{
+					"name": "arm64",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
 		"deployment-artifact": {
 			"record": [
 				{
@@ -3288,6 +3316,14 @@
 					"shape": {
 						"prim": "hash"
 					}
+				},
+				{
+					"name": "architecture",
+					"key": 3,
+					"shape": {
+						"type": "architecture"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -6071,6 +6107,280 @@
 				}
 			]
 		},
+		"footing-row": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "id",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "generation",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "version",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "content",
+					"key": 5,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-read": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "id",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "key",
+					"key": 3,
+					"shape": {
+						"map": {
+							"prim": "bytes"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "after",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 5,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-rows": {
+			"record": [
+				{
+					"name": "rows",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "footing-row"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-change-row": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "id",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "at",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "version",
+					"key": 4,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "content",
+					"key": 5,
+					"shape": {
+						"prim": "bytes"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-write": {
+			"record": [
+				{
+					"name": "rows",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "footing-change-row"
+						}
+					}
+				},
+				{
+					"name": "reverts",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-written": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "ids",
+					"key": 2,
+					"shape": {
+						"list": {
+							"prim": "uint32"
+						}
+					}
+				}
+			]
+		},
+		"footing-bundle-of": {
+			"record": [
+				{
+					"name": "at_least",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-bundle": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "bundle",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"lease-action": {
+			"enum": [
+				{
+					"name": "take",
+					"code": 1
+				},
+				{
+					"name": "renew",
+					"code": 2
+				},
+				{
+					"name": "release",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"footing-lease": {
+			"record": [
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "action",
+					"key": 2,
+					"shape": {
+						"type": "lease-action"
+					}
+				},
+				{
+					"name": "seconds",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"footing-leased": {
+			"record": [
+				{
+					"name": "until",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
 		"authority-loan": {
 			"record": [
 				{
@@ -6323,6 +6633,7 @@
 	],
 	"messages": {
 		"ahead": "The generation asked for is ahead of the one held",
+		"behind": "No generation as new as the one asked for is held yet",
 		"beyond_allowance": "The change asks for more than the allowance gives",
 		"beyond_host": "The host cannot give what is asked",
 		"beyond_limit": "The statement goes past a limit of the database",
@@ -6338,6 +6649,7 @@
 		"fault": "The implementation failed while answering",
 		"gap": "The frames asked for are no longer all held",
 		"hash_mismatch": "What was fetched does not match its hash",
+		"held": "The lease is held by another until it ends",
 		"invalid": "The input is well formed but not valid",
 		"malformed": "The call is not as its interface writes it",
 		"no_export": "No export of that name is deployed",
@@ -6377,9 +6689,9 @@
 		"records": [
 			{
 				"name": "capability",
-				"version": 2,
+				"version": 3,
 				"form": "claims",
-				"typ": "monoflake:capability:2",
+				"typ": "monoflake:capability:3",
 				"content": "capability"
 			},
 			{
@@ -7359,6 +7671,65 @@
 					"reasons": [
 						{
 							"name": "gap",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"footing": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "read",
+					"input": "footing-read",
+					"output": "footing-rows",
+					"reasons": [
+						{
+							"name": "no_kind",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "write",
+					"input": "footing-write",
+					"output": "footing-written",
+					"reasons": [
+						{
+							"name": "stale",
+							"failure": "rejected"
+						},
+						{
+							"name": "no_kind",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "bundle",
+					"input": "footing-bundle-of",
+					"output": "footing-bundle",
+					"reasons": [
+						{
+							"name": "behind",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "lease",
+					"input": "footing-lease",
+					"output": "footing-leased",
+					"reasons": [
+						{
+							"name": "held",
 							"failure": "rejected"
 						}
 					]

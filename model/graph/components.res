@@ -126,7 +126,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its products' configuration and the bundle it compiles",
-        ~contract=["records", "bundle"],
+        ~contract=["footing", "records", "bundle"],
       ),
       e(
         "authority",
@@ -191,7 +191,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its buckets and their policies, in the bundle, v7v3w",
-        ~contract=["bundle.storage"],
+        ~contract=["footing", "bundle.storage"],
       ),
       e(
         "tablet",
@@ -206,7 +206,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its scope's status and allowance, in the bundle, through scope*, vuanj",
-        ~contract=["bundle.issuer"],
+        ~contract=["footing", "bundle.issuer"],
       ),
       key(),
       e(
@@ -239,7 +239,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its directory of names and ids, in the bundle, v7v3w",
-        ~contract=["bundle.database"],
+        ~contract=["footing", "bundle.database"],
       ),
       e("tablet", #serve, hard, "a database is a tablet", ~contract=["database"]),
       e(
@@ -247,7 +247,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its scope's status and allowance, in the bundle, through scope*, vuanj",
-        ~contract=["bundle.issuer"],
+        ~contract=["footing", "bundle.issuer"],
       ),
       key(),
     ],
@@ -267,7 +267,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "its apps, versions, declarations, bindings, env, queues and schedules, in the bundle, v7v3w",
-        ~contract=["bundle.compute"],
+        ~contract=["footing", "bundle.compute"],
       ),
       e(
         "tablet",
@@ -282,14 +282,14 @@ let own: dict<component> = dict{
         #background,
         soft,
         "a tick's lease, so one compute of several fires it, v7v3w",
-        ~contract=["record.lease"],
+        ~contract=["footing", "record.lease"],
       ),
       e(
         "footing(organization)",
         #deploy,
         hard,
         "the allowance a declaration must fit, and its scope's status, through scope*, vuanj",
-        ~contract=["bundle.issuer"],
+        ~contract=["footing", "bundle.issuer"],
       ),
       e("?entry", #serve, hard, "a request trigger: HTTP reaches an app's function, 49qyg"),
       e("?entry", #deploy, hard, "binds an app's names, from the bundle, vr5lw"),
@@ -310,7 +310,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "reads the scope's grants and allowance in the bundle, in its own format, vuanj",
-        ~contract=["bundle.issuer"],
+        ~contract=["footing", "bundle.issuer"],
       ),
       e(
         "authority",
@@ -334,7 +334,7 @@ let own: dict<component> = dict{
         #start,
         hard,
         "which copies hold a tablet on machines, its primary and generation, raised only as one is taken over, vuanj",
-        ~contract=["record.writer"],
+        ~contract=["footing", "record.writer"],
       ),
       e(
         "blob",
@@ -375,6 +375,7 @@ let own: dict<component> = dict{
         hard,
         "the scope's stores, the bundle's backing section; the extent's records it reads and writes itself, and which journal each placement writes, b8f35",
         ~contract=[
+          "footing",
           "bundle.backing",
           "record.content",
           "record.piece",
@@ -451,7 +452,7 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "the extent's records and the scope's stores, the bundle's backing section, b8f35",
-        ~contract=["record.content", "record.piece", "record.parcel", "bundle.backing"],
+        ~contract=["footing", "record.content", "record.piece", "record.parcel", "bundle.backing"],
       ),
       e(
         "driver(machine)",

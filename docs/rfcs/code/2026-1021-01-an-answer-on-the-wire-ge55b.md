@@ -47,18 +47,19 @@ Decided by the author on 2026-10-21, after the agent read the author's own respo
   reason the operation does not declare is still answered under its own name, `unknown`.
 - **CBOR is what a component answers where a request names neither form**, RFC vr5lw.
 
-## Proposed
-
-Written by the agent on 2026-10-21 for the author to decide; the machine driver takes it now and
-cites this RFC.
-
-- **An image's artifact is an OCI image layout archive**, a tar holding `oci-layout`, `index.json`
-  and `blobs/`, as `docker buildx` writes with `type=oci` and `ctr images import` reads; its
-  `address` a URL the archive is fetched from, and its `hash` the SHA-256 of the archive's bytes as
-  fetched, checked before anything is imported, so `hash_mismatch` and `too_large` are decided on
-  the bytes alone. An archive holds one platform's image.
+- **An image's artifact is an OCI image layout archive, one architecture's**, decided by the author
+  on 2026-10-21 from the agent's proposal: a tar holding `oci-layout`, `index.json` and `blobs/`, as
+  `docker buildx` writes with `type=oci` and `ctr images import` reads; its `address` a URL the
+  archive is fetched from, and its `hash` the SHA-256 of the archive's bytes as fetched, checked
+  before anything is imported, so `hash_mismatch` and `too_large` are decided on the bytes alone.
+  An archive holds one architecture's image, and an artifact names which,
+  `model/contracts/kinds/deployments.res`: the control gives each host the artifact of its own
+  architecture, which builds a build has being the builder's, `?builder`, and a driver given
+  another's answers `beyond_host`, so a machine fetches its own alone.
 
 ## Open
 
 Whether a registry replaces the archive later, and then whether `hash` becomes a manifest's digest,
-is C11's with the image's format.
+is C11's with the image's format. Who serves the URL an archive is fetched from, and how a fetch is
+authenticated, is not decided; the author raised on 2026-10-21 a repository of the organization's
+own for releases, the images and the machine's NixOS among them.

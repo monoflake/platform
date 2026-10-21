@@ -9,8 +9,8 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use envelope::contracts::{
-	DeploymentDeleted, DeploymentDeploy, DeploymentDescribed, DeploymentForm, DeploymentIsolation,
-	DeploymentOf, DeploymentRuns, DeploymentRuntime, DeploymentState,
+	Architecture, DeploymentDeleted, DeploymentDeploy, DeploymentDescribed, DeploymentForm,
+	DeploymentIsolation, DeploymentOf, DeploymentRuns, DeploymentRuntime, DeploymentState,
 };
 
 use crate::{
@@ -58,6 +58,15 @@ impl Chosen for Runtimes {
 	}
 }
 
+/// The architecture this driver was built for, as OCI names it, or none where those names lack it.
+fn own() -> Option<Architecture> {
+	match std::env::consts::ARCH {
+		"x86_64" => Some(Architecture::Amd64),
+		"aarch64" => Some(Architecture::Arm64),
+		_ => None,
+	}
+}
+
 /// What a deploy asks, checked against what the host gives.
 struct Wanted<'a> {
 	runs: String,
@@ -76,6 +85,15 @@ impl<'a> Wanted<'a> {
 			DeploymentForm::Modules | DeploymentForm::Component => {
 				return Err(Refused::new("beyond_host", "a container runs an image alone"));
 			}
+		}
+		// An artifact naming another architecture than the machine's is beyond the host, RFC ge55b.
+		if let Some(named) = input.artifact.architecture
+			&& own() != Some(named)
+		{
+			return Err(Refused::new(
+				"beyond_host",
+				"an image runs on the architecture it was built for",
+			));
 		}
 		for isolation in &input.isolation {
 			match isolation {

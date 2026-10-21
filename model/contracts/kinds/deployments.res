@@ -44,11 +44,22 @@ let types: array<declared> = [
     }),
     from: "vr5lw",
   },
-  // Where the driver fetches it from, an address its builder gave, and its hash, checked.
+  // The machine an image is built for, as OCI names it, ge55b.
+  {
+    name: "architecture",
+    def: Enum({choices: [{name: "amd64", code: 1}, {name: "arm64", code: 2}], ordered: false}),
+    from: "ge55b",
+  },
+  // Where the driver fetches it from, an address its builder gave, and its hash, checked. An image
+  // names its architecture, and one of another is beyond the host, ge55b.
   {
     name: "deployment-artifact",
-    def: Record([field("address", 1, Prim(#string)), field("hash", 2, Prim(#hash))]),
-    from: "vr5lw",
+    def: Record([
+      field("address", 1, Prim(#string)),
+      field("hash", 2, Prim(#hash)),
+      optional("architecture", 3, Type("architecture")),
+    ]),
+    from: "vr5lw, ge55b",
   },
   // Deploying is idempotent, and the runtime is the driver's to choose unless set. A secret is
   // deployed here alone and never answered, v7v3w.

@@ -23,32 +23,32 @@ Found while reading, and to be settled with this: `records.res` names compute an
 writers of `lease`, and neither has an edge to `record.lease`; vuanj says the executor stores
 nothing.
 
-## Proposed
+## Decided
 
-Written by the agent on 2026-10-21 for the author to decide.
+Decided by the author on 2026-10-21, from the agent's proposal.
 
-1. **The footing is an interface, `footing`, declared in the model as every other is**, `POST
-   /footing/{operation}`, its answers `answer` envelopes, RFC ge55b, so the footing Worker on
-   Cloudflare and whatever answers it on a machine are held to one set of samples, RFC p8e8k, and no
-   component writes SQL against a schema it does not own. Four operations:
+1. **The footing is an interface, `footing`, declared in the model as every other is**,
+   `model/contracts/components/footings.res`, `POST /footing/{operation}`, its answers `answer`
+   envelopes, RFC ge55b, so the footing Worker on Cloudflare and whatever answers it on a machine are
+   held to one set of samples, `tests/components/footing/`, RFC p8e8k, and no component writes SQL
+   against a schema it does not own. Four operations:
    - `read`: a record by kind and key, or a kind's records by a prefix of a unique key, a page at a
-     time; each with its shell, the generation that wrote it among them.
-   - `write`: records of one change, each conditional -- absent, or at the generation read -- applied
-     all or none, answered `stale` where any condition failed, the generation it made given back.
+     time; each with the generation that wrote it.
+   - `write`: records of one change, each conditional, absent or at the generation read, applied all
+     or none, answered `stale` where any condition failed, the generation it made given back.
    - `bundle`: the newest signed bundle and its generation, or a section of it, for a reader that
      verifies it, `capability*`, refusing a generation lower than one it read, RFC v7v3w.
    - `lease`: a lease taken, renewed or given up, by name, `until` set by the footing's clock and
      never a host's, answered `held` while another holds it.
-2. **Who may write what is the capability's**: a call carries a capability whose rights name the
-   kinds its caller writes, as `records.res` lists them -- a control its configuration and
-   `generation`, `store`; blob its extent's four kinds; a tablet `writer`; whoever holds leases,
-   `lease` -- so the data plane's writing no configuration is held where it is written, not trusted.
+2. **Who may write what is the capability's**: a call carries a capability whose target names the
+   kinds its caller writes, as `model/graph/records.res` lists them, a case `records` of
+   `capability-target` in `model/contracts/signed/signed.res`, which raised `capability` to version
+   3; so the data plane's writing no configuration is held where it is written, not trusted.
 3. **A machine reaches the same interface**: a host on a machine calls the footing Worker over
    HTTPS, RFC b8f35, and a footing on a machine, where one is, answers the same operations; the
    machine footing's engine is the machine's, behind them.
-4. **`lease` is written by compute alone**, decided by the author on 2026-10-21: the executor stores
-   nothing, vuanj, so it left `records.res`'s writers of `lease`, and compute has the
-   `record.lease` edge it lacked.
+4. **`lease` is written by compute alone**: the executor stores nothing, vuanj, so it left
+   `records.res`'s writers of `lease`, and compute has the `record.lease` edge it lacked.
 
 ## Open
 

@@ -15,7 +15,7 @@ type kind =
 
 let typ = kind =>
   switch kind {
-  | Capability => "monoflake:capability:2"
+  | Capability => "monoflake:capability:3"
   | Certificate => "monoflake:certificate:1"
   | Account => "monoflake:account:1"
   | Bundle => "monoflake:bundle:1"

@@ -14,8 +14,9 @@ use driver_machine_container::{
 	ImageConfig, Listed, Mount, Network, Quota, Refused, Runtimes, Spec, Task, Unfetched,
 };
 use envelope::contracts::{
-	DeploymentArtifact, DeploymentDeploy, DeploymentDescribed, DeploymentForm, DeploymentIsolation,
-	DeploymentNetwork, DeploymentOf, DeploymentRuns, DeploymentRuntime, DeploymentState,
+	Architecture, DeploymentArtifact, DeploymentDeploy, DeploymentDescribed, DeploymentForm,
+	DeploymentIsolation, DeploymentNetwork, DeploymentOf, DeploymentRuns, DeploymentRuntime,
+	DeploymentState,
 };
 use serde_json::Value;
 use sha2::{Digest, Sha256};
@@ -279,7 +280,7 @@ fn deploy(address: &str, bytes: &[u8]) -> DeploymentDeploy {
 		form: DeploymentForm::Image,
 		runtime: None,
 		isolation: vec![DeploymentIsolation::Kernel],
-		artifact: DeploymentArtifact { address: address.into(), hash: hash(bytes) },
+		artifact: DeploymentArtifact { address: address.into(), hash: hash(bytes), architecture: None },
 		footing: "https://footing.invalid".into(),
 		secrets: BTreeMap::from([("TOKEN".into(), b"hidden".to_vec())]),
 		network: vec![DeploymentNetwork::Http],
@@ -516,6 +517,36 @@ async fn what_the_host_cannot_give_is_beyond_it_and_nothing_is_fetched() {
 	assert!(lines(&log).is_empty());
 }
 
+/// The architecture these tests run on, and the other, as OCI names them.
+fn architectures() -> (Architecture, Architecture) {
+	match std::env::consts::ARCH {
+		"aarch64" => (Architecture::Arm64, Architecture::Amd64),
+		_ => (Architecture::Amd64, Architecture::Arm64),
+	}
+}
+
+fn built_for(architecture: Architecture) -> DeploymentDeploy {
+	let mut input = echo();
+	input.artifact.architecture = Some(architecture);
+	input
+}
+
+#[tokio::test]
+async fn an_image_of_the_machines_architecture_deploys() {
+	let (driver, log) = driver("native", shell(), false);
+	let deployed = driver.deploy(&binding(), built_for(architectures().0)).await.unwrap();
+	assert_eq!(deployed.state, running("10.88.0.2:8080"));
+	assert_eq!(lines(&log).first().unwrap(), &format!("fetch file:///echo.tar at most {LARGEST}"));
+}
+
+#[tokio::test]
+async fn an_image_of_another_architecture_is_beyond_the_host_and_nothing_is_fetched() {
+	let (driver, log) = driver("foreign", shell(), false);
+	let refused = driver.deploy(&binding(), built_for(architectures().1)).await.unwrap_err();
+	assert_eq!(reason(refused), "beyond_host");
+	assert!(lines(&log).is_empty());
+}
+
 #[tokio::test]
 async fn an_image_without_its_port_or_its_container_is_malformed() {
 	let (driver, log) = driver("unplaced", shell(), false);
@@ -547,7 +578,11 @@ async fn an_artifact_past_its_bound_is_too_large() {
 async fn an_artifact_not_as_its_hash_says_is_refused_and_not_kept() {
 	let (driver, log) = driver("mismatched", shell(), false);
 	let input = DeploymentDeploy {
-		artifact: DeploymentArtifact { address: "file:///echo.tar".into(), hash: hash(ECHO_TWO) },
+		artifact: DeploymentArtifact {
+			address: "file:///echo.tar".into(),
+			hash: hash(ECHO_TWO),
+			architecture: None,
+		},
 		..echo()
 	};
 	assert_eq!(reason(driver.deploy(&binding(), input).await.unwrap_err()), "hash_mismatch");

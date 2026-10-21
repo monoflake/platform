@@ -5,7 +5,7 @@
 
 /** What a signed record is, each by its `typ`. */
 type kind =
-  /** `monoflake:capability:2`. */
+  /** `monoflake:capability:3`. */
   | Capability
   /** `monoflake:certificate:1`. */
   | Certificate
