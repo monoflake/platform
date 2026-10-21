@@ -108,6 +108,13 @@ AppleDouble `._*` files beside each one, so a carried `/var/lib/tailscale` needs
 `COPYFILE_DISABLE=1` and `--uid 0 --gid 0`. `nixos-install` leaves its build behind in the store,
 900 MiB of the 5 GB ext4, which a garbage collection after the first boot frees.
 
+**A path unit watching the system profile's link never fires**, tried on 2026-10-21 with systemd
+260: Nix replaces `/nix/var/nix/profiles/system` by renaming a new link over it, and inotify
+follows the old link to its target, which does not change. `PathChanged=` on the directory fires
+once for a rename into it, and not again for the links the collection it starts deletes there. A
+command `systemd-run` starts has no `PATH` on NixOS, so a test of one names each program by its
+path under `/run/current-system/sw/bin`, or it tests nothing.
+
 **A machine's own firewall can look like the provider's**: SYNs to port 22 that time out from
 everywhere may still reach the machine. A capture on its interface, an `AF_PACKET` socket where
 no tcpdump is installed, shows whether they arrive and whether any SYN-ACK leaves; here they
