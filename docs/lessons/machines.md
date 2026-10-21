@@ -95,6 +95,24 @@ with `--chown` carries `/var/lib/tailscale`, so the machine came back to its tai
 A flake read as `path:` from macOS's temporary directory needs its real path, `/private/var/...`, as
 Nix refuses `/var`, a symlink.
 
+**Far from the machine, nixos-anywhere is better left at its kexec**, tried on 2026-10-21 with 1.13.0
+on an aarch64 machine reached through a jump host across the Pacific. It evaluates where it runs and
+sends every derivation over SSH one at a time, so 1,652 of them took 26 minutes and the connection
+dropped before disko began. In the installer the kexec left running, the machine's own flake copied
+over, `disko --mode destroy,format,mount --flake` then `nixos-install --flake`, run under
+`systemd-run` so no SSH session holds them, took 3 minutes, fetching everything from the cache. The
+installer keeps the old system's SSH host keys, so copying `/etc/ssh/ssh_host_*` into `/mnt` keeps
+them too. A tarball made on macOS carries the Mac's user id onto every directory in its path and
+AppleDouble `._*` files beside each one, so a carried `/var/lib/tailscale` needs `/var` and
+`/var/lib` given back to root and those files deleted, or the tarball made with
+`COPYFILE_DISABLE=1` and `--uid 0 --gid 0`. `nixos-install` leaves its build behind in the store,
+900 MiB of the 5 GB ext4, which a garbage collection after the first boot frees.
+
+**A machine's own firewall can look like the provider's**: SYNs to port 22 that time out from
+everywhere may still reach the machine. A capture on its interface, an `AF_PACKET` socket where
+no tcpdump is installed, shows whether they arrive and whether any SYN-ACK leaves; here they
+arrived, and an nftables table of the old system's, with an input policy of drop, answered none.
+
 **NixOS laid over a running Debian by `NIXOS_LUSTRATE` failed to boot** on a machine running Docker
 and a firewall of its own: Debian's units, `networking.service` among them, still started, found the
 loader replaced by NixOS's `stub-ld`, and the emergency shell could not start. A machine is
