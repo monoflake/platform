@@ -1,0 +1,52 @@
+---
+name: 'Releases in Repositories of Their Own'
+title: "Where what the platform releases is built and published: a machine's NixOS in `monoflake/machine`, the runtimes' images in `monoflake/runtime`"
+status: draft
+supersedes: []
+blocked-by: []
+commits: []
+references: []
+---
+
+## Question
+
+The platform now has things to release that a machine fetches rather than builds: the runtimes'
+images, workerd's and wasmtime's, one OCI archive for each architecture, RFC ge55b, and the
+machine's own NixOS, today built on each machine it is installed on. Each follows a version of its
+own, an upstream release or a NixOS release, so their tags in this repository would mix three
+schemes, and ge55b leaves open who serves the URL an archive is fetched from.
+
+## Decided
+
+Decided by the author on 2026-10-21.
+
+- **Two repositories of the organization's own, by what they release, named in lower case**:
+  `monoflake/machine` and `monoflake/runtime`. Their code is kept off GitHub as far as it can be:
+  they are there for what GitHub gives around a repository, its releases and its scheduled CI.
+- **`monoflake/machine` is where a machine's NixOS configuration lives**, the configuration that
+  makes a machine a host of the platform, since that is what the repository is named for; it
+  follows this repository's changes and releases what changed.
+- **`monoflake/runtime` holds no code of its own, only the images' build configuration**, and is
+  glue: a scheduled run wakes, checks whether an upstream released, and, if one did, builds and
+  publishes the images.
+- **Neither is created on GitHub yet**: both are prepared and checked locally first, their CI
+  written and run where it can be, and this repository's code keeps its copies until the author
+  has reviewed the move.
+
+## Open
+
+Proposed by the agent on 2026-10-21, not yet confirmed:
+
+- An upstream release is taken once it is past the workspace's release delay, as `pins` takes
+  workerd's today, so the scheduled run in `monoflake/runtime` keeps the same rule.
+- Whether anything changed is judged by what would be built, a system's output path or an image's
+  pinned versions and base digests, never by a diff of source, so a comment changed releases
+  nothing.
+- GitHub disables a scheduled workflow after 60 days without a commit, so a run started by
+  `repository_dispatch` from this repository's CI may be the main trigger and the schedule a
+  fallback.
+- A binary cache of the machine's NixOS, so a machine downloads its system rather than building it,
+  cannot be a release asset; where it is kept, an object store with Nix's signing key, is open.
+- When the machine's configuration moves, `model/` must know a block written in another
+  repository, as cloud fills a role, and cloud's machines take their module from
+  `monoflake/machine`.
