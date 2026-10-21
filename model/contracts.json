@@ -2323,6 +2323,19 @@
 				}
 			]
 		},
+		"scope-status": {
+			"enum": [
+				{
+					"name": "active",
+					"code": 1
+				},
+				{
+					"name": "suspended",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
 		"bundle-issuer": {
 			"record": [
 				{
@@ -2349,6 +2362,14 @@
 					"shape": {
 						"type": "security"
 					}
+				},
+				{
+					"name": "status",
+					"key": 4,
+					"shape": {
+						"type": "scope-status"
+					},
+					"optional": true
 				}
 			]
 		},

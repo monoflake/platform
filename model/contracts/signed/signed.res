@@ -134,14 +134,26 @@ let types: array<declared> = [
     ]),
     from: "vuanj",
   },
+  // Whether a scope runs, as its authority's record says; one deleted has no bundle, 4dijn.
+  {
+    name: "scope-status",
+    def: Enum({
+      choices: [{name: "active", code: 1}, {name: "suspended", code: 2}],
+      ordered: false,
+    }),
+    from: "4dijn, vuanj",
+  },
   // The issuer's section of a bundle: the grants, the allowance it reads, and the organization's
-  // `security`, by which it dates what it signs, vuanj.
+  // `security`, by which it dates what it signs, vuanj; and the scope's status, which every product
+  // reads with its allowance through `scope*`, a scope being a concept and never a process, `active`
+  // where absent.
   {
     name: "bundle-issuer",
     def: Record([
       field("grants", 1, List(Type("grant"))),
       field("allowance", 2, Map(Type("allowance-value"))),
       field("security", 3, Type("security")),
+      optional("status", 4, Type("scope-status")),
     ]),
     from: "vuanj",
   },

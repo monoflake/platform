@@ -56,11 +56,18 @@ file's path pointing at a hash -- shares a pattern with it, never a dependency.
 
 | Component  | What it is                                                         |
 | ---------- | ------------------------------------------------------------------ |
-| `scope`    | Whose data this is: an opaque id, what it holds, what it may use   |
+| `scope`    | Whose data this is: an opaque id, its status, what it may use      |
 | `issuer`   | Signs the capabilities every other component checks                |
 | `tablet`   | One small SQLite with one writer: SQL, and an atomic batch         |
 | `blob`     | Bytes by the hash of their content: put, get, delete               |
 | `executor` | Runs a function's code on an input, in the sandbox its kind allows |
+
+**A scope is a concept, never a process**, decided by the author on 2026-10-20: an id, its status
+and its allowance, each read from the organization's bundle by whatever needs it, through one
+library so every reader judges alike. A process answering them would only read again what its caller
+already holds, the bundle in the footing, and add a hop to every call; its status reaches the
+organization by the authority's record, RFC 4dijn, and its allowance in the bundle's issuer
+section, and how soon either is seen is the bundle's, C36. The other four in the table run.
 
 **A component knows a scope and never a user.** A scope is an organization's, RFC v7v3w; accounts and
 logins are above; which user owns
@@ -81,12 +88,21 @@ owner's. A scope so suspended is deleted after seven days unless it is restored,
 
 **No component trusts its caller: it checks a capability.** A capability names a scope, a resource, an
 operation and when it expires, and is signed by the issuer alone, through a chain components verify
-with the root's public key and never call at run time -- RFC b8f35. A call is given only the
+with the root's public key and never call at run time -- RFC b8f35. **A request to the issuer is
+signed by its caller**, decided by the author on 2026-10-20: a COSE Sign1 under the key of the
+caller's certificate, which the issuer checks to the root as any component checks a capability, so
+what asks is proven the same way on every vendor and never by the transport. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
 the resource -- a bucket, whether writes are allowed -- and a component checks the scope. The issuer is
 its own component, reading each scope's grants from its organization's bundle, in the footing, RFC
 v7v3w. Authenticating the
-people who use an app is another matter, above.
+people who use an app is another matter, above. Decided by the author on 2026-10-20:
+
+- **A call's capabilities are kept by the compute for its app and resource**, asked again as they
+  near their expiry, and **each call is given those its bindings allow alone**: what "for that call
+  alone" holds is what is passed, never how often the issuer signs.
+- **A component's own work -- a sweep, a repair, a tablet's archive -- is given a capability by its
+  certificate's role**, no app asking, reaching its own blob space alone.
 
 **The operations are six, each a right of its own**: read; create, which is refused where what it
 would write already exists; replace, which overwrites what exists and so can lose it as a deletion
@@ -116,7 +132,10 @@ generation, the bundle compiled again with the grants it comes to, and the app's
 the grant's format is declared with the bundle's.
 
 **Inside a scope each product has its own blob space**, since what counts the references to a hash
-is the product's own tablet; two products sharing one would delete what the other still holds.
+is the product's own tablet; two products sharing one would delete what the other still holds. **A
+call names its space** -- the storage's, the compute's or the database's -- and is held to its scope's
+capability alone, decided by the author on 2026-10-20: a product at fault reaches only its own
+scope, as above, so nothing past the scope is asked of it.
 
 **The storage** reads its buckets and their policies from the bundle, and keeps one tablet per
 scope for the rest of its metadata -- each path's hash, each object, each
@@ -194,7 +213,8 @@ read from the bundle. A capability
 covers the databases of one app, so a database created for it is reachable once the organization
 holds the bundle that records it, RFC v7v3w.
 
-**A function's** code is kept where it was built, RFC vr5lw, its hash its identity; its declarations
+**A function's** code is kept where it was built, RFC vr5lw, its hash its identity, and handed to
+its hosts as it is deployed, never fetched by the executor as a call comes; its declarations
 are configuration, read from the bundle, and a deployment checks the types and the call graph,
 the calls never crossing a scope since they never cross an owner; its calls, their ids,
 outcomes and expiry, in a tablet `status(id)` reads; its `derive` cache as a tablet indexing a
@@ -203,7 +223,9 @@ cannot be chosen; its queues' messages and its schedules' repeats in tablets, th
 schedules themselves being configuration, in the bundle. **The executor stores nothing**: it is given
 the code's hash, the input and a sandbox -- for `derive` nothing at all, no capability, network, true
 time or randomness; for `effect` the call's capabilities and the network -- and gives back the output
-or a panic.
+or a panic. Decided by the author on 2026-10-20: **a `derive`'s fuel is its declaration's, passed
+with each call**, metered on Cloudflare as C15 settles; **a panic is a reason -- fuel run out, a
+trap, memory past its bound -- and a message**.
 
 **The executor runs code in one of two sandboxes, a V8 isolate or WebAssembly.**
 
@@ -234,7 +256,17 @@ or a panic.
   outcome can always be found. Every capability past the first is used only where a product needs
   it.
 - A blob puts bytes with a placement and answers their hash, gets them whole or by range, raises a
-  hash to a stricter placement, deletes, and lists, for a sweep alone. Below that face it encrypts
+  hash to a stricter placement, deletes, and lists, for a sweep alone. **Content of any size is put
+  by an upload**, decided by the author on 2026-10-20, since a request is bounded -- 100 to 500 MB on
+  Cloudflare by plan -- and one that drops starts again: begun, appended to in order a part at a
+  time, each part at most 16 MiB and cut, named and sealed as it arrives, and finished. Each answer
+  says how much was received and how much is durable, to the end of the last whole piece, sealed
+  and named; a dropped upload is resumed from what is durable, an append beginning anywhere but at
+  what was received refused. An upload is held by one instance, as a tablet's writer is; one taken
+  up again reads back what is durable to hash it anew, since a content's id is BLAKE3 over the whole
+  and no hasher's state is kept. Finishing cuts the last piece and records the content, then seen;
+  one left a day expires, the sweep's grace, and its pieces go as any nothing names. A get is by
+  range, 16 MiB at most, and an upload's parts follow in order, since cutting and hashing do. Below that face it encrypts
   with the scope's key, lays the bytes out as the placement asks, and places each parcel among
   the scope's stores: each store a parcel may go to is scored by a hash of the parcel and the
   store, and it goes to the highest, RFC b8f35 -- so anyone with the same stores finds the same
@@ -242,11 +274,17 @@ or a panic.
   removed moves only the parcels it wins or held. A write is done when every parcel the layout
   asks for has landed; a store down passes its parcel to the next in line, moved back by a repair
   later. **A repair must run on its own while the control plane is lost**, since until it does, data
-  is held below its placement.
+  is held below its placement. Decided by the author on 2026-10-20: **raising a hash answers at
+  once**, its parcels moved in the background and readable throughout, a describe showing the
+  placement it has and the one it is moving to; **a list is for a sweep alone**, by hash a page at a
+  time, each with when it was put, against the sweep's grace.
+- **A machine tablet's copies carry SQLite's WAL frames as they are**, the primary's to the rest,
+  decided by the author on 2026-10-20, never its statements; an append carrying no frame renews the
+  lease.
 - An executor runs code in one of two sandboxes.
 
 **Every dependency points down**: a product reaches the issuer, the tablet, the blob and the
-executor; the executor reaches the blob for code; the tablet reaches the blob to persist; the blob
+executor; the tablet reaches the blob to persist; the blob
 reaches the scope's backing and the extent, below it, RFC b8f35.
 
 **The constants v0 picks**, worked out with the author on 2026-10-19, each in code and changed by

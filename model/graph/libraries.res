@@ -58,6 +58,12 @@ let libraries: dict<library> = dict{
     takes: [{language: #rust, name: "serde_json", major: "1"}],
     samples: ["tests/compat"],
   },
+  "scope*": {
+    languages: [#rescript],
+    what: "a scope, a concept and never a process: its status and allowance read from its organization's bundle, and whether a need fits it, judged alike by every reader, vuanj",
+    agrees: false,
+    uses: ["vocabulary*", "compat*"],
+  },
   "capability*": {
     languages: [#rescript],
     what: "a capability and its chain to the root, checked, vuanj",
