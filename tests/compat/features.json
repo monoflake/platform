@@ -3,7 +3,12 @@
 	"made": [
 		{ "has": ["b", "a", "a"], "needs": [], "made": { "has": ["a", "b"], "needs": [] } },
 		{ "has": ["x-1", "y"], "needs": ["y", "y"], "made": { "has": ["x-1", "y"], "needs": ["y"] } },
-		{ "has": [], "needs": [], "made": { "has": [], "needs": [] } }
+		{ "has": [], "needs": [], "made": { "has": [], "needs": [] } },
+		{
+			"has": ["xa", "x9", "x-a", "x-9"],
+			"needs": [],
+			"made": { "has": ["x-9", "x-a", "x9", "xa"], "needs": [] }
+		}
 	],
 	"unmade": [
 		{ "has": [""], "needs": [], "malformed": { "name": "" } },
@@ -11,7 +16,8 @@
 		{ "has": ["é"], "needs": [], "malformed": { "name": "é" } },
 		{ "has": ["a", "b c"], "needs": ["z"], "malformed": { "name": "b c" } },
 		{ "has": ["a"], "needs": ["b"], "malformed": { "unheld": "b" } },
-		{ "has": ["a"], "needs": ["B"], "malformed": { "name": "B" } }
+		{ "has": ["a"], "needs": ["B"], "malformed": { "name": "B" } },
+		{ "has": ["a"], "needs": ["b", "C"], "malformed": { "unheld": "b" } }
 	],
 	"agreed": [
 		{
