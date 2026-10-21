@@ -113,7 +113,7 @@ let expected = () => {
             package: `${packageName(name)}-management`,
             license: Components.permissive,
             uses: [],
-            takes: [],
+            takes: d.managementTakes->Option.getOr([]),
             samples: [],
           },
         )

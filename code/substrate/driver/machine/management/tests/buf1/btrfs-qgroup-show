@@ -1,0 +1,17 @@
+Qgroupid    Referenced    Exclusive  Max referenced        Max exclusive   Path 
+--------    ----------    ---------  --------------        -------------   ---- 
+0/5            4415488      4415488            none                 none   <toplevel>
+0/256          8601600      8601600            none                 none   <squota space holder>
+0/257            16384        16384            none                 none   containerd/io.containerd.snapshotter.v1.btrfs/snapshots/1
+0/258                0            0            none                 none   <stale>
+0/260                0            0            none                 none   <stale>
+0/261                0            0            none                 none   <stale>
+0/264                0            0            none                 none   <stale>
+0/265                0            0            none                 none   <stale>
+0/268                0            0            none                 none   <stale>
+0/270                0            0            none                 none   <stale>
+0/271                0            0            none                 none   <stale>
+0/274                0            0            none                 none   <stale>
+0/275                0            0            none                 none   <stale>
+0/276                0            0            none                 none   <stale>
+0/280            81920        81920            none                 none   containerd/io.containerd.snapshotter.v1.btrfs/active/13

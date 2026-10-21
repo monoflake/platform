@@ -33,6 +33,8 @@ type runtime = {name: string, takes: string, stands: array<string>}
 type driver = {
   grounds: array<Steps.ground>,
   management: [#rust | #rescript],
+  /** What of others' its management may take, `model/graph/libraries.res`. */
+  managementTakes?: array<Libraries.taken>,
   implements: array<implementation>,
   runtimes: array<runtime>,
   system?: string,
@@ -59,6 +61,7 @@ let drivers: dict<driver> = dict{
   "driver(machine)": {
     grounds: [#provider, #home],
     management: #rust,
+    managementTakes: [{language: #rust, name: "rustix", major: "1"}],
     system: "NixOS, with containerd",
     images: "workerd and wasmtime",
     implements: [
@@ -74,6 +77,9 @@ let drivers: dict<driver> = dict{
           {language: #rust, name: "tokio", major: "1"},
           {language: #rust, name: "serde_json", major: "1"},
           {language: #rust, name: "sha2", major: "0.10"},
+          {language: #rust, name: "prost-types", major: "0.14"},
+          {language: #rust, name: "tonic", major: "0.14"},
+          {language: #rust, name: "reqwest", major: "0.13"},
         ],
       },
       {kind: #object, language: #rust, as_: "objects on the machine's file system"},
