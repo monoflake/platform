@@ -80,6 +80,20 @@ what is written into it is charged to it. Deleting the subvolume a snapshot came
 qgroup, shown as `<squota space holder>`, and its charge in every parent, until the last extent it
 wrote is freed.
 
+**A NixOS installed from a flake holds nixpkgs' source and Python unless told not to**: its nix
+registry and `NIX_PATH` pin nixpkgs' source, 197 MiB, and `nixos-rebuild-ng` brings Python 3, 128
+MiB. A machine that downloads its sets and builds none sets `nixpkgs.flake.setNixPath` and
+`setFlakeRegistry` false and `system.disableInstallerTools` true, and is switched from outside by
+`nixos-rebuild-ng --target-host`. So the machine's system measured 1.2 GiB installed, and its ext4 of
+5 GB held 1.4 GB once it had rebooted and collected its garbage; until a reboot, what the processes
+of the generation before run keeps that generation's paths alive.
+
+**nixos-anywhere installs a machine from a flake over SSH**, `--build-on remote` for a Mac that cannot
+build Linux, partitioning by disko. `--copy-host-keys` keeps the SSH host keys, and `--extra-files`
+with `--chown` carries `/var/lib/tailscale`, so the machine came back to its tailnet as the same node.
+A flake read as `path:` from macOS's temporary directory needs its real path, `/private/var/...`, as
+Nix refuses `/var`, a symlink.
+
 **NixOS laid over a running Debian by `NIXOS_LUSTRATE` failed to boot** on a machine running Docker
 and a firewall of its own: Debian's units, `networking.service` among them, still started, found the
 loader replaced by NixOS's `stub-ld`, and the emergency shell could not start. A machine is

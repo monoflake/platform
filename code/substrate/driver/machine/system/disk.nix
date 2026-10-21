@@ -1,10 +1,10 @@
 # A machine's disk, RFC vr5lw: ext4 of 5 GB for the host, and btrfs, with simple quotas, for the rest.
 # A BIOS boot partition and an EFI system partition stand before them, so one layout boots either way.
-{ lib, ... }:
+{ config, ... }:
 {
   disko.devices.disk.main = {
     type = "disk";
-    device = lib.mkDefault "/dev/vda";
+    device = config.machine.disk;
     content = {
       type = "gpt";
       partitions = {

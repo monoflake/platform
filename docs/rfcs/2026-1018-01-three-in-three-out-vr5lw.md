@@ -520,8 +520,11 @@ management interface below, RFC fhg6w.
     before the current, and a machine downloads its sets and builds none. **The system is the
     machine driver's `system/`, a NixOS module the root's `flake.nix` gives with the disk's layout
     by disko and a template**, worked out with the author on 2026-10-20: a machine's own flake,
-    started from the template, adds its name, its disk's device and the keys that reach it, and is
-    installed by nixos-anywhere.
+    started from the template, adds its name and what the module's options ask -- `machine.disk`,
+    `machine.keys`, `machine.tailnet.authKeyFile`, and `monoflake.driver.bindings`, the files of the
+    binding tokens its driver takes -- in technical words but where they name the platform, and is
+    installed by nixos-anywhere. A secret is a file the machine holds, never text in the Nix store,
+    and how it comes there is the holder's.
   - **A binding's share is bounded by btrfs's simple quotas**, Linux 6.7 on, through containerd's
     btrfs snapshotter, every image layer and container layer a subvolume: a binding's volumes are
     subvolumes of its own, bind mounted, never Docker's named volumes, and one qgroup above them
