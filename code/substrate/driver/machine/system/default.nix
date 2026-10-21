@@ -140,8 +140,40 @@ in
   };
 
   environment = {
-    # fastfetch's logo, `logo.nix`, in blue, pink and white.
+    # fastfetch's logo, `logo.nix`, in blue, pink and white; a configuration names every module it
+    # shows, so these are fastfetch's own defaults.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
+      modules = [
+        "title"
+        "separator"
+        "os"
+        "host"
+        "kernel"
+        "uptime"
+        "packages"
+        "shell"
+        "display"
+        "de"
+        "wm"
+        "wmtheme"
+        "theme"
+        "icons"
+        "font"
+        "cursor"
+        "terminal"
+        "terminalfont"
+        "cpu"
+        "gpu"
+        "memory"
+        "swap"
+        "disk"
+        "localip"
+        "battery"
+        "poweradapter"
+        "locale"
+        "break"
+        "colors"
+      ];
       logo = {
         type = "file";
         source = "${pkgs.writeText "logo.txt" (import ./logo.nix)}";
