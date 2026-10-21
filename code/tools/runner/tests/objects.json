@@ -1,0 +1,110 @@
+{
+	"interface": "object",
+	"cases": [
+		{
+			"description": "an object written is read whole, and described",
+			"steps": [
+				{
+					"call": "write",
+					"input": { "name": "a", "content": "aGVsbG8" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "a" },
+					"expect": { "output": { "content": "aGVsbG8", "size": 5 } }
+				},
+				{ "call": "describe", "input": { "name": "a" }, "expect": { "output": { "size": 5 } } },
+				{
+					"call": "describe",
+					"input": { "name": "none" },
+					"expect": { "output": { "size": { "$absent": true } } }
+				}
+			]
+		},
+		{
+			"description": "an object absent is not found",
+			"steps": [
+				{
+					"call": "read",
+					"input": { "name": "missing" },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				}
+			]
+		},
+		{
+			"description": "bytes made to a bound are written as made",
+			"steps": [
+				{
+					"call": "write",
+					"input": {
+						"name": "full",
+						"content": { "$bytes": { "length": { "bound": "content", "plus": 0 } } }
+					},
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "full" },
+					"expect": { "output": { "content": { "$capture": "full" }, "size": 16 } }
+				},
+				{
+					"call": "write",
+					"input": { "name": "again", "content": { "$use": "full" } },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "again" },
+					"expect": { "output": { "content": { "$use": "full" } } }
+				}
+			]
+		},
+		{
+			"description": "a call made as a component carries its certificate, which verifies to the run's root",
+			"steps": [
+				{
+					"call": "write",
+					"as": "compute",
+					"input": { "name": "who", "content": "AA" },
+					"expect": { "output": {} }
+				},
+				{
+					"call": "read",
+					"input": { "name": "who" },
+					"expect": {
+						"output": {
+							"content": {
+								"$signed": {
+									"record": "certificate",
+									"claims": {
+										"role": "component",
+										"sub": "compute",
+										"scope": 1,
+										"iat": { "$any": true },
+										"cnf": { "$any": true }
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a body that is no answer is unknown, whatever its HTTP status",
+			"steps": [
+				{
+					"call": "list",
+					"input": { "prefix": "" },
+					"expect": { "failure": "unknown", "reason": "malformed" }
+				}
+			]
+		},
+		{
+			"description": "a case given what the target cannot set up is skipped",
+			"given": { "size": 1024 },
+			"steps": [{ "call": "read", "input": { "name": "a" }, "expect": { "output": {} } }]
+		}
+	]
+}

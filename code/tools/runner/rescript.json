@@ -1,0 +1,12 @@
+{
+	"name": "@monoflake/runner",
+	"namespace": "Runner",
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
+	"dependencies": ["@monoflake/capability", "@monoflake/codec", "@monoflake/envelope"],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "number": "+4", "error": "+a-110" }
+}

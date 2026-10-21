@@ -22,6 +22,6 @@ let blocks: dict<state> = dict{
   "driver-machine-images": Accepted,
   "driver-machine-container": InWork,
   "driver-machine-management": Accepted,
-  "runner": InWork,
+  "runner": Accepted,
   "serve": Accepted,
 }
