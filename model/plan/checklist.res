@@ -166,9 +166,9 @@ let own: array<item> = [
     done: "v7v3w, 7xpd3: a person signs in to the platform half and is a member by their organization's, holding the account credential the authority signs",
   },
   {
-    id: "B11",
-    group: #B,
-    what: "day one's commands, written step by step: the deployer, the roster, the source, the entry, the runner, the intermediate",
+    id: "D19",
+    group: #D,
+    what: "day one's commands, written step by step: the deployer, the roster, the source, the entry, the runner, the intermediate; each written with the tool that runs it, as a runbook, before the first deployment, and never before building, decided by the author on 2026-10-20",
     from: "docs/scope.md",
   },
   {

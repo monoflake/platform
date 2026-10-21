@@ -165,6 +165,11 @@ yet sorted.
 | `?egress`       | later              |
 | `?clock`        | later              |
 
+**A boundary kept by hand has its commands written with the tool that runs it**, decided by the
+author on 2026-10-20: a runbook beside that tool, written as the tool is and finished before the
+first deployment, since a command is written against what it runs and never ahead of it, so day
+one's commands block deploying and never building [D19].
+
 **Decided now**, before the first byte is written, since each is written into every piece of data
 and a mistake in it is never undone: how a scope's salt is derived, the hash content is named by,
 how content is cut, and the format a parcel is sealed in -- BLAKE3, FastCDC, and AES-256-GCM in
