@@ -1,5 +1,5 @@
 # What a machine is, NixOS with containerd, the host's driver, the tailnet, a firewall and bash, RFC
-# vr5lw. Its disk is `disk.nix` and its own flake `template/`.
+# vr5lw. Its disk is `disk.nix`, its tools for hands `maintenance.nix`, its own flake `template/`.
 {
   config,
   lib,
@@ -25,6 +25,7 @@ in
   imports = [
     ./options.nix
     ./disk.nix
+    ./maintenance.nix
   ];
 
   # The system is the release, and containerd, its runtimes and the tailnet are unstable's.
@@ -138,52 +139,6 @@ in
   };
 
   environment = {
-    # The logo's colors are the viewer's own terminal's, `22` undoing fastfetch's bold; the modules
-    # are fastfetch's defaults less what a server has no use for, both opened two lines down.
-    etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
-      logo = {
-        type = "file";
-        source = pkgs.writeText "logo.txt" (import ./logo.nix);
-        padding = {
-          top = 2;
-          left = 1;
-          right = 3;
-        };
-        color = {
-          "1" = "22;34";
-          "2" = "22;36";
-          "3" = "22;37";
-        };
-      };
-      modules = [
-        "break"
-        "break"
-        "os"
-        "host"
-        "kernel"
-        "uptime"
-        "packages"
-        "shell"
-        "de"
-        "wm"
-        "wmtheme"
-        "theme"
-        "icons"
-        "font"
-        "cursor"
-        "terminal"
-        "terminalfont"
-        "cpu"
-        "gpu"
-        "memory"
-        "swap"
-        "disk"
-        "battery"
-        "poweradapter"
-        "break"
-        "colors"
-      ];
-    };
     variables.CONTAINERD_SNAPSHOTTER = "btrfs";
     defaultPackages = [ ];
     systemPackages = [
@@ -191,8 +146,6 @@ in
       pkgs.unstable.runc
       crun
       youki
-      pkgs.unstable.fastfetch-unwrapped
-      pkgs.unstable.htop
     ];
   };
   documentation.enable = false;

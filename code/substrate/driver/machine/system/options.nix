@@ -22,6 +22,11 @@ in
         description = "Memory installed, in MiB, from which the swap file's size is derived.";
         example = 4096;
       };
+      maintenance.enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Whether to install the tools and shell aliases for maintaining the machine by hand.";
+      };
       swap.compressor = mkOption {
         type = types.enum [
           "zstd"
