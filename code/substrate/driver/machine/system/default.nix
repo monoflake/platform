@@ -140,9 +140,7 @@ in
   };
 
   environment = {
-    # fastfetch's logo, `logo.txt`, is this project's own, under its license: the NixOS snowflake
-    # drawn in letters, a leg in `0`, `8` or `@` each, the snowflake itself Simon Frankau and Tim
-    # Cuthbertson's, CC BY 4.0. Its `$1` to `$3` are colors of the viewer's own terminal, chosen
+    # fastfetch's logo is `logo.nix`, its `$1` to `$3` colors of the viewer's own terminal chosen
     # nearest the author's, each opening with the normal weight fastfetch's bold would replace. A
     # configuration names every module it shows, so these are fastfetch's own defaults less the
     # title and its separator, the display, the local address and the locale, the logo and the
@@ -150,7 +148,7 @@ in
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file";
-        source = "${./logo.txt}";
+        source = pkgs.writeText "logo.txt" (import ./logo.nix);
         padding.top = 3;
         color = {
           "1" = "22;34";

@@ -76,7 +76,7 @@ nix run --inputs-from "path:$t" nixpkgs#nixfmt -- ${usage_check:+--check} $(find
 [tasks.nixed]
 description = "Lint the Nix with statix and deadnix and evaluate the root's flake for every system"
 run = """
-t=$(mktemp -d) && rsync -a --exclude=node_modules --exclude=target --exclude=.jj --exclude=.git --include='*/' --include='*.nix' --include='*.txt' --include=flake.lock --exclude='*' --prune-empty-dirs ./ "$t/" || exit 1
+t=$(mktemp -d) && rsync -a --exclude=node_modules --exclude=target --exclude=.jj --exclude=.git --include='*/' --include='*.nix' --include=flake.lock --exclude='*' --prune-empty-dirs ./ "$t/" || exit 1
 n() { nix run --inputs-from "path:$t" "nixpkgs#$1" -- "${@:2}"; }
 n statix check "$t" && n deadnix --fail "$t" && nix flake check --all-systems --no-build "path:$t"
 """
