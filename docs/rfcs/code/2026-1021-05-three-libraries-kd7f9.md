@@ -36,8 +36,8 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
   49qyg and vr5lw: WIT read from a build manifest's `wit`, the component model's language as far as
   the subset taken; the exports and their signatures; and, as an app is deployed, each call it
   makes matched to an export its own dependencies provide, by its parameters' number and types and
-  by the cases its result names, success, stop and failure alike, being cases the caller's type
-  holds, never by values. It looks one layer down and no further: a dependency's own dependencies
+  by every case the export's result or variant names being one the caller's type holds, never by
+  values. It looks one layer down and no further: a dependency's own dependencies
   are checked when that dependency is deployed, and what an export does behind its definition,
   whether it is right or runs at all, is no part of it. Converting a value between its JSON and its
   CBOR by the type both ends hold is compute's, at run time, with the types `wit*` reads; cycles
@@ -55,3 +55,30 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
 The WIT subset's resources, `own` and `borrow`; the capabilities past those four, C11; an
 export's amounts, C37; what a host offers, which waits on `?roster`. Each is a field or an entry
 added, not a change of these shapes.
+
+Found by the agent on 2026-10-21 while writing the interfaces, and not yet decided:
+
+- **Each vocabulary entry's rule**, how a need compares with an allowance and with an offer: RFC
+  49qyg gives every entry "the rule that compares two" and writes none of them; nor is `kind`'s
+  type as an `allowance-value`, or its default, decided, `kind` being today a required field of
+  `manifest-function` of its own rather than a need.
+- **What an offer is as data**: no type in `model/contracts` holds what a host offers, and whether
+  a sandbox is an entry of the vocabulary or a field beside it is open.
+- **A quota inherited**: an `organization` record has a `grace` but no quota, so "the
+  organization's where its own is unset" reaches nothing for a quota; a binding's quota is none
+  unless set, v7v3w.
+- **The paths in the bundle**: `bundle-hosts` holds each host's `relays` and `address` and no path,
+  so the shape the paths take there is not written; nor is the lender's own record of a loan.
+
+Proposed by the agent on 2026-10-21 for the author to decide, answering the first two above:
+
+- **A rule follows its entry's type**, so no entry writes one of its own: a flag needed holds only
+  where the other side holds it; an amount is at most the other side's; one of a set is a member of
+  the other side's set, an allowance or an offer holding `some`; some of a set is a subset of the
+  other side's. `kind` is then one of `derive` and `effect`, its allowance some of them, both by
+  default; `export` is a group of amounts, each at most the allowance's.
+- **The WIT a manifest carries is one file**: an optional `package` line, `interface` blocks of
+  `type`, `record`, `variant`, `enum`, `flags` and `func` items, a `use` of an interface in the same
+  file, and one `world` exporting those interfaces or functions; `resource`, `own`, `borrow`,
+  `include` and a `use` or `import` of another package refused as the WIT is read, until the
+  subset grows.
