@@ -1,6 +1,7 @@
 //! `model/contracts.json` read into its [`Model`], and held to what the Rust written from it needs:
 //! every name one Rust can write, every key and code within its type once, every type a shape or
-//! an operation names declared, and every reason's failure a choice of `failure`.
+//! an operation names declared, every reason's failure a choice of `failure` and its message in
+//! `messages`, and the call and the answer as `Envelope` and `Answer` read them.
 
 use std::collections::BTreeSet;
 
@@ -16,6 +17,12 @@ type Got<T> = Result<T, Unread>;
 
 /// The type every reason's failure is a choice of.
 pub(super) const FAILURE: &str = "failure";
+
+/// The type an answer's `error` holds.
+const ERROR: &str = "error";
+
+/// The field an answer's case is named by, which no field of `error` may be.
+const STATUS: &str = "status";
 
 /// Why the part at `at` is not read.
 fn unread(at: &str, expected: impl Into<String>) -> Unread {
@@ -82,15 +89,70 @@ pub(super) fn contracts(value: &Value) -> Got<Model> {
 		})
 		.collect::<Got<Vec<_>>>()?;
 	call(member(top, "call", "")?)?;
+	answer(member(top, "answer", "")?, &types)?;
 	let shell = fields(member(top, "shell", "")?, "shell", &known, None)?;
 	let failures = failures(&types)?;
-	let every = reasons(member(top, "reasons", "")?, "reasons", &failures)?;
-	let calling = reasons(member(top, "calling", "")?, "calling", &failures)?;
+	let messages = messages(member(top, "messages", "")?)?;
+	let held = Held { failures: &failures, messages: &messages };
+	let every = reasons(member(top, "reasons", "")?, "reasons", &held)?;
+	let calling = reasons(member(top, "calling", "")?, "calling", &held)?;
 	let interfaces = object(member(top, "interfaces", "")?, "interfaces")?
 		.iter()
-		.map(|(name, i)| interface(name, i, &join("interfaces", name), &known, &failures))
+		.map(|(name, i)| interface(name, i, &join("interfaces", name), &known, &held))
 		.collect::<Got<Vec<_>>>()?;
-	Ok(Model { types, shell, reasons: every, calling, interfaces })
+	Ok(Model { types, shell, reasons: every, calling, interfaces, messages })
+}
+
+/// The answer every operation gives, held to the one `Answer` reads and writes, as the call is to
+/// `Envelope`: its case by `status`, `success` code 1 holding the output as `data` at key 1, and
+/// `error` code 2 holding the fields of `error`, a record none of whose fields is `status` or at
+/// key 0, where the case stands.
+fn answer(value: &Value, types: &[Declared]) -> Got<()> {
+	let expected = json!({
+		"tag": STATUS,
+		"cases": [
+			{ "name": "success", "code": 1, "fields": [{ "name": "data", "key": 1, "shape": { "output": "operation" } }] },
+			{ "name": "error", "code": 2, "type": ERROR },
+		],
+	});
+	if *value != expected {
+		return Err(unread(
+			"answer",
+			"the answer Answer reads: by status, success 1 holding data at 1, the output, and error 2 \
+			 holding the type error",
+		));
+	}
+	let at = join("types", ERROR);
+	let Some(Def::Record(fields)) = types.iter().find(|t| t.name == ERROR).map(|t| &t.def) else {
+		return Err(unread(&at, "a record, an answer's error"));
+	};
+	match fields.iter().position(|f| f.name == STATUS || f.key == 0) {
+		Some(i) => Err(unread(
+			&join(&join(&at, "record"), i),
+			"a field other than status, at a key other than 0",
+		)),
+		None => Ok(()),
+	}
+}
+
+/// Each reason's default message, by its name.
+fn messages(value: &Value) -> Got<Vec<(String, String)>> {
+	object(value, "messages")?
+		.iter()
+		.map(|(name, message)| {
+			let at = join("messages", name);
+			if !names::is_snake_name(name) {
+				return Err(unread(&at, SNAKE));
+			}
+			Ok((name.clone(), text(message, &at)?.to_owned()))
+		})
+		.collect()
+}
+
+/// What every reason is held to: its failure one of `failures`, its name one `messages` has.
+struct Held<'a> {
+	failures: &'a [String],
+	messages: &'a [(String, String)],
 }
 
 /// The call every operation's body is, held to the one `Envelope` reads and writes: its fields are
@@ -272,7 +334,7 @@ fn shape(value: &Value, at: &str, known: &BTreeSet<&str>) -> Got<Shape> {
 	Err(unread(at, "a prim, an id, a type, a list or a map"))
 }
 
-fn reasons(value: &Value, at: &str, failures: &[String]) -> Got<Vec<Reason>> {
+fn reasons(value: &Value, at: &str, held: &Held) -> Got<Vec<Reason>> {
 	array(value, at)?
 		.iter()
 		.enumerate()
@@ -280,13 +342,15 @@ fn reasons(value: &Value, at: &str, failures: &[String]) -> Got<Vec<Reason>> {
 			let at = join(at, i);
 			let reason = object(r, &at)?;
 			let failure = text(member(reason, "failure", &at)?, &join(&at, "failure"))?;
-			if !failures.iter().any(|f| f == failure) {
+			if !held.failures.iter().any(|f| f == failure) {
 				return Err(unread(&join(&at, "failure"), "a choice of types/failure"));
 			}
-			Ok(Reason {
-				name: name(member(reason, "name", &at)?, &join(&at, "name"), names::is_snake_name, SNAKE)?,
-				failure: failure.to_owned(),
-			})
+			let name =
+				name(member(reason, "name", &at)?, &join(&at, "name"), names::is_snake_name, SNAKE)?;
+			let Some((_, message)) = held.messages.iter().find(|(n, _)| *n == name) else {
+				return Err(unread(&join(&at, "name"), "a reason messages gives a message"));
+			};
+			Ok(Reason { message: message.clone(), name, failure: failure.to_owned() })
 		})
 		.collect()
 }
@@ -296,7 +360,7 @@ fn interface(
 	value: &Value,
 	at: &str,
 	known: &BTreeSet<&str>,
-	failures: &[String],
+	held: &Held,
 ) -> Got<Interface> {
 	if !names::is_snake_name(name) {
 		return Err(unread(at, SNAKE));
@@ -329,7 +393,7 @@ fn interface(
 				)?,
 				input: type_of("input")?,
 				output: type_of("output")?,
-				reasons: reasons(member(op, "reasons", &at)?, &join(&at, "reasons"), failures)?,
+				reasons: reasons(member(op, "reasons", &at)?, &join(&at, "reasons"), held)?,
 			})
 		})
 		.collect::<Got<Vec<_>>>()?;

@@ -98,10 +98,53 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
         )),
       ),
     ),
+    "answer": {
+      let ((success, successCode), (data, dataKey), (error, errorCode)) = (
+        answerSuccess,
+        answerData,
+        answerError,
+      )
+      Object(
+        dict{
+          "tag": String(answerTag),
+          "cases": Array([
+            Object(
+              dict{
+                "name": String(success),
+                "code": Number(Int.toFloat(successCode)),
+                "fields": Array([
+                  Object(
+                    dict{
+                      "name": String(data),
+                      "key": Number(Int.toFloat(dataKey)),
+                      "shape": Object(dict{"output": String("operation")}),
+                    },
+                  ),
+                ]),
+              },
+            ),
+            Object(
+              dict{
+                "name": String(error),
+                "code": Number(Int.toFloat(errorCode)),
+                "type": String("error"),
+              },
+            ),
+          ]),
+        },
+      )
+    },
     "reasons": Array(
       Calls.common->Array.map(r => JSON.Object(
         dict{"name": String(r.name), "failure": String((r.failure :> string))},
       )),
+    ),
+    "messages": Object(
+      Calls.messages
+      ->Dict.toArray
+      ->Array.toSorted(((a, _), (b, _)) => String.compare(a, b))
+      ->Array.map(((n, m)) => (n, JSON.String(m)))
+      ->Dict.fromArray,
     ),
     "signed": Object(
       dict{

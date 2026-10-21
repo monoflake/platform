@@ -10,8 +10,8 @@ use serde_json::{Value, json};
 
 const CONTRACTS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../model/contracts.json");
 
-/// The least contracts that are written: a shell, the type `failure`, one record and one
-/// interface.
+/// The least contracts that are written: a shell, the types `failure` and `error`, the answer, one
+/// record and one interface, and the one reason's message.
 fn least() -> Value {
 	json!({
 		"version": 1,
@@ -27,9 +27,22 @@ fn least() -> Value {
 		},
 		"types": {
 			"failure": { "enum": [{ "name": "rejected", "code": 1 }], "ordered": false },
+			"error": { "record": [
+				{ "name": "failure", "key": 1, "shape": { "type": "failure" } },
+				{ "name": "reason", "key": 2, "shape": { "prim": "string" } },
+				{ "name": "message", "key": 3, "shape": { "prim": "string" } }
+			] },
 			"thing": { "record": [{ "name": "type", "key": 1, "shape": { "prim": "bool" } }] }
 		},
+		"answer": {
+			"tag": "status",
+			"cases": [
+				{ "name": "success", "code": 1, "fields": [{ "name": "data", "key": 1, "shape": { "output": "operation" } }] },
+				{ "name": "error", "code": 2, "type": "error" }
+			]
+		},
 		"reasons": [{ "name": "denied", "failure": "rejected" }],
+		"messages": { "denied": "Denied" },
 		"calling": [],
 		"interfaces": {
 			"things": {
@@ -61,6 +74,9 @@ fn the_contracts_are_written_the_same_byte_for_byte() {
 		"pub struct Shell {",
 		"pub const REASONS: &[Reason]",
 		"pub const CALLING: &[Reason]",
+		"Reason { name: \"denied\", failure: Failure::Rejected, message: \"The call carries no credential, or one that does not allow it\" },",
+		"pub fn message(name: &str) -> Option<&'static str> {",
+		"\"not_found\" => Some(\"Nothing of that name or id exists\"),",
 		"pub mod interface {",
 		"pub mod object {",
 		"impl Operation for Write {",
@@ -147,6 +163,24 @@ fn each_way_contracts_cannot_be_written_is_refused_where_it_is() {
 			"types/thing/union/cases/0/fields/0/name",
 		),
 		("/interfaces/things/operations/0/name", json!("operation"), "interfaces/things"),
+		("/answer/tag", json!("kind"), "answer"),
+		("/answer/cases/1/type", json!("thing"), "answer"),
+		("/answer/cases/0/code", json!(2), "answer"),
+		(
+			"/types/error",
+			json!({ "enum": [{ "name": "a", "code": 1 }], "ordered": false }),
+			"types/error",
+		),
+		("/types/error/record/2/name", json!("status"), "types/error/record/2"),
+		("/types/error/record/2/key", json!(0), "types/error/record/2"),
+		("/messages", json!({}), "reasons/0/name"),
+		("/messages/denied", json!(1), "messages/denied"),
+		("/messages", json!({ "Denied": "Denied" }), "messages/Denied"),
+		(
+			"/interfaces/things/operations/0/reasons",
+			json!([{ "name": "gone", "failure": "rejected" }]),
+			"interfaces/things/operations/0/reasons/0/name",
+		),
 		("/interfaces/things/operations/0/name", json!("call"), "interfaces/things"),
 	];
 	for (pointer, value, at) in cases {

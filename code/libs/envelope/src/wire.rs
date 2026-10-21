@@ -4,6 +4,7 @@
 //! no reader knows is passed over, in either form; anything else not as its type writes it is
 //! [`Malformed`].
 
+mod answer;
 mod call;
 mod number;
 mod text;

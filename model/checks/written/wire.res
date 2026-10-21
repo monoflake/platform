@@ -300,10 +300,38 @@ let run = () => {
           if Calls.common->Array.some(c => c.name == r.name) {
             contractRules->Array.push(`${at}: reason ${r.name}, which every operation has already`)
           }
+          if Calls.messages->Dict.get(r.name) == None {
+            contractRules->Array.push(`${at}: reason ${r.name}, with no message in calls.res`)
+          }
         },
       )
     })
   })
+  // Each reason's default message, ge55b: every common and calling reason has one, and every
+  // message is some reason's.
+  let named = Set.fromArray(
+    Array.concatMany(
+      Calls.common->Array.map(r => r.name),
+      [
+        Calls.calling->Array.map(r => r.name),
+        Contracts.interfaces->Array.flatMap(i =>
+          i.operations->Array.flatMap(o => o.reasons->Array.map(r => r.name))
+        ),
+      ],
+    ),
+  )
+  Array.concat(Calls.common, Calls.calling)->Array.forEach(r =>
+    if Calls.messages->Dict.get(r.name) == None {
+      contractRules->Array.push(`reason ${r.name}, with no message in calls.res`)
+    }
+  )
+  Calls.messages
+  ->Dict.keysToArray
+  ->Array.forEach(n =>
+    if !(named->Set.has(n)) {
+      contractRules->Array.push(`message for ${n}, which no operation fails for`)
+    }
+  )
   // The drivers' runtimes, RFC vr5lw: each a runtime the deployments' contract names, taking one of
   // its forms and standing on its isolations, every runtime given by some driver and every form
   // taken.

@@ -1,6 +1,7 @@
 //! envelope*'s module `contracts` written from the [`Model`], as the library's `src/lib.rs` names
 //! every item of it: each type and its `Encoded` by the helpers of the library's `wire`, the shell,
-//! the reasons, each interface's operations, and the two functions by a type's name.
+//! the reasons and their messages, each interface's operations, and the functions by a type's name
+//! and by an interface's.
 
 use std::collections::BTreeSet;
 
@@ -460,9 +461,10 @@ fn reasons(out: &mut Out, head: &str, reasons: &[Reason], failure: &str) {
 	out.open(&format!("{head} = &["));
 	for r in reasons {
 		out.line(&format!(
-			"Reason {{ name: {:?}, failure: {failure}::{} }},",
+			"Reason {{ name: {:?}, failure: {failure}::{}, message: {:?} }},",
 			r.name,
-			names::camel(&r.failure)
+			names::camel(&r.failure),
+			r.message
 		));
 	}
 	out.close("];");
@@ -654,6 +656,16 @@ pub(super) fn module(model: &Model) -> Result<String, Unread> {
 	out.line("");
 	out.line("/// The reasons a call between apps adds.");
 	reasons(&mut out, "pub const CALLING: &[Reason]", &model.calling, &failure);
+	out.line("");
+	out.line("/// A reason's default message, by its name, or none where no reason is so named.");
+	out.open("pub fn message(name: &str) -> Option<&'static str> {");
+	out.open("match name {");
+	for (name, message) in &model.messages {
+		out.line(&format!("{name:?} => Some({message:?}),"));
+	}
+	out.line("_ => None,");
+	out.close("}");
+	out.close("}");
 	out.line("");
 	out.line("/// Each interface of `model/contracts.json`, an operation reached at");
 	out.line("/// `POST /{interface}/{operation}`.");

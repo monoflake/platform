@@ -13,12 +13,34 @@ let callFields = (~capabilities=`{"list": {"prim": "bytes"}}`) =>
     {"name": "input", "key": 3, "shape": {"input": "operation"}},
     {"name": "capabilities", "key": 4, "shape": ${capabilities}, "optional": true}]`
 
-/** Contracts holding `types` beside a `failure` of one choice. */
-let contracts = (~types="", ~reasons="[]", ~interfaces="{}", ~call=callFields()) => {
-  let failure = `"failure": {"enum": [{"name": "rejected", "code": 1}], "ordered": false}`
+/** The answer as `model/contracts.json` writes it, the success's code `success`. */
+let answer = (~success=1) =>
+  `{"tag": "status", "cases": [
+    {"name": "success", "code": ${Int.toString(
+      success,
+    )}, "fields": [{"name": "data", "key": 1, "shape": {"output": "operation"}}]},
+    {"name": "error", "code": 2, "type": "error"}]}`
+
+/** An `error` as `model/contracts.json` writes it, its message's field `message`. */
+let error = (~message=`{"name": "message", "key": 3, "shape": {"prim": "string"}}`) =>
+  `"error": {"record": [{"name": "failure", "key": 1, "shape": {"type": "failure"}},
+    {"name": "reason", "key": 2, "shape": {"prim": "string"}}, ${message}]}`
+
+/** Contracts holding `types` beside a `failure` of one choice and an `error`. */
+let contracts = (
+  ~types="",
+  ~reasons="[]",
+  ~messages=`{"gone": "Gone"}`,
+  ~interfaces="{}",
+  ~call=callFields(),
+  ~answer=answer(),
+  ~error=error(),
+) => {
+  let failure = `"failure": {"enum": [{"name": "rejected", "code": 1}], "ordered": false}, ${error}`
   let types = types == "" ? failure : `${failure}, ${types}`
   `{"shell": [], "call": {"fields": ${call}, "typ": "monoflake:call:1"}, "types": {${types}},
-    "reasons": ${reasons}, "calling": [], "interfaces": ${interfaces}}`
+    "answer": ${answer}, "reasons": ${reasons}, "messages": ${messages}, "calling": [],
+    "interfaces": ${interfaces}}`
 }
 
 let source = text =>
@@ -38,6 +60,12 @@ test("model/contracts.json is written, the same twice over", () => {
     "module Interface = {",
     "let reasons: array<reason> = ",
     "let calling: array<reason> = ",
+    "type reason = {name: string, failure: Failure.t, message: string}",
+    `{name: "denied", failure: Failure.Rejected, message: "The call carries no credential, or one that does not allow it"}`,
+    "let messages: dict<string> = ",
+    `("not_found", "Nothing of that name or id exists")`,
+    "module Answer = {",
+    "type t<'output> = Success('output) | Error(Error.t)",
     "let jsonToCbor = ",
     "let cborToJson = ",
     "let callJsonToCbor = ",
@@ -87,6 +115,17 @@ test("an interface holds a call of each operation and the envelope it travels in
   ok(written->String.includes(`| "thing" => Some(Wire.jsonToCbor(json, Interface.Thing.fromJson`))
 })
 
+test("an answer is a union by its tag, its error the fields of error", () => {
+  let written = source(contracts())
+  ok(
+    written->String.includes(`Wire.ToJson.case("status", "success", [Wire.ToJson.field("data", d, data)])`),
+  )
+  ok(
+    written->String.includes(`Wire.ToCbor.case(2, [Wire.ToCbor.field(1, c.failure, Failure.toCbor)`),
+  )
+  ok(written->String.includes(`Wire.FromCbor.unknown("status", [1, 2])`))
+})
+
 test("what cannot be written is unread, where it stands", () => {
   let unread = (at, expected): result<string, Generate.unread> => Error({at, expected})
   deepEqual(written("{"), unread("", "JSON"))
@@ -110,6 +149,33 @@ test("what cannot be written is unread, where it stands", () => {
   deepEqual(
     written(contracts(~reasons=`[{"name": "gone", "failure": "lost"}]`)),
     unread("reasons/0/failure", "one of rejected"),
+  )
+  deepEqual(
+    written(contracts(~reasons=`[{"name": "lost", "failure": "rejected"}]`)),
+    unread("reasons/0/name", "a reason messages gives a message"),
+  )
+  deepEqual(written(contracts(~messages=`{"gone": 1}`)), unread("messages/gone", "a string"))
+  deepEqual(
+    written(contracts(~answer=answer(~success=2))),
+    unread("answer/cases/1/code", "a code other than success's"),
+  )
+  deepEqual(
+    written(contracts(~answer=`{"tag": "status", "cases": []}`)),
+    unread("answer/cases", "two cases, success and error"),
+  )
+  deepEqual(
+    written(
+      contracts(~error=error(~message=`{"name": "status", "key": 3, "shape": {"prim": "string"}}`)),
+    ),
+    unread("types/error/record/2/name", "a name no other field has"),
+  )
+  deepEqual(
+    written(
+      contracts(
+        ~error=error(~message=`{"name": "message", "key": 0, "shape": {"prim": "string"}}`),
+      ),
+    ),
+    unread("types/error/record/2/key", "a key no other field has"),
   )
   deepEqual(
     written(

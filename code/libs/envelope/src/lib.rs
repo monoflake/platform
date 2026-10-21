@@ -32,7 +32,8 @@ mod wire;
 ///   holding its input, `Call::Write(ObjectWrite)`, implementing [`Called`], so a call read is held
 ///   to the type its operation names.
 /// - **The reasons** every operation may fail for are `REASONS`, and those a call between apps
-///   adds are `CALLING`, each a `&[Reason]`.
+///   adds are `CALLING`, each a `&[Reason]`, every [`Reason`] with its message; and `message(name)`
+///   gives any reason's default message by its name, none for a name no reason has.
 /// - **By a type's name**, `json_to_cbor(name, json)` reads the JSON as that type and gives its
 ///   CBOR, and `cbor_to_json(name, cbor)` the reverse, each none for a name no type has; and **by an
 ///   interface's name**, `call_json_to_cbor(name, json)` reads the JSON as a call of it, an
@@ -126,13 +127,29 @@ pub trait Called: Sized {
 	fn from_cbor(operation: &str, input: &codec::Value) -> Result<Self, Malformed>;
 }
 
-/// A reason an operation may fail for, and the failure a caller acts on, RFC 49qyg.
+/// A reason an operation may fail for, the failure a caller acts on, RFC 49qyg, and the message an
+/// `error` carries for it unless the moment says more, `model/contracts.json`'s `messages`, RFC
+/// ge55b.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Reason {
 	/// Its name, as an `error` carries it.
 	pub name: &'static str,
 	/// What a caller acts on.
 	pub failure: contracts::Failure,
+	/// Its default message, for a person.
+	pub message: &'static str,
+}
+
+/// An answer, every operation's, `model/contracts.json`'s `answer`, RFC ge55b: by `status`, the
+/// operation's output as `data`, or an `error`, told apart by `status` alone. Implementing
+/// [`Encoded`] for every `O` that is: read, a `status` neither case names is [`Malformed`] at
+/// `status`.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Answer<O> {
+	/// `success`: the operation's output.
+	Success(O),
+	/// `error`: its failure, its reason and its message.
+	Error(contracts::Error),
 }
 
 /// An operation of an interface, reached at `POST /{interface}/{operation}`, RFC vr5lw;

@@ -110,8 +110,8 @@ type operation = {name: string, input: string, output: string, reasons: array<re
 
 /**
  * An interface, a kind's contract among them, vr5lw: each operation reached at `POST
- * /{interface}/{operation}`, its body a `call` and its output or an `error` the answer, in JSON or
- * CBOR as the request chooses. Its version is raised as a record's is, wnqvu.
+ * /{interface}/{operation}`, its body a `call` and its answer an `answer`, its output or an `error`,
+ * in JSON or CBOR as the request chooses, CBOR where it names neither, ge55b. Its version is raised as a record's is, wnqvu.
  */
 type interface_ = {
   name: string,
@@ -161,6 +161,18 @@ let call = [
 ]
 let callInput = ("input", 3)
 let callTyp = "monoflake:call:1"
+
+/**
+ * An answer, every operation's, RFC ge55b, as `canmi/lib`'s response envelope is one: a union by
+ * `status`, `success` holding the operation's output as `data`, or `error` holding the `error`
+ * type's fields, a reader telling them by `status` alone and never by the HTTP status, which says
+ * only as much to what stands between. The output is the operation's own type, which no shape
+ * names, so it is written apart, `answerData`.
+ */
+let answerTag = "status"
+let answerSuccess = ("success", 1)
+let answerData = ("data", 1)
+let answerError = ("error", 2)
 
 /** Every kind's content opens with its description, free text, empty unless written, v7v3w. */
 let description = optional("description", 0, Prim(#string))

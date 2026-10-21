@@ -67,11 +67,13 @@ pub(super) struct Declared {
 	pub(super) def: Def,
 }
 
-/// A reason an operation may fail for, its failure a choice of the type `failure`.
+/// A reason an operation may fail for, its failure a choice of the type `failure`, and its default
+/// message, the one `messages` gives it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) struct Reason {
 	pub(super) name: String,
 	pub(super) failure: String,
+	pub(super) message: String,
 }
 
 /// An operation of an interface, its input and output by their types' names.
@@ -99,4 +101,6 @@ pub(super) struct Model {
 	pub(super) reasons: Vec<Reason>,
 	pub(super) calling: Vec<Reason>,
 	pub(super) interfaces: Vec<Interface>,
+	/// Each reason's default message, by its name.
+	pub(super) messages: Vec<(String, String)>,
 }

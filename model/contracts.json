@@ -113,8 +113,7 @@
 					"key": 3,
 					"shape": {
 						"prim": "string"
-					},
-					"optional": true
+					}
 				}
 			]
 		},
@@ -6277,6 +6276,29 @@
 			]
 		}
 	},
+	"answer": {
+		"tag": "status",
+		"cases": [
+			{
+				"name": "success",
+				"code": 1,
+				"fields": [
+					{
+						"name": "data",
+						"key": 1,
+						"shape": {
+							"output": "operation"
+						}
+					}
+				]
+			},
+			{
+				"name": "error",
+				"code": 2,
+				"type": "error"
+			}
+		]
+	},
 	"reasons": [
 		{
 			"name": "denied",
@@ -6291,6 +6313,51 @@
 			"failure": "unavailable"
 		}
 	],
+	"messages": {
+		"ahead": "The generation asked for is ahead of the one held",
+		"beyond_allowance": "The change asks for more than the allowance gives",
+		"beyond_host": "The host cannot give what is asked",
+		"beyond_limit": "The statement goes past a limit of the database",
+		"beyond_range": "A value is beyond the range its column holds",
+		"beyond_window": "The moment asked for is outside the window kept",
+		"call_cycle": "The calls the change declares form a cycle",
+		"calls_unmatched": "A call the change declares matches no export",
+		"constraint": "The statement breaks a constraint of the database",
+		"denied": "The call carries no credential, or one that does not allow it",
+		"depended_on": "Something else depends on what the change removes",
+		"expectation_failed": "What is held is not what the call expected",
+		"extension_invalid": "The extension named is not valid here",
+		"gap": "The frames asked for are no longer all held",
+		"hash_mismatch": "What was fetched does not match its hash",
+		"invalid": "The input is well formed but not valid",
+		"malformed": "The call is not as its interface writes it",
+		"no_export": "No export of that name is deployed",
+		"no_kind": "No kind of that name exists",
+		"no_sandbox": "No host offers the sandbox asked for",
+		"not_a_bucket": "No bucket of that name exists",
+		"not_dismissible": "The warning cannot be dismissed",
+		"not_found": "Nothing of that name or id exists",
+		"not_granted": "The grants do not give what is asked",
+		"not_permitted": "The space does not permit what is asked",
+		"not_retiring": "The key named is not being retired",
+		"overloaded": "The implementation is busy for a moment; try again",
+		"quota_exceeded": "The write would go past the quota",
+		"read_only": "The database is read-only for now",
+		"role_refused": "The role asked for is not one the caller may hold",
+		"size_differs": "The size written differs from the size declared",
+		"stale": "What the call was based on has changed since",
+		"still_asked": "The binding still asks for capacity",
+		"still_running": "The deployment is still running; stop it first",
+		"stopped": "What was called is stopped",
+		"storage_full": "No store has room for the write now",
+		"suspended": "The organization is suspended",
+		"too_large": "The input is larger than its bound",
+		"unfetchable": "The artifact could not be fetched",
+		"unplaceable": "No store meets the placement asked for",
+		"unresolved": "A handle in the change resolves to nothing",
+		"wrong_offset": "The write does not start where the upload ends",
+		"wrong_type": "The bucket is not of the type the call needs"
+	},
 	"signed": {
 		"header": {
 			"alg": -19,
