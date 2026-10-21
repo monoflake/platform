@@ -1,9 +1,42 @@
-//! `driver(machine)`'s management, which today reads a machine's usage from the kernel under a
-//! given root, RFC vr5lw [C18]. This file is its interface, the model's, `docs/code.md`.
+//! `driver(machine)`'s management, a machine's usage read from the kernel [C18] and its bindings'
+//! tokens, RFCs vr5lw and 3d3nt. This file is its interface, the model's, `docs/code.md`.
 
 use std::path::{Path, PathBuf};
 
+mod tokens;
 mod usage;
+
+/// A binding, by its `capacity` space's integer, as its token names it.
+pub type Binding = u32;
+
+/// A call refused for its token, alike whether it carried none, one malformed, one not matching or
+/// one naming no binding held, so a caller learns nothing of which, RFC 3d3nt.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Denied;
+
+/// The tokens held, each binding's by the BLAKE3 of each secret, never a token itself, and those
+/// forgotten; a binding holds two while one replaces the other.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Tokens {
+	held: std::collections::BTreeMap<Binding, Vec<[u8; 32]>>,
+	forgotten: std::collections::BTreeSet<[u8; 32]>,
+}
+
+/// How tokens are taken, checked and forgotten, each `<id>.<secret>` in a file of its own, its
+/// secret 32 bytes in unpadded base64url; implemented for [`Tokens`].
+pub trait Hold {
+	/// Each file read again, its token taken if never seen; one forgotten stays so while the process
+	/// lasts, a file gone forgets nothing, and a file not read or not a token is answered.
+	fn reload(&mut self, files: &[PathBuf]) -> Vec<Unread>;
+	/// The binding a call's `Authorization` header is for, `Bearer <token>`, its secret's hash
+	/// compared in constant time with each its binding holds.
+	fn check(&self, authorization: Option<&str>) -> Result<Binding, Denied>;
+	/// A binding's tokens in force by their hashes, as an apply's `tokens` names them; every other
+	/// it holds is forgotten, and none changes where the apply names none.
+	fn apply(&mut self, binding: Binding, tokens: Option<&[[u8; 32]]>);
+	/// A binding its control ended, every token of it forgotten.
+	fn end(&mut self, binding: Binding);
+}
 
 /// Why a file was not read as the kernel writes it, which and where and what was expected, or that
 /// it could not be opened.

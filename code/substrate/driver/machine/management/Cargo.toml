@@ -11,3 +11,4 @@ workspace = true
 
 [dependencies]
 rustix = { version = "1", features = ["fs"] }
+blake3 = "1"

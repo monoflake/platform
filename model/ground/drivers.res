@@ -55,7 +55,10 @@ let drivers: dict<driver> = dict{
   "driver(machine)": {
     grounds: [#provider, #home],
     management: #rust,
-    managementTakes: [{language: #rust, name: "rustix", major: "1"}],
+    managementTakes: [
+      {language: #rust, name: "rustix", major: "1"},
+      {language: #rust, name: "blake3", major: "1"},
+    ],
     system: "NixOS, with containerd",
     images: "workerd and wasmtime",
     implements: [
@@ -70,7 +73,7 @@ let drivers: dict<driver> = dict{
           {language: #rust, name: "containerd-client", major: "0.9"},
           {language: #rust, name: "tokio", major: "1"},
           {language: #rust, name: "serde_json", major: "1"},
-          {language: #rust, name: "sha2", major: "0.10"},
+          {language: #rust, name: "sha2", major: "0.11"},
           {language: #rust, name: "prost-types", major: "0.14"},
           {language: #rust, name: "tonic", major: "0.14"},
           {language: #rust, name: "reqwest", major: "0.13"},

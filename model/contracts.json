@@ -2992,6 +2992,16 @@
 							"type": "management-item"
 						}
 					}
+				},
+				{
+					"name": "tokens",
+					"key": 3,
+					"shape": {
+						"list": {
+							"prim": "hash"
+						}
+					},
+					"optional": true
 				}
 			]
 		},

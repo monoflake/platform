@@ -34,13 +34,16 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
+  // `tokens`, where given, are the binding's tokens still in force by their BLAKE3, and the driver
+  // forgets every other it holds, 3d3nt.
   {
     name: "management-apply",
     def: Record([
       field("generation", 1, Prim(#uint53)),
       field("items", 2, List(Type("management-item"))),
+      optional("tokens", 3, List(Prim(#hash))),
     ]),
-    from: "vr5lw",
+    from: "vr5lw, 3d3nt",
   },
   // The generation the driver holds, the one sent or a newer it took before.
   {name: "management-held", def: Record([field("generation", 1, Prim(#uint53))]), from: "vr5lw"},
