@@ -1,8 +1,6 @@
 /**
- * The names no username or label is given by the ordinary flow, on any platform, since either may
- * stand in a domain name, v7v3w. Reserved means kept
- * for the platform: the operator alone gives one, by hand, to an organization of the platform's
- * own. The list only grows, and a name added that someone holds stays theirs.
+ * The names no username or label is given by the ordinary flow, kept for the platform's own
+ * organizations, v7v3w. The list only grows.
  */
 /**
  * The names a site keeps from its users, as shouldbee/reserved-usernames lists them, read by the

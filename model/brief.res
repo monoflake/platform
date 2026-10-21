@@ -1,7 +1,6 @@
 /**
- * One block's brief, `mise run brief <package> [--path]`: everything a worker needs to write it,
- * read from the model, so no brief is written by hand and none drifts from what is checked,
- * `docs/code.md`. With `--path`, its directory alone, for the tasks that run in it.
+ * One block's brief, `mise run brief <package> [--path]`, read from the model so none drifts from
+ * what is checked, `docs/code.md`. `--path` prints its directory alone.
  */
 open Base
 open Blocks

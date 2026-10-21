@@ -1,9 +1,6 @@
 /**
- * The records an organization's control keeps of its own, RFCs v7v3w and vr5lw: itself, its
- * members and its invitations; the tree its
- * resources are shown on, the names bound to them, the gateway's mounts, the extensions it binds
- * and the capacity it opens on them. Every value sealed is sealed under a key deployed as a secret
- * of the control's own deployment, v7v3w.
+ * The records an organization's control keeps of its own, itself, its people, its tree, names,
+ * mounts, extensions and capacity, RFCs v7v3w and vr5lw.
  */
 open Subset
 
@@ -13,9 +10,8 @@ let types: array<declared> = [
     def: Enum({choices: codes(["default", "strict"]), ordered: false}),
     from: "v7v3w, vuanj",
   },
-  // An organization's own: its name shown, at most 16 characters, empty unless written; how long
-  // its credentials live, vuanj; and the grace its extensions inherit, a week unless set, vr5lw.
-  // Its description is every record's.
+  // An organization's own record, its name shown, how long its credentials live, vuanj, and the
+  // grace its extensions inherit, vr5lw.
   {
     name: "organization",
     def: Record([
@@ -55,9 +51,8 @@ let types: array<declared> = [
     def: Enum({choices: codes(["folder", "app", "database", "bucket"]), ordered: false}),
     from: "v7v3w",
   },
-  // A node's id is its resource's, or a folder's, from the one space; `parent` the folder it sits
-  // in, none at the top; `slug` its part of a path, written as a label is; `name` the name shown,
-  // written as an account's is and repeated as freely.
+  // A node of the tree, its resource's or a folder's id, the folder it sits in, its `slug` in a
+  // path and the `name` shown.
   {
     name: "tree",
     def: Record([
@@ -90,8 +85,8 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  // A mount under the organization's gateway: a scope, written as a label is and never one the
-  // platform reserves, to the app it hands `/v{n}/...`, vr5lw.
+  // A mount under the organization's gateway, a scope written as a label to the app it hands
+  // `/v{n}/...`, vr5lw.
   {
     name: "scope",
     def: Record([field("scope", 1, Prim(#string)), field("app", 2, Id("app"))]),
@@ -102,8 +97,7 @@ let types: array<declared> = [
     def: Enum({choices: codes(["cloudflare", "machine"]), ordered: false}),
     from: "v7v3w",
   },
-  // What is bound: the driver's kind, and the host's own identifier, an account's id or what a
-  // machine's driver reports.
+  // What is bound, the driver's kind and the host's own identifier.
   {
     name: "extension-host",
     def: Record([
@@ -146,11 +140,8 @@ let types: array<declared> = [
     }),
     from: "v7v3w",
   },
-  // A host injected from outside and bound: `endpoint` where its driver's management answers;
-  // `token` the binding token, sealed; `levels` copied from the host as it is bound, its own from
-  // then; `quota` none unless set; `grace` the organization's unless set; `address` whether its
-  // host is declared to have a public one, which a relay dialing back checks; a management token
-  // and a shell key's private half sealed, if given; and the warnings its admin dismissed.
+  // A host injected from outside and bound, its management's endpoint, its sealed tokens and keys,
+  // its levels, quota, grace and dismissed warnings.
   {
     name: "extension",
     def: Record([
@@ -170,9 +161,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w, vr5lw",
   },
-  // A share opened on an extension, bound to it, an item of its driver's list: its capacity, and
-  // its secrets, one or two, sealed, which the control hands what uses it and whose hashes alone it
-  // sends the driver, vr5lw.
+  // A share opened on an extension, an item of its driver's list, its capacity and its sealed
+  // secrets, whose hashes alone reach the driver, vr5lw.
   {
     name: "capacity",
     def: Record([
@@ -182,20 +172,19 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  // The gateway's section of a bundle: every name bound and every mount, as the control holds them.
+  // The gateway's section of a bundle, every name bound and every mount as the control holds them.
   {
     name: "bundle-gateway",
     def: Record([field("names", 1, List(Type("name"))), field("scopes", 2, List(Type("scope")))]),
     from: "vr5lw",
   },
-  // A host as its bundle holds it: the relays it may use, and whether it has a public address,
-  // which a relay dialing back checks; nothing of the extension sealed.
+  // A host as its bundle holds it, its relays and whether it has a public address, nothing sealed.
   {
     name: "bundle-host",
     def: Record([field("relays", 1, Type("extension-relays")), field("address", 2, Prim(#bool))]),
     from: "vr5lw",
   },
-  // The hosts' section of a bundle: each host by its extension's id.
+  // The hosts' section of a bundle, each host by its extension's id.
   {
     name: "bundle-hosts",
     def: Record([field("hosts", 1, Map(Type("bundle-host")))]),

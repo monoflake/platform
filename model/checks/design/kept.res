@@ -49,7 +49,7 @@ let run = () => {
     }
   )
 
-  // The completion rule of theory, `docs/method.md`: every boundary is kept by someone and sorted.
+  // Every boundary is kept by someone and sorted, the completion rule of `docs/method.md`.
   let unsorted =
     needed
     ->Map.keys

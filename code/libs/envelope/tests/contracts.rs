@@ -1,7 +1,5 @@
-//! The module `contracts` held to what the samples of `tests/codec/` leave out: a field no reader
-//! knows passed over, where a value is not as its type writes it and what was expected there, the
-//! one text of bytes and of a hash, each shape's bounds, and the names an interface and the
-//! reasons are written under.
+//! The module `contracts` held to what the samples leave out, unknown fields, where a value is
+//! malformed, the texts, the bounds and the names.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]

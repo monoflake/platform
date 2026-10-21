@@ -1,6 +1,4 @@
-/***
- * A CWT, RFC 8392: a claims set carried as a Sign1's payload. `src/cwt.rs` is the same in Rust.
- */
+/*** A CWT, RFC 8392, a claims set carried as a Sign1's payload, as `src/cwt.rs` is in Rust. */
 
 type claims = array<(Cbor.value, Cbor.value)>
 

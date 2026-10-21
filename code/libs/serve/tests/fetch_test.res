@@ -1,8 +1,4 @@
-/***
- * `Fetch.handler` driven with node's global `Request` and `Response`, as a Worker gives them: the
- * method, the path, the two headers and the body read, and the status, `Content-Type` and body
- * written back.
- */
+/*** `Fetch.handler` driven with node's global `Request` and `Response`, as a Worker gives them. */
 open Node
 open Served
 

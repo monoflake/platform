@@ -1,7 +1,5 @@
-//! The subset's numbers: a 64-bit float, a 32-bit integer of either sign, and one within 2^53,
-//! [`Uint53`] and [`Int53`], which [`Bounded`] makes. An integer is read by its value, only within
-//! its bounds: in JSON any number that is exactly an integer, `5.0` and `1e2` among them, since a
-//! JavaScript reader cannot tell them from `5` and `100`; in CBOR an integer alone.
+//! The subset's numbers, a 64-bit float, 32-bit integers and [`Uint53`] and [`Int53`]. An integer
+//! is read by its value, `5.0` and `1e2` among them in JSON.
 
 use codec::Value as Cbor;
 use serde_json::Value as Json;
@@ -42,9 +40,8 @@ const UINT53: &str = "an integer of 0 to 2^53 - 1";
 const FLOAT: &str = "a number";
 const FINITE: &str = "a finite float";
 
-/// The integer a JSON number is exactly, if it is one within 2^53 either way: an integer as written,
-/// or a float that is finite, integral and within those bounds, taken apart by its bits so nothing
-/// is rounded.
+/// The integer a JSON number is exactly within 2^53 either way, a float taken apart by its bits so
+/// nothing is rounded.
 fn exact(json: &Json) -> Option<i64> {
 	if let Some(n) = json.as_i64() {
 		return Some(n);
@@ -56,10 +53,10 @@ fn exact(json: &Json) -> Option<i64> {
 	let bits = x.to_bits();
 	let exponent = (bits >> 52) & 0x7ff;
 	if exponent == 0 {
-		// A zero, either sign: no other float this small is integral.
+		// A zero of either sign, as no other float this small is integral.
 		return Some(0);
 	}
-	// The value is the significand times 2^(exponent - 1075), and integral, so the shift drops zeros.
+	// The value is the significand times 2^(exponent - 1075) and integral, so the shift drops zeros.
 	let significand = (bits & ((1 << 52) - 1)) | (1 << 52);
 	let shift = u32::try_from(1075_u64.checked_sub(exponent)?).ok()?;
 	let magnitude = i64::try_from(significand.checked_shr(shift)?).ok()?;

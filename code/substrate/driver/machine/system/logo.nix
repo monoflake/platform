@@ -1,5 +1,5 @@
-# fastfetch's logo: our own drawing of the NixOS snowflake (Simon Frankau and Tim Cuthbertson,
-# CC BY 4.0), `$1` to `$3` its blue, pink and white legs.
+# fastfetch's logo, our own drawing of the NixOS snowflake (Simon Frankau and Tim Cuthbertson, CC BY
+# 4.0), `$1` to `$3` its blue, pink and white legs.
 ''
   $3        q88p    $1"0000_  q00p
   $3        P8888_   $1"0000_0000P

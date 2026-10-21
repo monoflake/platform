@@ -1,7 +1,6 @@
 /**
- * A footing's own tables, RFC b8f35: each is looked up by its key, the fields its content names
- * `unique`, and holds one versioned record, CBOR, so a field added changes no schema and a key
- * changed is a break, wnqvu. A tablet's rows are its product's own schema, never these.
+ * A footing's own tables, each keyed and holding one versioned CBOR record, RFC b8f35. A tablet's
+ * rows are its product's schema instead.
  */
 open Subset
 
@@ -18,8 +17,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w, b8f35",
   },
-  // A store of the backing, never named: where it answers and its secret, sealed; its weight; and
-  // what it declared as it was bound, its levels and where it stands, 13ixj.
+  // A store of the backing, where it answers, its sealed secret, its weight and the levels it
+  // declared, 13ixj.
   {
     name: "store",
     def: Record([
@@ -38,8 +37,7 @@ let types: array<declared> = [
     def: Record([field("hash", 1, Prim(#hash)), field("pieces", 2, List(Prim(#hash)))]),
     from: "b8f35",
   },
-  // Where a piece lies: its parcel, its offset and length there, and whether it was compressed,
-  // which cannot be computed, as what was packed with what depends on when it came.
+  // Where a piece lies, its parcel, offset and length, and whether it was compressed.
   {
     name: "piece",
     def: Record([
@@ -58,8 +56,7 @@ let types: array<declared> = [
     def: Record([field("parcel", 1, Prim(#hash)), optional("store", 2, Prim(#string))]),
     from: "b8f35",
   },
-  // The journals a placement writes, at most two: one open, appended to, and one frozen; each named
-  // by its seed, drawn at random as it is opened.
+  // The journals a placement writes, one open and one frozen, each named by a random seed.
   {
     name: "journal",
     def: Record([
@@ -79,7 +76,7 @@ let types: array<declared> = [
     ]),
     from: "vuanj, b8f35",
   },
-  // A clock's lock: who holds a name, and until when, in milliseconds by the footing's clock.
+  // A clock's lock, who holds a name and until when by the footing's clock.
   {
     name: "lease",
     def: Record([

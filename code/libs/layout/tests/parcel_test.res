@@ -1,6 +1,5 @@
 /***
- * `Parcel` held to `tests/layout/parcels.json`: every parcel sealed, its head and its BLAKE3, opened
- * back to its capacity, where each piece fits, and every refusal, the first in the interface's order.
+ * `Parcel` held to `tests/layout/parcels.json`, every parcel sealed, opened, fitted and refused.
  */
 open Node
 open Sample

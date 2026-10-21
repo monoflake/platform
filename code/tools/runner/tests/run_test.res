@@ -1,7 +1,6 @@
 /***
- * `Run.file` held to RFC p8e8k against a target in memory: every case in CBOR and then in JSON,
- * passed, failed at its step, or skipped naming why; `within` retried after 100 ms doubling, by a
- * clock the target holds; `wait` moving that clock.
+ * `Run.file` held to RFC p8e8k against a target in memory, its outcomes, `within`'s retries and
+ * `wait` by the target's clock.
  */
 open Node
 
@@ -174,7 +173,8 @@ testAsync("a case needing what the target offers not is skipped, never passed", 
       },
     ],
   )
-  // Nothing of a case given what the target cannot set up is called; a case losing copies ran to there.
+  // Nothing of a case given what the target cannot set up is called, and a case losing copies ran
+  // to there.
   deepEqual(calls, [("write", Run.Cbor), ("write", Json)])
 })
 

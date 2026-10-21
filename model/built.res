@@ -1,7 +1,6 @@
 /**
- * Every written block built, formatted, linted and tested alone, `mise run blocks`, each by `mise
- * run built <package>`: one accepted that fails fails the run, and one in work that fails is listed
- * in red and fails nothing, `model/plan/work.res`. What verify holds of the code, `docs/code.md`.
+ * Every written block built, formatted, linted and tested alone, `mise run blocks`. One in work
+ * that fails is listed in red and fails nothing, `model/plan/work.res`.
  */
 open Base
 open Blocks

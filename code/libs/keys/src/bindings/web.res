@@ -1,6 +1,6 @@
 /***
- * What keys takes of the web's APIs beyond ReScript's Stdlib: UTF-8 by `TextEncoder`, and a typed
- * array's `set` from another.
+ * What keys takes of the web's APIs beyond ReScript's Stdlib, `TextEncoder` and a typed array's
+ * `set`.
  */
 type encoder
 @new external makeEncoder: unit => encoder = "TextEncoder"

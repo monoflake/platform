@@ -1,6 +1,6 @@
 /***
- * Reading the samples as they stand, from their paths: JSON, read through `JSON.Decode`, its hex in
- * either case, and the content it gives by a seed rather than whole.
+ * The samples read as they stand from their paths, JSON with hex in either case and content made
+ * from a seed.
  */
 
 /** The sample at `path`, from the repository's root. */
@@ -56,8 +56,10 @@ let numberAt = (json, names) => json->at(names)->number
 /** A member holding an integer. */
 let intAt = (json, names) => json->numberAt(names)->Float.toInt
 
-/** The content a sample gives: `{xof, length}`, BLAKE3's extended output of the text's UTF-8,
- * unkeyed, of that many bytes, or `{zeros}`, that many zero bytes. */
+/**
+ * The content a sample gives, `{xof, length}` as BLAKE3's extended output of the text, or
+ * `{zeros}`.
+ */
 let content = json =>
   switch (member(json, "xof"), member(json, "zeros")) {
   | (Some(xof), None) => Blake3.hashWith(Node.utf8(xof->string), {dkLen: json->intAt(["length"])})
@@ -72,8 +74,10 @@ let header = (json): Parcel.header => {
   seed: json->hexAt(["seed"]),
 }
 
-/** Sealed bytes changed as a case says: cut to its `truncate`, or its `set` bytes written over them
- * at its offset, or as they are. */
+/**
+ * Sealed bytes changed as a case says, cut to its `truncate` or with its `set` bytes written over
+ * them.
+ */
 let changed = (bytes, case) =>
   switch (member(case, "truncate"), member(case, "set")) {
   | (Some(length), None) => bytes->TypedArray.slice(~start=0, ~end=length->number->Float.toInt)
@@ -85,7 +89,7 @@ let changed = (bytes, case) =>
   | (Some(_), Some(_)) => JsError.throwWithMessage(`${JSON.stringify(case)}: two changes`)
   }
 
-/** The refusal a case names: a name alone, or `{name: n}`, as the name and the number. */
+/** The refusal a case names, a name alone or `{name: n}` as the name and the number. */
 let refused = case =>
   switch case->at(["refused"]) {
   | named if named->JSON.Decode.string->Option.isSome => (named->string, None)

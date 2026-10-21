@@ -11,7 +11,7 @@ use driver_machine_management::{Group, ReadGroup, Unread};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-// The fixtures keep the container's files in `sys/fs/cgroup` itself, to stay shallow, so its path is empty.
+// The fixtures keep the container's files in `sys/fs/cgroup` itself, so its path is empty.
 const CONTAINER: &str = "";
 
 /// A copy of the first reading's group in a fresh root, with one file replaced.

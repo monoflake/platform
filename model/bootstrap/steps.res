@@ -1,12 +1,10 @@
 /**
- * What a deployment of the Platform is, as a path of steps reads one, RFC 94y0d: its version, what of
- * it is on, what it stands on, and how it came to its step. Which deployments there are, and the path
- * they take, is the hosted platform's, RFC 8lkuv.
+ * A deployment of the Platform as a path of steps reads one, RFC 94y0d. Which deployments there are
+ * and their path are the hosted platform's, RFC 8lkuv.
  */
 /**
- * What a deployment stands on: `cloudflare` the vendor's own, `provider` a machine a provider runs,
- * `home` a machine its operator keeps, `platform` another platform's three products, as one platform
- * stands on another as on a vendor. Only `provider` offers `instance`, 49qyg.
+ * What a deployment stands on, the vendor's own, a provider's machine, its operator's machine or
+ * another platform's three products. Only `provider` offers `instance`, 49qyg.
  */
 type ground = [#cloudflare | #provider | #home | #platform]
 

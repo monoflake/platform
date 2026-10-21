@@ -1,7 +1,4 @@
-/***
- * What the tests take of node: its test runner, its strict assertions, its files, found from the
- * repository's root, and an HTTP server an end-to-end test answers by.
- */
+/*** What the tests take of node, its test runner, strict assertions, files and an HTTP server. */
 type url
 @new external urlIn: (string, string) => url = "URL"
 @val external importMetaUrl: string = "import.meta.url"

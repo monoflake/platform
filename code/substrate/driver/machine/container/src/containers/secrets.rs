@@ -1,6 +1,5 @@
-//! A deployment's secrets as files: each written to a directory of its container's own on tmpfs,
-//! bound read-only into it at [`INSIDE`], so its spec names the directory and never a value; and a
-//! sealed copy kept in the driver's state, as a reboot empties tmpfs and the copy puts them back.
+//! A deployment's secrets as files on tmpfs bound read-only into its container at [`INSIDE`], with
+//! a sealed copy that puts them back after a reboot.
 
 use std::collections::BTreeMap;
 use std::os::unix::fs::MetadataExt;
@@ -29,10 +28,8 @@ pub(super) trait Seal: Send + Sync {
 	fn open(&self, sealed: &[u8]) -> Result<Vec<u8>, Fault>;
 }
 
-/// The seal the driver uses: XChaCha20-Poly1305 under a key of its own, a file in its state made
-/// on first use, root's alone; each seal its nonce, at random, then what it encrypts.
-// A key beside what it seals guards against a copy of the sealed files alone, the machine itself
-// trusted, RFC vr5lw.
+/// The driver's seal, XChaCha20-Poly1305 under a root-only key file in its state with a random
+/// nonce each, guarding against a copy of the sealed files alone, RFC vr5lw.
 pub(super) struct KeyFile {
 	cipher: XChaCha20Poly1305,
 }
@@ -72,8 +69,8 @@ impl Seal for KeyFile {
 	}
 }
 
-/// A secret's name, as a file is named: letters, digits, `_`, `-` and `.`, never first, and not
-/// the platform's own.
+/// A secret's name as a file is named, letters, digits, `_`, `-` and `.` but not first, and not the
+/// platform's own.
 pub(super) fn named(name: &str) -> Result<(), Refused> {
 	let file = !name.is_empty()
 		&& !name.starts_with('.')
@@ -90,7 +87,7 @@ pub(super) fn named(name: &str) -> Result<(), Refused> {
 	Ok(())
 }
 
-/// Where one container's secrets are: bound into it, and sealed.
+/// Where one container's secrets are, bound into it and sealed.
 pub(super) struct Places {
 	/// On tmpfs, root's alone above it, its own the container's user's.
 	pub(super) open: PathBuf,

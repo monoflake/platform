@@ -1,12 +1,15 @@
 /***
- * `Generate` held to `model/contracts.json` and to contracts of its own: what it writes, the same
- * twice over, types that name one another, a keyword's field, and where what it cannot write is.
+ * `Generate` held to `model/contracts.json` and to contracts of its own, what it writes, twice
+ * over, and where it cannot.
  */
 open Node
 
 let written = text => Generate.read(text)->Result.flatMap(Generate.rescript)
 
-/** A call's fields as `model/contracts.json` writes them, the capabilities' shape `capabilities`. */
+/**
+ * A call's fields as `model/contracts.json` writes them, with the capabilities' shape
+ * `capabilities`.
+ */
 let callFields = (~capabilities=`{"list": {"prim": "bytes"}}`) =>
   `[{"name": "interface", "key": 1, "shape": {"prim": "string"}},
     {"name": "operation", "key": 2, "shape": {"prim": "string"}},

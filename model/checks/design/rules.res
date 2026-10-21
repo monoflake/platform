@@ -2,8 +2,8 @@
 open Base
 
 let run = () => {
-  // The rules every dimension stands on: a hard edge points to its own layer or below, a library
-  // uses only libraries, and no hard edge closes a cycle.
+  // A hard edge points to its own layer or below, a library uses only libraries, and no hard edge
+  // closes a cycle.
   let rules = []
   let softUp = []
   designed->Array.forEach(((name, p)) => {
@@ -33,8 +33,7 @@ let run = () => {
       }
     )
   )
-  // The platform runs on itself only while the graph is clean: nothing at layer 0 or below has an
-  // edge, hard or soft, to what it runs as an owner, RFC vuanj.
+  // Nothing at layer 0 or below has an edge to what it runs as an owner, RFC vuanj.
   designed->Array.forEach(((name, p)) =>
     if p.layer <= 0 {
       p.edges->Array.forEach(edge =>
@@ -44,8 +43,8 @@ let run = () => {
       )
     }
   )
-  // The organization's half runs on while the platform's cannot be reached: none of its components
-  // needs the platform's to serve or to start, and reads a bundle instead, RFC v7v3w.
+  // No component of the organization's half needs the platform's to serve or start, reading a
+  // bundle instead, RFC v7v3w.
   let halfOf = to_ =>
     known(to_)
       ? component(to_)->Option.flatMap(p => p.half)

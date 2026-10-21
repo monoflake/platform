@@ -1,13 +1,11 @@
 /**
- * The storage product's interface, an app's, RFCs 13ixj and vr5lw: the files of a file bucket and
- * the objects of an object bucket, and `publish` between them. A bucket itself is configuration,
- * made and ended through its organization's control, `generations.res`, so nothing here makes one.
- * Products are named by what they carry, in the plural, as the kinds are.
+ * The storage product's interface, the files and objects of a bucket and `publish` between them,
+ * RFCs 13ixj and vr5lw. A bucket is made through `generations.res`.
  */
 open Subset
 
 let types: array<declared> = [
-  // What a write to a path asks of what is there: nothing, the path new, or the content it names.
+  // What a write to a path asks of what is there, nothing, the path new or the content it names.
   {
     name: "file-expected",
     def: Union({
@@ -75,9 +73,8 @@ let types: array<declared> = [
     from: "13ixj",
   },
   {name: "file-deleted", def: Record([]), from: "13ixj"},
-  // A file of any size is written by an upload, as the blob's is, vuanj: begun at its path, its
-  // size held to where it is known and its expectation asked as it finishes, when the path is
-  // pointed at what it wrote.
+  // A file of any size is written by an upload begun at its path, its expectation asked as it
+  // finishes, vuanj.
   {
     name: "file-upload-begin",
     def: Record([
@@ -228,10 +225,8 @@ let types: array<declared> = [
 let onBucket = [("not_a_bucket", #rejected), ("wrong_type", #rejected)]
 
 /**
- * Deleting what is not there, and describing it, succeed, as the object kind's do; a write meets the
- * bucket's quota and its kind's bound. One write carries a part at most, and a file past it is
- * written by an upload, appended to in order and resumed from what is durable, as the blob's is,
- * vuanj; an upload left a day expires, and one whose bucket is deleted ends, each then not found.
+ * Deleting or describing what is not there succeeds, and a write meets the bucket's quota. A file
+ * past a part is written by an upload, vuanj.
  */
 let interface_: interface_ = {
   name: "storage",

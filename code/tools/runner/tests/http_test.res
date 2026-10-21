@@ -1,8 +1,6 @@
 /***
- * `Http.target` end to end: the block's own `tests/objects.json` run against a server answering
- * `object` by the `answer` envelope, in CBOR and in JSON; a call made `as` a component signed by
- * the chain the run made, its certificate verified to that root; a body that is no answer read as
- * `unknown`; and a record no chain of the run signed refused.
+ * `Http.target` end to end against a server answering `object`, in CBOR and JSON, signing,
+ * verifying and refusing.
  */
 open Node
 

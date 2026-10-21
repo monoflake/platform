@@ -1,27 +1,18 @@
 /***
- * A journal, RFC b8f35: what cannot yet fill a parcel, sealed as each write arrives under the
- * journal's key, `Keys.Derive.journal` from its seed, and put to its placement's stores as
- * one object a write. What it seals is the parcel's pieces as they will lie, so exporting it is
- * opening every object in order, and sealing what they held as `Parcel.seal` does under the
- * parcel's key, every piece keeping its offset. The model's interface, `docs/code.md`.
- *
- * Its first object begins with `prefix` bytes: the revision, 1, and the encryption master's version,
- * 4 bytes big-endian. Then, and in every later object, a write's segments follow, each 65,536 bytes
- * but the write's last, which holds the rest, each sealed with its 16-byte tag by AES-256-GCM:
- * segment `i`, counted across the journal from 0, under the nonce `8 zero bytes || u32_be(i)` and
- * the associated data `header || u32_be(i) || 0x00`, `header` the 41 bytes of the parcel it becomes,
- * `Parcel`'s, with the journal's seed.
+ * A journal, what cannot yet fill a parcel, sealed per write and exported as the parcel it becomes,
+ * as RFC b8f35 lays it out. The model's interface, `docs/code.md`.
  */
 
 /** 5 bytes, what a journal's first object begins with. */
 let prefix: int
 
-/** A write sealed: its object, and the index of the segment the next write begins at. */
+/** A write sealed, its object and the index of the segment the next write begins at. */
 type written = {object: Uint8Array.t, next: int}
 
-/** Why a write was not sealed, the first of these: a key not of 32 bytes, a master's version not an
- * integer of 1 to 2^32 - 1, a seed not of 32 bytes, a first segment below 0, nothing to seal, or
- * more than `Parcel.capacity` bytes. */
+/**
+ * Why a write was not sealed, the first of a bad key, master's version, seed or first segment,
+ * nothing to seal or too much.
+ */
 type unsealable = Key | Master | Seed | First | Empty | Overfull
 
 /** Why an object was not opened, the first of these, in their order, the prefix asked of the first
@@ -57,7 +48,7 @@ let seal: (
 /** The master's version a journal's first object begins with, read before its key is derived. */
 let begun: Uint8Array.t => result<float, unopened>
 
-/** An object opened, from segment `first` on: what its write sealed, and the index of the next. */
+/** An object opened from segment `first` on, what its write sealed and the index of the next. */
 let opened: (
   ~key: Uint8Array.t,
   ~header: Parcel.header,

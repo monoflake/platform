@@ -1,12 +1,6 @@
 /**
- * Every component and every library the drafts name, each component's dependencies as typed edges.
- * An edge says when it is needed and whether its loss is `hard` -- wrong or stopped -- or `soft` --
- * slower, staler, more garbage, never wrong. A `hard` edge points to its own layer or below; a
- * `soft` one may point up. A target beginning `?` is something the drafts need and no component is
- * yet: a boundary not drawn. Drafts: 13ixj storage, zn3u5 database, 49qyg functions, vuanj
- * components, b8f35 root and backing, wnqvu compat; v7v3w the two halves; 94y0d one platform on
- * another; 8lkuv the roles; the rules they are checked by, `docs/scope.md`. Every `hard`/`soft` here is
- * proposed, not decided; `open_` marks the ones in question.
+ * Every component and library the drafts name, with typed edges whose loss is `hard` or `soft`. A
+ * target led by `?` is a boundary not drawn, `docs/scope.md`.
  */
 let vendor = -9
 
@@ -21,19 +15,13 @@ type edge = {
   why: string,
   /** Why this edge's boundary is not yet clear. */
   open_?: string,
-  /**
-   * Who defines the format the source reads across this edge, when it is not the target. A format
-   * carried unread is no one's to name here: a tablet holding another component's rows reads none
-   * of them.
-   */
+  /** Who defines the format the source reads across this edge, when it is not the target. */
   reads?: string,
   /** Whether this edge is how its component is itself replaced by a new version, D3. */
   replaces?: bool,
   /**
-   * What crosses this edge between two processes, RFC fhg6w: an interface of `model/contracts/`, a
-   * signed record, a bundle's section as `bundle.{section}`, a record kind of the footing as
-   * `record.{kind}`, or `records`, every kind the source writes there; `wit`, an app's own exports;
-   * or `?{name}`, a contract not yet declared, `undeclared` below.
+   * What crosses this edge between two processes, a contract of `model/contracts/`, `wit`, or
+   * `?{name}` not yet declared, RFC fhg6w.
    */
   contract?: array<string>,
 }
@@ -41,8 +29,8 @@ type edge = {
 type component = {
   layer: int,
   /**
-   * The ground and the operator are outside the design: trusted as written, never built. A role
-   * is what this half needs of the platform half, built in another repository, RFC 8lkuv.
+   * The ground and the operator are outside the design, trusted as written. A role is built in
+   * another repository, RFC 8lkuv.
    */
   kind?: [#ground | #operator | #provided],
   /**
@@ -55,8 +43,8 @@ type component = {
   /** Whether it keeps state of its own, which must reach the ground to outlast a restart. */
   keeps?: bool,
   /**
-   * Whether it is a control, of the platform or of an organization as its half says: an HTTPS API
-   * that alone writes configuration, v7v3w. A footing is the same one word, of either, vr5lw.
+   * Whether it is a control, the HTTPS API that alone writes configuration, v7v3w. A footing is the
+   * same word of either half, vr5lw.
    */
   control?: bool,
   /** Whether the platform runs it as an owner, in an organization of its own, RFC vuanj. */
@@ -64,9 +52,8 @@ type component = {
   /** Which half runs it, RFC v7v3w; the root runs nothing, so it has none. */
   half?: half,
   /**
-   * The language its code is written in, RFC fhg6w: ReScript for what must run on a Worker, which
-   * runs in `workerd` on a machine alike, and Rust for what runs only natively on one. None where
-   * the code is not the platform's: an app is its user's, and the root runs nothing.
+   * The language its code is written in, ReScript for what runs on a Worker and Rust for what runs
+   * natively, RFC fhg6w. None where the code is not the platform's.
    */
   language?: [#rust | #rescript],
   edges: array<edge>,
@@ -94,9 +81,8 @@ let key = (~to_="root", ()) =>
   )
 
 /*
- * Of the components: `control(organization)` an organization's control, its products'
- * configuration as an HTTPS API, v7v3w; `footing(organization)` what the layer beneath gives it to
- * stand on, vr5lw; and the roles, what this half needs of the platform half, 8lkuv.
+ * The organization's control, its footing and the roles this half needs of the platform half,
+ * v7v3w, vr5lw and 8lkuv.
  */
 let own: dict<component> = dict{
   "app": {
@@ -555,8 +541,8 @@ let own: dict<component> = dict{
     uses: [],
   },
   /*
-   * The roles the platform half fills, RFC 8lkuv: `authority`, what says an organization exists and
-   * what it may use, RFC 7xpd3, and `directory`, what says where a scope's backing is, RFC 4dijn.
+   * The roles the platform half fills, `authority`, RFC 7xpd3, and `directory`, RFC 4dijn, RFC
+   * 8lkuv.
    */
   "authority": {
     layer: -3,
@@ -580,7 +566,7 @@ let own: dict<component> = dict{
   "operator": {layer: vendor, kind: #operator, edges: [], uses: []},
 }
 
-/** What another repository gives this model, RFC 8lkuv: none when this one is checked alone. */
+/** What another repository gives this model, none when this one is checked alone, RFC 8lkuv. */
 let given: dict<component> = Fill.part("components")->Option.getOr(Dict.make())
 
 /** Each role filled, to the component filling it. */
@@ -590,12 +576,12 @@ let filler: dict<string> =
   ->Array.filterMap(((name, c)) => c.fills->Option.map(role => (role, name)))
   ->Dict.fromArray
 
-/** A name as the whole graph knows it: a filled role by its filler, any other as it is. */
+/** A name as the whole graph knows it, a filled role by its filler. */
 let named = name => filler->Dict.get(name)->Option.getOr(name)
 
 /**
- * The whole graph of `own` and `given`: each role a component of `given` fills replaced by it, every
- * edge to the role pointed at its filler, and the rest of `given` beside.
+ * The whole graph of `own` and `given`, each role replaced by its filler in `given` and every edge
+ * to it repointed.
  */
 let merge = (own: dict<component>, given: dict<component>): dict<component> => {
   let filler =
@@ -627,9 +613,8 @@ let elsewhere = name => given->Dict.get(name)->Option.isSome
 let permissive = "MIT OR Apache-2.0"
 
 /**
- * The contracts an edge names that are not yet declared in the subset, by the name it gives each
- * after `?`, and the row that declares them. A tablet's copies speak among themselves -- WAL frames
- * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
+ * The contracts an edge names that the subset does not declare yet, by the name after `?`, and the
+ * row that declares each.
  */
 let ownUndeclared: array<(string, string)> = []
 

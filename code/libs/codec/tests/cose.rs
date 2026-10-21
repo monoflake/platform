@@ -1,6 +1,5 @@
-//! [`CoseSign1`] and [`Cwt`] held to cose-wg's examples, read as they stand: their structure alone,
-//! since a signature is made and checked by what the caller gives, `docs/code.md`. `cose_test.res`
-//! beside it is the same in ReScript.
+//! [`CoseSign1`] and [`Cwt`] held to cose-wg's examples, their structure alone, as `cose_test.res`
+//! is in ReScript.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -22,7 +21,7 @@ const EDDSA_02: &str = concat!(
 const CWT_A_3: &str =
 	concat!(env!("CARGO_MANIFEST_DIR"), "/../../../vendor/cose-examples/CWT/A_3.json");
 
-/// Every Sign1 case, by its file's name: each of `sign1-tests/`, and the two EdDSA ones.
+/// Every Sign1 case by its file's name, each of `sign1-tests/` and the two EdDSA ones.
 fn cases() -> Vec<(String, serde_json::Value)> {
 	let mut paths: Vec<_> =
 		std::fs::read_dir(SIGN1_TESTS).unwrap().map(|e| e.unwrap().path()).collect();
@@ -51,7 +50,7 @@ fn every_sign1_case_is_read_written_back_and_its_signed_bytes_built() {
 	for (name, case) in cases() {
 		let bytes = sample::hex_at(&case["output"]["cbor"]);
 		if failed_by(&case, "ChangeCBORTag") {
-			// sign-fail-01: a tag other than 18 is another message, not a Sign1.
+			// sign-fail-01 has a tag other than 18, so it is another message and not a Sign1.
 			assert_eq!(Sign1::decode(&bytes), Err(Sign1Refused::Shape), "{name}");
 			continue;
 		}
@@ -60,9 +59,8 @@ fn every_sign1_case_is_read_written_back_and_its_signed_bytes_built() {
 		assert_eq!(sign1.encode(tagged).unwrap(), bytes, "{name}: written back");
 		let expected = sample::hex_at(&case["intermediates"]["ToBeSign_hex"]);
 		if case["fail"].as_bool() == Some(true) {
-			// sign-fail-02 changes the payload, -03 and -04 the algorithm, -06 adds a protected
-			// attribute and -07 removes one, each after signing: the structure stands, and what is
-			// signed over differs from what was signed, which only a signature check catches.
+			// sign-fail-02, -03, -04, -06 and -07 change what is signed after signing, so the structure
+			// stands and only a signature check catches them.
 			assert_ne!(to_be_signed(&case, &sign1), expected, "{name}");
 		} else {
 			assert_eq!(to_be_signed(&case, &sign1), expected, "{name}");

@@ -1,6 +1,6 @@
 /**
- * What every check stands on: the bindings, the graph read as the checks read it, and how a
- * dimension prints.
+ * What every check stands on, the bindings, the graph as the checks read it and how a dimension
+ * prints.
  */
 type url
 @new external url: (string, string) => url = "URL"
@@ -107,8 +107,7 @@ let atBoundaries = (when_: Components.edge => bool): split => {
 
 let failed = ref(false)
 
-/** What a block in work fails, `model/plan/work.res`: listed in red after every dimension, failing
- * nothing. */
+/** What a block in work fails, `model/plan/work.res`, listed in red after every dimension. */
 let inWork: array<string> = []
 
 @val @scope(("process", "env")) external noColor: Nullable.t<string> = "NO_COLOR"
@@ -138,10 +137,7 @@ let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
   }
 }
 
-/**
- * A value of JSON read as one kind, or none: a match on JSON's own cases leaves a wildcard over them,
- * which warning 4 refuses, so every read goes through one of these.
- */
+/** A value of JSON read as one kind, or none, so no match leaves the wildcard warning 4 refuses. */
 let text = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.string)
 let numeric = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.float)
 let object = (j: option<JSON.t>) => j->Option.flatMap(JSON.Decode.object)

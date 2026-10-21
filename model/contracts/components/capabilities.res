@@ -1,16 +1,12 @@
 /**
- * The issuer's interface, RFCs vuanj and b8f35: capabilities asked for and signed, each call to it
- * signed by its caller's certificate, `kcwt` carrying the certificate, so what asks is proven and
- * never told. An app's capabilities are given for its grants, read from its organization's bundle;
- * a component's own, for its own work, reach its blob space alone, as `spaces` says. A scope
- * suspended is given none.
+ * The issuer's interface, capabilities signed for a caller its certificate proves, an app's for its
+ * grants and a component's for its own space, RFCs vuanj and b8f35.
  */
 open Subset
 
 /**
  * The blob space each component's own capability reaches, by its name in the model as its
- * certificate's `sub` says, decided by the author on 2026-10-20: what the issuer reads to decide,
- * and never a certificate's role.
+ * certificate's `sub` says.
  */
 let spaces = [
   ("storage", "storage"),
@@ -42,7 +38,7 @@ let types: array<declared> = [
     def: Record([field("capabilities", 1, List(Type("capability-issued")))]),
     from: "vuanj",
   },
-  // A component's own: the space it reaches, and the rights its work asks.
+  // A component's own capability, the space it reaches and the rights its work asks.
   {
     name: "capability-for-space",
     def: Record([field("space", 1, Type("blob-space")), field("rights", 2, Type("rights"))]),

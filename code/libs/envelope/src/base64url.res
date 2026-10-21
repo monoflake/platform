@@ -1,6 +1,5 @@
 /***
- * Bytes as text, RFC 4648's fifth section: base64url, unpadded, and read in that text alone, its
- * unused last bits zero, RFC fhg6w.
+ * Bytes as text, unpadded base64url read in that text alone, RFC 4648's fifth section, RFC fhg6w.
  */
 
 let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"

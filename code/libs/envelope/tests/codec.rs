@@ -1,7 +1,5 @@
-//! The module `contracts` held to the samples of `tests/codec/`, read as they stand: each sample's
-//! JSON read as its type, or as a call of its interface, gives exactly its CBOR, as codec writes
-//! it, and that CBOR read back gives exactly its JSON; each refused JSON is
-//! [`envelope::Malformed`].
+//! The module `contracts` held to the samples of `tests/codec/`, each JSON giving exactly its CBOR
+//! and back, each refused one [`envelope::Malformed`].
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -39,7 +37,7 @@ fn part(part: &str) -> Vec<(String, serde_json::Value)> {
 		.collect()
 }
 
-/// What a sample is read as: a type by its name, or a call of an interface by its name.
+/// What a sample is read as, a type or a call of an interface, by its name.
 #[derive(Debug, Clone, Copy)]
 enum As<'a> {
 	Type(&'a str),

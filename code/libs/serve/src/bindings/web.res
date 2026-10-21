@@ -1,7 +1,6 @@
 /***
- * What serve takes of the web's APIs beyond ReScript's Stdlib, which a Worker and workerd both
- * give: UTF-8 by `TextEncoder` and `TextDecoder`, a URL's path, and the Fetch API's `Request`,
- * `Headers` and `Response`.
+ * What serve takes of the web's APIs beyond ReScript's Stdlib, UTF-8, a URL's path and the Fetch
+ * API.
  */
 type encoder
 type decoder

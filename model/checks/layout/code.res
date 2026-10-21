@@ -1,13 +1,6 @@
 /**
- * The code held to the model, RFC fhg6w: a component's code lies in its layer's directory under the
- * name the model gives it, in the language the model declares, and uses only libraries written in
- * that language. A driver declares none: it lies in its layer's `driver/` as a directory of its
- * implementations, one a kind its grounds give, each in its own, of its management, in the
- * language its ground asks, and of its system and its images where its ground is a machine, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
- * for each of its languages. A package is named as the model names what it holds, `@monoflake/` led
- * where it is ReScript's, and namespaced by its subject's name alone, never the project's, the
- * workspace's `docs/naming.md`, and MIT OR Apache-2.0, the root's two texts. What
- * `monoflake/cloud` keeps lies nowhere here. Anything not yet written is noted, never refused.
+ * The code held to the model, each component in its layer's directory under its name and language,
+ * each library in `code/libs/`, RFC fhg6w. Anything not yet written is noted, never refused.
  */
 open Base
 
@@ -74,7 +67,7 @@ let jsonLicense = path =>
   ->member("license")
   ->Option.flatMap(JSON.Decode.string)
 
-/** The names a manifest's tables of dependencies list: package.json's, or a Cargo.toml's. */
+/** The names a manifest's tables of dependencies list, package.json's or a Cargo.toml's. */
 let jsonDependencies = path => {
   let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
   ["dependencies", "devDependencies", "peerDependencies"]->Array.flatMap(k =>
@@ -127,11 +120,7 @@ let takesLints = path => {
   found.contents
 }
 
-/**
- * What a block's directory breaks of what the model asks, or none where nothing is written there
- * yet: each language's manifest it is declared in and no other, each naming it, its license, its
- * warnings and lints, and only the packages its `uses` and `takes` allow.
- */
+/** What a block's directory breaks of what the model asks, or none where nothing is written yet. */
 let held = (path, h: held): option<array<string>> => {
   let at = urlIn(`${path}/`, root)
   let files = existsSync(at) ? entries(at, {withFileTypes: true})->Array.map(entryName) : []
@@ -329,7 +318,7 @@ let run = () => {
       found->Array.push(`${t}: the two texts at the root say all of it`)
     }
   )
-  // Each `%todo` and `todo!` names a row still open, so closing one lists the code that waited on it.
+  // Each `%todo` and `todo!` names a row still open, so closing one lists the code that waited.
   let rows = openRows()
   let waiting = []
   expected->Map.forEachWithKey((h, path) =>

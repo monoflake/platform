@@ -1,7 +1,6 @@
 /**
- * What only monoflake/cloud holds, RFC 8lkuv, by the words that would name it: this repository says
- * what it needs of a role and stops, so none of these is written here. The lessons quote the world
- * outside, and are not read.
+ * What only monoflake/cloud holds, by the words that would name it, so none is written here, RFC
+ * 8lkuv.
  */
 let names = [
   "control(platform)",

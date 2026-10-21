@@ -1,6 +1,6 @@
 /***
- * What the tool takes of node, since it runs while the platform is updated and never in it: its
- * arguments and exit, its files, the registry fetched, a download hashed, and git run as a child.
+ * What the tool takes of node, its arguments and exit, its files, the registry, a hash and git run
+ * as a child.
  */
 @module("node:process") external argv: array<string> = "argv"
 @module("node:process") external exit: int => unit = "exit"

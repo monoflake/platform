@@ -1,10 +1,10 @@
 /**
- * The `object` kind's contract, RFC vr5lw: what the blob asks, RFC vuanj, and no more, every object
- * at most 16 MiB, in the platform's own protocol. S3 is a bridge around a bucket, never this.
+ * The `object` kind's contract, what the blob asks and no more in the platform's own protocol, RFC
+ * vr5lw. S3 is a bridge around a bucket.
  */
 open Subset
 
-/** The most an object holds, in bytes: a parcel's 16 MiB, b8f35. */
+/** The most an object holds in bytes, a parcel's 16 MiB, b8f35. */
 let most =
   16 * 1024 * 1024
 
@@ -62,10 +62,7 @@ let types: array<declared> = [
   },
 ]
 
-/**
- * Deleting what is not there, and describing it, succeed: neither is a failure, each read seeing
- * every write before it.
- */
+/** Deleting or describing what is not there succeeds, and each read sees every write before it. */
 let interface_: interface_ = {
   name: "object",
   version: 1,

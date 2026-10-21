@@ -1,4 +1,4 @@
-/*** A content's hash as text: its bytes in lowercase hex digits, as b8f35 writes it. */
+/*** A content's hash as text, its bytes in lowercase hex digits, as b8f35 writes it. */
 
 let digits = "0123456789abcdef"
 

@@ -1,6 +1,6 @@
 /***
- * What the generator takes of node, since it runs while the platform is built and never in it: its
- * arguments and exit, its files, and ReScript's formatter run as a child.
+ * What the generator takes of node, its arguments and exit, its files and ReScript's formatter run
+ * as a child.
  */
 @module("node:process") external argv: array<string> = "argv"
 @module("node:process") external exit: int => unit = "exit"

@@ -1,7 +1,5 @@
 /***
- * `Matching.matches` held to RFC p8e8k's rules: what the sample leaves out passed over, `$any`
- * present, `$absent` absent, `$capture` and `$use`, a list whole, and `$signed` read by the run's
- * trust before its claims are matched.
+ * `Matching.matches` held to RFC p8e8k's rules for each placeholder, a list whole and `$signed`.
  */
 open Node
 

@@ -1,7 +1,5 @@
-//! Bytes and a hash, each in the one text JSON writes it in: bytes in base64url, unpadded, RFC
-//! 4648's 5, read in that text alone -- no other alphabet, no padding, no bit set past the last
-//! byte -- and a hash in its 64 lowercase hex digits, as b8f35 writes it. In CBOR each is a byte
-//! string, a hash's of 32 bytes.
+//! Bytes in unpadded base64url, RFC 4648's 5, and a hash in 64 lowercase hex digits, b8f35, each a
+//! byte string in CBOR.
 
 use codec::Value as Cbor;
 use serde_json::Value as Json;

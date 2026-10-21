@@ -1,8 +1,4 @@
-/***
- * `Contracts` past what its samples hold: a name no type has, a field a reader does not know, where
- * a value is malformed, an integer read by its value, and a set of names given out of its order.
- * `contracts.rs` beside it is the same in Rust.
- */
+/*** `Contracts` past what its samples hold, as `contracts.rs` is in Rust. */
 open Node
 open Sample
 
@@ -141,7 +137,7 @@ test("a call not as its interface writes it is malformed where it stands", () =>
     call(`{"interface": "object", "operation": "write", ${input}, "capabilities": ["AQID="]}`),
     malformed([Field("capabilities"), Index(0)], "base64url, unpadded"),
   )
-  // In CBOR: {1: "object", 2: "fly", 3: {}}.
+  // In CBOR `{1: "object", 2: "fly", 3: {}}`.
   deepEqual(
     Contracts.callCborToJson(
       "object",

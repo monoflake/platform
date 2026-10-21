@@ -1,14 +1,12 @@
 /**
- * What of the platform half's records an organization's half reads, RFC 8lkuv: what the authority
- * alone decides of an organization, its allowance and its deletion, RFC v7v3w. An account is an id
- * here and nothing more; its record, and every other the platform half keeps, is the platform
- * half's.
+ * What an organization's half reads of the platform half's records, the authority's decisions of
+ * its allowance and deletion, RFCs 8lkuv and v7v3w.
  */
 open Subset
 
 let types: array<declared> = [
-  // A capability's value in an allowance, by its type in the vocabulary, 49qyg: yes or no, an
-  // amount in its unit, one of a set, or some of it.
+  // A capability's value in an allowance by its type, yes or no, an amount, one of a set or some of
+  // it, 49qyg.
   {
     name: "allowance-value",
     def: Union({
@@ -22,10 +20,8 @@ let types: array<declared> = [
     }),
     from: "vuanj, 49qyg",
   },
-  // What the platform alone decides of an organization, kept under its scope's id: its allowance,
-  // each capability by its name, `export` among them, vuanj; and when its deletion was asked,
-  // emptied as it is withdrawn, which the platform carries out even with the organization's own
-  // control gone, b8f35. Nothing of another platform is here: a platform knows itself alone, 94y0d.
+  // What the platform alone decides of an organization, its allowance and when its deletion was
+  // asked, carried out even without its control, b8f35.
   {
     name: "platform-organization",
     def: Record([

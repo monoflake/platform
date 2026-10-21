@@ -5,7 +5,7 @@ use crate::{Load, Parse, Unread};
 
 const EXPECTED: &str = "three load averages, numbers of tasks";
 
-/// An average: a finite number that is not negative.
+/// An average, a finite number that is not negative.
 fn average(word: &str) -> Option<f64> {
 	word.parse::<f64>().ok().filter(|value| value.is_finite() && *value >= 0.0)
 }

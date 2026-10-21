@@ -1,15 +1,11 @@
 /**
- * The directory's contract, RFC 4dijn: a scope's row, read and never written, by what reads its
- * backing, each call signed by its certificate, and read as it is deployed alone. A row is a record
- * the authority signs, so whatever carries it -- this read, or the deployment of what reads it -- it
- * is verified the same way. A row is never removed: a scope deleted answers as deleted, and only an
- * id never opened is not found.
+ * The directory's contract, a scope's row the authority signs, read by what reads its backing, RFC
+ * 4dijn. A row is never removed.
  */
 open Subset
 
 let types: array<declared> = [
-  // A scope's row: its id, its status, and the place in a footing where its backing is kept, which
-  // its components can reach.
+  // A scope's row, its id, its status and where in a footing its backing is kept.
   {
     name: "directory-row",
     def: Record([

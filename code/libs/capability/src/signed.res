@@ -177,7 +177,7 @@ let same = (a, b) =>
   TypedArray.length(a) == TypedArray.length(b) &&
     a->TypedArray.everyWithIndex((byte, i) => b->TypedArray.get(i) == Some(byte))
 
-/** A key's `kid`: the first 16 bytes of the BLAKE3 of its public key. */
+/** A key's `kid`, the first 16 bytes of the BLAKE3 of its public key. */
 let kidOf = key => Keys.Hash.plain(key)->TypedArray.slice(~start=0, ~end=16)
 
 /** An unsigned integer a float holds exactly, under `label`, none where it is absent. */
@@ -218,7 +218,7 @@ let text = (pairs, label, name) =>
 /** What carries `iat` and `exp`. */
 type timed = {iat: float, exp: float}
 
-/** What a certificate certifies: its key, its role, its scope where it holds one, and its `sub`. */
+/** What a certificate certifies, its key, its role, its scope where it holds one and its `sub`. */
 type certified = {key: Uint8Array.t, role: Role.t, scope: option<float>, sub: option<string>}
 
 /** What verifying reads of a record's content, beyond the content itself. */
@@ -230,7 +230,9 @@ let timedOf = pairs =>
   | (Error(why), _) | (_, Error(why)) => Error(why)
   }
 
-/** The Ed25519 key a `cnf` confirms, as a COSE_Key: `kty` OKP, `crv` Ed25519, `x` its 32 bytes. */
+/**
+ * The Ed25519 key a `cnf` confirms as a COSE_Key, `kty` OKP, `crv` Ed25519 and `x` its 32 bytes.
+ */
 let keyOf = pairs =>
   switch pairs
   ->find(cnf)
@@ -313,7 +315,7 @@ type read = {
   claims: claims,
 }
 
-/** The protected header: `alg`, `kid` of 16 bytes and `typ`, and nothing else. */
+/** The protected header, `alg`, `kid` of 16 bytes and `typ`, and nothing else. */
 let headerOf = protected =>
   switch Cbor.decodeDeterministic(protected)->Result.mapOr(None, mapOf) {
   | None => Error("a protected header no deterministic map")
@@ -327,7 +329,7 @@ let headerOf = protected =>
     }
   }
 
-/** The unprotected header: none, but a call's certificate in `kcwt`, as it was signed. */
+/** The unprotected header, empty but for a call's certificate in `kcwt` as it was signed. */
 let kcwtOf = (kind, unprotected: array<(Cbor.value, Cbor.value)>) =>
   switch (kind, unprotected) {
   | (_, []) => Ok(None)
@@ -373,12 +375,15 @@ let read = (kind, bytes) =>
     }
   }
 
-/** Who a `kid` names: the root, or a certificate as it was signed and what it certifies. */
+/** Who a `kid` names, the root or a certificate as it was signed with what it certifies. */
 type found =
   | ByRoot
   | ByCertificate(Uint8Array.t, certified)
 
-/** Who a record's `kid` may name: a call's `kcwt` first, the certificates given, then the root. */
+/**
+ * Who a record's `kid` may name, a call's `kcwt` first, then the certificates given and then the
+ * root.
+ */
 let candidatesOf = (trust, record) => {
   let given = switch record.kcwt {
   | Some(certificate) => [certificate]->Array.concat(trust.certificates)

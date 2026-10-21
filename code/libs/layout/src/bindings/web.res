@@ -1,6 +1,6 @@
 /***
- * What layout takes of the web's APIs beyond ReScript's Stdlib: a typed array's `set` from another,
- * and AES-256-GCM by WebCrypto, `crypto.subtle`, its 16-byte tag at the end of each ciphertext.
+ * What layout takes of the web's APIs beyond ReScript's Stdlib, a typed array's `set` and
+ * WebCrypto's AES-256-GCM.
  */
 
 /** Writes `source` into `target` from `offset`. */

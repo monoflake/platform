@@ -1,5 +1,5 @@
-# A machine's disk, RFC vr5lw: ext4 of 5 GB for the host, and btrfs, with simple quotas, for the rest.
-# A BIOS boot partition and an EFI system partition stand before them, so one layout boots either way.
+# A machine's disk, a BIOS boot and an EFI partition, 5 GB of ext4 for the host and btrfs with
+# simple quotas for the rest, RFC vr5lw.
 { config, ... }:
 {
   disko.devices.disk.main = {

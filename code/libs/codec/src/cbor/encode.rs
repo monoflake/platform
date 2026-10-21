@@ -1,6 +1,5 @@
-//! A value written as RFC 8949's 4.2.1 writes it. Every head is written by minicbor's encoder,
-//! which writes each in its shortest form; what it leaves to its caller -- a float's width, the
-//! order of a map's keys, a key repeated, the depth -- is decided here.
+//! A value written as RFC 8949's 4.2.1 writes it, minicbor writing each head and this deciding the
+//! rest.
 
 use std::convert::Infallible;
 
@@ -19,8 +18,7 @@ pub(crate) fn encode(value: &Value) -> Result<Vec<u8>, Unwritable> {
 	written(value, 0)
 }
 
-/// Takes what minicbor's encoder gives back: a `Vec` takes every byte, so a write to one never
-/// fails, its error being `Infallible`'s.
+/// Takes what minicbor's encoder gives back, a write to a `Vec` never failing.
 pub(super) fn put(_: Result<&mut Writer, Error<Infallible>>) {}
 
 /// `value` within `depth` arrays, maps and tags, written alone.

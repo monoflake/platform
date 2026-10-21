@@ -1,20 +1,19 @@
 /***
- * An answer held to what a step expects, RFC p8e8k: what the sample names is checked and nothing
- * else. A field the sample leaves out is passed over, known to the contract or not; `$any` is a
- * field present with any value, `$absent` one absent, `$capture` records the value under a name,
- * `$use` holds it the same as captured, and `$signed` is verified to the run's root, then its claims
- * matched as any value is. The model's interface, `docs/code.md`.
+ * An answer held to what a step expects, only what the sample names checked, RFC p8e8k. The model's
+ * interface, `docs/code.md`.
  */
 
 /** The values captured so far in a case, by name. */
 type captures = dict<JSON.t>
 
-/** Where an answer is not as expected: the path, by names and indices joined by `/`, and both. */
+/**
+ * Where an answer is not as expected, the path by names and indices joined by `/`, and both values.
+ */
 type mismatch = {at: string, expected: string, answered: string}
 
 /**
- * How a `$signed` value is read: the bytes, by base64url as JSON writes them, verified by the run's
- * trust, its content then in JSON, as `capability*` verifies and `envelope*` writes it.
+ * How a `$signed` value is read, its base64url bytes verified by the run's trust and its content
+ * then in JSON.
  */
 type signed = (Uint8Array.t, string) => result<JSON.t, string>
 

@@ -1,7 +1,6 @@
 /***
- * `Journal` held to `tests/layout/journals.json`: every write sealed into its object, opened back,
- * the journal exported as the parcel it becomes, and every refusal, the first in the interface's
- * order.
+ * `Journal` held to `tests/layout/journals.json`, every write sealed and opened, the export and
+ * every refusal.
  */
 open Node
 open Sample
@@ -152,7 +151,7 @@ testAsync("what cannot be opened is refused by the first reason", async () => {
       ~message,
     )
     if first == 0 {
-      // The prefix alone is asked of `begun`: a version of 0 refused, another than the header's
+      // The prefix alone is asked of `begun`, a version of 0 refused and another than the header's
       // read as it is.
       let version = bytes->TypedArray.slice(~start=1, ~end=5)
       deepEqual(

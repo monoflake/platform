@@ -1,7 +1,5 @@
 /***
- * `Sign1` and `Cwt` held to cose-wg's examples, read as they stand: their structure alone, since a
- * signature is made and checked by what the caller gives, `docs/code.md`. `cose.rs` beside it is
- * the same in Rust.
+ * `Sign1` and `Cwt` held to cose-wg's examples, their structure alone, as `cose.rs` is in Rust.
  */
 open Node
 open Sample
@@ -11,7 +9,7 @@ let eddsa01 = "vendor/cose-examples/eddsa-examples/eddsa-sig-01.json"
 let eddsa02 = "vendor/cose-examples/eddsa-examples/eddsa-sig-02.json"
 let cwtA3 = "vendor/cose-examples/CWT/A_3.json"
 
-/** Every Sign1 case, by its file's name: each of `sign1-tests/`, and the two EdDSA ones. */
+/** Every Sign1 case by its file's name, each of `sign1-tests/` and the two EdDSA ones. */
 let cases = () =>
   Array.concat(
     readdirSync(fromRoot(`${sign1Tests}/`))
@@ -55,7 +53,7 @@ test("every Sign1 case is read, written back, and its signed bytes built", () =>
     let message = name
     let bytes = case->hexAt(["output", "cbor"])
     if failedBy(case, "ChangeCBORTag") {
-      // sign-fail-01: a tag other than 18 is another message, not a Sign1.
+      // sign-fail-01 has a tag other than 18, so it is another message and not a Sign1.
       deepEqual(Sign1.decode(bytes), Error(Shape), ~message)
     } else {
       let (sign1, tagged) = decoded(name, bytes)
@@ -63,9 +61,8 @@ test("every Sign1 case is read, written back, and its signed bytes built", () =>
       deepEqual(written(sign1, ~tagged), bytes, ~message)
       let expected = case->hexAt(["intermediates", "ToBeSign_hex"])
       if case->member("fail")->Option.flatMap(JSON.Decode.bool) == Some(true) {
-        // sign-fail-02 changes the payload, -03 and -04 the algorithm, -06 adds a protected
-        // attribute and -07 removes one, each after signing: the structure stands, and what is
-        // signed over differs from what was signed, which only a signature check catches.
+        // sign-fail-02, -03, -04, -06 and -07 change what is signed after signing, so the structure
+        // stands and only a signature check catches them.
         notDeepEqual(toBeSigned(case, sign1), expected, ~message)
       } else {
         deepEqual(toBeSigned(case, sign1), expected, ~message)

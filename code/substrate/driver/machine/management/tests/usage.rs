@@ -82,7 +82,7 @@ fn rates_between_the_two_readings_of_the_machine() {
 	let (total, cores) = rates.busy;
 	assert!(near(total.0, 757.0 / 761.0));
 	assert_eq!(cores.len(), 2);
-	// core 0: 73 user, 304 system, 2 irq, 1 softirq against no idle at all.
+	// Core 0 has 73 user, 304 system, 2 irq and 1 softirq against no idle at all.
 	assert!(near(cores[0].0, 1.0));
 	for Busy(share) in cores.iter().copied().chain([total]) {
 		assert!((0.0..=1.0).contains(&share));
@@ -120,7 +120,7 @@ fn a_counter_that_went_back_counts_from_zero() {
 	assert!(near(rates.interfaces[0].1, 400.0 / rates.seconds));
 	assert!(near(rates.interfaces[0].2, 0.0));
 	assert!(near(rates.disks[0].2, 1_000.0 / rates.seconds));
-	// Both idle counters restarted at zero, so none of them is counted: all that grew was busy.
+	// Both idle counters restarted at zero, so neither is counted and all that grew was busy.
 	assert!(near(rates.busy.0.0, 1.0));
 }
 

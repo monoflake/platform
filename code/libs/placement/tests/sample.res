@@ -1,6 +1,6 @@
 /***
- * Reading the samples as they stand, from their paths: JSON, read through `JSON.Decode`, its hex in
- * either case.
+ * The samples read as they stand from their paths, JSON through `JSON.Decode` with hex in either
+ * case.
  */
 
 /** The sample at `path`, from the repository's root. */
@@ -62,7 +62,7 @@ let store = (json): Rendezvous.store => {
 /** The stores a member holds. */
 let storesAt = (json, names) => json->at(names)->array->Array.map(store)
 
-/** The refusal a case names: `"parcel"`, `{store}`, `{weight: {store, weight}}` or `{repeated}`. */
+/** The refusal a case names, `"parcel"`, `{store}`, `{weight: {store, weight}}` or `{repeated}`. */
 let refused = json => {
   let refused = json->at(["refused"])
   switch (

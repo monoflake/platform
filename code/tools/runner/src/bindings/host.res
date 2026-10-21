@@ -1,6 +1,5 @@
 /***
- * What the runner's command takes of node, since it runs beside an implementation and never in
- * it: its arguments and exit code, and its files, the model's contracts found from the repository's
+ * What the runner's command takes of node, its arguments, exit code and files from the repository's
  * root.
  */
 @module("node:process") external argv: array<string> = "argv"

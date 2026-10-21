@@ -1,5 +1,5 @@
 /***
- * The texts `Wire` writes bytes in: base64url, unpadded, read in that text alone, and a hash's
+ * The texts `Wire` writes bytes in, unpadded base64url read in that text alone and a hash's
  * lowercase hex.
  */
 open Node

@@ -1,20 +1,12 @@
-//! `driver(machine)`'s management, `model/ground/drivers.res`, and this file its interface, the
-//! model's, `docs/code.md`. Whoever implements it implements each trait here for the types it
-//! names, in the private module `usage`, and never edits this file.
-//!
-//! Today it holds what a machine reports of itself, its usage, RFC vr5lw: every figure read from
-//! the kernel as the kernel counts it, a counter as a counter and a size in bytes, so what is sent
-//! and how often is decided apart from it, [C18]. The rest of management -- a binding's list of
-//! capacity, its policy, `end` -- is written with the driver. Everything is read under a root given,
-//! `/` on a machine and a directory of files as the kernel writes them in a test, so the readers run
-//! anywhere and only `Usage::read` touches a machine.
+//! `driver(machine)`'s management, which today reads a machine's usage from the kernel under a
+//! given root, RFC vr5lw [C18]. This file is its interface, the model's, `docs/code.md`.
 
 use std::path::{Path, PathBuf};
 
 mod usage;
 
-/// Why a file was not read as the kernel writes it: which, the line, from 1, and what was expected
-/// there; or that it could not be opened at all.
+/// Why a file was not read as the kernel writes it, which and where and what was expected, or that
+/// it could not be opened.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Unread {
 	/// The file, under the root, could not be read.
@@ -57,7 +49,7 @@ pub struct Times {
 	pub steal: u64,
 }
 
-/// The processor, `/proc/stat`: every core's times summed, and each core's, by its number.
+/// The processor, `/proc/stat`, every core's times summed and each core's by its number.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Processor {
 	/// The `cpu` line.
@@ -66,7 +58,7 @@ pub struct Processor {
 	pub cores: Vec<Times>,
 }
 
-/// The load, `/proc/loadavg`: runnable tasks averaged over one, five and fifteen minutes.
+/// The load, `/proc/loadavg`, runnable tasks averaged over one, five and fifteen minutes.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Load {
 	/// Over a minute.
@@ -82,7 +74,7 @@ pub struct Load {
 pub struct Memory {
 	/// `MemTotal`.
 	pub total: u64,
-	/// `MemAvailable`: what a new process could take without swapping.
+	/// `MemAvailable`, what a new process could take without swapping.
 	pub available: u64,
 	/// `MemFree`.
 	pub free: u64,
@@ -232,8 +224,8 @@ pub trait ReadUsage: Sized {
 	fn read(root: &Path, mounts: &[PathBuf], at: u64) -> Result<Self, Unread>;
 }
 
-/// How busy one core was, or all, between two readings: a share of 0 to 1 of the ticks that were
-/// not idle, I/O waits counted idle.
+/// How busy one core or all were between two readings, the share of ticks not idle, I/O waits
+/// counted idle.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Busy(pub f64);
 
@@ -250,9 +242,8 @@ pub struct Rates {
 	pub interfaces: Vec<(String, f64, f64)>,
 }
 
-/// The rates between an earlier reading and a later one; implemented for [`Usage`]. A counter that
-/// went back -- a device or an interface that came again -- counts from zero, and a device in one
-/// reading alone is left out.
+/// The rates between an earlier reading and a later one, implemented for [`Usage`]. A counter that
+/// went back counts from zero.
 pub trait Between {
 	/// The rates from `earlier` to `self`, none where `self` is not later.
 	fn since(&self, earlier: &Self) -> Option<Rates>;

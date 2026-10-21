@@ -1,8 +1,6 @@
 /**
- * The tree's three workspaces, RFC fhg6w: the root's `Cargo.toml` lists every crate beneath `code/`
- * as a member and nothing else, its `rescript.json` and `package.json` no ReScript package, as each
- * builds alone, and `pnpm-workspace.yaml` takes all beneath `code/`, where every package that pnpm
- * links lies. Cargo takes no recursive glob, so its list is written out and held here.
+ * The tree's three workspaces, the root's `Cargo.toml` members, its `rescript.json` and
+ * `package.json`, and `pnpm-workspace.yaml`, held to what lies beneath `code/`. RFC fhg6w.
  */
 open Base
 

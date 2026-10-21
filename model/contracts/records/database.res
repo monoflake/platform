@@ -17,18 +17,15 @@ let types: array<declared> = [
     ]),
     from: "zn3u5, vuanj",
   },
-  // A tier of what is kept past the 30 days every implementation rewinds within: a snapshot every
-  // so many milliseconds, kept until it is so old, the newest of each span kept, as restic's
+  // A tier of what is kept past 30 days, a snapshot every so often kept until so old, as restic's
   // buckets.
   {
     name: "database-retention",
     def: Record([field("every", 1, Prim(#uint53)), field("keep", 2, Prim(#uint53))]),
     from: "zn3u5",
   },
-  // Bound to one app as it is made, never another after; read copies off unless set; its copies,
-  // one unless asked, a majority of them holding each write, vuanj; its snapshots kept apart from
-  // its implementation, one unless asked, so none beyond it, placed as a bucket is, 13ixj; and kept
-  // past 30 days by its tiers, none unless set, so nothing older is kept.
+  // A database bound to one app, its read copies, copies, snapshots and tiers, each one or none
+  // unless set, vuanj and 13ixj.
   {
     name: "database",
     def: Record([
@@ -43,8 +40,8 @@ let types: array<declared> = [
     ]),
     from: "zn3u5, vuanj",
   },
-  // The database product's section of a bundle: each database by its id, as its record holds it,
-  // the one app it belongs to and its copies among it, vuanj.
+  // The database product's section of a bundle, each database by its id with its app and copies,
+  // vuanj.
   {
     name: "bundle-database",
     def: Record([field("databases", 1, Map(Type("database")))]),
@@ -57,19 +54,15 @@ let contents: array<content> = [
 ]
 
 /**
- * A database's copies, decided by the author on 2026-10-20, RFC vuanj: from 1 to 5, a write done
- * once a majority of those configured hold it, never a majority of those alive. Fewer alive than
- * that, it is read-only, and its owner releases the lock only by configuring copies the ones alive
- * are a majority of, which is the one way a configuration short of copies is reached. Its control
- * refuses any other as `invalid`.
+ * A database's copies, 1 to 5, a write done once a majority of those configured hold it, RFC vuanj.
+ * Fewer alive is read-only until fewer are configured.
  */
 let copiesMost = 5
 
-/** How many copies hold a write before it is done: 1 of 1, 2 of 2, 2 of 3, 3 of 4, 3 of 5. */
+/** How many copies hold a write before it is done, 1 of 1, 2 of 2, 2 of 3, 3 of 4 and 3 of 5. */
 let majority = copies => copies / 2 + 1
 
-/** The copies an owner may configure to release the lock, from so many alive: those they are a
- * majority of, so from 2 alive, 2 or 3. */
+/** The copies an owner may configure to release the lock, those `alive` are a majority of. */
 let releasing = alive =>
   Array.fromInitializer(~length=copiesMost, i => i + 1)->Array.filter(n =>
     n >= alive && majority(n) <= alive
@@ -79,9 +72,8 @@ let hour = 3_600_000.
 let day = 24. *. hour
 
 /**
- * What a database's tiers are held to, decided by the author on 2026-10-20: none unless set, so
- * nothing past 30 days is kept; one set, at most a year back and at most one snapshot an hour, each
- * tier sparser and older than the one before. Its control refuses any other as `invalid`.
+ * What a database's tiers are held to, none unless set, at most a year back and one snapshot an
+ * hour, each sparser and older. Its control refuses any other.
  */
 let retentionMost =
   365. *. day

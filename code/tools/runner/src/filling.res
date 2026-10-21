@@ -31,7 +31,7 @@ let placeholder = (json: JSON.t) =>
 
 let field = (spec, name) => spec->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))
 
-/** A length as written: a number, or a bound and how many past it. */
+/** A length as written, a number or a bound and how many past it. */
 let lengthOf = (spec, context, key) =>
   switch field(spec, "length") {
   | None => refuse(Unwritten(`${key} without a length`))

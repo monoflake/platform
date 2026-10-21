@@ -132,8 +132,7 @@ fn hex(hash: &[u8; 32]) -> String {
 	hash.iter().map(|b| format!("{b:02x}")).collect()
 }
 
-/// What runs as one containerd container may be named: its id within the namespace, as
-/// containerd's ids are written.
+/// The containerd id within the namespace of what runs as one container.
 fn container_id(runs: &DeploymentRuns, version: &str) -> String {
 	let of = match runs {
 		DeploymentRuns::App { id } => format!("app-{id}"),
@@ -153,12 +152,12 @@ fn network_id(namespace: &str, id: &str) -> String {
 	format!("{namespace}-{id}")
 }
 
-/// The containers of one deployment: in a namespace, every one whose labels name what it runs.
+/// The containers of one deployment, those in a namespace whose labels name what it runs.
 fn of_runs(listed: Vec<Listed>, runs: &str) -> Vec<Listed> {
 	listed.into_iter().filter(|l| l.labels.get(labels::RUNS).is_some_and(|r| r == runs)).collect()
 }
 
-/// The one container a deployment is answered by: a running one before any other.
+/// The one container a deployment is answered by, a running one before any other.
 fn chosen(mine: &[Listed]) -> Option<&Listed> {
 	mine.iter().find(|l| l.task == Some(Task::Running)).or_else(|| mine.first())
 }
@@ -398,9 +397,8 @@ where
 			let seal = KeyFile::of(&self.state).await?;
 			secrets::restore(&places, &seal, kept.user.0, kept.user.1).await?;
 		}
-		// Its namespace is kept while it is stopped, and made again where a restart lost it.
-		// open: a namespace made again may be given another address than the one its labels hold,
-		// and the Containerd trait updates no label yet, so the label is not written back.
+		// Its namespace is kept while stopped and made again where a restart lost it. A new address is
+		// not yet written back to its label.
 		self.network.attach(&network_id(&binding.namespace, &listed.id), kept.port).await?;
 		self.containerd.start(&binding.namespace, &listed.id).await?;
 		marks::clear(&self.state, &binding.namespace, &listed.id).await?;

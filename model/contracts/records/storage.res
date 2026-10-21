@@ -90,9 +90,8 @@ let types: array<declared> = [
     def: Enum({choices: codes(["private", "public"]), ordered: false}),
     from: "13ixj",
   },
-  // A bucket holds no name: it is its id, shown by its organization's tree, v7v3w. Its type is
-  // fixed as it is made; its quota, in bytes, is none unless set; the apps it is bindable by are
-  // all of them unless set.
+  // A bucket is its id and holds no name, v7v3w. Its type is fixed as it is made, and its quota and
+  // apps are unbounded unless set.
   {
     name: "bucket",
     def: Record([
@@ -106,7 +105,7 @@ let types: array<declared> = [
     ]),
     from: "13ixj",
   },
-  // The storage's section of a bundle: each bucket by its id, as its record holds it, vuanj.
+  // The storage's section of a bundle, each bucket by its id as its record holds it, vuanj.
   {
     name: "bundle-storage",
     def: Record([field("buckets", 1, Map(Type("bucket")))]),

@@ -1,6 +1,5 @@
-# What a machine's own flake sets, and nothing else, RFC vr5lw: in technical words, but for what
-# names the platform. A secret is a path to a file the machine holds, never its text, which the Nix
-# store would show every user; how the file comes there is the machine's holder's.
+# What a machine's own flake sets, and nothing else, RFC vr5lw. A secret is a path to a file the
+# machine holds, never its text.
 { config, lib, ... }:
 let
   inherit (lib) mkOption types;

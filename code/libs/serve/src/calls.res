@@ -67,13 +67,16 @@ let formOf = text =>
   | _ => None
   }
 
-/** The form an answer is written in: the first `Accept` names of the two, CBOR where it names neither. */
+/** The form an answer is written in, the first of the two `Accept` names, or CBOR. */
 let answerForm = accept =>
   accept
   ->Option.flatMap(accept => accept->String.split(",")->Array.findMap(formOf))
   ->Option.getOr(Cbor)
 
-/** An error's HTTP status, by its failure, and by its reason for `denied`, `not_found` and `rate_limited`. */
+/**
+ * An error's HTTP status by its failure, and by its reason for `denied`, `not_found` and
+ * `rate_limited`.
+ */
 let statusOf = (error: Contracts.Error.t) =>
   switch error.failure {
   | Rejected =>

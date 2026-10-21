@@ -1,6 +1,6 @@
 /***
- * What the source is written with: each type's module and its four functions, the groups types
- * that name one another are written in, a call's fields by what each holds, and `Answer`.
+ * What the source is written with, each type's module, the groups types are written in, a call's
+ * fields and `Answer`.
  */
 open Model
 open Names
@@ -36,7 +36,7 @@ let primName = p =>
   | Hash => "hash"
   }
 
-/** What the source names each type by: its module. */
+/** What the source names each type by, its module. */
 type names = {modules: Map.t<string, string>}
 
 let moduleOf = (names, name, at) =>
@@ -74,7 +74,7 @@ let rec coder = (names, side, shape, at) => {
   }
 }
 
-/** A record's or a case's fields, checked: each name and key once, none of them `taken`. */
+/** A record's or a case's fields, checked, each name and key once and none of them `taken`. */
 let checked = (fields: array<field>, at, ~taken: array<string>=[], ~keys: array<int>=[]) => {
   let at = i => [...at, Int.toString(i)]
   let labels = fields->Array.mapWithIndex((f, i) => label(f.name, [...at(i), "name"]))
@@ -307,8 +307,7 @@ let refers = def =>
   }
 
 /**
- * The types in groups each written before those that name it, a group the types that name one
- * another, Tarjan's: in the contracts' order, so the same for the same contracts.
+ * The types in groups each written before those that name it, by Tarjan's in the contracts' order.
  */
 let groups = (types: array<(string, def)>) => {
   let order = Map.fromArray(types->Array.mapWithIndex(((name, _), i) => (name, i)))
@@ -363,11 +362,7 @@ let groups = (types: array<(string, def)>) => {
 /** What each of a call's fields holds. */
 type role = InterfaceName | OperationName | OperationInput | Capabilities
 
-/**
- * A call's fields by what each holds, in the contracts' order: its interface's name and its
- * operation's, each a string; that operation's input; and the capabilities, an optional list of
- * bytes; each once.
- */
+/** A call's fields by what each holds, in the contracts' order, each once. */
 let roles = (fields: array<callField>) => {
   let at = ["call", "fields"]
   let operation = switch fields->Array.filterMap(f =>
@@ -408,8 +403,8 @@ let roles = (fields: array<callField>) => {
 }
 
 /**
- * `Answer`: a union by its tag, `Success` holding the output, written and read by the functions
- * given, and `Error` the fields of the type its case names, a record, beside the tag.
+ * `Answer`, a union by its tag, `Success` holding the output and `Error` the fields of its case's
+ * type.
  */
 let answerModule = (names, contracts: contracts) => {
   let {tag, success: (successCode, data, dataKey), error: (errorCode, errorType)} = contracts.answer

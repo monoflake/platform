@@ -1,4 +1,4 @@
-//! [`CoseSign1`] for [`Sign1`]: RFC 9052's COSE_Sign1, its structure alone.
+//! [`CoseSign1`] for [`Sign1`], RFC 9052's COSE_Sign1 and its structure alone.
 
 use crate::{Cbor, CoseSign1, Sign1, Sign1Refused, Unwritable, Value};
 

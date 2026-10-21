@@ -66,8 +66,8 @@ fn descriptor(value: &Value) -> Option<Descriptor> {
 	})
 }
 
-/// The manifest of an index the platform runs: one naming it, or the one image an index holds
-/// without naming a platform, an attestation passed over.
+/// The manifest of an index the platform runs, one naming it or the one image an index holds
+/// without a platform.
 pub(super) fn chosen(index: &Value, platform: &Platform) -> Result<Descriptor, Fault> {
 	let manifests =
 		index.get("manifests").and_then(Value::as_array).map(Vec::as_slice).unwrap_or_default();
@@ -116,8 +116,8 @@ pub(super) fn image_config(config: &Value) -> ImageConfig {
 	}
 }
 
-/// The chain id of each layer, bottom up, from the configuration's `rootfs.diff_ids`: the first its
-/// own diff id, each after the digest of the one below, a space, and its own.
+/// The chain id of each layer bottom up from `rootfs.diff_ids`, each after the digest of the one
+/// below.
 /// https://github.com/opencontainers/image-spec/blob/main/config.md#layer-chainid
 pub(super) fn chain_ids(config: &Value) -> Result<Vec<String>, Fault> {
 	let diffs = strings(config.get("rootfs").and_then(|r| r.get("diff_ids")));
@@ -139,9 +139,8 @@ pub(super) fn chain_ids(config: &Value) -> Result<Vec<String>, Fault> {
 	Ok(chain)
 }
 
-/// `tests/images/` holds real configurations for linux/amd64, as their registries serve them and
-/// then formatted: alpine 3.22.6's, `sha256:c83674e1999044d33d751661371b873539f47e5b5c5ca3320c7e0377acca6238`,
-/// and prometheus v3.5.0's, `sha256:a3bc50fcb50fb1409287c32773d8fe799f6cad5511c4ba3e2e851784e7a05026`.
+/// `tests/images/` holds alpine 3.22.6's and prometheus v3.5.0's linux/amd64 configurations as
+/// their registries serve them, formatted.
 #[cfg(test)]
 mod tests {
 	use super::*;

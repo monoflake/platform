@@ -1,10 +1,6 @@
 /**
- * Every tool, RFC fhg6w: a program run while the platform is built, never deployed, in
- * `code/tools/{name}`, each language's manifest beside the others' as a library's are. A generator
- * writes a library's sources from `model/contracts.json`: its Rust as the library's `build.rs`
- * runs it, into cargo's `OUT_DIR`; its ReScript as `mise run generate` runs its `src/main.res`,
- * given that file and the library's `generated/`, which is never committed. Decided by the author
- * on 2026-10-20.
+ * Every tool, a program run while the platform is built and never deployed, in `code/tools/{name}`,
+ * RFC fhg6w. A generator writes a library's sources from `model/contracts.json`.
  */
 type tool = {
   what: string,

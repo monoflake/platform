@@ -22,7 +22,8 @@ let registry = text =>
     | (_, None, _) => Error("the registry's document has no versions")
     | (_, _, None) => Error("the registry's document has no publish times")
     | (Some(latest), Some(versions), Some(times)) =>
-      // `time` keeps a version unpublished since, and `created` and `modified`; `versions` does not.
+      // `time` keeps a version since unpublished and `created` and `modified`, which `versions`
+      // does not.
       let published =
         versions
         ->Dict.keysToArray
@@ -82,7 +83,7 @@ let all = (~flags="g", pattern, text) => {
   found
 }
 
-/** An `ARG`'s default where a match of `arg` lies: past its name and any opening quote. */
+/** An `ARG`'s default where a match of `arg` lies, past its name and any opening quote. */
 let value = m => {
   let length = group => group->Option.flatMap(g => g)->Option.mapOr(0, String.length)
   let groups = m->RegExp.Result.matches
@@ -101,7 +102,7 @@ let once = (~flags="g", pattern, text, ~what) =>
   | _ => Error(`more than one ${what}`)
   }
 
-/** Where the pin's values lie: the version's, and each architecture's hash's. */
+/** Where the pin's values lie, the version's and each architecture's hash's. */
 let places = text =>
   once(
     ~flags="gm",

@@ -1,16 +1,11 @@
 /**
- * A kind of record, named within its half, the half its truth is kept in, and the components that
- * write it. A record a control writes is configuration: the authority for what spans organizations,
- * an organization's control for its products'; data is what lives inside what was opened,
- * v7v3w. `check.res` refuses configuration any other component writes, since the data plane runs on
- * while a control is lost, `docs/scope.md`, and a record of the platform's half any component of an
- * organization's writes.
+ * A kind of record, the half its truth is kept in and the components that write it, v7v3w.
+ * Configuration is written by a control alone, `docs/scope.md`.
  */
 type held = {
   half: Components.half,
   /**
-   * Its name within its half, as the shell of each of its rows writes it: one name may be a kind of
-   * each half, one concept kept in both, as an extension, or two, as an organization.
+   * Its name within its half, as each row's shell writes it, which may name one kind in each half.
    */
   kind: string,
   writes: array<string>,
@@ -34,9 +29,10 @@ let own: array<held> = [
   {half: #organization, kind: "capacity", writes: ["control(organization)"], from: "vr5lw"},
   {half: #platform, kind: "account", writes: ["authority"], from: "v7v3w", elsewhere: true},
   {half: #platform, kind: "organization", writes: ["authority"], from: "v7v3w"},
-  /* A footing's own tables, b8f35, each its keys and one versioned record; a product's tablet
-   * holds rows of its own schema, a migration's to change, and an app's database its app's, so
-   * neither is a kind of record here. */
+  /*
+   * A footing's own tables, b8f35. A tablet's rows and an app's database are their own schema, so
+   * neither is a kind here.
+   */
   {
     half: #organization,
     kind: "generation",
@@ -49,12 +45,14 @@ let own: array<held> = [
   {half: #organization, kind: "parcel", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "journal", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "writer", writes: ["tablet"], from: "b8f35, vuanj"},
-  /* A clock's lock: who holds a name, and until when, v7v3w, vr5lw; compute's alone, since the
-   * executor stores nothing, vuanj, decided by the author on 2026-10-21. */
+  /*
+   * A clock's lock, who holds a name and until when, compute's alone since the executor stores
+   * nothing, vuanj.
+   */
   {half: #organization, kind: "lease", writes: ["compute"], from: "b8f35, v7v3w"},
 ]
 
-/** Every kind, each writer named as the whole graph names it: a filled role by its filler. */
+/** Every kind with each writer named as the whole graph names it. */
 let records: array<held> =
   own
   ->Array.concat(Fill.part("records")->Option.getOr([]))
@@ -64,6 +62,6 @@ let records: array<held> =
 let find = (half: Components.half, kind) =>
   records->Array.find(r => r.half == half && r.kind == kind)
 
-/** The kind as this model declares it, a role's name kept: what contracts.json publishes. */
+/** The kind as this model declares it, a role's name kept, as contracts.json publishes it. */
 let declared = (half: Components.half, kind) =>
   own->Array.find(r => r.half == half && r.kind == kind)

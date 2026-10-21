@@ -1,9 +1,6 @@
 /**
- * A machine tablet's copies among themselves, RFC vuanj: SQLite's WAL frames as they are, the
- * primary's to each copy, counted from 0; a write done once a majority of the copies configured
- * hold it; a primary handed over fenced by its generation, which a majority takes; and a copy behind
- * catching up. An append carrying no frame renews the primary's lease. A copy checkpoints only what
- * the primary says is done, so a frame never done can still be cut.
+ * A machine tablet's copies among themselves, SQLite's WAL frames from the primary, a write done
+ * once a majority holds it and a handover fenced by generation, RFC vuanj.
  */
 open Subset
 

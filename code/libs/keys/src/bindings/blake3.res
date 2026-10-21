@@ -1,6 +1,6 @@
 /***
- * What keys takes of `@noble/hashes`: BLAKE3, unkeyed, keyed by 32 bytes, or deriving a key under
- * a context's UTF-8, each to `dkLen` bytes of its extended output, 32 where none is given.
+ * What keys takes of `@noble/hashes`, BLAKE3 unkeyed, keyed or deriving under a context, to `dkLen`
+ * bytes.
  */
 type options = {dkLen?: int, key?: Uint8Array.t, context?: Uint8Array.t}
 

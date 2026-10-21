@@ -1,10 +1,6 @@
 /**
- * One block held to its brief, its model half, `mise run accept <package> [--from <revision>]`:
- * what the model asks of its directory, as `code.res` holds every one; its samples there; each todo
- * naming an open row; nothing crossing into JavaScript unchecked outside its bindings; and, from
- * the revision its work began at, no change outside its directory but another in work, nor to its
- * interface, the conversation's to run as it reads the diff, since a worker runs no jj. Its
- * languages' builds, lints and tests are the task's to run after, in order, `docs/code.md`.
+ * One block held to its brief, `mise run accept <package> [--from <revision>]`, its directory,
+ * samples, todos, bindings and diff. Builds, lints and tests run after, `docs/code.md`.
  */
 open Base
 open Blocks
@@ -87,7 +83,8 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       | Some(m) =>
         switch m->RegExp.Result.matches {
         | [Some(t)] =>
-          // A trait generic over a type is implemented as `impl Bounded<u64> for`, its argument named.
+          // A trait generic over a type is implemented as `impl Bounded<u64> for`, with its
+          // argument.
           let implemented = RegExp.fromString(`impl(<[^>]*>)? ${t}(<[^>]*>)? for `)
           if !(rust->Array.some(text => implemented->RegExp.test(text))) {
             found->Array.push(`${path}/src/lib.rs: ${t}, implemented for nothing`)

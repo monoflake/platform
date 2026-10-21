@@ -1,6 +1,6 @@
 /***
- * What the runner takes of `@noble/hashes` and `@noble/curves`: BLAKE3 read out to a length, for
- * `$bytes` and a `kid`, and Ed25519's keys and signatures, for the chain a run makes, RFC p8e8k.
+ * What the runner takes of `@noble/hashes` and `@noble/curves`, BLAKE3 to a length and Ed25519, RFC
+ * p8e8k.
  */
 type options = {dkLen: int}
 

@@ -1,4 +1,4 @@
-//! [`Cwt`] for [`Claims`]: RFC 8392's claims set, carried as a Sign1's payload.
+//! [`Cwt`] for [`Claims`], RFC 8392's claims set carried as a Sign1's payload.
 
 use crate::{Cbor, Claims, Cwt, CwtRefused, Sign1, Sign1Refused, Unwritable, Value, sign1};
 

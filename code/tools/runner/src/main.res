@@ -1,12 +1,6 @@
 /***
- * `node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] <behavior file>...`:
- * each file's cases run against the implementation at `base` over HTTP, RFC p8e8k, each case's
- * outcome printed in each form and a summary after, the exit code 1 where any case failed. A bound
- * is the interface's own, as `model/contracts.json` writes it, or one the file given writes, which
- * stands in for a driver's own until D8. The chain signs as the components given and as every
- * component a step is called `as`; its root is printed, then each certificate above the
- * components', one a line, for the implementation to be started trusting the one and holding the
- * rest.
+ * Runs each behavior file's cases against the implementation at `base` over HTTP, RFC p8e8k, as
+ * `usage` says. It prints the chain's root and certificates first.
  */
 let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] <behavior file>..."
 
@@ -15,7 +9,7 @@ let refuse = why => {
   Host.setExitCode(Host.process, 2)
 }
 
-/** The arguments: each flag's value by its name, and the files. */
+/** The arguments, each flag's value by its name, and the files. */
 let rec parse = (args, flags, files) =>
   switch args {
   | list{flag, value, ...rest} if flag->String.startsWith("--") =>

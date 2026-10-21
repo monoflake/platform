@@ -1,9 +1,6 @@
 /**
- * What crosses each edge, RFC fhg6w: every edge between two of the platform's processes names the
- * contract it carries, one the model declares -- an interface, a signed record, a bundle's section,
- * a footing's record -- an app's own WIT, or one not yet declared, named in `undeclared` with the
- * row that declares it. An edge to the ground is the vendor's, and one to a boundary not yet drawn
- * carries the boundary's own contract, `model/graph/boundaries.res`.
+ * Each edge between two of the platform's processes names the contract it carries, one the model
+ * declares, an app's WIT or one in `undeclared`. RFC fhg6w.
  */
 open Base
 
@@ -71,8 +68,8 @@ let run = () => {
       found->Array.push(`${c}: marked undeclared, yet declared`)
     }
   )
-  // What runs is deployed by someone: each driver giving a kind of compute is reached at deployment
-  // through `deployments`, by what places it, vr5lw, v7v3w.
+  // Each driver giving a kind of compute is reached at deployment through `deployments`, by what
+  // places it, vr5lw, v7v3w.
   Drivers.drivers->Dict.forEachWithKey((d, driver) =>
     if (
       d.implements->Array.some(i => [#function, #instance, #container]->Array.includes(i.kind)) &&

@@ -6,8 +6,8 @@ use crate::{Parse, Processor, Times, Unread};
 const EXPECTED: &str =
 	"cpu and at least eight counters: user nice system idle iowait irq softirq steal";
 
-/// The times a `cpu` line's words write: the first eight columns, any further ones read to be
-/// counters and left.
+/// The times a `cpu` line writes, its first eight columns, any further ones read as counters and
+/// left.
 fn times<'a>(words: impl Iterator<Item = &'a str>) -> Option<Times> {
 	let values = counters(words)?;
 	let [user, nice, system, idle, iowait, irq, softirq, steal, ..] = values.as_slice() else {

@@ -1,6 +1,6 @@
 /***
- * `Pin` held to what it decides: the registry's document read, the delay, the version taken and
- * those held back, the Dockerfile's pin read and written in place, and a newer NixOS release named.
+ * `Pin` held to what it decides, the registry read, the version taken and held back, the pin read
+ * and written, and a newer NixOS.
  */
 open Node
 

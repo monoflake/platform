@@ -1,7 +1,4 @@
-//! `model/contracts.json` read into its [`Model`], and held to what the Rust written from it needs:
-//! every name one Rust can write, every key and code within its type once, every type a shape or
-//! an operation names declared, every reason's failure a choice of `failure` and its message in
-//! `messages`, and the call and the answer as `Envelope` and `Answer` read them.
+//! `model/contracts.json` read into its [`Model`] and held to what the Rust written from it needs.
 
 use std::collections::BTreeSet;
 
@@ -103,10 +100,7 @@ pub(super) fn contracts(value: &Value) -> Got<Model> {
 	Ok(Model { types, shell, reasons: every, calling, interfaces, messages })
 }
 
-/// The answer every operation gives, held to the one `Answer` reads and writes, as the call is to
-/// `Envelope`: its case by `status`, `success` code 1 holding the output as `data` at key 1, and
-/// `error` code 2 holding the fields of `error`, a record none of whose fields is `status` or at
-/// key 0, where the case stands.
+/// The answer every operation gives, held to the one `Answer` reads and writes, `docs/envelope.md`.
 fn answer(value: &Value, types: &[Declared]) -> Got<()> {
 	let expected = json!({
 		"tag": STATUS,
@@ -149,15 +143,14 @@ fn messages(value: &Value) -> Got<Vec<(String, String)>> {
 		.collect()
 }
 
-/// What every reason is held to: its failure one of `failures`, its name one `messages` has.
+/// What every reason is held to, a failure of `failures` and a name `messages` has.
 struct Held<'a> {
 	failures: &'a [String],
 	messages: &'a [(String, String)],
 }
 
-/// The call every operation's body is, held to the one `Envelope` reads and writes: its fields are
-/// the runtime's, written once there, so they are checked here rather than written from. Its `typ`,
-/// the protected header of a call signed whole, is its signer's, and passed over.
+/// The call every operation's body is, checked against the one `Envelope` reads since its fields
+/// are the runtime's.
 fn call(value: &Value) -> Got<()> {
 	let fields = member(object(value, "call")?, "fields", "call")?;
 	let expected = json!([

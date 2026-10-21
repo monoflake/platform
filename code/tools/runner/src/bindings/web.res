@@ -1,6 +1,6 @@
 /***
- * What the runner takes of the web's APIs beyond ReScript's Stdlib: UTF-8, base64url as the
- * platform writes it, a timer, and `fetch`, with which a target reaches an implementation.
+ * What the runner takes of the web's APIs beyond ReScript's Stdlib, UTF-8, base64url, a timer and
+ * `fetch`.
  */
 type encoder
 @new external makeEncoder: unit => encoder = "TextEncoder"

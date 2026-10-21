@@ -1,6 +1,6 @@
 /***
- * `Derive` held to `tests/keys/derived.json`: every value derived from its masters and parts, the
- * extended output, and every refusal, the first refused part winning.
+ * `Derive` held to `tests/keys/derived.json`, every value derived, the extended output and every
+ * refusal.
  */
 open Node
 open Sample

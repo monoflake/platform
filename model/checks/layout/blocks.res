@@ -1,19 +1,18 @@
 /**
- * Every block the model asks code of, RFC fhg6w: a component in its layer's directory, a driver's
- * implementation of a kind and its management in `driver/`, a library in `code/libs/` and a tool in
- * `code/tools/`, each
- * by the directory it lies in. `code.res` holds the code to them, and a brief and an acceptance are
- * each one block's, `model/brief.res` and `model/accept.res`.
+ * Every block the model asks code of, by the directory it lies in, RFC fhg6w. `code.res` holds the
+ * code to them, `model/brief.res` and `model/accept.res` one block each.
  */
 open Base
 
-/** A block's language: Rust's and ReScript's for code, Nix for the system a driver's machine runs,
- * and Docker's for the images it runs, `model/ground/drivers.res`. */
+/**
+ * A block's language, Rust or ReScript for code, Nix for a machine's system and Docker for its
+ * images, `model/ground/drivers.res`.
+ */
 type lang = [#rust | #rescript | #nix | #docker]
 
 /**
- * What a directory is to hold: what of the model, in which languages, under which package name; the
- * libraries it may use, by the model's names, what of others' it may take, and its samples.
+ * What a directory is to hold, of the model and in which languages, its package name, the libraries
+ * it may use and its samples.
  */
 type held = {
   name: string,
@@ -41,13 +40,15 @@ let group = layer =>
 /** A half in a name is the layer's already, so it is no part of the directory's. */
 let dirName = name => name->String.replace("(organization)", "")->String.replace("(platform)", "")
 
-/** A package's name is the model's, what is in parentheses written after a hyphen, as no package
- * name holds a parenthesis: `control-organization`, `driver-machine`. */
+/**
+ * A package's name is the model's, what is in parentheses after a hyphen, `control-organization`.
+ */
 let packageName = name => name->String.replace("(", "-")->String.replace(")", "")
 
-/** A driver is named `driver(...)`, its vendor in parentheses, and lies at `driver/` and that name,
- * as `control(organization)` names what it is first and which after: `driver(cloudflare)` lies at
- * `driver/cloudflare`. A driver named otherwise has none. */
+/**
+ * A driver named `driver(...)` lies at `driver/` and the name in its parentheses,
+ * `driver(cloudflare)` at `driver/cloudflare`.
+ */
 let driverDir = name =>
   name->String.startsWith("driver(") && name->String.endsWith(")")
     ? Some(name->String.slice(~start=String.length("driver("), ~end=String.length(name) - 1))
@@ -65,9 +66,8 @@ let languageName = (l: [< lang]) =>
   }
 
 /**
- * A ReScript package's namespace: its package's name in upper camel case, `envelope-generator` as
- * `EnvelopeGenerator`, the subject's alone, since the project's name is its manifests' and never its
- * callers', the workspace's `docs/naming.md`.
+ * A ReScript package's namespace, its package's name in upper camel case, `envelope-generator` as
+ * `EnvelopeGenerator`, the workspace's `docs/naming.md`.
  */
 let namespaceOf = package =>
   package
@@ -76,9 +76,8 @@ let namespaceOf = package =>
   ->Array.join("")
 
 /**
- * Every block by its directory, what the model asks of them that it cannot give -- a driver named
- * otherwise, a kind given and not implemented, a language at a layer with no directory, a library of
- * another language used -- and the components whose code is not the platform's.
+ * Every block by its directory, what the model asks of them that it cannot give, and the components
+ * whose code is not the platform's.
  */
 let expected = () => {
   let found = []
@@ -230,21 +229,20 @@ let expected = () => {
 }
 
 /**
- * What every ReScript package sets, as ReScript inherits none: warning 4, a fragile match, on, and
- * every warning an error but 110, a `%todo`, which `--ready` refuses instead, `docs/code.md`.
+ * What every ReScript package sets, warning 4 on and every warning an error but 110, a `%todo`,
+ * `docs/code.md`.
  */
 let rescriptWarnings = ("+4", "+a-110")
 
-/** What every ReScript package writes, beside its sources, as it builds alone and inherits nothing
- * of the root's: an ES module, by this suffix. */
+/** What every ReScript package writes beside its sources, an ES module by this suffix. */
 let rescriptOutput = ("esmodule", ".res.mjs")
 
 /** The version every package holds while none is published, decided by the author on 2026-10-20. */
 let unpublished = "0.0.0"
 
 /**
- * The lints the root's `Cargo.toml` sets for every crate, each taking them by `[lints] workspace =
- * true`, `docs/code.md`: Rust's own, then Clippy's, each denied or forbidden.
+ * The lints the root's `Cargo.toml` sets for every crate, Rust's and Clippy's, each denied or
+ * forbidden, `docs/code.md`.
  */
 let rustLints = [("unsafe_code", "forbid"), ("missing_docs", "deny")]
 let clippyLints = [
@@ -264,14 +262,15 @@ let find = package => {
   expected->Map.entries->Array.fromIterator->Array.find(((_, h)) => h.package == package)
 }
 
-/** Whether a file of a block, by its path within it, is its interface, the model's to write: a
- * crate's root and its build script, and each `.resi`. */
+/**
+ * Whether a file of a block is its interface, the model's to write, a crate's root, its build
+ * script or a `.resi`.
+ */
 let isInterface = file =>
   file->String.endsWith(".resi") || file == "src/lib.rs" || file == "build.rs"
 
 /**
- * Whether a file of a block may cross into JavaScript unchecked, as Rust's `unsafe` does: its own
- * bindings, or its tests', which bind what a test runs on and the code never may.
+ * Whether a file of a block may cross into JavaScript unchecked, its own or its tests' bindings.
  */
 let isBinding = file =>
   file->String.startsWith("src/bindings/") || file->String.startsWith("tests/bindings/")
@@ -296,7 +295,7 @@ let filesOf = path => {
   existsSync(urlIn(`${path}/`, root)) ? walk("") : []
 }
 
-/** Each `%todo` and `todo!` of a block's sources, by file and line, with the row it names, if one. */
+/** Each `%todo` and `todo!` of a block's sources by file and line, with the row it names. */
 let todosOf = path =>
   filesOf(path)
   ->Array.filter(f => f->String.endsWith(".res") || f->String.endsWith(".rs"))

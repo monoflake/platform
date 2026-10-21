@@ -1,14 +1,11 @@
 /**
- * The executor's interface, the compute's, RFC vuanj: a code's export run on an input in the
- * sandbox its kind allows, given back its output or its panic, the executor storing nothing. The
- * code is its hosts' already, handed them as it was deployed and never fetched as a call comes,
- * vr5lw. An input and an output cross as bytes, the CBOR of a WIT value, since a call passes between
- * JSON and CBOR knowing nothing past itself; an `effect` acts by the capabilities its call carries.
+ * The executor's interface, a code's export run on an input in its kind's sandbox, storing nothing,
+ * RFC vuanj. Input and output cross as the CBOR of a WIT value.
  */
 open Subset
 
 let types: array<declared> = [
-  // Where code runs: a V8 isolate, or WebAssembly, which a `derive` always does, vuanj.
+  // Where code runs, a V8 isolate or WebAssembly, which a `derive` always does, vuanj.
   {
     name: "sandbox",
     def: Enum({choices: [{name: "v8", code: 1}, {name: "webassembly", code: 2}], ordered: false}),
@@ -34,7 +31,7 @@ let types: array<declared> = [
     }),
     from: "vuanj",
   },
-  // What a run came to: the output its export returned, or the panic it ended in.
+  // What a run came to, the output its export returned or the panic it ended in.
   {
     name: "run-outcome",
     def: Union({

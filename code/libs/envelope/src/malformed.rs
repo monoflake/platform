@@ -1,5 +1,5 @@
-//! [`Malformed`] made and placed, as `src/malformed.resi` holds it in ReScript: a reader says what
-//! it expected where it stands, and each step out to the value read is put before it on the way.
+//! [`Malformed`] made and placed, as `src/malformed.resi` holds it, each step out to the value read
+//! put before it.
 
 use crate::{Malformed, Step};
 

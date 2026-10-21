@@ -1,10 +1,6 @@
 /**
- * What each driver is made of, RFC vr5lw: one implementation for each kind its vendor's resources
- * give, `model/ground/resources.res`. A kind is a contract the model declares,
- * `model/contracts/kinds/`, with no language of its own; each implementation of it has one, since a
- * Worker over R2 and a process over a machine's file system do the same work on grounds that share
- * nothing. Nothing calls an implementation but through its kind's contract, and no implementation
- * calls another.
+ * What each driver is made of, one implementation for each kind its vendor gives,
+ * `model/ground/resources.res`, RFC vr5lw. Nothing calls one but through its kind's contract.
  */
 type implementation = {
   kind: Resources.kind,
@@ -17,18 +13,14 @@ type implementation = {
 }
 
 /**
- * A runtime a driver gives compute by, RFC vr5lw: the form it takes and every isolation it stands
- * on, each a choice of `model/contracts/kinds/deployments.res`. An isolate run in a container
- * stands on both, so isolation is a list, and a kind added later, a virtual machine's, one more.
+ * A runtime a driver gives compute by, the form it takes and every isolation it stands on, RFC
+ * vr5lw.
  */
 type runtime = {name: string, takes: string, stands: array<string>}
 
 /**
- * A driver is its implementations and its management, `management/` beside them: the process that
- * answers the management interface and hands each call to the implementation of its kind, in the
- * language the driver's ground asks, vr5lw. A driver whose ground is a machine holds its system as
- * well, `system/`: what the machine runs beneath it, a NixOS module in Nix, its disk, and the template
- * a machine's own flake starts from, which the root's `flake.nix` gives, vr5lw.
+ * A driver is its implementations and its `management/`, and on a machine its `system/` as well,
+ * vr5lw.
  */
 type driver = {
   grounds: array<Steps.ground>,
@@ -38,7 +30,9 @@ type driver = {
   implements: array<implementation>,
   runtimes: array<runtime>,
   system?: string,
-  /** The images it runs its isolate runtimes from, each a program in a container, built by Docker. */
+  /**
+   * The images it runs its isolate runtimes from, each a program in a container built by Docker.
+   */
   images?: string,
 }
 

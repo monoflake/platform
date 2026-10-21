@@ -1,6 +1,6 @@
 /***
- * The generator, `src/generate.resi`: the contracts read, `generate/read.res`, and written whole,
- * here, by `generate/write.res`. `generate.rs` beside it is the same in Rust.
+ * The generator, `src/generate.resi`, reading by `generate/read.res` and writing by
+ * `generate/write.res`, as `generate.rs` is in Rust.
  */
 open Model
 open Names

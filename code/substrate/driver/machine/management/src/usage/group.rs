@@ -1,4 +1,4 @@
-//! A control group's files, cgroup v2: `cpu.stat`, `memory.current`, `memory.max`, `io.stat` and
+//! A control group's cgroup v2 files, `cpu.stat`, `memory.current`, `memory.max`, `io.stat` and
 //! `pids.current`.
 
 use super::scan::{counter, lines, malformed, past_end, slurp};
@@ -31,7 +31,7 @@ fn cpu(root: &Path, directory: &Path) -> Result<u64, Unread> {
 	Err(malformed(&file.to_string_lossy(), past_end(&text), "usage_usec"))
 }
 
-/// `memory.max`: a number, or `max`.
+/// `memory.max`, a number or `max`.
 fn limit(root: &Path, directory: &Path) -> Result<Option<u64>, Unread> {
 	let file = directory.join("memory.max");
 	let text = slurp(root, &file)?;

@@ -2,9 +2,8 @@
 open Base
 
 let run = () => {
-  // The contracts, RFC fhg6w: each declared once, in the subset, and written out as the product
-  // every language reads. A product changed in place, a type of a record whose version stayed, is
-  // refused.
+  // Each contract is declared once in the subset and written out as the product every language
+  // reads. A product changed in place is refused, RFC fhg6w.
   let contractRules = []
   let declared = Dict.fromArray(Contracts.types->Array.map(t => (t.name, t)))
   let unique = (names, what) => {
@@ -36,7 +35,7 @@ let run = () => {
     }
   Signed.signed->Array.forEach(r => reachSigned(r.content))
   Signed.sections->Array.forEach(((_, t)) => reachSigned(t))
-  // No secret is signed, nor travels in a bundle: it reaches a deployment alone, fhg6w.
+  // No secret is signed or travels in a bundle, and it reaches a deployment alone, fhg6w.
   let rec secret = (shape: Subset.shape) =>
     switch shape {
     | Prim(#secret) => true
@@ -198,8 +197,8 @@ let run = () => {
     Contracts.contents->Array.map(c => `the ${(c.half :> string)}'s ${c.kind}`),
     "a record's content",
   )
-  // An id within a content names a kind of the content's own half, which its control checks: every
-  // type a content reaches is read so, wherever else it is used.
+  // An id within a content names a kind of the content's own half, which its control checks,
+  // wherever else the type is used.
   let rec reached = (name, seen: Set.t<string>) =>
     if !(seen->Set.has(name)) {
       seen->Set.add(name)
@@ -271,8 +270,8 @@ let run = () => {
     | None => contractRules->Array.push(`${c.kind}'s content: no type ${c.content}`)
     }
   })
-  // An interface's operations, RFC vr5lw: named in whole words, snake_case, each input and output a
-  // record declared, and each reason its own.
+  // An interface's operations are whole snake_case words, each input and output a declared record
+  // and each reason its own, RFC vr5lw.
   let snake = n => /^[a-z]+(_[a-z]+)*$/->RegExp.test(n)
   unique(Contracts.interfaces->Array.map(i => i.name), "an interface")
   Contracts.interfaces->Array.forEach(i => {
@@ -307,8 +306,8 @@ let run = () => {
       )
     })
   })
-  // Each reason's default message, ge55b: every common and calling reason has one, and every
-  // message is some reason's.
+  // Every common and calling reason has a default message, and every message is some reason's,
+  // ge55b.
   let named = Set.fromArray(
     Array.concatMany(
       Calls.common->Array.map(r => r.name),
@@ -332,9 +331,8 @@ let run = () => {
       contractRules->Array.push(`message for ${n}, which no operation fails for`)
     }
   )
-  // The drivers' runtimes, RFC vr5lw: each a runtime the deployments' contract names, taking one of
-  // its forms and standing on its isolations, every runtime given by some driver and every form
-  // taken.
+  // The drivers' runtimes, each one the deployments' contract names, every runtime given and every
+  // form taken, RFC vr5lw.
   let choices = n =>
     switch declared->Dict.get(n) {
     | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
@@ -366,8 +364,8 @@ let run = () => {
       contractRules->Array.push(`deployment-form ${f}: taken by no runtime`)
     }
   )
-  // A database's preset tiers, zn3u5: within the bounds every set is held to, each sparser and kept
-  // longer than the one before.
+  // A database's preset tiers, within the bounds and each sparser and kept longer than the one
+  // before, zn3u5.
   Database.retentionPreset->Array.forEachWithIndex(((every, keep), i) => {
     if every < Database.retentionFinest || keep > Database.retentionMost || every >= keep {
       contractRules->Array.push(
@@ -424,12 +422,12 @@ let run = () => {
     walk(root)
     found
   }
-  // What an old reader of a version can no longer read: a type it reached gone or changed, past a
-  // record's fields that are new and optional, and an interface's operation gone.
+  // What an old reader of a version can no longer read, a type it reached gone or changed past new
+  // optional fields, and an operation gone.
   let breaks = (old: JSON.t, now: JSON.t) => {
     let found = []
-    // An id is an integer on the wire whatever kind and half it names, so naming them otherwise
-    // breaks no reader: what is compared is what is written.
+    // An id is an integer on the wire whatever kind and half it names, so what is compared is what
+    // is written.
     let rec wire = (j: JSON.t): JSON.t =>
       switch j {
       | Object(d) if d->Dict.get("id") != None => Object(dict{"id": String("*")})

@@ -8,10 +8,8 @@ external readdirAll: (url, {"recursive": bool}) => array<string> = "readdirSync"
 type mark = {where: string, mutable text: string}
 
 let run = () => {
-  // The checklist, `model/plan/checklist.res`, grows by itself: every open question a draft lists
-  // and every open mark in the model names its row in brackets, `[B12]`, and one that names none is
-  // unfiled until it is, so a new structure's new questions reach the checklist without being
-  // copied there.
+  // Every open question a draft lists and every open mark in the model names its checklist row,
+  // `[B12]`, so new questions reach `model/plan/checklist.res` uncopied.
   let hasTag = text => /\[([A-E]\d+)\]/->RegExp.test(text)
   let tagsIn = text => {
     let re = /\[([A-E]\d+)\]/g

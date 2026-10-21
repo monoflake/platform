@@ -11,7 +11,7 @@ workspace = true
 
 [dependencies]
 codec = { path = "../codec" }
-# A number is read exactly, as JavaScript reads it, so an integer written as a float keeps its value.
+# A number is read exactly as JavaScript reads it, so an integer written as a float keeps its value.
 serde_json = { version = "1", features = ["float_roundtrip"] }
 
 [build-dependencies]

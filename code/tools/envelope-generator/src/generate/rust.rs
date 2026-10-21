@@ -1,7 +1,4 @@
-//! envelope*'s module `contracts` written from the [`Model`], as the library's `src/lib.rs` names
-//! every item of it: each type and its `Encoded` by the helpers of the library's `wire`, the shell,
-//! the reasons and their messages, each interface's operations, and the functions by a type's name
-//! and by an interface's.
+//! envelope*'s module `contracts` written from the [`Model`], as `docs/envelope.md` lays out.
 
 use std::collections::BTreeSet;
 
@@ -10,8 +7,8 @@ use super::names;
 use super::read::FAILURE;
 use crate::Unread;
 
-/// The names the module already holds or takes from beside it, which no type's may be: what it
-/// imports, what it writes of its own, and what the prelude gives that it writes with.
+/// The names the module already holds or takes, its imports, its own and the prelude's, which no
+/// type may have.
 const TAKEN: &[&str] = &[
 	"BTreeMap",
 	"Bounded",
@@ -159,8 +156,8 @@ fn write(shape: &Shape, form: Form, arg: &str) -> String {
 	}
 }
 
-/// A field's value as a record or a union writes it, `Some` of it or, if optional, as it is held:
-/// `place` is where it is, `self.name` or a binding, and `borrowed` whether that is a reference.
+/// A field's value as a record or union writes it, `place` where it is and `borrowed` whether that
+/// is a reference.
 fn field_value(field: &Field, form: Form, place: &str, borrowed: bool) -> String {
 	if field.optional {
 		format!("{place}.as_ref().map({})", writer(&field.shape, form))
@@ -263,7 +260,7 @@ fn record(out: &mut Out, rust: &str, doc: &str, fields: &[Field]) {
 	out.close("}");
 }
 
-/// What a reader of `choices` expects, in each form: their names, and their codes.
+/// What a reader of `choices` expects in each form, their names and their codes.
 fn expected(choices: impl Iterator<Item = (String, i64)> + Clone) -> (String, String) {
 	let names: Vec<String> = choices.clone().map(|(name, _)| name).collect();
 	let codes: Vec<String> = choices.map(|(_, code)| code.to_string()).collect();
@@ -513,8 +510,8 @@ fn interface(out: &mut Out, interface: &Interface, at: &str) -> Result<(), Unrea
 	Ok(())
 }
 
-/// An interface's `Call`, a case for each operation holding its input, and its `Called`: a call
-/// read from either form is held to the type its operation names.
+/// An interface's `Call`, a case for each operation, and its `Called`, holding a call read to its
+/// operation's type.
 fn call(out: &mut Out, interface: &Interface) {
 	let cases: Vec<(String, String, &str, &str)> = interface
 		.operations

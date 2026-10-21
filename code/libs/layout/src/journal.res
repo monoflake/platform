@@ -1,7 +1,6 @@
 /***
- * A journal, RFC b8f35, as the author decided it on 2026-10-20: a first object's prefix, then a
- * write's segments of 64 KiB but its last, each sealed as a parcel's are, the associated data the
- * header of the parcel it becomes and `final` 0x00 throughout.
+ * A journal, RFC b8f35, a first object's prefix and then each write's segments sealed as a parcel's
+ * are.
  */
 
 let prefix = 5

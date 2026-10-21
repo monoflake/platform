@@ -1,14 +1,13 @@
 /***
- * COSE's Sign1, RFC 9052's 4.2: one signer's signature over a payload and its protected headers.
- * The signature is made and checked by what the caller gives, over `toBeSigned`; this holds the
- * structure alone. The model's interface, `docs/code.md`.
+ * COSE's Sign1, RFC 9052's 4.2, its structure alone and its signature the caller's. The model's
+ * interface, `docs/code.md`.
  */
 
 /** A Sign1 as its four fields. */
 type t = {
   /**
-   * The protected header map as the bytes it was serialized to, RFC 9052's 3, an empty map as no
-   * bytes: kept as written, since the signature covers these bytes and not a map.
+   * The protected header map as the bytes it was serialized to, kept as written since the signature
+   * covers them.
    */
   protected: Uint8Array.t,
   unprotected: array<(Cbor.value, Cbor.value)>,
@@ -21,17 +20,12 @@ type t = {
 type refused =
   /** Not one CBOR data item, as `Cbor.decode` refuses it. */
   | Cbor(Cbor.refused)
-  /**
-   * One data item, yet no Sign1: a tag other than 18; not an array of a byte string, a map, a byte
-   * string or nil, and a byte string; or protected bytes neither empty nor exactly one CBOR map.
-   */
+  /** One data item yet no Sign1, by its tag, its shape or its protected bytes. */
   | Shape
 
 /**
- * The bytes a signature is made and checked over, the Sig_structure for "Signature1", RFC 9052's
- * 4.4: its context, the protected bytes, the external additional data and the payload, written as
- * `Cbor.encode` writes them. Protected bytes serializing an empty map, `h'a0'`, are written as no
- * bytes, as RFC 9052's 3 has every computation take them.
+ * The Sig_structure for "Signature1" a signature covers, RFC 9052's 4.4, empty protected bytes
+ * written as none.
  */
 let toBeSigned: (
   ~protected: Uint8Array.t,

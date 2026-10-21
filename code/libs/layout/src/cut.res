@@ -62,7 +62,7 @@ let push = (t, part) => {
       } else {
         let gearHigh = t.gearHigh->Array.getUnsafe(byte)
         let gearLow = t.gearLow->Array.getUnsafe(byte)
-        // (hash << 1) + gear[byte], wrapping at 64 bits: the low half's carry goes into the high.
+        // (hash << 1) + gear[byte] wrapping at 64 bits, the low half's carry going into the high.
         let shifted = low.contents->Int.shiftLeft(1)
         let sum = shifted + gearLow
         let carry =

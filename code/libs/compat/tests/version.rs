@@ -11,7 +11,7 @@ use compat::{MAX, Range, Ranged, Refused, Unchosen, Version, Versioned};
 const VERSIONS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../tests/compat/versions.json");
 const WRITTEN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../tests/compat/written.json");
 
-/// A JSON number as a version: none where it is no u64, negative or fractional, or above [`MAX`].
+/// A JSON number as a version, none where it is negative, fractional or above [`MAX`].
 fn version(value: &serde_json::Value) -> Option<Version> {
 	value.as_u64().and_then(Version::new)
 }

@@ -1,13 +1,6 @@
 /**
- * An organization's control's interface, its configuration API, RFC v7v3w: one set of operations
- * over every kind of record it writes, never one a resource, so a kind added to the model is a case
- * more and the interface is otherwise unchanged. A change is a generation, a batch accepted whole or
- * refused whole, asked as a dry run or taken; going back is a change giving an older generation's
- * records again. What makes one resource of a kind, as a bucket is made, is a client's to draw.
- *
- * A handle stands for an id in what is sent, a path in the organization's tree or a name a change
- * gives a record it makes, and is resolved to the id as the request is received, a record made
- * given its id then: nothing past the control sees a handle, decided by the author on 2026-10-20.
+ * An organization's control's configuration API, one set of operations over every kind, each change
+ * a generation, RFC v7v3w. A handle is resolved to its id as it is received.
  */
 open Subset
 
@@ -38,8 +31,8 @@ let byKind = (name, fields: (string, string) => array<field>, from): declared =>
 }
 
 let types: array<declared> = [
-  // A record written: its id where it is there already, or a handle for one made; the generation it
-  // was read at, refused where it changed since; its content whole, or none, deleting it.
+  // A record written, its id or a handle, the generation it was read at, and its content whole or
+  // none to delete it.
   byKind(
     "change-item",
     (kind, content) => [
@@ -59,8 +52,8 @@ let types: array<declared> = [
     ]),
     from: "v7v3w",
   },
-  // A warning, whatever raises it: its kind, a code; what it is about, an id of any kind; when it
-  // was raised; what it says, from the API; and the generation that dismissed it, once one has.
+  // A warning, its kind, what it is about, when it was raised, what it says and the generation that
+  // dismissed it.
   {
     name: "warning",
     def: Record([
@@ -131,8 +124,8 @@ let types: array<declared> = [
     def: Record([field("records", 1, List(Type("record"))), optional("next", 2, Prim(#uint32))]),
     from: "v7v3w",
   },
-  // A generation: its number, its time by the footing's clock, its actor's `sub`, and the
-  // generation it went back to, where it did.
+  // A generation, its number, its footing time, its actor's `sub` and the generation it went back
+  // to.
   {
     name: "generation-row",
     def: Record([
@@ -195,11 +188,8 @@ let types: array<declared> = [
 ]
 
 /**
- * A change checked against the whole of what the control holds: a record read at a generation it
- * has changed since, a handle naming nothing, a record still depended on removed, content that
- * breaks its kind's rules, or a placement the scope's stores cannot meet; and, an app given a
- * version, what its build's manifest declares past the allowance, a call matching no export, or
- * calls closing a cycle, 49qyg.
+ * A change is checked against all the control holds, stale reads, dangling handles, broken rules
+ * and placements, and an app's manifest, 49qyg.
  */
 let interface_: interface_ = {
   name: "configuration",

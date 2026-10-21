@@ -1,6 +1,5 @@
-//! An OCI image layout archive imported by containerd's transfer service, its bytes sent over the
-//! streaming service as containerd's own client sends them, and unpacked onto btrfs; then the image
-//! read back from the content it holds.
+//! An OCI image layout archive imported by containerd's transfer service over its streaming
+//! service, unpacked onto btrfs.
 //! https://github.com/containerd/containerd/blob/main/core/transfer/streaming/stream.go
 
 use std::path::Path;
@@ -155,8 +154,8 @@ async fn blob(channel: &Channel, namespace: &str, digest: &str) -> Result<Value,
 	serde_json::from_slice(&bytes).map_err(|e| Fault(format!("{digest}: {e}")))
 }
 
-/// The image as the namespace holds it: its manifest for this platform, its configuration, its
-/// layers' chain and their size unpacked.
+/// The image as the namespace holds it, its manifest for this platform, configuration, layers'
+/// chain and unpacked size.
 async fn read_image(
 	channel: &Channel,
 	namespace: &str,

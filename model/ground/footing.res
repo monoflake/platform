@@ -1,14 +1,10 @@
 /**
- * What a footing keeps and what it is asked to write, RFC b8f35. A footing is a database priced by
- * the row, so `check.res` asks two things of it: that what it keeps is bounded, growing with
- * neither the content its owner holds nor time, and how many rows a day each step of the bootstrap
- * path asks of the vendor's plan, `docs/scope.md`. Reads follow the caches above, and are not
- * counted here.
+ * What a footing keeps and is asked to write, RFC b8f35, held bounded and counted in rows a day
+ * against each step's plan, `docs/scope.md`.
  */
 /**
- * How what a footing keeps grows. Only `bounded` may stand; the rest wait on a row: `bounded` by a
- * constant for each owner, however much it holds and however long; `content` with the content its
- * owner holds; `owners` with every owner there has ever been.
+ * How what a footing keeps grows, `bounded` per owner, with `content` or with `owners`. Only
+ * `bounded` may stand.
  */
 type growth = [#bounded | #content | #owners]
 
@@ -68,28 +64,27 @@ let kept: dict<kept> = Dict.fromArray(
 )
 
 /**
- * Rows written for one of each operation, as RFCs b8f35 and vuanj lay a write out: a tablet's
- * batch is its implementation's own, kept by it and rewound by it, so it writes no row of the
- * footing, and the extent's rows are the footing's own. A row written and later removed counts
- * twice, since a deletion is a write.
+ * Rows written for one of each operation as RFCs b8f35 and vuanj lay a write out, a deletion
+ * counted as a write.
  */
 type rows = {
-  /** A file of one new piece: its extent's two rows, its bytes put to the stores as a journal's
-   * object; then the piece's parcel written as the journal is exported. Its name and the count
-   * its content is held by are the storage's tablet's. */
+  /**
+   * A file of one new piece, its extent's two rows and then its parcel's row as the journal is
+   * exported.
+   */
   smallWrite: float,
-  /** A file whose content is held already: the count raised, in the storage's tablet alone. */
+  /** A file whose content is held already, the count raised in the storage's tablet alone. */
   duplicate: float,
-  /** A MiB of a large file sealed at once: about one piece's two extent rows and a parcel's row
-   * spread over the 16 pieces of a parcel. */
+  /**
+   * A MiB of a large file sealed at once, about a piece's two extent rows and a sixteenth of a
+   * parcel's row.
+   */
   largeMiB: float,
-  /** An app's database commit: none, its tablet's own. */
+  /** An app's database commit, none, its tablet's own. */
   commit: float,
-  /** A tablet a day while idle: none, its primary held by its copies hearing from it, a vendor's by
-   * the vendor, vuanj. */
+  /** A tablet a day while idle, none, its primary held by its copies or its vendor, vuanj. */
   idleTablet: float,
-  /** A tablet on machines taken over by another primary, or a copy of it replaced: its generation
-   * raised. */
+  /** A tablet on machines taken over or a copy replaced, its generation raised. */
   takeover: float,
 }
 
@@ -102,8 +97,10 @@ let rows = {
   takeover: 1.,
 }
 
-/** Rows written a day that a plan allows a whole account, `docs/lessons/`: the paid plan's included
- * 50 million a month, spread over 30 days. */
+/**
+ * Rows written a day that a plan allows a whole account, the paid plan's 50 million a month over 30
+ * days, `docs/lessons/`.
+ */
 let allowed = (plan: Steps.plan) =>
   switch plan {
   | #free => 100_000.
@@ -111,9 +108,8 @@ let allowed = (plan: Steps.plan) =>
   }
 
 /**
- * What the model assumes of one organization until it is measured [C7]: how many tablets it keeps --
- * the storage's metadata, the functions', and its apps' databases. How many organizations a
- * deployment holds at each step is the hosted platform's, RFC 8lkuv.
+ * What the model assumes of one organization's tablets until it is measured [C7]. The organizations
+ * at each step are the hosted platform's, RFC 8lkuv.
  */
 type assumed = {tablets: float}
 

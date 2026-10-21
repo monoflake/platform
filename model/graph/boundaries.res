@@ -1,7 +1,6 @@
 /**
- * Every boundary, and the contract it must keep once written: what it provides, and what the
- * dimensions require of it through the components that need it. Without a contract an edge to it is
- * a violation; with one it is an assumption the next layer down must keep. See `docs/scope.md`.
+ * Every boundary and the contract it must keep once written. An edge to one without a contract is a
+ * violation, `docs/scope.md`.
  */
 type boundary = {
   contract?: string,

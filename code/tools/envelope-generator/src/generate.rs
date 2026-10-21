@@ -1,7 +1,5 @@
-//! [`Generate`] for [`Contracts`]: the text read as JSON and held to what the Rust needs, `read`,
-//! then written, `rust`. What is read is kept as the JSON it is, so the Rust is written from it
-//! again, the same for the same contracts byte for byte: every part is written in the order it is
-//! read, and `serde_json` keeps an object's keys in one order.
+//! [`Generate`] for [`Contracts`], read and held to what the Rust needs and then written, the same
+//! for the same contracts byte for byte.
 
 mod model;
 mod names;

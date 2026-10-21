@@ -1,7 +1,6 @@
 /***
- * A CWT, RFC 8392: a claims set, a CBOR map, carried as the payload of a Sign1, which may stand
- * under CWT's tag 61. What a claim means is the caller's; this holds the structure alone. The
- * model's interface, `docs/code.md`.
+ * A CWT, RFC 8392, a claims set carried as a Sign1's payload, its structure alone. The model's
+ * interface, `docs/code.md`.
  */
 
 /** A claims set, its pairs in the order read; a claim's key is an integer or a text, its 3. */
@@ -18,7 +17,7 @@ type refused =
   /** A payload that is one data item, yet no map. */
   | Unclaimed
 
-/** The payload a Sign1 carries the claims as: the map written as `Cbor.encode` writes it. */
+/** The payload a Sign1 carries the claims as, the map written as `Cbor.encode` writes it. */
 let payload: claims => result<Uint8Array.t, Cbor.unwritable>
 
 /** A CWT's Sign1 and its claims, from bytes under tags 61 and 18, 18 alone, or neither. */

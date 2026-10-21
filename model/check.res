@@ -1,10 +1,6 @@
 /**
- * Runs s0's dimensions over the model, `docs/scope.md`: D0 serve, D1 bootstrap, D2 restart, D3
- * upgrade and D5 contract, each printing its question, every violation, and every assumption -- an
- * edge to a boundary whose contract is written -- and then the bootstrap path, RFC 94y0d, and the
- * checklist. D4 recovery models a failure, so it is s1's, and runs only with `--s1`. With
- * `--ready`, or `--ready=N`, the checklist fails while a row that blocks step 0, or step N, is
- * open, or an open question names no row. Exits 1 when any dimension finds a violation.
+ * Runs s0's dimensions over the model, then the bootstrap path and the checklist, `docs/scope.md`.
+ * `--s1` adds D4, `--ready[=N]` fails on an open row blocking that step, and a violation exits 1.
  */
 Rules.run()
 Roles.run()

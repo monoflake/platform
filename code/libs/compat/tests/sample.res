@@ -1,6 +1,4 @@
-/***
- * Reading the samples as they stand, from their paths: JSON, read through `JSON.Decode`.
- */
+/*** The samples read as they stand from their paths, JSON through `JSON.Decode`. */
 
 /** The sample at `path`, from the repository's root. */
 let read = path => Node.readFileSync(Node.fromRoot(path))->JSON.parseOrThrow

@@ -1,8 +1,8 @@
-//! [`Featured`] for [`Features`]: what a version cannot say, held by both sides, RFC wnqvu.
+//! [`Featured`] for [`Features`], what a version cannot say, held by both sides, RFC wnqvu.
 
 use crate::{Featured, Features, Malformed, Missing};
 
-/// Whether a name is one: not empty, and lowercase ASCII letters, digits and hyphens alone.
+/// Whether a name is one, lowercase ASCII letters, digits and hyphens and not empty.
 fn named(name: &str) -> bool {
 	!name.is_empty()
 		&& name.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')

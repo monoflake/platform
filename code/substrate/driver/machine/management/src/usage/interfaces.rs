@@ -1,4 +1,5 @@
-//! `/proc/net/dev`: two header lines, then a line for each interface, `name:` and sixteen counters.
+//! `/proc/net/dev`, two header lines and then a line for each interface, `name:` and sixteen
+//! counters.
 
 use super::scan::{counters, lines, malformed};
 use crate::{Interface, Interfaces, Parse, Unread};

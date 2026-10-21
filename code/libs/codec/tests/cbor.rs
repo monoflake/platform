@@ -1,6 +1,5 @@
-//! [`Cbor`] held to RFC 8949's own examples in `tests/cbor/`, read as they stand, and to what they
-//! leave out: what 4.2.1 writes, what is refused, and in which order. `cbor_test.res` beside it is
-//! the same in ReScript.
+//! [`Cbor`] held to RFC 8949's own examples in `tests/cbor/` and to what they leave out, as
+//! `cbor_test.res` is in ReScript.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -36,8 +35,8 @@ fn appendix_a_is_read_and_its_deterministic_items_written_back_byte_for_byte() {
 	}
 }
 
-/// The refusal each of Appendix F.1's kinds implies: the first five are its "too little data", the
-/// rest its syntax errors.
+/// The refusal each of Appendix F.1's kinds implies, the first five "too little data" and the rest
+/// syntax errors.
 fn refusal(kind: &str) -> Refused {
 	match kind {
 		"end of input in a head"
@@ -132,7 +131,7 @@ fn a_float_is_written_at_the_narrowest_width_that_keeps_it() {
 			assert!(matches!(read, Value::Float(y) if y.to_bits() == x.to_bits()), "{x:e}: {read:?}");
 		}
 	}
-	// A half's subnormal: 2^-24 and 3 * 2^-15.
+	// A half's subnormals, 2^-24 and 3 * 2^-16.
 	assert_eq!(Value::Float(2f64.powi(-24)).encode().unwrap(), [0xf9, 0x00, 0x01]);
 	assert_eq!(Value::Float(3.0 * 2f64.powi(-16)).encode().unwrap(), [0xf9, 0x03, 0x00]);
 	// A NaN but f97e00 is read, and refused as written longer than it need be.
@@ -182,7 +181,7 @@ fn a_map_holding_one_key_twice_is_never_written() {
 	);
 }
 
-/// `inner` within `n` arrays, maps and tags in turn, and its bytes: `[x]`, `{0: x}` and `0(x)`.
+/// `inner` within `n` arrays, maps and tags in turn, `[x]`, `{0: x}` and `0(x)`, with its bytes.
 fn nested(n: usize, inner: Value) -> (Value, Vec<u8>) {
 	let (mut value, mut bytes) = (inner.clone(), inner.encode().unwrap());
 	for at in 0..n {

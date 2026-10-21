@@ -1,8 +1,6 @@
 /***
- * A tiny implementation of `object` over HTTP, for the end-to-end test: each call read as its
- * `envelope` in the form its `Content-Type` names, a signed call's certificate kept as what it wrote,
- * and every answer the `answer` envelope in the form `Accept` names, RFC ge55b; `list` answers as a
- * proxy might, with no answer at all. Every call's body is kept, as it came, for a test to verify.
+ * A tiny implementation of `object` over HTTP for the end-to-end test, keeping every call's body,
+ * RFC ge55b. `list` answers with no answer at all.
  */
 open Node
 module Cbor = Codec.Cbor
@@ -58,7 +56,7 @@ let callOf = (contentType, body) =>
     }
   }
 
-/** What a handler answers: an output by its writers, or an error and its HTTP status. */
+/** What a handler answers, an output by its writers, or an error and its HTTP status. */
 type answer =
   | Output(JSON.t, Cbor.value)
   | Refused(int, Contracts.Error.t)

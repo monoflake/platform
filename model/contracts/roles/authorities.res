@@ -1,16 +1,12 @@
 /**
- * The authority's contract, RFC 7xpd3, both its ends: what an organization's control pulls of the
- * role above it and asks it to certify, each call signed by the organization's own key, and the
- * notice the authority sends that there is something to pull, unsigned, which the control gives.
- * What is pulled is one record the authority signs, its generation never below the one the control
- * holds, so an old record is never taken back. The roles' contracts are named for what they carry,
- * in the plural.
+ * The authority's contract at both ends, what a control pulls and asks certified and the notice it
+ * is sent, RFC 7xpd3. A record pulled is never older than the one held.
  */
 open Subset
 
 let types: array<declared> = [
-  // What an organization binds of another's, as it crosses, known by its host, no secret in it; what
-  // binding it asks past these waits on C3.
+  // What an organization binds of another's, known by its host and carrying no secret. More waits
+  // on C3.
   {
     name: "authority-loan",
     def: Record([
@@ -23,8 +19,8 @@ let types: array<declared> = [
     ]),
     from: "7xpd3, v7v3w",
   },
-  // The record pulled, signed by the authority: its generation, the organization's certificate as
-  // signed, its allowance, what it is lent and its status.
+  // The record pulled, signed by the authority, its generation, certificate, allowance, loans and
+  // status.
   {
     name: "authority-record",
     def: Record([
@@ -47,7 +43,7 @@ let types: array<declared> = [
     def: Record([field("record", 1, Prim(#bytes))]),
     from: "7xpd3",
   },
-  // A working key to certify, and what it signs: the issuer's capabilities, or the bundle.
+  // A working key to certify and what it signs, the issuer's capabilities or the bundle.
   {
     name: "authority-certify",
     def: Record([
@@ -61,7 +57,7 @@ let types: array<declared> = [
     def: Record([field("certificate", 1, Prim(#bytes))]),
     from: "7xpd3, b8f35",
   },
-  // A notice: that there is a generation to pull, and nothing else.
+  // A notice that there is a generation to pull, and nothing else.
   {name: "notice", def: Record([field("generation", 1, Prim(#uint53))]), from: "7xpd3"},
   {name: "noticed", def: Record([]), from: "7xpd3"},
 ]
@@ -82,7 +78,7 @@ let interface_: interface_ = {
   ],
 }
 
-/** The control's end: a notice, repeated until the generation it names is pulled. */
+/** The control's end, a notice repeated until the generation it names is pulled. */
 let notices: interface_ = {
   name: "notices",
   version: 1,

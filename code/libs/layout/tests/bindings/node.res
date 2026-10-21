@@ -1,6 +1,6 @@
 /***
- * What the tests take of node: its test runner, its strict assertions, and its files, found from
- * the repository's root; and of the web, UTF-8 by `TextEncoder`.
+ * What the tests take of node, its test runner, strict assertions and files, and of the web
+ * `TextEncoder`.
  */
 type url
 @new external urlIn: (string, string) => url = "URL"

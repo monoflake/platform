@@ -1,6 +1,5 @@
 /***
- * `Calls.serve` bound to the Fetch API, which a Worker and workerd both give a handler: a `Request` read
- * into `Calls.request`, the answer written back as a `Response`. The model's interface,
+ * `Calls.serve` bound to the Fetch API a Worker and workerd both give. The model's interface,
  * `docs/code.md`.
  */
 

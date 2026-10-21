@@ -1,50 +1,19 @@
-//! `envelope*`, `model/graph/libraries.res`, and this file its interface, the model's,
-//! `docs/code.md`: the same contract as `src/malformed.resi` holds in ReScript. Whoever implements
-//! it implements each trait here for the types it names, and never edits this file; envelope-
-//! generator writes the module `contracts`, as `build.rs` runs it, `model/graph/tools.res`.
-//!
-//! Each type of `model/contracts.json` in Rust, its JSON and its CBOR as RFC fhg6w's subset writes
-//! them, and each interface's operations. A value is written in one JSON and one CBOR, and read
-//! back from them alone: a field a reader does not know is passed over, and anything else not as
-//! its type writes it is [`Malformed`].
+//! `envelope*`, this file its interface, the model's, `docs/code.md`, and the contract
+//! `src/malformed.resi` holds. The module `contracts` is `docs/envelope.md`'s.
 
 mod malformed;
-/// What the module `contracts` is written with -- each shape's JSON and CBOR, base64url, hex --
-/// the implementer's own to shape, as envelope-generator's Rust calls it.
+/// What the module `contracts` is written with, each shape's JSON and CBOR, base64url and hex, as
+/// envelope-generator's Rust calls it.
 mod wire;
 
-/// Every type, interface and reason of `model/contracts.json`, written by envelope-generator.
-///
-/// - **A type** `bucket-kind` is `BucketKind`, implementing [`Encoded`]: a record a struct, every
-///   field public and named as the contract names it, a Rust keyword as a raw identifier,
-///   `r#type`, and an optional one an `Option`; an enumeration an enum without data, each choice
-///   named in upper camel case, `best_effort` as `BestEffort`; a union an enum, each case so named
-///   and holding its fields; and a set of names a struct holding the `u32` of its bits, with a
-///   constant for each name in upper snake case, `Rights::READ`.
-/// - **A shape** is as the subset's table says: `bool`, `String`, `f64`, `i32`, `u32` for an
-///   unsigned 32-bit integer, [`Uint53`] and [`Int53`], `Vec<u8>` for bytes and for a secret,
-///   `[u8; 32]` for a hash, `u32` for an id of either half, `Vec` for a list and `BTreeMap<String,
-///   _>` for a map.
-/// - **The shell** of every record, `contracts.json`'s `shell`, is `Shell`.
-/// - **An interface** `object` is the module `interface::object`, holding `VERSION`, a `u32`, and
-///   for each operation, `write`, a unit struct named in upper camel case, `Write`, implementing
-///   [`Operation`]; and `Call`, an enum with a case for each operation, named as its struct and
-///   holding its input, `Call::Write(ObjectWrite)`, implementing [`Called`], so a call read is held
-///   to the type its operation names.
-/// - **The reasons** every operation may fail for are `REASONS`, and those a call between apps
-///   adds are `CALLING`, each a `&[Reason]`, every [`Reason`] with its message; and `message(name)`
-///   gives any reason's default message by its name, none for a name no reason has.
-/// - **By a type's name**, `json_to_cbor(name, json)` reads the JSON as that type and gives its
-///   CBOR, and `cbor_to_json(name, cbor)` the reverse, each none for a name no type has; and **by an
-///   interface's name**, `call_json_to_cbor(name, json)` reads the JSON as a call of it, an
-///   [`Envelope`] of its `Call`, and `call_cbor_to_json(name, cbor)` the reverse: the samples of
-///   `tests/codec/` are held by these.
+/// Every type, interface and reason of `model/contracts.json`, written by envelope-generator as
+/// `docs/envelope.md` lays out.
 pub mod contracts {
 	include!(concat!(env!("OUT_DIR"), "/contracts.rs"));
 }
 
-/// A step from a value into what it holds: a record's or a union's field by its name, in JSON and
-/// CBOR alike; a list's item by its index; a map's entry by its key.
+/// A step from a value into what it holds, a field by its name, an item by its index or an entry by
+/// its key.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Step {
 	/// A field, by its name.
@@ -55,9 +24,8 @@ pub enum Step {
 	Key(String),
 }
 
-/// Why a value was not read as its type, which an operation answers as `malformed`, RFC fhg6w:
-/// where, by the steps from the value read, and what was expected there -- for bytes, the text,
-/// "base64url, unpadded".
+/// Why a value was not read as its type, answered as `malformed`, RFC fhg6w, by where it stands and
+/// what was expected there.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Malformed {
 	/// The steps from the value read to what is not as its type writes it.
@@ -97,12 +65,8 @@ pub trait Encoded: Sized {
 	fn from_cbor(cbor: &codec::Value) -> Result<Self, Malformed>;
 }
 
-/// A call, every operation's body, `model/contracts.json`'s `call`, RFC fhg6w: an interface's call,
-/// which names its operation and holds its input, and the capabilities it carries, each a COSE Sign1
-/// as it was signed, none written absent. Implementing [`Encoded`] for every [`Called`]: read, its
-/// `interface` is held to the call's, its `operation` chooses how its `input` is read, and an
-/// operation the interface has not is [`Malformed`] at `operation`. A call a certificate makes is
-/// signed whole by its caller, outside this crate.
+/// A call, `model/contracts.json`'s `call`, an interface's call and the capabilities it carries,
+/// RFC fhg6w. Read, an operation the interface has not is [`Malformed`].
 #[derive(Debug, Clone, PartialEq)]
 pub struct Envelope<C> {
 	/// The operation and its input.
@@ -127,9 +91,8 @@ pub trait Called: Sized {
 	fn from_cbor(operation: &str, input: &codec::Value) -> Result<Self, Malformed>;
 }
 
-/// A reason an operation may fail for, the failure a caller acts on, RFC 49qyg, and the message an
-/// `error` carries for it unless the moment says more, `model/contracts.json`'s `messages`, RFC
-/// ge55b.
+/// A reason an operation may fail for, its failure, RFC 49qyg, and the message an `error` carries
+/// for it, RFC ge55b.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Reason {
 	/// Its name, as an `error` carries it.
@@ -140,15 +103,13 @@ pub struct Reason {
 	pub message: &'static str,
 }
 
-/// An answer, every operation's, `model/contracts.json`'s `answer`, RFC ge55b: by `status`, the
-/// operation's output as `data`, or an `error`, told apart by `status` alone. Implementing
-/// [`Encoded`] for every `O` that is: read, a `status` neither case names is [`Malformed`] at
-/// `status`.
+/// An answer, `model/contracts.json`'s `answer`, the output as `data` or an `error` told apart by
+/// `status` alone, RFC ge55b.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Answer<O> {
-	/// `success`: the operation's output.
+	/// `success`, the operation's output.
 	Success(O),
-	/// `error`: its failure, its reason and its message.
+	/// `error`, its failure, its reason and its message.
 	Error(contracts::Error),
 }
 

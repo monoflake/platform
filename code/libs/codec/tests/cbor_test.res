@@ -1,7 +1,6 @@
 /***
- * `Cbor` held to RFC 8949's own examples in `tests/cbor/`, read as they stand, and to what they
- * leave out: what 4.2.1 writes, what is refused, and in which order. `cbor.rs` beside it is the
- * same in Rust.
+ * `Cbor` held to RFC 8949's own examples in `tests/cbor/` and to what they leave out, as `cbor.rs`
+ * is in Rust.
  */
 open Node
 open Sample
@@ -39,8 +38,8 @@ test("appendix A is read and its deterministic items written back byte for byte"
 )
 
 /**
- * The refusal each of Appendix F.1's kinds implies: the first five are its "too little data", the
- * rest its syntax errors.
+ * The refusal each of Appendix F.1's kinds implies, the first five "too little data" and the rest
+ * syntax errors.
  */
 let refusal = (kind): Cbor.refused =>
   switch kind {
@@ -117,7 +116,7 @@ test("a float is written at the narrowest width that keeps it", () => {
     (1.401298464324817e-45, [0xfa, 0x00, 0x00, 0x00, 0x01]),
     (7.006492321624085e-46, [0xfb, 0x36, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
     (5e-324, [0xfb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]),
-    // A half's subnormals: 2^-24 and 3 * 2^-16.
+    // A half's subnormals, 2^-24 and 3 * 2^-16.
     (5.960464477539063e-8, [0xf9, 0x00, 0x01]),
     (0.0000457763671875, [0xf9, 0x03, 0x00]),
     (Float.Constants.nan, [0xf9, 0x7e, 0x00]),
@@ -174,7 +173,7 @@ test("a map holding one key twice is never written", () => {
   )
 })
 
-/** `inner` within `n` arrays, maps and tags in turn, and its bytes: `[x]`, `{0: x}` and `0(x)`. */
+/** `inner` within `n` arrays, maps and tags in turn, `[x]`, `{0: x}` and `0(x)`, with its bytes. */
 let nested = (n, inner) => {
   let value = ref(inner)
   let written = ref(ints(encoded(inner)))

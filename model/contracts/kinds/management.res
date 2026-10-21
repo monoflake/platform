@@ -1,8 +1,6 @@
 /**
- * A driver's management, RFC vr5lw: what a binding asks is a list of capacity, sent whole and
- * numbered by generation; a policy, the grace, with a generation of its own; and `end`, the one
- * command apart from them. Every call carries the binding token. Function and instance are never
- * in the list: they are deployed into what it holds, by compute's interface.
+ * A driver's management, a list of capacity sent whole by generation, a grace policy and `end`,
+ * every call carrying the binding token, RFC vr5lw.
  */
 open Subset
 
@@ -25,9 +23,8 @@ let types: array<declared> = [
     }),
     from: "vr5lw",
   },
-  // An item is a `capacity` record, so the driver diffs by its id, which is never renamed. Each
-  // credential is the BLAKE3 of a random secret of 32 bytes the control
-  // made, which needs no salt; two while one replaces the other, and the driver makes none.
+  // An item is a `capacity` record the driver diffs by its id. Each credential is the BLAKE3 of 32
+  // random bytes the control made.
   {
     name: "management-item",
     def: Record([
@@ -45,7 +42,7 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  // The generation the driver holds: the one sent, or a newer it took before, the older dropped.
+  // The generation the driver holds, the one sent or a newer it took before.
   {name: "management-held", def: Record([field("generation", 1, Prim(#uint53))]), from: "vr5lw"},
   // The grace in whole seconds, 0 removing at once, at most a year.
   {
@@ -86,8 +83,8 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  // What the driver holds: the list's and the policy's generations, the grace, and each item. What
-  // it reports of use is open [C18], to come as an optional field.
+  // What the driver holds, the list's and the policy's generations, the grace and each item. Use
+  // reported is open [C18].
   {
     name: "management-described",
     def: Record([

@@ -1,7 +1,4 @@
-/***
- * What the tests take of `@noble/hashes`: BLAKE3, unkeyed, to `dkLen` bytes of its extended output,
- * 32 where none is given, which makes the samples' content and holds their large results.
- */
+/*** What the tests take of `@noble/hashes`, unkeyed BLAKE3 to `dkLen` bytes, 32 unless given. */
 type options = {dkLen?: int}
 
 @module("@noble/hashes/blake3.js") external hash: Uint8Array.t => Uint8Array.t = "blake3"

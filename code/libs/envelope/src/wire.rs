@@ -1,8 +1,5 @@
-//! What the module `contracts` is written with, RFC fhg6w's subset: a record's and a union's fields,
-//! an enumeration's names and codes, a set of names' bits, a list, a map and each primitive, in
-//! JSON and in CBOR, each reader saying what it expected and where. A record's or a union's field
-//! no reader knows is passed over, in either form; anything else not as its type writes it is
-//! [`Malformed`].
+//! What the module `contracts` is written with, RFC fhg6w's subset in JSON and CBOR. A field no
+//! reader knows is passed over, and anything else amiss is [`Malformed`].
 
 mod answer;
 mod call;
@@ -133,7 +130,7 @@ pub(crate) fn record_cbor(fields: impl IntoIterator<Item = (i128, Option<Cbor>)>
 	)
 }
 
-/// A union's JSON: its case's name in the field `tag`, beside the case's fields.
+/// A union's JSON, its case's name in the field `tag` beside the case's fields.
 pub(crate) fn union_json(
 	tag: &'static str,
 	case: &'static str,
@@ -142,7 +139,7 @@ pub(crate) fn union_json(
 	record_json(std::iter::once((tag, Some(Json::from(case)))).chain(fields))
 }
 
-/// A union's CBOR: its case's code at key 0, beside the case's fields.
+/// A union's CBOR, its case's code at key 0 beside the case's fields.
 pub(crate) fn union_cbor(
 	code: i128,
 	fields: impl IntoIterator<Item = (i128, Option<Cbor>)>,
@@ -150,8 +147,7 @@ pub(crate) fn union_cbor(
 	record_cbor(std::iter::once((0, Some(Cbor::Integer(code)))).chain(fields))
 }
 
-/// A union's case, its name in the field `tag`, read as any field is: a name no case has is the
-/// caller's to refuse, by [`unknown_case`].
+/// A union's case by its name in the field `tag`, a name no case has refused by [`unknown_case`].
 pub(crate) fn case_json<'a>(object: &'a Map<String, Json>, tag: &str) -> Read<&'a str> {
 	match object.get(tag) {
 		Some(value) => value.as_str().ok_or_else(|| Malformed::expected("a string")),

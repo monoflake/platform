@@ -1,12 +1,7 @@
-/** What every interface answers alike, RFC vr5lw: an error, its failure and its reason. */
+/** What every interface answers alike, an error with its failure and its reason, RFC vr5lw. */
 open Subset
 
-/** The reasons every operation may fail for, none of which an operation declares again: a
- * credential missing or wrong; an input that does not parse, bytes in any text but base64url
- * unpadded among them, fhg6w; an implementation overloaded for a moment, worth a retry; and a
- * caller calling faster than it is let, told apart from the implementation's own load by whose it
- * is; and a fault of the implementation's own, which only it can mend; decided by the author on
- * 2026-10-21, ge55b. */
+/** The reasons every operation may fail for, which no operation declares again, ge55b. */
 let common: array<reason> = [
   {name: "denied", failure: #rejected},
   {name: "malformed", failure: #rejected},
@@ -15,17 +10,13 @@ let common: array<reason> = [
   {name: "fault", failure: #unknown},
 ]
 
-/** The reasons a call to what is deployed may fail for, beside every operation's: the platform's
- * own, answered as an `error` before the app's code is reached, vr5lw. What the app answers is its
- * own exports' in WIT, never these. */
+/**
+ * The reasons a call to what is deployed may fail for, the platform's own before the app's code is
+ * reached, vr5lw.
+ */
 let calling: array<reason> = [{name: "stopped", failure: #unavailable}]
 
-/**
- * Each reason's default message, by its name, as `canmi/lib`'s catalog of codes gives one for each,
- * RFC ge55b: one line of English for a person, objective, opening with a capital and ending without
- * a stop, which an answer carries unless the moment has a more exact one. One name means one thing
- * in every interface, so it has one message; every reason any operation declares has one.
- */
+/** Each reason's default message by its name, one objective line of English, RFC ge55b. */
 let messages: dict<string> = dict{
   "denied": "The call carries no credential, or one that does not allow it",
   "malformed": "The call is not as its interface writes it",

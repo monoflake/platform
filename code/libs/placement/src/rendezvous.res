@@ -1,6 +1,6 @@
 /***
- * Where a parcel goes among the stores that meet its placement, RFC b8f35: rendezvous hashing over
- * integers alone, each store's score a bigint and never a float.
+ * Where a parcel goes among the stores meeting its placement, RFC b8f35, by rendezvous hashing over
+ * integers alone.
  */
 
 type store = {id: float, weight: int}

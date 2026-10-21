@@ -1,7 +1,6 @@
 /***
- * `Filling.fill` and `Filling.bytes` held to RFC p8e8k: the same bytes every run, of the case's
- * description, the step's index and the value's path; every placeholder an input takes made, and
- * what the run offers not refused as not offered.
+ * `Filling.fill` and `Filling.bytes` held to RFC p8e8k, the same bytes every run and every
+ * placeholder made.
  */
 open Node
 
@@ -24,7 +23,7 @@ test("$bytes are the BLAKE3 output of description, step and path, the same every
   deepEqual(made, Filling.bytes(~description="d", ~step=0, ~path="content", 8))
   // BLAKE3 of "d/0/content", its first 8 bytes.
   deepEqual(hex(made), "a61de286dc0fe80e")
-  // The output is extendable: a longer read begins with the shorter.
+  // The output is extendable, so a longer read begins with the shorter.
   deepEqual(
     Filling.bytes(~description="d", ~step=0, ~path="content", 16)->TypedArray.slice(
       ~start=0,

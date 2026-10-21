@@ -1,7 +1,4 @@
-/***
- * A parcel, RFC b8f35: its 41-byte header, then 256 segments sealed by AES-256-GCM, each under the
- * nonce and the associated data its index gives.
- */
+/*** A parcel, RFC b8f35, its 41-byte header and then 256 segments sealed by AES-256-GCM. */
 
 let size = 16_777_216
 let capacity = 16_773_079

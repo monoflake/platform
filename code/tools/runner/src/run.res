@@ -35,14 +35,14 @@ type outcome =
 
 type result_ = {description: string, outcomes: array<(form, outcome)>}
 
-/** How `within` is retried: first after 100 ms, doubling to at most 2 s between tries. */
+/** How `within` is retried, first after 100 ms and doubling to at most 2 s between tries. */
 let firstDelay = 100
 let longestDelay = 2000
 
-/** Why a case was skipped: what the target does not offer, which p8e8k leaves for later. */
+/** Why a case was skipped, what the target does not offer, which p8e8k leaves for later. */
 let unoffered = what => `${what}: not offered by this target, left for later by RFC p8e8k`
 
-/** How a step ended: on, with what it captured; or the case ends here. */
+/** How a step ended, going on with what it captured or ending the case. */
 type ended = On(Matching.captures) | Ended(outcome)
 
 let showAnswered = (answered: result<answered, string>) =>
@@ -70,7 +70,9 @@ let held = (expect: Sample.expect, answered, ~signed, captures) =>
     Error(`expected ${failure} ${reason}, answered ${showAnswered(answered)}`)
   }
 
-/** A step's attempt made until it is answered as expected, or, `within` some time, its time past. */
+/**
+ * A step's attempt made until it is answered as expected or, `within` some time, its time is past.
+ */
 let attempted = async (target, ~within, attempt, expect, captures) => {
   let start = target.now()
   let rec go = async (tries, delay) => {

@@ -21,7 +21,7 @@ pub(super) fn write(x: f64, e: &mut Writer) {
 	}
 }
 
-/// Whether a half holds `x` exactly: written as one and read back, it is itself, bit for bit.
+/// Whether a half holds `x` exactly, read back bit for bit.
 fn half(x: f32) -> bool {
 	let mut e = Writer::new(Vec::new());
 	put(e.f16(x));
@@ -35,13 +35,13 @@ fn single(x: f64) -> Option<f32> {
 	let exponent = i32::try_from((bits >> 52) & 0x7ff).ok()? - 1023;
 	let fraction = bits & ((1 << 52) - 1);
 	let magnitude = match exponent {
-		// Infinity, and zero: a double's subnormal is no single's, as the check below finds.
+		// Infinity and zero, a double's subnormal being no single's.
 		1024 => 0x7f80_0000,
 		-1023 => 0,
 		-126..=127 => {
 			(u32::try_from(exponent + 127).ok()? << 23) | u32::try_from(fraction >> 29).ok()?
 		}
-		// A single's subnormal: the significand, its leading one written out, shifted to its scale.
+		// A single's subnormal, the significand with its leading one shifted to its scale.
 		-149..=-127 => u32::try_from((fraction | (1 << 52)) >> (-97 - exponent)).ok()?,
 		_ => return None,
 	};

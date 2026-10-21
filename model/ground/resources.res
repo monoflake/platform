@@ -1,9 +1,6 @@
 /**
- * What each host's driver gives, RFC vr5lw, and what a footing and the products ask of it.
- * `check.res` asks of every step of the bootstrap path that each deployment's footing, of the
- * platform and of an organization alike, holds one kind of each class, its compute an `effect`
- * function; that its extensions give every kind the products need; and that every resource reaches
- * the public network by a path, networks joined by jumps.
+ * What each host's driver gives and what a footing and the products ask of it, RFC vr5lw, checked
+ * at every step of the path.
  */
 type class = [#compute | #storage | #database]
 
@@ -21,22 +18,20 @@ let classOf = (k: kind): class =>
   }
 
 /**
- * A network a resource may be in, RFC vr5lw: the public one; Cloudflare's, joined by a tunnel; and
- * a relay's, joined by a connection held out to a machine with an address. A tailnet and a local
- * network are private networks as well, bound by an organization and on no ground here.
+ * A network a resource may be in, the public one, Cloudflare's by a tunnel, or a relay's, RFC
+ * vr5lw.
  */
 type network = [#public | #cloudflare | #relay]
 
 type resource = {
   gives: array<kind>,
-  /** The networks it is in, where they stand: one in two is a jump between them. */
+  /** The networks it is in, one in two being a jump between them. */
   in_: array<network>,
   /** The private networks it stands up, which it is a jump into from the public one. */
   stands?: array<network>,
   /**
-   * The CPU a call may take on each of the vendor's plans, in milliseconds, docs/lessons/. A
-   * machine's driver declares how long a call may run as well, a value open [D8]; until it is, a
-   * machine is taken here to bound nothing.
+   * The CPU a call may take on each of the vendor's plans in milliseconds, docs/lessons/. A
+   * machine's limit is open [D8].
    */
   cpu?: {free: float, paid: float},
   /** Whether it is used only once metering holds, being priced by use, RFC 94y0d. */
@@ -91,17 +86,16 @@ let groundOf = (g: Steps.ground) =>
   | #platform => ["platform products"]
   }
 
-/** What cutting and sealing a parcel takes of CPU in a call, in milliseconds: assumed, an order
- * past a free Worker's 10, until it is measured. */
+/**
+ * The CPU cutting and sealing a parcel takes in a call, assumed at 100 milliseconds until measured.
+ */
 let assumedSealCpu = 100.
 
 type need = {any: array<kind>, cpu?: float, why: string}
 
 /**
- * What the products ask of an organization's extensions in v0, each met by any of its kinds: a
- * function for compute; a database for the database product, given in the platform's contract or
- * as a tablet whose one writer an instance holds, RFC 49qyg; and objects for the storage and a
- * tablet's archive, RFC vuanj. The rest of a kind is asked only by an app that declares it.
+ * What the products ask of an organization's extensions in v0, each need met by any of its kinds,
+ * RFCs 49qyg and vuanj.
  */
 let needs: array<need> = [
   {any: [#function], why: "compute runs an app's derive and effect"},
@@ -122,9 +116,7 @@ let get = (d, k) => Dict.get(d, k)->Option.getOrThrow
 let resourcesOf = (d: Steps.deployment) =>
   d.ground->Array.flatMap(groundOf)->Array.map(n => (n, get(resources, n)))
 
-/** What of a deployment's resources reaches the public network by no path, vr5lw: a private
- * network stands only where something of the deployment stands it up, and a resource in two that
- * stand joins them. */
+/** What of a deployment's resources reaches the public network by no path, vr5lw. */
 let unreached = (d: Steps.deployment): array<string> => {
   let all = resourcesOf(d)
   let standing = Set.fromArray(
@@ -154,8 +146,7 @@ let unreached = (d: Steps.deployment): array<string> => {
 let usable = (r: resource, d: Steps.deployment) =>
   !(r.metered->Option.getOr(false)) || d.on->Array.includes(#metering)
 
-/** What a deployment's footing may hold: anything its ground gives, the paid plan aside, since a
- * footing's compute runs the control's own code and never an app's. */
+/** What a deployment's footing may hold, anything its ground gives but the paid plan. */
 let footingKinds = (d: Steps.deployment): Set.t<kind> =>
   Set.fromArray(
     d.ground

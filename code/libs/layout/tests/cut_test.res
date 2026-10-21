@@ -1,6 +1,6 @@
 /***
- * `Cut` held to `tests/layout/cuts.json`: every content cut into the pieces it gives, under the gear
- * table its salt derives, however the content is split into parts.
+ * `Cut` held to `tests/layout/cuts.json`, every content cut into the pieces it gives however it is
+ * split.
  */
 open Node
 open Sample

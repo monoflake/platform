@@ -1,6 +1,6 @@
 /***
- * `Hash` held to `tests/keys/derived.json`'s hashes: keyed by a scope's salt, and unkeyed. Its
- * refusal is held with the rest, in `derive_test.res`.
+ * `Hash` held to `tests/keys/derived.json`'s hashes, keyed and unkeyed, its refusal held in
+ * `derive_test.res`.
  */
 open Node
 open Sample

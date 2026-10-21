@@ -1,13 +1,14 @@
-/***
- * An answer held to what a step expects, RFC p8e8k: only what the sample writes.
- */
+/*** An answer held to what a step expects, RFC p8e8k, only what the sample writes. */
 type captures = dict<JSON.t>
 
 type mismatch = {at: string, expected: string, answered: string}
 
 type signed = (Uint8Array.t, string) => result<JSON.t, string>
 
-/** A sample's placeholder: an object of one key, `$`-led, as `model/checks/written/cases.res` reads it. */
+/**
+ * A sample's placeholder, an object of one `$`-led key, as `model/checks/written/cases.res` reads
+ * it.
+ */
 let placeholder = (json: JSON.t) =>
   switch json->JSON.Decode.object->Option.map(Dict.toArray) {
   | Some([(key, value)]) if key->String.startsWith("$") => Some((key, value))

@@ -1,8 +1,8 @@
-//! How a name of `model/contracts.json` is written in Rust: a type's or a choice's in upper camel
-//! case, a constant's in upper snake case, a field's as it is, a keyword raw.
+//! How a name of `model/contracts.json` is written in Rust, a type in upper camel case, a constant
+//! in upper snake case, a keyword raw.
 
-/// Rust's keywords, strict and reserved, 2024 edition's among them: a field so named is written
-/// raw, `r#type`.
+/// Rust's strict and reserved keywords through the 2024 edition, a field so named written raw,
+/// `r#type`.
 const KEYWORDS: &[&str] = &[
 	"abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "do", "dyn",
 	"else", "enum", "extern", "false", "final", "fn", "for", "gen", "if", "impl", "in", "let",
@@ -14,13 +14,13 @@ const KEYWORDS: &[&str] = &[
 /// The keywords no raw identifier may be.
 const UNRAWABLE: &[&str] = &["crate", "self", "super", "_"];
 
-/// A type's name, `bucket-kind`: lowercase words, joined by hyphens.
+/// A type's name, `bucket-kind`, lowercase words joined by hyphens.
 pub(super) fn is_type_name(name: &str) -> bool {
 	words(name, '-')
 }
 
-/// A field's, a choice's, a case's, an interface's or an operation's name, `best_effort`:
-/// lowercase words, joined by underscores.
+/// A field's, a choice's, a case's, an interface's or an operation's name, lowercase words joined
+/// by underscores.
 pub(super) fn is_snake_name(name: &str) -> bool {
 	words(name, '_') && !UNRAWABLE.contains(&name)
 }
@@ -48,7 +48,7 @@ pub(super) fn upper_snake(name: &str) -> String {
 	name.replace('-', "_").to_ascii_uppercase()
 }
 
-/// A field's name as an identifier: itself, or raw where it is a keyword.
+/// A field's name as an identifier, itself or raw where it is a keyword.
 pub(super) fn ident(name: &str) -> String {
 	if KEYWORDS.contains(&name) { format!("r#{name}") } else { name.to_owned() }
 }

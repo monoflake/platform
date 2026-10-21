@@ -1,5 +1,4 @@
-//! [`Versioned`] for [`Version`] and [`Ranged`] for [`Range`]: the frozen core, the range a reader
-//! reads, and the version written among them, RFC wnqvu.
+//! [`Versioned`] for [`Version`] and [`Ranged`] for [`Range`], RFC wnqvu.
 
 use crate::{MAX, Range, Ranged, Refused, Unchosen, Version, Versioned};
 

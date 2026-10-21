@@ -1,9 +1,6 @@
 /***
- * `Calls.serve` held to `src/calls.resi`: a call read in either form and answered in either, CBOR
- * where `Accept` names neither; each status by failure and reason; a reason's own message unless
- * one is given; a reason no operation declares answered `unknown`, a throwing handler and an output
- * that cannot be written `fault`; a request read as no call `malformed`; and a signed call verified to
- * its signer, or `denied`, by the records of `tests/capability/signed.json`.
+ * `Calls.serve` held to `src/calls.resi`, each form, status, message and refusal, and signed calls
+ * by `tests/capability/signed.json`.
  */
 open Node
 open Served
@@ -36,7 +33,7 @@ test("a call in CBOR, answered in CBOR, written byte for byte", async () => {
     ),
   )
   deepEqual((response.status, response.contentType), (200, "application/cbor"))
-  // {0: 1, 1: {1: "a unsigned"}}
+  // `{0: 1, 1: {1: "a unsigned"}}`
   deepEqual(hex(response.body), "a2000101a1016a6120756e7369676e6564")
 })
 

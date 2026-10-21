@@ -1,6 +1,6 @@
 /***
- * What the tests serve: `object`, whose handler answers by the name it is given, and `issuer`,
- * which answers who called; requests written in either form, and answers read back from either.
+ * What the tests serve, `object` answering by the name it is given and `issuer` answering who
+ * called.
  */
 open Node
 
@@ -16,7 +16,7 @@ let named = (name): Calls.answer => Output(
 
 let refused = (reason, ~message=?): Calls.answer => Refused({reason, message})
 
-/** Who called, as a name: `unsigned`, `root`, or a certificate's role and its `sub`. */
+/** Who called as a name, `unsigned`, `root`, or a certificate's role and its `sub`. */
 let callerName = (caller: Calls.caller) =>
   switch caller {
   | Unsigned => "unsigned"
@@ -24,7 +24,7 @@ let callerName = (caller: Calls.caller) =>
   | Signed(Signed({role, sub})) => [role, sub->Option.getOr("")]->Array.join(" ")->String.trim
   }
 
-/** `describe` answers by its name, a handler's every way of answering; the rest answer one reason. */
+/** `describe` answers by its name, every way a handler answers, and the rest answer one reason. */
 let answerObject = (caller, envelope: Objects.envelope) =>
   switch envelope.call {
   | Describe({name: "throw"}) => JsError.throwWithMessage("thrown")

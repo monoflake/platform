@@ -1,6 +1,6 @@
 /***
- * A version, RFC wnqvu: the frozen core, the range a reader reads, and the version written among
- * them. `src/version.rs` is the same in Rust.
+ * A version, RFC wnqvu, the frozen core, a reader's range and what is written among them, as
+ * `src/version.rs` is in Rust.
  */
 
 let max = 9007199254740991.

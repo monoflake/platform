@@ -1,6 +1,6 @@
 /***
- * `Sample.read` held to the samples as they stand: every behavior file of `tests/kinds`,
- * `tests/products` and `tests/components` read, the properties refused, and each form of a step.
+ * `Sample.read` held to the samples as they stand, every behavior file read and the properties
+ * refused.
  */
 open Node
 

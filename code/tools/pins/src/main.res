@@ -1,15 +1,13 @@
 /***
- * `node src/main.res.mjs <Dockerfile> <pnpm-workspace.yaml> <flake.nix> [--dry-run]`, as platform's
- * `update` runs it: workerd's pin moved to what `Pin.choose` takes, each architecture's download
- * hashed, and the Dockerfile written unless dry; what is held back, and a NixOS release newer than
- * the flake follows, named either way.
+ * `node src/main.res.mjs <Dockerfile> <pnpm-workspace.yaml> <flake.nix> [--dry-run]`, as `update`
+ * runs it, moving workerd's pin and naming a newer NixOS.
  */
 let refuse = reason => {
   Console.error(`pins: ${reason}`)
   Host.exit(1)
 }
 
-// The packages as `pin.resi` names them, by Docker's architecture; amd64's versions are the ones read.
+// The packages as `pin.resi` names them by Docker's architecture, amd64's versions the ones read.
 let packages = dict{"amd64": "workerd-linux-64", "arm64": "workerd-linux-arm64"}
 let registryOf = name => `https://registry.npmjs.org/@cloudflare/${name}`
 let tarball = (name, version) => `${registryOf(name)}/-/${name}-${version}.tgz`

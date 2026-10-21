@@ -2,8 +2,8 @@
 open Base
 
 let run = () => {
-  // The footing, RFC b8f35: what it keeps must be bounded, and an idle organization's any row at all
-  // is a violation, docs/scope.md; what each step of a path asks of a plan is read where the path is.
+  // The footing keeps only what is bounded and nothing for an idle organization, RFC b8f35,
+  // docs/scope.md. What each step asks of a plan is read where the path is.
   let rows = Footing.rows
   let assumed = Footing.assumed
   let footing = []

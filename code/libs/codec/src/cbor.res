@@ -1,7 +1,6 @@
 /***
- * CBOR, RFC 8949: written as its 4.2.1 writes it, and read strictly, well formed by its Appendix C,
- * valid by its 5.3 and within `depth`. Written to behave as `src/cbor.rs` does over minicbor, and
- * held to the same samples, `docs/code.md`.
+ * CBOR, RFC 8949, written as its 4.2.1 writes it and read strictly, as `src/cbor.rs` does over
+ * minicbor, `docs/code.md`.
  */
 
 type rec value =
@@ -140,7 +139,7 @@ let narrow = (bits: bigint, width) => {
           )
         : None
     } else {
-      // A subnormal at `width`: the significand, its leading one written out, shifted to its scale.
+      // A subnormal at `width`, the significand with its leading one shifted to its scale.
       let significand = BigInt.bitwiseOr(fraction, shl(1n, 52))
       let shift = dropped + 1 - bias - exponent
       shift <= 52 && lowZero(significand, shift)
@@ -163,7 +162,9 @@ let floatBytes = x =>
     }
   }
 
-/** Whether a string is Unicode scalar values alone, as UTF-8 can write it: no lone surrogate. */
+/**
+ * Whether a string is Unicode scalar values alone, with no lone surrogate, as UTF-8 can write it.
+ */
 let scalar = text => {
   let n = String.length(text)
   // Within the string, so always a code unit.
@@ -278,7 +279,7 @@ let uint = (r, width) =>
     0n,
   )
 
-/** A head's argument, taken with the head: additional information 28 to 31 gives none. */
+/** A head's argument taken with the head, additional information 28 to 31 giving none. */
 let argument = r => {
   let info = byte(r) &&& 0x1f
   switch info {
@@ -294,7 +295,9 @@ let argument = r => {
 /** A view of `width` bytes to read a float from. */
 let viewOf = (r, width) => DataView.fromBuffer(take(r, BigInt.fromInt(width))->TypedArray.buffer)
 
-/** The double a half's bits denote: a subnormal scaled, anything else widened to a single's bits. */
+/**
+ * The double a half's bits denote, a subnormal scaled and anything else widened to a single's bits.
+ */
 let fromHalf = bits => {
   let sign = bits >> 15 == 1 ? -1. : 1.
   let exponent = bits >> 10 &&& 0x1f
@@ -356,8 +359,8 @@ let items = (r, next) =>
   }
 
 /**
- * A string's bytes, of `major` type 2 or 3: of one definite string, or of its chunks up to a break,
- * a chunk not a definite string of that type refused as soon as its first byte says so, its 3.2.3.
+ * A string's bytes of `major` type 2 or 3, one definite string or its chunks up to a break, its
+ * 3.2.3.
  */
 let chunks = (r, major) =>
   if (first(r) &&& 0x1f) == 31 {
@@ -382,7 +385,7 @@ let utf8 = (r, chunk) =>
     ""
   }
 
-/** What major type 7 holds: a simple value or a float; a break is out of place here. */
+/** What major type 7 holds, a simple value or a float, a break being out of place here. */
 let simple = r =>
   switch byte(r) {
   | 0xf4 => Bool(false)

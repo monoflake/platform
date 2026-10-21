@@ -36,14 +36,14 @@ let unwritable = (unwritable: Cbor.unwritable) =>
   | TooDeep => "nested too deep"
   }
 
-/** What the run itself writes, which cannot be unwritable, so a refusal is a fault of the runner. */
+/** What the run itself writes, which cannot be unwritable, so a refusal is the runner's fault. */
 let written = value =>
   switch Cbor.encode(value) {
   | Ok(bytes) => bytes
   | Error(why) => JsError.throwWithMessage(`the runner wrote CBOR that is ${unwritable(why)}`)
   }
 
-/** A key's `kid`: the first 16 bytes of the BLAKE3 of its public key. */
+/** A key's `kid`, the first 16 bytes of the BLAKE3 of its public key. */
 let kidOf = key => Noble.blake3(key, {dkLen: 32})->TypedArray.slice(~start=0, ~end=16)
 
 /** A Sign1 under tag 18 by `by`, its protected header `alg`, `kid` and `typ` alone. */
@@ -134,7 +134,9 @@ let callCbor = (interface, call) =>
   | None => Error(`no interface ${interface}`)
   }
 
-/** What is answered where the body is no answer: `unknown`, since nothing the platform said was read. */
+/**
+ * What is answered where the body is no answer, `unknown`, as nothing the platform said was read.
+ */
 let noAnswer = (status, why): Run.answered => Failed({
   failure: "unknown",
   reason: "malformed",
@@ -266,7 +268,8 @@ let target = (~base, ~chain, ~bounds) => {
         "input": input,
       },
     )
-    // A call a certificate makes is a Sign1 of its CBOR in either form, fhg6w; the answer is in the form asked.
+    // A call a certificate makes is a Sign1 of its CBOR in either form, fhg6w, and the answer is in
+    // the form asked.
     let body = switch (as_, chain) {
     | (None, _) =>
       switch form {

@@ -1,4 +1,4 @@
-//! `/proc/diskstats`: one line for each block device, a partition and a loop device among them.
+//! `/proc/diskstats`, a line for each block device, partitions and loop devices among them.
 
 use super::scan::{counter, lines, malformed};
 use crate::{Disk, Disks, Parse, Unread};
@@ -8,12 +8,11 @@ const EXPECTED: &str = "major, minor, a name and ten counters";
 /// A sector of the kernel's accounting, always 512 bytes, whatever the device's own.
 const SECTOR: u64 = 512;
 
-/// Names that are no disk: a loop device, a ram disk, an optical drive, a floppy.
+/// Names that are no disk, a loop device, a ram disk, an optical drive or a floppy.
 const NOT_DISKS: [&str; 5] = ["loop", "ram", "zram", "sr", "fd"];
 
-/// Whether `name` is a whole disk. The line holds no more than the name, so a partition is told by
-/// how its disk's kind numbers it: `vda1` and `sda2` append a digit to a name made of letters,
-/// `nvme0n1p1` and `mmcblk0p1` append `p` and a digit to a name that ends in one.
+/// Whether `name` is a whole disk, a partition appending a digit, or `p` and a digit after a name
+/// ending in one.
 fn whole(name: &str) -> bool {
 	if NOT_DISKS.iter().any(|prefix| name.starts_with(prefix)) {
 		return false;

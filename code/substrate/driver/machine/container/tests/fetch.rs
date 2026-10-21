@@ -1,5 +1,5 @@
-//! `Https` fetching a `file:` address: the bytes copied whole, hashed and held to their bound, and
-//! only a regular file within the directory the holder named, reached through no link.
+//! `Https` fetching a `file:` address, copied, hashed and bounded, only a regular file in the named
+//! directory through no link.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -23,7 +23,7 @@ fn address(path: &Path) -> String {
 	format!("file://{}", path.display())
 }
 
-/// Refused as the interface has it: unfetchable, its message naming no path.
+/// Refused as the interface has it, unfetchable with a message naming no path.
 fn refused(fetched: Result<[u8; 32], Unfetched>, place: &Path) {
 	match fetched {
 		Err(Unfetched::Unfetchable(why)) => {

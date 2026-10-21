@@ -13,7 +13,7 @@ const ADDRESS: &str = "monoflake.address";
 const PORT: &str = "monoflake.port";
 const USER: &str = "monoflake.user";
 
-/// A deployment's runs, as a label holds it: `app/<id>` or `component/<name>`.
+/// A deployment's runs as a label holds it, `app/<id>` or `component/<name>`.
 pub(super) fn runs(runs: &DeploymentRuns) -> String {
 	match runs {
 		DeploymentRuns::App { id } => format!("app/{id}"),

@@ -1,6 +1,6 @@
 /***
- * What the tests take of node: its test runner, its strict assertions, its files, found from the
- * repository's root, and its global `Request` and `Response`, as a Worker gives them.
+ * What the tests take of node, its test runner, strict assertions, files and global `Request` and
+ * `Response`.
  */
 type url
 @new external urlIn: (string, string) => url = "URL"

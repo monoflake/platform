@@ -1,5 +1,5 @@
-//! [`Cbor`] for [`Value`]: written as RFC 8949's 4.2.1 writes it, and read strictly, through
-//! minicbor, `docs/code.md`.
+//! [`Cbor`] for [`Value`], written as RFC 8949's 4.2.1 writes it and read strictly through
+//! minicbor.
 
 mod decode;
 mod encode;

@@ -1,4 +1,4 @@
-//! Reading the samples as they stand, from their paths: JSON.
+//! The samples read as they stand from their paths, JSON.
 
 use std::path::Path;
 

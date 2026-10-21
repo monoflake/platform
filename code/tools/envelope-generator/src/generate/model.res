@@ -1,7 +1,6 @@
 /***
- * What `model/contracts.json` holds that the ReScript is written from, as the subset declares it,
- * `model/contracts/subset/subset.res`, and why it is not read: `Unread`, thrown where it stands and
- * caught as `unread`. `model.rs` beside it is the same in Rust.
+ * What `model/contracts.json` holds that the ReScript is written from, and `Unread`, as `model.rs`
+ * is in Rust.
  */
 type unread = {at: string, expected: string}
 
@@ -32,12 +31,12 @@ type operation = {name: string, input: string, output: string, reasons: array<re
 type interface_ = {name: string, version: int, operations: array<operation>}
 
 /**
- * An answer, its case named by `tag`: `success` at its code, holding the output as the field
- * `data` at its key, and `error` at its code, holding the fields of the type `error` names.
+ * An answer by `tag`, `success` holding the output as `data` and `error` the fields of the type
+ * `error` names.
  */
 type answer = {tag: string, success: (int, string, int), error: (int, string)}
 
-/** A call's field: a shape of the subset's, or the input of the operation another field names. */
+/** A call's field, a shape of the subset's or the input of the operation another field names. */
 type callShape = Shape(shape) | Input(string)
 type callField = {name: string, key: int, shape: callShape, optional: bool}
 

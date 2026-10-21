@@ -1,6 +1,6 @@
 /***
- * Features, RFC wnqvu: what a version cannot say, held by both sides. `src/features.rs` is the same
- * in Rust.
+ * Features, RFC wnqvu, what a version cannot say, held by both sides, as `src/features.rs` is in
+ * Rust.
  */
 
 type t = {has: array<string>, needs: array<string>}
@@ -9,7 +9,7 @@ type malformed =
   | Name(string)
   | Unheld(string)
 
-/** Whether a name is one: not empty, and lowercase ASCII letters, digits and hyphens alone. */
+/** Whether a name is one, lowercase ASCII letters, digits and hyphens and not empty. */
 let named = name => /^[a-z0-9-]+$/->RegExp.test(name)
 
 /** The names sorted, each once. */

@@ -1,11 +1,9 @@
-# What a crate may depend on, RFC fhg6w: `cargo deny check`, run by verify. A dependency is under a
-# license every component's own allows it to be linked into, so the permissive half stays
-# permissive.
+# What a crate may depend on, RFC fhg6w, checked by `cargo deny check` in verify, each license one
+# every component allows it to be linked into.
 [graph]
 all-features = true
-# The targets a crate is built for, the machines' two and the author's own; a crate only another
-# target pulls in, webpki-root-certs through rustls-platform-verifier on wasm32 among them, is not
-# linked into anything shipped.
+# The targets a crate is built for, the machines' two and the author's own. A crate only another
+# target pulls in is linked into nothing shipped.
 targets = [
 	"x86_64-unknown-linux-gnu",
 	"aarch64-unknown-linux-gnu",
@@ -24,7 +22,8 @@ allow = [
 	"Apache-2.0 WITH LLVM-exception",
 	"BSD-2-Clause",
 	"BSD-3-Clause",
-	# minicbor's, RFC fhg6w: permissive, OSI approved, read 2026-10-19 in docs/lessons/languages.md.
+	# minicbor's, RFC fhg6w, permissive and OSI approved, read 2026-10-19 in
+	# docs/lessons/languages.md.
 	"BlueOak-1.0.0",
 	"CC0-1.0",
 	"ISC",

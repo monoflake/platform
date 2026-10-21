@@ -1,6 +1,5 @@
-//! `Containers` driven through every operation of `deployments` for an image, and every reason it
-//! answers, with containerd, the network, btrfs and the fetch faked; the real ones are run on a
-//! machine apart from these tests.
+//! `Containers` driven through every operation and reason of `deployments` with containerd, the
+//! network, btrfs and the fetch faked.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -373,7 +372,7 @@ async fn its_spec_holds_its_capacity_its_network_and_what_it_is_given() {
 	let network =
 		s["linux"]["namespaces"].as_array().unwrap().iter().find(|n| n["type"] == "network").unwrap();
 	assert_eq!(network["path"], format!("/run/netns/b1-{}", spec.id));
-	// A secret is a file bound into the container: never in its spec, its labels or its sealed copy.
+	// A secret is a file bound into the container, never in its spec, labels or sealed copy.
 	let open = driver.secrets.join("b1").join(&spec.id);
 	let bound = s["mounts"].as_array().unwrap().iter().find(|m| m["destination"] == "/run/secrets");
 	assert_eq!(

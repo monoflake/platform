@@ -1,7 +1,6 @@
 /***
  * `node src/main.res.mjs <contracts.json> <the library's generated/>`, as `mise run generate` runs
- * it: envelope*'s ReScript written into that directory as `contracts.res`, then formatted by
- * ReScript's formatter, so what the library compiles is as `rescript format` writes it.
+ * it, writing `contracts.res` and formatting it.
  */
 let refuse = reason => {
   Console.error(`envelope-generator: ${reason}`)

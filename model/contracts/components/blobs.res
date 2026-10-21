@@ -1,10 +1,6 @@
 /**
- * The blob's interface, a product's, RFCs vuanj and b8f35: bytes in a scope by the hash of their
- * content, each product's in a space of its own. Content of any size is put by an upload, appended
- * to in order a part at a time and resumed from what is durable, and read by range, a part at most
- * a call; one of a part or less is put whole. Beneath, the blob cuts, names, seals and places it,
- * `layout*`, `keys*` and `placement*`. The components' interfaces are named for what they carry, in
- * the plural, as the products' are.
+ * The blob's interface, a product's bytes in a scope by the hash of their content, put by an upload
+ * and read by range, RFCs vuanj and b8f35.
  */
 open Subset
 
@@ -68,8 +64,8 @@ let types: array<declared> = [
     def: Record([field("upload", 1, Prim(#hash))]),
     from: "vuanj",
   },
-  // How much was received, and how much is durable: to the end of the last whole piece, sealed and
-  // named, from where a dropped upload is resumed.
+  // How much was received and how much is durable, to the end of the last sealed piece, where a
+  // dropped upload resumes.
   {
     name: "blob-upload-state",
     def: Record([field("received", 1, Prim(#uint53)), field("durable", 2, Prim(#uint53))]),
@@ -118,11 +114,11 @@ let types: array<declared> = [
     from: "vuanj",
   },
   {name: "blob-placed", def: Record([]), from: "vuanj"},
-  // A key's version retired: every parcel it sealed sealed again under the newest, b8f35.
+  // A key's version retired, every parcel it sealed sealed again under the newest, b8f35.
   {name: "blob-rekey", def: Record([field("from", 1, Prim(#uint32))]), from: "b8f35"},
   // A task, by 32 random bytes, answered at once and told by `task`, RFC 49qyg.
   {name: "blob-task", def: Record([field("task", 1, Prim(#hash))]), from: "b8f35, 49qyg"},
-  // How a task stands: running, done, or failed as an outcome of 49qyg's and its reason.
+  // How a task stands, running, done or failed with 49qyg's outcome and its reason.
   {
     name: "blob-task-state",
     def: Union({
@@ -145,7 +141,7 @@ let types: array<declared> = [
     from: "b8f35, 49qyg",
   },
   {name: "blob-deleted", def: Record([]), from: "vuanj"},
-  // Hashes after `after`, in byte order, at most `limit`, a thousand unless set: for a sweep alone.
+  // Hashes after `after` in byte order, at most `limit` or a thousand, for a sweep alone.
   {
     name: "blob-list",
     def: Record([
@@ -168,16 +164,12 @@ let types: array<declared> = [
   },
 ]
 
-/** What every write meets: no stores of its scope meeting its placement, and none with room. */
+/** What every write meets, no store of its scope meeting its placement or none with room. */
 let onWrite = [("unplaceable", #rejected), ("storage_full", #unavailable)]
 
 /**
- * Deleting what is not there, and describing it, succeed, as the object kind's do. A placement is
- * set stricter or looser as the storage asks, the strictest of what names a content its to keep. A
- * rekey names a version older than the newest, else it is not retiring. An upload's
- * placement is asked of its stores as it begins; what is left of a part past the last whole piece
- * is written only by the next, or by the finish. An upload left a day expires, the sweep's grace,
- * and is then not found.
+ * Deleting or describing what is not there succeeds, a placement follows the strictest content, and
+ * an upload left a day expires.
  */
 let interface_: interface_ = {
   name: "blob",

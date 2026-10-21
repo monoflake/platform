@@ -1,4 +1,4 @@
-//! containerd over its gRPC API, by `containerd-client`: the one module that speaks its types.
+//! containerd over its gRPC API by `containerd-client`, the one module that speaks its types.
 //! https://github.com/containerd/containerd/tree/main/api
 
 mod import;
@@ -367,7 +367,7 @@ impl Containerd for Socket {
 				return Err(Fault(format!("{id}: its task is neither created, running nor stopped")));
 			}
 			Some(Task::Stopped(_)) | None => {
-				// A task ended is not started again: it is deleted and made anew, as it was made.
+				// A task ended is not started again but deleted and made anew.
 				if state.is_some() {
 					let request = within(namespace, DeleteTaskRequest { container_id: id.to_owned() })?;
 					found(TasksClient::new(channel.clone()).delete(request).await, "delete the task")?;

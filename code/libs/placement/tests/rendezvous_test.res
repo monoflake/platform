@@ -1,6 +1,5 @@
 /***
- * `Rendezvous` held to `tests/placement/ranked.json`: every store's score as a bigint, every set of
- * stores ranked, and every refusal, the first in the interface's order winning.
+ * `Rendezvous` held to `tests/placement/ranked.json`, every score, every ranking and every refusal.
  */
 open Node
 open Sample

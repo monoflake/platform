@@ -1,6 +1,6 @@
 /***
- * What the codec takes of the web's APIs beyond ReScript's Stdlib: UTF-8 by `TextEncoder` and
- * `TextDecoder`, and a typed array's `set` from another.
+ * What the codec takes of the web's APIs beyond ReScript's Stdlib, `TextEncoder`, `TextDecoder` and
+ * a typed array's `set`.
  */
 type encoder
 type decoder

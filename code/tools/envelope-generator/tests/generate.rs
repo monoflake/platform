@@ -1,6 +1,5 @@
-//! [`Generate`] held to `model/contracts.json` as it stands, written the same for the same
-//! contracts byte for byte, and to each way contracts may not be written in Rust, refused where
-//! it is with what was expected there.
+//! [`Generate`] held to `model/contracts.json`, the same output for the same contracts, and to each
+//! refusal and where it stands.
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -10,8 +9,8 @@ use serde_json::{Value, json};
 
 const CONTRACTS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../model/contracts.json");
 
-/// The least contracts that are written: a shell, the types `failure` and `error`, the answer, one
-/// record and one interface, and the one reason's message.
+/// The least contracts that are written, a shell, `failure`, `error`, the answer, one record, one
+/// interface and one message.
 fn least() -> Value {
 	json!({
 		"version": 1,

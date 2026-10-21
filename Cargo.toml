@@ -1,5 +1,5 @@
-# The Rust half of the tree, RFC fhg6w: a virtual manifest, every crate beneath code/ a member,
-# listed one by one since cargo takes no recursive glob, and held to what is there by the check.
+# The Rust half of the tree, RFC fhg6w, a virtual manifest listing every crate beneath code/ one by
+# one, held to what is there by the check.
 [workspace]
 resolver = "3"
 members = [

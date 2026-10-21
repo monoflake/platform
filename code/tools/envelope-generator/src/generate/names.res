@@ -1,8 +1,4 @@
-/***
- * How a name of `model/contracts.json` is written in ReScript: a module's in upper camel case, a
- * value's in lower camel case, a field's as it is, a keyword's followed by an underscore.
- * `names.rs` beside it is the same in Rust.
- */
+/*** How a name of `model/contracts.json` is written in ReScript, as `names.rs` does in Rust. */
 open Model
 
 /** The words ReScript's parser refuses as a field's or a value's name. */

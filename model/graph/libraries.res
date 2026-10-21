@@ -1,9 +1,8 @@
 /**
- * Every library the drafts name, RFC fhg6w: one subject, in one language or several, each
- * language's manifest beside the others' in its one directory, `code/libs/{name}`, and used by
- * every component of any of them that needs it.
+ * Every library the drafts name, one subject in `code/libs/{name}` with a manifest for each of its
+ * languages, RFC fhg6w.
  */
-/** A package of another project's a library may take, in one of its languages, at a major version. */
+/** A package of another project a library may take, in one of its languages, at a major version. */
 type taken = {language: [#rust | #rescript], name: string, major: string}
 
 type library = {

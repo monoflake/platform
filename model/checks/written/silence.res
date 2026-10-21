@@ -15,7 +15,9 @@ let rec files = path =>
     []
   }
 
-/** A name as a word of its own, plural or not: a method called on a module so spelled is none. */
+/**
+ * A name as a word of its own, plural or not, a method called on a module so spelled being none.
+ */
 let whole = name =>
   RegExp.fromString(
     "(^|[^\\w])" ++ name->String.replaceRegExp(/[.*+?^${}()|[\]\\]/g, "\\$&") ++ "s?(?![\\w.])",

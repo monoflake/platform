@@ -1,17 +1,12 @@
 /***
- * A version, RFC wnqvu: the frozen core, one integer raised only by a breaking change, compared by
- * its value; the range a reader reads; and the version a writer writes among the ranges of all that
- * read it. Where a version is carried is each format's own. The model's interface, `docs/code.md`;
- * `src/lib.rs` is the same in Rust.
+ * A version, one integer raised only by a breaking change, a reader's range and what a writer
+ * writes, RFC wnqvu. The model's interface, `docs/code.md`.
  */
 
-/**
- * The largest version, 2^53 - 1, JavaScript's largest safe integer, so both languages hold every
- * version exactly, decided by the author on 2026-10-20.
- */
+/** The largest version, 2^53 - 1, so both languages hold every version exactly. */
 let max: float
 
-/** A version: an integer of 0 to `max`, its value read by `(v :> float)`. */
+/** A version, an integer of 0 to `max`, its value read by `(v :> float)`. */
 type t = private float
 
 /** The number as a version, or none where it is no integer of 0 to `max`. */
@@ -28,9 +23,9 @@ let range: (t, t) => option<range>
 
 /** Why a reader refuses a version. */
 type refused =
-  /** Below its lowest: written in what it reads no longer. */
+  /** Below its lowest, written in what it reads no longer. */
   | Older({version: t, range: range})
-  /** Above its highest: written in what it does not yet read. */
+  /** Above its highest, written in what it does not yet read. */
   | Newer({version: t, range: range})
 
 /** Whether the range reads the version. */
@@ -41,13 +36,12 @@ type unchosen =
   /** No range was given. */
   | Empty
   /**
-   * The lowest of every range's highest is below the lowest of each of these ranges, by their
-   * positions as given, ascending: no version is read by all.
+   * No version is read by all, the lowest highest being below these ranges' lowest, by position.
    */
   | Apart({highest: t, above: array<int>})
 
 /**
- * What is written among the ranges of every reader running, the writer's own among them: the
- * lowest of their highest, which each reads, the same whatever their order, wnqvu.
+ * What is written among every running reader's ranges, the lowest of their highest, whatever their
+ * order, wnqvu.
  */
 let written: array<range> => result<t, unchosen>

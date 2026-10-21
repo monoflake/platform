@@ -1,8 +1,6 @@
 /**
- * A database's copies, RFC vuanj: of each count it may be configured with, any two majorities
- * share a copy, so a primary taking over finds every write done; a write is taken exactly while a
- * majority of those configured is alive; and the lock fewer alive put on it is released only by
- * configuring fewer copies, never more, so nothing short of copies is made from nothing.
+ * A database's copies, any two majorities of each count sharing a copy, writes taken while a
+ * majority lives and the lock released only by configuring fewer. RFC vuanj.
  */
 open Base
 

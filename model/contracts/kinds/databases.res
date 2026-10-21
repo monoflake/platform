@@ -1,12 +1,6 @@
 /**
- * The `database` kind's contract, RFCs zn3u5 and vr5lw: SQLite's dialect, one statement or a batch
- * atomic together, each with its parameters, answered with each one's rows. No interactive
- * transaction. A database's limits are its driver's to declare, vr5lw [C23]. An integer is held
- * within 2^53 either way, as a JavaScript number holds one exactly: one past it as a parameter is
- * malformed, and one read past it, as SQLite's own `random()` makes, fails as `beyond_range`, never
- * coerced, on every implementation alike, fhg6w. Every implementation
- * keeps each minute of the last 30 days and rewinds to any of them, by what it keeps itself: D1's
- * Time Travel, a Durable Object's recovery, a machine's WAL archived and its volume's snapshots.
+ * The `database` kind's contract, SQLite's dialect in statements or atomic batches, integers within
+ * 2^53 and 30 days of rewind, RFCs zn3u5 and vr5lw.
  */
 open Subset
 
@@ -69,9 +63,8 @@ let types: array<declared> = [
 ]
 
 /**
- * A batch that fails changes nothing, zn3u5; `index` of the failing statement is in the message.
- * A database on fewer of its copies alive than a majority is read-only, vuanj: a batch that writes
- * fails as `read_only`, and one that only reads is answered `behind`.
+ * A batch that fails changes nothing, zn3u5. A database with fewer copies alive than a majority is
+ * read-only and answers reads `behind`, vuanj.
  */
 let interface_: interface_ = {
   name: "database",

@@ -1,7 +1,5 @@
-//! Exactly one data item read strictly: well formed by RFC 8949's Appendix C, valid by its 5.3,
-//! and within [`DEPTH`]. Every head is read by minicbor's decoder; what it reads unchecked -- a
-//! simple value below 32 in two bytes, a string chunk of another type, a repeated key -- is
-//! refused here.
+//! Exactly one data item read strictly by minicbor's decoder, with what it reads unchecked refused
+//! here.
 
 use std::collections::HashSet;
 use std::error::Error as _;
@@ -12,9 +10,8 @@ use minicbor::decode::Error;
 use super::encode;
 use crate::{DEPTH, Refused, Value};
 
-/// One data item from `bytes`. What is not well formed is refused as soon as it is met; what is
-/// well formed yet not valid is refused only once the whole item is read well formed, and bytes
-/// left after it are refused before that.
+/// One data item from `bytes`. What is not well formed is refused as met, and what is not valid
+/// once the whole item is read.
 pub(crate) fn decode(bytes: &[u8]) -> Result<Value, Refused> {
 	let mut reader = Reader { decoder: Decoder::new(bytes), invalid: false };
 	let value = reader.item(0)?;
@@ -27,8 +24,7 @@ pub(crate) fn decode(bytes: &[u8]) -> Result<Value, Refused> {
 	}
 }
 
-/// What minicbor's refusal is here: a head it does not read is a syntax error, and the rest the
-/// input ending inside an item, a length longer than any input among them.
+/// minicbor's refusal as ours, a head it does not read a syntax error and the rest truncation.
 fn refusal(error: Error) -> Refused {
 	if error.is_type_mismatch() { Refused::Syntax } else { Refused::Truncated }
 }
@@ -155,8 +151,7 @@ impl<'b> Reader<'b> {
 		Ok(joined)
 	}
 
-	/// A definite text. One that is not UTF-8 is not valid, its 5.3.1, and refused only once the
-	/// whole item is read: minicbor has taken its bytes before checking them, so reading goes on.
+	/// A definite text, one not UTF-8 refused only once the whole item is read, its 5.3.1.
 	fn str(&mut self) -> Result<&'b str, Refused> {
 		match self.decoder.str() {
 			Ok(text) => Ok(text),
@@ -179,7 +174,7 @@ impl<'b> Reader<'b> {
 		}
 	}
 
-	/// What major type 7 holds: a simple value or a float; a break is out of place here.
+	/// What major type 7 holds, a simple value or a float, a break being out of place here.
 	fn simple(&mut self, initial: u8) -> Result<Value, Refused> {
 		let d = &mut self.decoder;
 		Ok(match initial {

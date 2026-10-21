@@ -1,12 +1,11 @@
 /***
- * A step's input with its placeholders made, RFC p8e8k: `$use` as captured, `$time` so many
- * milliseconds before now, `$bytes` the BLAKE3 extendable output of the case's description, the
- * step's index and the value's path joined by `/`, `$text` led by its start and filled with spaces,
- * a length given as a bound plus or minus. `$fixture` and `$frames` need what the run offers, and
- * are refused where it offers none. The model's interface, `docs/code.md`.
+ * A step's input with its placeholders made, RFC p8e8k, what the run does not offer refused. The
+ * model's interface, `docs/code.md`.
  */
 
-/** What a filling reads: the case, the step, the captures, the time, the bounds, the fixtures. */
+/**
+ * What a filling reads, the case, the step, the captures, the time, the bounds and the fixtures.
+ */
 type context = {
   description: string,
   step: int,
@@ -19,7 +18,7 @@ type context = {
   fixture: string => option<string>,
 }
 
-/** Why an input could not be made: what the run does not offer, or a placeholder not as written. */
+/** Why an input could not be made, what the run does not offer or a placeholder not as written. */
 type unfilled = Unoffered(string) | Unwritten(string)
 
 /** The input with every placeholder made, or why it could not be. */

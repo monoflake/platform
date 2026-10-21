@@ -1,6 +1,6 @@
 /***
- * What a parcel and a journal seal their segments by, RFC b8f35, written once: the parcel's header,
- * the master's version it holds, and each segment's nonce and associated data.
+ * What a parcel and a journal seal their segments by, RFC b8f35, the header, the master's version
+ * and each segment's nonce and associated data.
  */
 
 // What the header takes, what a segment holds but the last, and what its tag adds.
@@ -27,7 +27,7 @@ let read32 = (bytes, offset) =>
 /** Whether a master's version is an integer of 1 to 2^32 - 1. */
 let versioned = master => Math.floor(master) == master && master >= 1. && master <= 4294967295.
 
-/** The revision, 1, and the master's version: what follows the magic, and begins a journal. */
+/** The revision, 1, and the master's version, which follow the magic and begin a journal. */
 let begins = (~master) => [1, ...u32(Float.toInt(master))]
 
 /** The header's 41 bytes. */
@@ -38,10 +38,10 @@ let header = (~master, ~seed) => {
   bytes
 }
 
-/** The nonce of segment `i`: 8 zero bytes, then its index. */
+/** The nonce of segment `i`, 8 zero bytes and then its index. */
 let nonce = i => Uint8Array.fromArray(Array.concat(Array.make(~length=8, 0), u32(i)))
 
-/** The associated data of segment `i`: the header, the index, and `final`. */
+/** The associated data of segment `i`, the header, the index and `final`. */
 let associated = (header, i, ~final) => {
   let bytes = Uint8Array.fromLength(headed + 5)
   bytes->Web.setFrom(header, 0)

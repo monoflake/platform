@@ -1,7 +1,5 @@
-//! A call, `model/contracts.json`'s `call`, as [`Envelope`] reads and writes it: `interface` at key
-//! 1, held to its `Called`'s; `operation` at key 2, choosing how `input`, at key 3, is read; and
-//! `capabilities` at key 4, each a Sign1's bytes, absent when there are none. envelope-generator
-//! holds `contracts.json`'s fields to these.
+//! A call, `model/contracts.json`'s `call`, `interface` at key 1, `operation` at 2, `input` at 3
+//! and `capabilities` at 4, absent when none.
 
 use codec::Value as Cbor;
 use serde_json::Value as Json;
@@ -13,7 +11,7 @@ use super::{
 };
 use crate::{Called, Encoded, Envelope, Malformed, Step};
 
-/// What a call's `input` read as its operation's type answers: its own reason, within `input`.
+/// What a call's `input` read as its operation's type answers, its own reason within `input`.
 pub(crate) fn call_input<C>(read: Read<C>) -> Read<C> {
 	read.map_err(|m| m.within(Step::Field("input".to_owned())))
 }
@@ -33,9 +31,8 @@ fn interface<C: Called>(interface: &str) -> Read<()> {
 	}
 }
 
-/// What a call without an `input` answers: its operation looked up first, as it chooses how the
-/// input is read, by `C` reading nothing as its input, which no input is; an operation `C` has not
-/// answers at `operation`, and one it has, that `input` is not present.
+/// What a call without an `input` answers, an unknown operation at `operation` and a known one at
+/// `input`.
 fn no_input<C>(looked_up: Read<C>) -> Malformed {
 	match looked_up {
 		Err(m) if m.at.first() == Some(&Step::Field("operation".to_owned())) => m,

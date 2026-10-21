@@ -1,7 +1,6 @@
 /**
- * What a repository depending on this model gives it to fill its roles, RFC 8lkuv: the JSON file
- * `MONOFLAKE_FILL` names, its `components`, `records` and `kept` joined to this model's own. With
- * none, this model is checked alone, each role an assumption on its contract.
+ * What a repository depending on this model gives it to fill its roles, the JSON file
+ * `MONOFLAKE_FILL` names, RFC 8lkuv.
  */
 @val external env: Dict.t<string> = "process.env"
 @module("node:fs") external read: (string, @as("utf8") _) => string = "readFileSync"

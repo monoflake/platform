@@ -1,4 +1,4 @@
-//! The text of `btrfs qgroup show --raw -re <mount>`: a header, a rule, then a row for each qgroup.
+//! The text of `btrfs qgroup show --raw -re <mount>`, a header, a rule and a row for each qgroup.
 
 use super::scan::{counter, lines, malformed};
 use crate::{Parse, Quota, Quotas, Unread};
@@ -7,7 +7,7 @@ const HEADER: &str =
 	"the header of `btrfs qgroup show --raw -re`, Qgroupid first and Max referenced in it";
 const ROW: &str = "a qgroup id as 0/5, referenced, exclusive, max referenced and max exclusive, each a number or none";
 
-/// A limit: a number, or `none`.
+/// A limit, a number or `none`.
 fn limit(word: &str) -> Option<Option<u64>> {
 	if word == "none" { Some(None) } else { counter(word).map(Some) }
 }

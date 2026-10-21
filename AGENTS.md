@@ -22,7 +22,8 @@ model/      the spec: graph/, ground/, bootstrap/, names/; contracts/, in subset
 code/       the code, a component placed by its layer: apps/, products/, primitives/, substrate/;
             and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
-            scope.md, what the model covers
+            scope.md, what the model covers; envelope.md, what the generator writes;
+            signed.md, who signs what
 tests/      the samples, data alone: codec/, values in both forms; kinds/ and products/, each
             interface's cases; properties/, what only a history shows; cbor/, a standard's own;
             compat/, the versions' cases; keys/, placement/ and layout/, computed apart

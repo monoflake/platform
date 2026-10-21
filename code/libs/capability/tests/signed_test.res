@@ -1,6 +1,6 @@
 /***
- * `Signed` held to `tests/capability/signed.json`: every case, each record verified against the
- * root and the certificates it names at its time, to its signer and its content or to its refusal.
+ * `Signed` held to `tests/capability/signed.json`, each record verified at its time to its signer
+ * and content or its refusal.
  */
 open Node
 open Sample

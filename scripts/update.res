@@ -1,8 +1,6 @@
 /***
- * `mise run update`, in order: the flake's inputs moved to their branches' heads on a copy, Nix
- * reading a flake from git's index alone, `docs/lessons/building.md`, and its lock copied back;
- * then the pins tool, `code/tools/pins`, built and run on workerd's image and the flake. What the
- * verb is owed is the workspace's `docs/repos.md`, "What a repository's task owes the verb".
+ * `mise run update`, the flake's inputs moved on a copy, `docs/lessons/building.md`, then the pins
+ * tool run on workerd's image and the flake.
  */
 type spawned = {status: Nullable.t<int>, stdout: string, stderr: string}
 type options = {encoding?: string, stdio?: string}

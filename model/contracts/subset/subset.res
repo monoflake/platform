@@ -1,22 +1,10 @@
 /**
- * The wire contracts, in the subset Rust and ReScript both hold natively, RFC fhg6w: declared here
- * once, and written out by `mise run check --write` as `model/contracts.json`, the one thing a
- * language reads. What is structural is derived -- every record's shell, its `description`, a
- * reference typed by the kind it names -- and only what is a kind's own is declared.
- *
- * A record encodes as JSON with its fields' names, and as CBOR with their keys, deterministic. Key
- * 0 of a record's content is its `description`, every kind's, v7v3w; key 0 of a union is its case.
- * An enumeration is written as its name in JSON and as its code in CBOR, 13ixj's levels among them.
+ * The wire contracts in the subset Rust and ReScript both hold, declared once and written as
+ * `model/contracts.json` by `mise run check --write`, RFC fhg6w.
  */
 /**
- * A primitive: a 32-bit integer, signed or not; one exact in a JavaScript number, under 2^53, for a
- * time in milliseconds or a size in bytes, b8f35; a signed one within 2^53 either way, SQLite's as
- * the platform holds it, fhg6w, a number in JSON as any; a 64-bit float; bytes, base64url and
- * unpadded in JSON, RFC 4648's fifth section, and read in that text alone, fhg6w; and a content's
- * hash, 32 bytes in CBOR and its 64 lowercase hex digits in JSON, as b8f35 writes it wherever it is
- * text; and a secret, written as bytes are, sealed under its control's key where it is kept and
- * plain only in the call that hands it to what uses it, which no signed record and no section of a
- * bundle reaches, fhg6w. An id is never one of these: it is `Id`, typed by the kind it names.
+ * A primitive of the wire, integers, a float, bytes, a hash and a secret, fhg6w and b8f35. An id is
+ * never one of these but `Id`.
  */
 type prim = [
   | #bool
@@ -36,8 +24,10 @@ type half = [#platform | #organization]
 
 type rec shape =
   | Prim(prim)
-  /** An id of a record kind of the half the record holding it is kept in, stored as its integer, 8
-   * hex digits shown, b8f35: within one footing, so its control checks it exists and guards it. */
+  /**
+   * An id of a record kind of the record's own half, stored as its integer within one footing,
+   * b8f35.
+   */
   | Id(string)
   /**
    * An id of a kind of the other half, which its control never checks nor guards, kept by another.
@@ -61,24 +51,23 @@ type def =
   | Enum({choices: array<choice>, ordered: bool})
   /** A union, its case named in the field `tag`, as ReScript's `@tag` lays it out. */
   | Union({tag: string, cases: array<case>})
-  /** A set of names, each a bit, its code a power of two: in CBOR the integer of the bits set, in
-   * JSON an array of the names set, as WIT's `flags` is written, vr5lw. */
+  /**
+   * A set of names each a bit, the integer of the bits in CBOR and an array of names in JSON, as
+   * WIT's `flags`, vr5lw.
+   */
   | Flags(array<choice>)
 
 /**
- * Whose a record's keys are: the subset's own, from 1, key 0 reserved; CWT's, a claim registered by
- * its number or one of the platform's own below -65536, RFC 8392, b8f35; or another standard's, as
- * the RFC its type cites registers them, COSE's among them.
+ * Whose a record's keys are, the subset's from 1, CWT's, b8f35, or another standard's as its RFC
+ * registers them.
  */
 type keys = [#subset | #cwt | #standard]
 
 type declared = {name: string, def: def, from: string, keys?: keys}
 
 /**
- * A signed record, b8f35: a `COSE_Sign1` by Ed25519, its protected header derived -- `alg` -19,
- * `kid` the first 16 bytes of the BLAKE3 of the signer's public key, `typ`
- * `monoflake:{name}:{version}` -- its content a claim set of CWT's, or a record of the subset's.
- * None is a record of a footing.
+ * A signed record, a `COSE_Sign1` by Ed25519 whose header is derived, its content CWT claims or a
+ * record, b8f35.
  */
 type signed = {name: string, version: int, form: [#claims | #record], content: string}
 
@@ -96,22 +85,19 @@ type content = {
 }
 
 /**
- * An operation's failure, RFC 49qyg's outcomes but `success`: what a caller acts on, whatever the
- * reason, which is the operation's own and only told.
+ * An operation's failure, RFC 49qyg's outcomes but `success`, which a caller acts on whatever the
+ * reason.
  */
 type failure = [#rejected | #unavailable | #unknown]
 
 type reason = {name: string, failure: failure}
 
-/**
- * An operation: its input and its output, each a record declared, and the reasons it may fail for.
- */
+/** An operation, its declared input and output records and the reasons it may fail for. */
 type operation = {name: string, input: string, output: string, reasons: array<reason>}
 
 /**
- * An interface, a kind's contract among them, vr5lw: each operation reached at `POST
- * /{interface}/{operation}`, its body a `call` and its answer an `answer`, its output or an `error`,
- * in JSON or CBOR as the request chooses, CBOR where it names neither, ge55b. Its version is raised as a record's is, wnqvu.
+ * An interface, reached at `POST /{interface}/{operation}` with a `call` and answered in JSON or
+ * CBOR, vr5lw and ge55b.
  */
 type interface_ = {
   name: string,
@@ -136,10 +122,7 @@ let op = (name, input, output, reasons) => {
 }
 let codes = names => names->Array.mapWithIndex((name, i) => {name, code: i + 1})
 
-/**
- * The shell every record's row is, derived, v7v3w: its kind, its id, the generation that wrote it,
- * its version, and its content, absent once the record is deleted.
- */
+/** The shell every record's row is, its kind, id, generation, version and content, v7v3w. */
 let shell = [
   field("kind", 1, Prim(#string)),
   field("id", 2, Prim(#uint32)),
@@ -149,10 +132,8 @@ let shell = [
 ]
 
 /**
- * A call, every operation's body, fhg6w: the interface and the operation it reaches, the
- * operation's input at key 3, and the capabilities it carries, each a COSE Sign1 as it was signed,
- * none where absent. The input is the operation's own type, which no shape names, so it is written
- * apart, `callInput`. A call a certificate makes is signed whole, `typ` `monoflake:call:1`.
+ * A call, the interface, the operation, the input at key 3 and the capabilities, fhg6w. `callInput`
+ * writes the input apart.
  */
 let call = [
   field("interface", 1, Prim(#string)),
@@ -163,11 +144,8 @@ let callInput = ("input", 3)
 let callTyp = "monoflake:call:1"
 
 /**
- * An answer, every operation's, RFC ge55b, as `canmi/lib`'s response envelope is one: a union by
- * `status`, `success` holding the operation's output as `data`, or `error` holding the `error`
- * type's fields, a reader telling them by `status` alone and never by the HTTP status, which says
- * only as much to what stands between. The output is the operation's own type, which no shape
- * names, so it is written apart, `answerData`.
+ * An answer, a union by `status` holding the output as `data` or an `error`, RFC ge55b.
+ * `answerData` writes the output apart.
  */
 let answerTag = "status"
 let answerSuccess = ("success", 1)

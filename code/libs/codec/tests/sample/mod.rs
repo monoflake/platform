@@ -1,4 +1,4 @@
-//! Reading the samples as they stand, from their paths: JSON, its hex in either case.
+//! The samples read as they stand from their paths, JSON with hex in either case.
 
 use std::path::Path;
 

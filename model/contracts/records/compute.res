@@ -2,7 +2,7 @@
 open Subset
 
 let types: array<declared> = [
-  // An env key's value: a config's as written, a secret's sealed under its control's key, v7v3w.
+  // An env key's value, a config's as written or a secret's sealed under its control's key, v7v3w.
   {
     name: "app-env",
     def: Union({
@@ -25,9 +25,8 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
-  // A build's manifest, decided by the author on 2026-10-20: what it declares of its shape, found by
-  // its version's hash where its builder keeps it, vr5lw; its types are the WIT it carries, every
-  // function, export and call named in it, and checked by the wit library, 49qyg.
+  // A build's manifest, found by its version's hash where its builder keeps it, vr5lw. Its types
+  // are the WIT it carries, checked by the wit library, 49qyg.
   {
     name: "function-kind",
     def: Enum({choices: codes(["derive", "effect"]), ordered: false}),
@@ -43,7 +42,7 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
-  // How far an export is shown: within its organization, the default, or to anyone, vr5lw.
+  // How far an export is shown, within its organization by default or to anyone, vr5lw.
   {
     name: "export-shown",
     def: Enum({choices: codes(["organization", "public"]), ordered: false}),
@@ -89,7 +88,7 @@ let types: array<declared> = [
     def: Record([field("function", 1, Prim(#string)), field("cron", 2, Prim(#string))]),
     from: "49qyg",
   },
-  // What a queue's failure does: the message dropped, or tried again so many times, so far apart.
+  // What a queue's failure does, the message dropped or tried again so many times, so far apart.
   {
     name: "queue-failure",
     def: Union({
@@ -153,8 +152,8 @@ let types: array<declared> = [
     ]),
     from: "49qyg",
   },
-  // An app as its bundle holds it: its record but its env, whose secrets reach its deployment
-  // alone; and the hosts its deployment was placed on, compiled as configuration is applied, vr5lw.
+  // An app as its bundle holds it, its record but its env and the hosts its deployment was placed
+  // on, vr5lw.
   {
     name: "bundle-app",
     def: Record([
@@ -164,7 +163,7 @@ let types: array<declared> = [
     ]),
     from: "49qyg, vr5lw",
   },
-  // The compute's section of a bundle: each app by its id.
+  // The compute's section of a bundle, each app by its id.
   {
     name: "bundle-compute",
     def: Record([field("apps", 1, Map(Type("bundle-app")))]),

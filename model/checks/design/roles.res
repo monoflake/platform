@@ -1,9 +1,6 @@
 /**
- * The roles this half needs of the platform half, RFC 8lkuv: an edge to one names a contract it
- * answers, and what fills one stands where it does -- its layer, its half, a control as it is --
- * and implements every contract the role answers. How it is built is the other repository's, which
- * proves there that each edge to a role is carried. One filler a role; checked alone, a role
- * unfilled is an assumption, and given a fill, a gap.
+ * The roles this half needs of the platform half, each edge naming a contract the role answers and
+ * its filler implementing every one, RFC 8lkuv. Unfilled is an assumption, and given a fill a gap.
  */
 open Base
 

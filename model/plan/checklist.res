@@ -1,14 +1,10 @@
 /**
- * Every question left before the Platform is built, one row each, gathered from the drafts' Open
- * lists, the model's open marks and what the discussion found. A row is crossed off by naming where
- * it was decided. `mise run check --ready` fails while a row that blocks step 0 is open: that
- * is when building begins, `docs/scope.md`.
+ * Every question left before the Platform is built, a row each, crossed off by naming where it was
+ * decided. `--ready` fails while a step 0 row is open.
  */
 /**
- * `A`, written into data or published, so a mistake is never undone: decided before step 0; `B`,
- * blocks building v0, step 0; `C`, blocks a later step, which its `step` names; `D`, commercial and
- * operational, needed before users or when it is reached; `E`, text gone stale or inconsistent, to
- * fix or drop.
+ * `A` is never undone, `B` blocks v0, `C` blocks its `step`, `D` is commercial and operational, and
+ * `E` is stale text.
  */
 type group = [#A | #B | #C | #D | #E]
 
@@ -678,6 +674,6 @@ let own: array<item> = [
   },
 ]
 
-/** Every row, with group D's given beside: the hosted platform's, monoflake/cloud's, RFC 8lkuv. */
+/** Every row, with the hosted platform's group D given beside, RFC 8lkuv. */
 let given: array<item> = Fill.part("checklist")->Option.getOr([])
 let checklist: array<item> = Array.concat(own, given)

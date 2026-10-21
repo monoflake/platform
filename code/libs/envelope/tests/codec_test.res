@@ -1,8 +1,6 @@
 /***
- * `Contracts` held to the samples of `tests/codec/`, read as they stand: a sample's JSON read as
- * its type, or as a call of its interface, gives exactly its CBOR, as codec writes it, and that
- * CBOR read back gives exactly its JSON; a refused sample's JSON is a `Malformed.t`. `codec.rs`
- * beside it is the same in Rust.
+ * `Contracts` held to the samples of `tests/codec/`, each JSON giving exactly its CBOR and back, as
+ * `codec.rs` is in Rust.
  */
 open Node
 open Sample

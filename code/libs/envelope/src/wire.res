@@ -1,14 +1,12 @@
 /***
- * What `Contracts` is written with, as envelope-generator writes it: each shape's JSON and CBOR, RFC
- * fhg6w's subset. A reader throws `Unread` where a value is not as its type writes it, each step it
- * passes back through leading where, and a type's `fromJson` and `fromCbor` catch it as their
- * `Malformed.t`. A field a reader does not know is passed over.
+ * What `Contracts` is written with, each shape's JSON and CBOR, RFC fhg6w. A reader throws
+ * `Unread`, which `fromJson` and `fromCbor` catch as `Malformed.t`.
  */
 module Cbor = Codec.Cbor
 
 exception Unread(Malformed.t)
 
-/** Not as its type writes it, here: what was expected. */
+/** Not as its type writes it here, with what was expected. */
 let fail = expected => throw(Unread({at: [], expected}))
 
 /** A reading within a step from the value read, the step leading where it was refused. */
@@ -152,7 +150,7 @@ module FromJson = {
   /** Another type's reading. */
   let named = fromJson => json => unwrap(fromJson(json))
 
-  /** Exactly this string, as a call's interface is held to its module's: another, a string. */
+  /** Exactly this string, as a call's interface is held to its module's. */
   let exactly = text =>
     json =>
       switch string(json) {
@@ -370,7 +368,7 @@ module ToCbor = {
   /** A union's case, its code at key 0. */
   let case = (code, fields) => record([Some((0, int(code))), ...fields])
 
-  /** A set of names, by its table of each code and its choice: the integer of the bits set. */
+  /** A set of names by its table of codes and choices, the integer of the bits set. */
   let flags = (set, table) => Cbor.Integer(
     table->Array.reduce(0n, (bits, (code, flag)) =>
       set->Array.includes(flag) ? BigInt.bitwiseOr(bits, BigInt.fromInt(code)) : bits

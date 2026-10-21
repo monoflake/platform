@@ -1,9 +1,6 @@
 /**
- * The signed records, RFC b8f35: a capability, a certificate and an account credential, each a
- * claim set of CWT, RFC 8392, and a bundle, a record and no token. What the platform adds to CWT's
- * claims takes labels below -65536, IANA's range for private use; `iat` and `exp` are CWT's
- * NumericDate, seconds, the one time the platform counts in seconds, as the standard is taken
- * whole.
+ * The signed records, a capability, a certificate and an account credential as CWT claim sets and a
+ * bundle as a record, RFC b8f35. Private labels sit below -65536.
  */
 open Subset
 
@@ -69,8 +66,7 @@ let types: array<declared> = [
     }),
     from: "b8f35",
   },
-  // What a capability reaches: a resource, by its id, which carries its type, so any kind of the
-  // organization's; or a product's blob space, which a component's own work reaches alone, b8f35.
+  // What a capability reaches, a resource by its id or a product's blob space, b8f35.
   {
     name: "capability-target",
     def: Union({
@@ -96,9 +92,8 @@ let types: array<declared> = [
     from: "b8f35",
     keys: #cwt,
   },
-  // A scope's own certificate names it; one of the platform's own names none. A component's says
-  // who it is, its name in the model as `sub`, and never what it may do, which its verifier's rules
-  // say; each running instance holds a key of its own, b8f35.
+  // A certificate names its scope, or none for the platform's own, and a component's `sub` says who
+  // it is, b8f35.
   {
     name: "certificate",
     def: Record([
@@ -122,9 +117,8 @@ let types: array<declared> = [
     from: "b8f35",
     keys: #cwt,
   },
-  // A bundle: its generation, and an organization's the platform's it was compiled with; the
-  // certificates a component reads a `kid` in, each signed; and its body, each product's section in
-  // the product's own format, by the product's name.
+  // A bundle, its generation, the certificates a component reads a `kid` in, and each product's
+  // section by the product's name.
   {
     name: "bundle",
     def: Record([
@@ -149,8 +143,7 @@ let types: array<declared> = [
     }),
     from: "vuanj",
   },
-  // A grant: what an app may reach, and with which rights, compiled from its bindings, never
-  // written.
+  // A grant, what an app may reach and with which rights, compiled from its bindings.
   {
     name: "grant",
     def: Record([
@@ -160,8 +153,8 @@ let types: array<declared> = [
     ]),
     from: "vuanj",
   },
-  // A store as the blob and the extent reach it, its secret never here: its implementation of the
-  // object kind holds that, deployed for it, b8f35.
+  // A store as the blob and the extent reach it, its secret held by its object implementation
+  // instead, b8f35.
   {
     name: "backing-store",
     def: Record([
@@ -173,8 +166,8 @@ let types: array<declared> = [
     ]),
     from: "b8f35",
   },
-  // A scope's backing, a concept and never a process: its stores, and while they change the stores
-  // before, read from until what those held has moved, b8f35.
+  // A scope's backing, its stores and while they change the stores before, read until what they
+  // held has moved, b8f35.
   {
     name: "bundle-backing",
     def: Record([
@@ -183,8 +176,8 @@ let types: array<declared> = [
     ]),
     from: "b8f35",
   },
-  // Whether a scope runs, one type wherever it is said: its directory's row, its authority's record
-  // and its bundle, which never says deleted, since a scope deleted has none, 4dijn, 7xpd3.
+  // Whether a scope runs, one type in its directory's row, its authority's record and its bundle,
+  // 4dijn and 7xpd3.
   {
     name: "scope-status",
     def: Enum({
@@ -197,10 +190,8 @@ let types: array<declared> = [
     }),
     from: "4dijn, vuanj",
   },
-  // The issuer's section of a bundle: the grants, the allowance it reads, and the organization's
-  // `security`, by which it dates what it signs, vuanj; and the scope's status, which every product
-  // reads with its allowance through `scope*`, a scope being a concept and never a process, `active`
-  // where absent.
+  // The issuer's section of a bundle, the grants, the allowance, the organization's `security` and
+  // the scope's status, `active` where absent, vuanj.
   {
     name: "bundle-issuer",
     def: Record([
@@ -223,11 +214,8 @@ let signed: array<signed> = [
 ]
 
 /**
- * A bundle's sections, by the name of what reads each, decided by the author on 2026-10-20, RFC
- * b8f35: what the data plane reads of its organization's configuration and nothing a control alone
- * reads, each kind of record in one section at most, and no secret, which reaches a deployment
- * alone. A section is compiled from the records, never one of them: where a record holds a secret,
- * the section holds the rest.
+ * A bundle's sections by the name of what reads each, what the data plane reads and never a secret,
+ * RFC b8f35. A section is compiled from the records.
  */
 let sections = [
   ("issuer", "bundle-issuer"),

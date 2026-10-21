@@ -1,10 +1,6 @@
 /**
- * The samples in `tests/`, RFC vr5lw: data alone, which any language reads, held here to the
- * contracts they sample. A behavior file is an interface's cases, each a list of steps -- an
- * operation called with an input, and its output or its failure expected; a codec file is values in
- * JSON beside their CBOR, and inputs every reader must refuse. A database's case may be held on
- * `copies`, and a step `lose` some of them. Every operation and every reason of an interface with
- * samples must be sampled.
+ * The samples in `tests/`, data any language reads, held to the contracts they sample, RFC vr5lw.
+ * Every operation and reason of a sampled interface must be sampled.
  */
 open Base
 
@@ -16,7 +12,7 @@ let hashText = /^[0-9a-f]{64}$/
 
 let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
-/** Base64url without padding, its unused last bits zero, fhg6w: one text a value. */
+/** Base64url without padding and with its unused last bits zero, one text a value, fhg6w. */
 let isBase64url = s => {
   let n = String.length(s)
   let rest = mod(n, 4)
@@ -32,10 +28,7 @@ let isInteger = (x, lo, hi) => Math.floor(x) == x && x >= lo && x <= hi
 
 let isHex = s => hexText->RegExp.test(s)
 
-/**
- * Where a value stands: in an input, in what is expected, or in a codec sample, read as a reader
- * would.
- */
+/** Where a value stands, in an input, in what is expected or in a codec sample. */
 type mode = Input | Expected | Codec
 
 type scope = {
@@ -49,7 +42,7 @@ type scope = {
 
 let isContent = n => Contracts.contents->Array.some(c => c.content == n)
 
-/** A sample's placeholder: an object of one key, `$`-led. */
+/** A sample's placeholder, an object of one `$`-led key. */
 let placeholder = (j: JSON.t) =>
   switch j->JSON.Decode.object->Option.map(Dict.toArray) {
   | Some([(k, v)]) if k->String.startsWith("$") => Some((k, v))
@@ -75,13 +68,13 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
       | Some(n) if isInteger(n, 0., 9007199254740991.) => ()
       | _ => fail("$time takes how many milliseconds ago")
       }
-    // A value captured before: given as it was, or, expected, the same as it was.
+    // A value captured before, given as it was or expected the same.
     | ("$use", Input | Expected, Some(n)) =>
       if !(s.captured->Set.has(n)) {
         fail(`uses ${n}, captured by no step before`)
       }
-    // Bytes of a length, or a text its `start` led and spaces filled to a length, either a number or
-    // a bound and how many past it: a bound of the interface's, or one each driver declares.
+    // Bytes of a length, or a text its `start` leads and spaces fill to a length, a number or a
+    // bound and how many past it.
     | (("$bytes" | "$text") as k, Input | Expected, _) =>
       if shape != (k == "$bytes" ? Prim(#bytes) : Prim(#string)) {
         fail(`${k} where its kind of value is not`)
@@ -233,8 +226,10 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
     }
   }
 }
-/** A record's fields: each required one present, each conforming; a field unknown is a mistake in
- * a sample written, and passed over by a reader, as an optional field added later must be. */
+/**
+ * A record's fields, each required one present and conforming. A field unknown is a mistake in a
+ * sample and passed over by a reader.
+ */
 and record = (s, fields: array<Subset.field>, d, known, mode, at) => {
   fields->Array.forEach(f =>
     switch d->Dict.get(f.name) {
@@ -272,7 +267,7 @@ let read = path => JSON.parseOrThrow(readFileSync(urlIn(path, root)))
 let items = j => list(j)->Option.getOr([])
 
 /**
- * The capacity a case of an interface is `given`: its own kind's, and a container for what is
+ * The capacity a case of an interface is `given`, its own kind's and a container for what is
  * deployed.
  */
 let capacityOf = name => name == "deployments" ? "container" : name
@@ -287,10 +282,8 @@ let products = [Buckets.interface_.name, Generations.interface_.name]
 let roles = [Authorities.interface_.name, Directories.interface_.name, Authorities.notices.name]
 
 /**
- * What a role's case is given: the authority's generation for the organization, its status,
- * allowance and loans; and whether its scope was ever opened, a directory's row being never
- * removed, so a scope not opened is the one not found. Unset, the organization is open and active,
- * its allowance without bounds and nothing lent.
+ * What a role's case is given, the authority's generation, status, allowance and loans and whether
+ * its scope was opened. Unset, the organization is open, active and unbounded.
  */
 let roleGiven = [
   Subset.optional("generation", 1, Prim(#uint53)),
@@ -309,10 +302,8 @@ let components = [
 ]
 
 /**
- * What a product's case is given before its first step: the records changed first, through its
- * organization's control, each with its handle; the room of the one store the runner binds, at a
- * bucket's default levels, `best_effort`, `persistent` and no custody; the builds its builder keeps,
- * each manifest by its version's hash; and the allowance its authority gives it.
+ * What a product's case is given before its first step, the records changed first, a store's room,
+ * its builds and its allowance.
  */
 let productGiven = [
   Subset.optional("records", 1, List(Type("change-item"))),
@@ -322,10 +313,8 @@ let productGiven = [
 ]
 
 /**
- * What a component's case is given before its first step: the room of the one store its scope's
- * backing holds, at a bucket's default levels; its organization's bundle's issuer section; the
- * fixtures its hosts hold deployed, by name; and the sandboxes its hosts offer, both unless set. A step may be called `as` a component, by its name in
- * the model, the runner signing the call by a certificate saying so, b8f35.
+ * What a component's case is given before its first step, a store's room, its bundle's issuer
+ * section, fixtures and sandboxes. A step may be called `as` a component, b8f35.
  */
 let componentGiven = [
   Subset.optional("room", 1, Prim(#uint53)),
@@ -334,10 +323,7 @@ let componentGiven = [
   Subset.optional("sandboxes", 4, List(Type("sandbox"))),
 ]
 
-/**
- * How a fixture is served: as it was built, under a hash not its own, or from where nothing
- * answers.
- */
+/** How a fixture is served, as built, under a hash not its own, or from where nothing answers. */
 let served = ["as_built", "hash_mismatched", "unfetchable"]
 
 /** The checkers a property names, each written in the runner, never in a sample. */
@@ -349,8 +335,8 @@ let run = () => {
   let sampled = Set.make()
   let sent = ref(false)
   let deployments = Contracts.interfaces->Array.find(i => i.name == "deployments")
-  // A fixture, `tests/fixtures/{name}/fixture.json`: an app deployed by samples, its source the
-  // runner's to build.
+  // A fixture, `tests/fixtures/{name}/fixture.json`, an app deployed by samples and built by the
+  // runner.
   let fixtures = Dict.make()
   let fixtureFiles = files("tests/fixtures")
   fixtureFiles->Array.forEach(path => {
@@ -586,7 +572,7 @@ let run = () => {
                   | None => found->Array.push(`${at}: expects nothing`)
                   }
                 }
-              // A call to what is deployed, in its app's own WIT: held to its shape alone, never a
+              // A call to what is deployed, held to the shape of its app's own WIT and never a
               // contract's.
               | (None, None, Some(d), _) =>
                 if name != "deployments" {
@@ -649,7 +635,7 @@ let run = () => {
     | _ => found->Array.push(`${path}: names no interface`)
     }
   })
-  // An interface sampled is sampled whole: each operation called, each of its own reasons met.
+  // An interface sampled is sampled whole, each operation called and each of its own reasons met.
   Contracts.interfaces->Array.forEach(i =>
     if sampled->Set.has(i.name) {
       i.operations->Array.forEach(o => {
@@ -728,8 +714,8 @@ let run = () => {
           None
         }
       }
-    // A call, `contracts.json`'s `call`, fhg6w: its interface's own, an operation of it, the input
-    // that operation reads, and the capabilities it carries, each bytes, none written absent.
+    // A call, `contracts.json`'s `call`, its interface, an operation, the input it reads and the
+    // capabilities it carries, fhg6w.
     let called = (s, i: Subset.interface_, json, at) =>
       switch json->JSON.Decode.object {
       | Some(d) =>

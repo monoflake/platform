@@ -1,8 +1,6 @@
 /**
- * Every library a tool writes, its ReScript written again, `mise run generate [<package>]`: the
- * tool built and its `src/main.res` given `model/contracts.json` and the library's `generated/`,
- * `model/graph/tools.res`. Its Rust is its `build.rs`'s, cargo's to run. With a package, that one
- * alone, and nothing where no tool writes it.
+ * Every library a tool writes has its ReScript written again, `mise run generate [<package>]`,
+ * `model/graph/tools.res`. Its Rust is cargo's to run by `build.rs`.
  */
 open Base
 open Blocks

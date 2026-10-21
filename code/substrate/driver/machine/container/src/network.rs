@@ -1,6 +1,5 @@
-//! A container's network: a named network namespace, `/run/netns/<id>` as `ip netns` makes it,
-//! joined to a bridge by the CNI plugins `loopback`, `bridge` and `host-local`, each run by its
-//! binary as a runtime runs one. What `bridge` answered to ADD is kept, as DEL is given it again.
+//! A container's network, a named namespace joined to a bridge by the CNI plugins, `bridge`'s ADD
+//! answer kept for DEL.
 //! https://github.com/containernetworking/cni/blob/main/SPEC.md
 
 use std::net::{IpAddr, SocketAddr};
@@ -21,7 +20,7 @@ const NETNS: &str = "/run/netns";
 /// The interface a container reaches the bridge by.
 const INTERFACE: &str = "eth0";
 
-/// What one plugin is asked: its command and its interface.
+/// What one plugin is asked, its command and its interface.
 struct Call<'a> {
 	command: &'a str,
 	id: &'a str,
@@ -38,9 +37,8 @@ impl Bridge {
 		json!({ "cniVersion": VERSION, "name": "loopback", "type": "loopback" })
 	}
 
-	// open: who may reach a container's address from beyond the machine, and what may leave it,
-	// `?egress`, are not decided. Until they are, nothing forwards a port to it, its bridge
-	// masquerades what leaves, and no rule keeps one container from another on the bridge.
+	// Reach and egress are open, `?egress`, so nothing forwards a port, the bridge masquerades and
+	// containers share it.
 	fn bridge(&self) -> Value {
 		json!({
 			"cniVersion": VERSION,
@@ -156,7 +154,7 @@ impl Network for Bridge {
 			if exists(&netns).await {
 				return Ok(Attachment { address: SocketAddr::new(address(&answered)?, port), netns });
 			}
-			// The namespace went with a restart: its address is given back, and all made again.
+			// The namespace went with a restart, so its address is given back and all made again.
 			self.undone(id, &netns, &answered).await?;
 			tokio::fs::remove_file(&kept).await.map_err(|e| at(e, &kept))?;
 		}

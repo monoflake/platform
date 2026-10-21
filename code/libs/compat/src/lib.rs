@@ -1,20 +1,13 @@
-//! `compat*`, `model/graph/libraries.res`, and this file its interface, the model's, `docs/code.md`:
-//! the same contract as `src/version.resi` and `src/features.resi` hold in ReScript, a private
-//! module beside each. Whoever implements it implements each trait for the type it names there,
-//! and never edits this file.
-//!
-//! RFC wnqvu: a version is the frozen core, one integer raised only by a breaking change, compared
-//! by its value; a reader reads a range; a writer writes the version every reader running reads;
-//! and what a version cannot say, features do. Where a version is carried is each format's own.
+//! `compat*`, versions and features as RFC wnqvu has them. This file is its interface, the model's,
+//! `docs/code.md`, as the `.resi` files are in ReScript.
 
 mod features;
 mod version;
 
-/// The largest version, 2^53 - 1, JavaScript's largest safe integer, so both languages hold every
-/// version exactly, decided by the author on 2026-10-20.
+/// The largest version, 2^53 - 1, so both languages hold every version exactly.
 pub const MAX: u64 = 9_007_199_254_740_991;
 
-/// A version: an integer of 0 to [`MAX`], made by [`Versioned::new`] alone.
+/// A version, an integer of 0 to [`MAX`], made by [`Versioned::new`] alone.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Version(u64);
 
@@ -29,14 +22,14 @@ pub struct Range {
 /// Why a reader refuses a version.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Refused {
-	/// Below its lowest: written in what it reads no longer.
+	/// Below its lowest, written in what it reads no longer.
 	Older {
 		/// The version refused.
 		version: Version,
 		/// The range that refused it.
 		range: Range,
 	},
-	/// Above its highest: written in what it does not yet read.
+	/// Above its highest, written in what it does not yet read.
 	Newer {
 		/// The version refused.
 		version: Version,
@@ -50,8 +43,7 @@ pub enum Refused {
 pub enum Unchosen {
 	/// No range was given.
 	Empty,
-	/// The lowest of every range's highest is below the lowest of each of these ranges: no version
-	/// is read by all.
+	/// No version is read by all, the lowest highest being below these ranges' lowest.
 	Apart {
 		/// The lowest of every range's highest.
 		highest: Version,
@@ -78,13 +70,12 @@ pub trait Ranged: Sized {
 	fn highest(&self) -> Version;
 	/// Whether it reads the version.
 	fn reads(&self, version: Version) -> Result<(), Refused>;
-	/// What is written among the ranges of every reader running, the writer's own among them: the
-	/// lowest of their highest, which each reads, the same whatever their order.
+	/// What is written among every running reader's ranges, the lowest of their highest, whatever
+	/// their order.
 	fn written(ranges: &[Self]) -> Result<Version, Unchosen>;
 }
 
-/// A side's features: those it has, and those of them it needs; each list sorted, each name once.
-/// Made by [`Featured::new`] alone.
+/// A side's features, those it has and those of them it needs, made by [`Featured::new`] alone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Features {
 	has: Vec<String>,
@@ -100,8 +91,7 @@ pub enum Malformed {
 	Unheld(String),
 }
 
-/// Why two sides do not agree: what the first needs and the second has not, and the reverse, each
-/// sorted.
+/// Why two sides do not agree, what the first needs and the second has not, and the reverse.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Missing {
 	/// What the first needs and the second has not.
@@ -112,8 +102,7 @@ pub struct Missing {
 
 /// What both sides have; implemented for [`Features`].
 pub trait Featured: Sized {
-	/// The features, each list sorted and its repeats dropped, or the first name refused: every name
-	/// of `has` in its order, then every one of `needs`.
+	/// The features with each list sorted and its repeats dropped, or the first name refused.
 	fn new(has: &[&str], needs: &[&str]) -> Result<Self, Malformed>;
 	/// Those it has.
 	fn has(&self) -> &[String];

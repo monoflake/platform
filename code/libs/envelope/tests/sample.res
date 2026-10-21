@@ -1,6 +1,6 @@
 /***
- * What the tests read the samples and write their values with: JSON through `JSON.Decode`, hex, and
- * `Contracts` by a type's name, its refusal told where it stands.
+ * What the tests read the samples and write their values with, JSON, hex and `Contracts` by a
+ * type's name.
  */
 open Node
 module Cbor = Codec.Cbor

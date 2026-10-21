@@ -1,8 +1,6 @@
 /***
- * Every interface's operations as `Envelope.Contracts.Interface` holds them, each module's values
- * read as data: what an answer's output is read as, by an operation's name, since the generated
- * module gives each operation by a name of its own and no table of them. Deferred, the workspace's
- * `envelope-operations-table`.
+ * Every interface's operations as `Envelope.Contracts.Interface` holds them, read as data.
+ * Deferred, the workspace's `envelope-operations-table`.
  */
 @module("@monoflake/envelope/generated/contracts.res.mjs")
 external interfaces: dict<dict<JSON.t>> = "Interface"

@@ -1,18 +1,5 @@
-//! `driver(machine)`'s container, `model/ground/drivers.res`, and this file its interface, the
-//! model's, `docs/code.md`. Whoever implements it implements each trait here for the types it
-//! names, each in a private module beside this file, and never edits this file.
-//!
-//! An image deployed as a container on the machine, by the `deployments` interface, RFC vr5lw:
-//! each binding a containerd namespace of its own; its image imported and unpacked onto the btrfs
-//! snapshotter; its container's layer assigned to the binding's qgroup between preparing it and
-//! starting it; its runtime runc unless the deployment names crun or youki, each through
-//! containerd's `io.containerd.runc.v2` shim by its binary; its network a namespace of its own on a
-//! bridge, made by the CNI plugins the machine holds, its address reached within the machine; its
-//! processor and memory held to the capacity it is deployed into. What leaves it is not checked
-//! yet, `?egress`. An artifact is an OCI image layout archive fetched from its address, its hash the
-//! SHA-256 of its bytes, RFC ge55b; how one reaches the driver is open. Everything the driver holds
-//! of a container is written on it, as labels, so the driver comes back from a restart by reading
-//! containerd.
+//! `driver(machine)`'s container, an image deployed by `deployments` through containerd, RFC vr5lw.
+//! This file is its interface, the model's, `docs/code.md`.
 
 use std::collections::BTreeMap;
 use std::future::Future;
@@ -39,8 +26,8 @@ pub struct Refused {
 	pub message: Option<String>,
 }
 
-/// What a machine could not do, at a moment, of containerd, the network, btrfs or the fetch:
-/// answered `fault`, RFC ge55b, unless the step that met it says otherwise.
+/// What a machine could not do at a moment, answered `fault`, RFC ge55b, unless the step says
+/// otherwise.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fault(pub String);
 
@@ -53,8 +40,8 @@ pub struct Capacity {
 	pub memory: u64,
 }
 
-/// A binding, as the management holds it, RFC vr5lw: its containerd namespace, its qgroup, and the
-/// containers of capacity it asked for, by their ids.
+/// A binding as the management holds it, its containerd namespace, its qgroup and its containers of
+/// capacity, RFC vr5lw.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Binding {
 	/// Its containerd namespace.
@@ -65,10 +52,8 @@ pub struct Binding {
 	pub capacities: BTreeMap<u32, Capacity>,
 }
 
-/// The `deployments` interface for images, RFC vr5lw; implemented for [`Containers`]. Deploying is
-/// idempotent, the same version sent again leaving what runs; what was never deployed is
-/// `not_found` but to `delete`, which succeeds; `delete` of a running one is `still_running`. A form
-/// but `image`, an isolation but `kernel`, or a runtime but runc, crun or youki is `beyond_host`.
+/// The `deployments` interface for images, RFC vr5lw, implemented for [`Containers`]. Deploying is
+/// idempotent.
 pub trait Deployments {
 	/// Deploys, and answers at once, `making` until it runs.
 	fn deploy(
@@ -141,8 +126,8 @@ pub struct Mount {
 	pub options: Vec<String>,
 }
 
-/// A container to create: its id, its image, its runtime's binary, its snapshot, its OCI runtime
-/// spec in JSON, and its labels, which hold all the driver keeps of it.
+/// A container to create, its id, image, runtime, snapshot, OCI spec and the labels holding all the
+/// driver keeps of it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Spec {
 	/// Its id within the namespace.
@@ -172,8 +157,7 @@ pub enum Task {
 	Other,
 }
 
-/// A container as containerd lists it: its id, its labels, its task's state, none where it has no
-/// task.
+/// A container as containerd lists it, its id, labels and its task's state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Listed {
 	/// Its id.
@@ -236,7 +220,7 @@ pub struct Socket {
 	pub path: PathBuf,
 }
 
-/// A container's network: its namespace and its address on the bridge.
+/// A container's network, its namespace and its address on the bridge.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Attachment {
 	/// Its network namespace, by path, which its spec joins.
@@ -293,7 +277,7 @@ pub struct Btrfs {
 	pub binary: PathBuf,
 }
 
-/// Why an artifact was not fetched: past its bound, or not to be had now.
+/// Why an artifact was not fetched, past its bound or not to be had now.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Unfetched {
 	/// More bytes than the bound.
@@ -314,10 +298,8 @@ pub trait Fetch: Send + Sync {
 	) -> impl Future<Output = Result<[u8; 32], Unfetched>> + Send;
 }
 
-/// Fetching over HTTPS; and from a `file:` address only where the machine's holder named a
-/// directory for it, within that directory alone, a regular file followed through no link, so a
-/// caller of `deploy` reads nothing else of the machine. What is refused says no path and no
-/// system error back.
+/// Fetching over HTTPS, and from a `file:` address only within the directory the machine's holder
+/// named, through no link and saying no path back.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Https {
 	/// The one directory `file:` addresses may name, none where they are refused.
@@ -335,8 +317,8 @@ pub struct Runtimes {
 	pub youki: PathBuf,
 }
 
-/// The containers of a machine: what reaches containerd, the network, btrfs and an artifact, the
-/// runtimes, where artifacts and outputs are kept, and the most an artifact may be, in bytes.
+/// The containers of a machine, what reaches containerd, the network, btrfs and an artifact, and
+/// where things are kept.
 #[derive(Debug, Clone)]
 pub struct Containers<C, N, Q, F> {
 	/// containerd.
@@ -352,15 +334,14 @@ pub struct Containers<C, N, Q, F> {
 	/// Where artifacts are fetched to and each container's output is written, on ext4, root's
 	/// alone; each container's secrets kept sealed there too, so a reboot puts them back.
 	pub state: PathBuf,
-	/// Where each container's secrets are written as files, a directory of its own per container,
-	/// on tmpfs and root's alone, `/run/monoflake/secrets`; each mounted read-only into its
-	/// container, so no value is in a spec.
+	/// Where each container's secrets are written as files on tmpfs, `/run/monoflake/secrets`,
+	/// mounted read-only into it.
 	pub secrets: PathBuf,
 	/// The most an artifact may be.
 	pub largest: u64,
 }
 
-/// The runtime a deployment runs on: the one it names, or runc; implemented for [`Runtimes`].
+/// The runtime a deployment runs on, the one it names or runc, implemented for [`Runtimes`].
 pub trait Chosen {
 	/// The binary of the runtime named, or runc's.
 	fn binary(&self, named: Option<&DeploymentRuntime>) -> &std::path::Path;

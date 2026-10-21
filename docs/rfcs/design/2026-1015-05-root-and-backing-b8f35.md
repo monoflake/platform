@@ -307,7 +307,7 @@ as its backing is. The scope itself -- its row in the directory, its allowance -
   - **A capability is refused unless its signer's certificate names the role `issuer` and the
     capability's own scope**, so one organization's issuer never signs for another.
   - **Who signs what is one table, and nothing else is taken**, decided by the author on
-    2026-10-20, `code/libs/capability/src/signed.resi`: the root an intermediate; the intermediate
+    2026-10-20, `docs/signed.md`: the root an intermediate; the intermediate
     an authority; the authority an organization's, an issuer's, a bundle's and an account's key,
     its record and the directory's rows; an organization its components' keys and its own calls;
     an issuer capabilities; a bundle's key the bundle; an account's key account credentials; and a

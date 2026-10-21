@@ -1,7 +1,5 @@
-//! An answer, `model/contracts.json`'s `answer`, as [`Answer`] reads and writes it: a union by
-//! `status`, `success` code 1 holding the output as `data` at key 1, and `error` code 2 holding the
-//! fields of `error` beside the case, `error`'s own record with the case put in. envelope-generator
-//! holds `contracts.json`'s answer to these, and `error`'s fields clear of `status` and of key 0.
+//! An answer, `model/contracts.json`'s `answer`, a union by `status`, `success` code 1 with `data`
+//! at key 1 and `error` code 2 with its fields beside.
 
 use codec::Value as Cbor;
 use serde_json::Value as Json;

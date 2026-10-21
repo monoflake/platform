@@ -1,7 +1,5 @@
-# What a machine is, RFC vr5lw: NixOS and four things on it -- containerd, the host's driver, the
-# tailnet and a firewall -- with bash its one shell. Its disk is `disk.nix`; what is the machine's
-# own, its name and what `options.nix` asks, is its own flake's, `template/`. It downloads its sets
-# and builds none, so neither nixpkgs' source nor the tools that build a system are on it.
+# What a machine is, NixOS with containerd, the host's driver, the tailnet, a firewall and bash, RFC
+# vr5lw. Its disk is `disk.nix` and its own flake `template/`.
 {
   config,
   lib,
@@ -10,10 +8,10 @@
 }:
 let
   inherit (pkgs.unstable) crun youki;
-  # The serial console: a PC's first UART, an Arm machine's PL011.
+  # The serial console, a PC's first UART or an Arm machine's PL011.
   serial = if pkgs.stdenv.hostPlatform.isAarch64 then "ttyAMA0" else "ttyS0";
-  # The swap file, in MiB, by the memory, RFC vr5lw: 2 GiB up to 2, as much as the memory up to 8,
-  # half of it beyond, never under 8 nor over 16.
+  # The swap file in MiB by the memory, RFC vr5lw, 2 GiB up to 2, the memory up to 8 and half
+  # beyond, 8 to 16.
   memory = config.machine.memory;
   swap =
     if memory <= 2048 then
@@ -29,7 +27,7 @@ in
     ./disk.nix
   ];
 
-  # The system is the release; what it runs, containerd, its runtimes and the tailnet, is unstable's.
+  # The system is the release, and containerd, its runtimes and the tailnet are unstable's.
   nixpkgs.overlays = [ (final: _: { inherit (final.unstable) containerd; }) ];
 
   boot = {
@@ -210,7 +208,8 @@ in
       "nix-command"
       "flakes"
     ];
-    # The last three systems kept, as the boot menu keeps them, until the driver holds them, RFC vr5lw.
+    # The last three systems kept, as the boot menu keeps them, until the driver holds them, RFC
+    # vr5lw.
     gc = {
       automatic = true;
       dates = "daily";
