@@ -98,3 +98,55 @@ test("a float is finite, a NaN or an infinity in CBOR malformed", () => {
     deepEqual(cbor(text), malformed([Field("value")], "a finite float"), ~message=text)
   )
 })
+
+test("a call is its interface's operation, holding that operation's input", () => {
+  let call: Contracts.Interface.Object.envelope = {
+    call: Write({name: "a", content: Uint8Array.fromArray([1, 2])}),
+    capabilities: [],
+  }
+  let json = parse(`{"interface": "object", "operation": "write", "input": {"name": "a", "content": "AQI"}}`)
+  deepEqual(Contracts.Interface.Object.toJson(call), json)
+  deepEqual(Contracts.Interface.Object.fromJson(json), Ok(call))
+  // Capabilities none are written absent, and read as none when given empty.
+  let empty = parse(`{"interface": "object", "operation": "write", "input": {"name": "a", "content": "AQI"}, "capabilities": []}`)
+  deepEqual(Contracts.Interface.Object.fromJson(empty), Ok(call))
+  ok(Contracts.callJsonToCbor("no-such-interface", json)->Option.isNone)
+  ok(Contracts.callCborToJson("no-such-interface", Cbor.Null)->Option.isNone)
+})
+
+test("a call not as its interface writes it is malformed where it stands", () => {
+  let call = text => Contracts.callJsonToCbor("object", parse(text))
+  let input = `"input": {"name": "a", "content": "AQI"}`
+  deepEqual(
+    call(`{"interface": "object", "operation": "fly", ${input}}`),
+    malformed([Field("operation")], "one of write, read, describe, delete, list"),
+  )
+  deepEqual(
+    call(`{"interface": "database", "operation": "write", ${input}}`),
+    malformed([Field("interface")], "one of object"),
+  )
+  deepEqual(
+    call(`{"interface": 1, "operation": "write", ${input}}`),
+    malformed([Field("interface")], "a string"),
+  )
+  deepEqual(
+    call(`{"interface": "object", "operation": "write"}`),
+    malformed([Field("input")], "present"),
+  )
+  deepEqual(
+    call(`{"interface": "object", "operation": "write", "input": {"name": "a"}}`),
+    malformed([Field("input"), Field("content")], "present"),
+  )
+  deepEqual(
+    call(`{"interface": "object", "operation": "write", ${input}, "capabilities": ["AQID="]}`),
+    malformed([Field("capabilities"), Index(0)], "base64url, unpadded"),
+  )
+  // In CBOR: {1: "object", 2: "fly", 3: {}}.
+  deepEqual(
+    Contracts.callCborToJson(
+      "object",
+      decoded(hex("a301666f626a6563740263666c7903a0")),
+    )->Option.map(r => r->Result.map(_ => Cbor.Null)),
+    malformed([Field("operation")], "one of write, read, describe, delete, list"),
+  )
+})

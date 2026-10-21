@@ -6,11 +6,19 @@ open Node
 
 let written = text => Generate.read(text)->Result.flatMap(Generate.rescript)
 
+/** A call's fields as `model/contracts.json` writes them, the capabilities' shape `capabilities`. */
+let callFields = (~capabilities=`{"list": {"prim": "bytes"}}`) =>
+  `[{"name": "interface", "key": 1, "shape": {"prim": "string"}},
+    {"name": "operation", "key": 2, "shape": {"prim": "string"}},
+    {"name": "input", "key": 3, "shape": {"input": "operation"}},
+    {"name": "capabilities", "key": 4, "shape": ${capabilities}, "optional": true}]`
+
 /** Contracts holding `types` beside a `failure` of one choice. */
-let contracts = (~types="", ~reasons="[]", ~interfaces="{}") => {
+let contracts = (~types="", ~reasons="[]", ~interfaces="{}", ~call=callFields()) => {
   let failure = `"failure": {"enum": [{"name": "rejected", "code": 1}], "ordered": false}`
   let types = types == "" ? failure : `${failure}, ${types}`
-  `{"shell": [], "types": {${types}}, "reasons": ${reasons}, "calling": [], "interfaces": ${interfaces}}`
+  `{"shell": [], "call": {"fields": ${call}, "typ": "monoflake:call:1"}, "types": {${types}},
+    "reasons": ${reasons}, "calling": [], "interfaces": ${interfaces}}`
 }
 
 let source = text =>
@@ -32,6 +40,8 @@ test("model/contracts.json is written, the same twice over", () => {
     "let calling: array<reason> = ",
     "let jsonToCbor = ",
     "let cborToJson = ",
+    "let callJsonToCbor = ",
+    "let callCborToJson = ",
   ]->Array.forEach(expected => ok(once->String.includes(expected), ~message=expected))
 })
 
@@ -61,6 +71,20 @@ test("a keyword names its field followed by an underscore, under @as", () => {
   )
   ok(written->String.includes(`@as("type") type_: string`))
   ok(written->String.includes(`v.type_`))
+})
+
+test("an interface holds a call of each operation and the envelope it travels in", () => {
+  let written = source(
+    contracts(
+      ~types=`"thing-got": {"record": []}`,
+      ~interfaces=`{"thing": {"version": 1, "operations": [
+        {"name": "get_one", "input": "failure", "output": "thing-got", "reasons": []}]}}`,
+    ),
+  )
+  ok(written->String.includes("type call = | GetOne(Failure.t)"))
+  ok(written->String.includes("type envelope = {call: call, capabilities: array<Uint8Array.t>}"))
+  ok(written->String.includes(`Wire.FromJson.exactly("thing")`))
+  ok(written->String.includes(`| "thing" => Some(Wire.jsonToCbor(json, Interface.Thing.fromJson`))
 })
 
 test("what cannot be written is unread, where it stands", () => {
@@ -94,5 +118,32 @@ test("what cannot be written is unread, where it stands", () => {
       ),
     ),
     unread("interfaces/thing/operations/0/input", "a type declared"),
+  )
+  deepEqual(
+    written(contracts(~call=callFields(~capabilities=`{"prim": "bool"}`))),
+    unread(
+      "call/fields/3",
+      "the interface's name or the operation's, a string; its input; or the capabilities, an optional list of bytes",
+    ),
+  )
+  deepEqual(
+    written(
+      contracts(
+        ~types=`"thing": {"record": []}`,
+        ~interfaces=`{"thing": {"version": 1, "operations": [{"name": "get", "input": "thing", "output": "thing", "reasons": []}]}}`,
+      ),
+    ),
+    unread("interfaces/thing", "a name whose module hides no type's this module names"),
+  )
+  deepEqual(
+    written(
+      contracts(
+        ~interfaces=`{"thing": {"version": 1, "operations": [{"name": "to_json", "input": "failure", "output": "failure", "reasons": []}]}}`,
+      ),
+    ),
+    unread(
+      "interfaces/thing/operations/0/name",
+      "a name no other operation has, nor version, toJson, fromJson, toCbor or fromCbor",
+    ),
   )
 })

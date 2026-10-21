@@ -4,7 +4,7 @@
 
 use std::collections::BTreeSet;
 
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, json};
 
 use super::model::{
 	Case, Choice, Declared, Def, Field, Interface, Model, Operation, Prim, Reason, Shape,
@@ -81,6 +81,7 @@ pub(super) fn contracts(value: &Value) -> Got<Model> {
 			Ok(Declared { name: name.clone(), def: declared(def, &at, &known)? })
 		})
 		.collect::<Got<Vec<_>>>()?;
+	call(member(top, "call", "")?)?;
 	let shell = fields(member(top, "shell", "")?, "shell", &known, None)?;
 	let failures = failures(&types)?;
 	let every = reasons(member(top, "reasons", "")?, "reasons", &failures)?;
@@ -90,6 +91,28 @@ pub(super) fn contracts(value: &Value) -> Got<Model> {
 		.map(|(name, i)| interface(name, i, &join("interfaces", name), &known, &failures))
 		.collect::<Got<Vec<_>>>()?;
 	Ok(Model { types, shell, reasons: every, calling, interfaces })
+}
+
+/// The call every operation's body is, held to the one `Envelope` reads and writes: its fields are
+/// the runtime's, written once there, so they are checked here rather than written from. Its `typ`,
+/// the protected header of a call signed whole, is its signer's, and passed over.
+fn call(value: &Value) -> Got<()> {
+	let fields = member(object(value, "call")?, "fields", "call")?;
+	let expected = json!([
+		{ "name": "interface", "key": 1, "shape": { "prim": "string" } },
+		{ "name": "operation", "key": 2, "shape": { "prim": "string" } },
+		{ "name": "input", "key": 3, "shape": { "input": "operation" } },
+		{ "name": "capabilities", "key": 4, "shape": { "list": { "prim": "bytes" } }, "optional": true },
+	]);
+	if *fields == expected {
+		Ok(())
+	} else {
+		Err(unread(
+			"call/fields",
+			"the fields Envelope reads: interface 1 and operation 2, strings; input 3, as its operation \
+			 names; capabilities 4, an optional list of bytes",
+		))
+	}
 }
 
 /// The choices of `failure`, which every reason's failure is one of.

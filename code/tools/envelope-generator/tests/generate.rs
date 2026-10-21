@@ -16,6 +16,15 @@ fn least() -> Value {
 	json!({
 		"version": 1,
 		"shell": [{ "name": "kind", "key": 1, "shape": { "prim": "string" } }],
+		"call": {
+			"fields": [
+				{ "name": "interface", "key": 1, "shape": { "prim": "string" } },
+				{ "name": "operation", "key": 2, "shape": { "prim": "string" } },
+				{ "name": "input", "key": 3, "shape": { "input": "operation" } },
+				{ "name": "capabilities", "key": 4, "shape": { "list": { "prim": "bytes" } }, "optional": true }
+			],
+			"typ": "monoflake:call:1"
+		},
 		"types": {
 			"failure": { "enum": [{ "name": "rejected", "code": 1 }], "ordered": false },
 			"thing": { "record": [{ "name": "type", "key": 1, "shape": { "prim": "bool" } }] }
@@ -55,6 +64,11 @@ fn the_contracts_are_written_the_same_byte_for_byte() {
 		"pub mod interface {",
 		"pub mod object {",
 		"impl Operation for Write {",
+		"pub enum Call {",
+		"Write(crate::contracts::ObjectWrite),",
+		"impl Called for Call {",
+		"pub fn call_json_to_cbor(",
+		"pub fn call_cbor_to_json(",
 		"pub fn json_to_cbor(",
 		"pub fn cbor_to_json(",
 	] {
@@ -65,7 +79,7 @@ fn the_contracts_are_written_the_same_byte_for_byte() {
 #[test]
 fn the_least_contracts_import_only_what_they_use() {
 	let rust = written(&least()).unwrap();
-	assert!(rust.contains("use crate::{Encoded, Malformed, Reason, wire};"), "{rust}");
+	assert!(rust.contains("use crate::{Encoded, Envelope, Malformed, Reason, wire};"), "{rust}");
 	assert!(!rust.contains("BTreeMap"), "{rust}");
 	assert!(rust.contains("pub r#type: bool,"), "{rust}");
 	assert!(rust.contains("pub mod things {"), "{rust}");
@@ -104,6 +118,8 @@ fn each_way_contracts_cannot_be_written_is_refused_where_it_is() {
 		("/types/thing", json!({ "list": [] }), "types/thing"),
 		("/types/failure", json!({ "record": [] }), "types/failure"),
 		("/reasons/0/failure", json!("refused"), "reasons/0/failure"),
+		("/call/fields/3/key", json!(5), "call/fields"),
+		("/call/fields/2/shape", json!({ "type": "thing" }), "call/fields"),
 		(
 			"/interfaces/things/operations/0/input",
 			json!("nothing"),
@@ -131,6 +147,7 @@ fn each_way_contracts_cannot_be_written_is_refused_where_it_is() {
 			"types/thing/union/cases/0/fields/0/name",
 		),
 		("/interfaces/things/operations/0/name", json!("operation"), "interfaces/things"),
+		("/interfaces/things/operations/0/name", json!("call"), "interfaces/things"),
 	];
 	for (pointer, value, at) in cases {
 		let unread = refused(pointer, value.clone());

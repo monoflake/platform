@@ -1,6 +1,7 @@
 //! The module `contracts` held to the samples of `tests/codec/`, read as they stand: each sample's
-//! JSON read as its type gives exactly its CBOR, as codec writes it, and that CBOR read back gives
-//! exactly its JSON; each refused JSON is [`envelope::Malformed`].
+//! JSON read as its type, or as a call of its interface, gives exactly its CBOR, as codec writes
+//! it, and that CBOR read back gives exactly its JSON; each refused JSON is
+//! [`envelope::Malformed`].
 
 // What is here is all a test's, so the lints a test may break by are its helpers' as well.
 #![cfg(test)]
@@ -38,6 +39,37 @@ fn part(part: &str) -> Vec<(String, serde_json::Value)> {
 		.collect()
 }
 
+/// What a sample is read as: a type by its name, or a call of an interface by its name.
+#[derive(Debug, Clone, Copy)]
+enum As<'a> {
+	Type(&'a str),
+	Call(&'a str),
+}
+
+fn read_as<'a>(file: &str, sample: &'a serde_json::Value) -> As<'a> {
+	match (sample["type"].as_str(), sample["interface"].as_str()) {
+		(Some(name), None) => As::Type(name),
+		(None, Some(name)) => As::Call(name),
+		_ => panic!("{file}: {sample}: neither a type nor an interface, alone"),
+	}
+}
+
+type Read<T> = Option<Result<T, envelope::Malformed>>;
+
+fn json_to_cbor(read: As, json: &serde_json::Value) -> Read<codec::Value> {
+	match read {
+		As::Type(name) => contracts::json_to_cbor(name, json),
+		As::Call(name) => contracts::call_json_to_cbor(name, json),
+	}
+}
+
+fn cbor_to_json(read: As, cbor: &codec::Value) -> Read<serde_json::Value> {
+	match read {
+		As::Type(name) => contracts::cbor_to_json(name, cbor),
+		As::Call(name) => contracts::call_cbor_to_json(name, cbor),
+	}
+}
+
 /// The bytes a hex string spells.
 fn hex(text: &str) -> Vec<u8> {
 	assert!(text.len().is_multiple_of(2), "{text}: an odd number of digits");
@@ -49,19 +81,19 @@ fn each_sample_is_its_cbor_from_its_json_and_its_json_from_its_cbor() {
 	let samples = part("samples");
 	assert!(!samples.is_empty());
 	for (file, sample) in samples {
-		let name = sample["type"].as_str().unwrap_or_else(|| panic!("{file}: {sample}: no type"));
+		let name = read_as(&file, &sample);
 		let json = &sample["json"];
 		let bytes = hex(sample["cbor"].as_str().unwrap_or_else(|| panic!("{file}: {sample}: no cbor")));
-		let cbor = contracts::json_to_cbor(name, json)
-			.unwrap_or_else(|| panic!("{file}: {name}: no such type"))
-			.unwrap_or_else(|m| panic!("{file}: {name} {json}: {m:?}"));
-		assert_eq!(cbor.encode().unwrap(), bytes, "{file}: {name} {json}");
+		let cbor = json_to_cbor(name, json)
+			.unwrap_or_else(|| panic!("{file}: {name:?}: none so named"))
+			.unwrap_or_else(|m| panic!("{file}: {name:?} {json}: {m:?}"));
+		assert_eq!(cbor.encode().unwrap(), bytes, "{file}: {name:?} {json}");
 		let read = codec::Value::decode_deterministic(&bytes)
-			.unwrap_or_else(|r| panic!("{file}: {name}: {r:?}"));
-		let back = contracts::cbor_to_json(name, &read)
-			.unwrap_or_else(|| panic!("{file}: {name}: no such type"))
-			.unwrap_or_else(|m| panic!("{file}: {name} {}: {m:?}", sample["cbor"]));
-		assert_eq!(&back, json, "{file}: {name} {}", sample["cbor"]);
+			.unwrap_or_else(|r| panic!("{file}: {name:?}: {r:?}"));
+		let back = cbor_to_json(name, &read)
+			.unwrap_or_else(|| panic!("{file}: {name:?}: none so named"))
+			.unwrap_or_else(|m| panic!("{file}: {name:?} {}: {m:?}", sample["cbor"]));
+		assert_eq!(&back, json, "{file}: {name:?} {}", sample["cbor"]);
 	}
 }
 
@@ -70,11 +102,11 @@ fn each_refused_json_is_malformed() {
 	let refused = part("refused");
 	assert!(!refused.is_empty());
 	for (file, sample) in refused {
-		let name = sample["type"].as_str().unwrap_or_else(|| panic!("{file}: {sample}: no type"));
+		let name = read_as(&file, &sample);
 		assert_eq!(sample["reason"], "malformed", "{file}: {sample}: a reason this test does not know");
 		let json = &sample["json"];
 		let read =
-			contracts::json_to_cbor(name, json).unwrap_or_else(|| panic!("{file}: {name}: no such type"));
-		assert!(read.is_err(), "{file}: {name} {json}: read as {read:?}");
+			json_to_cbor(name, json).unwrap_or_else(|| panic!("{file}: {name:?}: none so named"));
+		assert!(read.is_err(), "{file}: {name:?} {json}: read as {read:?}");
 	}
 }

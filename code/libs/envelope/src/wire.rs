@@ -4,6 +4,7 @@
 //! no reader knows is passed over, in either form; anything else not as its type writes it is
 //! [`Malformed`].
 
+mod call;
 mod number;
 mod text;
 
@@ -12,6 +13,7 @@ use std::collections::BTreeMap;
 use codec::Value as Cbor;
 use serde_json::{Map, Value as Json};
 
+pub(crate) use call::{call_input, unknown_operation};
 pub(crate) use number::{
 	float_from_cbor, float_from_json, float_to_cbor, float_to_json, int32_from_cbor, int53_from_cbor,
 	int53_from_json, int53_to_cbor, int53_to_json, uint32_from_cbor, uint32_from_json,
@@ -46,7 +48,7 @@ pub(crate) fn cbor_to_json<T: Encoded>(cbor: &Cbor) -> Read<Json> {
 }
 
 /// What a field that is absent expects.
-const PRESENT: &str = "present";
+pub(super) const PRESENT: &str = "present";
 
 // A record, and a union's fields beside its case.
 
@@ -86,7 +88,7 @@ pub(crate) fn optional_json<T>(
 }
 
 /// The value at the integer `key`, if there is one.
-fn at(map: &Pairs, key: i128) -> Option<&Cbor> {
+pub(super) fn at(map: &Pairs, key: i128) -> Option<&Cbor> {
 	map.iter().find(|(k, _)| matches!(k, Cbor::Integer(n) if *n == key)).map(|(_, value)| value)
 }
 

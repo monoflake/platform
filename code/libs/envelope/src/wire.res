@@ -50,6 +50,13 @@ let isWithin = (n, bounds) =>
 
 let oneOf = names => `one of ${names->Array.join(", ")}`
 
+/** A list written absent when empty, as a call's capabilities are. */
+let nonEmpty = items => items->Array.length > 0 ? Some(items) : None
+let orEmpty = items => items->Option.getOr([])
+
+/** A name no case or operation has, at the field naming it. */
+let unknownName = (tag, names) => within(Malformed.Field(tag), () => fail(oneOf(names)))
+
 module ToJson = {
   let bool = value => JSON.Boolean(value)
   let string = value => JSON.String(value)
@@ -60,6 +67,8 @@ module ToJson = {
   let int53 = uint32
   let bytes = value => JSON.String(Base64url.encode(value))
   let hash = value => JSON.String(Hex.encode(value))
+  /** A value already written, as a call's input is by its operation's type. */
+  let json = (value: JSON.t) => value
   let list = write => items => JSON.Array(items->Array.map(write))
   let map = write => entries => JSON.Object(entries->Dict.mapValues(write))
 
@@ -143,6 +152,14 @@ module FromJson = {
   /** Another type's reading. */
   let named = fromJson => json => unwrap(fromJson(json))
 
+  /** Exactly this string, as a call's interface is held to its module's: another, a string. */
+  let exactly = text =>
+    json =>
+      switch string(json) {
+      | given if given == text => given
+      | _ => fail(oneOf([text]))
+      }
+
   /** A record's fields, its own alone, by name. */
   type fields = Map.t<string, JSON.t>
 
@@ -170,7 +187,7 @@ module FromJson = {
     record(json, fields => build(field(fields, tag, string), fields))
 
   /** A case no union of these names has. */
-  let unknown = (tag, names) => within(Malformed.Field(tag), () => fail(oneOf(names)))
+  let unknown = unknownName
 
   /** An enumeration, by its table of each name and its choice. */
   let choice = (json, table) =>
@@ -335,6 +352,8 @@ module ToCbor = {
   let int53 = uint32
   let bytes = value => Cbor.Bytes(value)
   let hash = bytes
+  /** A value already written, as a call's input is by its operation's type. */
+  let cbor = (value: Cbor.value) => value
   let list = write => items => Cbor.Array(items->Array.map(write))
   let map = write =>
     entries => Cbor.Map(
@@ -427,6 +446,17 @@ module FromCbor = {
 
   /** Another type's reading. */
   let named = fromCbor => cbor => unwrap(fromCbor(cbor))
+
+  /** Exactly this text string, as a call's interface is held to its module's. */
+  let exactly = text =>
+    cbor =>
+      switch string(cbor) {
+      | given if given == text => given
+      | _ => fail(oneOf([text]))
+      }
+
+  /** A text no operation has, at the field naming it. */
+  let unknownText = unknownName
 
   /** A record's fields by their keys, a key that is no integer passed over as any unknown. */
   type fields = Map.t<bigint, Cbor.value>

@@ -15,7 +15,9 @@ const TAKEN: &[&str] = &[
 	"BTreeMap",
 	"Bounded",
 	"Box",
+	"Called",
 	"Encoded",
+	"Envelope",
 	"Err",
 	"Int53",
 	"Malformed",
@@ -34,8 +36,10 @@ const TAKEN: &[&str] = &[
 	"Vec",
 ];
 
-/// The names an interface's module imports, which no operation's may be.
-const TAKEN_BY_INTERFACE: &[&str] = &["Operation", "Reason"];
+/// The names an interface's module imports or writes beside its operations, which no operation's
+/// may be.
+const TAKEN_BY_INTERFACE: &[&str] =
+	&["Call", "Called", "Encoded", "Malformed", "Operation", "Reason"];
 
 /// The source written, a line at a time, indented by tabs.
 struct Out {
@@ -477,7 +481,7 @@ fn interface(out: &mut Out, interface: &Interface, at: &str) -> Result<(), Unrea
 	}
 	out.line(&format!("/// The interface `{}`.", interface.name));
 	out.open(&format!("pub mod {} {{", names::ident(&interface.name)));
-	out.line("use crate::{Operation, Reason};");
+	out.line("use crate::{Called, Encoded, Malformed, Operation, Reason, wire};");
 	out.line("");
 	out.line("/// Its version, raised as a record's is.");
 	out.line(&format!("pub const VERSION: u32 = {};", interface.version));
@@ -502,8 +506,76 @@ fn interface(out: &mut Out, interface: &Interface, at: &str) -> Result<(), Unrea
 		reasons(out, "const REASONS: &'static [Reason]", &op.reasons, &failure);
 		out.close("}");
 	}
+	call(out, interface);
 	out.close("}");
 	Ok(())
+}
+
+/// An interface's `Call`, a case for each operation holding its input, and its `Called`: a call
+/// read from either form is held to the type its operation names.
+fn call(out: &mut Out, interface: &Interface) {
+	let cases: Vec<(String, String, &str, &str)> = interface
+		.operations
+		.iter()
+		.map(|op| {
+			let input = format!("crate::contracts::{}", names::camel(&op.input));
+			(names::camel(&op.name), input, op.name.as_str(), op.input.as_str())
+		})
+		.collect();
+	let all: Vec<&str> = cases.iter().map(|(_, _, name, _)| *name).collect();
+	let expected = format!("one of {}", all.join(", "));
+	out.line("");
+	out.line(&format!("/// A call of `{}`, by its operation, holding its input.", interface.name));
+	out.line("#[derive(Debug, Clone, PartialEq)]");
+	out.line(
+		"#[allow(clippy::large_enum_variant, reason = \"a call is read once and passed on, holding its input as the interface writes it, Call::Write(ObjectWrite); boxing would cost an allocation a call\")]",
+	);
+	out.open("pub enum Call {");
+	for (rust, input, name, declared) in &cases {
+		out.line(&format!("/// `{name}`, its input `{declared}`."));
+		out.line(&format!("{rust}({input}),"));
+	}
+	out.close("}");
+	out.line("");
+	out.open("impl Called for Call {");
+	out.line(&format!("const INTERFACE: &'static str = {:?};", interface.name));
+	out.line("");
+	out.open("fn operation(&self) -> &'static str {");
+	out.open("match self {");
+	for (rust, _, name, _) in &cases {
+		out.line(&format!("Self::{rust}(_) => {name:?},"));
+	}
+	out.close("}");
+	out.close("}");
+	for form in [Form::Json, Form::Cbor] {
+		let f = form.name();
+		out.line("");
+		out.open(&format!("fn input_{f}(&self) -> {} {{", form.value()));
+		out.open("match self {");
+		for (rust, _, _, _) in &cases {
+			out.line(&format!("Self::{rust}(input) => input.to_{f}(),"));
+		}
+		out.close("}");
+		out.close("}");
+	}
+	for form in [Form::Json, Form::Cbor] {
+		let f = form.name();
+		out.line("");
+		out.open(&format!(
+			"fn from_{f}(operation: &str, input: &{}) -> Result<Self, Malformed> {{",
+			form.value()
+		));
+		out.open("match operation {");
+		for (rust, input, name, _) in &cases {
+			out.line(&format!(
+				"{name:?} => wire::call_input({input}::from_{f}(input).map(Self::{rust})),"
+			));
+		}
+		out.line(&format!("_ => Err(wire::unknown_operation({expected:?})),"));
+		out.close("}");
+		out.close("}");
+	}
+	out.close("}");
 }
 
 /// Every shape of the contracts' fields, nested ones among them.
@@ -553,7 +625,7 @@ pub(super) fn module(model: &Model) -> Result<String, Unread> {
 	if has(Prim::Int53) {
 		imports.push("Int53");
 	}
-	imports.extend(["Malformed", "Reason"]);
+	imports.extend(["Envelope", "Malformed", "Reason"]);
 	if has(Prim::Uint53) {
 		imports.push("Uint53");
 	}
@@ -623,6 +695,34 @@ pub(super) fn module(model: &Model) -> Result<String, Unread> {
 				"{:?} => Some(wire::{from}_to_{to}::<{}>({from})),",
 				declared.name,
 				names::camel(&declared.name)
+			));
+		}
+		out.line("_ => None,");
+		out.close("}");
+		out.close("}");
+	}
+	for (form, from, to) in [(Form::Json, "json", "cbor"), (Form::Cbor, "cbor", "json")] {
+		out.line("");
+		out.line(&format!(
+			"/// The {} read as a call of the interface `name` and written as its {}, or none where no",
+			from.to_uppercase(),
+			to.to_uppercase()
+		));
+		out.line("/// interface is so named.");
+		out.open(&format!(
+			"pub fn call_{from}_to_{to}(name: &str, {from}: &{}) -> Option<Result<{}, Malformed>> {{",
+			form.value(),
+			match form {
+				Form::Json => Form::Cbor.value(),
+				Form::Cbor => Form::Json.value(),
+			}
+		));
+		out.open("match name {");
+		for each in &model.interfaces {
+			out.line(&format!(
+				"{:?} => Some(wire::{from}_to_{to}::<Envelope<interface::{}::Call>>({from})),",
+				each.name,
+				names::ident(&each.name)
 			));
 		}
 		out.line("_ => None,");

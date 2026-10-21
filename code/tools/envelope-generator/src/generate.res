@@ -26,8 +26,13 @@ type reason = {name: string, failure: string}
 type operation = {name: string, input: string, output: string, reasons: array<reason>}
 type interface_ = {name: string, version: int, operations: array<operation>}
 
+/** A call's field: a shape of the subset's, or the input of the operation another field names. */
+type callShape = Shape(shape) | Input(string)
+type callField = {name: string, key: int, shape: callShape, optional: bool}
+
 type contracts = {
   shell: array<field>,
+  call: array<callField>,
   types: array<(string, def)>,
   reasons: array<reason>,
   calling: array<reason>,
@@ -114,20 +119,38 @@ let rec shape = (json, at) => {
   }
 }
 
-let field = (json, at) => {
+let optional = (o, at) =>
+  switch o->Dict.get("optional") {
+  | Some(optional) =>
+    switch optional->JSON.Decode.bool {
+    | Some(optional) => optional
+    | None => fail([...at, "optional"], "a boolean")
+    }
+  | None => false
+  }
+
+let field = (json, at): field => {
   let o = object(json, at)
   {
     name: text(member(o, at, "name"), [...at, "name"]),
     key: integer(member(o, at, "key"), [...at, "key"]),
     shape: shape(member(o, at, "shape"), [...at, "shape"]),
-    optional: switch o->Dict.get("optional") {
-    | Some(optional) =>
-      switch optional->JSON.Decode.bool {
-      | Some(optional) => optional
-      | None => fail([...at, "optional"], "a boolean")
-      }
-    | None => false
+    optional: optional(o, at),
+  }
+}
+
+let callField = (json, at): callField => {
+  let o = object(json, at)
+  let at_ = [...at, "shape"]
+  let s = member(o, at, "shape")
+  {
+    name: text(member(o, at, "name"), [...at, "name"]),
+    key: integer(member(o, at, "key"), [...at, "key"]),
+    shape: switch object(s, at_)->Dict.get("input") {
+    | Some(operation) => Input(text(operation, [...at_, "input"]))
+    | None => Shape(shape(s, at_))
     },
+    optional: optional(o, at),
   }
 }
 
@@ -201,6 +224,12 @@ let read = text =>
     let o = object(json, [])
     {
       shell: fields(member(o, [], "shell"), ["shell"]),
+      // A call's `typ` is its Sign1's, made by whoever signs it, outside the envelope.
+      call: items(
+        member(object(member(o, [], "call"), ["call"]), ["call"], "fields"),
+        ["call", "fields"],
+        callField,
+      ),
       types: entries(member(o, [], "types"), ["types"], def),
       reasons: items(member(o, [], "reasons"), ["reasons"], reason),
       calling: items(member(o, [], "calling"), ["calling"], reason),
@@ -643,6 +672,53 @@ let groups = (types: array<(string, def)>) => {
   found
 }
 
+/** What each of a call's fields holds. */
+type role = InterfaceName | OperationName | OperationInput | Capabilities
+
+/**
+ * A call's fields by what each holds, in the contracts' order: its interface's name and its
+ * operation's, each a string; that operation's input; and the capabilities, an optional list of
+ * bytes; each once.
+ */
+let roles = (fields: array<callField>) => {
+  let at = ["call", "fields"]
+  let operation = switch fields->Array.filterMap(f =>
+    switch f.shape {
+    | Input(operation) => Some(operation)
+    | Shape(_) => None
+    }
+  ) {
+  | [operation] => operation
+  | _ => fail(at, "one field holding an operation's input")
+  }
+  let roles = fields->Array.mapWithIndex((f, i) => {
+    let refused = () =>
+      fail(
+        [...at, Int.toString(i)],
+        "the interface's name or the operation's, a string; its input; or the capabilities, an optional list of bytes",
+      )
+    let role = switch f.shape {
+    | Input(_) => f.optional ? refused() : OperationInput
+    | Shape(Prim(String)) =>
+      f.optional ? refused() : f.name == operation ? OperationName : InterfaceName
+    | Shape(List(Prim(Bytes))) => f.optional ? Capabilities : refused()
+    | Shape(Prim(Bool | Float64 | Int32 | Uint32 | Int53 | Uint53 | Bytes | Hash | Secret))
+    | Shape(Id | Type(_) | Map(_))
+    | Shape(List(Prim(Bool | String | Float64 | Int32 | Uint32 | Int53 | Uint53 | Hash | Secret)))
+    | Shape(List(Id | Type(_) | List(_) | Map(_))) =>
+      refused()
+    }
+    (f, role)
+  })
+  let one = role =>
+    switch roles->Array.filter(((_, r)) => r == role) {
+    | [(f, _)] => f
+    | _ =>
+      fail(at, "the interface's name, the operation's, its input and the capabilities, each once")
+    }
+  (roles, one(InterfaceName), one(OperationName), one(OperationInput), one(Capabilities))
+}
+
 let rescript = (contracts: contracts) =>
   caught(() => {
     let modules =
@@ -709,21 +785,110 @@ let rescript = (contracts: contracts) =>
       `let reasons: array<reason> = ${reasons(contracts.reasons, ["reasons"])}`,
       `let calling: array<reason> = ${reasons(contracts.calling, ["calling"])}`,
     ])
+    let (callFields, interfaceField, operationField, inputField, capabilitiesField) = roles(
+      contracts.call,
+    )
+    // Within `Interface`, a module of an interface's hides any of the same name the rest names.
+    let named =
+      contracts.interfaces->Array.flatMap(i =>
+        i.operations->Array.mapWithIndex(
+          (o, k) =>
+            moduleOf(
+              names,
+              o.input,
+              ["interfaces", i.name, "operations", Int.toString(k), "input"],
+            ),
+        )
+      )
     let interfaces = contracts.interfaces->Array.map(i => {
       let at = ["interfaces", i.name]
       let m = upper(i.name, at)
-      if m == "Failure" {
+      if m == "Failure" || reserved->Array.includes(m) || named->Array.includes(m) {
         fail(at, "a name whose module hides no type's this module names")
+      }
+      if i.operations->Array.length == 0 {
+        fail([...at, "operations"], "an operation at least")
       }
       let values =
         i.operations->Array.mapWithIndex(
           (o, n) => lower(o.name, [...at, "operations", Int.toString(n), "name"]),
         )
+      let own = ["version", "toJson", "fromJson", "toCbor", "fromCbor"]
       distinct(
-        ["version", ...values],
-        n => [...at, "operations", Int.toString(n - 1), "name"],
-        "a name no other operation has, nor version",
+        [...own, ...values],
+        n => [...at, "operations", Int.toString(n - own->Array.length), "name"],
+        "a name no other operation has, nor version, toJson, fromJson, toCbor or fromCbor",
       )
+      let constructors =
+        i.operations->Array.mapWithIndex(
+          (o, n) => upper(o.name, [...at, "operations", Int.toString(n), "name"]),
+        )
+      distinct(
+        constructors,
+        n => [...at, "operations", Int.toString(n), "name"],
+        "a name no other operation has in upper camel case",
+      )
+      let each = f =>
+        i.operations
+        ->Array.mapWithIndex(
+          (o, n) => f(o, constructors->Array.getUnsafe(n), moduleOf(names, o.input, [])),
+        )
+        ->Array.join(" ")
+      let isJson = side =>
+        switch side {
+        | ToJson | FromJson => true
+        | ToCbor | FromCbor => false
+        }
+      let refer = (side, f: callField) =>
+        isJson(side) ? quote(f.name) : `${Int.toString(f.key)}, ${quote(f.name)}`
+      let written = side => {
+        let w = `Wire.${sideName(side)}`
+        let items = callFields->Array.map(
+          ((f, role)) => {
+            let name = isJson(side) ? quote(f.name) : Int.toString(f.key)
+            switch role {
+            | InterfaceName => `${w}.field(${name}, ${quote(i.name)}, ${w}.string)`
+            | OperationName => `${w}.field(${name}, operation, ${w}.string)`
+            | OperationInput => `${w}.field(${name}, input, ${w}.${isJson(side) ? "json" : "cbor"})`
+            | Capabilities =>
+              `${w}.optional(${name}, Wire.nonEmpty(v.capabilities), ${w}.list(${w}.bytes))`
+            }
+          },
+        )
+        `let ${function(side)} = (v: envelope) => { let (operation, input) = switch v.call { ${each(
+            (o, k, m) => `| ${k}(input) => (${quote(o.name)}, ${m}.${function(side)}(input))`,
+          )} }
+${w}.record([${items->Array.join(", ")}]) }`
+      }
+      let read = side => {
+        let w = `Wire.${sideName(side)}`
+        let value = isJson(side) ? "json" : "cbor"
+        let unknown = isJson(side) ? "unknown" : "unknownText"
+        let names_ = i.operations->Array.map(o => quote(o.name))->Array.join(", ")
+        `let ${function(side)} = ${value} => ${w}.record(${value}, o => { ${w}.field(o, ${refer(
+            side,
+            interfaceField,
+          )}, ${w}.exactly(${quote(i.name)}))->ignore
+let call = switch ${w}.field(o, ${refer(side, operationField)}, ${w}.string) { ${each(
+            (o, k, m) =>
+              `| ${quote(o.name)} => ${k}(${w}.field(o, ${refer(
+                  side,
+                  inputField,
+                )}, ${w}.named(${m}.${function(side)})))`,
+          )} | _ => ${w}.${unknown}(${quote(operationField.name)}, [${names_}]) }
+{call, capabilities: Wire.orEmpty(${w}.optional(o, ${refer(
+            side,
+            capabilitiesField,
+          )}, ${w}.list(${w}.bytes)))} })`
+      }
+      let call = [
+        `type call = ${each((_, k, m) => `| ${k}(${m}.t)`)}`,
+        "type envelope = {call: call, capabilities: array<Uint8Array.t>}",
+        written(ToJson),
+        read(FromJson),
+        written(ToCbor),
+        read(FromCbor),
+      ]
       let operations = i.operations->Array.mapWithIndex(
         (o, n) => {
           let at = [...at, "operations", Int.toString(n)]
@@ -736,7 +901,10 @@ let rescript = (contracts: contracts) =>
             )}, output: ${quote(o.output)}, reasons: ${reasons(o.reasons, [...at, "reasons"])}}`
         },
       )
-      `module ${m} = { let version = ${Int.toString(i.version)}\n${operations->Array.join("\n")} }`
+      `module ${m} = { let version = ${Int.toString(i.version)}\n${[
+          ...operations,
+          ...call,
+        ]->Array.join("\n")} }`
     })
     distinct(
       contracts.interfaces->Array.map(i => upper(i.name, ["interfaces", i.name])),
@@ -750,6 +918,20 @@ let rescript = (contracts: contracts) =>
       `switch name { ${contracts.types
         ->Array.map(t => byName(f, t))
         ->Array.join(" ")} | _ => None }`
+    let calls = f =>
+      `switch interface { ${contracts.interfaces
+        ->Array.map(i =>
+          `| ${quote(i.name)} => Some(${f(`Interface.${upper(i.name, ["interfaces", i.name])}`)})`
+        )
+        ->Array.join(" ")} | _ => None }`
+    lines->Array.pushMany([
+      `let callJsonToCbor = (interface, json) => ${calls(m =>
+          `Wire.jsonToCbor(json, ${m}.fromJson, ${m}.toCbor)`
+        )}`,
+      `let callCborToJson = (interface, cbor) => ${calls(m =>
+          `Wire.cborToJson(cbor, ${m}.fromCbor, ${m}.toJson)`
+        )}`,
+    ])
     lines->Array.pushMany([
       `let jsonToCbor = (name, json) => ${switched(m =>
           `Wire.jsonToCbor(json, ${m}.fromJson, ${m}.toCbor)`

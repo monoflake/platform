@@ -13,7 +13,7 @@ use envelope::contracts::{
 	self, AppBindings, AppEnv, Availability, Content, DatabaseValue, Failure, FileEntry, ObjectRange,
 	ObjectRead, ObjectWrite, Rights, Shell, interface,
 };
-use envelope::{Bounded, Encoded, Int53, Malformed, Operation, Step, Uint53};
+use envelope::{Bounded, Called, Encoded, Envelope, Int53, Malformed, Operation, Step, Uint53};
 use serde_json::json;
 
 fn uint53(n: u64) -> Uint53 {
@@ -335,4 +335,127 @@ fn a_name_no_type_has_is_none() {
 	assert_eq!(contracts::json_to_cbor("no-such-type", &json!({})), None);
 	assert_eq!(contracts::cbor_to_json("no-such-type", &Value::Map(vec![])), None);
 	assert_eq!(contracts::json_to_cbor("shell", &json!({})), None);
+}
+
+type ObjectCall = Envelope<interface::object::Call>;
+
+fn write() -> interface::object::Call {
+	interface::object::Call::Write(ObjectWrite { name: "a".into(), content: b"hello".to_vec() })
+}
+
+#[test]
+fn a_call_is_its_operation_holding_its_input() {
+	let call = write();
+	assert_eq!(<interface::object::Call as Called>::INTERFACE, "object");
+	assert_eq!(call.operation(), "write");
+	assert_eq!(call.input_json(), json!({ "name": "a", "content": "aGVsbG8" }));
+	let read = <interface::object::Call as Called>::from_json("write", &call.input_json());
+	assert_eq!(read, Ok(call.clone()));
+	assert_eq!(<interface::object::Call as Called>::from_cbor("write", &call.input_cbor()), Ok(call));
+	let name = json!({ "name": "a" });
+	let describe = <interface::object::Call as Called>::from_json("describe", &name);
+	let delete = <interface::object::Call as Called>::from_json("delete", &name);
+	assert!(matches!(describe, Ok(interface::object::Call::Describe(_))), "{describe:?}");
+	assert!(matches!(delete, Ok(interface::object::Call::Delete(_))), "{delete:?}");
+}
+
+#[test]
+fn a_call_carries_its_capabilities_absent_when_none() {
+	let none = ObjectCall { call: write(), capabilities: vec![] };
+	let json = json!({ "interface": "object", "operation": "write", "input": { "name": "a", "content": "aGVsbG8" } });
+	assert_eq!(none.to_json(), json);
+	assert_eq!(ObjectCall::from_cbor(&none.to_cbor()), Ok(none.clone()));
+	let mut empty = json.clone();
+	empty["capabilities"] = json!([]);
+	assert_eq!(ObjectCall::from_json(&empty), Ok(none));
+	let some = ObjectCall { call: write(), capabilities: vec![vec![1, 2, 3], vec![]] };
+	assert_eq!(some.to_json()["capabilities"], json!(["AQID", ""]));
+	assert_eq!(ObjectCall::from_json(&some.to_json()), Ok(some.clone()));
+	assert_eq!(ObjectCall::from_cbor(&some.to_cbor()), Ok(some));
+	let mut wrong = json;
+	wrong["capabilities"] = json!(["AQID", "AQID="]);
+	assert_eq!(
+		ObjectCall::from_json(&wrong),
+		Err(malformed(vec![field("capabilities"), Step::Index(1)], "base64url, unpadded"))
+	);
+}
+
+#[test]
+fn a_call_not_as_its_interface_writes_it_says_where() {
+	let input = json!({ "name": "a", "content": "aGVsbG8" });
+	let call =
+		|interface: serde_json::Value, operation: serde_json::Value, input: serde_json::Value| {
+			let mut call = json!({ "interface": interface, "operation": operation, "input": input });
+			for key in ["interface", "operation", "input"] {
+				if call[key].is_null() {
+					call.as_object_mut().unwrap().remove(key);
+				}
+			}
+			ObjectCall::from_json(&call)
+		};
+	let operations = "one of write, read, describe, delete, list";
+	let cases = [
+		(
+			call(json!("database"), json!("write"), input.clone()),
+			vec![field("interface")],
+			"one of object",
+		),
+		(call(json!(null), json!("write"), input.clone()), vec![field("interface")], "present"),
+		(call(json!(1), json!("write"), input.clone()), vec![field("interface")], "a string"),
+		(call(json!("object"), json!("fly"), input.clone()), vec![field("operation")], operations),
+		(call(json!("object"), json!(null), input.clone()), vec![field("operation")], "present"),
+		(call(json!("object"), json!("write"), json!(null)), vec![field("input")], "present"),
+		(call(json!("object"), json!("fly"), json!(null)), vec![field("operation")], operations),
+		(
+			call(json!("object"), json!("write"), json!({ "name": "a", "content": "aGVsbG8=" })),
+			vec![field("input"), field("content")],
+			"base64url, unpadded",
+		),
+	];
+	for (read, at, expected) in cases {
+		assert_eq!(read, Err(malformed(at, expected)));
+	}
+	let text = |s: &str| Value::Text(s.into());
+	let input = write().input_cbor();
+	let cbor = |pairs| ObjectCall::from_cbor(&map(pairs));
+	assert_eq!(
+		cbor(vec![(1, text("database")), (2, text("write")), (3, input.clone())]),
+		Err(malformed(vec![field("interface")], "one of object"))
+	);
+	assert_eq!(
+		cbor(vec![(1, Value::Integer(1)), (2, text("write")), (3, input.clone())]),
+		Err(malformed(vec![field("interface")], "a text string"))
+	);
+	assert_eq!(
+		cbor(vec![(1, text("object")), (2, Value::Integer(1)), (3, input.clone())]),
+		Err(malformed(vec![field("operation")], "a text string"))
+	);
+	assert_eq!(
+		cbor(vec![(1, text("object")), (2, text("fly")), (3, input.clone())]),
+		Err(malformed(vec![field("operation")], operations))
+	);
+	assert_eq!(
+		cbor(vec![(1, text("object")), (2, text("write"))]),
+		Err(malformed(vec![field("input")], "present"))
+	);
+	assert_eq!(
+		cbor(vec![(1, text("object")), (2, text("fly"))]),
+		Err(malformed(vec![field("operation")], operations))
+	);
+	assert_eq!(
+		cbor(vec![
+			(1, text("object")),
+			(2, text("write")),
+			(3, input),
+			(4, Value::Array(vec![text("x")]))
+		]),
+		Err(malformed(vec![field("capabilities"), Step::Index(0)], "a byte string"))
+	);
+}
+
+#[test]
+fn a_name_no_interface_has_is_none() {
+	assert_eq!(contracts::call_json_to_cbor("no-such-interface", &json!({})), None);
+	assert_eq!(contracts::call_cbor_to_json("no-such-interface", &Value::Map(vec![])), None);
+	assert_eq!(contracts::call_json_to_cbor("object-write", &json!({})), None);
 }
