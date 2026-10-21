@@ -169,12 +169,20 @@ in
       persistent = true;
     };
   };
-  systemd.services = {
-    containerd.unitConfig.RequiresMountsFor = [
-      "/data"
-      "/run/monoflake/secrets"
-    ];
-    mkswap-data-swap-swapfile.preStart = "[ -d /data/swap ] || ${pkgs.unstable.btrfs-progs}/bin/btrfs subvolume create /data/swap";
-    nix-gc.preStart = "${config.nix.package}/bin/nix-env --profile /nix/var/nix/profiles/system --delete-generations +3";
+  systemd = {
+    services = {
+      containerd.unitConfig.RequiresMountsFor = [
+        "/data"
+        "/run/monoflake/secrets"
+      ];
+      mkswap-data-swap-swapfile.preStart = "[ -d /data/swap ] || ${pkgs.unstable.btrfs-progs}/bin/btrfs subvolume create /data/swap";
+      nix-gc.preStart = "${config.nix.package}/bin/nix-env --profile /nix/var/nix/profiles/system --delete-generations +3";
+    };
+    # A new system also collects, as the profile's link is renamed in this directory, which the
+    # collection's own deletions do not trigger again.
+    paths.nix-gc = {
+      wantedBy = [ "paths.target" ];
+      pathConfig.PathChanged = "/nix/var/nix/profiles";
+    };
   };
 }
