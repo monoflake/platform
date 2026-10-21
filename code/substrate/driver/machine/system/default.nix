@@ -141,12 +141,16 @@ in
 
   environment = {
     # The logo's colors are the viewer's own terminal's, `22` undoing fastfetch's bold; the modules
-    # are fastfetch's defaults less what a server has no use for, both opened three lines down.
+    # are fastfetch's defaults less what a server has no use for, both opened two lines down.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file";
         source = pkgs.writeText "logo.txt" (import ./logo.nix);
-        padding.top = 3;
+        padding = {
+          top = 2;
+          left = 1;
+          right = 3;
+        };
         color = {
           "1" = "22;34";
           "2" = "22;36";
@@ -154,7 +158,6 @@ in
         };
       };
       modules = [
-        "break"
         "break"
         "break"
         "os"
