@@ -426,7 +426,7 @@ management interface below, RFC fhg6w.
 
 - **A binding comes of a token its control makes**, which the host's holder enters in the driver's
   own management, which no binding sees -- a command on a machine, a secret on an account. The
-  driver shows it once and keeps it salted and hashed, never the token itself. **A driver never makes a credential of itself**:
+  driver shows it once and keeps its BLAKE3 alone, never the token itself, RFC 3d3nt. **A driver never makes a credential of itself**:
   each comes of someone's act, below.
 - **A host's levels are declared by its host, and copied by each binding**, availability, durability
   and the rest, RFC 13ixj. A vendor's host is declared in the code, which knows what the vendor is;
@@ -584,7 +584,7 @@ with credentials of their own, three in all:
 
 | Credential       | Made by                                                      | Kept by                                              | Kept apart                                | Over                                                      | Reaches                                                                                  |
 | ---------------- | ------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| binding token    | the control                                                  | the host, salted and hashed                          | each sees its own alone                   | the driver's HTTPS                                        | compute, storage and databases                                                           |
+| binding token    | the control                                                  | the host, hashed, RFC 3d3nt                          | each sees its own alone                   | the driver's HTTPS                                        | compute, storage and databases                                                           |
 | management token | the host: the account on Cloudflare, the holder on a machine | the control                                          | not: each authenticates, all see the same | HTTPS: the vendor's API, or a machine driver's management | the host's own: a domain's records; a machine's shell configuration, packages and reboot |
 | shell key        | the control, as a key pair                                   | the machine the public half, the control the private | its own                                   | SSH itself                                                | any command                                                                              |
 

@@ -17,18 +17,20 @@ management call carries it. What the token is, as bytes and as text, how it is s
 and how a call carries it are written nowhere, and the machine driver's management cannot take its
 first binding without them.
 
-## Proposed
+## Decided
 
-Written by the agent on 2026-10-21 for the author to decide.
+Decided by the author on 2026-10-21, from the agent's proposal, with two changes of the author's:
+the text names no vendor, and the hash takes no salt. vr5lw's "salted and hashed" is amended to
+this.
 
-1. **A token is 32 random bytes and the binding's id, written as one text**:
-   `monoflake-binding-1.<id>.<secret>`, the id the binding's `capacity` space's integer in decimal
-   and the secret base64url unpadded, RFC fhg6w. A versioned prefix lets a holder, a log scrubber
-   and a secret scanner know one on sight, as C24 asks of a key's comment; the id lets a
-   driver find the binding a token is for without trying every hash.
-2. **A driver keeps the id and `BLAKE3(salt || secret)`**, a salt of 16 random bytes of its own per
-   binding. The secret is random and long, so a fast hash with a salt is enough, and no
-   password-hashing cost is paid on every call.
+1. **A token is the binding's id and 32 random bytes, written as one text, `<id>.<secret>`**, the
+   id the binding's `capacity` space's integer in decimal and the secret base64url unpadded, RFC
+   fhg6w. It carries no prefix naming the platform: a vendor's name is written in first-party code
+   only where it is data, and the token's form is neutral. The id lets a driver find the binding a
+   token is for without trying every hash.
+2. **A driver keeps the id and `BLAKE3(secret)`, with no salt**, as vr5lw keeps an item's
+   credential: the secret is 32 random bytes, so a salt adds nothing a guess could be slowed by, and
+   the driver keeps no state for one. No password-hashing cost is paid on any call.
 3. **A call carries it as `Authorization: Bearer <token>`**, over the driver's HTTPS, or over the
    tailnet where the machine is reached only there; a token absent or not matching is `denied`, RFC
    ge55b, the same for a binding that does not exist, so a caller learns nothing of which.
@@ -36,7 +38,7 @@ Written by the agent on 2026-10-21 for the author to decide.
    reads each file at start and on a signal, takes a token it has not seen, and forgets a binding
    whose file is gone only when its control has ended it, `end`, so a file lost never ends what runs.
 5. **Replacing a token is a second one beside the first**, as an item's credential is, vr5lw: the
-   driver holds both until the control's next list names only the new one.
+   driver holds both until the control's next list names only the new one, by its hash.
 
 ## Open
 
