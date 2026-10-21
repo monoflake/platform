@@ -12,21 +12,6 @@ let
   inherit (pkgs.unstable) crun youki;
   # The serial console: a PC's first UART, an Arm machine's PL011.
   serial = if pkgs.stdenv.hostPlatform.isAarch64 then "ttyAMA0" else "ttyS0";
-  hyfetch = pkgs.writeText "hyfetch.json" (
-    builtins.toJSON {
-      preset = "transgender";
-      mode = "rgb";
-      auto_detect_light_dark = false;
-      light_dark = "dark";
-      lightness = 0.65;
-      color_align.mode = "horizontal";
-      backend = "fastfetch";
-      args = null;
-      distro = null;
-      pride_month_disable = true;
-      custom_ascii_path = null;
-    }
-  );
   # The swap file, in MiB, by the memory, RFC vr5lw: 2 GiB up to 2, as much as the memory up to 8,
   # half of it beyond, never under 8 nor over 16.
   memory = config.machine.memory;
@@ -75,8 +60,6 @@ in
   ];
   systemd.tmpfiles.rules = [
     "w- /sys/module/zswap/parameters/compressor - - - - ${config.machine.swap.compressor}"
-    # hyfetch's settings, so it asks nothing on its first run: the transgender flag over fastfetch.
-    "L+ /root/.config/hyfetch.json - - - - ${hyfetch}"
   ];
 
   # A container's secrets, never swapped, root's alone, RFC vr5lw.
@@ -157,6 +140,48 @@ in
   };
 
   environment = {
+    # fastfetch's logo, `logo.txt`: the NixOS snowflake by Simon Frankau and Tim Cuthbertson, CC BY
+    # 4.0, from nixos-artwork's `nix-snowflake-rainbow.svg`, its legs recolored blue, pink and white
+    # and drawn by chafa 1.18.3 in braille, 32 by 16, its output kept whole but for the cursor it
+    # hid and showed, each line opening with the normal weight fastfetch's bold would replace. A
+    # configuration names every module it shows, so these are fastfetch's own defaults.
+    etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
+      logo = {
+        type = "file-raw";
+        source = "${./logo.txt}";
+      };
+      modules = [
+        "title"
+        "separator"
+        "os"
+        "host"
+        "kernel"
+        "uptime"
+        "packages"
+        "shell"
+        "display"
+        "de"
+        "wm"
+        "wmtheme"
+        "theme"
+        "icons"
+        "font"
+        "cursor"
+        "terminal"
+        "terminalfont"
+        "cpu"
+        "gpu"
+        "memory"
+        "swap"
+        "disk"
+        "localip"
+        "battery"
+        "poweradapter"
+        "locale"
+        "break"
+        "colors"
+      ];
+    };
     variables.CONTAINERD_SNAPSHOTTER = "btrfs";
     defaultPackages = [ ];
     systemPackages = [
@@ -165,7 +190,6 @@ in
       crun
       youki
       pkgs.unstable.fastfetch-unwrapped
-      pkgs.unstable.hyfetch
       pkgs.unstable.htop
     ];
   };
