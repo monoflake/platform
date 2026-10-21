@@ -326,7 +326,8 @@ async fn an_image_deployed_runs_and_is_described_at_its_port() {
 async fn its_layer_joins_the_qgroup_before_its_task_starts() {
 	let (driver, log) = driver("ordered", shell(), false);
 	driver.deploy(&binding(), echo()).await.unwrap();
-	let id = "app-1-".to_owned() + &format!("{:x}", Sha256::digest(ECHO))[..12];
+	let id =
+		"app-1-".to_owned() + &hash(ECHO).iter().map(|b| format!("{b:02x}")).collect::<String>()[..12];
 	let rootfs = driver.containerd.rootfs.display().to_string();
 	let output = driver.state.join("output/b1").join(format!("{id}.log"));
 	assert_eq!(
@@ -488,7 +489,8 @@ async fn a_new_version_replaces_the_one_before() {
 	assert_eq!(two.state, running("10.88.0.3:8080"));
 	let held = driver.containerd.held.lock().unwrap();
 	assert_eq!(held.len(), 1);
-	let old = "app-1-".to_owned() + &format!("{:x}", Sha256::digest(ECHO))[..12];
+	let old =
+		"app-1-".to_owned() + &hash(ECHO).iter().map(|b| format!("{b:02x}")).collect::<String>()[..12];
 	let log = lines(&log);
 	let start_two = log.iter().position(|l| l.starts_with("start ") && !l.ends_with(&old)).unwrap();
 	let stop_one = log.iter().position(|l| *l == format!("stop {old} within 10000")).unwrap();

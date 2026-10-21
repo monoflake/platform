@@ -93,6 +93,14 @@ flag "--major" help="Refused: nothing here has a range to cross"
 '''
 run = "rescript build > /dev/null && node scripts/update.res.mjs"
 
+[tasks.clean]
+description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
+usage = '''
+flag "-n --dry-run" help="List what would go and remove nothing"
+'''
+depends = ["//:build"]
+run = "node {{env.WORKSPACE}}/scripts/clean.res.mjs code/libs/envelope/generated"
+
 [tasks.verify]
 description = "What a commit has to pass: everything formatted, the check, every block alone, and the crates' dependencies once there are crates"
 run = [

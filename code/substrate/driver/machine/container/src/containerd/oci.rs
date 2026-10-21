@@ -190,8 +190,11 @@ mod tests {
 		// The image specification's own example.
 		let config = json!({ "rootfs": { "diff_ids": ["sha256:a", "sha256:b", "sha256:c"] } });
 		let chain = chain_ids(&config).unwrap();
-		let two = format!("sha256:{:x}", Sha256::digest(b"sha256:a sha256:b"));
-		let three = format!("sha256:{:x}", Sha256::digest(format!("{two} sha256:c").as_bytes()));
+		let hex = |text: &str| -> String {
+			Sha256::digest(text.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
+		};
+		let two = format!("sha256:{}", hex("sha256:a sha256:b"));
+		let three = format!("sha256:{}", hex(&format!("{two} sha256:c")));
 		assert_eq!(chain, ["sha256:a".to_owned(), two, three]);
 	}
 
