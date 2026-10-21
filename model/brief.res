@@ -17,8 +17,14 @@ let lines = (path, h: held) => {
       has(#rescript)
         ? [`${scoped(h)}, package.json and rescript.json, namespaced ${namespaceOf(h.package)}`]
         : [],
-    )->Array.concat(
+    )
+    ->Array.concat(
       has(#nix) ? ["a NixOS module, default.nix, which the root's flake.nix gives"] : [],
+    )
+    ->Array.concat(
+      has(#docker)
+        ? ["an image for each directory, built by Docker for every architecture, docker-bake.hcl"]
+        : [],
     )
   let uses = h.uses->Array.map(u => {
     let dir = libraryDir(u)

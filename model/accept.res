@@ -103,7 +103,7 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       switch l {
       | #rust => f->String.endsWith(".rs") && f != "src/lib.rs"
       | #rescript => f->String.startsWith("tests/") && f->String.endsWith(".res")
-      | #nix => false
+      | #nix | #docker => false
       }
     )
   h.languages->Array.forEach(l => {

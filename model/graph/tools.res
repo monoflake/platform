@@ -9,6 +9,8 @@
 type tool = {
   what: string,
   languages: array<[#rust | #rescript]>,
+  /** The platform's libraries it may depend on, by the model's names. */
+  uses?: array<string>,
   /** The library whose sources it writes, by the model's name, if it is a generator. */
   writes?: string,
   takes?: array<Libraries.taken>,
@@ -21,6 +23,19 @@ let tools: dict<tool> = dict{
     languages: [#rust, #rescript],
     writes: "envelope*",
     takes: [{language: #rust, name: "serde_json", major: "1"}],
+  },
+  "runner": {
+    what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
+    languages: [#rescript],
+    uses: ["envelope*", "codec*", "capability*"],
+    takes: [
+      {language: #rescript, name: "@noble/curves", major: "2"},
+      {language: #rescript, name: "@noble/hashes", major: "2"},
+    ],
+  },
+  "pins": {
+    what: "the versions an image pins by hand, workerd's, moved to the newest released past the workspace's supply-chain delay, each with its download's hash, and a newer NixOS release named",
+    languages: [#rescript],
   },
 }
 

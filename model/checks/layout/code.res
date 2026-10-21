@@ -3,7 +3,7 @@
  * name the model gives it, in the language the model declares, and uses only libraries written in
  * that language. A driver declares none: it lies in its layer's `driver/` as a directory of its
  * implementations, one a kind its grounds give, each in its own, of its management, in the
- * language its ground asks, and of its system where its ground is a machine, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
+ * language its ground asks, and of its system and its images where its ground is a machine, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
  * for each of its languages. A package is named as the model names what it holds, `@monoflake/` led
  * where it is ReScript's, and namespaced by its subject's name alone, never the project's, the
  * workspace's `docs/naming.md`, and MIT OR Apache-2.0, the root's two texts. What
@@ -17,6 +17,7 @@ let manifests: array<(string, lang)> = [
   ("Cargo.toml", #rust),
   ("rescript.json", #rescript),
   ("default.nix", #nix),
+  ("docker-bake.hcl", #docker),
 ]
 
 type stats
@@ -299,12 +300,12 @@ let run = () => {
                       | Some(h) => check(inner, h)
                       | None =>
                         found->Array.push(
-                          `${inner}: neither its management, its system nor a kind it implements`,
+                          `${inner}: neither its management, its system, its images nor a kind it implements`,
                         )
                       }
                     } else {
                       found->Array.push(
-                        `${at}/${k->entryName}: a driver holds its implementations, its management and its system alone`,
+                        `${at}/${k->entryName}: a driver holds its implementations, its management, its system and its images alone`,
                       )
                     },
                 )

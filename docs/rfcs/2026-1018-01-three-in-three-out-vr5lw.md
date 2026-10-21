@@ -149,8 +149,9 @@ bundle's.
   which means nothing past its process, are refused as they are deployed.
 
 - **Each request chooses its form**, by `Content-Type` and `Accept`, `application/json` or
-  `application/cbor`, JSON where it names neither; the platform's components speak CBOR among
-  themselves. Both are built in v0, and run one set of examples, each in both forms, which every
+  `application/cbor`; the platform's components speak CBOR among themselves, and CBOR is what a
+  component answers where a request names neither, decided by the author on 2026-10-21, an app's
+  own exports choosing for themselves. Both are built in v0, and run one set of examples, each in both forms, which every
   codec must judge alike, `tests/codec/`.
 - **A value's hash is the platform's alone, and is of its structure, never its bytes**: values equal
   in structure are one value however they were written, in either form, in any order of a record's
@@ -499,7 +500,14 @@ management interface below, RFC fhg6w.
   container stands on both, and a kind added later, a virtual machine's, is one more entry.
   **Containerd's namespaces keep bindings apart**, each seeing its own containers and images alone,
   RFC v7v3w. **A container outlives containerd's restart**, its shim its parent, so containerd is
-  upgraded without stopping what runs. How workerd and wasmtime are run is for when they are built.
+  upgraded without stopping what runs. **workerd and wasmtime run from images, each in a
+  container**, decided by the author on 2026-10-21: an isolate runtime is a program of its own in a
+  container the driver makes, never inside the driver, whose process holds every binding's
+  credentials, and its version is its image's, pinned in the file that builds it. The host gives
+  containerd and the OCI runtimes alone. **An image is built by Docker, in CI, for every
+  architecture a machine runs**: Docker is a builder, what it makes is an OCI image any OCI runtime
+  runs, and no machine holds it. How an image is built for delivery and reaches the driver is
+  open, the author said on 2026-10-21: for now each is built and tried locally.
 
 - **A machine goes back two ways, each set on its own**: its system, by the generations of NixOS it
   keeps, upgraded at fixed staggered times so a count of generations stands for about as many
@@ -510,8 +518,8 @@ management interface below, RFC fhg6w.
   own data moved onto it, and every binding's share -- so a workload that fills its disk never
   reaches the host.
   - **The system's store, `/nix`, is the host's, on ext4**, worked out with the author on
-    2026-10-19: what the host holds is a set fixed whatever runs -- NixOS, containerd, the OCI and
-    isolate runtimes, the driver, the tailnet, the firewall, and bash as its one shell, the author
+    2026-10-19: what the host holds is a set fixed whatever runs -- NixOS, containerd, the OCI
+    runtimes, the driver, the tailnet, the firewall, and bash as its one shell, the author
     said on 2026-10-20, neither fish nor zsh on a server -- and all that grows with use is on
     btrfs, code built for a binding among it. A set measured 1.1 GiB trimmed, `docs/lessons/`.
     Generations share every path an update leaves alone, and only one that moves nixpkgs or a

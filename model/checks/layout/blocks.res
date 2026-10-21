@@ -8,8 +8,8 @@
 open Base
 
 /** A block's language: Rust's and ReScript's for code, Nix for the system a driver's machine runs,
- * `model/ground/drivers.res`. */
-type lang = [#rust | #rescript | #nix]
+ * and Docker's for the images it runs, `model/ground/drivers.res`. */
+type lang = [#rust | #rescript | #nix | #docker]
 
 /**
  * What a directory is to hold: what of the model, in which languages, under which package name; the
@@ -61,6 +61,7 @@ let languageName = (l: [< lang]) =>
   | #rust => "rust"
   | #rescript => "rescript"
   | #nix => "nix"
+  | #docker => "docker"
   }
 
 /**
@@ -98,8 +99,8 @@ let expected = () => {
               languages: [(i.language :> lang)],
               package: `${packageName(name)}-${(i.kind :> string)}`,
               license: Components.permissive,
-              uses: [],
-              takes: [],
+              uses: i.uses->Option.getOr([]),
+              takes: i.takes->Option.getOr([]),
               samples: [],
             },
           )
@@ -123,6 +124,20 @@ let expected = () => {
               name: `${name} system, ${as_}`,
               languages: [#nix],
               package: `${packageName(name)}-system`,
+              license: Components.permissive,
+              uses: [],
+              takes: [],
+              samples: [],
+            },
+          )
+        )
+        d.images->Option.forEach(as_ =>
+          expected->Map.set(
+            `code/${g}/driver/${dir}/images`,
+            {
+              name: `${name} images, ${as_}`,
+              languages: [#docker],
+              package: `${packageName(name)}-images`,
               license: Components.permissive,
               uses: [],
               takes: [],
@@ -205,7 +220,7 @@ let expected = () => {
         languages: t.languages->Array.map(l => (l :> lang)),
         package: name,
         license: Components.permissive,
-        uses: [],
+        uses: t.uses->Option.getOr([]),
         takes: t.takes->Option.getOr([]),
         samples: t.samples->Option.getOr([]),
       },

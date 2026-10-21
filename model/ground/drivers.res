@@ -6,7 +6,15 @@
  * nothing. Nothing calls an implementation but through its kind's contract, and no implementation
  * calls another.
  */
-type implementation = {kind: Resources.kind, language: [#rust | #rescript], as_: string}
+type implementation = {
+  kind: Resources.kind,
+  language: [#rust | #rescript],
+  as_: string,
+  /** The platform's libraries it may depend on, by the model's names. */
+  uses?: array<string>,
+  /** What of others' it may take, `model/graph/libraries.res`. */
+  takes?: array<Libraries.taken>,
+}
 
 /**
  * A runtime a driver gives compute by, RFC vr5lw: the form it takes and every isolation it stands
@@ -28,6 +36,8 @@ type driver = {
   implements: array<implementation>,
   runtimes: array<runtime>,
   system?: string,
+  /** The images it runs its isolate runtimes from, each a program in a container, built by Docker. */
+  images?: string,
 }
 
 let drivers: dict<driver> = dict{
@@ -50,10 +60,22 @@ let drivers: dict<driver> = dict{
     grounds: [#provider, #home],
     management: #rust,
     system: "NixOS, with containerd",
+    images: "workerd and wasmtime",
     implements: [
       {kind: #function, language: #rust, as_: "workerd, run for each deployment"},
       {kind: #instance, language: #rust, as_: "a process"},
-      {kind: #container, language: #rust, as_: "a container, by containerd"},
+      {
+        kind: #container,
+        language: #rust,
+        as_: "a container, by containerd",
+        uses: ["envelope*"],
+        takes: [
+          {language: #rust, name: "containerd-client", major: "0.9"},
+          {language: #rust, name: "tokio", major: "1"},
+          {language: #rust, name: "serde_json", major: "1"},
+          {language: #rust, name: "sha2", major: "0.10"},
+        ],
+      },
       {kind: #object, language: #rust, as_: "objects on the machine's file system"},
       {kind: #volume, language: #rust, as_: "a btrfs subvolume"},
       {kind: #database, language: #rust, as_: "SQLite on a volume"},

@@ -57,7 +57,8 @@ run = """
 d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || exit 1
 [ ! -f "$d/Cargo.toml" ] || { cargo fmt --check -p "$p" && cargo clippy -p "$p" --all-targets -- -D warnings && cargo test -p "$p"; } || exit 1
 [ ! -f "$d/rescript.json" ] || { mise run generate "$p" && rescript build "$d" && cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; } || exit 1
-[ ! -f "$d/default.nix" ] || { mise run nixfmt --check && mise run nixed; }
+[ ! -f "$d/default.nix" ] || { mise run nixfmt --check && mise run nixed; } || exit 1
+[ ! -f "$d/docker-bake.hcl" ] || (cd "$d" && docker buildx bake --print > /dev/null)
 """
 
 # Nix reads a flake's files from git's index, which jj leaves without what @ adds, so each Nix task
@@ -81,6 +82,14 @@ n statix check "$t" && n deadnix --fail "$t" && nix flake check --all-systems --
 [tasks.blocks]
 description = "Build, format, lint and test every written block alone; one in work fails nothing"
 run = "rescript build > /dev/null && node model/built.res.mjs"
+
+[tasks.update]
+description = "Move the flake's inputs to their branches' heads and workerd past the release delay, and name a newer NixOS release: `update [--dry-run]`"
+usage = '''
+flag "-n --dry-run" help="Say what would move and write nothing"
+flag "--major" help="Refused: nothing here has a range to cross"
+'''
+run = "rescript build > /dev/null && node scripts/update.res.mjs"
 
 [tasks.verify]
 description = "What a commit has to pass: everything formatted, the check, every block alone, and the crates' dependencies once there are crates"
