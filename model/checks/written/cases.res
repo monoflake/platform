@@ -687,17 +687,60 @@ let run = () => {
     let j = read(path)
     let typed = (x, n, what) =>
       switch text(x->member("type")) {
-      | Some(t) if declared->Dict.get(t) != None => Some(t)
-      | _ =>
+      | Some(t) if declared->Dict.get(t) != None => Some(#type_(t))
+      | Some(_) =>
         found->Array.push(`${path}: ${what} ${int(n)}, no type declared`)
         None
+      | None =>
+        switch text(x->member("interface"))->Option.flatMap(name =>
+          Contracts.interfaces->Array.find(i => i.name == name)
+        ) {
+        | Some(i) => Some(#call(i))
+        | None =>
+          found->Array.push(`${path}: ${what} ${int(n)}, neither a type declared nor an interface`)
+          None
+        }
+      }
+    // A call, `contracts.json`'s `call`, fhg6w: its interface's own, an operation of it, the input
+    // that operation reads, and the capabilities it carries, each bytes, none written absent.
+    let called = (s, i: Subset.interface_, json, at) =>
+      switch json->JSON.Decode.object {
+      | Some(d) =>
+        let fail = why => s.found->Array.push(`${at}: ${why}`)
+        if text(d->Dict.get("interface")) != Some(i.name) {
+          fail(`a call of ${i.name} names another interface`)
+        }
+        switch text(d->Dict.get("operation"))->Option.flatMap(o =>
+          i.operations->Array.find(x => x.name == o)
+        ) {
+        | Some(o) =>
+          conforms(s, Type(o.input), d->Dict.get("input")->Option.getOr(Null), Codec, `${at}.input`)
+        | None => fail(`no operation of ${i.name}`)
+        }
+        switch d->Dict.get("capabilities") {
+        | None => ()
+        | Some(c) => conforms(s, List(Prim(#bytes)), c, Codec, `${at}.capabilities`)
+        }
+        d
+        ->Dict.keysToArray
+        ->Array.forEach(k =>
+          if !(["interface", "operation", "input", "capabilities"]->Array.includes(k)) {
+            fail(`${k}, nothing a call holds`)
+          }
+        )
+      | None => s.found->Array.push(`${at}: a call is an object`)
+      }
+    let held = (s, t, json, at) =>
+      switch t {
+      | #type_(t) => conforms(s, Type(t), json, Codec, at)
+      | #call(i) => called(s, i, json, at)
       }
     items(j->member("samples"))->Array.forEachWithIndex((x, n) =>
       switch typed(x, n, "sample") {
       | Some(t) =>
         pairs := pairs.contents + 1
         let s = {found, captured: Set.make(), bounds: dict{}, declared: [], fixtures: []}
-        conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, `${path}#${int(n)}`)
+        held(s, t, x->member("json")->Option.getOr(Null), `${path}#${int(n)}`)
         switch text(x->member("cbor")) {
         | Some(h) if isHex(h) && h != "" => ()
         | _ => found->Array.push(`${path}#${int(n)}: no CBOR in lowercase hex`)
@@ -710,7 +753,7 @@ let run = () => {
       | Some(t) =>
         refused := refused.contents + 1
         let s = {found: [], captured: Set.make(), bounds: dict{}, declared: [], fixtures: []}
-        conforms(s, Type(t), x->member("json")->Option.getOr(Null), Codec, "")
+        held(s, t, x->member("json")->Option.getOr(Null), "")
         if s.found == [] {
           found->Array.push(`${path}: refused ${int(n)} is read, yet every reader must refuse it`)
         }

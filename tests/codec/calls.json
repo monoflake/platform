@@ -1,0 +1,88 @@
+{
+	"samples": [
+		{
+			"interface": "object",
+			"json": {
+				"interface": "object",
+				"operation": "write",
+				"input": {
+					"name": "a",
+					"content": "aGVsbG8"
+				}
+			},
+			"cbor": "a301666f626a6563740265777269746503a2016161024568656c6c6f"
+		},
+		{
+			"interface": "object",
+			"json": {
+				"interface": "object",
+				"operation": "write",
+				"input": {
+					"name": "a",
+					"content": "aGVsbG8"
+				},
+				"capabilities": ["AQID"]
+			},
+			"cbor": "a401666f626a6563740265777269746503a2016161024568656c6c6f048143010203"
+		},
+		{
+			"interface": "storage",
+			"json": {
+				"interface": "storage",
+				"operation": "file_read",
+				"input": {
+					"bucket": 3,
+					"path": "a.txt"
+				}
+			},
+			"cbor": "a3016773746f72616765026966696c655f7265616403a201030265612e747874"
+		}
+	],
+	"refused": [
+		{
+			"interface": "object",
+			"json": {
+				"interface": "object",
+				"operation": "fly",
+				"input": {
+					"name": "a",
+					"content": "aGVsbG8"
+				}
+			},
+			"reason": "malformed"
+		},
+		{
+			"interface": "object",
+			"json": {
+				"interface": "database",
+				"operation": "write",
+				"input": {
+					"name": "a",
+					"content": "aGVsbG8"
+				}
+			},
+			"reason": "malformed"
+		},
+		{
+			"interface": "object",
+			"json": {
+				"interface": "object",
+				"operation": "write"
+			},
+			"reason": "malformed"
+		},
+		{
+			"interface": "object",
+			"json": {
+				"interface": "object",
+				"operation": "write",
+				"input": {
+					"name": "a",
+					"content": "aGVsbG8"
+				},
+				"capabilities": ["AQID="]
+			},
+			"reason": "malformed"
+		}
+	]
+}

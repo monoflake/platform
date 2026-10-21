@@ -28,12 +28,16 @@ mod wire;
 /// - **The shell** of every record, `contracts.json`'s `shell`, is `Shell`.
 /// - **An interface** `object` is the module `interface::object`, holding `VERSION`, a `u32`, and
 ///   for each operation, `write`, a unit struct named in upper camel case, `Write`, implementing
-///   [`Operation`].
+///   [`Operation`]; and `Call`, an enum with a case for each operation, named as its struct and
+///   holding its input, `Call::Write(ObjectWrite)`, implementing [`Called`], so a call read is held
+///   to the type its operation names.
 /// - **The reasons** every operation may fail for are `REASONS`, and those a call between apps
 ///   adds are `CALLING`, each a `&[Reason]`.
 /// - **By a type's name**, `json_to_cbor(name, json)` reads the JSON as that type and gives its
-///   CBOR, and `cbor_to_json(name, cbor)` the reverse, each none for a name no type has: the samples
-///   of `tests/codec/` are held by these.
+///   CBOR, and `cbor_to_json(name, cbor)` the reverse, each none for a name no type has; and **by an
+///   interface's name**, `call_json_to_cbor(name, json)` reads the JSON as a call of it, an
+///   [`Envelope`] of its `Call`, and `call_cbor_to_json(name, cbor)` the reverse: the samples of
+///   `tests/codec/` are held by these.
 pub mod contracts {
 	include!(concat!(env!("OUT_DIR"), "/contracts.rs"));
 }
@@ -90,6 +94,36 @@ pub trait Encoded: Sized {
 	fn to_cbor(&self) -> codec::Value;
 	/// The value its CBOR writes, or why that is not one.
 	fn from_cbor(cbor: &codec::Value) -> Result<Self, Malformed>;
+}
+
+/// A call, every operation's body, `model/contracts.json`'s `call`, RFC fhg6w: an interface's call,
+/// which names its operation and holds its input, and the capabilities it carries, each a COSE Sign1
+/// as it was signed, none written absent. Implementing [`Encoded`] for every [`Called`]: read, its
+/// `interface` is held to the call's, its `operation` chooses how its `input` is read, and an
+/// operation the interface has not is [`Malformed`] at `operation`. A call a certificate makes is
+/// signed whole by its caller, outside this crate.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Envelope<C> {
+	/// The operation and its input.
+	pub call: C,
+	/// The capabilities it carries.
+	pub capabilities: Vec<Vec<u8>>,
+}
+
+/// An interface's call, by its operation; implemented for each interface's `Call` in [`contracts`].
+pub trait Called: Sized {
+	/// Its interface's name.
+	const INTERFACE: &'static str;
+	/// Its operation's name.
+	fn operation(&self) -> &'static str;
+	/// Its input's JSON.
+	fn input_json(&self) -> serde_json::Value;
+	/// Its input's CBOR.
+	fn input_cbor(&self) -> codec::Value;
+	/// The call to the operation named, its input read from JSON, or why it is not one.
+	fn from_json(operation: &str, input: &serde_json::Value) -> Result<Self, Malformed>;
+	/// The call to the operation named, its input read from CBOR, or why it is not one.
+	fn from_cbor(operation: &str, input: &codec::Value) -> Result<Self, Malformed>;
 }
 
 /// A reason an operation may fail for, and the failure a caller acts on, RFC 49qyg.
