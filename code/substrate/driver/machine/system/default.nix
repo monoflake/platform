@@ -145,13 +145,18 @@ in
     # and drawn by chafa 1.18.3 in braille, 32 by 16, its output kept whole but for the cursor it
     # hid and showed, each line opening with the normal weight fastfetch's bold would replace. A
     # configuration names every module it shows, so these are fastfetch's own defaults less the
-    # title and its separator, the display, the local address and the locale.
+    # title and its separator, the display, the local address and the locale, and opened three
+    # lines down, the logo two.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file-raw";
         source = "${./logo.txt}";
+        padding.top = 2;
       };
       modules = [
+        "break"
+        "break"
+        "break"
         "os"
         "host"
         "kernel"
