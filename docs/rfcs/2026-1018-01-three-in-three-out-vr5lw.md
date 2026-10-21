@@ -480,7 +480,8 @@ management interface below, RFC fhg6w.
   platform runs on a machine for its organization -- the blob, a tablet's writer -- is that
   organization's use, never kept back.
 - **A machine runs NixOS**, worked out with the author on 2026-10-19: its newest stable release,
-  with nixpkgs unstable beside it, by a flake, so what a machine is is one revision and nothing kept
+  with what it runs -- containerd, its runtimes, the tailnet -- from nixpkgs unstable, decided by the
+  author on 2026-10-21, by a flake, so what a machine is is one revision and nothing kept
   by hand. It runs four things and no more: containerd, which manages all that runs; the host's
   driver, written in Rust for this system alone, RFC fhg6w, which speaks containerd's own gRPC API by
   the client generated from its protobuf definitions, `containerd-client` in Rust, `docs/lessons/`; the

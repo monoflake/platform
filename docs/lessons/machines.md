@@ -99,3 +99,18 @@ and a firewall of its own: Debian's units, `networking.service` among them, stil
 loader replaced by NixOS's `stub-ld`, and the emergency shell could not start. A machine is
 reinstalled from the provider's image by https://github.com/bin456789/reinstall instead, `nixos
 26.05 --username root --ssh-key <key>`, which installs NixOS through its own netboot.
+
+**What the machine runs moved to unstable, 2026-10-21**: the release, 26.05, carried tailscale
+1.98.10, containerd 2.3.3, runc 1.4.3, crun 1.27.1 and btrfs-progs 6.19.1 the day unstable carried
+1.104.1, 2.4.1, 1.5.2, 1.30.1 and 7.1, both locked the same day; the kernel, 6.18.57, was one. Taking
+those five and workerd from unstable, the release keeping the rest, put a second glibc and libstdc++
+in the set, 1.2 GiB to 1.4 GiB, and three systems kept held 1.9 GB of the ext4.
+
+**containerd 2 unpacks a pull through its transfer service**, whose unpack platforms name overlayfs
+alone: with btrfs the default, `ctr image pull` failed with "no unpack platforms defined" until
+`io.containerd.transfer.v1.local`'s `unpack_config` named btrfs too. The CRI's snapshotter is set
+apart from it, and a layer pulled lands as a subvolume under `/data/containerd`.
+
+**Tailscale replaces `/etc/resolv.conf` with its own resolver**, `100.100.100.100`, which a
+container's network cannot reach; `tailscale set --accept-dns=false`, the module's `extraSetFlags`,
+leaves the machine's nameservers in place.
