@@ -80,6 +80,7 @@ let drivers: dict<driver> = dict{
           {language: #rust, name: "prost-types", major: "0.14"},
           {language: #rust, name: "tonic", major: "0.14"},
           {language: #rust, name: "reqwest", major: "0.13"},
+          {language: #rust, name: "chacha20poly1305", major: "0.11"},
         ],
       },
       {kind: #object, language: #rust, as_: "objects on the machine's file system"},

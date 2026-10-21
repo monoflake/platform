@@ -349,8 +349,13 @@ pub struct Containers<C, N, Q, F> {
 	pub fetch: F,
 	/// The runtimes.
 	pub runtimes: Runtimes,
-	/// Where artifacts are fetched to and each container's output is written.
+	/// Where artifacts are fetched to and each container's output is written, on ext4, root's
+	/// alone; each container's secrets kept sealed there too, so a reboot puts them back.
 	pub state: PathBuf,
+	/// Where each container's secrets are written as files, a directory of its own per container,
+	/// on tmpfs and root's alone, `/run/monoflake/secrets`; each mounted read-only into its
+	/// container, so no value is in a spec.
+	pub secrets: PathBuf,
 	/// The most an artifact may be.
 	pub largest: u64,
 }

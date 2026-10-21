@@ -20,7 +20,7 @@ let blocks: dict<state> = dict{
   "placement": Accepted,
   "pins": Accepted,
   "driver-machine-images": Accepted,
-  "driver-machine-container": InWork,
+  "driver-machine-container": Accepted,
   "driver-machine-management": Accepted,
   "runner": Accepted,
   "serve": Accepted,

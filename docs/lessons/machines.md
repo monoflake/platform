@@ -127,3 +127,18 @@ holds, which every machine would compile, so nixpkgs' stands until the system is
 `base-nossl` holds it; wasmtime 49.0.4 needs `libgcc_s` beside glibc, GLIBC_2.28, so distroless
 `cc`. Both images build for arm64 on an amd64 builder with nothing emulated, since only the stage
 fetching the release runs a command, on the build's own platform.
+
+**A container driven through containerd's API alone, tried on 2026-10-21** on containerd 2.4.1,
+by `containerd-client` 0.9 from Rust, an alpine image with busybox httpd run by runc, crun and
+youki in turn:
+
+- `containerd-client` generates its code from containerd's protobufs as it builds, so `protoc`
+  must be on the build's path; platform's `mise.toml` pins it.
+- **containerd's garbage collector takes a snapshot nothing holds**: one prepared for a container
+  not yet created was gone before `Containers.Create`, until a lease held it from `Prepare` to the
+  container's creation.
+- A task listed by the tasks service names its container by `id`, not `container_id`.
+- `ctr run -d --rm` is refused; a detached task is killed and its container removed apart.
+- busybox httpd as PID 1 ignores SIGTERM, so a stop waits its whole grace before the kill.
+- A CNI bridge plugin run by hand leaves an nftables table, `cni_plugins_masquerade`, which its
+  `DEL` does not remove when the bridge goes.
