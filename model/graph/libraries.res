@@ -58,6 +58,12 @@ let libraries: dict<library> = dict{
     takes: [{language: #rust, name: "serde_json", major: "1"}],
     samples: ["tests/compat"],
   },
+  "serve*": {
+    languages: [#rescript],
+    what: "a component's interfaces served alike on a Worker and on workerd: a call read from its request, its signer verified, handed to its operation's handler, and the output or the error written back, vr5lw, ge55b",
+    agrees: false,
+    uses: ["envelope*", "codec*", "capability*"],
+  },
   "scope*": {
     languages: [#rescript],
     what: "a scope, a concept and never a process: its status and allowance read from its organization's bundle, and whether a need fits it, judged alike by every reader, vuanj",

@@ -2,7 +2,14 @@
 # listed one by one since cargo takes no recursive glob, and held to what is there by the check.
 [workspace]
 resolver = "3"
-members = ["code/libs/codec", "code/libs/compat", "code/libs/envelope", "code/tools/envelope-generator"]
+members = [
+	"code/libs/codec",
+	"code/libs/compat",
+	"code/libs/envelope",
+	"code/substrate/driver/machine/container",
+	"code/substrate/driver/machine/management",
+	"code/tools/envelope-generator",
+]
 
 [workspace.package]
 edition = "2024"

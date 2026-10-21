@@ -63,6 +63,8 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
   | Some((k, v)) =>
     switch (k, mode, v->JSON.Decode.string) {
     | ("$any", Expected, _) => ()
+    // A field that must be absent, since one a sample leaves out is passed over, p8e8k.
+    | ("$absent", Expected, _) => ()
     | ("$capture", Expected, Some(n)) => s.captured->Set.add(n)
     // A moment so many milliseconds before the step is sent, where a time is asked.
     | ("$time", Input, _) =>
