@@ -53,6 +53,14 @@
 			"used": 0,
 			"length": 16773079,
 			"at": 0
+		},
+		{
+			"used": -1,
+			"length": 10
+		},
+		{
+			"used": 0,
+			"length": -1
 		}
 	],
 	"unsealable": [

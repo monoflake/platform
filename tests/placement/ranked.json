@@ -235,6 +235,11 @@
 			"refused": "parcel"
 		},
 		{
+			"parcel": "00000000000000000000000000000000000000000000000000000000000000",
+			"stores": [],
+			"refused": "parcel"
+		},
+		{
 			"parcel": "6ea26a8f240ff1ada0d320ca0b3c738e8c6d0238c7f0d567473e2c5a0fcc684a",
 			"stores": [
 				{

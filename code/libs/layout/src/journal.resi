@@ -27,6 +27,8 @@ type unsealable = Key | Master | Seed | First | Empty | Overfull
 /** Why an object was not opened, the first of these, in their order, the prefix asked of the first
  * object alone, and the segments in their order. */
 type unopened =
+  /** A first segment below 0. */
+  | First
   /** Shorter than its prefix. */
   | Prefix
   /** Revision 2, defined and not built. */

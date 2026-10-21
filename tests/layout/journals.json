@@ -119,8 +119,12 @@
 		}
 	],
 	"unopened": {
-		"of": "the first write's object where `first` is 0, the second's where it is 1, each case changing it so",
+		"of": "the first write's object where `first` is 0, and the second's where it is any other, each case changing it so",
 		"cases": [
+			{
+				"first": -1,
+				"refused": "first"
+			},
 			{
 				"first": 0,
 				"truncate": 4,

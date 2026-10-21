@@ -14,6 +14,6 @@ let blocks: dict<state> = dict{
   "envelope": Accepted,
   "envelope-generator": Accepted,
   "keys": Accepted,
-  "layout": InWork,
-  "placement": InWork,
+  "layout": Accepted,
+  "placement": Accepted,
 }

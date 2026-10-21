@@ -45,7 +45,7 @@ type unopened =
 
 /**
  * Where a piece of `length` bytes goes in a parcel holding `used` already: at `used`, or none where
- * it would not fit, a piece never spanning two parcels.
+ * it would not fit, a piece never spanning two parcels, or where either is below 0.
  */
 let fits: (~used: int, ~length: int) => option<int>
 
