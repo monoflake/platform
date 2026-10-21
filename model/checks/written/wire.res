@@ -480,6 +480,17 @@ let run = () => {
       | _ => ()
       }
     })
+    // A signed record is read wherever its signature travels, so its content changing past new
+    // optional fields raises its version too, RFC fhg6w.
+    let signed = (j: JSON.t) => j->member("signed")->Option.flatMap(s => s->member("records"))
+    items(signed(old))->Array.forEach(r => {
+      let name = r->named("name")
+      switch items(signed(now))->Array.find(x => x->named("name") == name) {
+      | Some(n) if version(n) == version(r) =>
+        same(`signed ${name}`, r->named("content"), n->named("content"))
+      | _ => ()
+      }
+    })
     let interface_ = (j: JSON.t, i) => j->member("interfaces")->Option.flatMap(x => x->member(i))
     switch object(old->member("interfaces")) {
     | Some(d) =>

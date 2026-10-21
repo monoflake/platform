@@ -103,6 +103,49 @@ let crateDependencies = path => {
   found
 }
 
+/** A dependency's requirement as a Cargo.toml writes it inline, none where it names none. */
+let quoted = /^"([^"]+)"$/
+let inline = /version\s*=\s*"([^"]+)"/
+let crateRequirement = (path, name) =>
+  readFileSync(urlIn(path, root))
+  ->String.split("\n")
+  ->Array.findMap(line =>
+    switch line->String.trim->String.split("=")->Array.get(0)->Option.map(String.trim) {
+    | Some(k) if k == name => {
+        let value =
+          line
+          ->String.trim
+          ->String.slice(~start=line->String.trim->String.indexOf("=") + 1)
+          ->String.trim
+        switch (quoted->RegExp.exec(value), inline->RegExp.exec(value)) {
+        | (Some(m), _) | (None, Some(m)) =>
+          m->RegExp.Result.matches->Array.get(0)->Option.flatMap(x => x)
+        | (None, None) => None
+        }
+      }
+    | _ => None
+    }
+  )
+
+/** A package.json's requirement for a dependency, none where it is not a version. */
+let jsonRequirement = (path, name) => {
+  let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
+  ["dependencies", "devDependencies", "peerDependencies"]->Array.findMap(k =>
+    j
+    ->member(k)
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(d => d->Dict.get(name))
+    ->Option.flatMap(JSON.Decode.string)
+  )
+}
+
+/** Whether a requirement stays within a major, `0.11` taking `0.11.2` and `1` taking `^1.4`. */
+let operators = /^[\^~=<>\s]+/
+let within = (requirement, major) => {
+  let bare = requirement->String.replaceRegExp(operators, "")
+  bare == major || bare->String.startsWith(`${major}.`)
+}
+
 /** Whether a Cargo.toml takes the root's lints, `[lints]` with `workspace = true`. */
 let takesLints = path => {
   let section = ref("")
@@ -140,6 +183,19 @@ let held = (path, h: held): option<array<string>> => {
           l == #rust ? h.writtenBy->Option.mapOr([], w => [w]) : [],
         ],
       )
+    // Each package taken at the major the model names, where its manifest writes a version.
+    let majors = (l: lang, manifest, requirement) =>
+      h.takes
+      ->Array.filter(t => (t.language :> lang) == l)
+      ->Array.forEach(t =>
+        switch requirement(manifest, t.name) {
+        | Some(r) if !within(r, t.major) =>
+          found->Array.push(
+            `${manifest}: takes ${t.name} at ${r}, where the model gives ${h.name} its major ${t.major}`,
+          )
+        | _ => ()
+        }
+      )
     manifests->Array.forEach(((m, l)) =>
       switch (files->Array.includes(m), h.languages->Array.includes(l)) {
       | (true, false) =>
@@ -172,6 +228,7 @@ let held = (path, h: held): option<array<string>> => {
           found->Array.push(`${manifest}: takes ${d}, which ${h.name} neither uses nor takes`)
         }
       )
+      majors(#rust, manifest, crateRequirement)
     }
     if files->Array.includes("package.json") {
       let manifest = `${path}/package.json`
@@ -190,6 +247,7 @@ let held = (path, h: held): option<array<string>> => {
           found->Array.push(`${manifest}: takes ${d}, which ${h.name} neither uses nor takes`)
         }
       )
+      majors(#rescript, manifest, jsonRequirement)
     }
     if files->Array.includes("rescript.json") {
       let manifest = `${path}/rescript.json`
