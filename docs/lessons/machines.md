@@ -155,7 +155,11 @@ it is mounted `noswap`, Linux 6.4 on.
 **fastfetch shows what its configuration names and nothing else**, tried on 2026-10-21 with 2.70.0:
 a configuration file with no `modules` prints the logo alone, so one that sets only the logo lists
 fastfetch's defaults, as `--gen-config` writes them. It opens every logo line with bold, which a
-`file-raw` logo undoes by opening each line with `ESC[22m`. chafa writes `ESC[?25l` before its
+logo undoes with `22` before each of its colors. A `file-raw` logo is printed as its bytes, its
+colors fixed; a `file` logo colors by `$1` to `$9`, each a color of the terminal's own palette
+that the configuration names, so it follows the viewer's theme. A palette's names are slots, which
+a theme may fill as it likes: Rose Pine's cyan is a pink. chafa writes `ESC[?25l` before its
 picture and `ESC[?25h` after, hiding the cursor, which a logo leaves out; and its edges are grays
-of each color, so a picture reduced to a few colors by nearest distance paints a white edge pink.
-A logo is kept as chafa wrote it, never redrawn by hand.
+of each color, so a picture reduced to a few colors by nearest distance paints a white edge pink,
+where one sorted by hue, the grays first, keeps each edge with its own leg. A logo is chafa's
+output sorted by a program, never redrawn by hand.
