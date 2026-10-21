@@ -1,0 +1,415 @@
+{
+	"interface": "blob",
+	"cases": [
+		{
+			"description": "content put is read whole and by range, described, listed and deleted",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG8",
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						},
+						"range": {
+							"start": 1,
+							"length": 3
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "ZWxs",
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {
+							"size": 5,
+							"put": {
+								"$any": true
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							}
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"space": "storage"
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"hash": {
+										"$use": "a"
+									},
+									"put": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "delete",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "describe",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "delete",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		},
+		{
+			"description": "the same content put twice has one hash, and a space holds its own alone",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$use": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "compute",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"space": "database"
+					},
+					"expect": {
+						"output": {
+							"entries": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a hash is raised to a stricter placement its stores meet, and refused one they do not",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "opportunistic",
+							"durability": "ephemeral",
+							"custody": "false"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						}
+					},
+					"expect": {
+						"output": {
+							"size": 5,
+							"put": {
+								"$any": true
+							},
+							"placement": {
+								"availability": "opportunistic",
+								"durability": "ephemeral",
+								"custody": "false"
+							}
+						}
+					}
+				},
+				{
+					"call": "raise",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						},
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "raise",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "a"
+						},
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "true"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unplaceable"
+					}
+				},
+				{
+					"call": "raise",
+					"input": {
+						"space": "storage",
+						"hash": "0000000000000000000000000000000000000000000000000000000000000000",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "a list goes a page at a time, after a hash and to a limit",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "YQ"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "a"
+							},
+							"size": 1
+						}
+					}
+				},
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "Yg"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "b"
+							},
+							"size": 1
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"space": "storage",
+						"limit": 1
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"hash": {
+										"$capture": "first"
+									},
+									"put": {
+										"$any": true
+									}
+								}
+							],
+							"next": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "list",
+					"input": {
+						"space": "storage",
+						"after": {
+							"$use": "first"
+						},
+						"limit": 1
+					},
+					"expect": {
+						"output": {
+							"entries": [
+								{
+									"hash": {
+										"$any": true
+									},
+									"put": {
+										"$any": true
+									}
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

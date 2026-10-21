@@ -252,11 +252,22 @@ caller acts on, the reason only told. Three reasons are every operation's and de
 `denied`, a credential missing or wrong; `malformed`, an input that does not parse; and
 `overloaded`, an implementation that cannot answer for a moment, `unavailable` and worth a retry,
 since a database's one writer keeps its callers from meeting a lock, and what is left is load. An operation is reached at `POST /{interface}/{operation}`,
-its input the body, its output or an `error` the answer, JSON or CBOR by the request; an
+its body a call, its output or an `error` the answer, JSON or CBOR by the request; an
 interface's version is raised as a record's is, and the check refuses an operation gone or a type
 it reaches changed while the version stayed. **The platform's own interfaces are all of the
 subset**, a kind's and the database's among them; WIT is an app's alone.
 
+- **A call is every operation's body, and carries what it acts by**, decided by the author on
+  2026-10-20: the interface and the operation it reaches, the operation's input as its type writes
+  it, and the capabilities it carries, each a COSE Sign1 as it was signed, none where absent. So a
+  call is whole wherever it goes -- over HTTP, over a Worker's RPC, held in a queue and run later --
+  and the model checks what it carries as it checks its input; an operation's input names no
+  credential, and a call over HTTP names the operation its path does. **A call made by a
+  certificate is signed**, where what is reached must know who asks, the issuer first: its body is
+  then a COSE Sign1 whose payload is the call's CBOR, `typ` `monoflake:call:1`, under the key the
+  certificate certifies, so the interface, the operation, the input and the capabilities are bound
+  together and none is carried to another. Envelope generates the call with the components that
+  make one.
 - **A union is a field's value, its case named inside it**: a bucket's kind is
   `{"name": "packed", "compress": true}`, so a field belongs to its case alone. It is written as
   ReScript's `@tag` lays it out, so it crosses into ReScript unconverted.

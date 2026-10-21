@@ -214,7 +214,7 @@ let own: dict<component> = dict{
         "its metadata per scope: paths, objects, hashes, references",
         ~contract=["database"],
       ),
-      e("blob", #serve, hard, "content", ~contract=["?blob"]),
+      e("blob", #serve, hard, "content", ~contract=["blob"]),
       e(
         "footing(organization)",
         #serve,
@@ -228,7 +228,7 @@ let own: dict<component> = dict{
         #background,
         soft,
         "sweep: bytes nothing names, hashes nothing counts",
-        ~contract=["?blob"],
+        ~contract=["blob"],
       ),
       e("?clock", #background, soft, "starts the sweep at set times"),
       e(
@@ -290,7 +290,7 @@ let own: dict<component> = dict{
         "calls and status(id), queues' messages, schedules' repeats, the derive index",
         ~contract=["database"],
       ),
-      e("blob", #serve, soft, "derive outputs: a miss runs it again", ~contract=["?blob"]),
+      e("blob", #serve, soft, "derive outputs: a miss runs it again", ~contract=["blob"]),
       e(
         "footing(organization)",
         #deploy,
@@ -355,14 +355,14 @@ let own: dict<component> = dict{
         #background,
         soft,
         "archives a machine copy's WAL and its snapshots, vuanj",
-        ~contract=["?blob"],
+        ~contract=["blob"],
       ),
       e(
         "blob",
         #start,
         hard,
         "a copy added starts from its volume's last snapshot, then takes what is after from its primary, vuanj",
-        ~contract=["?blob"],
+        ~contract=["blob"],
       ),
       key(),
       e("?runner", #start, hard, "its writer and read copies are placed, and a handover decided"),
@@ -637,10 +637,6 @@ let permissive = "MIT OR Apache-2.0"
  */
 let ownUndeclared: array<(string, string)> = [
   ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
-  (
-    "blob",
-    "the blob's interface: content put and read by its hash, a sweep, an archive, b8f35 [B32]",
-  ),
   ("issuer", "the issuer's interface: a capability asked for and signed, vuanj [B32]"),
   (
     "executor",

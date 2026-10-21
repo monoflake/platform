@@ -1,9 +1,10 @@
 /**
  * Every contract together, and the product written from them, RFC fhg6w: `subset/`, the language
  * they are written in; `kinds/`, the interfaces the drivers give, each named in the plural; and
- * `records/`, the records' contents by product, each in the singular; and `products/`, the
- * interfaces the products give, each named for what it carries in the plural, so no two modules
- * share a name, ReScript's being one space across the model.
+ * `records/`, the records' contents by product, each in the singular; `products/`, the interfaces
+ * the products give, and `components/`, those the components beneath them give, each named for what
+ * it carries in the plural, so no two modules share a name, ReScript's being one space across the
+ * model.
  */
 open Subset
 
@@ -22,6 +23,7 @@ let ownTypes: array<declared> = Array.flat([
   Deployments.types,
   Buckets.types,
   Generations.types,
+  Blobs.types,
 ])
 let ownContents: array<content> = Array.flat([
   Storage.contents,
@@ -42,6 +44,7 @@ let interfaces: array<interface_> = [
   Deployments.interface_,
   Buckets.interface_,
   Generations.interface_,
+  Blobs.interface_,
 ]
 
 /** The product: what every language reads, and nothing of the model's code. */
@@ -49,6 +52,25 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
   dict{
     "version": Number(1.),
     "shell": fieldsJson(shell),
+    "call": Object(
+      dict{
+        "fields": {
+          let (name, key) = callInput
+          let input = JSON.Object(
+            dict{
+              "name": JSON.String(name),
+              "key": JSON.Number(Int.toFloat(key)),
+              "shape": JSON.Object(dict{"input": JSON.String("operation")}),
+            },
+          )
+          // By key: the interface and the operation, the input, then the capabilities.
+          let before = call->Array.filter(f => f.key < key)->Array.map(fieldJson)
+          let after = call->Array.filter(f => f.key > key)->Array.map(fieldJson)
+          JSON.Array(Array.concatMany(before, [[input], after]))
+        },
+        "typ": String(callTyp),
+      },
+    ),
     "types": Object(
       Dict.fromArray(
         ownTypes->Array.map(t => (

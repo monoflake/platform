@@ -110,7 +110,7 @@ type operation = {name: string, input: string, output: string, reasons: array<re
 
 /**
  * An interface, a kind's contract among them, vr5lw: each operation reached at `POST
- * /{interface}/{operation}`, its input the body and its output or an `error` the answer, in JSON or
+ * /{interface}/{operation}`, its body a `call` and its output or an `error` the answer, in JSON or
  * CBOR as the request chooses. Its version is raised as a record's is, wnqvu.
  */
 type interface_ = {
@@ -147,6 +147,20 @@ let shell = [
   field("version", 4, Prim(#uint32)),
   optional("content", 5, Prim(#bytes)),
 ]
+
+/**
+ * A call, every operation's body, fhg6w: the interface and the operation it reaches, the
+ * operation's input at key 3, and the capabilities it carries, each a COSE Sign1 as it was signed,
+ * none where absent. The input is the operation's own type, which no shape names, so it is written
+ * apart, `callInput`. A call a certificate makes is signed whole, `typ` `monoflake:call:1`.
+ */
+let call = [
+  field("interface", 1, Prim(#string)),
+  field("operation", 2, Prim(#string)),
+  optional("capabilities", 4, List(Prim(#bytes))),
+]
+let callInput = ("input", 3)
+let callTyp = "monoflake:call:1"
 
 /** Every kind's content opens with its description, free text, empty unless written, v7v3w. */
 let description = optional("description", 0, Prim(#string))

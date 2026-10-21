@@ -38,6 +38,42 @@
 			"optional": true
 		}
 	],
+	"call": {
+		"fields": [
+			{
+				"name": "interface",
+				"key": 1,
+				"shape": {
+					"prim": "string"
+				}
+			},
+			{
+				"name": "operation",
+				"key": 2,
+				"shape": {
+					"prim": "string"
+				}
+			},
+			{
+				"name": "input",
+				"key": 3,
+				"shape": {
+					"input": "operation"
+				}
+			},
+			{
+				"name": "capabilities",
+				"key": 4,
+				"shape": {
+					"list": {
+						"prim": "bytes"
+					}
+				},
+				"optional": true
+			}
+		],
+		"typ": "monoflake:call:1"
+	},
 	"types": {
 		"failure": {
 			"enum": [
@@ -5046,6 +5082,362 @@
 					}
 				}
 			]
+		},
+		"blob-space": {
+			"enum": [
+				{
+					"name": "storage",
+					"code": 1
+				},
+				{
+					"name": "compute",
+					"code": 2
+				},
+				{
+					"name": "database",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"blob-put": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "placement",
+					"key": 2,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "content",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"blob-stored": {
+			"record": [
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"blob-upload-begin": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "placement",
+					"key": 2,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "size",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"blob-upload": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "part",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"blob-upload-append": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "offset",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "content",
+					"key": 3,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"blob-upload-name": {
+			"record": [
+				{
+					"name": "upload",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"blob-upload-state": {
+			"record": [
+				{
+					"name": "received",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "durable",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"blob-upload-aborted": {
+			"record": []
+		},
+		"blob-get": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "range",
+					"key": 3,
+					"shape": {
+						"type": "object-range"
+					},
+					"optional": true
+				}
+			]
+		},
+		"blob-content": {
+			"record": [
+				{
+					"name": "content",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"blob-name": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"blob-described": {
+			"record": [
+				{
+					"name": "size",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "put",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				},
+				{
+					"name": "placement",
+					"key": 3,
+					"shape": {
+						"type": "placement"
+					},
+					"optional": true
+				},
+				{
+					"name": "moving",
+					"key": 4,
+					"shape": {
+						"type": "placement"
+					},
+					"optional": true
+				}
+			]
+		},
+		"blob-raise": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "hash",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "placement",
+					"key": 3,
+					"shape": {
+						"type": "placement"
+					}
+				}
+			]
+		},
+		"blob-raised": {
+			"record": []
+		},
+		"blob-deleted": {
+			"record": []
+		},
+		"blob-list": {
+			"record": [
+				{
+					"name": "space",
+					"key": 1,
+					"shape": {
+						"type": "blob-space"
+					}
+				},
+				{
+					"name": "after",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					},
+					"optional": true
+				},
+				{
+					"name": "limit",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
+				}
+			]
+		},
+		"blob-entry": {
+			"record": [
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "put",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"blob-listed": {
+			"record": [
+				{
+					"name": "entries",
+					"key": 1,
+					"shape": {
+						"list": {
+							"type": "blob-entry"
+						}
+					}
+				},
+				{
+					"name": "next",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					},
+					"optional": true
+				}
+			]
 		}
 	},
 	"reasons": [
@@ -5673,6 +6065,148 @@
 							"failure": "rejected"
 						}
 					]
+				}
+			]
+		},
+		"blob": {
+			"version": 1,
+			"bounds": {
+				"part": 16777216
+			},
+			"declared": [],
+			"operations": [
+				{
+					"name": "put",
+					"input": "blob-put",
+					"output": "blob-stored",
+					"reasons": [
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "unplaceable",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "upload_begin",
+					"input": "blob-upload-begin",
+					"output": "blob-upload",
+					"reasons": [
+						{
+							"name": "unplaceable",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "upload_append",
+					"input": "blob-upload-append",
+					"output": "blob-upload-state",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "wrong_offset",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "upload_describe",
+					"input": "blob-upload-name",
+					"output": "blob-upload-state",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "upload_finish",
+					"input": "blob-upload-name",
+					"output": "blob-stored",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "size_differs",
+							"failure": "rejected"
+						},
+						{
+							"name": "storage_full",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "upload_abort",
+					"input": "blob-upload-name",
+					"output": "blob-upload-aborted",
+					"reasons": []
+				},
+				{
+					"name": "get",
+					"input": "blob-get",
+					"output": "blob-content",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "describe",
+					"input": "blob-name",
+					"output": "blob-described",
+					"reasons": []
+				},
+				{
+					"name": "raise",
+					"input": "blob-raise",
+					"output": "blob-raised",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "unplaceable",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "delete",
+					"input": "blob-name",
+					"output": "blob-deleted",
+					"reasons": []
+				},
+				{
+					"name": "list",
+					"input": "blob-list",
+					"output": "blob-listed",
+					"reasons": []
 				}
 			]
 		}

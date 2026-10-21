@@ -1,0 +1,286 @@
+{
+	"interface": "blob",
+	"cases": [
+		{
+			"description": "a part past its bound is refused, put or appended, and one at it is taken",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 1
+								}
+							}
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				},
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 0
+								}
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$any": true
+							},
+							"size": 16777216
+						}
+					}
+				},
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": {
+									"bound": "part",
+									"plus": 1
+								}
+							}
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				}
+			]
+		},
+		{
+			"description": "a placement no store of the scope meets is refused, put, begun or appended to",
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "true"
+						},
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unplaceable"
+					}
+				},
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "true"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unplaceable"
+					}
+				}
+			]
+		},
+		{
+			"description": "past the room its stores hold, a write fails for room, put, appended or finished",
+			"given": {
+				"room": 1024
+			},
+			"steps": [
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": {
+							"$bytes": {
+								"length": 2048
+							}
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				},
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": 2048
+							}
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				}
+			]
+		},
+		{
+			"description": "what an upload holds past its last whole piece is written as it finishes, and fails there for room",
+			"given": {
+				"room": 1024
+			},
+			"steps": [
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": {
+							"$bytes": {
+								"length": 1000
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 1000,
+							"durable": 0
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 1000,
+						"content": {
+							"$bytes": {
+								"length": 100
+							}
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 1100,
+							"durable": 0
+						}
+					}
+				},
+				{
+					"call": "upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "storage_full"
+					}
+				}
+			]
+		}
+	]
+}

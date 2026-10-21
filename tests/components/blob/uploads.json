@@ -1,0 +1,364 @@
+{
+	"interface": "blob",
+	"cases": [
+		{
+			"description": "an upload appended in order is finished as one content, read back whole",
+			"steps": [
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"size": 10
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": 16777216
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_describe",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 5,
+						"content": "d29ybGQ"
+					},
+					"expect": {
+						"output": {
+							"received": 10,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$capture": "h"
+							},
+							"size": 10
+						}
+					}
+				},
+				{
+					"call": "get",
+					"input": {
+						"space": "storage",
+						"hash": {
+							"$use": "h"
+						}
+					},
+					"expect": {
+						"output": {
+							"content": "aGVsbG93b3JsZA",
+							"size": 10
+						}
+					}
+				},
+				{
+					"call": "put",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"content": "aGVsbG93b3JsZA"
+					},
+					"expect": {
+						"output": {
+							"hash": {
+								"$use": "h"
+							},
+							"size": 10
+						}
+					}
+				},
+				{
+					"call": "upload_describe",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "an append anywhere but where what was received ends is refused, and changes nothing",
+			"steps": [
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_offset"
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 6,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "wrong_offset"
+					}
+				},
+				{
+					"call": "upload_describe",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "an upload finished at another size than it began with is refused",
+			"steps": [
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"size": 6
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"output": {
+							"received": 5,
+							"durable": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "size_differs"
+					}
+				}
+			]
+		},
+		{
+			"description": "an upload aborted, or one never begun, is not found",
+			"steps": [
+				{
+					"call": "upload_begin",
+					"input": {
+						"space": "storage",
+						"placement": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						}
+					},
+					"expect": {
+						"output": {
+							"upload": {
+								"$capture": "u"
+							},
+							"part": {
+								"$any": true
+							}
+						}
+					}
+				},
+				{
+					"call": "upload_abort",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "upload_append",
+					"input": {
+						"upload": {
+							"$use": "u"
+						},
+						"offset": 0,
+						"content": "aGVsbG8"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "upload_finish",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "upload_abort",
+					"input": {
+						"upload": {
+							"$use": "u"
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				}
+			]
+		}
+	]
+}

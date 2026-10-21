@@ -71,7 +71,8 @@ let rec conforms = (s: scope, shape: Subset.shape, j: JSON.t, mode, at) => {
       | Some(n) if isInteger(n, 0., 9007199254740991.) => ()
       | _ => fail("$time takes how many milliseconds ago")
       }
-    | ("$use", Input, Some(n)) =>
+    // A value captured before: given as it was, or, expected, the same as it was.
+    | ("$use", Input | Expected, Some(n)) =>
       if !(s.captured->Set.has(n)) {
         fail(`uses ${n}, captured by no step before`)
       }
@@ -240,8 +241,11 @@ let items = j => list(j)->Option.getOr([])
  */
 let capacityOf = name => name == "deployments" ? "container" : name
 
-/** The products' interfaces, whose cases are given configuration rather than capacity. */
-let products = [Buckets.interface_.name, Generations.interface_.name]
+/**
+ * The products' interfaces and the components' beneath them, whose cases are given configuration
+ * rather than capacity.
+ */
+let products = [Buckets.interface_.name, Generations.interface_.name, Blobs.interface_.name]
 
 /**
  * What a product's case is given before its first step: the records changed first, through its
@@ -354,7 +358,10 @@ let run = () => {
       }
     | _ => found->Array.push(`${at}: expects an output, or a failure and its reason`)
     }
-  let behavior = Array.concat(files("tests/kinds"), files("tests/products"))
+  let behavior = Array.concatMany(
+    files("tests/kinds"),
+    [files("tests/products"), files("tests/components")],
+  )
   behavior->Array.forEach(path => {
     let j = read(path)
     switch text(j->member("interface")) {

@@ -89,9 +89,10 @@ owner's. A scope so suspended is deleted after seven days unless it is restored,
 **No component trusts its caller: it checks a capability.** A capability names a scope, a resource, an
 operation and when it expires, and is signed by the issuer alone, through a chain components verify
 with the root's public key and never call at run time -- RFC b8f35. **A request to the issuer is
-signed by its caller**, decided by the author on 2026-10-20: a COSE Sign1 under the key of the
-caller's certificate, which the issuer checks to the root as any component checks a capability, so
-what asks is proven the same way on every vendor and never by the transport. A call is given only the
+signed by its caller**, decided by the author on 2026-10-20: the call whole, a COSE Sign1 under the
+key of the caller's certificate, RFC fhg6w, which the issuer checks to the root as any component
+checks a capability, so what asks is proven the same way on every vendor and never by the
+transport. A call is given only the
 capabilities its app's bindings allow, for that call alone, and passes them down: a product checks
 the resource -- a bucket, whether writes are allowed -- and a component checks the scope. The issuer is
 its own component, reading each scope's grants from its organization's bundle, in the footing, RFC
