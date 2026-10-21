@@ -71,7 +71,7 @@ lib.mkIf config.machine.maintenance.enable {
       c = "clear";
       os = "fastfetch";
       ls = "eza";
-      ll = "eza -l";
+      ll = "eza -la";
       la = "eza -la";
       lt = "eza -T -L 2";
       l = "eza -lah";
