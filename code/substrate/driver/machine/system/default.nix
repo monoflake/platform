@@ -140,11 +140,8 @@ in
   };
 
   environment = {
-    # fastfetch's logo is `logo.nix`, its `$1` to `$3` colors of the viewer's own terminal chosen
-    # nearest the author's, each opening with the normal weight fastfetch's bold would replace. A
-    # configuration names every module it shows, so these are fastfetch's own defaults less the
-    # title and its separator, the display, the local address and the locale, the logo and the
-    # modules both opened three lines down.
+    # The logo's colors are the viewer's own terminal's, `22` undoing fastfetch's bold; the modules
+    # are fastfetch's defaults less what a server has no use for, both opened three lines down.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file";
