@@ -507,7 +507,14 @@ management interface below, RFC fhg6w.
   containerd and the OCI runtimes alone. **An image is built by Docker, in CI, for every
   architecture a machine runs**: Docker is a builder, what it makes is an OCI image any OCI runtime
   runs, and no machine holds it. How an image is built for delivery and reaches the driver is
-  open, the author said on 2026-10-21: for now each is built and tried locally.
+  open, the author said on 2026-10-21: for now each is built and tried locally. **A deployment's
+  secrets are files on a tmpfs, mounted read-only into its container**, its configuration naming
+  their paths alone, decided by the author on 2026-10-21; the driver keeps each sealed on the
+  machine's disk, root's alone, so a container comes back after a reboot. **The seal's key is a file
+  the driver makes beside them on first use**, decided by the author on 2026-10-21: what is sealed
+  is safe from a copy of the sealed files alone, and the machine itself, and so its cloud vendor, is
+  trusted, since no vendor's virtual machine is known to give more; a TPM or a key from the control
+  is a `Seal` of its own where one is worth it.
 
 - **A machine goes back two ways, each set on its own**: its system, by the generations of NixOS it
   keeps, upgraded at fixed staggered times so a count of generations stands for about as many

@@ -21,8 +21,7 @@ pub(super) const INSIDE: &str = "/run/secrets";
 const PLATFORM: &str = "MONOFLAKE_";
 
 /// A secret's bytes sealed for the driver's state, and opened again.
-// open: where the key is held -- a file of the machine's holder, the machine's TPM, or one the
-// control hands the driver -- is not decided; until it is, a seal is given to the driver whole.
+// Where its key is held is the seal's alone, RFC vr5lw, so another is a `Seal` of its own.
 pub(super) trait Seal: Send + Sync {
 	/// The bytes sealed.
 	fn seal(&self, plain: &[u8]) -> Result<Vec<u8>, Fault>;
@@ -32,8 +31,8 @@ pub(super) trait Seal: Send + Sync {
 
 /// The seal the driver uses: XChaCha20-Poly1305 under a key of its own, a file in its state made
 /// on first use, root's alone; each seal its nonce, at random, then what it encrypts.
-// open: a key beside what it seals guards against a copy of the sealed files alone; where the key
-// moves to is the question `Seal` leaves open.
+// A key beside what it seals guards against a copy of the sealed files alone, the machine itself
+// trusted, RFC vr5lw.
 pub(super) struct KeyFile {
 	cipher: XChaCha20Poly1305,
 }
@@ -44,7 +43,7 @@ impl KeyFile {
 		let path = state.join("secrets.key");
 		let key = match tokio::fs::read(&path).await {
 			Ok(bytes) => Key::try_from(bytes.as_slice())
-				.map_err(|_| Refused::new("unknown", format!("{}: not a key", path.display())))?,
+				.map_err(|_| Refused::new("fault", format!("{}: not a key", path.display())))?,
 			Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
 				let key = Key::generate();
 				directory(state, 0o700).await?;
@@ -109,7 +108,7 @@ impl Places {
 }
 
 fn failed(path: &Path, e: &std::io::Error) -> Refused {
-	Refused::new("unknown", format!("{}: {e}", path.display()))
+	Refused::new("fault", format!("{}: {e}", path.display()))
 }
 
 async fn directory(path: &Path, mode: u32) -> Result<(), Refused> {
