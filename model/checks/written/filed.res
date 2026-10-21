@@ -1,6 +1,10 @@
 /** The checklist, and every open question filed in it. */
 open Base
 
+/** A directory's files, those of its directories beneath among them, by their paths under it. */
+@module("node:fs")
+external readdirAll: (url, {"recursive": bool}) => array<string> = "readdirSync"
+
 type mark = {where: string, mutable text: string}
 
 let run = () => {
@@ -30,7 +34,7 @@ let run = () => {
   let given: array<string> = Fill.part("rfcs")->Option.getOr([])
   [urlIn("docs/rfcs/", root), ...given->Array.map(absolute)]
   ->Array.flatMap(rfcs =>
-    readdirSync(rfcs)
+    readdirAll(rfcs, {"recursive": true})
     ->Array.filter(f => f->String.endsWith(".md"))
     ->Array.toSorted(byText)
     ->Array.map(file => (rfcs, file))

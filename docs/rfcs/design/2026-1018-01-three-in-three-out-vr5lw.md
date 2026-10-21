@@ -576,6 +576,12 @@ with credentials of their own, three in all:
 - **Over HTTPS go named operations alone; any command goes over SSH.** A flaw in the platform's own
   code can then misuse a named operation at worst, never run what it likes on a machine, and SSH
   keeps the handshake and the authentication it is trusted for.
+- **A machine driver serves plain HTTP, and TLS is a reverse proxy's**, decided by the author on
+  2026-10-21: what the driver writes is its operations, on an address its holder configures; where a
+  call must be encrypted -- off the tailnet, or wherever HTTPS is asked above -- a reverse proxy in
+  front of it adds TLS in a line, so no certificate is the driver's to keep. Who may reach which
+  address of a machine, the driver's and a container's, is open, and written as such where the code
+  meets it; the capability comes first, the model of who reaches it after.
 - **What a control asks depends on the driver's kind**, and only what the platform uses -- a
   domain's records, a shell -- never the host's whole. Without either a binding still works: what a
   Cloudflare driver opens is reached at the address the vendor gives it free, as a Worker's.

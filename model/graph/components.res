@@ -293,6 +293,13 @@ let own: dict<component> = dict{
       e("blob", #serve, soft, "derive outputs: a miss runs it again", ~contract=["blob"]),
       e(
         "footing(organization)",
+        #background,
+        soft,
+        "a tick's lease, so one compute of several fires it, v7v3w",
+        ~contract=["record.lease"],
+      ),
+      e(
+        "footing(organization)",
         #deploy,
         hard,
         "the allowance a declaration must fit, and its scope's status, through scope*, vuanj",

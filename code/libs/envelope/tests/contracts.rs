@@ -323,7 +323,8 @@ fn the_reasons_every_operation_and_every_call_may_fail_for() {
 		[
 			("denied", Failure::Rejected),
 			("malformed", Failure::Rejected),
-			("overloaded", Failure::Unavailable)
+			("overloaded", Failure::Unavailable),
+			("rate_limited", Failure::Unavailable)
 		]
 	);
 	let calling: Vec<_> = contracts::CALLING.iter().map(|r| (r.name, r.failure)).collect();

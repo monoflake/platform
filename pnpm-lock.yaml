@@ -59,7 +59,39 @@ importers:
         specifier: workspace:*
         version: link:../keys
 
+  code/libs/serve:
+    dependencies:
+      '@monoflake/capability':
+        specifier: workspace:*
+        version: link:../capability
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../envelope
+
   code/tools/envelope-generator: {}
+
+  code/tools/pins: {}
+
+  code/tools/runner:
+    dependencies:
+      '@monoflake/capability':
+        specifier: workspace:*
+        version: link:../../libs/capability
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:../../libs/codec
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+      '@noble/curves':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
 
 packages:
 

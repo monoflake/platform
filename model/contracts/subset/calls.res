@@ -3,11 +3,14 @@ open Subset
 
 /** The reasons every operation may fail for, none of which an operation declares again: a
  * credential missing or wrong; an input that does not parse, bytes in any text but base64url
- * unpadded among them, fhg6w; and an implementation overloaded for a moment, worth a retry. */
+ * unpadded among them, fhg6w; an implementation overloaded for a moment, worth a retry; and a
+ * caller calling faster than it is let, told apart from the implementation's own load by whose it
+ * is, decided by the author on 2026-10-21, ge55b. */
 let common: array<reason> = [
   {name: "denied", failure: #rejected},
   {name: "malformed", failure: #rejected},
   {name: "overloaded", failure: #unavailable},
+  {name: "rate_limited", failure: #unavailable},
 ]
 
 /** The reasons a call to what is deployed may fail for, beside every operation's: the platform's
@@ -25,6 +28,7 @@ let messages: dict<string> = dict{
   "denied": "The call carries no credential, or one that does not allow it",
   "malformed": "The call is not as its interface writes it",
   "overloaded": "The implementation is busy for a moment; try again",
+  "rate_limited": "The caller is calling faster than it is let; slow down",
   "stopped": "What was called is stopped",
   "ahead": "The generation asked for is ahead of the one held",
   "beyond_allowance": "The change asks for more than the allowance gives",

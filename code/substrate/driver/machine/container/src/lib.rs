@@ -314,9 +314,15 @@ pub trait Fetch: Send + Sync {
 	) -> impl Future<Output = Result<[u8; 32], Unfetched>> + Send;
 }
 
-/// Fetching over HTTPS, or from a `file:` address on the machine.
+/// Fetching over HTTPS; and from a `file:` address only where the machine's holder named a
+/// directory for it, within that directory alone, a regular file followed through no link, so a
+/// caller of `deploy` reads nothing else of the machine. What is refused says no path and no
+/// system error back.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Https;
+pub struct Https {
+	/// The one directory `file:` addresses may name, none where they are refused.
+	pub local: Option<PathBuf>,
+}
 
 /// The OCI runtime binaries, by their paths.
 #[derive(Debug, Clone, PartialEq, Eq)]

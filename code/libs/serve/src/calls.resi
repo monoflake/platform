@@ -5,7 +5,8 @@
  * payload is the call's CBOR, verified by `capability*` to the trust given, its signer handed on; the
  * call handed to its interface's handler; and the handler's output or error written back as an
  * `answer`, in the form `Accept` names, CBOR where it names neither, its HTTP status the error's,
- * `400` for `rejected` but `403` for `denied` and `404` for `not_found`, `503` for `unavailable`,
+ * `400` for `rejected` but `403` for `denied` and `404` for `not_found`, `503` for `unavailable`
+ * but `429` for `rate_limited`, the caller's own pace rather than the implementation's load,
  * `500` for `unknown`, `200` for an output. A request read as no call is `malformed`; a call whose
  * signature does not verify is `denied`; a handler that throws is `unknown`. Which calls must be
  * signed, and by whom, is each handler's to say, answering `denied`. What a component reads of its

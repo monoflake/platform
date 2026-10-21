@@ -6311,6 +6311,10 @@
 		{
 			"name": "overloaded",
 			"failure": "unavailable"
+		},
+		{
+			"name": "rate_limited",
+			"failure": "unavailable"
 		}
 	],
 	"messages": {
@@ -6342,6 +6346,7 @@
 		"not_retiring": "The key named is not being retired",
 		"overloaded": "The implementation is busy for a moment; try again",
 		"quota_exceeded": "The write would go past the quota",
+		"rate_limited": "The caller is calling faster than it is let; slow down",
 		"read_only": "The database is read-only for now",
 		"role_refused": "The role asked for is not one the caller may hold",
 		"size_differs": "The size written differs from the size declared",
@@ -7576,7 +7581,7 @@
 		{
 			"kind": "lease",
 			"half": "organization",
-			"writes": ["compute", "executor"],
+			"writes": ["compute"],
 			"version": 1,
 			"content": "lease",
 			"unique": [["name"]]

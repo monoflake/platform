@@ -18,10 +18,10 @@ let blocks: dict<state> = dict{
   "keys": Accepted,
   "layout": Accepted,
   "placement": Accepted,
-  "pins": InWork,
-  "driver-machine-images": InWork,
+  "pins": Accepted,
+  "driver-machine-images": Accepted,
   "driver-machine-container": InWork,
   "driver-machine-management": Accepted,
   "runner": InWork,
-  "serve": InWork,
+  "serve": Accepted,
 }

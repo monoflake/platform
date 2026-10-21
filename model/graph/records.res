@@ -49,8 +49,9 @@ let own: array<held> = [
   {half: #organization, kind: "parcel", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "journal", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "writer", writes: ["tablet"], from: "b8f35, vuanj"},
-  /* A clock's lock: who holds a name, and until when, v7v3w, vr5lw. */
-  {half: #organization, kind: "lease", writes: ["compute", "executor"], from: "b8f35, v7v3w"},
+  /* A clock's lock: who holds a name, and until when, v7v3w, vr5lw; compute's alone, since the
+   * executor stores nothing, vuanj, decided by the author on 2026-10-21. */
+  {half: #organization, kind: "lease", writes: ["compute"], from: "b8f35, v7v3w"},
 ]
 
 /** Every kind, each writer named as the whole graph names it: a filled role by its filler. */
