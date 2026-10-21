@@ -10,7 +10,7 @@ fn mark(state: &Path, namespace: &str, id: &str) -> PathBuf {
 }
 
 fn failed(path: &Path, e: &std::io::Error) -> Refused {
-	Refused::new("unknown", format!("{}: {e}", path.display()))
+	Refused::new("fault", format!("{}: {e}", path.display()))
 }
 
 /// The stop marked, before it is made.

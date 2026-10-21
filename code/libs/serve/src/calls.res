@@ -103,10 +103,10 @@ let encoded = (form, answer: Answer.t<output>) =>
   | _ => None
   }
 
-// open: no reason names a fault of the implementation's own yet, ge55b
+/** An output that could not be written, the implementation's fault, RFC ge55b. */
 let unwritten: Contracts.Error.t = {
   failure: Unknown,
-  reason: "unknown",
+  reason: "fault",
   message: "The implementation answered an output that could not be written",
 }
 
@@ -149,12 +149,8 @@ let malformed = message =>
 
 let denied = refusal([], "denied", None)
 
-// open: no reason names a fault of the implementation's own yet, ge55b
-let thrown: Contracts.Error.t = {
-  failure: Unknown,
-  reason: "unknown",
-  message: "The implementation failed while answering",
-}
+/** What a handler threw, the implementation's fault, RFC ge55b. */
+let thrown = refusal([], "fault", None)
 
 /** Where a value was not read as its type, and what was expected there. */
 let explained = (m: Envelope.Malformed.t) => {

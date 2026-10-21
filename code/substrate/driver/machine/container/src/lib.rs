@@ -40,7 +40,7 @@ pub struct Refused {
 }
 
 /// What a machine could not do, at a moment, of containerd, the network, btrfs or the fetch:
-/// answered `unknown` unless the step that met it says otherwise.
+/// answered `fault`, RFC ge55b, unless the step that met it says otherwise.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fault(pub String);
 

@@ -564,10 +564,10 @@ async fn an_artifact_nothing_serves_is_unfetchable() {
 }
 
 #[tokio::test]
-async fn a_failure_of_the_machine_is_unknown_and_undoes_what_was_made() {
+async fn a_failure_of_the_machine_is_a_fault_and_undoes_what_was_made() {
 	let (driver, log) = driver("refused", shell(), true);
 	let refused = driver.deploy(&binding(), echo()).await.unwrap_err();
-	assert_eq!(refused.reason, "unknown");
+	assert_eq!(refused.reason, "fault");
 	assert_eq!(refused.message.as_deref(), Some("ERROR: quotas not enabled"));
 	let log = lines(&log);
 	assert!(!log.iter().any(|l| l.starts_with("start ")));

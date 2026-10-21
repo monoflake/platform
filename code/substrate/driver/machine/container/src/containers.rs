@@ -38,7 +38,7 @@ impl Refused {
 
 impl From<Fault> for Refused {
 	fn from(fault: Fault) -> Self {
-		Self::new("unknown", fault.0)
+		Self::new("fault", fault.0)
 	}
 }
 
@@ -176,7 +176,7 @@ fn state(listed: &Listed, asked: bool) -> DeploymentState {
 				runtime: kept.runtime,
 				isolation: vec![ISOLATION],
 			},
-			Err(why) => DeploymentState::Failed { reason: "unknown".into(), message: Some(why) },
+			Err(why) => DeploymentState::Failed { reason: "fault".into(), message: Some(why) },
 		},
 		Some(Task::Created | Task::Other) => DeploymentState::Making,
 		Some(Task::Stopped(status)) => ended(format!("exit status {status}")),
@@ -193,7 +193,7 @@ fn described(
 		.labels
 		.get(labels::VERSION)
 		.and_then(|v| labels::unhex(v))
-		.ok_or_else(|| Refused::new("unknown", format!("{}: no version in its labels", listed.id)))?;
+		.ok_or_else(|| Refused::new("fault", format!("{}: no version in its labels", listed.id)))?;
 	Ok(DeploymentDescribed { runs: runs.clone(), version, state: state(listed, asked) })
 }
 
@@ -240,7 +240,7 @@ where
 		let directory = self.state.join("artifacts");
 		tokio::fs::create_dir_all(&directory)
 			.await
-			.map_err(|e| Refused::new("unknown", format!("{}: {e}", directory.display())))?;
+			.map_err(|e| Refused::new("fault", format!("{}: {e}", directory.display())))?;
 		let file = directory.join(format!("{namespace}-{}.tar", hex(&input.artifact.hash)));
 		match self.fetch.fetch(&input.artifact.address, &file, self.largest).await {
 			Ok(hash) if hash == input.artifact.hash => Ok(file),
@@ -392,7 +392,7 @@ where
 	) -> Result<DeploymentDescribed, Refused> {
 		let mine = self.mine(binding, &input.runs).await?;
 		let listed = chosen(&mine).ok_or_else(|| Refused::bare("not_found"))?;
-		let kept = Kept::read(&listed.labels).map_err(|why| Refused::new("unknown", why))?;
+		let kept = Kept::read(&listed.labels).map_err(|why| Refused::new("fault", why))?;
 		let places = self.places(&binding.namespace, &listed.id);
 		if tokio::fs::try_exists(&places.sealed).await.unwrap_or(false) {
 			let seal = KeyFile::of(&self.state).await?;

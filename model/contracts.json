@@ -6315,6 +6315,10 @@
 		{
 			"name": "rate_limited",
 			"failure": "unavailable"
+		},
+		{
+			"name": "fault",
+			"failure": "unknown"
 		}
 	],
 	"messages": {
@@ -6331,6 +6335,7 @@
 		"depended_on": "Something else depends on what the change removes",
 		"expectation_failed": "What is held is not what the call expected",
 		"extension_invalid": "The extension named is not valid here",
+		"fault": "The implementation failed while answering",
 		"gap": "The frames asked for are no longer all held",
 		"hash_mismatch": "What was fetched does not match its hash",
 		"invalid": "The input is well formed but not valid",

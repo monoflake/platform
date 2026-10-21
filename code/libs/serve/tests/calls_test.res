@@ -1,8 +1,8 @@
 /***
  * `Calls.serve` held to `src/calls.resi`: a call read in either form and answered in either, CBOR
  * where `Accept` names neither; each status by failure and reason; a reason's own message unless
- * one is given; a reason no operation declares, a throwing handler and an output that cannot be
- * written answered `unknown`; a request read as no call `malformed`; and a signed call verified to
+ * one is given; a reason no operation declares answered `unknown`, a throwing handler and an output
+ * that cannot be written `fault`; a request read as no call `malformed`; and a signed call verified to
  * its signer, or `denied`, by the records of `tests/capability/signed.json`.
  */
 open Node
@@ -101,7 +101,7 @@ test("each failure its status, and denied, not_found and rate_limited their own"
       "overloaded",
     ),
     ("/object/describe", describe("paced"), 429, Unavailable, "rate_limited"),
-    ("/object/describe", describe("throw"), 500, Unknown, "unknown"),
+    ("/object/describe", describe("throw"), 500, Unknown, "fault"),
   ]
   for i in 0 to cases->Array.length - 1 {
     switch cases->Array.get(i) {
@@ -158,7 +158,7 @@ test("a reason its operation does not declare is unknown, its reason as given", 
   deepEqual(answerOf(stopped), error(Unknown, "stopped", messageOf("stopped")))
 })
 
-test("a handler that throws or rejects is unknown", async () => {
+test("a handler that throws or rejects is a fault", async () => {
   let thrown = await serve(request("/object/describe", inCbor(describe("throw"))))
   let rejected = await serve(request("/object/describe", inCbor(describe("reject"))))
   [thrown, rejected]->Array.forEach(response => {
@@ -171,12 +171,12 @@ test("a handler that throws or rejects is unknown", async () => {
           | Error(e) => Some((e.failure, e.reason))
           },
       ),
-      Ok(Some((Contracts.Failure.Unknown, "unknown"))),
+      Ok(Some((Contracts.Failure.Unknown, "fault"))),
     )
   })
 })
 
-test("an output its writers cannot write is unknown, in either form", async () => {
+test("an output its writers cannot write is a fault, in either form", async () => {
   let inJson = await serve(
     request(~accept="application/json", "/object/describe", inCbor(describe("unwritable"))),
   )
@@ -195,7 +195,7 @@ test("an output its writers cannot write is unknown, in either form", async () =
           },
       )
     ),
-    [Ok(Some("unknown")), Ok(Some("unknown"))],
+    [Ok(Some("fault")), Ok(Some("fault"))],
   )
 })
 

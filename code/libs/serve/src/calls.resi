@@ -8,7 +8,7 @@
  * `400` for `rejected` but `403` for `denied` and `404` for `not_found`, `503` for `unavailable`
  * but `429` for `rate_limited`, the caller's own pace rather than the implementation's load,
  * `500` for `unknown`, `200` for an output. A request read as no call is `malformed`; a call whose
- * signature does not verify is `denied`; a handler that throws is `unknown`. Which calls must be
+ * signature does not verify is `denied`; a handler that throws is `fault`. Which calls must be
  * signed, and by whom, is each handler's to say, answering `denied`. What a component reads of its
  * bundle and its footing is its own. The model's interface, `docs/code.md`.
  */

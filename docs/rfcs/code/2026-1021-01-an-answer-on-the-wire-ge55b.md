@@ -42,6 +42,9 @@ Decided by the author on 2026-10-21, after the agent read the author's own respo
 - **Load is told by whose it is**: `overloaded`, `503`, where the implementation cannot take more
   for a moment; `rate_limited`, `429`, where the caller calls faster than it is let. Both are every
   operation's.
+- **A fault of the implementation's own is `fault`**, `unknown`, `500`, every operation's: what it
+  threw, or an output it gave that could not be written, decided by the author on 2026-10-21. A
+  reason the operation does not declare is still answered under its own name, `unknown`.
 - **CBOR is what a component answers where a request names neither form**, RFC vr5lw.
 
 ## Proposed
