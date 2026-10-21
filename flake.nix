@@ -1,5 +1,5 @@
 {
-  description = "The platform: a machine's system, and a template a machine's own flake starts from";
+  description = "NixOS module and template for a Linux container host";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -42,7 +42,7 @@
 
       templates.machine = {
         path = system + "/template";
-        description = "A machine of the platform's: its name, its disk and the keys that reach it";
+        description = "NixOS configuration for a Linux container host";
       };
 
       # The template, as it stands, built as a machine would be, so the module is held to it.

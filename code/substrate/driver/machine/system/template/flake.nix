@@ -1,5 +1,5 @@
 {
-  description = "A machine of the platform's";
+  description = "NixOS configuration for a Linux container host";
 
   inputs = {
     platform.url = "github:monoflake/platform";

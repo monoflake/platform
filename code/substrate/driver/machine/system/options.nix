@@ -11,30 +11,30 @@ in
     machine = {
       disk = mkOption {
         type = types.str;
-        description = "The disk the machine's system and its workloads lie on, all of it, by its device.";
+        description = "Block device to partition and install the system onto.";
         example = "/dev/vda";
       };
       keys = mkOption {
         type = types.listOf types.str;
-        description = "The SSH public keys that reach the machine as root, its holder's among them.";
+        description = "SSH public keys authorized to log in as root.";
       };
       tailnet.authKeyFile = mkOption {
         type = types.nullOr file;
         default = null;
-        description = "A file holding a tailnet's auth key, with which the machine joins it at boot.";
+        description = "Path to a file containing a Tailscale auth key, used to join the tailnet at boot.";
       };
     };
     monoflake.driver.bindings = mkOption {
       type = types.listOf file;
       default = [ ];
-      description = "Files each holding a binding's token, which a control made and the driver takes, RFC vr5lw; read once the driver is built.";
+      description = "Paths to files each containing a binding token for the driver.";
     };
   };
 
   config.assertions = [
     {
       assertion = config.machine.keys != [ ];
-      message = "machine.keys is empty, so nothing would reach the machine once it is installed.";
+      message = "machine.keys must not be empty, or no SSH key could log in as root.";
     }
   ];
 }
