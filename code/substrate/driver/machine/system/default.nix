@@ -140,19 +140,18 @@ in
   };
 
   environment = {
-    # fastfetch's logo, `logo.txt`: the NixOS snowflake by Simon Frankau and Tim Cuthbertson, CC BY
-    # 4.0, from nixos-artwork's `nix-snowflake-rainbow.svg`, its legs recolored blue, pink and white
-    # and drawn by chafa 1.18.3 in braille, 32 by 16, each cell then sorted by hue into a leg and
-    # written as fastfetch's `$1` to `$3`. Each is a color of the viewer's own terminal, chosen
-    # nearest the author's, and opens with the normal weight fastfetch's bold would replace. A
+    # fastfetch's logo, `logo.txt`, is this project's own, under its license: the NixOS snowflake
+    # drawn in letters, a leg in `0`, `8` or `@` each, the snowflake itself Simon Frankau and Tim
+    # Cuthbertson's, CC BY 4.0. Its `$1` to `$3` are colors of the viewer's own terminal, chosen
+    # nearest the author's, each opening with the normal weight fastfetch's bold would replace. A
     # configuration names every module it shows, so these are fastfetch's own defaults less the
-    # title and its separator, the display, the local address and the locale, and opened three
-    # lines down, the logo two.
+    # title and its separator, the display, the local address and the locale, the logo and the
+    # modules both opened three lines down.
     etc."xdg/fastfetch/config.jsonc".text = builtins.toJSON {
       logo = {
         type = "file";
         source = "${./logo.txt}";
-        padding.top = 2;
+        padding.top = 3;
         color = {
           "1" = "22;34";
           "2" = "22;36";

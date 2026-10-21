@@ -161,5 +161,7 @@ that the configuration names, so it follows the viewer's theme. A palette's name
 a theme may fill as it likes: Rose Pine's cyan is a pink. chafa writes `ESC[?25l` before its
 picture and `ESC[?25h` after, hiding the cursor, which a logo leaves out; and its edges are grays
 of each color, so a picture reduced to a few colors by nearest distance paints a white edge pink,
-where one sorted by hue, the grays first, keeps each edge with its own leg. A logo is chafa's
-output sorted by a program, never redrawn by hand.
+where one sorted by hue, the grays first, keeps each edge with its own leg. A logo drawn in
+letters is matched cell by cell against the picture's shape, each letter drawn in the terminal's
+font, both softened first so a slanted edge does not flip on a pixel; a logo is drawn by a program
+from the picture, never by hand.
