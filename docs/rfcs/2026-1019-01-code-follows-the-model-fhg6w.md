@@ -139,8 +139,9 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   one subject, and one written in two languages is one directory holding each language's
   manifest beside the other's, decided by the author on 2026-10-19 with `envelope`, the
   contracts' types and their encoding, which cargo and ReScript each take as their own package
-  there. Its generators are one tool so too, `code/tools/envelope/`, each written in the language
-  it writes.
+  there. Its generators are one tool so too, `code/tools/envelope-generator/`, each written in
+  the language it writes; the tool is named for what it does, as the library holds the subject's
+  name, decided by the author on 2026-10-20.
 - **Each component declares its language in the model**, decided by the author on 2026-10-19, and
   the language follows from where it must run: ReScript for what must run on a Worker, which then
   runs in `workerd` on a machine alike, and Rust for what runs only natively on a machine. Since an
@@ -179,8 +180,10 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   and hands each call to the implementation of its kind.
 - **What is generated is never committed**: `model/contracts.json` is the one product committed,
   and an envelope generated from it would be a second copy to drift. A build writes it again
-  first, into `generated/`, then compiles ReScript, then cargo, then bundles each Worker by
-  tsdown; the order is a script's, `scripts/`. Every output -- `.res.mjs` beside its source,
+  first, then compiles ReScript, then cargo, then bundles each Worker by tsdown; the order is a
+  script's, `scripts/`. **Rust's is written by the library's `build.rs`, into cargo's `OUT_DIR`,
+  and ReScript's by `mise run generate`, into the library's `generated/`**, decided by the author on
+  2026-10-20, so cargo builds alone, and `mise run prepare` readies a fresh clone. Every output -- `.res.mjs` beside its source,
   `target/`, each package's `dist/`, `generated/` -- is ignored.
 
 **A wire contract encodes as JSON for an API, and as CBOR for a record of the footing, a bundle and

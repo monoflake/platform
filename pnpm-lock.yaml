@@ -17,6 +17,16 @@ importers:
 
   code/libs/codec: {}
 
+  code/libs/compat: {}
+
+  code/libs/envelope:
+    dependencies:
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:../codec
+
+  code/tools/envelope-generator: {}
+
 packages:
 
   '@rescript/darwin-arm64@12.3.1':

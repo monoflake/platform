@@ -52,7 +52,8 @@ alone.
 
 | Command                  | Does                                                  |
 | ------------------------ | ----------------------------------------------------- |
-| `pnpm install`           | once, the ReScript compiler                           |
+| `mise run prepare`       | once in a clone: installed, compiled, generated       |
+| `mise run generate`      | the ReScript a tool writes of a library, again        |
 | `mise run check`         | compiles the model and runs `model/check.res`         |
 | `mise run check --ready` | asks whether building may begin                       |
 | `mise run check --write` | writes `model/contracts.json` again from the model    |

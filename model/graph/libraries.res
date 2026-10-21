@@ -27,9 +27,11 @@ type library = {
 let libraries: dict<library> = dict{
   "envelope*": {
     languages: [#rust, #rescript],
-    what: "the contracts' types and their JSON and CBOR, generated from model/contracts.json by code/tools/envelope, fhg6w",
+    what: "the contracts' types, their JSON and CBOR and each interface's operations, written from model/contracts.json by envelope-generator, fhg6w",
     agrees: true,
     uses: ["codec*"],
+    takes: [{language: #rust, name: "serde_json", major: "1"}],
+    samples: ["tests/codec"],
   },
   "codec*": {
     languages: [#rust, #rescript],

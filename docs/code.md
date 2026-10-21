@@ -36,6 +36,15 @@ against it, and the whole is held by the conversation.
   Cargo builds a crate alone already, by `-p`. Accept builds no model: the model is the
   conversation's, compiled before it dispatches, and two builds of one package at once collide on
   its lock.
+- **A generated library's sources are its tool's, and the preparation writes them**, decided by
+  the author on 2026-10-20, `model/graph/tools.res`. A tool is a block in `code/tools/`, its
+  package named as the model names it, `envelope-generator`, since a library already holds the
+  subject's name. Its Rust runs in the library's `build.rs`, which writes into cargo's `OUT_DIR`, so
+  `cargo` alone builds it; its ReScript runs by `mise run generate`, which writes the library's
+  `generated/`, ignored, before `built` builds it. `mise run prepare` makes a fresh clone ready:
+  the packages installed, the model compiled, every generated library written. A crate's
+  `build.rs` is the model's, as its root is, and what the generator writes is held to the
+  library's interface and its samples.
 - **A written block is in work or accepted**, `model/plan/work.res`, decided by the author on
   2026-10-20. The conversation marks it in work as it dispatches a worker or changes its interface,
   and accepted once accept passed and the diff was read. Whatever an accepted block fails -- its

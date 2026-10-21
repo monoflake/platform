@@ -65,7 +65,20 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
     }
   })
   if files->Array.includes("src/lib.rs") {
-    let rust = files->Array.filter(f => f->String.endsWith(".rs") && f != "src/lib.rs")
+    // What a generator writes implements a trait too, so its sources are read beside the block's.
+    let writer =
+      h.writtenBy
+      ->Option.map(w => `code/tools/${w}`)
+      ->Option.mapOr([], w =>
+        filesOf(w)
+        ->Array.filter(f => f->String.endsWith(".rs"))
+        ->Array.map(f => readFileSync(urlIn(`${w}/${f}`, root)))
+      )
+    let rust =
+      files
+      ->Array.filter(f => f->String.endsWith(".rs") && f != "src/lib.rs")
+      ->Array.map(read)
+      ->Array.concat(writer)
     let traits = /pub trait (\w+)/g
     let text = read("src/lib.rs")
     let go = ref(true)
@@ -74,7 +87,7 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       | Some(m) =>
         switch m->RegExp.Result.matches {
         | [Some(t)] =>
-          if !(rust->Array.some(f => read(f)->String.includes(`impl ${t} for`))) {
+          if !(rust->Array.some(text => text->String.includes(`impl ${t} for`))) {
             found->Array.push(`${path}/src/lib.rs: ${t}, implemented for nothing`)
           }
         | _ => ()

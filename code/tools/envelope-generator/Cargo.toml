@@ -1,0 +1,13 @@
+[package]
+name = "envelope-generator"
+version = "0.0.0"
+description = "Writes envelope's Rust from model/contracts.json, its types, their JSON and CBOR and each interface's operations, RFC fhg6w"
+edition.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde_json = "1"

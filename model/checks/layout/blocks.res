@@ -1,6 +1,7 @@
 /**
  * Every block the model asks code of, RFC fhg6w: a component in its layer's directory, a driver's
- * implementation of a kind and its management in `driver/`, and a library in `code/libs/`, each
+ * implementation of a kind and its management in `driver/`, a library in `code/libs/` and a tool in
+ * `code/tools/`, each
  * by the directory it lies in. `code.res` holds the code to them, and a brief and an acceptance are
  * each one block's, `model/brief.res` and `model/accept.res`.
  */
@@ -20,6 +21,8 @@ type held = {
   uses: array<string>,
   takes: array<Libraries.taken>,
   samples: array<string>,
+  /** The tool writing its sources, by its package's name, which its crate builds by. */
+  writtenBy?: string,
 }
 
 /** The directory each layer's components lie in. */
@@ -158,6 +161,21 @@ let expected = () => {
         uses: l.uses,
         takes: l.takes->Option.getOr([]),
         samples: l.samples->Option.getOr([]),
+        writtenBy: ?Tools.writerOf(name),
+      },
+    )
+  )
+  Tools.tools->Dict.forEachWithKey((t, name) =>
+    expected->Map.set(
+      `code/tools/${name}`,
+      {
+        name,
+        languages: t.languages,
+        package: name,
+        license: Components.permissive,
+        uses: [],
+        takes: t.takes->Option.getOr([]),
+        samples: t.samples->Option.getOr([]),
       },
     )
   )
@@ -199,8 +217,10 @@ let find = package => {
   expected->Map.entries->Array.fromIterator->Array.find(((_, h)) => h.package == package)
 }
 
-/** Whether a file of a block, by its path within it, is its interface, the model's to write. */
-let isInterface = file => file->String.endsWith(".resi") || file == "src/lib.rs"
+/** Whether a file of a block, by its path within it, is its interface, the model's to write: a
+ * crate's root and its build script, and each `.resi`. */
+let isInterface = file =>
+  file->String.endsWith(".resi") || file == "src/lib.rs" || file == "build.rs"
 
 /**
  * Whether a file of a block may cross into JavaScript unchecked, as Rust's `unsafe` does: its own

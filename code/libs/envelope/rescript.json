@@ -1,0 +1,13 @@
+{
+	"name": "@monoflake/envelope",
+	"namespace": true,
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "generated" },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
+	"dependencies": ["@monoflake/codec"],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "number": "+4", "error": "+a-110" }
+}

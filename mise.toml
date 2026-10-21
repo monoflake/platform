@@ -41,13 +41,22 @@ flag "--from <revision>" help="The revision its work began at"
 '''
 run = 'node model/accept.res.mjs "$usage_package" ${usage_from:+--from "$usage_from"} && mise run built "$usage_package"'
 
+[tasks.prepare]
+description = "Make a clone ready to build: the packages installed, the model compiled, every generated library written"
+run = "pnpm install && rescript build && mise run generate"
+
+[tasks.generate]
+description = "Write again the ReScript a tool writes of a library, or of one: `generate [<package>]`"
+usage = 'arg "[package]" help="The library, by its package name"'
+run = 'node model/generate.res.mjs ${usage_package:-}'
+
 [tasks.built]
 description = "Build, format, lint and test one block alone, as accept and verify each ask: `built <package>`"
 usage = 'arg "<package>" help="The block, by its package name"'
 run = """
 d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || exit 1
 [ ! -f "$d/Cargo.toml" ] || { cargo fmt --check -p "$p" && cargo clippy -p "$p" --all-targets -- -D warnings && cargo test -p "$p"; } || exit 1
-[ ! -f "$d/rescript.json" ] || { rescript build "$d" && cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; }
+[ ! -f "$d/rescript.json" ] || { mise run generate "$p" && rescript build "$d" && cd "$d" && rescript format --check && node --test 'tests/**/*.mjs'; }
 """
 
 [tasks.blocks]

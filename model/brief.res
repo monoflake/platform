@@ -25,12 +25,22 @@ let lines = (path, h: held) => {
     h.takes->Array.map(t => `${languageName(t.language)}: ${t.name}, major version ${t.major}`)
   let files = filesOf(path)
   let interfaces = files->Array.filter(isInterface)
-  let library = Libraries.libraries->Dict.get(h.name)
+  let tool = Tools.tools->Dict.get(h.name)
+  let what = switch Libraries.libraries->Dict.get(h.name) {
+  | Some(l) => Some(l.what)
+  | None => tool->Option.map(t => t.what)
+  }
+  let generation = switch (h.writtenBy, tool->Option.flatMap(t => t.writes)) {
+  | (Some(w), _) => [`Written by: ${w}, its Rust by build.rs and its ReScript by mise run generate`]
+  | (None, Some(l)) => [`Writes: ${l}'s sources, as model/graph/tools.res says`]
+  | (None, None) => []
+  }
   [
     `# Brief: ${h.name}`,
     "",
     `Directory: ${path}`,
-    ...library->Option.mapOr([], l => [`What: ${l.what}`]),
+    ...what->Option.mapOr([], w => [`What: ${w}`]),
+    ...generation,
     `Languages: ${h.languages->Array.map(languageName)->Array.join(", ")}`,
     `Packages: ${packages->Array.join("; ")}; license ${h.license}`,
     "",

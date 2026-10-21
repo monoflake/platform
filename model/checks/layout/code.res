@@ -134,12 +134,16 @@ let held = (path, h: held): option<array<string>> => {
   } else {
     let found = []
     let allowed = (l: lang) =>
-      Array.concat(
-        h.uses->Array.map(u => {
-          let dir = libraryDir(u)
-          l == #rescript ? `@monoflake/${dir}` : dir
-        }),
-        h.takes->Array.filter(t => t.language == l)->Array.map(t => t.name),
+      Array.concatMany(
+        [],
+        [
+          h.uses->Array.map(u => {
+            let dir = libraryDir(u)
+            l == #rescript ? `@monoflake/${dir}` : dir
+          }),
+          h.takes->Array.filter(t => t.language == l)->Array.map(t => t.name),
+          l == #rust ? h.writtenBy->Option.mapOr([], w => [w]) : [],
+        ],
       )
     manifests->Array.forEach(((m, l)) =>
       switch (files->Array.includes(m), h.languages->Array.includes(l)) {
@@ -254,7 +258,7 @@ let run = () => {
       into(h)->Array.pushMany(problems)
     })
   let inside = path => entries(urlIn(`${path}/`, root), {withFileTypes: true})
-  ["apps", "products", "primitives", "substrate", "platform", "libs"]->Array.forEach(g => {
+  ["apps", "products", "primitives", "substrate", "platform", "libs", "tools"]->Array.forEach(g => {
     let at = urlIn(`code/${g}/`, root)
     if existsSync(at) {
       inside(`code/${g}`)

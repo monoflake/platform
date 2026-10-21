@@ -8,4 +8,9 @@
  */
 type state = InWork | Accepted
 
-let blocks: dict<state> = dict{"codec": Accepted, "compat": Accepted}
+let blocks: dict<state> = dict{
+  "codec": Accepted,
+  "compat": Accepted,
+  "envelope": InWork,
+  "envelope-generator": InWork,
+}

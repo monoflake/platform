@@ -1,0 +1,17 @@
+[package]
+name = "envelope"
+version = "0.0.0"
+description = "The contracts' types, their JSON and CBOR and each interface's operations, written from model/contracts.json, RFC fhg6w"
+edition.workspace = true
+publish.workspace = true
+license = "MIT OR Apache-2.0"
+
+[lints]
+workspace = true
+
+[dependencies]
+codec = { path = "../codec" }
+serde_json = "1"
+
+[build-dependencies]
+envelope-generator = { path = "../../tools/envelope-generator" }
