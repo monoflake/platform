@@ -1,0 +1,84 @@
+{
+	"interface": "directory",
+	"cases": [
+		{
+			"description": "a scope's row is its id, its status and where its backing is kept, signed",
+			"steps": [
+				{
+					"call": "row",
+					"input": {
+						"scope": 1
+					},
+					"expect": {
+						"output": {
+							"row": {
+								"$signed": {
+									"record": "directory",
+									"claims": {
+										"scope": {
+											"$any": true
+										},
+										"status": "active",
+										"backing": {
+											"$any": true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a scope suspended or deleted keeps its row, saying so",
+			"given": {
+				"status": "deleted"
+			},
+			"steps": [
+				{
+					"call": "row",
+					"input": {
+						"scope": 1
+					},
+					"expect": {
+						"output": {
+							"row": {
+								"$signed": {
+									"record": "directory",
+									"claims": {
+										"scope": {
+											"$any": true
+										},
+										"status": "deleted",
+										"backing": {
+											"$any": true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a scope never opened is the one not found",
+			"given": {
+				"opened": false
+			},
+			"steps": [
+				{
+					"call": "row",
+					"input": {
+						"scope": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		}
+	]
+}

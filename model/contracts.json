@@ -2119,6 +2119,10 @@
 				{
 					"name": "component",
 					"code": 5
+				},
+				{
+					"name": "authority",
+					"code": 6
 				}
 			],
 			"ordered": false
@@ -2475,6 +2479,10 @@
 				{
 					"name": "suspended",
 					"code": 2
+				},
+				{
+					"name": "deleted",
+					"code": 3
 				}
 			],
 			"ordered": false
@@ -6059,6 +6067,210 @@
 					}
 				}
 			]
+		},
+		"authority-loan": {
+			"record": [
+				{
+					"name": "host",
+					"key": 1,
+					"shape": {
+						"type": "extension-host"
+					}
+				},
+				{
+					"name": "endpoint",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "levels",
+					"key": 3,
+					"shape": {
+						"type": "placement"
+					}
+				},
+				{
+					"name": "place",
+					"key": 4,
+					"shape": {
+						"type": "extension-place"
+					}
+				},
+				{
+					"name": "quota",
+					"key": 5,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "address",
+					"key": 6,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"authority-record": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "certificate",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "allowance",
+					"key": 3,
+					"shape": {
+						"map": {
+							"type": "allowance-value"
+						}
+					}
+				},
+				{
+					"name": "loans",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "authority-loan"
+						}
+					}
+				},
+				{
+					"name": "status",
+					"key": 5,
+					"shape": {
+						"type": "scope-status"
+					}
+				}
+			]
+		},
+		"authority-pull": {
+			"record": [
+				{
+					"name": "holding",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
+				}
+			]
+		},
+		"authority-pulled": {
+			"record": [
+				{
+					"name": "record",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"authority-certify": {
+			"record": [
+				{
+					"name": "key",
+					"key": 1,
+					"shape": {
+						"type": "confirmation"
+					}
+				},
+				{
+					"name": "role",
+					"key": 2,
+					"shape": {
+						"type": "certificate-role"
+					}
+				}
+			]
+		},
+		"authority-certified": {
+			"record": [
+				{
+					"name": "certificate",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"notice": {
+			"record": [
+				{
+					"name": "generation",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"noticed": {
+			"record": []
+		},
+		"directory-row": {
+			"record": [
+				{
+					"name": "scope",
+					"key": 1,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					}
+				},
+				{
+					"name": "status",
+					"key": 2,
+					"shape": {
+						"type": "scope-status"
+					}
+				},
+				{
+					"name": "backing",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"directory-read": {
+			"record": [
+				{
+					"name": "scope",
+					"key": 1,
+					"shape": {
+						"id": "organization",
+						"half": "platform"
+					}
+				}
+			]
+		},
+		"directory-answer": {
+			"record": [
+				{
+					"name": "row",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
 		}
 	},
 	"reasons": [
@@ -6109,6 +6321,20 @@
 				"form": "record",
 				"typ": "monoflake:bundle:1",
 				"content": "bundle"
+			},
+			{
+				"name": "authority",
+				"version": 1,
+				"form": "record",
+				"typ": "monoflake:authority:1",
+				"content": "authority-record"
+			},
+			{
+				"name": "directory",
+				"version": 1,
+				"form": "record",
+				"typ": "monoflake:directory:1",
+				"content": "directory-row"
 			}
 		],
 		"sections": {
@@ -7052,6 +7278,70 @@
 					"reasons": [
 						{
 							"name": "gap",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"authority": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "pull",
+					"input": "authority-pull",
+					"output": "authority-pulled",
+					"reasons": [
+						{
+							"name": "ahead",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "certify",
+					"input": "authority-certify",
+					"output": "authority-certified",
+					"reasons": [
+						{
+							"name": "role_refused",
+							"failure": "rejected"
+						},
+						{
+							"name": "suspended",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"notices": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "notice",
+					"input": "notice",
+					"output": "noticed",
+					"reasons": []
+				}
+			]
+		},
+		"directory": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "row",
+					"input": "directory-read",
+					"output": "directory-answer",
+					"reasons": [
+						{
+							"name": "not_found",
 							"failure": "rejected"
 						}
 					]

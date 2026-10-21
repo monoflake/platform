@@ -2,8 +2,8 @@
  * Every contract together, and the product written from them, RFC fhg6w: `subset/`, the language
  * they are written in; `kinds/`, the interfaces the drivers give, each named in the plural; and
  * `records/`, the records' contents by product, each in the singular; `products/`, the interfaces
- * the products give, and `components/`, those the components beneath them give, each named for what
- * it carries in the plural, so no two modules share a name, ReScript's being one space across the
+ * the products give, `components/`, those the components beneath them give, and `roles/`, the
+ * platform half's two roles' and their ends here, each named for what it carries in the plural, so no two modules share a name, ReScript's being one space across the
  * model.
  */
 open Subset
@@ -27,6 +27,8 @@ let ownTypes: array<declared> = Array.flat([
   Capabilities.types,
   Runs.types,
   Frames.types,
+  Authorities.types,
+  Directories.types,
 ])
 let ownContents: array<content> = Array.flat([
   Storage.contents,
@@ -51,6 +53,9 @@ let interfaces: array<interface_> = [
   Capabilities.interface_,
   Runs.interface_,
   Frames.interface_,
+  Authorities.interface_,
+  Authorities.notices,
+  Directories.interface_,
 ]
 
 /** The product: what every language reads, and nothing of the model's code. */

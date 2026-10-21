@@ -147,14 +147,14 @@ let own: dict<component> = dict{
         #deploy,
         hard,
         "its certificate, allowance, loans and status, pulled when it holds none and on a notice",
-        ~contract=["?authority"],
+        ~contract=["authority"],
       ),
       e(
         "authority",
         #deploy,
         hard,
         "its bundle's signing key, its alone, certified for seven days and renewed each day, v7v3w",
-        ~contract=["?authority"],
+        ~contract=["authority"],
       ),
       e(
         "driver(machine)",
@@ -324,7 +324,7 @@ let own: dict<component> = dict{
         #deploy,
         hard,
         "its signing key, certified for seven days and renewed each day, the certificate in the bundle and the key a secret deployed beside it, v7v3w",
-        ~contract=["?authority"],
+        ~contract=["authority"],
       ),
     ],
     uses: ["capability*", "vocabulary*", "compat*"],
@@ -374,7 +374,7 @@ let own: dict<component> = dict{
         #deploy,
         hard,
         "where its scope's backing is kept, read as it is deployed and only then, 4dijn",
-        ~contract=["?directory"],
+        ~contract=["directory"],
       ),
       e(
         "footing(organization)",
@@ -451,7 +451,7 @@ let own: dict<component> = dict{
         #deploy,
         hard,
         "where its scope's backing is kept, read as it is deployed and only then, 4dijn",
-        ~contract=["?directory"],
+        ~contract=["directory"],
       ),
       e(
         "footing(organization)",
@@ -556,7 +556,7 @@ let own: dict<component> = dict{
     kind: #provided,
     control: true,
     half: #platform,
-    answers: ["?authority"],
+    answers: ["authority"],
     edges: [],
     uses: [],
   },
@@ -564,7 +564,7 @@ let own: dict<component> = dict{
     layer: -3,
     kind: #provided,
     half: #platform,
-    answers: ["?directory"],
+    answers: ["directory"],
     edges: [],
     uses: [],
   },
@@ -624,13 +624,7 @@ let permissive = "MIT OR Apache-2.0"
  * after `?`, and the row that declares them. A tablet's copies speak among themselves -- WAL frames
  * from a primary, a generation taken by a majority, vuanj -- on no edge, as they are one component.
  */
-let ownUndeclared: array<(string, string)> = [
-  ("authority", "the record an organization's control pulls of its authority, signed, 7xpd3 [B32]"),
-  (
-    "directory",
-    "the directory's rows as they cross, signed: a scope's id, its status and where its backing is, 4dijn [B32]",
-  ),
-]
+let ownUndeclared: array<(string, string)> = []
 
 /** Every contract undeclared, with those the platform half's own components name, RFC 8lkuv. */
 let undeclared = Array.concat(ownUndeclared, Fill.part("undeclared")->Option.getOr([]))

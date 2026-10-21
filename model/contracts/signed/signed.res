@@ -56,7 +56,7 @@ let types: array<declared> = [
   {
     name: "certificate-role",
     def: Enum({
-      choices: codes(["intermediate", "issuer", "bundle", "account", "component"]),
+      choices: codes(["intermediate", "issuer", "bundle", "account", "component", "authority"]),
       ordered: false,
     }),
     from: "b8f35",
@@ -175,11 +175,16 @@ let types: array<declared> = [
     ]),
     from: "b8f35",
   },
-  // Whether a scope runs, as its authority's record says; one deleted has no bundle, 4dijn.
+  // Whether a scope runs, one type wherever it is said: its directory's row, its authority's record
+  // and its bundle, which never says deleted, since a scope deleted has none, 4dijn, 7xpd3.
   {
     name: "scope-status",
     def: Enum({
-      choices: [{name: "active", code: 1}, {name: "suspended", code: 2}],
+      choices: [
+        {name: "active", code: 1},
+        {name: "suspended", code: 2},
+        {name: "deleted", code: 3},
+      ],
       ordered: false,
     }),
     from: "4dijn, vuanj",
@@ -205,6 +210,8 @@ let signed: array<signed> = [
   {name: "certificate", version: 1, form: #claims, content: "certificate"},
   {name: "account", version: 1, form: #claims, content: "account-credential"},
   {name: "bundle", version: 1, form: #record, content: "bundle"},
+  {name: "authority", version: 1, form: #record, content: "authority-record"},
+  {name: "directory", version: 1, form: #record, content: "directory-row"},
 ]
 
 /**

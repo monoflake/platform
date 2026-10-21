@@ -287,6 +287,7 @@ let own: array<item> = [
     group: #B,
     what: "the interfaces between the platform's own components, and the products' an app calls, declared in the subset with samples as the kinds' are: every contract an edge names after `?`, model/graph/components.res's undeclared",
     from: "found, fhg6w",
+    done: "vuanj, b8f35, 7xpd3, 4dijn: storage and configuration; the blob, the issuer, the executor and the copies; the authority, its notices and the directory, each in model/contracts/ with its cases",
   },
   {
     id: "B33",

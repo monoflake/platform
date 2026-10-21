@@ -68,3 +68,24 @@ its certificate expires.
 **No authority is published, only the cases it is held to**, decided by the author on 2026-10-20:
 a reference authority would be the glue itself, so this repository gives the contract and, with it
 once declared, its cases in `tests/kinds/`, against which a team checks the authority it writes.
+
+**The contract is declared**, decided by the author on 2026-10-20,
+`model/contracts/roles/authorities.res`, its cases in `tests/kinds/authorities/`:
+
+- **`pull` answers the record, `certify` a working key's certificate**, each a call the control
+  signs with the organization's own key; and the control gives `notice`, which carries a generation
+  alone. The record is a signed record of its own, `monoflake:authority:1`: its generation, the
+  organization's certificate as signed, its allowance, what it is lent and its status.
+- **No record is taken back**: the authority's generation only rises, the control takes no record
+  below the one it holds, and a pull holding a generation past the authority's is refused, `ahead`,
+  so a record replayed can never undo a suspension.
+- **The authority signs under a role of its own**, `authority`, certified by the intermediate; it
+  signs the directory's rows too, RFC 4dijn, since they are its writes.
+- **It certifies an organization's keys, never its components'**: the issuer's and the bundle's,
+  and the organization's own at opening. Each instance of a component holds a key its organization's
+  key certifies, in a chain to the root, RFC b8f35, so the platform half's work grows with the
+  organizations and never with what each runs.
+- **What a loan crosses as holds no secret**, as no signed record does: its host, endpoint, levels,
+  place, quota and whether it has an address; what binding it asks past these waits on C3.
+- **An account credential is no part of it**: it is signed as a person signs in, which is the
+  person's with the authority and never the control's.

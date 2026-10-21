@@ -37,3 +37,12 @@ blob's and the extent's, each reading where its scope's backing is kept.
 reaches an organization by the authority's record, its status there and a notice of the change,
 RFC 7xpd3, never by the directory, which answers where a backing is, and that changes only as a
 backing moves, when what reads it is deployed again.
+
+**The contract is declared**, decided by the author on 2026-10-20,
+`model/contracts/roles/directories.res`, its cases in `tests/kinds/directories/`: one operation,
+`row`, a call the reader signs with its certificate, answering the row as a record the authority
+signs, `monoflake:directory:1`. **A row is never removed**, so a scope deleted answers as deleted
+and only an id never opened is not found. **Being signed, a row may come with the deployment of
+what reads it**, verified the same way, so reading it is the deployer's choice and never a trust.
+**A scope's status is one type wherever it is said** -- a row, the authority's record, a bundle --
+`active`, `suspended` or `deleted`, a bundle never saying the last, since a scope deleted has none.

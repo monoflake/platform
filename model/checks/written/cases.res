@@ -278,6 +278,26 @@ let capacityOf = name => name == "deployments" ? "container" : name
 /** The products' interfaces, whose cases are given configuration rather than capacity. */
 let products = [Buckets.interface_.name, Generations.interface_.name]
 
+/**
+ * The platform half's roles' contracts, whose cases are given what the role holds of the one
+ * organization a case is about, a team writing its own holding them to these, 7xpd3.
+ */
+let roles = [Authorities.interface_.name, Directories.interface_.name, Authorities.notices.name]
+
+/**
+ * What a role's case is given: the authority's generation for the organization, its status,
+ * allowance and loans; and whether its scope was ever opened, a directory's row being never
+ * removed, so a scope not opened is the one not found. Unset, the organization is open and active,
+ * its allowance without bounds and nothing lent.
+ */
+let roleGiven = [
+  Subset.optional("generation", 1, Prim(#uint53)),
+  Subset.optional("status", 2, Type("scope-status")),
+  Subset.optional("allowance", 3, Map(Type("allowance-value"))),
+  Subset.optional("loans", 4, List(Type("authority-loan"))),
+  Subset.optional("opened", 5, Prim(#bool)),
+]
+
 /** The components' interfaces, beneath the products, whose cases are given what they read. */
 let components = [
   Blobs.interface_.name,
@@ -440,6 +460,11 @@ let run = () => {
           | Some(g) if products->Array.includes(name) =>
             switch g->JSON.Decode.object {
             | Some(d) => record(s, productGiven, d, [], Input, `${at}.given`)
+            | None => found->Array.push(`${at}: given, no object`)
+            }
+          | Some(g) if roles->Array.includes(name) =>
+            switch g->JSON.Decode.object {
+            | Some(d) => record(s, roleGiven, d, [], Input, `${at}.given`)
             | None => found->Array.push(`${at}: given, no object`)
             }
           | Some(g) if components->Array.includes(name) =>

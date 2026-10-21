@@ -1,0 +1,326 @@
+{
+	"interface": "authority",
+	"cases": [
+		{
+			"description": "a control holding nothing pulls the record its authority signs: its certificate, allowance, loans and status",
+			"steps": [
+				{
+					"call": "pull",
+					"input": {},
+					"expect": {
+						"output": {
+							"record": {
+								"$signed": {
+									"record": "authority",
+									"claims": {
+										"generation": {
+											"$any": true
+										},
+										"certificate": {
+											"$any": true
+										},
+										"allowance": {},
+										"loans": [],
+										"status": "active"
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a pull holding the generation there is answers it again, and one holding a later one is refused, so no record is taken back",
+			"given": {
+				"generation": 5
+			},
+			"steps": [
+				{
+					"call": "pull",
+					"input": {
+						"holding": 5
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"$signed": {
+									"record": "authority",
+									"claims": {
+										"generation": 5,
+										"certificate": {
+											"$any": true
+										},
+										"allowance": {},
+										"loans": [],
+										"status": "active"
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "pull",
+					"input": {
+						"holding": 4
+					},
+					"expect": {
+						"output": {
+							"record": {
+								"$signed": {
+									"record": "authority",
+									"claims": {
+										"generation": 5,
+										"certificate": {
+											"$any": true
+										},
+										"allowance": {},
+										"loans": [],
+										"status": "active"
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "pull",
+					"input": {
+						"holding": 6
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "ahead"
+					}
+				}
+			]
+		},
+		{
+			"description": "what the authority sets of an organization is what its record says",
+			"given": {
+				"status": "suspended",
+				"allowance": {
+					"storage": {
+						"name": "amount",
+						"value": 1099511627776
+					}
+				},
+				"loans": [
+					{
+						"host": {
+							"driver": "machine",
+							"identifier": "m1"
+						},
+						"endpoint": "https://m1.invalid",
+						"levels": {
+							"availability": "best_effort",
+							"durability": "persistent",
+							"custody": "false"
+						},
+						"place": {
+							"site": "a"
+						},
+						"quota": 1073741824,
+						"address": true
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "pull",
+					"input": {},
+					"expect": {
+						"output": {
+							"record": {
+								"$signed": {
+									"record": "authority",
+									"claims": {
+										"generation": {
+											"$any": true
+										},
+										"certificate": {
+											"$any": true
+										},
+										"allowance": {
+											"storage": {
+												"name": "amount",
+												"value": 1099511627776
+											}
+										},
+										"loans": [
+											{
+												"host": {
+													"driver": "machine",
+													"identifier": "m1"
+												},
+												"endpoint": "https://m1.invalid",
+												"levels": {
+													"availability": "best_effort",
+													"durability": "persistent",
+													"custody": "false"
+												},
+												"place": {
+													"site": "a"
+												},
+												"quota": 1073741824,
+												"address": true
+											}
+										],
+										"status": "suspended"
+									}
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a working key is certified for the issuer or the bundle, and refused any other role",
+			"steps": [
+				{
+					"call": "certify",
+					"input": {
+						"key": {
+							"key": {
+								"kty": "okp",
+								"crv": "ed25519",
+								"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+							}
+						},
+						"role": "issuer"
+					},
+					"expect": {
+						"output": {
+							"certificate": {
+								"$signed": {
+									"record": "certificate",
+									"claims": {
+										"iat": {
+											"$any": true
+										},
+										"exp": {
+											"$any": true
+										},
+										"cnf": {
+											"key": {
+												"kty": "okp",
+												"crv": "ed25519",
+												"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+											}
+										},
+										"scope": {
+											"$any": true
+										},
+										"role": "issuer"
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "certify",
+					"input": {
+						"key": {
+							"key": {
+								"kty": "okp",
+								"crv": "ed25519",
+								"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+							}
+						},
+						"role": "bundle"
+					},
+					"expect": {
+						"output": {
+							"certificate": {
+								"$signed": {
+									"record": "certificate",
+									"claims": {
+										"iat": {
+											"$any": true
+										},
+										"exp": {
+											"$any": true
+										},
+										"cnf": {
+											"key": {
+												"kty": "okp",
+												"crv": "ed25519",
+												"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+											}
+										},
+										"scope": {
+											"$any": true
+										},
+										"role": "bundle"
+									}
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "certify",
+					"input": {
+						"key": {
+							"key": {
+								"kty": "okp",
+								"crv": "ed25519",
+								"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+							}
+						},
+						"role": "intermediate"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "role_refused"
+					}
+				},
+				{
+					"call": "certify",
+					"input": {
+						"key": {
+							"key": {
+								"kty": "okp",
+								"crv": "ed25519",
+								"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+							}
+						},
+						"role": "component"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "role_refused"
+					}
+				}
+			]
+		},
+		{
+			"description": "an organization suspended has no working key certified",
+			"given": {
+				"status": "suspended"
+			},
+			"steps": [
+				{
+					"call": "certify",
+					"input": {
+						"key": {
+							"key": {
+								"kty": "okp",
+								"crv": "ed25519",
+								"x": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+							}
+						},
+						"role": "issuer"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "suspended"
+					}
+				}
+			]
+		}
+	]
+}
