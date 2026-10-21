@@ -108,6 +108,7 @@ in
       crun
       youki
       pkgs.unstable.fastfetch-unwrapped
+      pkgs.unstable.htop
     ];
   };
   documentation.enable = false;
