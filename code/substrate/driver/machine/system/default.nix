@@ -107,6 +107,7 @@ in
       pkgs.unstable.runc
       crun
       youki
+      pkgs.unstable.fastfetch-unwrapped
     ];
   };
   documentation.enable = false;
