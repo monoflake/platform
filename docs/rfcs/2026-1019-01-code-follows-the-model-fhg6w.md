@@ -161,12 +161,12 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
 
 - **The root holds their manifests and no package**: `Cargo.toml`, a virtual manifest, its members
   listed one by one, `[workspace.package]` and `[workspace.dependencies]` shared, one `Cargo.lock`
-  and one `target/`; `package.json`, the tools and each package as `workspace:*`, which is how pnpm links it where
-  ReScript looks; `pnpm-workspace.yaml`, taking all beneath
-  `code/`; and `rescript.json`, the model its own sources, every ReScript package listed as a
-  dependency, and what a package cannot set -- its module format and suffix -- set once. Cargo
-  and ReScript take no recursive glob, so `model/checks/layout/workspace.res` holds each list to
-  what is there.
+  and one `target/`; `package.json`, the tools; `pnpm-workspace.yaml`, taking all beneath `code/`;
+  and `rescript.json`, the model its own sources. **Neither of the last two lists a block**,
+  decided by the author on 2026-10-20, so the model compiles alone and each package builds as its
+  own root, one failing failing no other: a package therefore writes its own module format and
+  suffix, `docs/code.md`. Cargo takes no recursive glob, so `model/checks/layout/workspace.res`
+  holds its list to what is there.
 - **A package is named as the model names what it holds**: a component by its name, a half
   written after a hyphen, `control-organization`; a driver's implementation and its management
   by the driver's name and theirs, `driver-machine-object`, `driver-machine-management`; a library
