@@ -151,3 +151,11 @@ named on the kernel's line that is not yet loaded falls back to the default, so 
 filesystem mkswapfile`, which marks it no copy on write, and encrypts swap at random only through
 `cryptsetup` over what it names, a loop device for a file. A tmpfs holds pages swap can take unless
 it is mounted `noswap`, Linux 6.4 on.
+
+**fastfetch shows what its configuration names and nothing else**, tried on 2026-10-21 with 2.70.0:
+a configuration file with no `modules` prints the logo alone, so one that sets only the logo lists
+fastfetch's defaults, as `--gen-config` writes them. It opens every logo line with bold, which a
+`file-raw` logo undoes by opening each line with `ESC[22m`. chafa writes `ESC[?25l` before its
+picture and `ESC[?25h` after, hiding the cursor, which a logo leaves out; and its edges are grays
+of each color, so a picture reduced to a few colors by nearest distance paints a white edge pink.
+A logo is kept as chafa wrote it, never redrawn by hand.
