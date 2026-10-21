@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/envelope-generator",
-	"namespace": true,
+	"namespace": "EnvelopeGenerator",
 	"sources": [
 		{ "dir": "src", "subdirs": true },
 		{ "dir": "tests", "subdirs": true, "type": "dev" }

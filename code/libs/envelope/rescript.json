@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/envelope",
-	"namespace": true,
+	"namespace": "Envelope",
 	"sources": [
 		{ "dir": "src", "subdirs": true },
 		{ "dir": "generated" },

@@ -5,7 +5,8 @@
  * implementations, one a kind its grounds give, each in its own, and of its management, in the
  * language its ground asks, `model/ground/drivers.res`. A library lies in `code/libs/`, a manifest
  * for each of its languages. A package is named as the model names what it holds, `@monoflake/` led
- * where it is ReScript's, and namespaced, and MIT OR Apache-2.0, the root's two texts. What
+ * where it is ReScript's, and namespaced by its subject's name alone, never the project's, the
+ * workspace's `docs/naming.md`, and MIT OR Apache-2.0, the root's two texts. What
  * `monoflake/cloud` keeps lies nowhere here. Anything not yet written is noted, never refused.
  */
 open Base
@@ -34,7 +35,7 @@ let jsonName = path => {
   let j = JSON.parseOrThrow(readFileSync(urlIn(path, root)))
   (
     j->member("name")->Option.flatMap(JSON.Decode.string),
-    j->member("namespace")->Option.flatMap(JSON.Decode.bool),
+    j->member("namespace")->Option.flatMap(JSON.Decode.string),
   )
 }
 
@@ -199,9 +200,13 @@ let held = (path, h: held): option<array<string>> => {
     if files->Array.includes("rescript.json") {
       let manifest = `${path}/rescript.json`
       let scoped = `@monoflake/${h.package}`
+      let namespace = namespaceOf(h.package)
       switch jsonName(manifest) {
-      | (Some(n), Some(true)) if n == scoped => ()
-      | _ => found->Array.push(`${manifest}: no package named ${scoped} and namespaced`)
+      | (Some(n), Some(ns)) if n == scoped && ns == namespace => ()
+      | _ =>
+        found->Array.push(
+          `${manifest}: no package named ${scoped} and namespaced ${namespace}, its subject's name alone`,
+        )
       }
       switch files->Array.includes("package.json")
         ? jsonName(`${path}/package.json`)

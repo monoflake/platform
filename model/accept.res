@@ -87,7 +87,9 @@ switch (named, find(named->Array.get(0)->Option.getOr(""))) {
       | Some(m) =>
         switch m->RegExp.Result.matches {
         | [Some(t)] =>
-          if !(rust->Array.some(text => text->String.includes(`impl ${t} for`))) {
+          // A trait generic over a type is implemented as `impl Bounded<u64> for`, its argument named.
+          let implemented = RegExp.fromString(`impl(<[^>]*>)? ${t}(<[^>]*>)? for `)
+          if !(rust->Array.some(text => implemented->RegExp.test(text))) {
             found->Array.push(`${path}/src/lib.rs: ${t}, implemented for nothing`)
           }
         | _ => ()

@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/codec",
-	"namespace": true,
+	"namespace": "Codec",
 	"sources": [
 		{ "dir": "src", "subdirs": true },
 		{ "dir": "tests", "subdirs": true, "type": "dev" }

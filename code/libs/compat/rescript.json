@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/compat",
-	"namespace": true,
+	"namespace": "Compat",
 	"sources": [
 		{ "dir": "src", "subdirs": true },
 		{ "dir": "tests", "subdirs": true, "type": "dev" }

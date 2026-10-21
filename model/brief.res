@@ -13,7 +13,9 @@ let lines = (path, h: held) => {
   let has = (l: lang) => h.languages->Array.includes(l)
   let packages = Array.concat(
     has(#rust) ? [`the crate ${crate(h)}, Cargo.toml`] : [],
-    has(#rescript) ? [`${scoped(h)}, package.json and rescript.json, namespaced`] : [],
+    has(#rescript)
+      ? [`${scoped(h)}, package.json and rescript.json, namespaced ${namespaceOf(h.package)}`]
+      : [],
   )
   let uses = h.uses->Array.map(u => {
     let dir = libraryDir(u)

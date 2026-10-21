@@ -9,8 +9,8 @@
  * reader does not know is passed over, and anything else not as its type writes it is `t`.
  *
  * - **A type** `bucket-kind` is the module `Contracts.BucketKind`, holding `t`, `toJson: t =>
- *   JSON.t`, `fromJson: JSON.t => result<t, Malformed.t>`, `toCbor: t => MonoflakeCodec.Cbor.value`
- *   and `fromCbor: MonoflakeCodec.Cbor.value => result<t, Malformed.t>`. A record is a record, each
+ *   JSON.t`, `fromJson: JSON.t => result<t, Malformed.t>`, `toCbor: t => Codec.Cbor.value`
+ *   and `fromCbor: Codec.Cbor.value => result<t, Malformed.t>`. A record is a record, each
  *   field named as the contract names it, a ReScript keyword followed by an underscore under
  *   `@as`, `type_`, and an optional one optional; an enumeration a variant without payloads, each
  *   choice in upper camel case under `@as` its name, `best_effort` as `BestEffort`; a union a
@@ -29,7 +29,7 @@
  * - **The reasons** every operation may fail for are `Contracts.reasons`, and those a call between
  *   apps adds are `Contracts.calling`, each an `array<Contracts.reason>`.
  * - **By a type's name**, `Contracts.jsonToCbor: (string, JSON.t) => option<result<
- *   MonoflakeCodec.Cbor.value, Malformed.t>>` reads the JSON as that type and gives its CBOR, and
+ *   Codec.Cbor.value, Malformed.t>>` reads the JSON as that type and gives its CBOR, and
  *   `Contracts.cborToJson` the reverse, each none for a name no type has: the samples of
  *   `tests/codec/` are held by these.
  */

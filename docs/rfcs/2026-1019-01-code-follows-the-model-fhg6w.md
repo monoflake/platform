@@ -295,6 +295,12 @@ subset**, a kind's and the database's among them; WIT is an app's alone.
   rule above asks: an optional field added keeps its version, so a reader of that version meets
   it, and refusing it would break what the version promises. A sample written in `tests/` is held
   otherwise, a field it does not know taken as a mistake in writing it.
+- **An integer is read by its value, never its text**, decided on 2026-10-20 as envelope's two
+  halves were held to one reading: any JSON number that is exactly an integer within its shape's
+  bounds is that integer, `5.0` and `1e2` among them, since a JavaScript reader cannot tell them
+  from `5` and `100`; in CBOR an integer alone is one. **A 64-bit float is finite**: CBOR's NaN or
+  infinity is refused as `malformed`, since JSON carries neither and a value has to read back the
+  same from both.
 - **Bytes are read in one text alone**, decided by the author on 2026-10-19: base64url, unpadded,
   its unused last bits zero, and any other -- base64's own alphabet, a padding, a bit set past the
   last byte -- refused as `rejected` for `malformed`, naming the text expected. A value has one text, as it has one

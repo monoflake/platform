@@ -57,6 +57,17 @@ let libraryDir = name => name->String.replace("*", "")
 let languageName = (l: lang) => (l :> string)
 
 /**
+ * A ReScript package's namespace: its package's name in upper camel case, `envelope-generator` as
+ * `EnvelopeGenerator`, the subject's alone, since the project's name is its manifests' and never its
+ * callers', the workspace's `docs/naming.md`.
+ */
+let namespaceOf = package =>
+  package
+  ->String.split("-")
+  ->Array.map(w => w->String.charAt(0)->String.toUpperCase ++ w->String.slice(~start=1))
+  ->Array.join("")
+
+/**
  * Every block by its directory, what the model asks of them that it cannot give -- a driver named
  * otherwise, a kind given and not implemented, a language at a layer with no directory, a library of
  * another language used -- and the components whose code is not the platform's.
