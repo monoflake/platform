@@ -29,9 +29,15 @@ Decided by the author on 2026-10-21.
 - **`monoflake/runtime` holds no code of its own, only the images' build configuration**, and is
   glue: a scheduled run wakes, checks whether an upstream released, and, if one did, builds and
   publishes the images.
-- **Neither is created on GitHub yet**: both are prepared and checked locally first, their CI
-  written and run where it can be, and this repository's code keeps its copies until the author
-  has reviewed the move.
+- **Both were prepared and checked locally first**, their CI written and run where it could be,
+  and this repository's code keeps its copies until the author has reviewed the move. The author
+  opened both on GitHub on 2026-10-21: `monoflake/machine` with its CI running, `monoflake/runtime`
+  with its Actions turned off until its release is settled.
+- **A runtime's image is published twice**, decided by the author on 2026-10-21: as a release
+  asset of `monoflake/runtime`, the archive a driver fetches, RFC ge55b, and on Docker Hub as
+  `canmi/workerd` and `canmi/wasmtime`, for whoever pulls it by hand. Docker Hub takes no new
+  organization without a paid plan, so the images stand under the author's own account. The
+  release assets' file names are still to be settled.
 
 ## Open
 
