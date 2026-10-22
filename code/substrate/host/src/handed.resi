@@ -31,7 +31,7 @@ type call = {
 type answer = Answered(response) | Refused(Contracts.Error.t)
 
 /**
- * A call posted to `{address}/{export}`, an instance's to `{address}/{key}/{export}`, its driver's
- * refusal passed on and a stopped deployment `unavailable`.
+ * Posted to `{address}/{export}` or `{address}/{key}/{export}`, refused `malformed` first where
+ * either is no plain segment, other `runs` answered `fault` and a stopped one `unavailable`.
  */
 let call: (driver, ~post: post, call) => promise<answer>

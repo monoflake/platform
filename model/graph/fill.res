@@ -15,8 +15,7 @@ let given: Dict.t<JSON.t> = switch env->Dict.get("MONOFLAKE_FILL") {
 let part: string => option<'a> = key => given->Dict.get(key)->Option.map(Obj.magic)
 
 /**
- * The part filling driver roles, RFC 7ykg6, each role by name as `Drivers.driver` has it,
- * `{grounds, kinds: [{kind, contract, version}], management, runtimes: [{name, takes, stands}]}`,
- * the version of each kind's contract and of `management`, held to `model/ground/drivers.res`.
+ * The part filling driver roles, RFC 7ykg6, each by name as `Drivers.driver` has it, with the
+ * version of each kind's contract and of `management`, held to `model/ground/drivers.res`.
  */
 let drivers = "drivers"

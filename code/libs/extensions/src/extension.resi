@@ -30,7 +30,7 @@ type binding = {
 
 /** Why a binding is not made, the contracts' `invalid`. */
 type unbound =
-  /** A grace past a year, in seconds. */
+  /** A grace below zero or past a year, in seconds. */
   | Grace(float)
   /** Relays of `some` naming none, or one twice. */
   | Relays
@@ -45,7 +45,7 @@ let week: float
  */
 let bind: (declared, binding) => result<Contracts.Extension.t, array<unbound>>
 
-/** The grace in force on a binding, its own, else its organization's, else a week. */
+/** A binding's grace in force, its own, else its organization's, else a week, a year at most. */
 let grace: (Contracts.Extension.t, ~organization: Contracts.Organization.t) => float
 
 /** The quota in force on a binding, its own, else its organization's, else none, RFC 87lwb. */
