@@ -64,21 +64,24 @@ Decided by the author on 2026-10-21.
 - **Docker Hub is reached by an access token in a repository secret**, `DOCKERHUB_TOKEN`, decided
   by the author on 2026-10-22: Docker Hub's OIDC connections for GitHub Actions serve paid
   organizations alone, so a personal account takes a token.
+- **Whether anything changed is judged by what would be built**, decided by the author on
+  2026-10-22 from the agent's proposal: a system's output path or an image's pinned versions and
+  base digests, never a diff of source, so a comment changed releases nothing.
+- **The model knows a block written in another repository**, decided by the author on 2026-10-22:
+  as cloud fills a role, a repository of the organization's fills what this model declares
+  provided, and cloud's machines take their module from `monoflake/machine`.
 
 ## Open
 
 Proposed by the agent on 2026-10-21, not yet confirmed:
 
-- An upstream release is taken once it is past the workspace's release delay, as `pins` takes
-  workerd's today, so the scheduled run in `monoflake/runtime` keeps the same rule.
-- Whether anything changed is judged by what would be built, a system's output path or an image's
-  pinned versions and base digests, never by a diff of source, so a comment changed releases
-  nothing.
+- An upstream release is taken once it is past the workspace's release delay, as `pins` took
+  workerd's, so the scheduled run in `monoflake/runtime` keeps the same rule.
+
+Deferred by the author on 2026-10-22:
+
 - GitHub disables a scheduled workflow after 60 days without a commit, so a run started by
   `repository_dispatch` from this repository's CI may be the main trigger and the schedule a
   fallback.
 - A binary cache of the machine's NixOS, so a machine downloads its system rather than building it,
   cannot be a release asset; where it is kept, an object store with Nix's signing key, is open.
-- When the machine's configuration moves, `model/` must know a block written in another
-  repository, as cloud fills a role, and cloud's machines take their module from
-  `monoflake/machine`.

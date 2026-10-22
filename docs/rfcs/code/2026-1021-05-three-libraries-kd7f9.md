@@ -50,35 +50,28 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
   bundle. Each credential reaches it already hashed: the control makes and hashes it beside its
   sealing and its tokens, so `extensions*` never holds a secret.
 
+- **A rule follows its entry's type**, decided by the author on 2026-10-22 from the agent's
+  proposal, so no entry writes one of its own: a flag needed holds only where the other side holds
+  it; an amount is at most the other side's; one of a set is a member of the other side's set, an
+  allowance or an offer holding `some`; some of a set is a subset of the other side's. `kind` is
+  then one of `derive` and `effect`, its allowance some of them, both by default; `export` is a
+  group of amounts, each at most the allowance's.
+- **A sandbox is an entry of the vocabulary**, one of a set, decided by the author on 2026-10-22, so
+  what a host offers is compared by the same rules as every other entry.
+- **An organization holds a quota, and a binding's unset one is the organization's**, decided by
+  the author on 2026-10-22: the `organization` record gains a `quota` beside its `grace`.
+- **The WIT a manifest carries is one file**, decided by the author on 2026-10-22 from the agent's
+  proposal: an optional `package` line, `interface` blocks of `type`, `record`, `variant`, `enum`,
+  `flags` and `func` items, a `use` of an interface in the same file, and one `world` exporting
+  those interfaces or functions; `resource`, `own`, `borrow`, `include` and a `use` or `import` of
+  another package refused as the WIT is read, until the subset grows.
+
 ## Open
 
 The WIT subset's resources, `own` and `borrow`; the capabilities past those four, C11; an
-export's amounts, C37; what a host offers, which waits on `?roster`. Each is a field or an entry
-added, not a change of these shapes.
+export's amounts, C37; what a host offers past the sandbox, which waits on `?roster`. Each is a
+field or an entry added, not a change of these shapes.
 
-Found by the agent on 2026-10-21 while writing the interfaces, and not yet decided:
-
-- **Each vocabulary entry's rule**, how a need compares with an allowance and with an offer: RFC
-  49qyg gives every entry "the rule that compares two" and writes none of them; nor is `kind`'s
-  type as an `allowance-value`, or its default, decided, `kind` being today a required field of
-  `manifest-function` of its own rather than a need.
-- **What an offer is as data**: no type in `model/contracts` holds what a host offers, and whether
-  a sandbox is an entry of the vocabulary or a field beside it is open.
-- **A quota inherited**: an `organization` record has a `grace` but no quota, so "the
-  organization's where its own is unset" reaches nothing for a quota; a binding's quota is none
-  unless set, v7v3w.
 - **The paths in the bundle**: `bundle-hosts` holds each host's `relays` and `address` and no path,
-  so the shape the paths take there is not written; nor is the lender's own record of a loan.
-
-Proposed by the agent on 2026-10-21 for the author to decide, answering the first two above:
-
-- **A rule follows its entry's type**, so no entry writes one of its own: a flag needed holds only
-  where the other side holds it; an amount is at most the other side's; one of a set is a member of
-  the other side's set, an allowance or an offer holding `some`; some of a set is a subset of the
-  other side's. `kind` is then one of `derive` and `effect`, its allowance some of them, both by
-  default; `export` is a group of amounts, each at most the allowance's.
-- **The WIT a manifest carries is one file**: an optional `package` line, `interface` blocks of
-  `type`, `record`, `variant`, `enum`, `flags` and `func` items, a `use` of an interface in the same
-  file, and one `world` exporting those interfaces or functions; `resource`, `own`, `borrow`,
-  `include` and a `use` or `import` of another package refused as the WIT is read, until the
-  subset grows.
+  so the shape the paths take there is not written; nor is the lender's own record of a loan. The
+  author decided on 2026-10-22 that it waits for the host to be written.
