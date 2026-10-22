@@ -109,9 +109,10 @@ let libraries: dict<library> = dict{
   },
   "wit*": {
     languages: [#rescript],
-    what: "an export's types, and a call checked against them, 49qyg",
+    what: "a build's WIT read as far as the one file of kd7f9's subset, its world's imports and exports with their signatures, and a caller's calls matched one layer down against a dependency's exports by their types, 49qyg, kd7f9",
     agrees: false,
     uses: ["compat*"],
+    samples: ["tests/wit"],
   },
   "extensions*": {
     languages: [#rescript],

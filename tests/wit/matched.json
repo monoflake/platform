@@ -1,0 +1,61 @@
+{
+	"from": "RFC kd7f9: each call a caller makes matched to the export its dependency provides of its name, by its parameters' number and types and by every case the export's result or variant names being one the caller's type holds, never by values; RFC 49qyg. A parameter's type is held exactly, a type's name and a parameter's are not compared, a record's fields are by name. A step is written as its word and its name or its position from 0",
+	"caller": "tests/wit/matched/caller.wit",
+	"provider": "tests/wit/matched/provider.wit",
+	"cases": [
+		{
+			"what": "calls matching, a parameter named apart, a record's fields in another order, and an enum holding more",
+			"calls": ["users.put", "users.rank", "ping"],
+			"mismatches": []
+		},
+		{
+			"what": "parameters counted apart",
+			"calls": ["users.rename"],
+			"mismatches": [{ "count": "users.rename", "caller": 1, "export": 2 }]
+		},
+		{
+			"what": "a parameter's type apart",
+			"calls": ["users.page"],
+			"mismatches": [{ "mistyped": "users.page", "at": ["parameter 0"] }]
+		},
+		{
+			"what": "a parameter's enum holding a case the export does not, a parameter held exactly",
+			"calls": ["users.set-rank"],
+			"mismatches": [{ "mistyped": "users.set-rank", "at": ["parameter 1", "case top"] }]
+		},
+		{
+			"what": "a variant case the export's result names and the caller does not hold",
+			"calls": ["users.get"],
+			"mismatches": [{ "unheld": "users.get", "at": ["result"], "case": "banned" }]
+		},
+		{
+			"what": "a flag the export's result names and the caller does not hold",
+			"calls": ["users.rights"],
+			"mismatches": [{ "unheld": "users.rights", "at": ["result"], "case": "write" }]
+		},
+		{
+			"what": "a record's field the caller's result lacks",
+			"calls": ["users.profile"],
+			"mismatches": [{ "mistyped": "users.profile", "at": ["result", "field name"] }]
+		},
+		{
+			"what": "a call no export answers to",
+			"calls": ["gone"],
+			"mismatches": [{ "missing": "gone" }]
+		},
+		{
+			"what": "a call the caller's world does not import, and no export answers to",
+			"calls": ["users.remove"],
+			"mismatches": [{ "undeclared": "users.remove" }, { "missing": "users.remove" }]
+		},
+		{
+			"what": "every mismatch of several calls, in the order of the calls",
+			"calls": ["users.get", "gone", "users.rename", "users.put"],
+			"mismatches": [
+				{ "unheld": "users.get", "at": ["result"], "case": "banned" },
+				{ "missing": "gone" },
+				{ "count": "users.rename", "caller": 1, "export": 2 }
+			]
+		}
+	]
+}

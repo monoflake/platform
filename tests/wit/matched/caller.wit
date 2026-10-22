@@ -1,0 +1,38 @@
+// The caller, its own copy of what it calls, its types named as it likes.
+package app:front;
+
+interface users {
+  record person {
+    name: string,
+    id: u64,
+  }
+
+  record badge {
+    id: u64,
+  }
+
+  variant lookup {
+    found(person),
+    absent,
+  }
+
+  enum level { low, high, top }
+
+  flags access { read }
+
+  get: func(key: u64) -> lookup;
+  put: func(u: person) -> result<_, string>;
+  rank: func(id: u64) -> level;
+  set-rank: func(id: u64, l: level);
+  rights: func(id: u64) -> access;
+  rename: func(id: u64) -> result;
+  page: func(start: u32, count: u32) -> list<person>;
+  profile: func(id: u64) -> badge;
+}
+
+world main {
+  import users;
+  import ping: func() -> string;
+  import gone: func();
+  export front: func() -> string;
+}

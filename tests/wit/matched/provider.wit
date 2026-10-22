@@ -1,0 +1,37 @@
+// The dependency, its exports matched against the caller's imports in `matched.json`.
+package app:back;
+
+interface types {
+  record user {
+    id: u64,
+    name: string,
+  }
+
+  variant lookup {
+    found(user),
+    absent,
+    banned(string),
+  }
+
+  enum level { low, high }
+
+  flags access { read, write }
+}
+
+interface users {
+  use types.{user, lookup, level, access};
+
+  get: func(id: u64) -> lookup;
+  put: func(u: user) -> result<_, string>;
+  rank: func(id: u64) -> level;
+  set-rank: func(id: u64, l: level);
+  rights: func(id: u64) -> access;
+  rename: func(id: u64, name: string) -> result;
+  page: func(start: u64, count: u32) -> list<user>;
+  profile: func(id: u64) -> user;
+}
+
+world main {
+  export users;
+  export ping: func() -> string;
+}

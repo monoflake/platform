@@ -1,0 +1,5 @@
+package app:hello;
+
+world main {
+  export hello: func() -> string;
+}

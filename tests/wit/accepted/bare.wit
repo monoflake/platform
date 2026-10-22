@@ -1,0 +1,3 @@
+world bare {
+  export ping: func();
+}

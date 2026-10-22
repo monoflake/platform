@@ -631,6 +631,13 @@ let own: array<item> = [
     step: 1,
   },
   {
+    id: "C41",
+    group: #C,
+    what: "what wit leaves open: a world's imports as its calls, a call's name, a parameter held exactly, what no match compares, what else of WIT is refused, an option within an option refused as read, and how a file is read",
+    from: "0vjdg, kd7f9",
+    step: 1,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",

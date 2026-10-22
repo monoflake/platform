@@ -1,0 +1,49 @@
+// Every type the subset takes, read from RFC kd7f9's one file.
+package app:shapes@1.2.0-rc.1+build.5;
+
+/// The shapes and what they carry, defined in an order that uses some before they are defined.
+interface types {
+  type points = list<point>;
+
+  record point {
+    x: s32,
+    y: s32,
+  }
+
+  variant shape {
+    circle(f64),
+    polygon(points),
+    empty,
+  }
+
+  enum color { red, green, blue }
+
+  flags rights { read, write, %export }
+
+  type numbers = tuple<u8, u16, u32, u64, s8, s16, s64, f32>;
+  type text = tuple<char, string, bool>;
+}
+
+/* A block comment /* nested */ ends here. */
+interface api {
+  use types.{point, shape as figure, color, rights, numbers, text};
+
+  area: func(s: figure) -> result<f64, string>;
+  near: func(p: point, within: option<u32>) -> tuple<bool, list<u8>>;
+  check: func(r: rights) -> result;
+  count: func(n: numbers, t: text) -> result<u64>;
+  clear: func() -> result<_, color>;
+}
+
+interface log {
+  write: func(line: string);
+}
+
+world main {
+  use types.{color};
+
+  import log;
+  import now: func() -> u64;
+  export api;
+  export paint: func(c: color, %type: string);
+}

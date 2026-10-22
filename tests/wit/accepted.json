@@ -1,0 +1,110 @@
+{
+	"from": "RFC kd7f9: the one file a build manifest's wit holds, an optional package line, interfaces of type, record, variant, enum, flags and func items, a use of an interface in the same file, and one world exporting interfaces or functions, its imports the calls it may make; each file read by the component model's WIT.md and by wit-parser 0.252, which asks a package line of a file resolved alone. A type is written with every alias resolved, a primitive by its keyword, a named type with the name it was defined under",
+	"accepted": [
+		{
+			"what": "the least, a package line and a world exporting one function",
+			"file": "tests/wit/accepted/hello.wit",
+			"package": { "namespace": "app", "name": "hello" },
+			"name": "main",
+			"imports": [],
+			"exports": [{ "name": "hello", "parameters": [], "result": "string" }]
+		},
+		{
+			"what": "no package line, a world exporting a function of no result",
+			"file": "tests/wit/accepted/bare.wit",
+			"package": null,
+			"name": "bare",
+			"imports": [],
+			"exports": [{ "name": "ping", "parameters": [] }]
+		},
+		{
+			"what": "every type the subset takes, aliases resolved, a use renaming, comments nested, names escaped, an interface and a function imported and exported",
+			"file": "tests/wit/accepted/types.wit",
+			"package": { "namespace": "app", "name": "shapes", "version": "1.2.0-rc.1+build.5" },
+			"name": "main",
+			"imports": [
+				{ "name": "log.write", "parameters": [{ "name": "line", "type": "string" }] },
+				{ "name": "now", "parameters": [], "result": "u64" }
+			],
+			"exports": [
+				{
+					"name": "api.area",
+					"parameters": [
+						{
+							"name": "s",
+							"type": {
+								"variant": "shape",
+								"cases": [
+									{ "name": "circle", "payload": "f64" },
+									{
+										"name": "polygon",
+										"payload": {
+											"list": {
+												"record": "point",
+												"fields": [
+													{ "name": "x", "type": "s32" },
+													{ "name": "y", "type": "s32" }
+												]
+											}
+										}
+									},
+									{ "name": "empty" }
+								]
+							}
+						}
+					],
+					"result": { "result": { "success": "f64", "failure": "string" } }
+				},
+				{
+					"name": "api.near",
+					"parameters": [
+						{
+							"name": "p",
+							"type": {
+								"record": "point",
+								"fields": [
+									{ "name": "x", "type": "s32" },
+									{ "name": "y", "type": "s32" }
+								]
+							}
+						},
+						{ "name": "within", "type": { "option": "u32" } }
+					],
+					"result": { "tuple": ["bool", { "list": "u8" }] }
+				},
+				{
+					"name": "api.check",
+					"parameters": [
+						{ "name": "r", "type": { "flags": "rights", "names": ["read", "write", "export"] } }
+					],
+					"result": { "result": {} }
+				},
+				{
+					"name": "api.count",
+					"parameters": [
+						{
+							"name": "n",
+							"type": { "tuple": ["u8", "u16", "u32", "u64", "s8", "s16", "s64", "f32"] }
+						},
+						{ "name": "t", "type": { "tuple": ["char", "string", "bool"] } }
+					],
+					"result": { "result": { "success": "u64" } }
+				},
+				{
+					"name": "api.clear",
+					"parameters": [],
+					"result": {
+						"result": { "failure": { "enum": "color", "cases": ["red", "green", "blue"] } }
+					}
+				},
+				{
+					"name": "paint",
+					"parameters": [
+						{ "name": "c", "type": { "enum": "color", "cases": ["red", "green", "blue"] } },
+						{ "name": "type", "type": "string" }
+					]
+				}
+			]
+		}
+	]
+}

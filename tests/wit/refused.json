@@ -1,0 +1,356 @@
+{
+	"from": "RFC kd7f9: resource, own, borrow, include and a use or import of another package refused as the WIT is read, and anything else of WIT.md the subset does not take, each where it is; RFC vr5lw: an option within an option. Each file is its lines joined by a newline, a newline ending it; a line and a column count from 1, a column in code points. Every refusal is named in the order of where it is, and a token out of place ends the reading",
+	"refused": [
+		{
+			"what": "a resource, its body read through",
+			"lines": [
+				"interface files {",
+				"  resource file {",
+				"    size: func() -> u64;",
+				"  }",
+				"  open: func(path: string) -> u32;",
+				"}",
+				"world main {",
+				"  export files;",
+				"}"
+			],
+			"refusals": [{ "problem": { "refused": "resource" }, "line": 2, "column": 3 }]
+		},
+		{
+			"what": "own and borrow, each where it is",
+			"lines": [
+				"interface files {",
+				"  resource file;",
+				"  close: func(f: own<file>);",
+				"  size: func(f: borrow<file>) -> u64;",
+				"}",
+				"world main {",
+				"  export files;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": "resource" }, "line": 2, "column": 3 },
+				{ "problem": { "refused": "own" }, "line": 3, "column": 18 },
+				{ "problem": { "refused": "borrow" }, "line": 4, "column": 17 }
+			]
+		},
+		{
+			"what": "an include, with its renames",
+			"lines": [
+				"world main {",
+				"  include wasi:cli/imports@0.2.0;",
+				"  include base with { ping as pong }",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": "include" }, "line": 2, "column": 3 },
+				{ "problem": { "refused": "include" }, "line": 3, "column": 3 }
+			]
+		},
+		{
+			"what": "a use of another package's types",
+			"lines": [
+				"interface api {",
+				"  use wasi:clocks/wall-clock@0.2.0.{datetime};",
+				"  now: func() -> datetime;",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{
+					"problem": { "refused": { "foreign": "wasi:clocks/wall-clock@0.2.0" } },
+					"line": 2,
+					"column": 3
+				}
+			]
+		},
+		{
+			"what": "an import and an export of another package's interfaces",
+			"lines": [
+				"world main {",
+				"  import wasi:http/outgoing-handler;",
+				"  import store: wasi:keyvalue/store;",
+				"  export wasi:http/incoming-handler@0.2.0;",
+				"}"
+			],
+			"refusals": [
+				{
+					"problem": { "refused": { "foreign": "wasi:http/outgoing-handler" } },
+					"line": 2,
+					"column": 3
+				},
+				{ "problem": { "refused": { "foreign": "wasi:keyvalue/store" } }, "line": 3, "column": 3 },
+				{
+					"problem": { "refused": { "foreign": "wasi:http/incoming-handler@0.2.0" } },
+					"line": 4,
+					"column": 3
+				}
+			]
+		},
+		{
+			"what": "a top-level use, of this file's interface and of another package's",
+			"lines": [
+				"use api as other;",
+				"use wasi:io/streams;",
+				"interface api {",
+				"  ping: func();",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "top-level use" } }, "line": 1, "column": 1 },
+				{ "problem": { "refused": { "foreign": "wasi:io/streams" } }, "line": 2, "column": 1 }
+			]
+		},
+		{
+			"what": "map, future, stream and async, none taken",
+			"lines": [
+				"world main {",
+				"  export index: func() -> map<string, u32>;",
+				"  export later: func() -> future<u8>;",
+				"  export flow: func() -> stream;",
+				"  export wait: async func();",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "map" } }, "line": 2, "column": 27 },
+				{ "problem": { "refused": { "beyond": "future" } }, "line": 3, "column": 27 },
+				{ "problem": { "refused": { "beyond": "stream" } }, "line": 4, "column": 26 },
+				{ "problem": { "refused": { "beyond": "async" } }, "line": 5, "column": 16 }
+			]
+		},
+		{
+			"what": "a gate, the gated item read on",
+			"lines": ["world main {", "  @since(version = 0.2.0)", "  export ping: func();", "}"],
+			"refusals": [{ "problem": { "refused": { "beyond": "@since" } }, "line": 2, "column": 3 }]
+		},
+		{
+			"what": "a nested package and a nested package name",
+			"lines": [
+				"package local:a:b;",
+				"package local:c {",
+				"  interface c {}",
+				"}",
+				"world main {}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "nested package name" } }, "line": 1, "column": 1 },
+				{ "problem": { "refused": { "beyond": "nested package" } }, "line": 2, "column": 1 }
+			]
+		},
+		{
+			"what": "a fixed-length list",
+			"lines": ["world main {", "  export address: func() -> list<u8, 4>;", "}"],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "fixed-length list" } }, "line": 2, "column": 29 }
+			]
+		},
+		{
+			"what": "a type defined in a world",
+			"lines": [
+				"world main {",
+				"  record point { x: s32, y: s32 }",
+				"  export origin: func() -> point;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "type in a world" } }, "line": 2, "column": 3 }
+			]
+		},
+		{
+			"what": "an inline interface and an interface named in a world",
+			"lines": [
+				"interface api {",
+				"  ping: func();",
+				"}",
+				"world main {",
+				"  import host: interface {",
+				"    log: func(line: string);",
+				"  }",
+				"  export named: api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "inline interface" } }, "line": 5, "column": 3 },
+				{ "problem": { "refused": { "beyond": "named interface" } }, "line": 8, "column": 3 }
+			]
+		},
+		{
+			"what": "a token out of place stops the reading, a refusal before it kept",
+			"lines": ["interface api {", "  resource r;", "  ping: func()", "  pong: func();", "}"],
+			"refusals": [
+				{ "problem": { "refused": "resource" }, "line": 2, "column": 3 },
+				{ "problem": { "unexpected": "pong", "expected": "`;`" }, "line": 4, "column": 3 }
+			]
+		},
+		{
+			"what": "the end where a closing brace is asked",
+			"lines": ["interface api {", "  ping: func();"],
+			"refusals": [
+				{ "problem": { "unexpected": null, "expected": "an item or `}`" }, "line": 3, "column": 1 }
+			]
+		},
+		{
+			"what": "a keyword unescaped where a name is asked",
+			"lines": ["interface api {", "  type: func();", "}"],
+			"refusals": [
+				{ "problem": { "unexpected": ":", "expected": "a name" }, "line": 2, "column": 7 }
+			]
+		},
+		{
+			"what": "a name not kebab-case, the reading going on",
+			"lines": [
+				"interface api {",
+				"  getValue: func() -> u32;",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [{ "problem": { "name": "getValue" }, "line": 2, "column": 3 }]
+		},
+		{
+			"what": "a control character in a comment",
+			"lines": ["// a bell \u0007 here", "world main {}"],
+			"refusals": [{ "problem": { "character": 7 }, "line": 1, "column": 11 }]
+		},
+		{
+			"what": "a column counted in code points past a character outside the basic plane",
+			"lines": ["interface api {", "  /* \ud800\udf48 */ resource r;", "}", "world main {}"],
+			"refusals": [{ "problem": { "refused": "resource" }, "line": 2, "column": 11 }]
+		},
+		{
+			"what": "names not defined, a type, a used interface and an exported one",
+			"lines": [
+				"interface api {",
+				"  use missing.{thing};",
+				"  ping: func(x: absent) -> thing;",
+				"}",
+				"world main {",
+				"  export api;",
+				"  export elsewhere;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "undefined": "missing" }, "line": 2, "column": 7 },
+				{ "problem": { "undefined": "absent" }, "line": 3, "column": 17 },
+				{ "problem": { "undefined": "elsewhere" }, "line": 7, "column": 10 }
+			]
+		},
+		{
+			"what": "a name of a use the interface it names does not define",
+			"lines": [
+				"interface types {",
+				"  type a = u8;",
+				"}",
+				"interface api {",
+				"  use types.{b};",
+				"}",
+				"world main {}"
+			],
+			"refusals": [{ "problem": { "undefined": "b" }, "line": 5, "column": 14 }]
+		},
+		{
+			"what": "names defined twice",
+			"lines": [
+				"interface api {",
+				"  type a = u8;",
+				"  record a { x: u8, x: u16 }",
+				"  ping: func(v: u8, v: u8);",
+				"  ping: func();",
+				"}",
+				"interface api {}",
+				"world main {",
+				"  export api;",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "repeated": "a" }, "line": 3, "column": 10 },
+				{ "problem": { "repeated": "x" }, "line": 3, "column": 21 },
+				{ "problem": { "repeated": "v" }, "line": 4, "column": 21 },
+				{ "problem": { "repeated": "ping" }, "line": 5, "column": 3 },
+				{ "problem": { "repeated": "api" }, "line": 7, "column": 11 },
+				{ "problem": { "repeated": "api" }, "line": 10, "column": 10 }
+			]
+		},
+		{
+			"what": "types reached from within themselves",
+			"lines": [
+				"interface api {",
+				"  record tree { left: node, right: node }",
+				"  type node = option<tree>;",
+				"  type self = self;",
+				"}",
+				"world main {}"
+			],
+			"refusals": [
+				{ "problem": { "recursive": "tree" }, "line": 3, "column": 22 },
+				{ "problem": { "recursive": "self" }, "line": 4, "column": 15 }
+			]
+		},
+		{
+			"what": "an option within an option, through an alias",
+			"lines": [
+				"interface api {",
+				"  type maybe = option<u8>;",
+				"  type twice = option<maybe>;",
+				"}",
+				"world main {}"
+			],
+			"refusals": [{ "problem": "nested", "line": 3, "column": 16 }]
+		},
+		{
+			"what": "no world",
+			"lines": ["interface api {", "  ping: func();", "}"],
+			"refusals": [{ "problem": "no world", "line": 4, "column": 1 }]
+		},
+		{
+			"what": "a second world",
+			"lines": ["world one {}", "world two {}"],
+			"refusals": [{ "problem": "second world", "line": 2, "column": 7 }]
+		},
+		{
+			"what": "a version that is not semantic",
+			"lines": ["package local:a@1.0;", "world main {}"],
+			"refusals": [
+				{
+					"problem": { "unexpected": "1.0", "expected": "a semantic version" },
+					"line": 1,
+					"column": 17
+				}
+			]
+		},
+		{
+			"what": "a block comment never closed",
+			"lines": ["world main {}", "/* open"],
+			"refusals": [
+				{
+					"problem": { "unexpected": "/*", "expected": "`interface`, `world` or `use`" },
+					"line": 2,
+					"column": 1
+				}
+			]
+		},
+		{
+			"what": "every refusal in the order of where each is, a resolved one before a parsed one",
+			"lines": [
+				"interface api {",
+				"  ping: func(x: absent);",
+				"  resource r;",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "undefined": "absent" }, "line": 2, "column": 17 },
+				{ "problem": { "refused": "resource" }, "line": 3, "column": 3 }
+			]
+		}
+	]
+}
