@@ -61,9 +61,22 @@ let lines = (tree: tree, path, h: held) => {
     ...generation,
     `Languages: ${h.languages->Array.map(languageName)->Array.join(", ")}`,
     `Packages: ${packages->Array.join("; ")}; license ${h.license}`,
+    ...h.released == Some(true)
+      ? ["Version: its own, MAJOR.MINOR.PATCH, as it is released"]
+      : [`Version: ${unpublished}, as nothing is published`],
     "",
     "Uses, the platform's libraries it may depend on:",
     ...uses == [] ? ["  none"] : uses->Array.map(u => `  ${u}`),
+    ...switch h.blocks {
+    | Some(named) if named != [] =>
+      [
+        "Blocks of this tree it may depend on, by their packages:",
+        ...named->Array.map(b =>
+          `  ${b}${find(tree, b)->Option.mapOr(", no block of it", ((p, _)) => `: ${p}`)}`
+        ),
+      ]
+    | _ => []
+    },
     "Takes, the only packages of others its manifests may name, tests' among them:",
     ...takes == [] ? ["  none"] : takes->Array.map(t => `  ${t}`),
     "Samples, what its tests read in every language, as they are:",

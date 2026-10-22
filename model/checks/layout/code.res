@@ -177,6 +177,26 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
     None
   } else {
     let found = []
+    // A block of this tree it depends on, by its package, as a driver's program its kinds.
+    let named = h.blocks->Option.getOr([])
+    named->Array.forEach(b =>
+      switch find(tree, b) {
+      | Some((_, other)) if other.package != h.package => ()
+      | _ => found->Array.push(`${path}: uses the block ${b}, which is no other block of this tree`)
+      }
+    )
+    let released = h.released == Some(true)
+    // A released block's version is its own, and every other one's is `unpublished`.
+    let versioned = version =>
+      switch version {
+      | Some(v) if released => releasedVersion->RegExp.test(v)
+      | Some(v) => v == unpublished
+      | None => false
+      }
+    let unversioned = manifest =>
+      released
+        ? `${manifest}: no version MAJOR.MINOR.PATCH of its own, as ${h.name} is released`
+        : `${manifest}: no version ${unpublished}, as nothing is published`
     let allowed = (l: lang) =>
       Array.concatMany(
         [],
@@ -187,6 +207,7 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
           }),
           h.takes->Array.filter(t => (t.language :> lang) == l)->Array.map(t => t.name),
           l == #rust ? h.writtenBy->Option.mapOr([], w => [w]) : [],
+          named->Array.map(b => l == #rescript ? `@monoflake/${b}` : b),
         ],
       )
     // Each package taken at the major the model names, where its manifest writes a version.
@@ -223,8 +244,8 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
       if crateKey(root, manifest, "license") != Some(h.license) {
         found->Array.push(`${manifest}: no license ${h.license}`)
       }
-      if crateKey(root, manifest, "version") != Some(unpublished) {
-        found->Array.push(`${manifest}: no version ${unpublished}, as nothing is published`)
+      if !versioned(crateKey(root, manifest, "version")) {
+        found->Array.push(unversioned(manifest))
       }
       if !takesLints(root, manifest) {
         found->Array.push(`${manifest}: no [lints] workspace = true, so the root's lints miss it`)
@@ -245,8 +266,8 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
         JSON.parseOrThrow(readFileSync(urlIn(manifest, root)))
         ->member("version")
         ->Option.flatMap(JSON.Decode.string)
-      if version != Some(unpublished) {
-        found->Array.push(`${manifest}: no version ${unpublished}, as nothing is published`)
+      if !versioned(version) {
+        found->Array.push(unversioned(manifest))
       }
       jsonDependencies(root, manifest)->Array.forEach(d =>
         if !(allowed(#rescript)->Array.includes(d)) {

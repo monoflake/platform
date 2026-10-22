@@ -21,6 +21,10 @@ type held = {
   samples: array<string>,
   /** The tool writing its sources, by its package's name, which its crate builds by. */
   writtenBy?: string,
+  /** Other blocks of its own tree it may depend on, by their package names. */
+  blocks?: array<string>,
+  /** Whether it is released, its version then its own rather than `unpublished`. */
+  released?: bool,
 }
 
 /** The directory each layer's components lie in. */
@@ -152,6 +156,9 @@ let rescriptOutput = ("esmodule", ".res.mjs")
 /** The version every package holds while none is published, decided by the author on 2026-10-20. */
 let unpublished = "0.0.0"
 
+/** The form a released block's own version takes, `MAJOR.MINOR.PATCH`, as RFC 8c0rg's program. */
+let releasedVersion = /^\d+\.\d+\.\d+$/
+
 /**
  * The lints the root's `Cargo.toml` sets for every crate, Rust's and Clippy's, each denied or
  * forbidden, `docs/code.md`.
@@ -188,11 +195,14 @@ let find = (tree, package) =>
   tree.blocks->Map.entries->Array.fromIterator->Array.find(((_, h)) => h.package == package)
 
 /**
- * Whether a file of a block is its interface, the model's to write, a crate's root, its build
- * script or a `.resi`.
+ * Whether a file of a block is its interface, the model's to write, a crate's root, a library's or
+ * a binary's, its build script or a `.resi`.
  */
 let isInterface = file =>
-  file->String.endsWith(".resi") || file == "src/lib.rs" || file == "build.rs"
+  file->String.endsWith(".resi") ||
+  file == "src/lib.rs" ||
+  file == "src/main.rs" ||
+  file == "build.rs"
 
 /**
  * Whether a file of a block may cross into JavaScript unchecked, its own or its tests' bindings.

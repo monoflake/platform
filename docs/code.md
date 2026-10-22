@@ -10,9 +10,10 @@ against it, and the whole is held by the conversation.
 - **A block is one directory of what the model asks code of**: a component or a library,
   `model/checks/layout/blocks.res`; a driver's are `monoflake/driver`'s, held by `tree.res`, RFC
   7ykg6. `mise run brief <package>` prints what it holds, read from the model; no brief is written
-  by hand.
+  by hand. A block depends on another of its own tree only where the model names it by its package,
+  `blocks`, as a driver's program does its kinds.
 - **Its interface is the model's**: a ReScript `.resi` beside the module it types, and Rust's
-  crate root, `src/lib.rs`. The conversation writes it and the author reviews it before the block
+  crate root, `src/lib.rs`, or a binary's `src/main.rs`. The conversation writes it and the author reviews it before the block
   is begun; a worker implements it and never edits it, and reports one that seems wrong.
 - **A crate's root is its interface, and every module beneath it private**, decided by the author
   on 2026-10-20: it holds the types, the traits a worker implements for them and the constants,
@@ -59,7 +60,8 @@ against it, and the whole is held by the conversation.
   stay one.
 - **A package's version is `0.0.0` while nothing is published**, decided by the author on
   2026-10-20, `Blocks.unpublished`: a version is a promise to whoever takes a release, and none is
-  made yet.
+  made yet. A block the model marks `released` keeps a version of its own, as `monoflake/driver`'s
+  program does, RFC 8c0rg.
 - **A block's tests read its samples as they stand**, each language the same files, the model's
   `samples`; a sample is never copied into a test, and accept refuses one no test of a language
   names, as it refuses an interface left unimplemented.
