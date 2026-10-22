@@ -42,7 +42,7 @@ let relaysHeld = (relays: Contracts.ExtensionRelays.t) =>
 let bind = (declared, binding) => {
   let refused = []
   switch binding.grace {
-  | Some(grace) if grace > year => refused->Array.push(Grace(grace))
+  | Some(grace) if grace < 0. || grace > year => refused->Array.push(Grace(grace))
   | Some(_) | None => ()
   }
   if !relaysHeld(binding.relays) {
@@ -72,12 +72,13 @@ let bind = (declared, binding) => {
   }
 }
 
+/** A year at most, as a binding's is and the policy a driver is sent holds, `management.res`. */
 let grace = (extension: Contracts.Extension.t, ~organization: Contracts.Organization.t) =>
   switch (extension.grace, organization.grace) {
   | (Some(own), _) => own
   | (None, Some(inherited)) => inherited
   | (None, None) => week
-  }
+  }->Math.min(year)
 
 let quota = (extension: Contracts.Extension.t, ~organization: Contracts.Organization.t) =>
   switch extension.quota {

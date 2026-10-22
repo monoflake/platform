@@ -189,6 +189,10 @@ let typedef = (s, scope) => {
   | Word("flags") =>
     advance(s)
     let (n, flags) = cases()
+    // The component model's binary holds 32 flags at most, as wasmparser's validator refuses.
+    flags
+    ->Array.get(32)
+    ->Option.forEach(f => refuse(s, Refused(Beyond("flags past 32")), f.place))
     define(s, scope, n, Defines(FlagsOf(flags)))
     true
   | Word("resource") =>
@@ -221,6 +225,12 @@ let interface = (s, scope) => {
     }
   }
   advance(s)
+  // An interface is one namespace, so a function holding a type's name is refused, as WIT.md says.
+  scope.functions->Array.forEach(((n, _)) =>
+    if scope.types->Map.has(n.name) {
+      refuse(s, Repeated(n.name), n.place)
+    }
+  )
 }
 
 /** An import or an export of a world, an interface of this file or a function of its own. */
@@ -312,6 +322,13 @@ let world = (s, n) => {
     }
   }
   advance(s)
+  // A name a world uses is one of its imports, so an imported function holding it is refused.
+  w.imports->Array.forEach(item =>
+    switch item {
+    | Function(n, _) if w.scope.types->Map.has(n.name) => refuse(s, Repeated(n.name), n.place)
+    | Function(_) | Interface(_) | Outside => ()
+    }
+  )
   w
 }
 

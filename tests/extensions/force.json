@@ -1,5 +1,5 @@
 {
-	"from": "RFC vr5lw: the grace is a week unless set, set for the organization, and for each binding either inherited from that or its own. RFC kd7f9: an organization holds a quota, and a binding's unset one is the organization's. RFC 87lwb: with neither set no quota is in force, `null`",
+	"from": "RFC vr5lw: the grace is a week unless set, set for the organization, and for each binding either inherited from that or its own; RFC vr5lw and the management policy a driver is sent hold it to a year at most, so an organization's past a year is in force as a year. RFC kd7f9: an organization holds a quota, and a binding's unset one is the organization's. RFC 87lwb: with neither set no quota is in force, `null`",
 	"cases": [
 		{
 			"what": "the binding's own grace and quota, over the organization's",
@@ -134,6 +134,38 @@
 			},
 			"grace": 86400,
 			"quota": 1073741824
+		},
+		{
+			"what": "the organization's grace past a year, in force as a year",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": []
+			},
+			"organization": {
+				"security": "default",
+				"grace": 40000000
+			},
+			"grace": 31536000,
+			"quota": null
 		},
 		{
 			"what": "the organization's unset too, a week and no quota",

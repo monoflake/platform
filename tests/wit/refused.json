@@ -279,6 +279,86 @@
 			]
 		},
 		{
+			"what": "a type and a function of one name in an interface, which is one namespace, the function refused wherever it is",
+			"lines": [
+				"interface api {",
+				"  ping: func();",
+				"  type ping = u8;",
+				"  record pong { x: u8 }",
+				"  pong: func();",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "repeated": "ping" }, "line": 2, "column": 3 },
+				{ "problem": { "repeated": "pong" }, "line": 5, "column": 3 }
+			]
+		},
+		{
+			"what": "a name a world uses and a function it imports, one scope of imports, an export kept apart",
+			"lines": [
+				"interface types {",
+				"  record point { x: u8 }",
+				"}",
+				"world main {",
+				"  use types.{point as spot};",
+				"  import spot: func();",
+				"  export spot: func();",
+				"}"
+			],
+			"refusals": [{ "problem": { "repeated": "spot" }, "line": 6, "column": 10 }]
+		},
+		{
+			"what": "flags of more than 32 members, past what the component model's binary holds, refused at the 33rd",
+			"lines": [
+				"interface api {",
+				"  flags many {",
+				"    b1,",
+				"    b2,",
+				"    b3,",
+				"    b4,",
+				"    b5,",
+				"    b6,",
+				"    b7,",
+				"    b8,",
+				"    b9,",
+				"    b10,",
+				"    b11,",
+				"    b12,",
+				"    b13,",
+				"    b14,",
+				"    b15,",
+				"    b16,",
+				"    b17,",
+				"    b18,",
+				"    b19,",
+				"    b20,",
+				"    b21,",
+				"    b22,",
+				"    b23,",
+				"    b24,",
+				"    b25,",
+				"    b26,",
+				"    b27,",
+				"    b28,",
+				"    b29,",
+				"    b30,",
+				"    b31,",
+				"    b32,",
+				"    b33,",
+				"  }",
+				"}",
+				"world main {",
+				"  export api;",
+				"}"
+			],
+			"refusals": [
+				{ "problem": { "refused": { "beyond": "flags past 32" } }, "line": 35, "column": 5 }
+			]
+		},
+		{
 			"what": "types reached from within themselves",
 			"lines": [
 				"interface api {",
