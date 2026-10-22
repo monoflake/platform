@@ -1,10 +1,17 @@
 ---
 name: "The Drivers' Model of Their Own"
 title: 'The drivers moved to `monoflake/driver`, with a model of their own that fills the roles this one declares'
-status: accepted
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  [
+    monoflake/platform@a3522b04,
+    monoflake/platform@f66866b5,
+    monoflake/driver@227c46e9,
+    monoflake/cloud@c87f9e29,
+    monoflake/cloud@3ba7e857,
+  ]
 references: []
 ---
 
