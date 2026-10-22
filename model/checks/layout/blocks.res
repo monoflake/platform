@@ -207,7 +207,10 @@ let filesOf = (tree, path) => {
     entries(urlIn(`${path}/${inner}`, tree.root), {withFileTypes: true})->Array.flatMap(e => {
       let name = inner ++ e->entryName
       if e->isDirectory {
-        skipped->Array.includes(e->entryName) ? [] : walk(`${name}/`)
+        // A block beneath another's directory is its own, a driver's kinds in its program's.
+        skipped->Array.includes(e->entryName) || tree.blocks->Map.has(`${path}/${name}`)
+          ? []
+          : walk(`${name}/`)
       } else if name->String.endsWith(".res.mjs") {
         []
       } else {

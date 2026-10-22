@@ -167,7 +167,12 @@ let takesLints = (root, path) => {
 let held = (tree: tree, path, h: held): option<array<string>> => {
   let root = tree.root
   let at = urlIn(`${path}/`, root)
-  let files = existsSync(at) ? entries(at, {withFileTypes: true})->Array.map(entryName) : []
+  // A block's directory beneath this one is its own, never this block's.
+  let files = existsSync(at)
+    ? entries(at, {withFileTypes: true})
+      ->Array.filter(e => !(e->isDirectory && tree.blocks->Map.has(`${path}/${e->entryName}`)))
+      ->Array.map(entryName)
+    : []
   if files->Array.length == 0 {
     None
   } else {
