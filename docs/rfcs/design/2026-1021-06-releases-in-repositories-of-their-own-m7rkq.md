@@ -43,6 +43,13 @@ Decided by the author on 2026-10-21.
   The release is drafted with its archives and manifest and published last, so its tag, which a
   later run reads as released, stands only for a release whose assets are all up. An asset is
   named `<runtime>-<version>-linux-x86_64.tar`, the workspace's `docs/naming.md`.
+- **A release is a UTC day**, decided by the author on 2026-10-22: it is named and titled by the
+  day alone, `2026.10.22`, each part padded so the names sort by their text as by date, and holds
+  only the versions new that day. Its notes are one list item a version, upstream's release of it
+  linked and the pull linked to its tag on Docker Hub; a later run the same day adds its versions'
+  files and lines to the day's release, the files named by version so none collide. Each version
+  carries its own manifest, `<runtime>-<version>.json`, uploaded last, and a version counts as
+  released once a published release holds that manifest.
 - **Docker Hub is reached by an access token in a repository secret**, `DOCKERHUB_TOKEN`, decided
   by the author on 2026-10-22: Docker Hub's OIDC connections for GitHub Actions serve paid
   organizations alone, so a personal account takes a token.
