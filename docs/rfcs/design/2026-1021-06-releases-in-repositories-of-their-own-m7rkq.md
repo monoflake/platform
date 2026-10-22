@@ -36,8 +36,16 @@ Decided by the author on 2026-10-21.
 - **A runtime's image is published twice**, decided by the author on 2026-10-21: as a release
   asset of `monoflake/runtime`, the archive a driver fetches, RFC ge55b, and on Docker Hub as
   `canmi/workerd` and `canmi/wasmtime`, for whoever pulls it by hand. Docker Hub takes no new
-  organization without a paid plan, so the images stand under the author's own account. The
-  release assets' file names are still to be settled.
+  organization without a paid plan, so the images stand under the author's own account.
+- **One build makes both**, decided by the author on 2026-10-22: each architecture is built once,
+  its OCI archive written and its image pushed to Docker Hub by digest from the same build, so the
+  two hold one manifest; the image is then tagged as its version and `latest` over both digests.
+  The release is drafted with its archives and manifest and published last, so its tag, which a
+  later run reads as released, stands only for a release whose assets are all up. An asset is
+  named `<runtime>-<version>-linux-x86_64.tar`, the workspace's `docs/naming.md`.
+- **Docker Hub is reached by an access token in a repository secret**, `DOCKERHUB_TOKEN`, decided
+  by the author on 2026-10-22: Docker Hub's OIDC connections for GitHub Actions serve paid
+  organizations alone, so a personal account takes a token.
 
 ## Open
 
