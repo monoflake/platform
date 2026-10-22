@@ -1,1 +1,3 @@
 model/contracts.json linguist-generated=true
+
+*.wit linguist-detectable=true
