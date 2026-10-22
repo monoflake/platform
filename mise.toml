@@ -66,15 +66,6 @@ d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || e
 description = "Build, format, lint and test every written block alone; one in work fails nothing"
 run = "rescript build > /dev/null && node model/built.res.mjs"
 
-[tasks.update]
-description = "Move this repository's tools, crates and packages within their bounds, and with `--major` across them: `update [--dry-run] [--major]`"
-usage = '''
-flag "-n --dry-run" help="Say what would move and write nothing"
-flag "--major" help="Cross the bounds the manifests declare"
-'''
-depends = ["//:build"]
-run = "node {{env.WORKSPACE}}/scripts/deps/update.res.mjs"
-
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
 usage = '''

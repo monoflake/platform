@@ -1,2 +1,6 @@
 # The workspace this repository sits under, whose rules and linked configuration it takes.
 base = "https://github.com/canmi21/canmi.git"
+
+# What the workspace's update moves here besides this repository's own task, its docs/toolchain.md.
+[update]
+packages = true
