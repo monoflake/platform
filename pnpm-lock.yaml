@@ -93,6 +93,12 @@ importers:
 
   code/libs/wit: {}
 
+  code/substrate/host:
+    dependencies:
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+
   code/tools/envelope-generator: {}
 
   code/tools/runner:

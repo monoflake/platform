@@ -500,7 +500,8 @@ let own: dict<component> = dict{
         ~contract=["deployments"],
       ),
     ],
-    uses: ["vocabulary*", "compat*"],
+    uses: ["vocabulary*", "compat*", "envelope*"],
+    samples: ["tests/kinds/deployments"],
   },
   /*
    * The drivers, roles their own repository fills, asked in `model/ground/drivers.res`, RFC 7ykg6.

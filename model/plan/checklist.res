@@ -652,6 +652,13 @@ let own: array<item> = [
     step: 1,
   },
   {
+    id: "C44",
+    group: #C,
+    what: "what the host leaves open: how the executor names a deployment at a host, the address kept or described each call, a deployment making or failed, an instance's key on a path, what a host offers and how it reports it, and the paths in the bundle",
+    from: "tkil2, vr5lw, vuanj, b8f35, ot812",
+    step: 1,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",
