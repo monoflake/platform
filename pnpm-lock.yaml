@@ -65,6 +65,18 @@ importers:
         specifier: workspace:*
         version: link:../keys
 
+  code/libs/scope:
+    dependencies:
+      '@monoflake/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../envelope
+      '@monoflake/vocabulary':
+        specifier: workspace:*
+        version: link:../vocabulary
+
   code/libs/serve:
     dependencies:
       '@monoflake/capability':

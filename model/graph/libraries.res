@@ -67,7 +67,8 @@ let libraries: dict<library> = dict{
     languages: [#rescript],
     what: "a scope, a concept and never a process: its status and allowance read from its organization's bundle, and whether a need fits it, judged alike by every reader, vuanj",
     agrees: false,
-    uses: ["vocabulary*", "compat*"],
+    uses: ["vocabulary*", "compat*", "envelope*", "codec*"],
+    samples: ["tests/scope"],
   },
   "capability*": {
     languages: [#rescript],

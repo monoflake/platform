@@ -14,6 +14,7 @@ let blocks: dict<state> = dict{
   "keys": Accepted,
   "layout": Accepted,
   "placement": Accepted,
+  "scope": InWork,
   "runner": Accepted,
   "serve": Accepted,
   "vocabulary": InWork,

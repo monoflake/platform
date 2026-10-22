@@ -645,6 +645,13 @@ let own: array<item> = [
     step: 1,
   },
   {
+    id: "C43",
+    group: #C,
+    what: "what scope leaves open: a bundle holding no scope by the id asked, a deleted scope's reason, a scope not active refusing before it is compared, where a section is read, which vocabulary judges, and the form a need is given in",
+    from: "b8hyu, vuanj, kd7f9",
+    step: 1,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",

@@ -1,0 +1,231 @@
+{
+	"from": "RFC vuanj: a scope's status and allowance read from its organization's bundle, the issuer section's `bundle-issuer`, its status `active` where absent; RFC kd7f9: a need fits by vocabulary*'s `fits` over the model's vocabulary, defaults filled and every failing capability named; a scope not active fails as `scope-status` names it; RFC b8hyu for a scope the bundle does not hold. Each bundle holds its issuer section as JSON, written to its CBOR by the test, or as hex where it is malformed",
+	"held": [
+		{
+			"what": "an active scope given tcp and instance, a need within it fitting",
+			"bundle": {
+				"scope": 7,
+				"generation": 3,
+				"issuer": {
+					"grants": [],
+					"allowance": {
+						"network": { "name": "some", "values": ["http", "tcp"] },
+						"instance": { "name": "flag", "value": true }
+					},
+					"security": "default",
+					"status": "active"
+				}
+			},
+			"scope": 7,
+			"status": "active",
+			"allowance": {
+				"kind": { "name": "some", "values": ["derive", "effect"] },
+				"network": { "name": "some", "values": ["http", "tcp"] },
+				"instance": { "name": "flag", "value": true },
+				"sandbox": { "name": "some", "values": [] }
+			},
+			"fits": [
+				{
+					"what": "an effect asking tcp and an instance",
+					"need": {
+						"kind": { "name": "one", "value": "effect" },
+						"network": { "name": "some", "values": ["http", "tcp"] },
+						"instance": { "name": "flag", "value": true }
+					},
+					"refused": null
+				},
+				{
+					"what": "a derive declaring nothing else",
+					"need": { "kind": { "name": "one", "value": "derive" } },
+					"refused": null
+				}
+			]
+		},
+		{
+			"what": "an active scope allowed derive and http alone, a need failing on several capabilities",
+			"bundle": {
+				"scope": 7,
+				"generation": 4,
+				"issuer": {
+					"grants": [],
+					"allowance": {
+						"kind": { "name": "some", "values": ["derive"] },
+						"network": { "name": "some", "values": ["http"] }
+					},
+					"security": "strict",
+					"status": "active"
+				}
+			},
+			"scope": 7,
+			"status": "active",
+			"allowance": {
+				"kind": { "name": "some", "values": ["derive"] },
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": false },
+				"sandbox": { "name": "some", "values": [] }
+			},
+			"fits": [
+				{
+					"what": "an effect asking udp, an instance and a capability no entry names",
+					"need": {
+						"kind": { "name": "one", "value": "effect" },
+						"network": { "name": "some", "values": ["http", "udp"] },
+						"instance": { "name": "flag", "value": true },
+						"gpu": { "name": "flag", "value": true }
+					},
+					"refused": {
+						"unfit": [
+							{ "unknown": "gpu" },
+							{
+								"exceeds": "instance",
+								"need": { "name": "flag", "value": true },
+								"held": { "name": "flag", "value": false }
+							},
+							{
+								"exceeds": "kind",
+								"need": { "name": "one", "value": "effect" },
+								"held": { "name": "some", "values": ["derive"] }
+							},
+							{
+								"exceeds": "network",
+								"need": { "name": "some", "values": ["http", "udp"] },
+								"held": { "name": "some", "values": ["http"] }
+							}
+						]
+					}
+				},
+				{
+					"what": "a derive asking http alone still fitting",
+					"need": { "kind": { "name": "one", "value": "derive" } },
+					"refused": null
+				}
+			]
+		},
+		{
+			"what": "a scope naming no status and an empty allowance, active and every entry its default",
+			"bundle": {
+				"scope": 12,
+				"generation": 1,
+				"issuer": { "grants": [], "allowance": {}, "security": "default" }
+			},
+			"scope": 12,
+			"status": "active",
+			"allowance": {
+				"kind": { "name": "some", "values": ["derive", "effect"] },
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": false },
+				"sandbox": { "name": "some", "values": [] }
+			},
+			"fits": [
+				{
+					"what": "a need declaring nothing fits the defaults",
+					"need": {},
+					"refused": null
+				},
+				{
+					"what": "tcp and a sandbox past the defaults",
+					"need": {
+						"network": { "name": "some", "values": ["tcp"] },
+						"sandbox": { "name": "one", "value": "v8" }
+					},
+					"refused": {
+						"unfit": [
+							{
+								"exceeds": "network",
+								"need": { "name": "some", "values": ["tcp"] },
+								"held": { "name": "some", "values": ["http"] }
+							},
+							{
+								"exceeds": "sandbox",
+								"need": { "name": "one", "value": "v8" },
+								"held": { "name": "some", "values": [] }
+							}
+						]
+					}
+				}
+			]
+		},
+		{
+			"what": "a suspended scope, its allowance still read and no need fitting",
+			"bundle": {
+				"scope": 7,
+				"generation": 5,
+				"issuer": {
+					"grants": [],
+					"allowance": { "instance": { "name": "flag", "value": true } },
+					"security": "default",
+					"status": "suspended"
+				}
+			},
+			"scope": 7,
+			"status": "suspended",
+			"allowance": {
+				"kind": { "name": "some", "values": ["derive", "effect"] },
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": true },
+				"sandbox": { "name": "some", "values": [] }
+			},
+			"fits": [
+				{ "what": "a need within its allowance", "need": {}, "refused": "suspended" },
+				{
+					"what": "a need past it, refused by the status before it is compared",
+					"need": { "network": { "name": "some", "values": ["icmp"] } },
+					"refused": "suspended"
+				}
+			]
+		},
+		{
+			"what": "a deleted scope",
+			"bundle": {
+				"scope": 7,
+				"generation": 6,
+				"issuer": { "grants": [], "allowance": {}, "security": "default", "status": "deleted" }
+			},
+			"scope": 7,
+			"status": "deleted",
+			"allowance": {
+				"kind": { "name": "some", "values": ["derive", "effect"] },
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": false },
+				"sandbox": { "name": "some", "values": [] }
+			},
+			"fits": [{ "what": "a need of nothing", "need": {}, "refused": "deleted" }]
+		}
+	],
+	"unheld": [
+		{
+			"what": "a bundle of another scope",
+			"bundle": {
+				"scope": 7,
+				"generation": 3,
+				"issuer": { "grants": [], "allowance": {}, "security": "default" }
+			},
+			"scope": 8,
+			"unheld": { "other": 7 }
+		},
+		{
+			"what": "a bundle holding no issuer section",
+			"bundle": { "scope": 7, "generation": 3 },
+			"scope": 7,
+			"unheld": { "absent": true }
+		},
+		{
+			"what": "an issuer section that is no CBOR data item, a break alone",
+			"bundle": { "scope": 7, "generation": 3, "issuerHex": "ff" },
+			"scope": 7,
+			"unheld": {
+				"malformed": [{ "field": "body" }, { "key": "issuer" }],
+				"expected": "one CBOR data item as RFC 8949's 4.2.1 writes it"
+			}
+		},
+		{
+			"what": "an issuer section an empty map, holding no grants",
+			"bundle": { "scope": 7, "generation": 3, "issuerHex": "a0" },
+			"scope": 7,
+			"unheld": {
+				"malformed": [{ "field": "body" }, { "key": "issuer" }, { "field": "grants" }],
+				"expected": "present"
+			}
+		}
+	]
+}

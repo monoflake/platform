@@ -1,0 +1,12 @@
+{
+	"name": "@monoflake/scope",
+	"namespace": "Scope",
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
+	"dependencies": ["@monoflake/envelope", "@monoflake/codec", "@monoflake/vocabulary"],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "number": "+4", "error": "+a-110" }
+}
