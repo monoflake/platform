@@ -51,6 +51,10 @@ Decided by the author on 2026-10-21.
   commit, and each archive's size, SHA-256 and image digest. A later run the same day adds its
   versions' archives and rows, then merges its entries into the manifest and uploads it last, so a
   version counts as released once a published release's manifest lists it.
+- **An archive stays a plain tar of gzip layers**, decided by the author on 2026-10-22 from the
+  agent's measure of 2026.10.22's archives: a wrapper of gzip, zstd or xz saved 0.6 to 2.4 percent,
+  the layers being compressed already, and would have made the driver unpack before it imports;
+  zstd layers at level 19 came to 71 to 72 percent of gzip's but need Docker 23 or later to pull.
 - **Docker Hub's readme and description follow GitHub's**, decided by the author on 2026-10-22:
   each run writes this repository's README and description over both images' on Docker Hub, with
   the one token the push takes, since a second token in the same repository leaks with the first.
