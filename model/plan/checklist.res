@@ -638,6 +638,13 @@ let own: array<item> = [
     step: 1,
   },
   {
+    id: "C42",
+    group: #C,
+    what: "what extensions leaves open: the quota in force where none is set, custody and a copy's availability as a set composes, which places lie apart, a borrower's grace, a loan's quota against its lender's, and a failure's shape",
+    from: "87lwb, kd7f9",
+    step: 1,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",

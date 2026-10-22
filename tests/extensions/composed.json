@@ -1,0 +1,513 @@
+{
+	"from": "RFC vr5lw: only members at stable or above compose; a pool on 2 hosts or more on distinct nodes is redundant, in distinct regions multiregion; a keyed container or a database's writer on 2 hosts or more on distinct nodes is recoverable at most; 2 copies or more, each persistent or above, on distinct nodes are replicated, in distinct zones multizone, in distinct regions multiregion; a set's level is the higher of its lowest member's own and the highest its spread composes to. RFC 87lwb: custody is the lowest member's, two members lie apart in a domain where they or a domain wider name it apart, and a set of no member composes to nothing, `null`",
+	"cases": [
+		{
+			"what": "no member",
+			"set": "pool",
+			"members": [],
+			"composed": null
+		},
+		{
+			"what": "one member, its own levels",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "one member multiregion of itself, not pulled down",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "multiregion",
+						"durability": "multiregion",
+						"custody": "false"
+					},
+					"place": {
+						"account": "account-1"
+					}
+				}
+			],
+			"composed": {
+				"availability": "multiregion",
+				"durability": "multiregion",
+				"custody": "false"
+			}
+		},
+		{
+			"what": "a pool on two nodes",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				}
+			],
+			"composed": {
+				"availability": "redundant",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a pool in two regions",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1",
+						"region": "us-east"
+					}
+				},
+				{
+					"levels": {
+						"availability": "recoverable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2",
+						"region": "eu-west"
+					}
+				}
+			],
+			"composed": {
+				"availability": "multiregion",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a pool on one node, which composes nothing",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a pool where a node is not named, which lies apart from nothing",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "nodes of one name in two sites lie apart",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1",
+						"site": "home"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1",
+						"site": "office"
+					}
+				}
+			],
+			"composed": {
+				"availability": "redundant",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a member below stable left out, its own level the lowest",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "best_effort",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				}
+			],
+			"composed": {
+				"availability": "best_effort",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a member below stable left out, the rest composing past it",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "opportunistic",
+						"durability": "ephemeral",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m3"
+					}
+				}
+			],
+			"composed": {
+				"availability": "redundant",
+				"durability": "ephemeral",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a keyed set in two regions is recoverable at most",
+			"set": "keyed",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1",
+						"region": "us-east"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2",
+						"region": "eu-west"
+					}
+				}
+			],
+			"composed": {
+				"availability": "recoverable",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a keyed set whose members are redundant of themselves keeps their level",
+			"set": "keyed",
+			"members": [
+				{
+					"levels": {
+						"availability": "redundant",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "redundant",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				}
+			],
+			"composed": {
+				"availability": "redundant",
+				"durability": "persistent",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "copies on two nodes",
+			"set": "copies",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "replicated",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "copies in two zones",
+			"set": "copies",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1",
+						"zone": "a"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "redundant",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2",
+						"zone": "b"
+					}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "multizone",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "copies in two regions",
+			"set": "copies",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"region": "us-east"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"region": "eu-west"
+					}
+				}
+			],
+			"composed": {
+				"availability": "stable",
+				"durability": "multiregion",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "a copy ephemeral left out, and one below stable",
+			"set": "copies",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "ephemeral",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "best_effort",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m2"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m3"
+					}
+				}
+			],
+			"composed": {
+				"availability": "best_effort",
+				"durability": "ephemeral",
+				"custody": "true"
+			}
+		},
+		{
+			"what": "custody the lowest member's",
+			"set": "pool",
+			"members": [
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "true"
+					},
+					"place": {
+						"node": "m1"
+					}
+				},
+				{
+					"levels": {
+						"availability": "stable",
+						"durability": "persistent",
+						"custody": "false"
+					},
+					"place": {
+						"node": "m2"
+					}
+				}
+			],
+			"composed": {
+				"availability": "redundant",
+				"durability": "persistent",
+				"custody": "false"
+			}
+		}
+	]
+}

@@ -1,0 +1,143 @@
+{
+	"from": "RFC v7v3w: a control lends what it binds, opening a binding of its own host for the borrower and setting its quota; the lender keeps the host's management token, its shell and its grace; the borrower's record is an extension like any, whose lender names who lent it. RFC 7xpd3: what a loan crosses as holds no secret, its host, endpoint, levels, place, quota and whether it has an address. RFC 87lwb: the borrower's grace left unset",
+	"lent": [
+		{
+			"what": "the lender's binding as it stands, the quota lent, nothing sealed",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "recoverable",
+					"durability": "redundant",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m9",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": true,
+				"dismissed": [],
+				"quota": 107374182400,
+				"grace": 86400,
+				"management": "c2VhbGVkLW1hbmFnZW1lbnQ",
+				"shell": "c2VhbGVkLXNoZWxs"
+			},
+			"quota": 10737418240,
+			"loan": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"levels": {
+					"availability": "recoverable",
+					"durability": "redundant",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m9",
+					"region": "us-east"
+				},
+				"quota": 10737418240,
+				"address": true
+			}
+		}
+	],
+	"borrowed": [
+		{
+			"what": "the borrower's binding, its lender named, the loan's quota",
+			"loan": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"levels": {
+					"availability": "recoverable",
+					"durability": "redundant",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m9",
+					"region": "us-east"
+				},
+				"quota": 10737418240,
+				"address": true
+			},
+			"lender": {
+				"name": "platform"
+			},
+			"token": "c2VhbGVkLWxvYW4tdG9rZW4",
+			"relays": {
+				"name": "all"
+			},
+			"borrowed": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWxvYW4tdG9rZW4",
+				"levels": {
+					"availability": "recoverable",
+					"durability": "redundant",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m9",
+					"region": "us-east"
+				},
+				"quota": 10737418240,
+				"relays": {
+					"name": "all"
+				},
+				"address": true,
+				"dismissed": [],
+				"lender": {
+					"name": "platform"
+				}
+			}
+		},
+		{
+			"what": "relays naming none",
+			"loan": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"levels": {
+					"availability": "recoverable",
+					"durability": "redundant",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m9",
+					"region": "us-east"
+				},
+				"quota": 10737418240,
+				"address": true
+			},
+			"lender": {
+				"name": "platform"
+			},
+			"token": "c2VhbGVkLWxvYW4tdG9rZW4",
+			"relays": {
+				"name": "some",
+				"extensions": []
+			},
+			"unbound": [
+				{
+					"refused": "relays"
+				}
+			]
+		}
+	]
+}

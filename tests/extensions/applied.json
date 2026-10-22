@@ -1,0 +1,286 @@
+{
+	"from": "RFC vr5lw: the list holds four kinds, each a capacity record the driver diffs by its id, sent whole by generation; an item's credential is the BLAKE3 of 32 random bytes the control made, two while one replaces the other, and names itself once. RFC 3d3nt: tokens, where given, are the binding's still in force by their BLAKE3. RFC 87lwb: one extension's items sorted by id, the others passed over, every refusal named, `refused` naming its case",
+	"cases": [
+		{
+			"what": "one extension's items sorted by id, another's passed over, its tokens given",
+			"extension": 1,
+			"generation": 7,
+			"tokens": [
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+			],
+			"listed": [
+				{
+					"id": 9,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "volume",
+							"size": 10737418240
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["1111111111111111111111111111111111111111111111111111111111111111"]
+				},
+				{
+					"id": 4,
+					"capacity": {
+						"extension": 2,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["2222222222222222222222222222222222222222222222222222222222222222"]
+				},
+				{
+					"id": 3,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "container",
+							"millicores": 500,
+							"memory": 536870912
+						},
+						"credentials": ["c2VhbGVkLTE", "c2VhbGVkLTI"]
+					},
+					"hashes": [
+						"2222222222222222222222222222222222222222222222222222222222222222",
+						"3333333333333333333333333333333333333333333333333333333333333333"
+					]
+				}
+			],
+			"applied": {
+				"generation": 7,
+				"items": [
+					{
+						"id": 3,
+						"capacity": {
+							"name": "container",
+							"millicores": 500,
+							"memory": 536870912
+						},
+						"credentials": [
+							"2222222222222222222222222222222222222222222222222222222222222222",
+							"3333333333333333333333333333333333333333333333333333333333333333"
+						]
+					},
+					{
+						"id": 9,
+						"capacity": {
+							"name": "volume",
+							"size": 10737418240
+						},
+						"credentials": ["1111111111111111111111111111111111111111111111111111111111111111"]
+					}
+				],
+				"tokens": [
+					"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+				]
+			}
+		},
+		{
+			"what": "no tokens given, none sent",
+			"extension": 2,
+			"generation": 1,
+			"listed": [
+				{
+					"id": 4,
+					"capacity": {
+						"extension": 2,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["2222222222222222222222222222222222222222222222222222222222222222"]
+				}
+			],
+			"applied": {
+				"generation": 1,
+				"items": [
+					{
+						"id": 4,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["2222222222222222222222222222222222222222222222222222222222222222"]
+					}
+				]
+			}
+		},
+		{
+			"what": "nothing listed of the extension, an empty list",
+			"extension": 5,
+			"generation": 2,
+			"listed": [
+				{
+					"id": 4,
+					"capacity": {
+						"extension": 2,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["2222222222222222222222222222222222222222222222222222222222222222"]
+				}
+			],
+			"applied": {
+				"generation": 2,
+				"items": []
+			}
+		},
+		{
+			"what": "every refusal named, by id and then the tokens",
+			"extension": 1,
+			"generation": 3,
+			"tokens": [
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+			],
+			"listed": [
+				{
+					"id": 6,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["1111111111111111111111111111111111111111111111111111111111111111"]
+				},
+				{
+					"id": 6,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "volume",
+							"size": 10737418240
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["2222222222222222222222222222222222222222222222222222222222222222"]
+				},
+				{
+					"id": 2,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": [
+						"1111111111111111111111111111111111111111111111111111111111111111",
+						"2222222222222222222222222222222222222222222222222222222222222222"
+					]
+				},
+				{
+					"id": 8,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": ["11111111111111111111111111111111111111111111111111111111111111"]
+				},
+				{
+					"id": 4,
+					"capacity": {
+						"extension": 4,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE"]
+					},
+					"hashes": []
+				}
+			],
+			"unlisted": [
+				{
+					"refused": "credentials",
+					"id": 2
+				},
+				{
+					"refused": "repeated",
+					"id": 6
+				},
+				{
+					"refused": "hash",
+					"id": 8
+				},
+				{
+					"refused": "token",
+					"at": 1
+				}
+			]
+		},
+		{
+			"what": "an item of no credential",
+			"extension": 1,
+			"generation": 3,
+			"listed": [
+				{
+					"id": 1,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": []
+					},
+					"hashes": []
+				}
+			],
+			"unlisted": [
+				{
+					"refused": "credentials",
+					"id": 1
+				}
+			]
+		},
+		{
+			"what": "an item of three credentials",
+			"extension": 1,
+			"generation": 3,
+			"listed": [
+				{
+					"id": 1,
+					"capacity": {
+						"extension": 1,
+						"capacity": {
+							"name": "object",
+							"size": 1073741824
+						},
+						"credentials": ["c2VhbGVkLTE", "c2VhbGVkLTI", "c2VhbGVkLTE"]
+					},
+					"hashes": [
+						"1111111111111111111111111111111111111111111111111111111111111111",
+						"2222222222222222222222222222222222222222222222222222222222222222",
+						"3333333333333333333333333333333333333333333333333333333333333333"
+					]
+				}
+			],
+			"unlisted": [
+				{
+					"refused": "credentials",
+					"id": 1
+				}
+			]
+		}
+	]
+}

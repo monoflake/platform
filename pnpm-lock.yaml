@@ -37,6 +37,12 @@ importers:
         specifier: workspace:*
         version: link:../codec
 
+  code/libs/extensions:
+    dependencies:
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../envelope
+
   code/libs/keys:
     dependencies:
       '@noble/hashes':
@@ -70,6 +76,10 @@ importers:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../envelope
+
+  code/libs/vocabulary: {}
+
+  code/libs/wit: {}
 
   code/tools/envelope-generator: {}
 

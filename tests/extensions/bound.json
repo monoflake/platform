@@ -1,0 +1,330 @@
+{
+	"from": "RFC vr5lw: a binding copies the levels its host declares as it is made and may set its own instead, its own from then; a grace is a whole number of seconds from 0 to a year; which relays a host may use is chosen as it is bound, one or more, or all. RFC v7v3w for the record, nothing dismissed as it is made. RFC 87lwb for a failure's shape, `refused` naming its case",
+	"cases": [
+		{
+			"what": "a binding copying its host's levels and place",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "all"
+				}
+			},
+			"bound": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": []
+			}
+		},
+		{
+			"what": "a binding setting its own levels and place, its quota, grace and sealed credentials",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "some",
+					"extensions": [2, 5]
+				},
+				"levels": {
+					"availability": "best_effort",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "office",
+					"region": "us-east"
+				},
+				"quota": 10737418240,
+				"grace": 3600,
+				"management": "c2VhbGVkLW1hbmFnZW1lbnQ",
+				"shell": "c2VhbGVkLXNoZWxs"
+			},
+			"bound": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "best_effort",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "office",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "some",
+					"extensions": [2, 5]
+				},
+				"address": false,
+				"dismissed": [],
+				"quota": 10737418240,
+				"grace": 3600,
+				"management": "c2VhbGVkLW1hbmFnZW1lbnQ",
+				"shell": "c2VhbGVkLXNoZWxs"
+			}
+		},
+		{
+			"what": "a host declared to have an address, and a grace of a year, the longest",
+			"declared": {
+				"host": {
+					"driver": "cloudflare",
+					"identifier": "account-1"
+				},
+				"levels": {
+					"availability": "multiregion",
+					"durability": "multiregion",
+					"custody": "false"
+				},
+				"place": {
+					"account": "account-1"
+				},
+				"address": true
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "all"
+				},
+				"grace": 31536000
+			},
+			"bound": {
+				"host": {
+					"driver": "cloudflare",
+					"identifier": "account-1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "multiregion",
+					"durability": "multiregion",
+					"custody": "false"
+				},
+				"place": {
+					"account": "account-1"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": true,
+				"dismissed": [],
+				"grace": 31536000
+			}
+		},
+		{
+			"what": "a grace of 0, which removes at once",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "all"
+				},
+				"grace": 0
+			},
+			"bound": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": [],
+				"grace": 0
+			}
+		},
+		{
+			"what": "a grace past a year",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "all"
+				},
+				"grace": 31536001
+			},
+			"unbound": [
+				{
+					"refused": "grace",
+					"grace": 31536001
+				}
+			]
+		},
+		{
+			"what": "relays of some naming none",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "some",
+					"extensions": []
+				}
+			},
+			"unbound": [
+				{
+					"refused": "relays"
+				}
+			]
+		},
+		{
+			"what": "relays naming one twice, and a grace past a year, both named",
+			"declared": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"address": false
+			},
+			"binding": {
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"relays": {
+					"name": "some",
+					"extensions": [3, 3]
+				},
+				"grace": 40000000
+			},
+			"unbound": [
+				{
+					"refused": "grace",
+					"grace": 40000000
+				},
+				{
+					"refused": "relays"
+				}
+			]
+		}
+	]
+}

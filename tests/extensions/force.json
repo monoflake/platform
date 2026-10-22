@@ -1,0 +1,170 @@
+{
+	"from": "RFC vr5lw: the grace is a week unless set, set for the organization, and for each binding either inherited from that or its own. RFC kd7f9: an organization holds a quota, and a binding's unset one is the organization's. RFC 87lwb: with neither set no quota is in force, `null`",
+	"cases": [
+		{
+			"what": "the binding's own grace and quota, over the organization's",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": [],
+				"grace": 3600,
+				"quota": 1073741824
+			},
+			"organization": {
+				"security": "default",
+				"grace": 86400,
+				"quota": 10737418240
+			},
+			"grace": 3600,
+			"quota": 1073741824
+		},
+		{
+			"what": "a grace of 0 set is the binding's own",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": [],
+				"grace": 0
+			},
+			"organization": {
+				"security": "default",
+				"grace": 86400
+			},
+			"grace": 0,
+			"quota": null
+		},
+		{
+			"what": "the binding's unset, the organization's inherited",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": []
+			},
+			"organization": {
+				"security": "strict",
+				"grace": 86400,
+				"quota": 10737418240
+			},
+			"grace": 86400,
+			"quota": 10737418240
+		},
+		{
+			"what": "the binding's own quota and the organization's grace",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": [],
+				"quota": 1073741824
+			},
+			"organization": {
+				"security": "default",
+				"grace": 86400
+			},
+			"grace": 86400,
+			"quota": 1073741824
+		},
+		{
+			"what": "the organization's unset too, a week and no quota",
+			"extension": {
+				"host": {
+					"driver": "machine",
+					"identifier": "m1"
+				},
+				"endpoint": "https://m1.example:4100",
+				"token": "c2VhbGVkLWJpbmRpbmctdG9rZW4",
+				"levels": {
+					"availability": "stable",
+					"durability": "persistent",
+					"custody": "true"
+				},
+				"place": {
+					"node": "m1",
+					"site": "home",
+					"region": "us-east"
+				},
+				"relays": {
+					"name": "all"
+				},
+				"address": false,
+				"dismissed": []
+			},
+			"organization": {
+				"security": "default"
+			},
+			"grace": 604800,
+			"quota": null
+		}
+	]
+}
