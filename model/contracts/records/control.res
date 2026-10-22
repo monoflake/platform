@@ -11,13 +11,14 @@ let types: array<declared> = [
     from: "v7v3w, vuanj",
   },
   // An organization's own record, its name shown, how long its credentials live, vuanj, and the
-  // grace its extensions inherit, vr5lw.
+  // grace and quota its extensions inherit where their own are unset, vr5lw and kd7f9.
   {
     name: "organization",
     def: Record([
       optional("name", 1, Prim(#string)),
       field("security", 2, Type("security")),
       optional("grace", 3, Prim(#uint32)),
+      optional("quota", 4, Prim(#uint53)),
     ]),
     from: "v7v3w",
   },

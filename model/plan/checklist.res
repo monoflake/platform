@@ -624,6 +624,13 @@ let own: array<item> = [
     step: 2,
   },
   {
+    id: "C40",
+    group: #C,
+    what: "what the vocabulary leaves open: a group's member keyed on the wire, a need's one of a set left absent, the sandbox's default, what is held read leniently, which side compares which entry, an amount's unit, and how the library reads its table",
+    from: "b194m, kd7f9",
+    step: 1,
+  },
+  {
     id: "E1",
     group: #E,
     what: "the issuer's standing capability to read every scope's grants, gone now each organization signs its own: drop it from b8f35's question, v7v3w's Open and the intermediate's contract",

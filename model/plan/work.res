@@ -15,4 +15,5 @@ let blocks: dict<state> = dict{
   "placement": Accepted,
   "runner": Accepted,
   "serve": Accepted,
+  "vocabulary": InWork,
 }

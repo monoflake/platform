@@ -1097,6 +1097,14 @@
 						"prim": "uint32"
 					},
 					"optional": true
+				},
+				{
+					"name": "quota",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -7811,6 +7819,52 @@
 			]
 		}
 	},
+	"vocabulary": [
+		{
+			"name": "kind",
+			"type": "one",
+			"default": {
+				"name": "some",
+				"values": ["derive", "effect"]
+			},
+			"members": ["derive", "effect"]
+		},
+		{
+			"name": "network",
+			"type": "some",
+			"default": {
+				"name": "some",
+				"values": ["http"]
+			},
+			"members": ["http", "tcp", "udp", "icmp"]
+		},
+		{
+			"name": "instance",
+			"type": "flag",
+			"default": {
+				"name": "flag",
+				"value": false
+			}
+		},
+		{
+			"name": "export",
+			"type": "amounts",
+			"default": {
+				"name": "amount",
+				"value": 0
+			},
+			"members": []
+		},
+		{
+			"name": "sandbox",
+			"type": "one",
+			"default": {
+				"name": "some",
+				"values": []
+			},
+			"members": ["v8", "webassembly"]
+		}
+	],
 	"records": [
 		{
 			"kind": "bucket",

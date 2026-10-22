@@ -364,6 +364,38 @@ let run = () => {
       contractRules->Array.push(`deployment-form ${f}: taken by no runtime`)
     }
   )
+  // Each capability named once, its set a declared enumeration and its default within it, kd7f9.
+  let capabilityNames = Set.make()
+  Platform.vocabulary->Array.forEach(c => {
+    let at = `vocabulary ${c.name}`
+    if !(/^[a-z][a-z0-9-]*$/->RegExp.test(c.name)) || capabilityNames->Set.has(c.name) {
+      contractRules->Array.push(`${at}: no name of its own`)
+    }
+    capabilityNames->Set.add(c.name)
+    let within = (set, default: array<string>) =>
+      switch Contracts.members(set) {
+      | [] => contractRules->Array.push(`${at}: ${set}, no declared enumeration`)
+      | members =>
+        default->Array.forEach(d =>
+          if !(members->Array.includes(d)) {
+            contractRules->Array.push(`${at}: its default ${d}, no member of ${set}`)
+          }
+        )
+      }
+    switch c.type_ {
+    | Flag(_) => ()
+    | Amount({default}) | Amounts({default}) if default < 0 =>
+      contractRules->Array.push(`${at}: a default below none`)
+    | Amount(_) => ()
+    | Amounts({members}) =>
+      members->Array.forEachWithIndex((m, i) =>
+        if !(/^[a-z][a-z0-9-]*$/->RegExp.test(m)) || members->Array.indexOf(m) != i {
+          contractRules->Array.push(`${at}: its member ${m}, no name of its own`)
+        }
+      )
+    | OneOf({set, default}) | SomeOf({set, default}) => within(set, default)
+    }
+  })
   // A database's preset tiers, within the bounds and each sparser and kept longer than the one
   // before, zn3u5.
   Database.retentionPreset->Array.forEachWithIndex(((every, keep), i) => {

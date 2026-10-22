@@ -1,0 +1,106 @@
+{
+	"from": "RFC kd7f9 and RFC 49qyg: the vocabulary the model declares, as model/contracts.json holds it; kind one of derive and effect, both allowed by default; network some of http, tcp, udp and icmp, http alone by default; instance yes or no, no by default; export a group of amounts, none by default and no member yet; the sandbox one of v8 and webassembly, none offered by default",
+	"entries": [
+		{
+			"name": "kind",
+			"type": "one",
+			"members": ["derive", "effect"],
+			"default": { "name": "some", "values": ["derive", "effect"] }
+		},
+		{
+			"name": "network",
+			"type": "some",
+			"members": ["http", "tcp", "udp", "icmp"],
+			"default": { "name": "some", "values": ["http"] }
+		},
+		{ "name": "instance", "type": "flag", "default": { "name": "flag", "value": false } },
+		{
+			"name": "export",
+			"type": "amounts",
+			"members": [],
+			"default": { "name": "amount", "value": 0 }
+		},
+		{
+			"name": "sandbox",
+			"type": "one",
+			"members": ["v8", "webassembly"],
+			"default": { "name": "some", "values": [] }
+		}
+	],
+	"filled": [
+		{
+			"what": "a function declaring nothing needs http alone",
+			"side": "need",
+			"values": {},
+			"filled": {
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": false }
+			}
+		},
+		{
+			"what": "an allowance or an offer holding nothing",
+			"side": "held",
+			"values": {},
+			"filled": {
+				"kind": { "name": "some", "values": ["derive", "effect"] },
+				"network": { "name": "some", "values": ["http"] },
+				"instance": { "name": "flag", "value": false },
+				"sandbox": { "name": "some", "values": [] }
+			}
+		}
+	],
+	"fits": [
+		{
+			"what": "a derive asking http alone fits an allowance of defaults",
+			"need": { "kind": { "name": "one", "value": "derive" } },
+			"allowance": {},
+			"failed": []
+		},
+		{
+			"what": "an effect where only derive is allowed, asking tcp beside http",
+			"need": {
+				"kind": { "name": "one", "value": "effect" },
+				"network": { "name": "some", "values": ["http", "tcp"] }
+			},
+			"allowance": { "kind": { "name": "some", "values": ["derive"] } },
+			"failed": [
+				{
+					"exceeds": "kind",
+					"need": { "name": "one", "value": "effect" },
+					"held": { "name": "some", "values": ["derive"] }
+				},
+				{
+					"exceeds": "network",
+					"need": { "name": "some", "values": ["http", "tcp"] },
+					"held": { "name": "some", "values": ["http"] }
+				}
+			]
+		}
+	],
+	"meets": [
+		{
+			"what": "a host offering webassembly and instance",
+			"need": {
+				"sandbox": { "name": "one", "value": "webassembly" },
+				"instance": { "name": "flag", "value": true }
+			},
+			"offer": {
+				"sandbox": { "name": "some", "values": ["v8", "webassembly"] },
+				"instance": { "name": "flag", "value": true }
+			},
+			"failed": []
+		},
+		{
+			"what": "a host offering no sandbox meets no need of one",
+			"need": { "sandbox": { "name": "one", "value": "v8" } },
+			"offer": {},
+			"failed": [
+				{
+					"exceeds": "sandbox",
+					"need": { "name": "one", "value": "v8" },
+					"held": { "name": "some", "values": [] }
+				}
+			]
+		}
+	]
+}

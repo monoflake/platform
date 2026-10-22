@@ -56,6 +56,34 @@ let interfaces: array<interface_> = [
   Directories.interface_,
 ]
 
+/** The members of a declared enumeration, by its name, none where it is no enumeration. */
+let members = set =>
+  switch ownTypes->Array.find(t => t.name == set) {
+  | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
+  | Some({def: Record(_) | Union(_) | Flags(_)}) | None => []
+  }
+
+/** A capability as every language reads it, its default as `allowance-value` writes it. */
+let capabilityJson = (c: Platform.capability): JSON.t => {
+  let strings = names => JSON.Array(names->Array.map(n => JSON.String(n)))
+  let some = names => JSON.Object(dict{"name": String("some"), "values": strings(names)})
+  let amount = n => JSON.Object(dict{"name": String("amount"), "value": Number(Int.toFloat(n))})
+  let (type_, of_, default) = switch c.type_ {
+  | Flag({default}) => (
+      "flag",
+      None,
+      JSON.Object(dict{"name": String("flag"), "value": Boolean(default)}),
+    )
+  | Amount({default}) => ("amount", None, amount(default))
+  | OneOf({set, default}) => ("one", Some(members(set)), some(default))
+  | SomeOf({set, default}) => ("some", Some(members(set)), some(default))
+  | Amounts({members, default}) => ("amounts", Some(members), amount(default))
+  }
+  let o = dict{"name": JSON.String(c.name), "type": String(type_), "default": default}
+  of_->Option.forEach(m => o->Dict.set("members", strings(m)))
+  Object(o)
+}
+
 /** The product, what every language reads, and nothing of the model's code. */
 let product = (~writes: (half, string) => array<string>): JSON.t => Object(
   dict{
@@ -175,6 +203,7 @@ let product = (~writes: (half, string) => array<string>): JSON.t => Object(
       )),
     ),
     "interfaces": Object(Dict.fromArray(interfaces->Array.map(i => (i.name, interfaceJson(i))))),
+    "vocabulary": Array(Platform.vocabulary->Array.map(capabilityJson)),
     "records": Array(
       ownContents->Array.map(c => JSON.Object(
         dict{

@@ -79,9 +79,10 @@ let libraries: dict<library> = dict{
   },
   "vocabulary*": {
     languages: [#rescript],
-    what: "capabilities by name, type and rule; declared, allowed, offered compared, 49qyg",
+    what: "capabilities by name, type and rule, the table contracts.json holds; a need fitting an allowance and meeting an offer, every capability that fails named, 49qyg, kd7f9",
     agrees: false,
     uses: ["compat*"],
+    samples: ["tests/vocabulary"],
   },
   "placement*": {
     languages: [#rescript],

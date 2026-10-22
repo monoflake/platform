@@ -1,0 +1,427 @@
+{
+	"from": "RFC kd7f9: a rule follows its entry's type, a flag needed held only where the other side holds it, an amount at most the other side's, one of a set a member of the other side's set, some of a set a subset of it; defaults filled before either; every capability that fails named; RFC 49qyg for the values. A vocabulary of its own, an entry of every type",
+	"entries": [
+		{ "name": "flag", "type": "flag", "default": { "name": "flag", "value": false } },
+		{ "name": "amount", "type": "amount", "default": { "name": "amount", "value": 128 } },
+		{
+			"name": "one",
+			"type": "one",
+			"members": ["a", "b", "c"],
+			"default": { "name": "some", "values": ["a", "b"] }
+		},
+		{
+			"name": "some",
+			"type": "some",
+			"members": ["a", "b", "c"],
+			"default": { "name": "some", "values": ["a"] }
+		},
+		{
+			"name": "group",
+			"type": "amounts",
+			"members": ["x", "y"],
+			"default": { "name": "amount", "value": 0 }
+		}
+	],
+	"unmade": [
+		{
+			"what": "an empty name",
+			"entries": [{ "name": "", "type": "flag", "default": { "name": "flag", "value": false } }],
+			"malformed": { "name": "" }
+		},
+		{
+			"what": "a name in upper case",
+			"entries": [
+				{ "name": "Flag", "type": "flag", "default": { "name": "flag", "value": false } }
+			],
+			"malformed": { "name": "Flag" }
+		},
+		{
+			"what": "two entries of one name",
+			"entries": [
+				{ "name": "flag", "type": "flag", "default": { "name": "flag", "value": false } },
+				{ "name": "flag", "type": "amount", "default": { "name": "amount", "value": 1 } }
+			],
+			"malformed": { "repeated": "flag" }
+		},
+		{
+			"what": "a member not a name",
+			"entries": [
+				{
+					"name": "some",
+					"type": "some",
+					"members": ["a", "B"],
+					"default": { "name": "some", "values": [] }
+				}
+			],
+			"malformed": { "name": "B" }
+		},
+		{
+			"what": "a member twice",
+			"entries": [
+				{
+					"name": "group",
+					"type": "amounts",
+					"members": ["x", "x"],
+					"default": { "name": "amount", "value": 0 }
+				}
+			],
+			"malformed": { "repeated": "x" }
+		},
+		{
+			"what": "a flag's default an amount",
+			"entries": [{ "name": "flag", "type": "flag", "default": { "name": "amount", "value": 0 } }],
+			"malformed": { "default": "flag" }
+		},
+		{
+			"what": "an amount's default not an integer",
+			"entries": [
+				{ "name": "amount", "type": "amount", "default": { "name": "amount", "value": 1.5 } }
+			],
+			"malformed": { "default": "amount" }
+		},
+		{
+			"what": "a group's default below none",
+			"entries": [
+				{
+					"name": "group",
+					"type": "amounts",
+					"members": ["x"],
+					"default": { "name": "amount", "value": -1 }
+				}
+			],
+			"malformed": { "default": "group" }
+		},
+		{
+			"what": "one of a set's default one member, where it is the other side's some",
+			"entries": [
+				{
+					"name": "one",
+					"type": "one",
+					"members": ["a", "b"],
+					"default": { "name": "one", "value": "a" }
+				}
+			],
+			"malformed": { "default": "one" }
+		},
+		{
+			"what": "some of a set's default outside its set",
+			"entries": [
+				{
+					"name": "some",
+					"type": "some",
+					"members": ["a", "b"],
+					"default": { "name": "some", "values": ["a", "z"] }
+				}
+			],
+			"malformed": { "default": "some" }
+		},
+		{
+			"what": "the first refused of several, in order",
+			"entries": [
+				{ "name": "flag", "type": "flag", "default": { "name": "amount", "value": 0 } },
+				{ "name": "", "type": "flag", "default": { "name": "flag", "value": false } }
+			],
+			"malformed": { "default": "flag" }
+		}
+	],
+	"filled": [
+		{
+			"what": "a need holding nothing takes every default but one of a set's",
+			"side": "need",
+			"values": {},
+			"filled": {
+				"flag": { "name": "flag", "value": false },
+				"amount": { "name": "amount", "value": 128 },
+				"some": { "name": "some", "values": ["a"] },
+				"group.x": { "name": "amount", "value": 0 },
+				"group.y": { "name": "amount", "value": 0 }
+			}
+		},
+		{
+			"what": "a side held takes every default, one of a set's among them",
+			"side": "held",
+			"values": {},
+			"filled": {
+				"flag": { "name": "flag", "value": false },
+				"amount": { "name": "amount", "value": 128 },
+				"one": { "name": "some", "values": ["a", "b"] },
+				"some": { "name": "some", "values": ["a"] },
+				"group.x": { "name": "amount", "value": 0 },
+				"group.y": { "name": "amount", "value": 0 }
+			}
+		},
+		{
+			"what": "what is given is kept, a name of no entry among it",
+			"side": "need",
+			"values": {
+				"flag": { "name": "flag", "value": true },
+				"one": { "name": "one", "value": "c" },
+				"group.y": { "name": "amount", "value": 7 },
+				"later": { "name": "flag", "value": true }
+			},
+			"filled": {
+				"flag": { "name": "flag", "value": true },
+				"amount": { "name": "amount", "value": 128 },
+				"one": { "name": "one", "value": "c" },
+				"some": { "name": "some", "values": ["a"] },
+				"group.x": { "name": "amount", "value": 0 },
+				"group.y": { "name": "amount", "value": 7 },
+				"later": { "name": "flag", "value": true }
+			}
+		}
+	],
+	"fits": [
+		{
+			"what": "a need of defaults fits an allowance of defaults",
+			"need": {},
+			"allowance": {},
+			"failed": []
+		},
+		{
+			"what": "a flag needed and not allowed",
+			"need": { "flag": { "name": "flag", "value": true } },
+			"allowance": {},
+			"failed": [
+				{
+					"exceeds": "flag",
+					"need": { "name": "flag", "value": true },
+					"held": { "name": "flag", "value": false }
+				}
+			]
+		},
+		{
+			"what": "a flag needed and allowed",
+			"need": { "flag": { "name": "flag", "value": true } },
+			"allowance": { "flag": { "name": "flag", "value": true } },
+			"failed": []
+		},
+		{
+			"what": "a flag not needed fits whatever is allowed",
+			"need": { "flag": { "name": "flag", "value": false } },
+			"allowance": { "flag": { "name": "flag", "value": true } },
+			"failed": []
+		},
+		{
+			"what": "an amount past the default allowed",
+			"need": { "amount": { "name": "amount", "value": 129 } },
+			"allowance": {},
+			"failed": [
+				{
+					"exceeds": "amount",
+					"need": { "name": "amount", "value": 129 },
+					"held": { "name": "amount", "value": 128 }
+				}
+			]
+		},
+		{
+			"what": "an amount equal to the one allowed fits",
+			"need": { "amount": { "name": "amount", "value": 500 } },
+			"allowance": { "amount": { "name": "amount", "value": 500 } },
+			"failed": []
+		},
+		{
+			"what": "one of a set, a member the default allows",
+			"need": { "one": { "name": "one", "value": "b" } },
+			"allowance": {},
+			"failed": []
+		},
+		{
+			"what": "one of a set, a member the default does not allow",
+			"need": { "one": { "name": "one", "value": "c" } },
+			"allowance": {},
+			"failed": [
+				{
+					"exceeds": "one",
+					"need": { "name": "one", "value": "c" },
+					"held": { "name": "some", "values": ["a", "b"] }
+				}
+			]
+		},
+		{
+			"what": "one of a set, its allowance narrowed",
+			"need": { "one": { "name": "one", "value": "b" } },
+			"allowance": { "one": { "name": "some", "values": ["a"] } },
+			"failed": [
+				{
+					"exceeds": "one",
+					"need": { "name": "one", "value": "b" },
+					"held": { "name": "some", "values": ["a"] }
+				}
+			]
+		},
+		{
+			"what": "some of a set, a subset of what is allowed",
+			"need": { "some": { "name": "some", "values": ["c", "a"] } },
+			"allowance": { "some": { "name": "some", "values": ["a", "b", "c"] } },
+			"failed": []
+		},
+		{
+			"what": "some of a set, none of it needed",
+			"need": { "some": { "name": "some", "values": [] } },
+			"allowance": { "some": { "name": "some", "values": [] } },
+			"failed": []
+		},
+		{
+			"what": "some of a set, past the default allowed",
+			"need": { "some": { "name": "some", "values": ["a", "b"] } },
+			"allowance": {},
+			"failed": [
+				{
+					"exceeds": "some",
+					"need": { "name": "some", "values": ["a", "b"] },
+					"held": { "name": "some", "values": ["a"] }
+				}
+			]
+		},
+		{
+			"what": "a group's member past the default, the other within what is allowed",
+			"need": {
+				"group.x": { "name": "amount", "value": 1 },
+				"group.y": { "name": "amount", "value": 5 }
+			},
+			"allowance": { "group.y": { "name": "amount", "value": 10 } },
+			"failed": [
+				{
+					"exceeds": "group.x",
+					"need": { "name": "amount", "value": 1 },
+					"held": { "name": "amount", "value": 0 }
+				}
+			]
+		},
+		{
+			"what": "what is allowed and named by no entry, or a member no set holds, is passed over",
+			"need": { "some": { "name": "some", "values": ["a"] } },
+			"allowance": {
+				"some": { "name": "some", "values": ["a", "later"] },
+				"later": { "name": "amount", "value": 3 }
+			},
+			"failed": []
+		},
+		{
+			"what": "a need mistyped, outside its set, of no entry, or at a group's own name",
+			"need": {
+				"flag": { "name": "amount", "value": 1 },
+				"one": { "name": "one", "value": "z" },
+				"some": { "name": "some", "values": ["a", "z"] },
+				"amount": { "name": "amount", "value": 1.5 },
+				"group": { "name": "amount", "value": 1 },
+				"group.z": { "name": "amount", "value": 1 }
+			},
+			"allowance": {},
+			"failed": [
+				{ "mistyped": "amount", "side": "need" },
+				{ "mistyped": "flag", "side": "need" },
+				{ "mistyped": "group", "side": "need" },
+				{ "unknown": "group.z" },
+				{ "mistyped": "one", "side": "need" },
+				{ "mistyped": "some", "side": "need" }
+			]
+		},
+		{
+			"what": "an allowance mistyped",
+			"need": {},
+			"allowance": {
+				"flag": { "name": "some", "values": [] },
+				"amount": { "name": "amount", "value": -1 }
+			},
+			"failed": [
+				{ "mistyped": "amount", "side": "held" },
+				{ "mistyped": "flag", "side": "held" }
+			]
+		},
+		{
+			"what": "a need failing on several capabilities names each, sorted by name",
+			"need": {
+				"flag": { "name": "flag", "value": true },
+				"amount": { "name": "amount", "value": 1000 },
+				"one": { "name": "one", "value": "c" },
+				"some": { "name": "some", "values": ["b"] },
+				"group.y": { "name": "amount", "value": 2 },
+				"zone": { "name": "flag", "value": true }
+			},
+			"allowance": { "group.y": { "name": "amount", "value": 1 } },
+			"failed": [
+				{
+					"exceeds": "amount",
+					"need": { "name": "amount", "value": 1000 },
+					"held": { "name": "amount", "value": 128 }
+				},
+				{
+					"exceeds": "flag",
+					"need": { "name": "flag", "value": true },
+					"held": { "name": "flag", "value": false }
+				},
+				{
+					"exceeds": "group.y",
+					"need": { "name": "amount", "value": 2 },
+					"held": { "name": "amount", "value": 1 }
+				},
+				{
+					"exceeds": "one",
+					"need": { "name": "one", "value": "c" },
+					"held": { "name": "some", "values": ["a", "b"] }
+				},
+				{
+					"exceeds": "some",
+					"need": { "name": "some", "values": ["b"] },
+					"held": { "name": "some", "values": ["a"] }
+				},
+				{ "unknown": "zone" }
+			]
+		}
+	],
+	"meets": [
+		{
+			"what": "an offer of defaults meets a need of defaults",
+			"need": {},
+			"offer": {},
+			"failed": []
+		},
+		{
+			"what": "an offer holding what is needed",
+			"need": {
+				"flag": { "name": "flag", "value": true },
+				"one": { "name": "one", "value": "c" },
+				"some": { "name": "some", "values": ["b", "c"] }
+			},
+			"offer": {
+				"flag": { "name": "flag", "value": true },
+				"one": { "name": "some", "values": ["c"] },
+				"some": { "name": "some", "values": ["a", "b", "c"] }
+			},
+			"failed": []
+		},
+		{
+			"what": "an offer short on several capabilities",
+			"need": {
+				"flag": { "name": "flag", "value": true },
+				"one": { "name": "one", "value": "a" },
+				"group.x": { "name": "amount", "value": 1 }
+			},
+			"offer": { "one": { "name": "some", "values": ["b", "c"] } },
+			"failed": [
+				{
+					"exceeds": "flag",
+					"need": { "name": "flag", "value": true },
+					"held": { "name": "flag", "value": false }
+				},
+				{
+					"exceeds": "group.x",
+					"need": { "name": "amount", "value": 1 },
+					"held": { "name": "amount", "value": 0 }
+				},
+				{
+					"exceeds": "one",
+					"need": { "name": "one", "value": "a" },
+					"held": { "name": "some", "values": ["b", "c"] }
+				}
+			]
+		},
+		{
+			"what": "an offer holding one of a set as one, where it holds some",
+			"need": { "one": { "name": "one", "value": "a" } },
+			"offer": { "one": { "name": "one", "value": "a" } },
+			"failed": [{ "mistyped": "one", "side": "held" }]
+		}
+	]
+}

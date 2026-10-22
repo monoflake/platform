@@ -35,3 +35,38 @@ let types: array<declared> = [
 let contents: array<content> = [
   {half: #platform, kind: "organization", version: 2, content: "platform-organization"},
 ]
+
+/**
+ * A capability's type and its default, what a side holding nothing of it holds, kd7f9. A set is a
+ * declared enumeration by its name, and a group's members are each an amount.
+ */
+type capabilityType =
+  | Flag({default: bool})
+  | Amount({default: int})
+  /** A need holds one member, compared with the members the other side holds. */
+  | OneOf({set: string, default: array<string>})
+  | SomeOf({set: string, default: array<string>})
+  | Amounts({members: array<string>, default: int})
+
+type capability = {name: string, type_: capabilityType, from: string}
+
+/**
+ * The vocabulary of capabilities a need, an allowance and an offer are written in, its rule
+ * following its type, 49qyg and kd7f9.
+ */
+let vocabulary: array<capability> = [
+  {
+    name: "kind",
+    type_: OneOf({set: "function-kind", default: ["derive", "effect"]}),
+    from: "49qyg, kd7f9",
+  },
+  {
+    name: "network",
+    type_: SomeOf({set: "deployment-network", default: ["http"]}),
+    from: "49qyg",
+  },
+  {name: "instance", type_: Flag({default: false}), from: "49qyg"},
+  // Which amounts it groups is open [C37].
+  {name: "export", type_: Amounts({members: [], default: 0}), from: "49qyg, 94y0d, kd7f9"},
+  {name: "sandbox", type_: OneOf({set: "sandbox", default: []}), from: "kd7f9, vuanj"},
+]
