@@ -45,11 +45,15 @@ Decided by the author on 2026-10-21.
   named `<runtime>-<version>-linux-x86_64.tar`, the workspace's `docs/naming.md`.
 - **A release is a UTC day**, decided by the author on 2026-10-22: it is named and titled by the
   day alone, `2026.10.22`, each part padded so the names sort by their text as by date, and holds
-  only the versions new that day. Its notes are one list item a version, upstream's release of it
-  linked and the pull linked to its tag on Docker Hub; a later run the same day adds its versions'
-  files and lines to the day's release, the files named by version so none collide. Each version
-  carries its own manifest, `<runtime>-<version>.json`, uploaded last, and a version counts as
-  released once a published release holds that manifest.
+  only the versions new that day. Its notes are a table, a row a version: upstream's release of it,
+  upstream's commit short, and its image linked to its tag on Docker Hub. It carries one
+  `manifest.json`, each version listed with the commit here that built it, upstream's tag and
+  commit, and each archive's size, SHA-256 and image digest. A later run the same day adds its
+  versions' archives and rows, then merges its entries into the manifest and uploads it last, so a
+  version counts as released once a published release's manifest lists it.
+- **Docker Hub's readme and description follow GitHub's**, decided by the author on 2026-10-22:
+  each run writes this repository's README and description over both images' on Docker Hub, with
+  the one token the push takes, since a second token in the same repository leaks with the first.
 - **Docker Hub is reached by an access token in a repository secret**, `DOCKERHUB_TOKEN`, decided
   by the author on 2026-10-22: Docker Hub's OIDC connections for GitHub Actions serve paid
   organizations alone, so a personal account takes a token.
