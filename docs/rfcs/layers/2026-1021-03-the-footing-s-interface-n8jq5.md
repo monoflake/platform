@@ -1,10 +1,11 @@
 ---
 name: "The Footing's Interface"
 title: "How a component reads and writes its footing: one interface the footing's own Worker answers, records by kind and key, writes conditional, leases by the footing's clock"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@67fc4c81
 references: []
 ---
 
@@ -23,7 +24,7 @@ Found while reading, and to be settled with this: `records.res` names compute an
 writers of `lease`, and neither has an edge to `record.lease`; vuanj says the executor stores
 nothing.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21, from the agent's proposal.
 
@@ -49,9 +50,3 @@ Decided by the author on 2026-10-21, from the agent's proposal.
    machine footing's engine is the machine's, behind them.
 4. **`lease` is written by compute alone**: the executor stores nothing, vuanj, so it left
    `records.res`'s writers of `lease`, and compute has the `record.lease` edge it lacked.
-
-## Open
-
-What a reader caches of a bundle, and how soon it sees a newer one, stays C36's. How long a read
-may be stale, given D1's read replicas need a session's bookmark, `docs/lessons/cloudflare.md`, is
-for when the footing Worker is written.

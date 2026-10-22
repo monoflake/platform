@@ -1,11 +1,53 @@
 ---
 name: 'Root and Backing'
 title: 'Beneath the components, layer -2 holds a root nothing can start without and a backing per scope -- where its bytes are kept and with which keys -- which the blob reads downward and no capability carries'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@3b181be4
+  - monoflake/platform@93a010dc
+  - monoflake/platform@9b9b9405
+  - monoflake/platform@ab3edd39
+  - monoflake/platform@5aa0e85b
+  - monoflake/platform@f6a4562a
+  - monoflake/platform@0756976d
+  - monoflake/platform@5c26713e
+  - monoflake/platform@5062a43d
+  - monoflake/platform@87834a5e
+  - monoflake/platform@e59b4547
+  - monoflake/platform@e3d5f568
+references:
+  - url: https://www.rfc-editor.org/rfc/rfc9052
+    took: 'COSE_Sign1, the one form of every signed record'
+  - url: https://www.rfc-editor.org/rfc/rfc9864.html
+    took: 'Ed25519 named by -19, never the polymorphic EdDSA'
+  - url: https://www.rfc-editor.org/rfc/rfc8392
+    took: "CWT's claim sets, for a capability, a certificate and an account credential"
+  - url: https://www.iana.org/assignments/cwt/cwt.xhtml
+    took: 'claim labels below -65536 kept for private use'
+  - url: https://www.rfc-editor.org/rfc/rfc8747
+    took: 'cnf, the key a certificate certifies'
+  - url: https://www.rfc-editor.org/rfc/rfc9596
+    took: "typ, so a signature over one kind is never taken as another's"
+  - url: https://www.rfc-editor.org/rfc/rfc9528
+    took: 'kcwt, the certificate a call carries in its unprotected header'
+  - url: https://www.rfc-editor.org/rfc/rfc8032
+    took: 'Ed25519 verified strictly'
+  - url: https://github.com/satoshilabs/slips/blob/master/slip-0039.md
+    took: "a master's share written as SLIP-39 words"
+  - url: https://github.com/BLAKE3-team/BLAKE3-specs
+    took: "BLAKE3, keyed and by derive_key, naming every layer's record"
+  - url: https://www.usenix.org/conference/atc16/technical-sessions/presentation/xia
+    took: 'FastCDC with normalized chunking, the cut of content into pieces'
+  - url: https://github.com/nlfiedler/fastcdc-rs
+    took: 'the masks for 22 and 18 effective bits'
+  - url: https://www.sqlite.org/limits.html
+    took: "SQLite's pages, which the footing's bound of an organization rests on"
+  - url: https://developers.cloudflare.com/d1/platform/limits/
+    took: "D1's 10 GB, the footing's bound"
+  - url: https://developers.cloudflare.com/d1/worker-api/d1-database/
+    took: 'a batch run as one transaction, into which the footing Worker groups commits'
 ---
 
 ## Question
@@ -16,6 +58,8 @@ bottom: what nothing can start without, and where a scope's bytes go, which a us
 by bringing an object store of their own.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **Control is not a component.** What it held is taken apart by what each piece is, and each goes to the
 layer it belongs to. The name is now the two controls', the platform's and each organization's, HTTPS APIs that reserve no name, RFC v7v3w.
@@ -593,16 +637,3 @@ write(bucket, path, content)
   A piece a write finds again is counted again in the same step as it is found; a repack drops only
   pieces still at zero when it commits, and the old parcel is removed only after. The threshold
   trades space for rewriting: at 30 percent, each byte reclaimed costs about 2.3 rewritten.
-
-Open, for the discussion that follows:
-
-- How much an organization writes through its footing before the footing is what bounds it. [C7]
-- How stores are added to a scope, which is to come down from what the layers above need. [C3]
-- How often the operator rotates the intermediate key, and how long a working key lives. [D3]
-- Whether a system apart from the platform -- a machine the author keeps, signing on the author's
-  authority -- may rotate the intermediate key unattended in the operator's place. [D3]
-- How a leaked intermediate key is revoked, while every component holds the root's public key alone; a
-  failure, and so s1's. [D3]
-- How a host keeps its way to a footing short, where the vendor's routing lands a connection far:
-  one connection dialed again while it lands far, reads from replicas, a paid plan's routing
-  measured; an optimization, not a block. [D5]

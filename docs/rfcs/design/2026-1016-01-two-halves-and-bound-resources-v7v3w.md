@@ -1,11 +1,32 @@
 ---
 name: 'Two Halves and Bound Resources'
 title: "Layer 0 is a contract kept by two halves: the platform's, on serverless vendors behind contracts it writes itself, and each organization's, on the resources bound to it"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@3173be95
+  - monoflake/platform@4f820183
+  - monoflake/platform@5130ba1b
+  - monoflake/platform@dec59c5b
+  - monoflake/platform@fdb53e8b
+  - monoflake/platform@76b9aa4c
+  - monoflake/platform@cdd138ff
+  - monoflake/platform@690dca33
+  - monoflake/platform@0f4ab0c5
+references:
+  - url: https://www.rfc-editor.org/rfc/rfc1123
+    took: "a username and a label written as a host's name"
+  - url: https://www.rfc-editor.org/rfc/rfc5890
+    took: 'the xn-- prefix of an encoded name, which a label never begins with'
+  - url: https://www.rfc-editor.org/rfc/rfc2142.html
+    took: 'the mailboxes a domain keeps, among the names reserved'
+  - url: https://github.com/shouldbee/reserved-usernames
+    took: 'the names a site keeps from its users, among the names reserved'
+  - url: https://lists.cabforum.org/pipermail/servercert-wg/2018-November/000362.html
+    took: 'that no public CA certifies a name with an underscore'
+  - url: https://www.rfc-editor.org/rfc/rfc9180
+    took: "HPKE, sealing a footing's snapshot to a key the admin holds"
 ---
 
 ## Question
@@ -17,6 +38,8 @@ serverless offering is good, but it lets a customer neither use another's resour
 own; the platform exists to schedule across them.
 
 The shape the discussion has reached so far:
+
+## Decision
 
 **Layer 0 is a contract, and runs nowhere itself.** The components that keep it are split by whose things
 they hold:
@@ -397,7 +420,3 @@ configuration; its extensions hold its data and run it.**
   assumes none is made, and finding one afterwards is for later.
 
 **Between resources, a call goes by a path of networks joined by jumps**, RFC vr5lw.
-
-Open, for the discussion that follows:
-
-- How a host is bound: what credential its driver gives a binding, and how an admin enters it. [C3]

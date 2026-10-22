@@ -1,11 +1,29 @@
 ---
 name: 'Storage Is Named Content'
 title: 'An organization keeps files by path in file buckets and objects by hash and extension in object buckets, both naming content addressed by a hash keyed to the organization, and serves an object bucket alone'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@274ee7a7
+  - monoflake/platform@541fb046
+  - monoflake/platform@460eab67
+  - monoflake/platform@789779b0
+  - monoflake/platform@690dca33
+  - monoflake/platform@ffc63eea
+references:
+  - url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/MIME_types/Common_types
+    took: "the type each common extension is served as, IANA's where IANA registers one"
+  - url: https://cdn.jsdelivr.net/npm/mime-db@1.54.0/db.json
+    took: 'that one type lists several extensions, so a type never leads back to one'
+  - url: https://fileinfo.com/help/different_extensions
+    took: 'that a three-letter extension is mostly a longer name cut short'
+  - url: https://mimesniff.spec.whatwg.org/
+    took: 'nosniff, so a browser takes the type it is given and guesses none'
+  - url: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/sandbox
+    took: 'Content-Security-Policy: sandbox, a page opened from an answer showing and doing nothing'
+  - url: https://support.atlassian.com/jira/kb/pdf-attachments-fail-to-load-in-chrome-on-jira-data-center/
+    took: 'application/pdf exempted from the sandbox, which Chrome shows blank'
 ---
 
 ## Question
@@ -23,6 +41,8 @@ about anything but its own logic.
 This is layer 0, the platform's face, as RFC vuanj numbers the layers.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **An organization's storage holds buckets of two types, and content beneath both**, worked out
 with the author on 2026-10-18. A bucket of either holds names alone; the bytes are content's.
@@ -243,13 +263,3 @@ storage (one an organization, its own unique salt)
 each file bucket's paths and each object bucket's objects and the hash each names, the content's own
 metadata, and the access each bucket grants. Writing a path updates every directory above it up to
 `/` in the same step, so a directory's size and count are read, never computed, when it is listed.
-
-Open, for the discussion that follows:
-
-- Whether that metadata is held per owner or per bucket. Deduplication and the count of names
-  pointing at each hash are an owner's, which argues for per owner. [C9]
-- Whether one content named in a `packed` and an `opaque` bucket is kept once, and how. [C8]
-- What follows when a store is lost without warning, or reaches an end its owner did not choose.
-  [C20]
-- Whether copies are laid out whole or as shards with parity, and whether the owner sees which.
-  [C21]

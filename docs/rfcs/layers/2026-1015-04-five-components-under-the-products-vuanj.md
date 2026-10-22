@@ -1,11 +1,29 @@
 ---
-name: 'Five Components Under the Products'
+name: 'Five Components Under Products'
 title: 'The storage, the database and functions are built side by side from five components -- scope, issuer, tablet, blob and executor -- and never from one another, so nothing beneath an app depends on itself'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@72a7c0d7
+  - monoflake/platform@87cee8b5
+  - monoflake/platform@269d17f9
+  - monoflake/platform@e2d53237
+  - monoflake/platform@89e484a7
+  - monoflake/platform@4c3b3b97
+  - monoflake/platform@2a85ad49
+  - monoflake/platform@fe1d3618
+references:
+  - url: https://developers.cloudflare.com/d1/reference/time-travel/
+    took: "every implementation of a tablet keeping each minute of its last 30 days, D1's Time Travel"
+  - url: https://blog.cloudflare.com/durable-objects-easy-fast-correct-choose-three/
+    took: 'a Durable Object one instance for its id, so one replaced writes nothing after'
+  - url: https://developers.cloudflare.com/d1/best-practices/import-export-data/
+    took: "what a vendor's export loses, so a snapshot is the platform's own dump"
+  - url: https://www.sqlite.org/wal.html
+    took: "SQLite's WAL frames, which a machine tablet's copies carry"
+  - url: https://developers.cloudflare.com/workers/platform/limits/
+    took: 'a request bounded by plan, so content of any size is put by an upload'
 ---
 
 ## Question
@@ -19,6 +37,8 @@ Names are chosen for what they mean, apart from the names the platform uses now;
 when this lands.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **Layers are numbered from the platform's face, layer 0**, upward to what users build and downward
 to what the platform is made of:
@@ -310,10 +330,3 @@ a release:
 | a primary's lease, held among its copies         | 10 seconds, renewed every 3                                              |
 | the longest a write waits after a writer is lost | 15 seconds, the lease and a new writer's catching up; then `unavailable` |
 | an object's longest extension                    | 16 characters, RFC 13ixj, only ever raised                               |
-
-Open, for the discussion that follows:
-
-- How a private link's reader proves they may read it: the authentication of people, not components.
-  [C10]
-- How soon a component sees a newer bundle, the issuer above all, so a grant removed stops being
-  signed, and what each caches of one. [C36]

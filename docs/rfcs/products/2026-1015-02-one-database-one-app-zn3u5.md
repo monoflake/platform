@@ -1,11 +1,25 @@
 ---
 name: 'One Database, One App'
 title: "An app's database is an abstraction of two kinds by what it is used for -- transactional, in SQLite's dialect, run a statement or a batch at a time atomically, and analytical, appended and scanned -- known by an id that never changes, under a name an owner may move, bound to one app alone"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@f6001342
+  - monoflake/platform@cdd138ff
+  - monoflake/platform@269d17f9
+  - monoflake/platform@8cba089a
+  - monoflake/platform@89e484a7
+  - monoflake/platform@0f4ab0c5
+references:
+  - url: https://www.sqlite.org/lang.html
+    took: "SQLite's dialect, the contract of a transactional database"
+  - url: https://developers.cloudflare.com/d1/reference/time-travel/
+    took: 'a database returned to any minute of its last 30 days'
+  - url: https://developers.cloudflare.com/d1/reference/migrations/
+    took: 'migrations a push runs in order, once each, the ones run kept in the database'
+  - url: https://developers.cloudflare.com/d1/sql-api/sql-statements/
+    took: "that D1 tells no statement's kind, so a database's rights are one"
 ---
 
 ## Question
@@ -19,6 +33,8 @@ here is the database's shape as an app sees it. The storage's is RFC 13ixj.
 This is layer 0, the platform's face, as RFC vuanj numbers the layers.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **`database` is the product, an abstraction: what runs it is the platform's and may change.** It
 has two kinds, named for what each is used for and never for the engine beneath, as a function's
@@ -100,10 +116,3 @@ would fail or slow without a reason it could see.
 transparency log or metrics: `append(table, rows)`, a restricted `execute`, and deletion by a range
 of time. Nothing needs it yet, so it is not built; its place is kept so that it comes as a kind of
 `database`, never as something beside it.
-
-Open, for the discussion that follows:
-
-- Everything beneath the contract past what RFC vuanj settles for the tablet. [C12]
-- The form of results and the limits on one query. [C12]
-- The `analytical` kind's table definition and its query dialect, when something needs it. [C12]
-- Whether a database, as a bucket is, may be deleted only while empty. [C12]

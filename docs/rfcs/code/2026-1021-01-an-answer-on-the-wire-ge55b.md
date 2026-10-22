@@ -1,11 +1,20 @@
 ---
 name: 'An Answer on the Wire'
 title: "Every answer one envelope, told by its status, each reason with its message; and what an image's artifact is"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@fda630e9
+  - monoflake/platform@c9a2638d
+  - monoflake/platform@6a1f095c
+  - monoflake/platform@dfc95a6d
+  - monoflake/platform@67fc4c81
+references:
+  - url: https://github.com/canmi21/lib/blob/main/spec/response/envelope.md
+    took: 'one envelope for every answer, a union by status, each reason with a default message'
+  - url: https://github.com/opencontainers/image-spec/blob/main/image-layout.md
+    took: "an image's artifact as an OCI image layout, oci-layout, index.json and blobs/"
 ---
 
 ## Question
@@ -21,7 +30,7 @@ library, `serve*`, and the samples' runner -- cannot be written without them:
    generic hash; an image's format waits on C11, and how an image reaches the driver is open, RFC
    vr5lw.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21, after the agent read the author's own response envelope in
 `canmi/lib`, `spec/response/envelope.md`, and proposed it be taken over.
@@ -56,10 +65,3 @@ Decided by the author on 2026-10-21, after the agent read the author's own respo
   `model/contracts/kinds/deployments.res`: the control gives each host the artifact of its own
   architecture, which builds a build has being the builder's, `?builder`, and a driver given
   another's answers `beyond_host`, so a machine fetches its own alone.
-
-## Open
-
-Whether a registry replaces the archive later, and then whether `hash` becomes a manifest's digest,
-is C11's with the image's format. Who serves the URL an archive is fetched from, and how a fetch is
-authenticated, is not decided; the author raised on 2026-10-21 a repository of the organization's
-own for releases, the images and the machine's NixOS among them.

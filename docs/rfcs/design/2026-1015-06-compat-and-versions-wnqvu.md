@@ -1,10 +1,13 @@
 ---
 name: 'Compat and Versions'
 title: 'Everything the platform writes carries one integer version, raised only by a breaking change; every reader accepts a range; and one library, compat, says how, on a frozen core that never changes and so needs no version'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@9b9b9405
+  - monoflake/platform@d905a14e
+  - monoflake/platform@43fb79c2
 references: []
 ---
 
@@ -16,6 +19,8 @@ what one writes another must read. Worked out with the author on 2026-10-15, as 
 the platform's libraries with its apps rather than inheriting them.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **A version is an integer, raised only by a breaking change.** A field added is no break and raises
 nothing, because two rules hold for every reader: **a field it does not know is passed over**, and
@@ -66,8 +71,3 @@ table's schema changes only where a key does.
 knows what is deployed where: before it replaces a component, the new build must read what its neighbors
 write now, and they must read what it will write; and the version written moves to the lowest of
 every running reader's highest once a replacement lands.
-
-Open, for the discussion that follows:
-
-- How the data kept in each version on disk is counted, and by which component, so that a reader knows
-  when it may drop an old one. [C13]

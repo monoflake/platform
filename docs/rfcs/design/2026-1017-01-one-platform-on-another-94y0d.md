@@ -1,10 +1,14 @@
 ---
 name: 'One Platform on Another'
 title: "A platform may stand on another's three products as on any vendor: one code, never forked, each platform knowing itself alone, the one above handing the one below only what it sealed"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@8fa730b6
+  - monoflake/platform@2bb67dec
+  - monoflake/platform@3dd9d5dc
+  - monoflake/platform@06c72d7f
 references: []
 ---
 
@@ -14,6 +18,8 @@ RFC v7v3w splits layer 0 between two halves, and RFC b8f35 stands each owner on 
 ground. Worked out with the author on 2026-10-17: how a platform is built and kept running when
 what it stands on must already be stable, without a cycle and without a second code to maintain.
 How the hosted platform uses what is decided here is the platform half's, RFC 8lkuv.
+
+## Decision
 
 **One code, the Platform, may run as more than one deployment, and one may stand on another's three
 products as on any vendor.**
@@ -83,12 +89,3 @@ Its code runs inline in the compute the one beneath gives it; a read is served f
 memory or from the storage beneath through an index the compute caches, RFC b8f35; a write is
 confirmed once beneath as well -- a database's batch once, a journal's segments once per write, a
 parcel once per 16 MiB.
-
-Open, for the discussion that follows:
-
-- What an organization may export, each an amount of the `export` capability -- compute, storage,
-  databases -- and the app that exports it. [C37]
-- How a tablet's copies fail, simulated on paper before a platform holds its users' data. [C1]
-- What metering counts for each vendor and machine, where the counts are kept, and the margin it
-  cuts off at. [C18]
-- When a platform's cells move onto a database organization, and what a cell holds before. [C6]

@@ -1,11 +1,65 @@
 ---
 name: 'Three In, Three Out'
 title: "A platform takes compute, storage and a database from beneath and gives compute, storage and databases above, one of each beneath for its control alone and as many as it likes above, every organization's apps standing on the compute and storage it extends"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@3072fcee
+  - monoflake/platform@f31ee0df
+  - monoflake/platform@6a6b02f9
+  - monoflake/platform@11b54069
+  - monoflake/platform@be1417f1
+  - monoflake/platform@fc510366
+  - monoflake/platform@51f3688c
+  - monoflake/platform@79d0735d
+  - monoflake/platform@d57cebca
+  - monoflake/platform@69cd5ab5
+  - monoflake/platform@fed973cb
+  - monoflake/platform@6a1f095c
+  - monoflake/platform@a0ddb331
+  - monoflake/machine@7ee1eef2
+references:
+  - url: https://github.com/WebAssembly/spec/tree/main/interpreter
+    took: 'a case written as a script of steps, as a .wast script is'
+  - url: https://jepsen.io/
+    took: 'a property checked over a history by a named checker'
+  - url: https://www.rfc-editor.org/rfc/rfc4648
+    took: 'base64url without padding, its fifth section, the one text of bytes'
+  - url: https://github.com/cloudflare/workerd
+    took: 'workerd, so one bundle runs alike on a Worker and a machine, and no hardened sandbox'
+  - url: https://docs.rs/containerd-client
+    took: "containerd's gRPC API spoken from Rust"
+  - url: https://btrfs.readthedocs.io/en/latest/btrfs-quota.html
+    took: "btrfs's simple quotas, bounding a binding's share"
+  - url: https://www.rfc-editor.org/rfc/rfc8555
+    took: "ACME's HTTP and DNS challenges"
+  - url: https://www.rfc-editor.org/rfc/rfc8615.html
+    took: 'a /.well-known/ suffix minted unregistered'
+  - url: https://www.rfc-editor.org/rfc/rfc9083.html
+    took: "a registration's expiration read by RDAP"
+  - url: https://data.iana.org/rdap/dns.json
+    took: "the registry IANA's bootstrap names for a domain"
+  - url: https://github.com/publicsuffix/list/wiki/Guidelines
+    took: 'a domain asked of the Public Suffix List before it opens to the public'
+  - url: https://letsencrypt.org/docs/rate-limits/
+    took: 'one set of names issued five times a week'
+  - url: https://docs.cloud.google.com/certificate-manager/docs/public-ca
+    took: "Google's public CA, which counts no domain's certificates"
+  - url: https://tailscale.com/kb/1215/oauth-clients
+    took: "a machine's key asked of Tailscale by an OAuth client, tagged"
+  - url: https://developers.cloudflare.com/workers-vpc/
+    took: 'a Worker reaching what stands behind a tunnel'
+  - url: https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/configure-tunnels/tunnel-availability/
+    took: "a tunnel's lasting connections, a request finding the nearest"
+  - url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+    took: "a build's deploy command changed to upload a version and deploy nothing"
+  - url: https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization
+    took: 'how long GitHub Actions keeps an artifact'
+  - url: https://developers.cloudflare.com/workers/platform/limits/
+    took: "a Worker's size and startup bounds"
+  - url: https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/
+    took: 'the last hundred versions of a Worker kept'
 ---
 
 ## Question
@@ -15,6 +69,8 @@ above, and what each resource can give, so that one platform stands on another a
 vendor.
 
 The shape the discussion has reached so far:
+
+## Decision
 
 **The three products are compute, a database and storage**, the names layer 0 shows: compute was
 the functions of RFC 49qyg, and storage the store of RFC 13ixj. **A platform takes the same three
@@ -848,11 +904,3 @@ above is the three that one organization beneath gives, and its control stands o
 organization opened above has its footing, and the compute and storage it buys, from a cell the
 platform above opens beneath through that platform's API; what else it extends comes from its
 users' own clouds.
-
-Open, for the discussion that follows:
-
-- The database's sizes, a small one and a large one, and what each is made of. [C23]
-- A machine's own upgrades, staggered and run by its driver, and what carries a workload across them.
-  [C32]
-- A container checkpointed whole to disk by CRIU, a cold pause that frees its memory and outlives a
-  reboot, and whether it carries a container across a machine's upgrade. [C39]

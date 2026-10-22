@@ -1,11 +1,14 @@
 ---
 name: "A Binding's Token"
 title: "What a binding's token is as text, how a driver takes it and keeps it, and how a control presents it"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@a0ddb331
+references:
+  - url: https://www.rfc-editor.org/rfc/rfc6750
+    took: 'a token carried as Authorization: Bearer'
 ---
 
 ## Question
@@ -17,7 +20,7 @@ management call carries it. What the token is, as bytes and as text, how it is s
 and how a call carries it are written nowhere, and the machine driver's management cannot take its
 first binding without them.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21, from the agent's proposal, with two changes of the author's:
 the text names no vendor, and the hash takes no salt. vr5lw's "salted and hashed" is amended to
@@ -39,9 +42,3 @@ this.
    whose file is gone only when its control has ended it, `end`, so a file lost never ends what runs.
 5. **Replacing a token is a second one beside the first**, as an item's credential is, vr5lw: the
    driver holds both until the control's next list names only the new one, by its hash.
-
-## Open
-
-Whether the token also names where its control is reached, so a driver could report to it rather
-than wait to be asked, is left until a driver needs to call its control at all; today every call
-goes from the control to the driver.

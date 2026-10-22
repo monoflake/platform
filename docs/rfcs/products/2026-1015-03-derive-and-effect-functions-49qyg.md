@@ -1,11 +1,23 @@
 ---
 name: 'Derive and Effect Functions'
 title: 'An app runs as functions that keep no state of their own, of two kinds: derive, whose output its input alone decides, cached and run again freely, and effect, which acts on what it is bound to and is never retried'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@8fa730b6
+  - monoflake/platform@1fc60720
+  - monoflake/platform@cdd138ff
+  - monoflake/platform@3dd9d5dc
+  - monoflake/platform@ff44a694
+  - monoflake/platform@0f4ab0c5
+references:
+  - url: https://component-model.bytecodealliance.org/design/wit.html
+    took: "WIT, the component model's interface language, for a parameter's type"
+  - url: https://developers.cloudflare.com/workers/configuration/cron-triggers/
+    took: "a schedule's times as cron's five fields in UTC"
+  - url: https://developers.cloudflare.com/d1/reference/migrations/
+    took: "a database slot's migrations run in the order of their names, once each, kept in that database"
 ---
 
 ## Question
@@ -19,6 +31,8 @@ the database RFC zn3u5. The question here is what a function is to an app.
 This is layer 0, the platform's face, as RFC vuanj numbers the layers.
 
 The shape the discussion has reached so far, to be decided once it is diffed against what exists:
+
+## Decision
 
 **A function may hold state while it runs, and none after.** Its memory during a call is its own;
 whether any of it is still there at the next call is the platform's to decide, so an app may cache
@@ -189,21 +203,3 @@ neither as it is made.
   slot as a database used is. A deployment is refused where the slot's declared type, the type it
   is filled under and the type of the resource the id names disagree, saying which, so an id filled
   in the wrong place is caught where it is written and never resolved to whatever it names.
-
-Open, for the discussion that follows:
-
-- How a `keyed` daemon's own credentials reach it, an account's login: env is the same for every
-  copy of a deployment, so these may be what it is started with rather than env. [C11]
-- How a daemon is started, addressed and ended, given that any may vanish at any moment; a `keyed`
-  one, exactly one per key, has the shape of a tablet's writer, placed at run time with at least one
-  promised and the rest fenced, RFC vuanj. [C11]
-- Every capability past the kind and the network -- where a function's requests leave from, how long
-  it may run, its resources -- each of which is at once a need, an allowance and what the platform
-  can give, and is entered in the vocabulary when it is taken up. [C11]
-- Which imports a `derive` is denied in WebAssembly -- files, the network, the clock, entropy and
-  the rest -- examined one by one when it is built. [C11]
-- Whether an exported function carries a version, so one can change while its callers move. [C11]
-- Whether a change in storage starts a function, perhaps by putting a message in a queue. [C11]
-- Every bound: the `derive` budget, the longest wait for a lock and the longest hold, how long an id
-  lives, how long an outcome is looked up before it is `unknown`, and how much a dead-letter list
-  holds and for how long. [D4]

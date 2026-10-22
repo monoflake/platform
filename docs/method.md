@@ -35,8 +35,10 @@ until the layer it was found at is finished. The workspace's `docs/planning.md` 
 
 ## Only what the author decided
 
-A draft records what the author decided. A proposal they have not confirmed goes under Open, and so
-does anything not discussed -- with no numbers in it.
+An RFC records what the author decided, under `## Decision`, the workspace's RFC 2ut6h; a proposal
+they have not confirmed, and anything not discussed, is a draft of its own, with no numbers in it.
+Since 2026-10-22 a question decided in part is split: what is decided is `accepted`, or `landed`
+once built, and what is open is a new draft beside it, RFC 1dj2c.
 
 ## A block's decisions in one round, the most urgent block first
 

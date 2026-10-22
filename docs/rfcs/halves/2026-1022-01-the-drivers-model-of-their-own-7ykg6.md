@@ -1,7 +1,7 @@
 ---
 name: "The Drivers' Model of Their Own"
 title: 'The drivers moved to `monoflake/driver`, with a model of their own that fills the roles this one declares'
-status: draft
+status: accepted
 supersedes: []
 blocked-by: []
 commits: []
@@ -16,7 +16,7 @@ runtimes it gives. A driver is what a vendor gives the platform through a kind's
 nothing above the contract reads how it is built. Where do the drivers live, and how much of them
 does this model hold.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-22.
 
@@ -41,8 +41,3 @@ Decided by the author on 2026-10-22.
   never reads the driver, and cloud reads both.
 - **Until releases cross repositories, a driver reaches this one by path**, the sibling checkout
   `../platform`, as the workspace places them; how the three pin one another's releases is open.
-
-## Open
-
-How the three repositories pin each other's versions once each releases, and what CI checks the
-whole across them, was left by the author on 2026-10-22 for its own discussion.

@@ -1,10 +1,19 @@
 ---
-name: 'Releases in Repositories of Their Own'
+name: 'Two Release Repositories'
 title: "Where what the platform releases is built and published: a machine's NixOS in `monoflake/machine`, the runtimes' images in `monoflake/runtime`"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/machine@7ee1eef2
+  - monoflake/runtime@e47062bb
+  - monoflake/runtime@389d4184
+  - monoflake/runtime@8ede7fd0
+  - monoflake/runtime@6ccdef76
+  - monoflake/runtime@cc1f2db7
+  - monoflake/runtime@504c0132
+  - monoflake/platform@17c8c341
+  - monoflake/cloud@3f509148
 references: []
 ---
 
@@ -16,7 +25,7 @@ machine's own NixOS, today built on each machine it is installed on. Each follow
 own, an upstream release or a NixOS release, so their tags in this repository would mix three
 schemes, and ge55b leaves open who serves the URL an archive is fetched from.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21.
 
@@ -70,18 +79,3 @@ Decided by the author on 2026-10-21.
 - **The model knows a block written in another repository**, decided by the author on 2026-10-22:
   as cloud fills a role, a repository of the organization's fills what this model declares
   provided, and cloud's machines take their module from `monoflake/machine`.
-
-## Open
-
-Proposed by the agent on 2026-10-21, not yet confirmed:
-
-- An upstream release is taken once it is past the workspace's release delay, as `pins` took
-  workerd's, so the scheduled run in `monoflake/runtime` keeps the same rule.
-
-Deferred by the author on 2026-10-22:
-
-- GitHub disables a scheduled workflow after 60 days without a commit, so a run started by
-  `repository_dispatch` from this repository's CI may be the main trigger and the schedule a
-  fallback.
-- A binary cache of the machine's NixOS, so a machine downloads its system rather than building it,
-  cannot be a release asset; where it is kept, an object store with Nix's signing key, is open.

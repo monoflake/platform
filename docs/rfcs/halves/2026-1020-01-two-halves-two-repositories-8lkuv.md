@@ -1,10 +1,16 @@
 ---
 name: 'Two Halves, Two Repositories'
 title: 'The organization half is monoflake/platform and the platform half monoflake/cloud: the first names what it needs of the second as roles with contracts, and the second fills them, the whole model checked where both are'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@f3fa36e2
+  - monoflake/platform@efdb338b
+  - monoflake/platform@7359146d
+  - monoflake/platform@98d541f1
+  - monoflake/cloud@390ab227
+  - monoflake/cloud@7d38d527
 references: []
 ---
 
@@ -16,7 +22,7 @@ make sense alone: where the line between the two repositories runs, how this one
 of the other without describing it, and how the two together still give the one model every
 dimension is checked over.
 
-## Decided
+## Decision
 
 **The line is RFC v7v3w's, between the two halves**, decided by the author on 2026-10-20. This
 repository holds the organization half -- an organization's control, the three products, the

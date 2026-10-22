@@ -1,10 +1,12 @@
 ---
 name: 'What the Directory Answers'
 title: "The contract between a scope, its backing and the role that finds them: a scope's id, its status and where its backing is, a row never removed"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@c27c962b
+  - monoflake/cloud@072146cd
 references: []
 ---
 
@@ -16,7 +18,7 @@ its id, its status of `active`, `suspended` or `deleted`, and a reference to whe
 never removed so an id is never given twice. The edges from `scope` and `backing` to it are drawn,
 and their contract is undeclared, `?directory`.
 
-## Decided
+## Decision
 
 **The contract is the reading alone**, decided by the author on 2026-10-20: this half reads the
 directory and never writes it. Opening, suspending, restoring and deleting a scope are the

@@ -1,11 +1,16 @@
 ---
 name: 'How the Samples Run'
 title: 'What the runner does with every key a sample may hold, so an implementation is held to the samples through its contracts alone'
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@750d12b4
+  - monoflake/platform@50f46c69
+  - monoflake/platform@431aea95
+references:
+  - url: https://github.com/BLAKE3-team/BLAKE3-specs
+    took: "BLAKE3's extendable output, bytes the same every run to any length"
 ---
 
 ## Question
@@ -16,7 +21,7 @@ does is written nowhere: how an answer is matched, what a placeholder makes, how
 `as`, `lose` and the properties are brought about. The runner, `code/tools/runner`, is the first
 such program.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21, as the agent proposed them that night.
 
@@ -62,10 +67,8 @@ Decided by the author on 2026-10-21, as the agent proposed them that night.
 - **A bound a driver declares is asked of the driver through its contract**, [D8], never written in
   the runner's configuration.
 
-## What the first runner leaves for later
-
-Each is a case the runner reports as skipped, naming this RFC, never as passed: a fixture, which
-needs its source and its builder; `lose`, the properties and `$frames`, which need what the
+**What the first runner leaves for later.** Each is a case the runner reports as skipped, naming
+this RFC, never as passed: a fixture, which needs its source and its builder; `lose`, the properties and `$frames`, which need what the
 implementation offers for them; `given` past a kind's, and a driver's declared bounds, which wait on
 the binding's token and D8. Until a driver answers its bounds, the runner reads them from its
 configuration, and says so.

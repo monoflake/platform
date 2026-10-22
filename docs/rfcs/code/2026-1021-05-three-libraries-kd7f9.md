@@ -1,11 +1,13 @@
 ---
 name: 'Three Libraries'
 title: 'The interfaces of vocabulary*, wit* and extensions*: what each computes, pure, of what its caller hands it'
-status: draft
+status: accepted
 supersedes: []
 blocked-by: []
 commits: []
-references: []
+references:
+  - url: https://component-model.bytecodealliance.org/design/wit.html
+    took: "the WIT items a manifest's one file may hold"
 ---
 
 ## Question
@@ -15,7 +17,7 @@ and the host use, and says in a line what each is; their interfaces, which the m
 unwritten. What each must do is settled across RFCs 49qyg, vuanj, v7v3w and vr5lw; what is left is
 the shape, and where that shape stops.
 
-## Decided
+## Decision
 
 Decided by the author on 2026-10-21, from the agent's proposal and in the author's own words where
 they differed from it. The interfaces are the libraries' own `.resi` files, which the model names.
@@ -65,13 +67,3 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
   `flags` and `func` items, a `use` of an interface in the same file, and one `world` exporting
   those interfaces or functions; `resource`, `own`, `borrow`, `include` and a `use` or `import` of
   another package refused as the WIT is read, until the subset grows.
-
-## Open
-
-The WIT subset's resources, `own` and `borrow`; the capabilities past those four, C11; an
-export's amounts, C37; what a host offers past the sandbox, which waits on `?roster`. Each is a
-field or an entry added, not a change of these shapes.
-
-- **The paths in the bundle**: `bundle-hosts` holds each host's `relays` and `address` and no path,
-  so the shape the paths take there is not written; nor is the lender's own record of a loan. The
-  author decided on 2026-10-22 that it waits for the host to be written.

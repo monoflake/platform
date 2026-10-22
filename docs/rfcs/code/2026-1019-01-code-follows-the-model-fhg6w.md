@@ -1,11 +1,38 @@
 ---
 name: 'Code Follows the Model'
 title: "The platform's code is cut where the model is: a component is a deployable in one language of three, a library a package of one language, and only an edge between processes is a wire contract"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
-references: []
+commits:
+  - monoflake/platform@24e60378
+  - monoflake/platform@6b6cfa87
+  - monoflake/platform@44a6e6c1
+  - monoflake/platform@634bc1d1
+  - monoflake/platform@2561c1a0
+  - monoflake/platform@06d73ddf
+  - monoflake/platform@ab48c6aa
+  - monoflake/platform@a3c65752
+  - monoflake/platform@c1831e64
+references:
+  - url: https://www.rfc-editor.org/rfc/rfc8949
+    took: "CBOR's deterministic encoding, its 4.2, and its appendices' items as tests"
+  - url: https://www.rfc-editor.org/rfc/rfc9052
+    took: "COSE's Sign1, held to its standard's tests"
+  - url: https://www.rfc-editor.org/rfc/rfc8392
+    took: 'CWT, held to its Appendix A'
+  - url: https://github.com/cose-wg/Examples
+    took: 'the sign1, EdDSA and CWT cases an implementation is held to'
+  - url: https://docs.rs/minicbor/latest/minicbor/
+    took: "minicbor, Rust's CBOR, wrapped"
+  - url: https://www.rfc-editor.org/rfc/rfc4648
+    took: 'base64url without padding, the one text of bytes'
+  - url: https://tailscale.com/opensource
+    took: 'the server that coordinates kept apart and the rest opened'
+  - url: https://rescript-lang.org/community/roadmap/
+    took: 'ReScript 13 writing .d.ts, genType until then'
+  - url: https://github.com/cloudflare/workerd
+    took: 'one JavaScript bundle running alike on a Worker and in workerd'
 ---
 
 ## Question
@@ -16,6 +43,8 @@ alone, apart from the workspace's present rules and every other project; what ch
 this lands is for then.
 
 The shape the discussion has reached so far:
+
+## Decision
 
 **The model's boundaries are the code's**, since `model/graph/` already cuts the platform into
 components, libraries and edges, each with its contract:
@@ -340,5 +369,3 @@ them, whoever wrote it.
   `codec*`'s value keeps. It is held to the same samples, `docs/code.md`.
 - **Every test runs in CI**, so what is taken or built stays whole.
 - **`codec*` is begun**, the first block written against its brief, 2026-10-20.
-
-Open, for the discussion that follows:

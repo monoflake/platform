@@ -1,10 +1,12 @@
 ---
-name: 'What a Control Asks of the Authority'
+name: 'What the Authority Answers'
 title: "The contract between an organization's control and the role above it, which says the organization exists, certifies its key, sets its allowance and lends to it"
-status: draft
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@c27c962b
+  - monoflake/cloud@072146cd
 references: []
 ---
 
@@ -20,7 +22,7 @@ What the role does for one organization is settled by the drafts already: it ope
 restores and deletes the organization, certifies its key under the intermediate, sets its allowance,
 RFC vuanj, and lends it what it binds, RFC v7v3w. What is not settled is what crosses.
 
-## Decided
+## Decision
 
 **What the authority decides of an organization travels one way, pulled by the organization's
 control**, decided by the author on 2026-10-20: the control pulls once when it holds nothing yet,
