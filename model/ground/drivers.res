@@ -1,16 +1,9 @@
 /**
- * What each driver is made of, one implementation for each kind its vendor gives,
- * `model/ground/resources.res`, RFC vr5lw. Nothing calls one but through its kind's contract.
+ * What this model asks of each driver role and nothing of how one is built, RFC 7ykg6. The
+ * drivers' own model fills them, `model/graph/fill.res`, and nothing calls one but through a kind.
  */
-type implementation = {
-  kind: Resources.kind,
-  language: [#rust | #rescript],
-  as_: string,
-  /** The platform's libraries it may depend on, by the model's names. */
-  uses?: array<string>,
-  /** What of others' it may take, `model/graph/libraries.res`. */
-  takes?: array<Libraries.taken>,
-}
+/** A kind a driver gives, by the contract reaching it at its version, a volume by none. */
+type kind = {kind: Resources.kind, contract?: string, version?: int}
 
 /**
  * A runtime a driver gives compute by, the form it takes and every isolation it stands on, RFC
@@ -18,65 +11,46 @@ type implementation = {
  */
 type runtime = {name: string, takes: string, stands: array<string>}
 
-/**
- * A driver is its implementations and its `management/`, vr5lw; a machine's NixOS is
- * `monoflake/machine`'s and its isolate runtimes' images `monoflake/runtime`'s, RFC m7rkq.
- */
+/** A driver role as this model asks it and as a fill gives it, the one shape for both. */
 type driver = {
   grounds: array<Steps.ground>,
-  management: [#rust | #rescript],
-  /** What of others' its management may take, `model/graph/libraries.res`. */
-  managementTakes?: array<Libraries.taken>,
-  implements: array<implementation>,
+  kinds: array<kind>,
+  /** The version of `management` its management answers. */
+  management: int,
   runtimes: array<runtime>,
 }
 
-let drivers: dict<driver> = dict{
+/** The version this model declares of a contract, none where it declares no such contract. */
+let versionOf = contract =>
+  Contracts.interfaces->Array.find(i => i.name == contract)->Option.map(i => i.version)
+
+/** A kind asked at its contract's version as this model declares it now. */
+let at = (kind: Resources.kind): kind =>
+  switch kind {
+  | #function | #instance | #container => {
+      kind,
+      contract: "deployments",
+      version: ?versionOf("deployments"),
+    }
+  | #object => {kind, contract: "object", version: ?versionOf("object")}
+  | #database => {kind, contract: "database", version: ?versionOf("database")}
+  | #volume => {kind: kind}
+  }
+
+let management = versionOf("management")->Option.getOr(0)
+
+/** Each driver role, by the name the graph gives it, `model/graph/components.res`. */
+let asked: dict<driver> = dict{
   "driver(cloudflare)": {
     grounds: [#cloudflare],
-    management: #rescript,
-    implements: [
-      {
-        kind: #function,
-        language: #rescript,
-        as_: "a Worker of each deployment, made through Cloudflare's API",
-      },
-      {kind: #instance, language: #rescript, as_: "a Durable Object"},
-      {kind: #object, language: #rescript, as_: "a Worker over R2"},
-      {kind: #database, language: #rescript, as_: "a Worker over D1, or a Durable Object's SQLite"},
-    ],
+    kinds: [#function, #instance, #object, #database]->Array.map(at),
+    management,
     runtimes: [{name: "workers", takes: "modules", stands: ["isolate"]}],
   },
   "driver(machine)": {
     grounds: [#provider, #home],
-    management: #rust,
-    managementTakes: [
-      {language: #rust, name: "rustix", major: "1"},
-      {language: #rust, name: "blake3", major: "1"},
-    ],
-    implements: [
-      {kind: #function, language: #rust, as_: "workerd, run for each deployment"},
-      {kind: #instance, language: #rust, as_: "a process"},
-      {
-        kind: #container,
-        language: #rust,
-        as_: "a container, by containerd",
-        uses: ["envelope*"],
-        takes: [
-          {language: #rust, name: "containerd-client", major: "0.9"},
-          {language: #rust, name: "tokio", major: "1"},
-          {language: #rust, name: "serde_json", major: "1"},
-          {language: #rust, name: "sha2", major: "0.11"},
-          {language: #rust, name: "prost-types", major: "0.14"},
-          {language: #rust, name: "tonic", major: "0.14"},
-          {language: #rust, name: "reqwest", major: "0.13"},
-          {language: #rust, name: "chacha20poly1305", major: "0.11"},
-        ],
-      },
-      {kind: #object, language: #rust, as_: "objects on the machine's file system"},
-      {kind: #volume, language: #rust, as_: "a btrfs subvolume"},
-      {kind: #database, language: #rust, as_: "SQLite on a volume"},
-    ],
+    kinds: [#function, #instance, #container, #object, #volume, #database]->Array.map(at),
+    management,
     // An isolate runs inside its organization's container, which keeps bindings apart, v7v3w.
     runtimes: [
       {name: "workerd", takes: "modules", stands: ["isolate", "kernel"]},
@@ -87,3 +61,6 @@ let drivers: dict<driver> = dict{
     ],
   },
 }
+
+/** What a fill gives of the driver roles, none when this model is checked alone. */
+let given: option<dict<driver>> = Fill.part(Fill.drivers)

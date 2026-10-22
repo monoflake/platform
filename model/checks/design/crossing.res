@@ -70,9 +70,9 @@ let run = () => {
   )
   // Each driver giving a kind of compute is reached at deployment through `deployments`, by what
   // places it, vr5lw, v7v3w.
-  Drivers.drivers->Dict.forEachWithKey((d, driver) =>
+  Drivers.asked->Dict.forEachWithKey((d, driver) =>
     if (
-      d.implements->Array.some(i => [#function, #instance, #container]->Array.includes(i.kind)) &&
+      d.kinds->Array.some(k => [#function, #instance, #container]->Array.includes(k.kind)) &&
         !(
           designed->Array.some(((_, p)) =>
             p.edges->Array.some(

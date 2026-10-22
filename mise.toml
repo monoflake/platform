@@ -4,8 +4,6 @@ _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
 cargo-deny = "0.20"
-# containerd-client's build compiles containerd's protobufs, driver(machine)'s container.
-protoc = "36.2"
 
 # What oxfmt formats here; ReScript's formatter takes its sources from rescript.json.
 [vars]

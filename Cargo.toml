@@ -6,8 +6,6 @@ members = [
 	"code/libs/codec",
 	"code/libs/compat",
 	"code/libs/envelope",
-	"code/substrate/driver/machine/container",
-	"code/substrate/driver/machine/management",
 	"code/tools/envelope-generator",
 ]
 

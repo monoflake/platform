@@ -178,14 +178,14 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   user's and the root runs nothing, so neither declares one. **Where the platform meets a vendor, a
   kind is a contract with an implementation a vendor**, and the language is the implementation's:
   a driver declares none, and lies as a directory of its implementations, `driver(machine)`'s Rust
-  and `driver(cloudflare)`'s ReScript, RFC vr5lw. **The drivers lie together in `substrate/driver/`**,
-  decided by the author on 2026-10-19, each named `driver(...)` with its vendor in parentheses, as
-  `control(organization)` names what it is first and which after, decided by the author on
-  2026-10-20, so its directory is that name, `driver/cloudflare` and `driver/machine`, and no word is
-  said twice. **A name is written whole**, never shortened.
-  `model/checks/layout/code.res` holds that each component's code lies in its layer's directory, named as
-  the model names it, that its manifest is its language's, and that it uses only libraries of its
-  own language.
+  and `driver(cloudflare)`'s ReScript, RFC vr5lw. **The drivers lay together in `substrate/driver/`**,
+  decided by the author on 2026-10-19 and moved to `monoflake/driver` by RFC 7ykg6, each named
+  `driver(...)` with its vendor in parentheses, as `control(organization)` names what it is first
+  and which after, decided by the author on 2026-10-20, so its directory is that name,
+  `driver/cloudflare` and `driver/machine`, and no word is said twice. **A name is written whole**,
+  never shortened. `model/checks/layout/code.res` holds that each component's code lies in its
+  layer's directory, named as the model names it, that its manifest is its language's, and that it
+  uses only libraries of its own language.
 
 **The tree builds as three workspaces at its root**, decided by the author on 2026-10-19:
 
@@ -205,8 +205,8 @@ with the author on 2026-10-19, so where code goes follows from the model and is 
   name never meet. Its sources are `src/`; a setting such as its warnings is its own to write, as
   ReScript inherits none. `model/checks/layout/code.res` holds the names and the manifests.
 - **A driver holds its management beside its implementations**, `management/`, in the language
-  its ground asks, `model/ground/drivers.res`: the process that answers the management interface
-  and hands each call to the implementation of its kind.
+  its ground asks, `monoflake/driver`'s model since RFC 7ykg6: the process that answers the
+  management interface and hands each call to the implementation of its kind.
 - **What is generated is never committed**: `model/contracts.json` is the one product committed,
   and an envelope generated from it would be a second copy to drift. A build writes it again
   first, then compiles ReScript, then cargo, then bundles each Worker by tsdown; the order is a

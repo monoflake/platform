@@ -35,6 +35,8 @@ vendor/     other projects' files, copied at one version and left as written
   fhg6w. Here the platform half is two roles, `authority` and
   `directory`, known by the edges this half has into them; cloud fills them, proves those edges
   carried, and its `mise run check` is the whole model, RFC 8lkuv.
+- **The drivers are `monoflake/driver`'s**: here `driver(machine)` and `driver(cloudflare)` are
+  roles, asked in `model/ground/drivers.res` and filled by that repository's model, RFC 7ykg6.
 - **The model is the spec**: what a draft decides is written once in `model/`, and the draft keeps
   why. `model/contracts.json` is what every language reads.
 - **A script in `scripts/` decides only order**; one that begins to compute hands that part to a

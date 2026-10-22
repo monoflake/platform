@@ -7,9 +7,10 @@ against it, and the whole is held by the conversation.
 
 ## A block is written alone, against what the model asks
 
-- **A block is one directory of what the model asks code of**: a component, a driver's
-  implementation of a kind or its management, or a library, `model/checks/layout/blocks.res`.
-  `mise run brief <package>` prints what it holds, read from the model; no brief is written by hand.
+- **A block is one directory of what the model asks code of**: a component or a library,
+  `model/checks/layout/blocks.res`; a driver's are `monoflake/driver`'s, held by `tree.res`, RFC
+  7ykg6. `mise run brief <package>` prints what it holds, read from the model; no brief is written
+  by hand.
 - **Its interface is the model's**: a ReScript `.resi` beside the module it types, and Rust's
   crate root, `src/lib.rs`. The conversation writes it and the author reviews it before the block
   is begun; a worker implements it and never edits it, and reports one that seems wrong.

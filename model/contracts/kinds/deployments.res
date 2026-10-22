@@ -12,7 +12,7 @@ let types: array<declared> = [
     def: Enum({choices: codes(["modules", "component", "image"]), ordered: false}),
     from: "vr5lw",
   },
-  // What runs a form, as each driver declares in `model/ground/drivers.res`.
+  // What runs a form, as `model/ground/drivers.res` asks of each driver.
   {
     name: "deployment-runtime",
     def: Enum({

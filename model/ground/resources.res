@@ -5,8 +5,8 @@
 type class = [#compute | #storage | #database]
 
 /**
- * A kind of what a resource gives, each a contract with an implementation a driver,
- * `model/ground/drivers.res`; a database's sizes are open [C23].
+ * A kind of what a resource gives, each a contract a driver answers, `model/ground/drivers.res`;
+ * a database's sizes are open [C23].
  */
 type kind = [#function | #instance | #container | #object | #volume | #database]
 

@@ -1,13 +1,10 @@
 /**
  * Every block the model asks code of, by the directory it lies in, RFC fhg6w. `code.res` holds the
- * code to them, `model/brief.res` and `model/accept.res` one block each.
+ * code to them, and `tree.res` briefs and accepts one, of this repository or another's.
  */
 open Base
 
-/**
- * A block's language, Rust or ReScript for code, Nix for a machine's system and Docker for its
- * images, `model/ground/drivers.res`.
- */
+/** A block's language, Rust or ReScript for code, Nix for a system and Docker for an image. */
 type lang = [#rust | #rescript | #nix | #docker]
 
 /**
@@ -45,15 +42,6 @@ let dirName = name => name->String.replace("(organization)", "")->String.replace
  */
 let packageName = name => name->String.replace("(", "-")->String.replace(")", "")
 
-/**
- * A driver named `driver(...)` lies at `driver/` and the name in its parentheses,
- * `driver(cloudflare)` at `driver/cloudflare`.
- */
-let driverDir = name =>
-  name->String.startsWith("driver(") && name->String.endsWith(")")
-    ? Some(name->String.slice(~start=String.length("driver("), ~end=String.length(name) - 1))
-    : None
-
 /** A library's name in the model carries a mark, which its directory does not. */
 let libraryDir = name => name->String.replace("*", "")
 
@@ -86,54 +74,6 @@ let expected = () => {
   designed->Array.forEach(((name, c)) =>
     switch c.language {
     | _ if Components.elsewhere(name) => ()
-    | None if Drivers.drivers->Dict.get(name) != None =>
-      switch (group(c.layer), Drivers.drivers->Dict.get(name), driverDir(name)) {
-      | (_, _, None) => found->Array.push(`${name}: a driver not named driver(...)`)
-      | (Some(g), Some(d), Some(dir)) =>
-        d.implements->Array.forEach(i =>
-          expected->Map.set(
-            `code/${g}/driver/${dir}/${(i.kind :> string)}`,
-            {
-              name: `${name} ${(i.kind :> string)}`,
-              languages: [(i.language :> lang)],
-              package: `${packageName(name)}-${(i.kind :> string)}`,
-              license: Components.permissive,
-              uses: i.uses->Option.getOr([]),
-              takes: i.takes->Option.getOr([]),
-              samples: [],
-            },
-          )
-        )
-        expected->Map.set(
-          `code/${g}/driver/${dir}/management`,
-          {
-            name: `${name} management`,
-            languages: [(d.management :> lang)],
-            package: `${packageName(name)}-management`,
-            license: Components.permissive,
-            uses: [],
-            takes: d.managementTakes->Option.getOr([]),
-            samples: [],
-          },
-        )
-        let given = Set.fromArray(
-          d.grounds
-          ->Array.flatMap(Resources.groundOf)
-          ->Array.flatMap(n => Resources.get(Resources.resources, n).gives),
-        )
-        let made = Set.fromArray(d.implements->Array.map(i => i.kind))
-        given->Set.forEach(k =>
-          if !(made->Set.has(k)) {
-            found->Array.push(`${name}: its grounds give ${(k :> string)}, which it implements not`)
-          }
-        )
-        made->Set.forEach(k =>
-          if !(given->Set.has(k)) {
-            found->Array.push(`${name}: implements ${(k :> string)}, which its grounds give not`)
-          }
-        )
-      | _ => found->Array.push(`${name}: a driver at layer ${int(c.layer)}, which has no directory`)
-      }
     | None => none->Array.push(name)
     | Some(language) =>
       switch group(c.layer) {
@@ -228,11 +168,24 @@ let clippyLints = [
   "dbg_macro",
 ]
 
-/** A block by its package's name, as a brief and an acceptance each name one. */
-let find = package => {
-  let (expected, _, _) = expected()
-  expected->Map.entries->Array.fromIterator->Array.find(((_, h)) => h.package == package)
+/**
+ * A repository whose blocks this model's code holds, its root, each block by its directory from
+ * there, each written block's state and the rows a todo may name, RFC 7ykg6.
+ */
+type tree = {root: url, blocks: Map.t<string, held>, work: dict<Work.state>, rows: array<string>}
+
+/** Every open row of the checklist, the one thing a `%todo` or a `todo!` may name. */
+let openRows = () => Checklist.checklist->Array.filter(i => i.done == None)->Array.map(i => i.id)
+
+/** This repository's own blocks. */
+let own = () => {
+  let (blocks, _, _) = expected()
+  {root, blocks, work: Work.blocks, rows: openRows()}
 }
+
+/** A block by its package's name, as a brief and an acceptance each name one. */
+let find = (tree, package) =>
+  tree.blocks->Map.entries->Array.fromIterator->Array.find(((_, h)) => h.package == package)
 
 /**
  * Whether a file of a block is its interface, the model's to write, a crate's root, its build
@@ -247,14 +200,11 @@ let isInterface = file =>
 let isBinding = file =>
   file->String.startsWith("src/bindings/") || file->String.startsWith("tests/bindings/")
 
-/** Every open row of the checklist, the one thing a `%todo` or a `todo!` may name. */
-let openRows = () => Checklist.checklist->Array.filter(i => i.done == None)->Array.map(i => i.id)
-
 /** Every file a block holds, by its path within it, what a build writes passed over. */
-let filesOf = path => {
+let filesOf = (tree, path) => {
   let skipped = ["node_modules", "target", "lib", "dist", "generated"]
   let rec walk = inner =>
-    entries(urlIn(`${path}/${inner}`, root), {withFileTypes: true})->Array.flatMap(e => {
+    entries(urlIn(`${path}/${inner}`, tree.root), {withFileTypes: true})->Array.flatMap(e => {
       let name = inner ++ e->entryName
       if e->isDirectory {
         skipped->Array.includes(e->entryName) ? [] : walk(`${name}/`)
@@ -264,15 +214,15 @@ let filesOf = path => {
         [name]
       }
     })
-  existsSync(urlIn(`${path}/`, root)) ? walk("") : []
+  existsSync(urlIn(`${path}/`, tree.root)) ? walk("") : []
 }
 
 /** Each `%todo` and `todo!` of a block's sources by file and line, with the row it names. */
-let todosOf = path =>
-  filesOf(path)
+let todosOf = (tree, path) =>
+  filesOf(tree, path)
   ->Array.filter(f => f->String.endsWith(".res") || f->String.endsWith(".rs"))
   ->Array.flatMap(f =>
-    readFileSync(urlIn(`${path}/${f}`, root))
+    readFileSync(urlIn(`${path}/${f}`, tree.root))
     ->String.split("\n")
     ->Array.flatMapWithIndex((line, at) =>
       switch /(%todo|todo!)(\(\s*"([^"]*)"\s*\))?/->RegExp.exec(line) {
@@ -288,11 +238,11 @@ let todosOf = path =>
   )
 
 /** Where a block's sources cross into JavaScript unchecked outside `src/bindings/`. */
-let unboundOf = path =>
-  filesOf(path)
+let unboundOf = (tree, path) =>
+  filesOf(tree, path)
   ->Array.filter(f => (f->String.endsWith(".res") || f->String.endsWith(".resi")) && !isBinding(f))
   ->Array.flatMap(f =>
-    readFileSync(urlIn(`${path}/${f}`, root))
+    readFileSync(urlIn(`${path}/${f}`, tree.root))
     ->String.split("\n")
     ->Array.flatMapWithIndex((line, at) =>
       /%%?raw\b|\bObj\.magic\b|^\s*(@[^\n]*\s)?external\s/->RegExp.test(line)

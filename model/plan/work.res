@@ -13,8 +13,6 @@ let blocks: dict<state> = dict{
   "keys": Accepted,
   "layout": Accepted,
   "placement": Accepted,
-  "driver-machine-container": Accepted,
-  "driver-machine-management": Accepted,
   "runner": Accepted,
   "serve": Accepted,
 }

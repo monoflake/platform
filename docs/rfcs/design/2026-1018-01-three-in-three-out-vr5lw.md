@@ -269,7 +269,7 @@ was built**, worked out with the author on 2026-10-18.
 - **Each runtime takes one form**: modules, a bundle of JavaScript modules, WebAssembly within it as
   it likes, run by V8; a component, WebAssembly's, run by wasmtime; an image, whose format waits on
   the container [C11], run by an OCI runtime. WIT keeps the types one however it runs, RFC vuanj.
-  Each driver declares the runtimes it gives, `model/ground/drivers.res`: Cloudflare's own alone; a
+  Each driver gives the runtimes `model/ground/drivers.res` asks of it: Cloudflare's own alone; a
   machine's `workerd`, Cloudflare's runtime under an open license, so one bundle runs alike on both,
   `wasmtime`, and runc, crun and youki. `workerd` is no hardened sandbox and asks for one around it
   where code may be hostile, `docs/lessons/`: on a machine it runs inside its organization's
@@ -431,9 +431,9 @@ management interface below, RFC fhg6w.
   instance, container, object, volume, database, `model/ground/resources.res` -- is declared once by
   the model. **An implementation of a kind has one**: a Worker over R2 and a process over a
   machine's file system both give `object`, on grounds that share nothing, so each is written as its
-  ground asks, `model/ground/drivers.res`. A driver implements every kind its vendor's resources
-  give and no other: `driver(cloudflare)` function, instance, object and database, in ReScript;
-  `driver(machine)` all six, in Rust.
+  ground asks, in `monoflake/driver`, RFC 7ykg6. A driver implements every kind its vendor's
+  resources give and no other: `driver(cloudflare)` function, instance, object and database, in
+  ReScript; `driver(machine)` all six, in Rust.
 - **Nothing calls an implementation but through its kind's contract**, and no implementation calls
   another, so above the drivers a product speaks of `object` and never of R2 or a disk.
 - **One set of cases runs against every implementation of a kind**, at its HTTP API, so the drivers

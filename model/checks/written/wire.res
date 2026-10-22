@@ -331,15 +331,15 @@ let run = () => {
       contractRules->Array.push(`message for ${n}, which no operation fails for`)
     }
   )
-  // The drivers' runtimes, each one the deployments' contract names, every runtime given and every
-  // form taken, RFC vr5lw.
+  // The runtimes asked of the drivers, each one the deployments' contract names, every runtime
+  // asked and every form taken, RFC vr5lw.
   let choices = n =>
     switch declared->Dict.get(n) {
     | Some({def: Enum({choices})}) => choices->Array.map(c => c.name)
     | Some({def: Record(_) | Union(_) | Flags(_)}) | None => []
     }
   let given =
-    Drivers.drivers->Dict.toArray->Array.flatMap(((d, v)) => v.runtimes->Array.map(r => (d, r)))
+    Drivers.asked->Dict.toArray->Array.flatMap(((d, v)) => v.runtimes->Array.map(r => (d, r)))
   given->Array.forEach(((d, r)) => {
     let at = `${d}'s ${r.name}`
     if !(choices("deployment-runtime")->Array.includes(r.name)) {
@@ -356,7 +356,7 @@ let run = () => {
   })
   choices("deployment-runtime")->Array.forEach(n =>
     if !(given->Array.some(((_, r)) => r.name == n)) {
-      contractRules->Array.push(`deployment-runtime ${n}: given by no driver`)
+      contractRules->Array.push(`deployment-runtime ${n}: asked of no driver`)
     }
   )
   choices("deployment-form")->Array.forEach(f =>

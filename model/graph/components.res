@@ -503,35 +503,22 @@ let own: dict<component> = dict{
     uses: ["vocabulary*", "compat*"],
   },
   /*
-   * A driver is made of implementations, one for each kind its vendor gives, each in its own
-   * language, `model/ground/drivers.res`.
+   * The drivers, roles their own repository fills, asked in `model/ground/drivers.res`, RFC 7ykg6.
    */
   "driver(machine)": {
     layer: -2,
+    kind: #provided,
     half: #organization,
-    edges: [
-      replaced,
-      e(
-        "vendor",
-        #serve,
-        hard,
-        "a machine's containerd, its firewall and its disk, by their own APIs, vr5lw",
-      ),
-    ],
+    answers: ["management", "deployments", "object", "database"],
+    edges: [],
     uses: [],
   },
   "driver(cloudflare)": {
     layer: -2,
+    kind: #provided,
     half: #organization,
-    edges: [
-      replaced,
-      e(
-        "vendor",
-        #serve,
-        hard,
-        "an account's Workers, D1 and R2, made and bound through Cloudflare's API, b8f35",
-      ),
-    ],
+    answers: ["management", "deployments", "object", "database"],
+    edges: [],
     uses: [],
   },
   "root": {
