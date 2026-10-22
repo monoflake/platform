@@ -73,8 +73,6 @@ importers:
 
   code/tools/envelope-generator: {}
 
-  code/tools/pins: {}
-
   code/tools/runner:
     dependencies:
       '@monoflake/capability':

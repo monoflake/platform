@@ -30,7 +30,10 @@ Decided by the author on 2026-10-21.
   glue: a scheduled run wakes, checks whether an upstream released, and, if one did, builds and
   publishes the images.
 - **Both were prepared and checked locally first**, their CI written and run where it could be,
-  and this repository's code keeps its copies until the author has reviewed the move. The author
+  and this repository kept its copies until the author had reviewed the move: its machine NixOS,
+  its images and the pins tool that moved them were removed on 2026-10-22, so each of the two is
+  the one source of what it holds, and `monoflake/cloud`'s machines take their module from
+  `monoflake/machine`. The author
   opened both on GitHub on 2026-10-21: `monoflake/machine` with its CI running, `monoflake/runtime`
   with its Actions turned off until its release is settled.
 - **A runtime's image is published twice**, decided by the author on 2026-10-21: as a release

@@ -533,9 +533,9 @@ management interface below, RFC fhg6w.
     library everything links costs a whole set. So **ext4 is 5 GB whatever the disk, and btrfs the
     rest**, decided by the author on 2026-10-20: the current set, the one before it and the one an
     update brings, journald held to 256 MB; the driver collects every generation older than the one
-    before the current, and a machine downloads its sets and builds none. **The system is the
-    machine driver's `system/`, a NixOS module the root's `flake.nix` gives with the disk's layout
-    by disko and a template**, worked out with the author on 2026-10-20: a machine's own flake,
+    before the current, and a machine downloads its sets and builds none. **The system is a
+    NixOS module with the disk's layout by disko and a template, `monoflake/machine`'s since
+    2026-10-22, RFC m7rkq**, worked out with the author on 2026-10-20: a machine's own flake,
     started from the template, adds its name and what the module's options ask -- `machine.disk`,
     `machine.keys`, `machine.memory`, `machine.tailnet.authKeyFile`, and `monoflake.driver.bindings`, the files of the
     binding tokens its driver takes -- in technical words but where they name the platform, and is

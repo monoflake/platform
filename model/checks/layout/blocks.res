@@ -116,34 +116,6 @@ let expected = () => {
             samples: [],
           },
         )
-        d.system->Option.forEach(as_ =>
-          expected->Map.set(
-            `code/${g}/driver/${dir}/system`,
-            {
-              name: `${name} system, ${as_}`,
-              languages: [#nix],
-              package: `${packageName(name)}-system`,
-              license: Components.permissive,
-              uses: [],
-              takes: [],
-              samples: [],
-            },
-          )
-        )
-        d.images->Option.forEach(as_ =>
-          expected->Map.set(
-            `code/${g}/driver/${dir}/images`,
-            {
-              name: `${name} images, ${as_}`,
-              languages: [#docker],
-              package: `${packageName(name)}-images`,
-              license: Components.permissive,
-              uses: [],
-              takes: [],
-              samples: [],
-            },
-          )
-        )
         let given = Set.fromArray(
           d.grounds
           ->Array.flatMap(Resources.groundOf)

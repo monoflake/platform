@@ -27,7 +27,6 @@ docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources;
 tests/      the samples, data alone: codec/, values in both forms; kinds/ and products/, each
             interface's cases; properties/, what only a history shows; cbor/, a standard's own;
             compat/, the versions' cases; keys/, placement/ and layout/, computed apart
-scripts/    the entries that drive the rest, in order: no logic of their own
 vendor/     other projects' files, copied at one version and left as written
 ```
 

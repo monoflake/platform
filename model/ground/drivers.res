@@ -19,8 +19,8 @@ type implementation = {
 type runtime = {name: string, takes: string, stands: array<string>}
 
 /**
- * A driver is its implementations and its `management/`, and on a machine its `system/` as well,
- * vr5lw.
+ * A driver is its implementations and its `management/`, vr5lw; a machine's NixOS is
+ * `monoflake/machine`'s and its isolate runtimes' images `monoflake/runtime`'s, RFC m7rkq.
  */
 type driver = {
   grounds: array<Steps.ground>,
@@ -29,11 +29,6 @@ type driver = {
   managementTakes?: array<Libraries.taken>,
   implements: array<implementation>,
   runtimes: array<runtime>,
-  system?: string,
-  /**
-   * The images it runs its isolate runtimes from, each a program in a container built by Docker.
-   */
-  images?: string,
 }
 
 let drivers: dict<driver> = dict{
@@ -59,8 +54,6 @@ let drivers: dict<driver> = dict{
       {language: #rust, name: "rustix", major: "1"},
       {language: #rust, name: "blake3", major: "1"},
     ],
-    system: "NixOS, with containerd",
-    images: "workerd and wasmtime",
     implements: [
       {kind: #function, language: #rust, as_: "workerd, run for each deployment"},
       {kind: #instance, language: #rust, as_: "a process"},

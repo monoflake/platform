@@ -29,10 +29,6 @@ let tools: dict<tool> = dict{
       {language: #rescript, name: "@noble/hashes", major: "2"},
     ],
   },
-  "pins": {
-    what: "the versions an image pins by hand, workerd's, moved to the newest released past the workspace's supply-chain delay, each with its download's hash, and a newer NixOS release named",
-    languages: [#rescript],
-  },
 }
 
 /** The tool writing a library's sources, by its name, if one does. */

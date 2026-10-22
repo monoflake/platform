@@ -17,9 +17,7 @@ let lines = (path, h: held) => {
         ? [`${scoped(h)}, package.json and rescript.json, namespaced ${namespaceOf(h.package)}`]
         : [],
     )
-    ->Array.concat(
-      has(#nix) ? ["a NixOS module, default.nix, which the root's flake.nix gives"] : [],
-    )
+    ->Array.concat(has(#nix) ? ["a NixOS module, default.nix"] : [])
     ->Array.concat(
       has(#docker)
         ? ["an image for each directory, built by Docker for every architecture, docker-bake.hcl"]
