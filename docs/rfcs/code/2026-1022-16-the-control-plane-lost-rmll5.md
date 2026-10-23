@@ -1,10 +1,16 @@
 ---
 name: 'The Control Plane Lost'
 title: 'The second thread: hello served while the control plane on its machine is stopped'
-status: accepted
+status: landed
 supersedes: []
 blocked-by: [n0o4l]
-commits: []
+commits:
+  [
+    monoflake/platform@0e803b06,
+    monoflake/driver@d4a5211a,
+    monoflake/machine@6887898f,
+    monoflake/cloud@84cfcf76,
+  ]
 references: []
 ---
 
