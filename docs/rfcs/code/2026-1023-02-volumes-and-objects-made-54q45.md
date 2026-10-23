@@ -1,10 +1,10 @@
 ---
 name: 'Volumes and Objects Made'
 title: 'The fourth thread: a volume and an object made on a machine, the object kind held to its samples there'
-status: accepted
+status: landed
 supersedes: []
 blocked-by: [ehm48]
-commits: []
+commits: [monoflake/driver@1ab4515d, monoflake/platform@e1b73a0c]
 references: []
 ---
 
