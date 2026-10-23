@@ -64,6 +64,17 @@ d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || e
 description = "Build, format, lint and test every written block alone; one in work fails nothing"
 run = "rescript build > /dev/null && node model/built.res.mjs"
 
+# What a user runs to deploy an app of their own, from wherever it lives, RFC n0o4l.
+[tasks.deploy]
+description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver: `deploy <directory> <target> [--app <id>] [--dry-run]`"
+usage = '''
+arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed"
+arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+flag "--app <id>" help="The app's id, its deployment's and its host's, 1 unless given"
+flag "-n --dry-run" help="Build, pack and ask the machine, and copy or send nothing"
+'''
+run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/src/main.res.mjs "$usage_directory" "$usage_target" ${usage_app:+--app "$usage_app"} ${usage_dry_run:+--dry-run}'
+
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
 usage = '''

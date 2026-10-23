@@ -20,6 +20,11 @@ let tools: dict<tool> = dict{
     writes: "envelope*",
     takes: [{language: #rust, name: "serde_json", major: "1"}],
   },
+  "deploy": {
+    what: "a Worker's bundle, built by wrangler, packed as the function kind takes it and sent to a test machine as a list and a deployment, what a user runs to deploy an app of their own, n0o4l",
+    languages: [#rescript],
+    uses: ["envelope*"],
+  },
   "runner": {
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
     languages: [#rescript],
