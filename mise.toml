@@ -93,6 +93,17 @@ flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and stop no
 '''
 run = 'rescript build code/tools/lose > /dev/null && node code/tools/lose/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
 
+# The driver and the entry replaced on a test machine while hello is asked, RFC ehm48.
+[tasks.replace]
+description = "Restart a test machine's driver, entry and containerd and copy a new build in while hello is asked through its entry and tunnel, and report: `replace <target> [--no-build | --during <command>] [--dry-run]`"
+usage = '''
+arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+flag "--no-build" help="Restart the units alone, and build and copy nothing"
+flag "--during <command>" help="Run this command here as the one action under load, in place of every other"
+flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and replace nothing"
+'''
+run = 'rescript build code/tools/replace > /dev/null && node code/tools/replace/src/main.res.mjs "$usage_target" ${usage_no_build:+--no-build} ${usage_during:+--during "$usage_during"} ${usage_dry_run:+--dry-run}'
+
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
 usage = '''

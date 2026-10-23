@@ -38,6 +38,12 @@ let tools: dict<tool> = dict{
     uses: ["envelope*"],
     blocks: ["conform"],
   },
+  "replace": {
+    what: "a test machine's driver, entry and containerd restarted and a new build copied in while hello is asked by several clients at once through its entry and its tunnel, each request refused or failed counted against the action it fell in, ehm48",
+    languages: [#rescript],
+    uses: ["envelope*"],
+    blocks: ["conform", "lose"],
+  },
   "runner": {
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
     languages: [#rescript],

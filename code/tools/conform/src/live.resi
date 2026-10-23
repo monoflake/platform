@@ -25,6 +25,9 @@ let deployment: (~app: int) => string
 /** The shell printing the live binding's id, what stands before its token's dot. */
 let binding: string
 
+/** The shell setting `e` to the live entry's address, its own unit's `--listen`, RFC rmll5. */
+let entered: string
+
 /** The shell asking the live entry for `/` by the host of an app's deployment on the binding. */
 let hello: (~app: int, ~binding: int) => string
 

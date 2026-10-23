@@ -122,6 +122,18 @@ importers:
         specifier: workspace:*
         version: link:../../libs/envelope
 
+  code/tools/replace:
+    dependencies:
+      '@monoflake/conform':
+        specifier: workspace:*
+        version: link:../conform
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+      '@monoflake/lose':
+        specifier: workspace:*
+        version: link:../lose
+
   code/tools/runner:
     dependencies:
       '@monoflake/capability':

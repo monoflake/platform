@@ -18,6 +18,7 @@ let blocks: dict<state> = dict{
   "layout": Accepted,
   "lose": Accepted,
   "placement": Accepted,
+  "replace": Accepted,
   "scope": Accepted,
   "runner": Accepted,
   "serve": Accepted,
