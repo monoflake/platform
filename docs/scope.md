@@ -3,8 +3,9 @@
 What the model covers in its current stage. An edge case outside it goes to the out-of-model list
 and is not designed for until a later stage takes it in. See `docs/method.md`.
 
-**Building begins when `mise run check --ready` passes**: every row of `model/plan/checklist.res`
-that blocks step 0 is crossed off by naming where it was decided, and every check holds. **The
+**The platform keeps data only once `mise run check --ready` passes**, a thread built and run
+before it, `docs/method.md`: every row of `model/plan/checklist.res` that blocks step 0 is crossed
+off by naming where it was decided, and every check holds. **The
 checklist grows by itself**: every open question a draft lists, and every open mark in the model,
 names its row in brackets, `[B12]`; one that names none is unfiled and blocks, so a new dimension
 or structure brings its questions in. A later step is gated the same way, `--ready=N`.

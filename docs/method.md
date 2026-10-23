@@ -2,7 +2,8 @@
 
 How the design is worked out, agreed with the author on 2026-10-15. The old platform was built a
 step at a time without a design that held together in theory, and could not carry a stable app; this
-one is made to hold together on paper first.
+one is made to hold together on paper first. Since 2026-10-22 it is also run while it is built, its
+direction held on paper and its details found by running, "Held on paper, found by running" below.
 
 ## Five phases, in order
 
@@ -14,12 +15,13 @@ words are kept apart, worked out with the author on 2026-10-19.
 | Theory       | Drafts in `docs/rfcs/`, and the model in `model/`                                                         | `mise run check --ready` passes, `docs/scope.md` |
 | Simulation   | The model run through scenarios: a cold start, a component lost, a component upgraded, a contract changed | The same, since `check.res` runs them            |
 | Comparison   | The design diffed against the code and designs that exist                                                 | Every component that exists has a fate           |
-| Construction | Built from the ground up, in the order the bootstrap check gives                                          | The cold start is walked through once for real   |
+| Construction | Built from the ground up, in the order the bootstrap check gives, a thread at a time                      | The cold start is walked through once for real   |
 | Hardening    | The error paths, the irreversible first                                                                   | Never                                            |
 
-**One gate stands before construction, `--ready`**, worked out with the author on 2026-10-19: every
-row blocking step 0 crossed off and every check holding, which is theory's completion -- every edge
-reaching what the real world already provides, or marked by hand on day one or for later.
+**One gate stands before the platform keeps data, `--ready`**, worked out with the author on
+2026-10-19 as the gate before construction and moved on 2026-10-22: every row blocking step 0 crossed
+off and every check holding, which is theory's completion -- every edge reaching what the real world
+already provides, or marked by hand on day one or for later. A thread is built and run before it.
 **Simulation runs inside it**: a cold start is D1, an upgrade D3, a contract changed D5, each run by
 every check; a component lost is D4, a stage's later than `s0`, and is taken in with that stage.
 **Comparison is a row of the checklist, and comes before a cutover, not before building**: the
@@ -27,11 +29,40 @@ platform is built from nothing on an account of its own and touches nothing that
 service, Worker and store that exists becomes -- kept, replaced, moved or retired -- is settled
 before the first of them moves onto it, a row of group D.
 
+## Held on paper, found by running
+
+Agreed with the author on 2026-10-22. A design proved whole on paper and built in order afterward
+meets no request until the end, and the platform had none to carry; the two are worked together.
+
+- **The model holds the direction, running finds the details.** What the model checks of the whole
+  -- every hard edge pointing down, the data plane serving while the control plane is lost, a
+  platform taking nothing but what a driver gives, each organization on a footing of its own --
+  stays a check that refuses. A record's fields, a constant or a name is provisional until something
+  running has used it, and is changed by what running shows rather than proved first.
+- **One set of samples joins the two.** A contract's samples, which every language's tests read, are
+  also sent to what is deployed, so a running component that strays from the model fails the case a
+  test would.
+- **Until the platform keeps data, anything may be wiped.** With no user's data and no caller from
+  outside, every deployment, record and format may be dropped and built again, and nothing promises
+  compatibility, as a `0.x` version does not. The author declares the moment the first data the
+  platform must keep is written; from then the compatibility the model asks of an upgrade holds, and
+  is proved by an upgrade done rather than one reasoned through. Before it an upgrade is still
+  rehearsed on the test machines while something serves, so the moment comes with it practiced.
+- **A thread is built through every layer at its thinnest.** The first is one request from outside
+  reaching an app and its answer returning. An edge the model marks by hand on day one is filled by
+  hand, a file or a key made once, behind the contract the real component will answer; a layer's
+  other parts wait until a thread needs them.
+- **The first app lives in two homes.** It is written as a Worker, for the runtime both drivers give,
+  so it runs on Cloudflare as it is and on the platform unchanged. When the platform fails, its name
+  is turned back to Cloudflare; a difference between the two is the platform's to fix, never the
+  app's.
+
 ## A layer at a time
 
 A layer is worked out whole before the next is begun, every area together. A need found at one layer
 is written as an edge to a boundary of the next, a target beginning `?`, and is not followed down
 until the layer it was found at is finished. The workspace's `docs/planning.md` states the same rule.
+This is the order of the design; what is built runs through every layer at once, as a thread.
 
 ## Only what the author decided
 
