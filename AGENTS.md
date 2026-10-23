@@ -7,8 +7,9 @@ by a model, and the code that follows the model.
 
 It is public at `monoflake/platform`, listed in the workspace's `repos/registry.toml` as
 `monoflake/platform`, beside the private `monoflake/cloud`. No task here deploys the platform itself
-or touches another repository; `code/tools/deploy` is what a user runs to deploy an app of their
-own, from wherever it lives, RFC n0o4l.
+or changes another repository; `code/tools/deploy` is what a user runs to deploy an app of their
+own, from wherever it lives, RFC n0o4l, and a rehearsal may run a sibling's development task, as
+`replace` runs `monoflake/driver`'s `dev`, decided by the author on 2026-10-23.
 
 ## Start here
 
