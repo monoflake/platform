@@ -1,3 +1,9 @@
 packages:
   - "code/**"
 minimumReleaseAge: 1440
+
+# A package listed here may run code during install, which is blocked unless it cannot work
+# otherwise, as esbuild and workerd each unpack a binary for the machine they run on.
+allowBuilds:
+  esbuild: true
+  workerd: true

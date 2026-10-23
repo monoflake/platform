@@ -177,7 +177,19 @@ let own: dict<component> = dict{
         ~contract=["management"],
       ),
     ],
-    uses: ["capability*", "vocabulary*", "wit*", "extensions*", "placement*", "compat*"],
+    uses: [
+      "capability*",
+      "vocabulary*",
+      "wit*",
+      "extensions*",
+      "placement*",
+      "compat*",
+      "serve*",
+      "envelope*",
+      "codec*",
+    ],
+    // wrangler bundles it and runs it locally on workerd with D1 and R2, RFC rxmd9.
+    takes: [{language: #rescript, name: "wrangler", major: "4"}],
   },
   "storage": {
     language: #rescript,

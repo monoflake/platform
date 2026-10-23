@@ -1,0 +1,17 @@
+{
+	"name": "@monoflake/control-organization",
+	"namespace": "ControlOrganization",
+	"sources": [
+		{ "dir": "src", "subdirs": true },
+		{ "dir": "tests", "subdirs": true, "type": "dev" }
+	],
+	"dependencies": [
+		"@monoflake/envelope",
+		"@monoflake/codec",
+		"@monoflake/capability",
+		"@monoflake/serve"
+	],
+	"package-specs": [{ "module": "esmodule", "in-source": true }],
+	"suffix": ".res.mjs",
+	"warnings": { "number": "+4", "error": "+a-110" }
+}

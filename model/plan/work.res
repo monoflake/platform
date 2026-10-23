@@ -8,6 +8,7 @@ let blocks: dict<state> = dict{
   "codec": Accepted,
   "compat": Accepted,
   "conform": Accepted,
+  "control-organization": InWork,
   "deploy": Accepted,
   "envelope": Accepted,
   "envelope-generator": Accepted,

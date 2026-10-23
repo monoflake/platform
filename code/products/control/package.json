@@ -1,0 +1,16 @@
+{
+	"name": "@monoflake/control-organization",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@monoflake/capability": "workspace:*",
+		"@monoflake/codec": "workspace:*",
+		"@monoflake/envelope": "workspace:*",
+		"@monoflake/serve": "workspace:*"
+	},
+	"devDependencies": {
+		"wrangler": "4.151.3"
+	}
+}

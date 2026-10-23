@@ -5364,6 +5364,158 @@
 				}
 			]
 		},
+		"organization-open": {
+			"record": [
+				{
+					"name": "label",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"organization-opened": {
+			"record": [
+				{
+					"name": "organization",
+					"key": 1,
+					"shape": {
+						"id": "organization"
+					}
+				}
+			]
+		},
+		"binding-open": {
+			"record": [
+				{
+					"name": "organization",
+					"key": 1,
+					"shape": {
+						"id": "organization"
+					}
+				}
+			]
+		},
+		"binding-opened": {
+			"record": [
+				{
+					"name": "binding",
+					"key": 1,
+					"shape": {
+						"id": "capacity"
+					}
+				},
+				{
+					"name": "secret",
+					"key": 2,
+					"shape": {
+						"prim": "secret"
+					}
+				}
+			]
+		},
+		"binding-bind": {
+			"record": []
+		},
+		"binding-bound": {
+			"record": [
+				{
+					"name": "binding",
+					"key": 1,
+					"shape": {
+						"id": "capacity"
+					}
+				},
+				{
+					"name": "address",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "tunnel",
+					"key": 3,
+					"shape": {
+						"prim": "secret"
+					},
+					"optional": true
+				}
+			]
+		},
+		"release-put": {
+			"record": [
+				{
+					"name": "form",
+					"key": 1,
+					"shape": {
+						"type": "deployment-form"
+					}
+				},
+				{
+					"name": "artifact",
+					"key": 2,
+					"shape": {
+						"prim": "bytes"
+					}
+				}
+			]
+		},
+		"release-held": {
+			"record": [
+				{
+					"name": "hash",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "size",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"release-deploy": {
+			"record": [
+				{
+					"name": "binding",
+					"key": 1,
+					"shape": {
+						"id": "capacity"
+					}
+				},
+				{
+					"name": "app",
+					"key": 2,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "release",
+					"key": 3,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"release-of": {
+			"record": [
+				{
+					"name": "app",
+					"key": 1,
+					"shape": {
+						"id": "app"
+					}
+				}
+			]
+		},
 		"blob-space": {
 			"enum": [
 				{
@@ -6692,8 +6844,10 @@
 		"storage_full": "No store has room for the write now",
 		"suspended": "The organization is suspended",
 		"too_large": "The input is larger than its bound",
+		"unbound": "The binding has not been bound by its host yet",
 		"unfetchable": "The artifact could not be fetched",
 		"unplaceable": "No store meets the placement asked for",
+		"unreachable": "A host or service the call needs could not be reached",
 		"unresolved": "A handle in the change resolves to nothing",
 		"wrong_offset": "The write does not start where the upload ends",
 		"wrong_type": "The bucket is not of the type the call needs"
@@ -7413,6 +7567,127 @@
 						{
 							"name": "not_dismissible",
 							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"organizations": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "open",
+					"input": "organization-open",
+					"output": "organization-opened",
+					"reasons": [
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						}
+					]
+				}
+			]
+		},
+		"bindings": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "open",
+					"input": "binding-open",
+					"output": "binding-opened",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "bind",
+					"input": "binding-bind",
+					"output": "binding-bound",
+					"reasons": [
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
+						}
+					]
+				}
+			]
+		},
+		"releases": {
+			"version": 1,
+			"bounds": {
+				"artifact": 33554432
+			},
+			"declared": [],
+			"operations": [
+				{
+					"name": "put",
+					"input": "release-put",
+					"output": "release-held",
+					"reasons": [
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						}
+					]
+				},
+				{
+					"name": "deploy",
+					"input": "release-deploy",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "unbound",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "beyond_host",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "hash_mismatch",
+							"failure": "rejected"
+						},
+						{
+							"name": "unfetchable",
+							"failure": "unavailable"
+						},
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
+						}
+					]
+				},
+				{
+					"name": "describe",
+					"input": "release-of",
+					"output": "deployment-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
 						}
 					]
 				}

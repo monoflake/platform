@@ -163,6 +163,52 @@ let takesLints = (root, path) => {
   found.contents
 }
 
+/**
+ * What a Worker's configuration runs on a timer, a Cron Trigger or a Durable Object, at its top or
+ * in an environment, none of which may run across the two halves of a thread, RFC rxmd9.
+ */
+let timed = (config: JSON.t) => {
+  let envs =
+    object(config->member("env"))
+    ->Option.getOr(dict{})
+    ->Dict.toArray
+    ->Array.map(((name, c)) => (`env.${name}.`, c))
+  Array.concat([("", config)], envs)->Array.flatMap(((at, c)) => {
+    let some = j => list(j)->Option.mapOr(false, xs => xs != [])
+    let classes =
+      list(c->member("migrations"))
+      ->Option.getOr([])
+      ->Array.some(m => some(m->member("new_classes")) || some(m->member("new_sqlite_classes")))
+    [
+      (some(c->member("triggers")->Option.flatMap(t => t->member("crons"))), "triggers.crons"),
+      (c->member("durable_objects") != None, "durable_objects"),
+      (classes, "migrations of a Durable Object's class"),
+    ]->Array.filterMap(((found, what)) => found ? Some(`${at}${what}`) : None)
+  })
+}
+
+/** Configurations `timed` must refuse, read on every check so the rule is seen to fail. */
+let timedFixtures = [
+  `{"triggers": {"crons": ["*/5 * * * *"]}}`,
+  `{"env": {"local": {"durable_objects": {"bindings": [{"name": "A", "class_name": "A"}]}}}}`,
+  `{"migrations": [{"tag": "v1", "new_sqlite_classes": ["A"]}]}`,
+]
+
+/** What a block's wrangler configuration breaks, read from `wrangler.json`, the one form read. */
+let wranglerOf = (root, path, files) =>
+  Array.concat(
+    ["wrangler.jsonc", "wrangler.toml"]
+    ->Array.filter(f => files->Array.includes(f))
+    ->Array.map(f => `${path}/${f}: a Worker's configuration here is wrangler.json, which is read`),
+    files->Array.includes("wrangler.json")
+      ? timed(
+          JSON.parseOrThrow(readFileSync(urlIn(`${path}/wrangler.json`, root))),
+        )->Array.map(what =>
+          `${path}/wrangler.json: declares ${what}, and nothing runs on a timer, RFC rxmd9`
+        )
+      : [],
+  )
+
 /** What a block's directory breaks of what the model asks, or none where nothing is written yet. */
 let held = (tree: tree, path, h: held): option<array<string>> => {
   let root = tree.root
@@ -319,6 +365,7 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
         found->Array.push(`${path}/${text}: no link to the root's ${text}`)
       }
     )
+    found->Array.pushMany(wranglerOf(root, path, files))
     found->Array.pushMany(unboundOf(tree, path))
     Some(found)
   }
@@ -392,6 +439,11 @@ let run = () => {
       })
     }
   })
+  timedFixtures->Array.forEach(f =>
+    if timed(JSON.parseOrThrow(f)) == [] {
+      found->Array.push(`the timer rule refuses no timer in ${f}`)
+    }
+  )
   // The root holds the two texts as Rust's projects do, and nothing else of licensing, RFC fhg6w.
   ["LICENSE-MIT", "LICENSE-APACHE"]->Array.forEach(t =>
     if !existsSync(urlIn(t, root)) {
