@@ -74,3 +74,47 @@ test(
     deepEqual(gone->Web.status, 503)
   },
 )
+
+/** A state holding app 4 deployed on a bound binding, its host faked. */
+let deployed = async () => {
+  let state = Memory.state()
+  let organization = await state.openOrganization("first")
+  let binding = await state.openBinding(~organization, ~secret=Uint8Array.fromLength(32))
+  await state.addressed(~binding, ~address="10.200.0.1")
+  await state.deploy({app: 4., binding, release: "", capacity: 1.})
+  state
+}
+
+let passing = (state, host: Host.t, request) =>
+  Gateway.passed(state, host.reach, ~port=36879, request, {app: 4., path: "/"}, ~search="")
+
+test(
+  "a request with no body that fails before any answer is sent once more, and answered",
+  async () => {
+    // The entry closes its kept connections as it restarts, which a request sent on one meets.
+    let state = await deployed()
+    let host = Host.make()
+    host.drops := 1
+    let asked = Web.request("https://control.test/v1/app-4/", {method: "GET", headers: dict{}})
+    let answer = await passing(state, host, asked)
+    deepEqual((answer->Web.status, host.seen->Array.length), (200, 2))
+    host.drops := 2
+    let twice = await passing(state, host, asked)
+    deepEqual((twice->Web.status, host.seen->Array.length), (503, 4))
+  },
+)
+
+test("a request whose body a first send spent is not sent again", async () => {
+  let state = await deployed()
+  let host = Host.make()
+  host.drops := 1
+  let posted = Web.request(
+    "https://control.test/v1/app-4/",
+    {method: "POST", headers: dict{}, body: Web.utf8("once")},
+  )
+  let answer = await passing(state, host, posted)
+  deepEqual((answer->Web.status, host.seen->Array.length), (503, 1))
+  let empty = Web.request("https://control.test/v1/app-4/", {method: "POST", headers: dict{}})
+  host.drops := 1
+  deepEqual((await passing(state, host, empty))->Web.status, 200)
+})

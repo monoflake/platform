@@ -15,6 +15,8 @@ type t = {
   slow: ref<bool>,
   /** Whether nothing answers at all. */
   gone: ref<bool>,
+  /** How many of the next requests fail before any answer, as a connection closed would. */
+  drops: ref<int>,
   /** The last deploy sent. */
   deployed: ref<option<Contracts.DeploymentDeploy.t>>,
 }
@@ -31,6 +33,7 @@ let make = (): t => {
   let seen = []
   let slow = ref(false)
   let gone = ref(false)
+  let drops = ref(0)
   let deployed = ref(None)
   {
     reach: {
@@ -45,6 +48,10 @@ let make = (): t => {
         })
         if gone.contents {
           JsError.throwWithMessage("connection refused")
+        }
+        if drops.contents > 0 {
+          drops := drops.contents - 1
+          JsError.throwWithMessage("Network connection lost.")
         }
         let path = Web.parts(request->Web.url)->Web.pathname
         let input = async () =>
@@ -116,6 +123,7 @@ let make = (): t => {
     seen,
     slow,
     gone,
+    drops,
     deployed,
   }
 }

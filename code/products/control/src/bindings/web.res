@@ -14,6 +14,7 @@ type body
 @send external header: (headers, string) => Nullable.t<string> = "get"
 @send external setHeader: (headers, string, string) => unit = "set"
 @send external requestBytes: request => promise<ArrayBuffer.t> = "arrayBuffer"
+@get external requestBody: request => Nullable.t<body> = "body"
 
 /** A request whole. */
 let bytesOf = async request => Uint8Array.fromBuffer(await request->requestBytes)
