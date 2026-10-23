@@ -138,6 +138,7 @@ let expected = () => {
         uses: t.uses->Option.getOr([]),
         takes: t.takes->Option.getOr([]),
         samples: t.samples->Option.getOr([]),
+        blocks: ?t.blocks,
       },
     )
   )

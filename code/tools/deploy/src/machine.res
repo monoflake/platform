@@ -84,8 +84,13 @@ let call = envelope => {
 `
 }
 
+/** The entry's address, its own unit's `--listen`, RFC rmll5. */
+let entered = `e=$(systemctl show -p ExecStart --value monoflake-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
+[ -n "$e" ] || { echo "monoflake-entry names no address to listen on" >&2; exit 1; }
+`
+
 let asked = host =>
-  `${flags}curl -sS -m 10 -H 'Host: ${host}' "http://$(o entry)/"
+  `${entered}curl -sS -m 10 -H 'Host: ${host}' "http://$e/"
 `
 
 type refused = {reason: string, message: string}

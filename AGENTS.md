@@ -54,21 +54,22 @@ workspace -- `.editorconfig`, `.oxfmtrc.json`, `.oxlintrc.json`, `rustfmt.toml`,
 sits at the root as a link up to the workspace's file, which dangles in a clone of this repository
 alone.
 
-| Command                          | Does                                                          |
-| -------------------------------- | ------------------------------------------------------------- |
-| `mise run prepare`               | once in a clone: installed, compiled, generated               |
-| `mise run generate`              | the ReScript a tool writes of a library, again                |
-| `mise run check`                 | compiles the model and runs `model/check.res`                 |
-| `mise run check --ready`         | asks whether building may begin                               |
-| `mise run check --write`         | writes `model/contracts.json` again from the model            |
-| `mise run fmt`                   | formats the ReScript, the prose and the JSON                  |
-| `mise run verify`                | everything formatted, the check, the blocks, the deny         |
-| `mise run brief <name>`          | one block's brief, read from the model                        |
-| `mise run accept <name>`         | one block held to its brief, alone                            |
-| `mise run built <name>`          | one block built, formatted, linted and tested alone           |
-| `mise run blocks`                | every written block built alone, as verify asks               |
-| `mise run deploy <app> <target>` | an app built by wrangler and run on a test machine, RFC n0o4l |
-| `mise run conform <target>`      | the kinds' samples run on a test machine's driver, RFC n0o4l  |
+| Command                          | Does                                                            |
+| -------------------------------- | --------------------------------------------------------------- |
+| `mise run prepare`               | once in a clone: installed, compiled, generated                 |
+| `mise run generate`              | the ReScript a tool writes of a library, again                  |
+| `mise run check`                 | compiles the model and runs `model/check.res`                   |
+| `mise run check --ready`         | asks whether building may begin                                 |
+| `mise run check --write`         | writes `model/contracts.json` again from the model              |
+| `mise run fmt`                   | formats the ReScript, the prose and the JSON                    |
+| `mise run verify`                | everything formatted, the check, the blocks, the deny           |
+| `mise run brief <name>`          | one block's brief, read from the model                          |
+| `mise run accept <name>`         | one block held to its brief, alone                              |
+| `mise run built <name>`          | one block built, formatted, linted and tested alone             |
+| `mise run blocks`                | every written block built alone, as verify asks                 |
+| `mise run deploy <app> <target>` | an app built by wrangler and run on a test machine, RFC n0o4l   |
+| `mise run conform <target>`      | the kinds' samples run on a test machine's driver, RFC n0o4l    |
+| `mise run lose <target>`         | a test machine's driver stopped while hello is asked, RFC rmll5 |
 
 A commit waits on `mise run check monoflake`, run from the workspace: this verify, then the
 workspace's rules over the tree.

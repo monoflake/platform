@@ -10,22 +10,44 @@ l=$(o listen); l=\${l:-localhost:37483}
 `
 
 /** A call to the live driver's path, its body the call of an interface's describe. */
-let posted = (~interface, ~token) =>
+let posted = (
+  ~interface,
+  ~token,
+  ~body=`{"interface": "${interface}", "operation": "describe", "input": {}}`,
+) =>
   `${flags}curl -sS -m 10 -w '\\n%{http_code}' -X POST "http://$l/${interface}/describe" \\
   ${token
       ? `-H "Authorization: Bearer $(t)" `
       : ""}-H 'Content-Type: application/json' -H 'Accept: application/json' \\
-  --data '{"interface": "${interface}", "operation": "describe", "input": {}}'
+  --data '${body}'
 `
 
 let described = posted(~interface="management", ~token=true)
 let untokened = posted(~interface="management", ~token=false)
 let unknown = posted(~interface="nothing", ~token=true)
 
+let deployment = (~app) =>
+  posted(
+    ~interface="deployments",
+    ~token=true,
+    ~body=Contracts.Interface.Deployments.toJson({
+      call: Describe({runs: App({id: Int.toFloat(app)})}),
+      capabilities: [],
+    })->JSON.stringify,
+  )
+
+let binding = `${flags}head -n 1 "$(o bindings)" | cut -s -d. -f1
+`
+
+/** The entry's address, its own unit's `--listen`, RFC rmll5. */
+let entered = `e=$(systemctl show -p ExecStart --value monoflake-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
+[ -n "$e" ] || { echo "monoflake-entry names no address to listen on" >&2; exit 1; }
+`
+
 let hello = (~app, ~binding) =>
-  `${flags}curl -sS -m 10 -w '\\n%{http_code}' -H 'Host: app-${Int.toString(app)}.b${Int.toString(
+  `${entered}curl -sS -m 10 -w '\\n%{http_code}' -H 'Host: app-${Int.toString(app)}.b${Int.toString(
       binding,
-    )}' "http://$(o entry)/"
+    )}' "http://$e/"
 `
 
 let tunnel = "cat /run/monoflake/tunnel/address 2> /dev/null || true\n"

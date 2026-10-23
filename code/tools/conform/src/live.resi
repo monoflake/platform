@@ -19,6 +19,12 @@ let untokened: string
 /** The shell calling an interface no driver serves, with the live binding's token. */
 let unknown: string
 
+/** The shell calling deployments' describe of an app's deployment with the live binding's token. */
+let deployment: (~app: int) => string
+
+/** The shell printing the live binding's id, what stands before its token's dot. */
+let binding: string
+
 /** The shell asking the live entry for `/` by the host of an app's deployment on the binding. */
 let hello: (~app: int, ~binding: int) => string
 

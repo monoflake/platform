@@ -63,7 +63,8 @@ test("the shell starts the driver on the bindings, its own port, bridge and subn
   let shell = Instance.started(~count=2, ~subnet="10.250.0.0/24")
   ok(shell->String.includes(`--unit=${Instance.unit}`))
   ok(shell->String.includes(`--listen=127.0.0.1:${Int.toString(Instance.port)}`))
-  ok(shell->String.includes(`--entry=127.0.0.1:${Int.toString(Instance.entryPort)}`))
+  // The entry is a unit of its own, so the second driver is given none, RFC rmll5.
+  ok(!(shell->String.includes("--entry")))
   ok(shell->String.includes(`--bridge=${Instance.bridge} --subnet=10.250.0.0/24`))
   ok(shell->String.includes(`-le ${Int.toString(Instance.first + 1)}`))
 })

@@ -113,6 +113,15 @@ importers:
 
   code/tools/envelope-generator: {}
 
+  code/tools/lose:
+    dependencies:
+      '@monoflake/conform':
+        specifier: workspace:*
+        version: link:../conform
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+
   code/tools/runner:
     dependencies:
       '@monoflake/capability':

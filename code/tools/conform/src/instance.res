@@ -1,7 +1,6 @@
 let unit = "monoflake-conform"
 let directory = "/run/monoflake-conform"
 let port = 47483
-let entryPort = 46879
 let first = 1000
 let bridge = "conform0"
 
@@ -70,8 +69,8 @@ let readFacts = text => {
   | (_, None) => Error("the subvolumes of the mount were not counted")
   | (Some(binding), _) if binding >= first =>
     Error(`the live binding ${int(binding)} is among those from ${int(first)} this run takes`)
-  | (_, Some(_)) if listening->Array.includes(port) || listening->Array.includes(entryPort) =>
-    Error(`something listens on port ${int(port)} or ${int(entryPort)} already`)
+  | (_, Some(_)) if listening->Array.includes(port) =>
+    Error(`something listens on port ${int(port)} already`)
   | (Some(binding), Some(subvolumes)) =>
     Ok({
       binding,
@@ -134,7 +133,7 @@ while [ "$i" -le ${int(last)} ]; do
   i=$((i + 1))
 done
 systemd-run --quiet --collect --unit=${unit} --setenv=PATH="$p" "$bin" $kept "$@" \\
-  --listen=127.0.0.1:${int(port)} --entry=127.0.0.1:${int(entryPort)} \\
+  --listen=127.0.0.1:${int(port)} \\
   --state="$d/state" --secrets="$d/secrets" --bridge=${bridge} --subnet=${subnet}
 n=0
 until [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:${int(

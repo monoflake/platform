@@ -84,6 +84,15 @@ flag "-n --dry-run" help="Ask the machine and the live driver, and start nothing
 '''
 run = 'rescript build code/tools/runner > /dev/null && rescript build code/tools/conform > /dev/null && node code/tools/conform/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
 
+# The control plane lost on a test machine while hello is asked, RFC rmll5.
+[tasks.lose]
+description = "Stop a test machine's driver while hello is asked through its entry and tunnel, start it again and report: `lose <target> [--dry-run]`"
+usage = '''
+arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and stop nothing"
+'''
+run = 'rescript build code/tools/lose > /dev/null && node code/tools/lose/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
+
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
 usage = '''

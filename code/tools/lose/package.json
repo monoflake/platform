@@ -1,0 +1,11 @@
+{
+	"name": "@monoflake/lose",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@monoflake/conform": "workspace:*",
+		"@monoflake/envelope": "workspace:*"
+	}
+}

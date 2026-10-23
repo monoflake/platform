@@ -7,6 +7,8 @@ type tool = {
   languages: array<[#rust | #rescript]>,
   /** The platform's libraries it may depend on, by the model's names. */
   uses?: array<string>,
+  /** Other tools it may depend on, by their names. */
+  blocks?: array<string>,
   /** The library whose sources it writes, by the model's name, if it is a generator. */
   writes?: string,
   takes?: array<Libraries.taken>,
@@ -29,6 +31,12 @@ let tools: dict<tool> = dict{
     what: "the kinds' samples run by the runner against the driver a test machine runs, on a second driver started from its binary with bindings of its own, the live one asked beside it and everything the run made removed after, n0o4l",
     languages: [#rescript],
     uses: ["envelope*"],
+  },
+  "lose": {
+    what: "a test machine's driver stopped while hello is asked through its entry and its tunnel, its calls found refused, and the driver started again and found as it was, rmll5",
+    languages: [#rescript],
+    uses: ["envelope*"],
+    blocks: ["conform"],
   },
   "runner": {
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",

@@ -12,9 +12,6 @@ let directory: string
 /** The port it listens on, on the machine's loopback alone. */
 let port: int
 
-/** The port its entry listens on, on loopback alone. */
-let entryPort: int
-
 /** The first binding it holds, above every id a live binding takes. */
 let first: int
 
