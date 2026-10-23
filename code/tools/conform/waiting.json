@@ -1,0 +1,19 @@
+[
+	{
+		"interface": "management",
+		"operation": "apply",
+		"naming": "4elqc",
+		"on": "RFC 4elqc, an item but a container made by the list"
+	},
+	{
+		"interface": "object",
+		"operation": "write",
+		"naming": "the binding holds no bucket",
+		"on": "RFC 4elqc, a bucket a binding holds only once its list makes one"
+	},
+	{
+		"interface": "database",
+		"naming": "no interface database",
+		"on": "RFC 4elqc, a database the driver serves once its list makes one"
+	}
+]

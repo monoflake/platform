@@ -2,7 +2,7 @@
  * Runs each behavior file's cases against the implementation at `base` over HTTP, RFC p8e8k, as
  * `usage` says. It prints the chain's root and certificates first.
  */
-let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] <behavior file>..."
+let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] <behavior file>..."
 
 let refuse = why => {
   Console.error(`runner: ${why}`)
@@ -65,7 +65,31 @@ let formName = (form: Run.form) =>
   | Json => "json"
   }
 
-type tally = {mutable passed: int, mutable failed: int, mutable skipped: int}
+type tally = {mutable passed: int, mutable failed: int, mutable waiting: int, mutable skipped: int}
+
+let counted = tally =>
+  `${Int.toString(tally.passed)} passed, ${Int.toString(tally.failed)} failed, ${Int.toString(
+      tally.waiting,
+    )} waiting, ${Int.toString(tally.skipped)} skipped`
+
+/** A case's outcome in a form printed, and counted in each tally. */
+let told = (tallies, form, description, reported: Waiting.reported) => {
+  let form = formName(form)
+  switch reported {
+  | Ran(Passed) =>
+    tallies->Array.forEach(t => t.passed = t.passed + 1)
+    Console.log(`  passed  ${form}  ${description}`)
+  | Ran(Failed({step, why})) =>
+    tallies->Array.forEach(t => t.failed = t.failed + 1)
+    Console.log(`  failed  ${form}  ${description}, at step ${Int.toString(step)}: ${why}`)
+  | Waiting(on) =>
+    tallies->Array.forEach(t => t.waiting = t.waiting + 1)
+    Console.log(`  waiting ${form}  ${description}: on ${on}`)
+  | Ran(Skipped(why)) =>
+    tallies->Array.forEach(t => t.skipped = t.skipped + 1)
+    Console.log(`  skipped ${form}  ${description}: ${why}`)
+  }
+}
 
 let main = async () => {
   switch parse(List.fromArray(Host.argv->Array.slice(~start=2)), Dict.make(), []) {
@@ -134,47 +158,89 @@ let main = async () => {
         | None => ()
         }
         let bounds = interfaceBounds()
-        let tally = {passed: 0, failed: 0, skipped: 0}
-        let rec each = async n =>
-          switch files->Array.get(n) {
-          | None => ()
-          | Some((path, file)) =>
-            let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
-            let target = Http.target(~base, ~chain, ~bounds=Dict.assign(own->Dict.copy, given))
-            Console.log(`${path}, ${file.interface}:`)
-            let results = await Run.file(file, target)
-            results->Array.forEach(result =>
-              result.outcomes->Array.forEach(((form, outcome)) =>
-                switch outcome {
-                | Passed =>
-                  tally.passed = tally.passed + 1
-                  Console.log(`  passed  ${formName(form)}  ${result.description}`)
-                | Failed({step, why}) =>
-                  tally.failed = tally.failed + 1
-                  Console.log(
-                    `  failed  ${formName(form)}  ${result.description}, at step ${Int.toString(
-                        step,
-                      )}: ${why}`,
-                  )
-                | Skipped(why) =>
-                  tally.skipped = tally.skipped + 1
-                  Console.log(`  skipped ${formName(form)}  ${result.description}: ${why}`)
-                }
+        let needed =
+          files->Array.reduce(0, (n, (_, file: Sample.file)) => n + file.cases->Array.length * 2)
+        let tokens = switch flags->Dict.get("tokens") {
+        | None => Ok(None)
+        | Some(path) =>
+          (
+            path == "-"
+              ? (await Host.readStdin())->Result.mapError(why => `stdin: ${why}`)
+              : readText(path)
+          )->Result.flatMap(text =>
+            switch Bearer.tokens(text) {
+            | tokens if tokens->Array.length >= needed => Ok(Some(tokens))
+            | tokens =>
+              Error(
+                `${path == "-" ? "stdin" : path}: ${Int.toString(
+                    tokens->Array.length,
+                  )} tokens for ${Int.toString(needed)} bindings, one for each case in each form`,
               )
-            )
-            await each(n + 1)
-          }
-        await each(0)
-        let count = Int.toString
-        let run = files->Array.length
-        Console.log(
-          `${count(tally.passed)} passed, ${count(tally.failed)} failed, ${count(
-              tally.skipped,
-            )} skipped, each case once in each form, of ${count(run)} behavior file${run == 1
-              ? ""
-              : "s"}`,
-        )
-        Host.setExitCode(Host.process, tally.failed > 0 || refused.contents ? 1 : 0)
+            }
+          )
+        }
+        let rules = switch flags->Dict.get("waits") {
+        | None => Ok([])
+        | Some(path) =>
+          readText(path)->Result.flatMap(text =>
+            Waiting.read(text)->Result.mapError(why => `${path}: ${why}`)
+          )
+        }
+        switch (tokens, rules) {
+        | (Error(why), _) | (_, Error(why)) => refuse(why)
+        | (Ok(tokens), Ok(rules)) =>
+          let total = {passed: 0, failed: 0, waiting: 0, skipped: 0}
+          let taken = ref(0)
+          // Each token taken in turn, the next binding a case's CBOR or JSON runs on.
+          let next = tokens =>
+            () => {
+              taken := taken.contents + 1
+              tokens->Array.get(taken.contents - 1)->Option.getOr("")
+            }
+          let rec each = async n =>
+            switch files->Array.get(n) {
+            | None => ()
+            | Some((path, file)) =>
+              let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
+              let bounds = Dict.assign(own->Dict.copy, given)
+              Console.log(`${path}, ${file.interface}:`)
+              let tally = {passed: 0, failed: 0, waiting: 0, skipped: 0}
+              let results = switch tokens {
+              | None =>
+                (
+                  await Run.file(file, Http.target(~base, ~chain, ~bounds))
+                )->Array.filterMapWithIndex((result, k) =>
+                  file.cases->Array.get(k)->Option.map(case => (case, result))
+                )
+              | Some(tokens) =>
+                await Bearer.file(
+                  file,
+                  ~at=(~token) => Http.target(~base, ~chain, ~bounds, ~token),
+                  ~next=next(tokens),
+                )
+              }
+              results->Array.forEach(((case, result)) =>
+                result.outcomes->Array.forEach(((form, outcome)) =>
+                  told(
+                    [tally, total],
+                    form,
+                    result.description,
+                    Waiting.reported(rules, ~interface=file.interface, ~case, outcome),
+                  )
+                )
+              )
+              Console.log(`  ${counted(tally)}`)
+              await each(n + 1)
+            }
+          await each(0)
+          let run = files->Array.length
+          Console.log(
+            `${counted(total)}, each case once in each form, of ${Int.toString(
+                run,
+              )} behavior file${run == 1 ? "" : "s"}`,
+          )
+          Host.setExitCode(Host.process, total.failed > 0 || refused.contents ? 1 : 0)
+        }
       }
     }
   }

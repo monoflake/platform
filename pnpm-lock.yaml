@@ -99,6 +99,12 @@ importers:
         specifier: workspace:*
         version: link:../../libs/envelope
 
+  code/tools/conform:
+    dependencies:
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+
   code/tools/deploy:
     dependencies:
       '@monoflake/envelope':

@@ -80,7 +80,7 @@ let respond = (response, ~cbor, answer) => {
   response->end(cbor ? written(value) : Web.utf8(JSON.stringify(json)))
 }
 
-let handle = (objects: dict<Uint8Array.t>, bodies) =>
+let handle = (objectsOf: dict<string> => option<dict<Uint8Array.t>>, bodies) =>
   (request, response) =>
     body(request)
     ->Promise.thenResolve(bytes => {
@@ -93,10 +93,12 @@ let handle = (objects: dict<Uint8Array.t>, bodies) =>
         response->writeHead(502, dict{"content-type": "text/plain"})
         response->end(Web.utf8("bad gateway"))
       } else {
-        let answer = switch callOf(contentType, bytes) {
-        | Error() =>
+        let answer = switch (objectsOf(headers), callOf(contentType, bytes)) {
+        | (None, _) =>
+          Refused(403, {failure: Rejected, reason: "denied", message: "no binding's token"})
+        | (_, Error()) =>
           Refused(400, {failure: Rejected, reason: "malformed", message: "not a call of object"})
-        | Ok(({call}, certificate)) =>
+        | (Some(objects), Ok(({call}, certificate))) =>
           switch call {
           | Write({name, content}) =>
             objects->Dict.set(name, certificate->Option.getOr(content))
@@ -144,10 +146,20 @@ let handle = (objects: dict<Uint8Array.t>, bodies) =>
 
 /**
  * The server started at `localhost`, on the port given or one of the system's choosing, keeping
- * each body in `bodies`.
+ * each body in `bodies`, and where tokens are given each its own objects, a call with none denied.
  */
-let start = (~port=0, ~bodies=[]) =>
+let start = (~port=0, ~bodies=[], ~tokens=?) =>
   Promise.make((resolve, _) => {
-    let server = createServer(handle(Dict.make(), bodies))
+    let objects = Dict.make()
+    let kept =
+      tokens->Option.map(tokens =>
+        tokens->Array.map(t => (`Bearer ${t}`, Dict.make()))->Dict.fromArray
+      )
+    let objectsOf = headers =>
+      switch kept {
+      | None => Some(objects)
+      | Some(kept) => headers->Dict.get("authorization")->Option.flatMap(a => kept->Dict.get(a))
+      }
+    let server = createServer(handle(objectsOf, bodies))
     server->listen(port, "localhost", () => resolve(server))
   })

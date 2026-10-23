@@ -68,6 +68,7 @@ alone.
 | `mise run built <name>`          | one block built, formatted, linted and tested alone           |
 | `mise run blocks`                | every written block built alone, as verify asks               |
 | `mise run deploy <app> <target>` | an app built by wrangler and run on a test machine, RFC n0o4l |
+| `mise run conform <target>`      | the kinds' samples run on a test machine's driver, RFC n0o4l  |
 
 A commit waits on `mise run check monoflake`, run from the workspace: this verify, then the
 workspace's rules over the tree.

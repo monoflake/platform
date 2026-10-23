@@ -25,6 +25,11 @@ let tools: dict<tool> = dict{
     languages: [#rescript],
     uses: ["envelope*"],
   },
+  "conform": {
+    what: "the kinds' samples run by the runner against the driver a test machine runs, on a second driver started from its binary with bindings of its own, the live one asked beside it and everything the run made removed after, n0o4l",
+    languages: [#rescript],
+    uses: ["envelope*"],
+  },
   "runner": {
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
     languages: [#rescript],

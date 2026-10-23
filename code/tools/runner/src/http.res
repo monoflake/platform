@@ -258,7 +258,7 @@ let verified = (chain, bytes, record) =>
     }
   }
 
-let target = (~base, ~chain, ~bounds) => {
+let target = (~base, ~chain, ~bounds, ~token=?) => {
   let base = base->String.endsWith("/") ? base->String.slice(~start=0, ~end=-1) : base
   let call = async (~interface, ~operation, ~input, ~form, ~as_) => {
     let call = JSON.Object(
@@ -302,7 +302,13 @@ let target = (~base, ~chain, ~bounds) => {
         (
           await post(
             `${base}/${interface}/${operation}`,
-            ~headers=dict{"content-type": contentType, "accept": media(form)},
+            ~headers=Dict.fromArray(
+              [
+                ("content-type", contentType),
+                ("accept", media(form)),
+                ...token->Option.mapOr([], token => [("authorization", `Bearer ${token}`)]),
+              ],
+            ),
             ~body=Some(body),
           )
         )->Result.map(((status, contentType, bytes)) =>

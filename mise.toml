@@ -75,6 +75,15 @@ flag "-n --dry-run" help="Build, pack and ask the machine, and copy or send noth
 '''
 run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/src/main.res.mjs "$usage_directory" "$usage_target" ${usage_app:+--app "$usage_app"} ${usage_dry_run:+--dry-run}'
 
+# The samples sent to what a test machine runs, RFC n0o4l.
+[tasks.conform]
+description = "Run the kinds' samples against the driver a test machine runs, on a second driver beside it, and report: `conform <target> [--dry-run]`"
+usage = '''
+arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+flag "-n --dry-run" help="Ask the machine and the live driver, and start nothing"
+'''
+run = 'rescript build code/tools/runner > /dev/null && rescript build code/tools/conform > /dev/null && node code/tools/conform/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
+
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
 usage = '''

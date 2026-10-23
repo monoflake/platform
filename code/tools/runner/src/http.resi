@@ -21,5 +21,13 @@ let root: chain => Uint8Array.t
  */
 let certificates: chain => array<Uint8Array.t>
 
-/** The target at a base URL, signing as a component by the chain given, its bounds as written. */
-let target: (~base: string, ~chain: option<chain>, ~bounds: dict<float>) => Run.target
+/**
+ * The target at a base URL, signing as a component by the chain given, its bounds as written, each
+ * call carrying a binding's token where one is given, as a driver authenticates it, RFC 3d3nt.
+ */
+let target: (
+  ~base: string,
+  ~chain: option<chain>,
+  ~bounds: dict<float>,
+  ~token: string=?,
+) => Run.target
