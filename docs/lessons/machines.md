@@ -192,3 +192,13 @@ font, both softened first so a slanted edge does not flip on a pixel; a logo is 
 from the picture, never by hand. Its columns are its rows times the picture's width over its height,
 divided by a cell's width over its height, 0.52 in Menlo -- not another drawing's proportions,
 which made one 6 percent too wide.
+
+**A service that makes network namespaces cannot have a mount namespace of its own**, tried on buf
+on 2026-10-22 under `systemd-run`, NixOS 26.05: `ip netns add` mounts the namespace under
+`/run/netns`, and under `ProtectSystem`, `ProtectHome`, `PrivateTmp` or any setting that gives the
+unit its own mount namespace that mount stays inside the unit, so containerd, outside it, never
+sees the namespace a container is to join. CNI, btrfs quota groups and containerd's socket all work
+inside such a sandbox; the namespace alone does not reach out. A unit sharing PID 1's mount
+namespace keeps `NoNewPrivileges`, `ProtectClock`, `ProtectHostname`, `RestrictRealtime`,
+`RestrictSUIDSGID`, `LockPersonality`, `MemoryDenyWriteExecute`, `SystemCallArchitectures`,
+`RestrictAddressFamilies` and a capability bounding set, monoflake/machine's `system/driver.nix`.
