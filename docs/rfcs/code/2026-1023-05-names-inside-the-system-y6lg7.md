@@ -55,17 +55,25 @@ Choices made provisionally while the thread ran, for the author to read.
 - **Names the table left open**: `/etc/driver-machine/images`, `/run/driver-machine/secrets`, the
   local binding's token at `/var/lib/driver-machine/binding`, the local units `local-disk` and
   `local-binding`, the image `machine-empty:1`, the temporary names `ssh-` and `switch-`, and
-  conform's instance unit `conform`.
+  conform's instance unit `conform`, the unit `tunnel-address`, the volumes `machine-local-nix`
+  and `machine-local-state`, and ssh's connection sockets `~/.ssh/deploy-%C` and `~/.ssh/dev-%C`,
+  generic names in a directory other tools share, each told apart by its connection's hash.
 - **`MONOFLAKE_FILL` is `FILL`**, the variable the platform's model reads from its two halves.
 - **The layout vectors' seeds lost the name**, `layout sample` and its siblings, and the vectors were
-  made again by a reference written from RFC b8f35 alone, which first reproduced the old ones.
+  made again by a reference written from RFC b8f35 alone, which first reproduced the old ones; the
+  reference was not kept, so the vectors stand on the library's tests passing against them.
 - **Kept, and declared under `[[names.data]]`**: the `typ` values and key contexts, the reserved
   name, `monoflake-challenge`, the user-agent `monoflake-runtime`, and the variables a user's code
   reads beside other vendors', `MONOFLAKE_FOOTING` and the secret prefix `MONOFLAKE_`.
-- **The machine's platform option is not added** until code reads it; the decision above stands for
-  that moment.
+- **The machine's platform option is not added** until code reads it, the workspace's deferred item
+  `machine-platform`.
 - **The check's edges**, the workspace's commit 2a8b8419: the author's own account, a person's name, is outside the rule; comments
   are read; each file repeating a format's data is declared; a `workspace.toml`'s `ids` and
   `spelled` lines pass.
 - **hello was down for a few minutes on each machine** while it was switched, since nothing was
   migrated; no request failed in the rehearsals after.
+- **The review at the thread's end**, by an agent reading only the commits and the rules, found the
+  rename whole and spelled alike in every writer and reader, and the check too loose: a sibling's
+  name inside a path, a domain followed by a dot, any dotted host before a path, and a bare name
+  declared each let the name through. The workspace's commit 307cf15c closes each, with a test.
+  It also found `FILL` generic, kept since it is read only by the model's own tools.
