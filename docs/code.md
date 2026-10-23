@@ -60,8 +60,9 @@ against it, and the whole is held by the conversation.
   stay one.
 - **A package's version is `0.0.0` while nothing is published**, decided by the author on
   2026-10-20, `Blocks.unpublished`: a version is a promise to whoever takes a release, and none is
-  made yet. A block the model marks `released` keeps a version of its own, as `monoflake/driver`'s
-  program does, RFC 8c0rg.
+  made yet. A block the model marks `released`, once the author opens its releases, keeps a
+  version of its own from `0.1.0`, as `monoflake/driver`'s program will, RFC 8c0rg; until then
+  every block of the author's own is `0.0.0`, a packaging of others' work keeping theirs.
 - **A block's tests read its samples as they stand**, each language the same files, the model's
   `samples`; a sample is never copied into a test, and accept refuses one no test of a language
   names, as it refuses an interface left unimplemented.
