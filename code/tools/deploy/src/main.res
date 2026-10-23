@@ -4,18 +4,32 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <id>] [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <id>] [--binding <id>] [--dry-run]"
 
-/** The arguments, the app's directory, the target, the app's id and whether nothing is changed. */
-type args = {directory: string, target: string, app: float, dry: bool}
+/**
+ * The arguments, the app's directory, the target, the app's id, the binding a control deploys it
+ * onto, and whether nothing is changed.
+ */
+type args = {directory: string, target: string, app: float, binding: option<float>, dry: bool}
+
+let id = text =>
+  switch Float.fromString(text) {
+  | Some(n) if Math.floor(n) == n && n >= 1. => Some(n)
+  | _ => None
+  }
 
 let rec parse = (args, given) =>
   switch args {
   | list{"--dry-run", ...rest} => parse(rest, {...given, dry: true})
-  | list{"--app", id, ...rest} =>
-    switch Float.fromString(id) {
-    | Some(app) if Math.floor(app) == app && app >= 1. => parse(rest, {...given, app})
-    | _ => Error(`--app ${id} is no id`)
+  | list{"--app", text, ...rest} =>
+    switch id(text) {
+    | Some(app) => parse(rest, {...given, app})
+    | None => Error(`--app ${text} is no id`)
+    }
+  | list{"--binding", text, ...rest} =>
+    switch id(text) {
+    | Some(binding) => parse(rest, {...given, binding: Some(binding)})
+    | None => Error(`--binding ${text} is no id`)
     }
   | list{flag, ..._} if flag->String.startsWith("--") => Error(`${flag} is no flag of ${usage}`)
   | list{named, ...rest} if given.directory == "" => parse(rest, {...given, directory: named})
@@ -243,16 +257,106 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
   )
 }
 
+/** Asked again until `ready` says it is done or a minute has passed, each ask awaited. */
+let rec polled = async (ask, ready, ~left=300) =>
+  switch (await ask())->Result.flatMap(ready) {
+  | Ok(Some(value)) => Ok(value)
+  | Ok(None) if left > 0 =>
+    await Host.sleep(200)
+    await polled(ask, ready, ~left=left - 1)
+  | Ok(None) => Error("not ready after a minute")
+  | Error(why) => Error(why)
+  }
+
+/** The release put, deployed onto the binding and running through a control, then asked there. */
+let throughControl = async (control: Control.t, ~app, ~binding, ~hash, ~path, ~dry) => {
+  let progress = async () =>
+    switch await Control.describe(control, ~app) {
+    | Ok(described) => Ok(Deploying.progress(described, hash))
+    | Error({reason: "not_found"}) => Ok(Deploying.Elsewhere)
+    | Error(refused) => Error(refusal(refused))
+    }
+  let running = progress =>
+    switch progress {
+    | Deploying.Running => Ok(Some())
+    | Waiting | Elsewhere => Ok(None)
+    | Failed(why) => Error(why)
+    }
+  let sent = async () =>
+    switch await Control.put(control, Host.readBytes(path)) {
+    | Error(refused) => Error(refusal(refused))
+    | Ok(held) if Envelope.Hex.encode(held.hash) != Envelope.Hex.encode(hash) =>
+      Error(`the control kept ${Envelope.Hex.encode(held.hash)}, not the bundle packed`)
+    | Ok(_) =>
+      switch await Control.deploy(control, ~binding, ~app, ~hash) {
+      | Error(refused) => Error(refusal(refused))
+      | Ok(_) => (await polled(progress, running))->Result.map(() => "deployed and running")
+      }
+    }
+  let answered = await timed("describe", progress, p =>
+    switch p {
+    | Deploying.Running => "running this version already"
+    | Waiting | Elsewhere | Failed(_) => "not running this version"
+    }
+  )
+  ->after(async p =>
+    switch p {
+    | Deploying.Running =>
+      Console.log("deploy: running this version already, nothing sent")
+      Ok("nothing sent")
+    | Waiting | Elsewhere | Failed(_) if dry =>
+      Console.log(
+        `deploy: the release would be put and deployed onto binding ${Float.toString(binding)}`,
+      )
+      Ok("nothing sent, as --dry-run asks")
+    | Waiting | Elsewhere | Failed(_) =>
+      await timed("deploy", sent, said => `binding ${Float.toString(binding)}, ${said}`)
+    }
+  )
+  ->after(async _ =>
+    dry
+      ? Ok(None)
+      : (
+          await timed("answer", () => Control.asked(control, ~app), _ => "the gateway answered")
+        )->Result.map(answer => Some(answer))
+  )
+  answered->Result.map(answer =>
+    answer->Option.forEach(answer => {
+      Console.log(answer)
+      Console.log(`deploy: open ${Control.gateway(~origin=control.origin, ~app)}`)
+    })
+  )
+}
+
+/** The control a target names, with the operator's secret, or why it cannot be called. */
+let controlOf = (named, binding) =>
+  Control.origin(named)->Option.map(origin =>
+    switch (origin, binding, Host.env->Dict.get(Control.operatorVariable)) {
+    | (Error(why), _, _) => Error(why)
+    | (Ok(_), None, _) => Error(`a control's target asks --binding, the binding to deploy onto`)
+    | (Ok(_), Some(_), None | Some("")) =>
+      Error(`${Control.operatorVariable} holds no operator's secret for the control`)
+    | (Ok(origin), Some(binding), Some(operator)) =>
+      Ok(({origin, operator, fetch: Web.fetch}: Control.t), binding)
+    }
+  )
+
 let main = async () => {
   let started = Date.now()
   switch parse(
     List.fromArray(Host.argv->Array.slice(~start=2)),
-    {directory: "", target: "", app: 1., dry: false},
+    {directory: "", target: "", app: 1., binding: None, dry: false},
   ) {
   | Error(why) =>
     Console.error(`deploy: ${why}`)
     Host.setExitCode(Host.process, 2)
-  | Ok({directory, target: named, app, dry}) =>
+  | Ok({target: named, binding})
+    if controlOf(named, binding)->Option.mapOr(false, Result.isError) =>
+    controlOf(named, binding)->Option.forEach(c =>
+      c->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
+    )
+    Host.setExitCode(Host.process, 2)
+  | Ok({directory, target: named, app, binding, dry}) =>
     let directory = Host.absolute(directory)
     let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-"]))
     let result = await timed(
@@ -268,11 +372,17 @@ let main = async () => {
       )
     )
     ->after(((hash, path, _)) =>
-      timed(
-        "ask",
-        async () => remote(Machine.target(named), Machine.facts)->Result.flatMap(Machine.readFacts),
-        (facts: Machine.facts) => `binding ${facts.binding}`,
-      )->after(facts => sent(named, ~app, ~hash, ~path, ~facts, ~dry))
+      switch controlOf(named, binding) {
+      | Some(Ok((control, binding))) => throughControl(control, ~app, ~binding, ~hash, ~path, ~dry)
+      | Some(Error(why)) => Promise.resolve(Error(why))
+      | None =>
+        timed(
+          "ask",
+          async () =>
+            remote(Machine.target(named), Machine.facts)->Result.flatMap(Machine.readFacts),
+          (facts: Machine.facts) => `binding ${facts.binding}`,
+        )->after(facts => sent(named, ~app, ~hash, ~path, ~facts, ~dry))
+      }
     )
     Host.remove(scratch, {recursive: true, force: true})
     let took = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=2)

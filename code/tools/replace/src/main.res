@@ -5,9 +5,10 @@
 module Host = Conform.Host
 module Live = Conform.Live
 module Remote = Conform.Remote
+module Through = Conform.Through
 module Run = Lose.Run
 
-let usage = "replace <target> [--no-build | --during <command>] [--dry-run]"
+let usage = "replace <target> [--control <origin>] [--no-build | --during <command>] [--dry-run]"
 
 /** The app whose deployment hello is, as deploy makes it. */
 let app = 1
@@ -56,7 +57,7 @@ let marked = async (target, name) => {
   }
 }
 
-/** hello asked once through the tunnel, from here. */
+/** hello asked once through the tunnel or a control's gateway, from here. */
 let askedTunnel = async address => {
   let began = Date.now()
   let outcome = switch await Host.fetchWithin(address, 10000) {
@@ -67,7 +68,7 @@ let askedTunnel = async address => {
   ({began, ended: Date.now(), outcome}: Load.asked)
 }
 
-/** `Load.clients` clients asking through the tunnel back to back until `stopped` is set. */
+/** `Load.clients` clients asking from here back to back until `stopped` is set. */
 let tunnelLoad = (address, stopped: ref<bool>) =>
   Promise.all(
     Array.fromInitializer(~length=Load.clients, async _ => {
@@ -101,11 +102,11 @@ let looked = async (target, ~binding, ~tunnel, ~when_) => {
     ->Result.flatMap(Live.greeted)
   let through = switch tunnel {
   | None => []
-  | Some(address) =>
+  | Some({Through.name: name, address}) =>
     let {outcome} = await askedTunnel(address)
     [
       (
-        "hello answers through the tunnel",
+        `hello answers through the ${name}`,
         switch outcome {
         | Answered => Ok()
         | Refused(why) | Failed(why) => Error(why)
@@ -143,7 +144,7 @@ let replaced = async (target: Remote.target, ~binding, ~tunnel, ~stop, ~actions)
   )
   let stopped = ref(false)
   let tunneled = switch tunnel {
-  | Some(address) => tunnelLoad(address, stopped)
+  | Some({Through.address: address}) => tunnelLoad(address, stopped)
   | None => Promise.resolve([])
   }
   await Host.sleep(Float.toInt(warm))
@@ -187,15 +188,15 @@ let replaced = async (target: Remote.target, ~binding, ~tunnel, ~stop, ~actions)
 }
 
 /** Each action's window counted on each path, said, and whether every one held. */
-let reported = ((phases, ending: phase, done, entryAsks, tunnelAsks), ~tunnel) => {
+let reported = ((phases, ending: phase, done, entryAsks, tunnelAsks), ~tunnel: option<string>) => {
   let held = ref(true)
   phases->Array.forEachWithIndex((phase: phase, i) => {
     let next = phases->Array.get(i + 1)->Option.getOr(ending)
     let paths = [
       Counted.count(~path="entry", ~from=phase.there, ~until=next.there, entryAsks),
-      ...tunnel
-        ? [Counted.count(~path="tunnel", ~from=phase.here, ~until=next.here, tunnelAsks)]
-        : [],
+      ...tunnel->Option.mapOr([], path => [
+        Counted.count(~path, ~from=phase.here, ~until=next.here, tunnelAsks),
+      ]),
     ]
     paths->Array.forEach(c => {
       say(`${phase.name}, ${Counted.line(c)}`)
@@ -226,76 +227,79 @@ let main = async () => {
   | at => (args->Array.get(at + 1), args->Array.filterWithIndex((_, i) => i != at && i != at + 1))
   }
   let known = ["--dry-run", "--no-build"]
-  let flags = args->Array.filter(a => a->String.startsWith("--"))
-  switch args->Array.filter(a => !(a->String.startsWith("--"))) {
-  | [named] if flags->Array.every(f => known->Array.includes(f)) =>
-    let target = Remote.target(named)
-    let binding =
-      (await remote(target, Live.binding))->Result.flatMap(text =>
-        Int.fromString(text->String.trim)->Option.mapOr(Error(`${text} is no id`), id => Ok(id))
-      )
-    switch binding {
-    | Error(why) =>
-      say(`failed: the live binding of ${named} was not read, ${why}`)
-      Host.setExitCode(Host.process, 1)
-    | Ok(binding) =>
-      let tunnel = switch (await remote(target, Live.tunnel))->Result.map(String.trim) {
-      | Ok("") | Error(_) => None
-      | Ok(address) => Some(address)
-      }
-      let dev = Here("mise", ["run", "//repos/monoflake/driver:dev", named])
-      let actions = switch during {
-      | Some(command) => [(command, Here("sh", ["-c", command]))]
-      | None =>
-        [
-          ...Actions.restarts->Array.map(a => (a.name, There(a.shell))),
-          ...building ? [(build, dev)] : [],
-        ]
-      }
-      let names = actions->Array.map(((name, _)) => name)->Array.join(", then ")
-      let through = tunnel->Option.isSome ? "the entry and the tunnel" : "the entry"
-      if !(await looked(target, ~binding, ~tunnel, ~when_="before")) {
-        say(`${named} does not serve as it should, so nothing is replaced, ${took()}s`)
-        Host.setExitCode(Host.process, 1)
-      } else if dry {
-        say(`would ask hello through ${through}, ${Int.toString(Load.clients)} clients on each`)
-        say(`would ${names}, ${seconds(pause)}s apart, and count each one's requests`)
-        say(`nothing replaced, as --dry-run asks, ${took()}s`)
-      } else {
-        let stop = `/tmp/replace-${Float.toString(started)}`
-        ["SIGINT", "SIGTERM", "SIGHUP"]->Array.forEach(signal =>
-          Host.onSignal(Host.process, signal, () => {
-            let back = remoteNow(target, `touch '${stop}'; ${Actions.kept}`)
-            say(back ? "every unit started again" : "failed: a unit did not start")
-            Host.exit(Host.process, 130)
-          })
-        )
-        say(`hello asked through ${through}, ${Int.toString(Load.clients)} clients on each`)
-        let run = try await replaced(target, ~binding, ~tunnel, ~stop, ~actions) catch {
-        | JsExn(e) => Error(e->JsExn.message->Option.getOr("the run threw"))
-        }
-        let back =
-          (await remote(target, Actions.kept))->Result.isOk || remoteNow(target, Actions.kept)
-        let kept = switch run {
-        | Ok(window) => reported(window, ~tunnel=tunnel->Option.isSome)
-        | Error(why) =>
-          remoteNow(target, `touch '${stop}'`)->ignore
-          say(`failed: ${why}`)
-          false
-        }
-        let still = await looked(target, ~binding, ~tunnel, ~when_="after")
-        let met = kept && back && still
-        say(
-          `${named} ${met
-              ? "refuses and fails nothing while it is replaced"
-              : "does not serve every request while it is replaced"}, ${took()}s`,
-        )
-        Host.setExitCode(Host.process, met ? 0 : 1)
-      }
-    }
-  | _ =>
-    Console.error(`replace: ${usage}`)
+  switch Through.control(args) {
+  | Error(why) =>
+    Console.error(`replace: ${why}`)
     Host.setExitCode(Host.process, 2)
+  | Ok((control, rest)) =>
+    let flags = rest->Array.filter(a => a->String.startsWith("--"))
+    switch rest->Array.filter(a => !(a->String.startsWith("--"))) {
+    | [named] if flags->Array.every(f => known->Array.includes(f)) =>
+      let target = Remote.target(named)
+      let binding =
+        (await remote(target, Live.binding))->Result.flatMap(text =>
+          Int.fromString(text->String.trim)->Option.mapOr(Error(`${text} is no id`), id => Ok(id))
+        )
+      switch binding {
+      | Error(why) =>
+        say(`failed: the live binding of ${named} was not read, ${why}`)
+        Host.setExitCode(Host.process, 1)
+      | Ok(binding) =>
+        let tunnel = Through.chosen(~control, ~tunnel=await remote(target, Live.tunnel), ~app)
+        let dev = Here("mise", ["run", "//repos/monoflake/driver:dev", named])
+        let actions = switch during {
+        | Some(command) => [(command, Here("sh", ["-c", command]))]
+        | None =>
+          [
+            ...Actions.restarts->Array.map(a => (a.name, There(a.shell))),
+            ...building ? [(build, dev)] : [],
+          ]
+        }
+        let names = actions->Array.map(((name, _)) => name)->Array.join(", then ")
+        let through = tunnel->Option.mapOr("the entry", t => `the entry and the ${t.name}`)
+        if !(await looked(target, ~binding, ~tunnel, ~when_="before")) {
+          say(`${named} does not serve as it should, so nothing is replaced, ${took()}s`)
+          Host.setExitCode(Host.process, 1)
+        } else if dry {
+          say(`would ask hello through ${through}, ${Int.toString(Load.clients)} clients on each`)
+          say(`would ${names}, ${seconds(pause)}s apart, and count each one's requests`)
+          say(`nothing replaced, as --dry-run asks, ${took()}s`)
+        } else {
+          let stop = `/tmp/replace-${Float.toString(started)}`
+          ["SIGINT", "SIGTERM", "SIGHUP"]->Array.forEach(signal =>
+            Host.onSignal(Host.process, signal, () => {
+              let back = remoteNow(target, `touch '${stop}'; ${Actions.kept}`)
+              say(back ? "every unit started again" : "failed: a unit did not start")
+              Host.exit(Host.process, 130)
+            })
+          )
+          say(`hello asked through ${through}, ${Int.toString(Load.clients)} clients on each`)
+          let run = try await replaced(target, ~binding, ~tunnel, ~stop, ~actions) catch {
+          | JsExn(e) => Error(e->JsExn.message->Option.getOr("the run threw"))
+          }
+          let back =
+            (await remote(target, Actions.kept))->Result.isOk || remoteNow(target, Actions.kept)
+          let kept = switch run {
+          | Ok(window) => reported(window, ~tunnel=tunnel->Option.map(t => t.name))
+          | Error(why) =>
+            remoteNow(target, `touch '${stop}'`)->ignore
+            say(`failed: ${why}`)
+            false
+          }
+          let still = await looked(target, ~binding, ~tunnel, ~when_="after")
+          let met = kept && back && still
+          say(
+            `${named} ${met
+                ? "refuses and fails nothing while it is replaced"
+                : "does not serve every request while it is replaced"}, ${took()}s`,
+          )
+          Host.setExitCode(Host.process, met ? 0 : 1)
+        }
+      }
+    | _ =>
+      Console.error(`replace: ${usage}`)
+      Host.setExitCode(Host.process, 2)
+    }
   }
 }
 

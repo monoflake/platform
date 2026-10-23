@@ -6,8 +6,9 @@ module Contracts = Envelope.Contracts
 module Host = Conform.Host
 module Live = Conform.Live
 module Remote = Conform.Remote
+module Through = Conform.Through
 
-let usage = "lose <target> [--dry-run]"
+let usage = "lose <target> [--control <origin>] [--dry-run]"
 
 /** The app whose deployment hello is, as deploy makes it. */
 let app = 1
@@ -45,7 +46,7 @@ let throughEntry = (target, ~binding) =>
     ->Result.flatMap(Live.readAnswered)
     ->Result.flatMap(Live.greeted)
 
-/** hello asked through the tunnel, from here. */
+/** hello asked through the tunnel or a control's gateway, from here. */
 let throughTunnel = address =>
   async () =>
     switch await Host.fetchWithin(address, 5000) {
@@ -170,8 +171,8 @@ let main = async () => {
   let took = () => seconds(Date.now() -. started)
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
-  switch args->Array.filter(a => a != "--dry-run") {
-  | [named] if !(named->String.startsWith("--")) =>
+  switch Through.control(args->Array.filter(a => a != "--dry-run")) {
+  | Ok((control, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let binding =
       (await remote(target, Live.binding))->Result.flatMap(text =>
@@ -182,9 +183,13 @@ let main = async () => {
       say(`failed: the live binding of ${named} was not read, ${why}`)
       Host.setExitCode(Host.process, 1)
     | Ok(binding) =>
-      let tunnel = switch (await remote(target, Live.tunnel))->Result.map(String.trim) {
-      | Ok("") | Error(_) => []
-      | Ok(address) => [("tunnel", throughTunnel(address))]
+      let tunnel = switch Through.chosen(
+        ~control,
+        ~tunnel=await remote(target, Live.tunnel),
+        ~app,
+      ) {
+      | None => []
+      | Some({name, address}) => [(name, throughTunnel(address))]
       }
       let paths = [("entry", throughEntry(target, ~binding)), ...tunnel]
       let (before, held) = await looked(target, paths, ~when_="before")
@@ -231,7 +236,10 @@ let main = async () => {
         Host.setExitCode(Host.process, met ? 0 : 1)
       }
     }
-  | _ =>
+  | Error(why) =>
+    Console.error(`lose: ${why}`)
+    Host.setExitCode(Host.process, 2)
+  | Ok(_) =>
     Console.error(`lose: ${usage}`)
     Host.setExitCode(Host.process, 2)
   }

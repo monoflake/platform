@@ -4,7 +4,7 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "conform <target> [--dry-run]"
+let usage = "conform <target> [--control <origin>] [--dry-run]"
 
 /** The kinds whose samples the machine's driver is held to, each a directory of `tests/kinds/`. */
 let kinds = ["management", "deployments", "objects", "databases"]
@@ -121,19 +121,20 @@ let samples = () =>
   })
 
 /** The live driver's list, its refusals and hello, each with what it showed or why it failed. */
-let asked = async (target, facts: Instance.facts) => {
+let asked = async (target, facts: Instance.facts, ~control) => {
   let ask = (command, read) =>
     remote(target, command)->Result.flatMap(Live.readAnswered)->Result.flatMap(read)
   let list = ask(Live.described, Live.list)
-  let tunnel = switch remote(target, Live.tunnel)->Result.map(String.trim) {
-  | Ok("") | Error(_) => None
-  | Ok(address) =>
-    Some(
+  let through = switch Through.chosen(~control, ~tunnel=remote(target, Live.tunnel), ~app) {
+  | None => None
+  | Some({name, address}) =>
+    Some((
+      `the ${name} answers hello`,
       switch await Host.fetchWithin(address, 10000) {
       | response => Live.greeted({status: response->Host.status, body: await response->Host.text})
       | exception JsExn(e) => Error(e->JsExn.message->Option.getOr("not reached"))
       },
-    )
+    ))
   }
   let checks = [
     ("describe answers a list of the contract's shape", list->Result.map(_ => ())),
@@ -143,7 +144,7 @@ let asked = async (target, facts: Instance.facts) => {
       `the entry answers hello for app-${Int.toString(app)}.b${Int.toString(facts.binding)}`,
       ask(Live.hello(~app, ~binding=facts.binding), Live.greeted),
     ),
-    ...tunnel->Option.mapOr([], answered => [("the tunnel answers hello", answered)]),
+    ...through->Option.mapOr([], check => [check]),
   ]
   (list, checks)
 }
@@ -275,8 +276,8 @@ let main = async () => {
   let took = () => ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
-  switch args->Array.filter(a => a != "--dry-run") {
-  | [named] if !(named->String.startsWith("--")) =>
+  switch Through.control(args->Array.filter(a => a != "--dry-run")) {
+  | Ok((control, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let files = samples()
     let count = files->Array.reduce(0, (n, (_, cases)) => n + cases * 2)
@@ -290,7 +291,7 @@ let main = async () => {
         say(`failed: every subnet of its own overlaps a route of ${named}`)
         Host.setExitCode(Host.process, 1)
       | Some(subnet) =>
-        let (before, checks) = await asked(target, facts)
+        let (before, checks) = await asked(target, facts, ~control)
         let held = told("before", checks)
         say(
           `${Int.toString(files->Array.length)} behavior files, ${Int.toString(
@@ -350,7 +351,7 @@ let main = async () => {
           if nothingLeft {
             say("after, nothing the run made is left")
           }
-          let (after, checks) = await asked(target, facts)
+          let (after, checks) = await asked(target, facts, ~control)
           let still = told("after", checks)
           let same = switch (before, after) {
           | (Ok(b), Ok(a)) =>
@@ -368,7 +369,10 @@ let main = async () => {
         }
       }
     }
-  | _ =>
+  | Error(why) =>
+    Console.error(`conform: ${why}`)
+    Host.setExitCode(Host.process, 2)
+  | Ok(_) =>
     Console.error(`conform: ${usage}`)
     Host.setExitCode(Host.process, 2)
   }
