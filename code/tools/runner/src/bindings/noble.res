@@ -1,6 +1,6 @@
 /***
- * What the runner takes of `@noble/hashes` and `@noble/curves`, BLAKE3 to a length and Ed25519, RFC
- * p8e8k.
+ * What the runner takes of `@noble/hashes` and `@noble/curves`, BLAKE3 to a length, SHA-256 and
+ * Ed25519, RFC p8e8k.
  */
 type options = {dkLen: int}
 
@@ -14,3 +14,6 @@ external keygen: unit => keys = "keygen"
 
 @module("@noble/curves/ed25519.js") @scope("ed25519")
 external sign: (Uint8Array.t, Uint8Array.t) => Uint8Array.t = "sign"
+
+@module("@noble/hashes/sha2.js")
+external sha256: Uint8Array.t => Uint8Array.t = "sha256"

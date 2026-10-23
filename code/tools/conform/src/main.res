@@ -12,6 +12,13 @@ let kinds = ["management", "deployments", "objects", "databases"]
 /** The app whose deployment hello is, as deploy makes it. */
 let app = 1
 
+/** What a case of each kind is held where it gives none, a container as deploy holds hello's. */
+let holding = `{
+  "deployments": {"millicores": 500, "memory": 268435456},
+  "object": {"size": 268435456},
+  "database": {"size": 268435456}
+}`
+
 let say = line => Console.log(`conform: ${line}`)
 
 /** A program run, what it wrote, or why it failed with what it wrote to stderr. */
@@ -35,6 +42,64 @@ let ran = (program, args, ~input=?) => {
 
 let remote = (target: Remote.target, command) =>
   ran("ssh", [...target.options, target.host, command])
+
+/** A file of this machine's written to the machine through a shell reading stdin. */
+let sent = (target: Remote.target, path, command) => {
+  let done = Host.spawnSyncBytes(
+    "ssh",
+    [...target.options, target.host, command],
+    {input: Host.readBytes(path), stdio: ["pipe", "pipe", "pipe"], encoding: "utf8"},
+  )
+  switch done.status->Nullable.toOption {
+  | Some(0) => Ok()
+  | _ => Error(`ssh failed, ${done.stderr->Nullable.toOption->Option.getOr("")->String.trim}`)
+  }
+}
+
+/**
+ * The runner's fixtures built into a directory here and copied to the one the machine serves, the
+ * padded made there, or why they are not.
+ */
+let fixtures = (target, facts: Instance.facts, ~scratch, ~local) => {
+  let built = `${scratch}/fixtures`
+  let bounds = `${scratch}/bounds.json`
+  Host.writeText(
+    bounds,
+    JSON.stringify(
+      JSON.Object(facts.largest->Option.mapOr(dict{}, n => dict{"artifact": JSON.Number(n)})),
+    ),
+  )
+  let directory = Instance.served(local)
+  ran(
+    Host.execPath,
+    [
+      Host.fromRoot("code/tools/runner/src/build.res.mjs"),
+      "--into",
+      built,
+      "--bounds",
+      bounds,
+      ...facts.architecture->Option.mapOr([], a => ["--architecture", a]),
+    ],
+  )
+  ->Result.flatMap(said => {
+    said->String.split("\n")->Array.filter(l => l != "")->Array.forEach(l => say(`fixtures, ${l}`))
+    Instance.readFixtures(Host.readText(`${built}/fixtures.json`))
+  })
+  ->Result.flatMap(made =>
+    remote(target, Instance.emptied(directory))
+    ->Result.flatMap(_ =>
+      made.files->Array.reduce(
+        Ok(),
+        (copied, file) =>
+          copied->Result.flatMap(
+            () => sent(target, `${built}/${file}`, Instance.copied(~directory, ~file)),
+          ),
+      )
+    )
+    ->Result.flatMap(() => remote(target, Instance.made(~directory, made.padded)))
+    ->Result.map(_ => (built, directory))
+  )
+}
 
 /** Every behavior file of the kinds by its path from the root, and how many cases each holds. */
 let samples = () =>
@@ -129,7 +194,7 @@ let rec reached = async (base, ~left=100) =>
 let children = []
 
 /** The samples run by the runner on the instance through a forward, hello watched beside them. */
-let run = async (target, facts, tokens, files) => {
+let run = async (target: Remote.target, facts, tokens, files, ~scratch, ~served) => {
   let local = await Host.freePort()
   let forward = Host.spawn(
     "ssh",
@@ -149,6 +214,21 @@ let run = async (target, facts, tokens, files) => {
         "-",
         "--waits",
         Host.fromRoot("code/tools/conform/waiting.json"),
+        "--bounds",
+        `${scratch}/bounds.json`,
+        "--held",
+        `${scratch}/held.json`,
+        // A send is made on the machine, as only it reaches a deployment's address on its bridge.
+        "--send-through",
+        JSON.stringify(
+          JSON.Array([...target.options, target.host]->Array.map(a => JSON.String(a))),
+        ),
+        ...served->Option.mapOr([], ((built, directory)) => [
+          "--fixtures",
+          built,
+          "--served",
+          `file://${directory}`,
+        ]),
         ...files,
       ],
       {stdio: ["pipe", "inherit", "inherit"], cwd: Host.fromRoot(".")},
@@ -172,7 +252,14 @@ let run = async (target, facts, tokens, files) => {
 
 /** Everything the instance made removed, each said, and whether nothing is left. */
 let clean = (target, facts: Instance.facts, ~when_) =>
-  switch remote(target, Instance.cleaned(~mount=facts.mount, ~subvolumes=facts.subvolumes)) {
+  switch remote(
+    target,
+    Instance.cleaned(
+      ~mount=facts.mount,
+      ~subvolumes=facts.subvolumes,
+      ~served=facts.local->Option.map(Instance.served),
+    ),
+  ) {
   | Error(why) =>
     say(`${when_}, failed to clean, ${why}`)
     false
@@ -217,6 +304,23 @@ let main = async () => {
           Host.setExitCode(Host.process, held ? 0 : 1)
         } else {
           let cleaned = clean(target, facts, ~when_="from an earlier run")
+          let scratch = Host.mkdtemp(`${Host.tmpdir()}/monoflake-conform-`)
+          let forget = () => Host.rm(scratch, {recursive: true, force: true})
+          Host.writeText(`${scratch}/held.json`, holding)
+          let served = switch facts.local {
+          | None =>
+            say("the live driver names no --local directory, so no fixture is served")
+            None
+          | Some(local) =>
+            switch fixtures(target, facts, ~scratch, ~local) {
+            | Ok((built, directory)) =>
+              say(`fixtures copied to ${directory}, ${took()}s`)
+              Some((built, directory))
+            | Error(why) =>
+              say(`no fixture is served, ${why}`)
+              None
+            }
+          }
           let code = switch remote(
             target,
             Instance.started(~count, ~subnet),
@@ -229,10 +333,19 @@ let main = async () => {
             Host.onSignal(Host.process, "SIGINT", () => {
               children->Array.forEach(child => child->Host.kill->ignore)
               clean(target, facts, ~when_="stopped")->ignore
+              forget()
               Host.exit(Host.process, 130)
             })
-            await run(target, facts, tokens, files->Array.map(((path, _)) => path))
+            await run(
+              target,
+              facts,
+              tokens,
+              files->Array.map(((path, _)) => path),
+              ~scratch,
+              ~served,
+            )
           }
+          forget()
           let nothingLeft = clean(target, facts, ~when_="after")
           if nothingLeft {
             say("after, nothing the run made is left")

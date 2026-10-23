@@ -4,19 +4,24 @@
  */
 open Node
 
-let facts = "binding=1\nmount=/data\nsubvolumes=16\nroute=default\nroute=10.88.0.0/16\nroute=192.168.65.0/24\nlistening=0.0.0.0:37483\nlistening=[::]:22\nlistening=127.0.0.1%lo:53\n"
+let facts = "binding=1\nmount=/data\nsubvolumes=16\nroute=default\nroute=10.88.0.0/16\nroute=192.168.65.0/24\nlistening=0.0.0.0:37483\nlistening=[::]:22\nlistening=127.0.0.1%lo:53\nlocal=/var/lib/monoflake/artifacts\nlargest=1073741824\narchitecture=aarch64\n"
 
-test("the facts give the live binding, the mount, the routes and the ports listened on", () =>
-  deepEqual(
-    Instance.readFacts(facts),
-    Ok({
-      binding: 1,
-      mount: "/data",
-      routes: ["default", "10.88.0.0/16", "192.168.65.0/24"],
-      listening: [37483, 22, 53],
-      subvolumes: 16,
-    }),
-  )
+test(
+  "the facts give the live binding, the mount, the routes, the ports and what serves artifacts",
+  () =>
+    deepEqual(
+      Instance.readFacts(facts),
+      Ok({
+        binding: 1,
+        mount: "/data",
+        routes: ["default", "10.88.0.0/16", "192.168.65.0/24"],
+        listening: [37483, 22, 53],
+        subvolumes: 16,
+        local: Some("/var/lib/monoflake/artifacts"),
+        largest: Some(1073741824.),
+        architecture: Some("arm64"),
+      }),
+    ),
 )
 
 test("a machine whose binding or ports the run would take is refused", () => {
@@ -74,5 +79,45 @@ test("what cleaning said is read as removed and left", () => {
     Instance.readCleaned("removed the unit u\nremoved /run/x\nleft the qgroup 1/1000\nnoise\n"),
     {removed: ["the unit u", "/run/x"], left: ["the qgroup 1/1000"]},
   )
-  ok(Instance.cleaned(~mount="/data", ~subvolumes=16)->String.includes("-le 16"))
+  let shell = Instance.cleaned(
+    ~mount="/data",
+    ~subvolumes=16,
+    ~served=Some("/srv/a/monoflake-conform"),
+  )
+  ok(shell->String.includes("-le 16"))
+  ok(shell->String.includes("v='/srv/a/monoflake-conform'"))
+  ok(shell->String.includes("for u2 in volumes buckets"))
+  // What the lists made on the mount goes before the qgroups, each emptied of its members.
+  let at = text => shell->String.indexOf(text)
+  ok(at("btrfs subvolume delete") < at("btrfs qgroup destroy"))
+  ok(at("btrfs qgroup remove") < at("btrfs qgroup destroy"))
+  // A name tested as the run's is never the variable a loop reads it from.
+  ok(shell->String.includes("mine() { k=") && !(shell->String.includes("mine() { n=")))
+})
+
+test("a directory, a bound or an architecture the machine does not give is none", () => {
+  let read = Instance.readFacts(
+    "binding=1\nsubvolumes=0\nlocal=/var/lib/a'b\nlargest=many\narchitecture=riscv64\n",
+  )
+  deepEqual(read->Result.map(f => (f.local, f.largest, f.architecture)), Ok((None, None, None)))
+})
+
+test("the manifest names the files to copy and those to pad, each a plain name", () => {
+  let manifest = `{"built": {}, "files": ["echo-modules.tar"], "padded": [{"file": "echo-modules-oversized.tar", "from": "echo-modules.tar", "size": 1025}], "unbuilt": {}}`
+  deepEqual(
+    Instance.readFixtures(manifest),
+    Ok({
+      files: ["echo-modules.tar"],
+      padded: [{file: "echo-modules-oversized.tar", from: "echo-modules.tar", size: 1025.}],
+    }),
+  )
+  ok(Instance.readFixtures(`{"files": ["a'b.tar"]}`)->Result.isError)
+  ok(Instance.readFixtures("not JSON")->Result.isError)
+  let made = Instance.made(~directory="/srv/f", [{file: "b.tar", from: "a.tar", size: 1025.}])
+  ok(made->String.includes("cp '/srv/f/a.tar' '/srv/f/b.tar' && truncate -s 1025 '/srv/f/b.tar'"))
+  ok(
+    Instance.served(
+      "/var/lib/monoflake/artifacts",
+    ) == "/var/lib/monoflake/artifacts/monoflake-conform",
+  )
 })

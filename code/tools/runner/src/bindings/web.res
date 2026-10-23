@@ -1,6 +1,6 @@
 /***
- * What the runner takes of the web's APIs beyond ReScript's Stdlib, UTF-8, base64url, a timer and
- * `fetch`.
+ * What the runner takes of the web's APIs beyond ReScript's Stdlib, UTF-8, base64url, bytes copied,
+ * a timer, `fetch` and random bytes.
  */
 type encoder
 @new external makeEncoder: unit => encoder = "TextEncoder"
@@ -40,3 +40,11 @@ type headers
 @get external headers: response => headers = "headers"
 @send external header: (headers, string) => Nullable.t<string> = "get"
 @send external arrayBuffer: response => promise<ArrayBuffer.t> = "arrayBuffer"
+
+@val @scope("crypto") external fillRandom: Uint8Array.t => Uint8Array.t = "getRandomValues"
+
+/** So many bytes from the system's secure random source. */
+let random = length => fillRandom(Uint8Array.fromLength(length))
+
+/** Bytes written into another array from an offset. */
+@send external copyInto: (Uint8Array.t, Uint8Array.t, int) => unit = "set"

@@ -22,6 +22,9 @@ echo "mount=$m"
 echo "subvolumes=$(btrfs subvolume list "$m" | wc -l)"
 ip -4 route show | awk '{ print "route=" $1 }'
 ss -Hltn | awk '{ print "listening=" $4 }'
+echo "local=$(o local)"
+echo "largest=$(o largest)"
+echo "architecture=$(uname -m)"
 `
 
 type facts = {
@@ -30,7 +33,21 @@ type facts = {
   routes: array<string>,
   listening: array<int>,
   subvolumes: int,
+  local: option<string>,
+  largest: option<float>,
+  architecture: option<string>,
 }
+
+/** A path put in a shell between single quotes, which nothing of it may close. */
+let plainPath = /^\/[A-Za-z0-9._\/-]+$/
+
+/** An architecture as OCI names it, by what `uname -m` prints. */
+let architectureOf = machine =>
+  switch machine {
+  | "aarch64" | "arm64" => Some("arm64")
+  | "x86_64" | "amd64" => Some("amd64")
+  | _ => None
+  }
 
 /** Each line's name and value, split at its first `=`. */
 let said = text =>
@@ -78,9 +95,78 @@ let readFacts = text => {
       routes: valuesOf(said, "route"),
       listening,
       subvolumes,
+      local: one("local")->Option.filter(l => plainPath->RegExp.test(l)),
+      largest: one("largest")
+      ->Option.flatMap(Float.fromString)
+      ->Option.filter(n => Math.floor(n) == n && n > 0.),
+      architecture: one("architecture")->Option.flatMap(architectureOf),
     })
   }
 }
+
+let served = local => `${local}/monoflake-conform`
+
+type padded = {file: string, from: string, size: float}
+
+type fixtures = {files: array<string>, padded: array<padded>}
+
+/** A file's name as the runner's build writes one, with nothing a shell reads. */
+let plainFile = /^[a-z0-9-]+\.tar$/
+
+let readFixtures = manifest => {
+  let field = (json, name) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))
+  let text = (json, name) => field(json, name)->Option.flatMap(JSON.Decode.string)
+  switch JSON.parseOrThrow(manifest) {
+  | exception JsExn(_) => Error("the fixtures' manifest is no JSON")
+  | json =>
+    let files =
+      field(json, "files")
+      ->Option.flatMap(JSON.Decode.array)
+      ->Option.getOr([])
+      ->Array.map(JSON.Decode.string)
+    let padded =
+      field(json, "padded")
+      ->Option.flatMap(JSON.Decode.array)
+      ->Option.getOr([])
+      ->Array.map(p =>
+        switch (
+          text(p, "file"),
+          text(p, "from"),
+          field(p, "size")->Option.flatMap(JSON.Decode.float),
+        ) {
+        | (Some(file), Some(from), Some(size)) => Some({file, from, size})
+        | (Some(_) | None, Some(_) | None, Some(_) | None) => None
+        }
+      )
+    let named = name => plainFile->RegExp.test(name)
+    switch (
+      files->Array.every(f => f->Option.mapOr(false, named)),
+      padded->Array.every(p =>
+        p->Option.mapOr(false, p => named(p.file) && named(p.from) && Math.floor(p.size) == p.size)
+      ),
+    ) {
+    | (true, true) =>
+      Ok({files: files->Array.filterMap(f => f), padded: padded->Array.filterMap(p => p)})
+    | (false, _) | (_, false) => Error("the fixtures' manifest names a file no build writes")
+    }
+  }
+}
+
+let emptied = directory =>
+  `rm -rf '${directory}' && mkdir -m 755 '${directory}'
+`
+
+let copied = (~directory, ~file) =>
+  `cat > '${directory}/${file}'
+`
+
+let made = (~directory, padded) =>
+  padded
+  ->Array.map(({file, from, size}) =>
+    `cp '${directory}/${from}' '${directory}/${file}' && truncate -s ${size->Float.toString} '${directory}/${file}'
+`
+  )
+  ->Array.join("")
 
 /** An IPv4 address as a number, or none where it is not four octets. */
 let addressOf = text => {
@@ -169,9 +255,10 @@ let readTokens = (text, ~count) => {
   }
 }
 
-let cleaned = (~mount, ~subvolumes) =>
-  `u=${unit} d=${directory} m=${mount} f=${int(first)} br=${bridge}
-mine() { n=\${1#b}; n=\${n%%-*}; case "$n" in ''|*[!0-9]*) return 1;; esac; [ "$n" -ge "$f" ]; }
+let cleaned = (~mount, ~subvolumes, ~served) =>
+  `u=${unit} d=${directory} m=${mount} f=${int(first)} br=${bridge} v='${served->Option.getOr("")}'
+numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge "$f" ]; }
+mine() { k=\${1#b}; k=\${k%%-*}; case "$k" in ''|*[!0-9]*) return 1;; esac; [ "$k" -ge "$f" ]; }
 q=inet\\ cni_plugins_masquerade\\ masq_checks
 rules() { nft -a list chain $q 2> /dev/null | grep "net: $br," | sed 's/.*# handle //'; }
 if systemctl list-units --all --no-legend "$u.service" | grep -q .; then
@@ -194,8 +281,20 @@ for ns in $(ctr namespaces ls -q); do
   ctr -n "$ns" content ls -q | xargs -r ctr -n "$ns" content rm
   ctr namespaces rm "$ns" > /dev/null && echo "removed the namespace $ns"
 done
+for u2 in volumes buckets; do
+  for b in "$m/$u2"/*; do
+    [ -d "$b" ] && numbered "\${b##*/}" || continue
+    for sv in "$b"/*; do [ -d "$sv" ] && btrfs subvolume delete "$sv" > /dev/null && echo "removed the subvolume $sv"; done
+    rmdir "$b" && echo "removed $b"
+  done
+done
+btrfs qgroup clear-stale "$m" > /dev/null 2>&1
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
-  mine "b\${g#1/}" && btrfs qgroup destroy "$g" "$m" && echo "removed the qgroup $g"
+  mine "b\${g#1/}" || continue
+  for c in $(btrfs qgroup show --raw -c "$m" 2> /dev/null | awk -v g="$g" '$1 == g { print $4 }' | tr ',' ' '); do
+    case "$c" in 0/*) btrfs qgroup remove "$c" "$g" "$m" > /dev/null 2>&1;; esac
+  done
+  btrfs qgroup destroy "$g" "$m" && echo "removed the qgroup $g"
 done
 for n in $(ip netns list | awk '{ print $1 }'); do
   mine "$n" && ip netns delete "$n" && echo "removed the network namespace $n"
@@ -206,6 +305,7 @@ for c in /sys/fs/cgroup/b*; do
   [ -d "$c" ] && mine "\${c##*/}" && find "$c" -depth -type d -exec rmdir {} + && echo "removed the cgroup $c"
 done
 if [ -e "$d" ]; then rm -rf "$d" && echo "removed $d"; fi
+if [ -n "$v" ] && [ -e "$v" ]; then rm -rf "$v" && echo "removed $v"; fi
 systemctl list-units --all --no-legend "$u.service" | grep -q . && echo "left the unit $u"
 for ns in $(ctr namespaces ls -q); do mine "$ns" && echo "left the namespace $ns"; done
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
@@ -215,7 +315,11 @@ for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the n
 [ -z "$(rules)" ] || echo "left a masquerade rule of $br"
 ip link show "$br" > /dev/null 2>&1 && echo "left the bridge $br"
 for c in /sys/fs/cgroup/b*; do [ -d "$c" ] && mine "\${c##*/}" && echo "left the cgroup $c"; done
+for u2 in volumes buckets; do
+  for b in "$m/$u2"/*; do [ -d "$b" ] && numbered "\${b##*/}" && echo "left $b"; done
+done
 [ -e "$d" ] && echo "left $d"
+[ -n "$v" ] && [ -e "$v" ] && echo "left $v"
 s=$(btrfs subvolume list "$m" | wc -l)
 [ "$s" -le ${int(subvolumes)} ] || echo "left $((s - ${int(
       subvolumes,

@@ -93,26 +93,38 @@ testAsync(
   },
 )
 
-test("split calls in CBOR through one target and in JSON through the other", () => {
-  let called = []
-  let target = (name): Run.target => {
-    call: async (~interface as _, ~operation as _, ~input as _, ~form as _, ~as_ as _) => {
-      called->Array.push(name)
-      Ok(Answered(JSON.Null))
-    },
-    send: async (~to as _, ~export as _, ~key as _, ~body as _) => Error("none"),
-    given: async (~interface as _, _) => Ok(),
-    lose: async _ => Ok(),
-    bound: _ => None,
-    fixture: _ => None,
-    signed: (_, _) => Error("none"),
-    now: () => 0.,
-    wait: async _ => (),
-  }
-  let split = Bearer.split(~cbor=target("cbor"), ~json=target("json"))
-  let call = form =>
-    split.call(~interface="object", ~operation="read", ~input=JSON.Null, ~form, ~as_=None)->ignore
-  call(Json)
-  call(Cbor)
-  deepEqual(called, ["json", "cbor"])
-})
+test(
+  "split calls, holds and sends in CBOR through one target and in JSON through the other",
+  () => {
+    let called = []
+    let target = (name): Run.target => {
+      call: async (~interface as _, ~operation as _, ~input as _, ~form as _, ~as_ as _) => {
+        called->Array.push(name)
+        Ok(Answered(JSON.Null))
+      },
+      send: async (~to as _, ~export as _, ~key as _, ~body as _, ~form as _) => {
+        called->Array.push(`${name} send`)
+        Error("none")
+      },
+      given: async (~interface as _, ~form as _, _) => {
+        called->Array.push(`${name} given`)
+        Ok()
+      },
+      lose: async _ => Ok(),
+      bound: _ => None,
+      fixture: _ => Error("none"),
+      signed: (_, _) => Error("none"),
+      now: () => 0.,
+      wait: async _ => (),
+    }
+    let split = Bearer.split(~cbor=target("cbor"), ~json=target("json"))
+    let call = form =>
+      split.call(~interface="object", ~operation="read", ~input=JSON.Null, ~form, ~as_=None)->ignore
+    call(Json)
+    call(Cbor)
+    split.given(~interface="object", ~form=Json, None)->ignore
+    split.given(~interface="object", ~form=Cbor, None)->ignore
+    split.send(~to="a", ~export="echo", ~key=None, ~body=None, ~form=Json)->ignore
+    deepEqual(called, ["json", "cbor", "json given", "cbor given", "json send"])
+  },
+)

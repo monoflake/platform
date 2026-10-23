@@ -2,11 +2,11 @@
  * Runs each behavior file's cases against the implementation at `base` over HTTP, RFC p8e8k, as
  * `usage` says. It prints the chain's root and certificates first.
  */
-let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] <behavior file>..."
+let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] [--held <json file>] [--fixtures <directory> [--served <address>]] [--send-through <json array of ssh's arguments>] <behavior file>..."
 
 let refuse = why => {
   Console.error(`runner: ${why}`)
-  Host.setExitCode(Host.process, 2)
+  System.setExitCode(System.process, 2)
 }
 
 /** The arguments, each flag's value by its name, and the files. */
@@ -21,7 +21,7 @@ let rec parse = (args, flags, files) =>
   }
 
 let readText = path =>
-  try Ok(Host.readFileSync(path)) catch {
+  try Ok(System.readFileSync(path)) catch {
   | JsExn(e) => Error(`${path}: ${e->JsExn.message->Option.getOr("not read")}`)
   }
 
@@ -33,9 +33,41 @@ let numbers = json =>
   ->Array.filterMap(((name, value)) => value->JSON.Decode.float->Option.map(n => (name, n)))
   ->Dict.fromArray
 
+/** A JSON file's object, by its path, or why it holds none. */
+let objectIn = path =>
+  readText(path)->Result.flatMap(text =>
+    switch JSON.parseOrThrow(text)->JSON.Decode.object {
+    | Some(o) => Ok(o)
+    | None => Error(`${path}: no JSON object`)
+    | exception JsExn(_) => Error(`${path}: no JSON`)
+    }
+  )
+
+/** The fixtures a build wrote into a directory, served at an address or else from the directory. */
+let fixturesIn = (directory, ~served) =>
+  readText(`${directory}/${Fixtures.manifestFile}`)
+  ->Result.flatMap(text =>
+    Fixtures.read(text)->Result.mapError(why => `${directory}/${Fixtures.manifestFile}: ${why}`)
+  )
+  ->Result.map(manifest =>
+    Fixtures.served(manifest, ~at=served->Option.getOr(`file://${System.absolute(directory)}`))
+  )
+
+/** ssh's arguments as a JSON array of strings writes them, or why it does not. */
+let sshArguments = text =>
+  switch JSON.parseOrThrow(text)->JSON.Decode.array {
+  | Some(items) =>
+    let strings = items->Array.filterMap(JSON.Decode.string)
+    strings->Array.length == items->Array.length && strings != []
+      ? Ok(strings)
+      : Error("--send-through: not an array of ssh's arguments")
+  | None => Error("--send-through: no JSON array")
+  | exception JsExn(_) => Error("--send-through: no JSON array")
+  }
+
 /** Each interface's own bounds, by its name. */
 let interfaceBounds = () =>
-  switch JSON.parseOrThrow(Host.fromRoot("model/contracts.json")) {
+  switch JSON.parseOrThrow(System.fromRoot("model/contracts.json")) {
   | contracts =>
     contracts
     ->JSON.Decode.object
@@ -92,7 +124,7 @@ let told = (tallies, form, description, reported: Waiting.reported) => {
 }
 
 let main = async () => {
-  switch parse(List.fromArray(Host.argv->Array.slice(~start=2)), Dict.make(), []) {
+  switch parse(List.fromArray(System.argv->Array.slice(~start=2)), Dict.make(), []) {
   | Error(why) => refuse(`${why}; ${usage}`)
   | Ok((flags, paths)) =>
     switch (flags->Dict.get("base"), paths) {
@@ -165,7 +197,7 @@ let main = async () => {
         | Some(path) =>
           (
             path == "-"
-              ? (await Host.readStdin())->Result.mapError(why => `stdin: ${why}`)
+              ? (await System.readStdin())->Result.mapError(why => `stdin: ${why}`)
               : readText(path)
           )->Result.flatMap(text =>
             switch Bearer.tokens(text) {
@@ -186,9 +218,44 @@ let main = async () => {
             Waiting.read(text)->Result.mapError(why => `${path}: ${why}`)
           )
         }
-        switch (tokens, rules) {
-        | (Error(why), _) | (_, Error(why)) => refuse(why)
-        | (Ok(tokens), Ok(rules)) =>
+        let held = flags->Dict.get("held")->Option.mapOr(Ok(dict{}), objectIn)
+        let fixture =
+          flags
+          ->Dict.get("fixtures")
+          ->Option.mapOr(Ok(None), directory =>
+            fixturesIn(directory, ~served=flags->Dict.get("served"))->Result.map(f => Some(f))
+          )
+        let through =
+          flags
+          ->Dict.get("send-through")
+          ->Option.mapOr(Ok(None), text => sshArguments(text)->Result.map(a => Some(a)))
+        switch (tokens, rules, held, fixture, through) {
+        | (Error(why), _, _, _, _)
+        | (_, Error(why), _, _, _)
+        | (_, _, Error(why), _, _)
+        | (_, _, _, Error(why), _)
+        | (_, _, _, _, Error(why)) =>
+          refuse(why)
+        | (Ok(tokens), Ok(rules), Ok(held), Ok(fixture), Ok(through)) =>
+          // What a target over HTTP is given beside its calls, each case held through management.
+          // A send is handed as the host component hands a call, posted here or on the machine.
+          let offered = (target: Run.target): Run.target =>
+            Handing.target(
+              {
+                ...target,
+                given: Holding.given(~call=target.call, ~now=target.now, ~wait=target.wait, ~held),
+                fixture: fixture->Option.getOr(target.fixture),
+              },
+              ~post=through->Option.mapOr(Http.handedPost, Remote.post),
+            )
+          if given->Dict.keysToArray != [] {
+            Console.log(
+              `bounds read from configuration, as no driver answers its own yet, RFC p8e8k: ${given
+                ->Dict.toArray
+                ->Array.map(((name, n)) => `${name} ${Float.toString(n)}`)
+                ->Array.join(", ")}`,
+            )
+          }
           let total = {passed: 0, failed: 0, waiting: 0, skipped: 0}
           let taken = ref(0)
           // Each token taken in turn, the next binding a case's CBOR or JSON runs on.
@@ -208,14 +275,14 @@ let main = async () => {
               let results = switch tokens {
               | None =>
                 (
-                  await Run.file(file, Http.target(~base, ~chain, ~bounds))
+                  await Run.file(file, offered(Http.target(~base, ~chain, ~bounds)))
                 )->Array.filterMapWithIndex((result, k) =>
                   file.cases->Array.get(k)->Option.map(case => (case, result))
                 )
               | Some(tokens) =>
                 await Bearer.file(
                   file,
-                  ~at=(~token) => Http.target(~base, ~chain, ~bounds, ~token),
+                  ~at=(~token) => offered(Http.target(~base, ~chain, ~bounds, ~token)),
                   ~next=next(tokens),
                 )
               }
@@ -239,7 +306,7 @@ let main = async () => {
                 run,
               )} behavior file${run == 1 ? "" : "s"}`,
           )
-          Host.setExitCode(Host.process, total.failed > 0 || refused.contents ? 1 : 0)
+          System.setExitCode(System.process, total.failed > 0 || refused.contents ? 1 : 0)
         }
       }
     }

@@ -48,6 +48,8 @@ let tools: dict<tool> = dict{
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
     languages: [#rescript],
     uses: ["envelope*", "codec*", "capability*"],
+    // A send is made as the host component makes a call, through its `Handed.call`.
+    blocks: ["host"],
     takes: [
       {language: #rescript, name: "@noble/curves", major: "2"},
       {language: #rescript, name: "@noble/hashes", major: "2"},

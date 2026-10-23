@@ -5,6 +5,8 @@ type form = Cbor | Json
 
 type answered = Answered(JSON.t) | Failed({failure: string, reason: string, message: string})
 
+type fixture = {form: string, address: string, hash: string, architecture: option<string>}
+
 type target = {
   call: (
     ~interface: string,
@@ -18,11 +20,16 @@ type target = {
     ~export: string,
     ~key: option<string>,
     ~body: option<JSON.t>,
+    ~form: form,
   ) => promise<result<answered, string>>,
-  given: (~interface: string, JSON.t) => promise<result<unit, Filling.unfilled>>,
+  given: (
+    ~interface: string,
+    ~form: form,
+    option<JSON.t>,
+  ) => promise<result<unit, Filling.unfilled>>,
   lose: int => promise<result<unit, Filling.unfilled>>,
   bound: string => option<float>,
-  fixture: string => option<string>,
+  fixture: string => result<fixture, string>,
   signed: Matching.signed,
   now: unit => float,
   wait: int => promise<unit>,
@@ -102,12 +109,15 @@ let refusedOf = (unfilled: Filling.unfilled, step) =>
   | Unwritten(why) => Ended(Failed({step, why}))
   }
 
-/** A fixture's version and artifact written where a step names it, as the check writes them. */
-let withFixture = (input, name, hash) => {
+/** A fixture's version, form and artifact written where a step names it, as the check does. */
+let withFixture = (input, fixture: fixture) => {
   let fields = input->JSON.Decode.object->Option.mapOr(Dict.make(), Dict.copy)
+  let artifact = dict{"address": JSON.String(fixture.address), "hash": JSON.String(fixture.hash)}
+  fixture.architecture->Option.forEach(a => artifact->Dict.set("architecture", JSON.String(a)))
   [
-    ("version", JSON.String(hash)),
-    ("artifact", JSON.Object(dict{"address": JSON.String(name), "hash": JSON.String(hash)})),
+    ("version", JSON.String(fixture.hash)),
+    ("form", JSON.String(fixture.form)),
+    ("artifact", JSON.Object(artifact)),
   ]->Array.forEach(((key, value)) =>
     if fields->Dict.get(key) == None {
       fields->Dict.set(key, value)
@@ -123,7 +133,7 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
     captures,
     now: target.now(),
     bound: target.bound,
-    fixture: target.fixture,
+    fixture: name => target.fixture(name)->Result.mapOr(None, f => Some(f.hash)),
   }
   let finish = result =>
     switch result {
@@ -136,8 +146,8 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
     | None => Ok(input)
     | Some(name) =>
       switch target.fixture(name) {
-      | Some(hash) => Ok(withFixture(input, name, hash))
-      | None => Error(Filling.Unoffered(`the fixture ${name}, built from its source`))
+      | Ok(fixture) => Ok(withFixture(input, fixture))
+      | Error(why) => Error(Filling.Unoffered(`the fixture ${name}, ${why}`))
       }
     }
     switch input->Result.flatMap(input => Filling.fill(input, context)) {
@@ -158,7 +168,7 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
       switch to->JSON.Decode.string {
       | None => Ended(Failed({step: k, why: `a send to ${JSON.stringify(to)}, no address`}))
       | Some(to) =>
-        let attempt = () => target.send(~to, ~export=send.export, ~key=send.key, ~body)
+        let attempt = () => target.send(~to, ~export=send.export, ~key=send.key, ~body, ~form)
         finish(await attempted(target, ~within=within->Option.getOr(0), attempt, expect, captures))
       }
     }
@@ -175,11 +185,7 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
 
 /** A case run from nothing, in one form. */
 let case = async (target, file: Sample.file, case: Sample.case, form) => {
-  let given = switch case.given {
-  | None => Ok()
-  | Some(given) => await target.given(~interface=file.interface, given)
-  }
-  switch given {
+  switch await target.given(~interface=file.interface, ~form, case.given) {
   | Error(Unoffered(what)) => Skipped(unoffered(what))
   | Error(Unwritten(why)) => Failed({step: 0, why: `given before its first step: ${why}`})
   | Ok() =>

@@ -145,6 +145,9 @@ importers:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope
+      '@monoflake/host':
+        specifier: workspace:*
+        version: link:../../substrate/host
       '@noble/curves':
         specifier: 2.4.0
         version: 2.4.0

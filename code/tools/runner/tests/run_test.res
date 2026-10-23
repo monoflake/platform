@@ -47,13 +47,14 @@ let fake = (~ready=Float.Constants.positiveInfinity) => {
   }
   let target: Run.target = {
     call,
-    send: async (~to as _, ~export as _, ~key as _, ~body) => Ok(
+    send: async (~to as _, ~export as _, ~key as _, ~body, ~form as _) => Ok(
       Run.Answered(body->Option.getOr(JSON.Null)),
     ),
-    given: async (~interface as _, _) => Error(Filling.Unoffered("a case's given")),
+    given: async (~interface as _, ~form as _, given) =>
+      given == None ? Ok() : Error(Filling.Unoffered("a case's given")),
     lose: async _ => Error(Filling.Unoffered("losing copies")),
     bound: _ => None,
-    fixture: _ => None,
+    fixture: _ => Error("built from its source"),
     signed: (_, _) => Error("nothing signed"),
     now: () => clock.contents,
     wait: async ms => {
@@ -245,3 +246,60 @@ testAsync("a send's to is made from what was captured, and its answer matched", 
     ],
   )
 })
+
+testAsync(
+  "a fixture's version, form and artifact are written where the step writes none",
+  async () => {
+    let (target, _, _) = fake()
+    let inputs = []
+    let target: Run.target = {
+      ...target,
+      call: async (~interface as _, ~operation as _, ~input, ~form as _, ~as_ as _) => {
+        inputs->Array.push(input)
+        Ok(Run.Answered(JSON.Object(dict{})))
+      },
+      fixture: name =>
+        name == "echo-image"
+          ? Ok({
+              form: "image",
+              address: "file:///f/echo-image.tar",
+              hash: "ab",
+              architecture: Some("arm64"),
+            })
+          : Error("not built"),
+    }
+    let results = await Run.file(
+      fileOf(`{"interface": "deployments", "cases": [{"description": "deployed", "steps": [
+      {"call": "deploy", "fixture": "echo-image", "input": {"port": 8080, "version": "cd"}, "expect": {"output": {}}}
+    ]}, {"description": "unbuilt", "steps": [
+      {"call": "deploy", "fixture": "echo-component", "input": {}, "expect": {"output": {}}}
+    ]}]}`),
+      target,
+    )
+    deepEqual(
+      inputs->Array.getUnsafe(0),
+      JSON.parseOrThrow(`{"port": 8080, "version": "cd", "form": "image",
+      "artifact": {"address": "file:///f/echo-image.tar", "hash": "ab", "architecture": "arm64"}}`),
+    )
+    deepEqual(
+      results->Array.getUnsafe(1),
+      {
+        description: "unbuilt",
+        outcomes: [
+          (
+            Cbor,
+            Skipped(
+              "the fixture echo-component, not built: not offered by this target, left for later by RFC p8e8k",
+            ),
+          ),
+          (
+            Json,
+            Skipped(
+              "the fixture echo-component, not built: not offered by this target, left for later by RFC p8e8k",
+            ),
+          ),
+        ],
+      },
+    )
+  },
+)

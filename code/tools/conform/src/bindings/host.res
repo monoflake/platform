@@ -1,6 +1,7 @@
 /***
  * What the tool takes of node, its arguments, exit code and signals, files from the repository's
- * root, processes run to their end or left running, a free port, `fetch` and a timer.
+ * root and a directory of its own, processes run to their end or left running, a free port, `fetch`
+ * and a timer.
  */
 @module("node:process") external argv: array<string> = "argv"
 @module("node:process") external execPath: string = "execPath"
@@ -20,11 +21,20 @@ let fromRoot = path => pathOf(urlIn(`../../../../../${path}`, importMetaUrl))
 
 @module("node:fs") external readText: (string, @as("utf8") _) => string = "readFileSync"
 @module("node:fs") external list: string => array<string> = "readdirSync"
+@module("node:fs") external readBytes: string => Uint8Array.t = "readFileSync"
+@module("node:fs") external writeText: (string, string) => unit = "writeFileSync"
+@module("node:fs") external mkdtemp: string => string = "mkdtempSync"
+type removed = {recursive: bool, force: bool}
+@module("node:fs") external rm: (string, removed) => unit = "rmSync"
+@module("node:os") external tmpdir: unit => string = "tmpdir"
 
 type spawned = {status: Nullable.t<int>, stdout: Nullable.t<string>, stderr: Nullable.t<string>}
 type spawnOptions = {input?: string, stdio: array<string>, encoding: string}
 @module("node:child_process")
 external spawnSync: (string, array<string>, spawnOptions) => spawned = "spawnSync"
+type bytesOptions = {input: Uint8Array.t, stdio: array<string>, encoding: string}
+@module("node:child_process")
+external spawnSyncBytes: (string, array<string>, bytesOptions) => spawned = "spawnSync"
 
 type child
 type childOptions = {stdio: array<string>, cwd?: string}
