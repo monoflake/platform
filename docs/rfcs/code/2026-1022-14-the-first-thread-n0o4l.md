@@ -32,6 +32,10 @@ Decided by the author on 2026-10-22.
   through a Cloudflare Tunnel, which ends TLS in place of the machine's certificate RFC vr5lw asks;
   a machine's list is kept in one file and a deployment named by its id, the rest of RFC 4elqc left
   `todo!`; the entry is a listener in `driver-machine`, choosing a deployment by the request's host.
+  The host's two leftmost labels are the deployment's address, `app-<id>.b<binding>`, with no table
+  beside them, the tunnel rewriting a public name to such a host; the entry listens on port 36879,
+  ENTRY on a keypad as the driver's 37483 is DRIVE, on loopback but on the local machine, decided by
+  the dispatcher on 2026-10-23 for the author to confirm.
 
 The steps, in order, each one worker's and done when the author can try it:
 
