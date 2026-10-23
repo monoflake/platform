@@ -1,10 +1,16 @@
 ---
 name: 'The Driver Replaced'
 title: 'The third thread: the driver and the entry replaced, and a machine switched, while hello serves'
-status: accepted
+status: landed
 supersedes: []
 blocked-by: [rmll5]
-commits: []
+commits:
+  [
+    monoflake/platform@0a2ab236,
+    monoflake/driver@107182ce,
+    monoflake/machine@3a180425,
+    monoflake/cloud@298752d7,
+  ]
 references: []
 ---
 
