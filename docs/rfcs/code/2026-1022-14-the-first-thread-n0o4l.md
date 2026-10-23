@@ -29,7 +29,9 @@ Decided by the author on 2026-10-22.
   configuration sets it, as Cargo's `path` stands in for a version. A production machine never sets
   it.
 - **The provisional choices**, each changed by what running shows: the request reaches the machine
-  through a Cloudflare Tunnel, which ends TLS in place of the machine's certificate RFC vr5lw asks;
+  through a Cloudflare Tunnel, which ends TLS in place of the machine's certificate RFC vr5lw asks,
+  a quick tunnel at a random address needing no account until a credential can be kept, decided by
+  the author on 2026-10-23, its module taking a named tunnel's token file for then;
   a machine's list is kept in one file and a deployment named by its id, the rest of RFC 4elqc left
   `todo!`; the entry is a listener in `driver-machine`, choosing a deployment by the request's host.
   The host's two leftmost labels are the deployment's address, `app-<id>.b<binding>`, with no table
