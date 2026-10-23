@@ -26,7 +26,7 @@ test("a refusal is a connection refused, and anything else not 200 a failure", (
 })
 
 test("through the tunnel, a 200 saying hello answers and a refused cause refuses", () => {
-  deepEqual(Load.fetched(~status=200, ~body="hello from monoflake"), Answered)
+  deepEqual(Load.fetched(~status=200, ~body="hello from a machine"), Answered)
   ok(
     switch Load.fetched(~status=502, ~body="bad gateway") {
     | Failed(_) => true
@@ -49,5 +49,5 @@ test("the shell asks the app's host on a new connection each time until it is st
   ok(shell->String.includes("Host: app-1.b2"))
   ok(shell->String.includes(`[ ! -e "$stop" ]`))
   ok(shell->String.includes(`seq ${Int.toString(Load.clients)}`))
-  ok(shell->String.includes("--value monoflake-entry"))
+  ok(shell->String.includes("--value driver-machine-entry"))
 })

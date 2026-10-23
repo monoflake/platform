@@ -30,7 +30,7 @@ test("a call with no token is denied, and an unknown interface refused naming it
 })
 
 test("hello is a 200 saying so", () => {
-  deepEqual(Live.greeted(answered(200, "hello from monoflake")), Ok())
+  deepEqual(Live.greeted(answered(200, "hello from a machine")), Ok())
   ok(Live.greeted(answered(502, "hello"))->Result.isError)
   ok(Live.greeted(answered(200, "bad gateway"))->Result.isError)
 })
@@ -40,7 +40,7 @@ test("the shells read the token on the machine and name the app's host", () => {
   ok(!(Live.untokened->String.includes("Authorization")))
   ok(Live.unknown->String.includes("/nothing/describe"))
   ok(Live.hello(~app=1, ~binding=1)->String.includes("Host: app-1.b1"))
-  ok(Live.hello(~app=1, ~binding=1)->String.includes("--value monoflake-entry"))
+  ok(Live.hello(~app=1, ~binding=1)->String.includes("--value driver-machine-entry"))
   let deployment = Live.deployment(~app=1)
   ok(deployment->String.includes("/deployments/describe"))
   ok(deployment->String.includes(`"runs":{"name":"app","id":1}`))

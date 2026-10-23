@@ -10,7 +10,7 @@ let kept = [
   "ControlMaster=auto",
   "-o",
   // Under the home, as the system's own temporary directory is too long a path for a socket.
-  "ControlPath=~/.ssh/monoflake-deploy-%C",
+  "ControlPath=~/.ssh/deploy-%C",
   "-o",
   "ControlPersist=120",
 ]
@@ -38,7 +38,7 @@ let target = name =>
 let port = 37483
 
 /** The driver's command line, and `o` printing the first value of one of its flags. */
-let flags = `a=$(systemctl show -p ExecStart --value monoflake-driver) || exit 1
+let flags = `a=$(systemctl show -p ExecStart --value driver-machine) || exit 1
 o() { printf '%s\\n' "$a" | grep -o -- "--$1=[^ ;]*" | head -n 1 | cut -d= -f2-; }
 `
 
@@ -46,7 +46,7 @@ o() { printf '%s\\n' "$a" | grep -o -- "--$1=[^ ;]*" | head -n 1 | cut -d= -f2-;
 let facts = `${flags}b=$(o bindings) && [ -n "$b" ] || { echo "the driver names no binding" >&2; exit 1; }
 echo "directory=$(o local)"
 echo "binding=$(head -n 1 "$b" | cut -s -d. -f1)"
-echo "tunnel=$(cat /run/monoflake/tunnel/address 2> /dev/null)"
+echo "tunnel=$(cat /run/tunnel/address 2> /dev/null)"
 `
 
 type facts = {directory: string, binding: string, tunnel: option<string>}
@@ -85,8 +85,8 @@ let call = envelope => {
 }
 
 /** The entry's address, its own unit's `--listen`, RFC rmll5. */
-let entered = `e=$(systemctl show -p ExecStart --value monoflake-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
-[ -n "$e" ] || { echo "monoflake-entry names no address to listen on" >&2; exit 1; }
+let entered = `e=$(systemctl show -p ExecStart --value driver-machine-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
+[ -n "$e" ] || { echo "driver-machine-entry names no address to listen on" >&2; exit 1; }
 `
 
 let asked = host =>

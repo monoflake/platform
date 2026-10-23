@@ -262,7 +262,7 @@ let main = async () => {
         say(`would ${names}, ${seconds(pause)}s apart, and count each one's requests`)
         say(`nothing replaced, as --dry-run asks, ${took()}s`)
       } else {
-        let stop = `/tmp/monoflake-replace-${Float.toString(started)}`
+        let stop = `/tmp/replace-${Float.toString(started)}`
         ["SIGINT", "SIGTERM", "SIGHUP"]->Array.forEach(signal =>
           Host.onSignal(Host.process, signal, () => {
             let back = remoteNow(target, `touch '${stop}'; ${Actions.kept}`)

@@ -15,11 +15,11 @@ let restarts = [
     shell: `systemctl restart ${Stopping.unit} || exit 1
 ${Stopping.start}`,
   },
-  {name: "restart monoflake-entry", shell: restarted("monoflake-entry")},
+  {name: "restart driver-machine-entry", shell: restarted("driver-machine-entry")},
   {name: "restart containerd", shell: restarted("containerd")},
 ]
 
-let units = ["containerd", "monoflake-entry.socket", "monoflake-entry", Stopping.unit]
+let units = ["containerd", "driver-machine-entry.socket", "driver-machine-entry", Stopping.unit]
 
 let each = body =>
   `for u in ${units->Array.join(" ")}; do

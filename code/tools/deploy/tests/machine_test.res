@@ -18,10 +18,10 @@ test("local is localhost's port 2222, and any other name is ssh's own", () => {
 test("the facts give the directory, the binding and a tunnel only where one answers", () => {
   deepEqual(
     Machine.readFacts(
-      "directory=/var/lib/monoflake/artifacts\nbinding=1\ntunnel=https://a.example\n",
+      "directory=/var/lib/driver-machine/artifacts\nbinding=1\ntunnel=https://a.example\n",
     ),
     Ok({
-      directory: "/var/lib/monoflake/artifacts",
+      directory: "/var/lib/driver-machine/artifacts",
       binding: "1",
       tunnel: Some("https://a.example"),
     }),

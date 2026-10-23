@@ -4,7 +4,7 @@
  */
 open Node
 
-let facts = "binding=1\nmount=/data\nsubvolumes=16\nroute=default\nroute=10.88.0.0/16\nroute=192.168.65.0/24\nlistening=0.0.0.0:37483\nlistening=[::]:22\nlistening=127.0.0.1%lo:53\nlocal=/var/lib/monoflake/artifacts\nlargest=1073741824\narchitecture=aarch64\n"
+let facts = "binding=1\nmount=/data\nsubvolumes=16\nroute=default\nroute=10.88.0.0/16\nroute=192.168.65.0/24\nlistening=0.0.0.0:37483\nlistening=[::]:22\nlistening=127.0.0.1%lo:53\nlocal=/var/lib/driver-machine/artifacts\nlargest=1073741824\narchitecture=aarch64\n"
 
 test(
   "the facts give the live binding, the mount, the routes, the ports and what serves artifacts",
@@ -17,7 +17,7 @@ test(
         routes: ["default", "10.88.0.0/16", "192.168.65.0/24"],
         listening: [37483, 22, 53],
         subvolumes: 16,
-        local: Some("/var/lib/monoflake/artifacts"),
+        local: Some("/var/lib/driver-machine/artifacts"),
         largest: Some(1073741824.),
         architecture: Some("arm64"),
       }),
@@ -79,13 +79,9 @@ test("what cleaning said is read as removed and left", () => {
     Instance.readCleaned("removed the unit u\nremoved /run/x\nleft the qgroup 1/1000\nnoise\n"),
     {removed: ["the unit u", "/run/x"], left: ["the qgroup 1/1000"]},
   )
-  let shell = Instance.cleaned(
-    ~mount="/data",
-    ~subvolumes=16,
-    ~served=Some("/srv/a/monoflake-conform"),
-  )
+  let shell = Instance.cleaned(~mount="/data", ~subvolumes=16, ~served=Some("/srv/a/conform"))
   ok(shell->String.includes("-le 16"))
-  ok(shell->String.includes("v='/srv/a/monoflake-conform'"))
+  ok(shell->String.includes("v='/srv/a/conform'"))
   ok(shell->String.includes("for u2 in volumes buckets"))
   // What the lists made on the mount goes before the qgroups, each emptied of its members.
   let at = text => shell->String.indexOf(text)
@@ -117,7 +113,7 @@ test("the manifest names the files to copy and those to pad, each a plain name",
   ok(made->String.includes("cp '/srv/f/a.tar' '/srv/f/b.tar' && truncate -s 1025 '/srv/f/b.tar'"))
   ok(
     Instance.served(
-      "/var/lib/monoflake/artifacts",
-    ) == "/var/lib/monoflake/artifacts/monoflake-conform",
+      "/var/lib/driver-machine/artifacts",
+    ) == "/var/lib/driver-machine/artifacts/conform",
   )
 })

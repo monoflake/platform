@@ -8,7 +8,7 @@ let kept = [
   "ControlMaster=auto",
   "-o",
   // Under the home, as the system's own temporary directory is too long a path for a socket.
-  "ControlPath=~/.ssh/monoflake-conform-%C",
+  "ControlPath=~/.ssh/conform-%C",
   "-o",
   "ControlPersist=120",
 ]

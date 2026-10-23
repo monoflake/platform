@@ -3,7 +3,7 @@ module Contracts = Envelope.Contracts
 type answered = {status: int, body: string}
 
 /** The live driver's command line, `o` printing one of its flags, and `t` its binding's token. */
-let flags = `a=$(systemctl show -p ExecStart --value monoflake-driver) || exit 1
+let flags = `a=$(systemctl show -p ExecStart --value driver-machine) || exit 1
 o() { printf '%s\\n' "$a" | grep -o -- "--$1=[^ ;]*" | head -n 1 | cut -d= -f2-; }
 t() { tr -d '\\n' < "$(o bindings)"; }
 l=$(o listen); l=\${l:-localhost:37483}
@@ -40,8 +40,8 @@ let binding = `${flags}head -n 1 "$(o bindings)" | cut -s -d. -f1
 `
 
 /** The entry's address, its own unit's `--listen`, RFC rmll5. */
-let entered = `e=$(systemctl show -p ExecStart --value monoflake-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
-[ -n "$e" ] || { echo "monoflake-entry names no address to listen on" >&2; exit 1; }
+let entered = `e=$(systemctl show -p ExecStart --value driver-machine-entry | grep -o -- "--listen=[^ ;]*" | head -n 1 | cut -d= -f2-)
+[ -n "$e" ] || { echo "driver-machine-entry names no address to listen on" >&2; exit 1; }
 `
 
 let hello = (~app, ~binding) =>
@@ -50,7 +50,7 @@ let hello = (~app, ~binding) =>
     )}' "http://$e/"
 `
 
-let tunnel = "cat /run/monoflake/tunnel/address 2> /dev/null || true\n"
+let tunnel = "cat /run/tunnel/address 2> /dev/null || true\n"
 
 let readAnswered = text => {
   let text = text->String.trimEnd

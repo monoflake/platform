@@ -8,3 +8,57 @@ packages = true
 # The id space its docs/rfcs holds RFCs in, the workspace's scripts/rfcs reading it.
 [rfcs]
 ids = "monoflake"
+
+# Where the project's own name is data a format or a key derivation defines, and the vectors
+# repeating it, the workspace's docs/naming.md.
+[[names.data]]
+file = "code/libs/capability/src/signed.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/libs/capability/src/signed.resi"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/libs/keys/src/context.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/libs/keys/src/context.resi"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "model/contracts/subset/subset.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "model/contracts/contracts.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/libs/capability/tests/signed_test.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/tools/envelope-generator/tests/generate.rs"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "code/tools/envelope-generator/tests/generate_test.res"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "tests/keys/derived.json"
+spelled = ["monoflake:"]
+
+[[names.data]]
+file = "model/plan/checklist.res"
+spelled = ["monoflake:", "monoflake-challenge"]
+
+[[names.data]]
+file = "model/names/reserved.res"
+spelled = ["\"monoflake\""]
+
+[[names.data]]
+file = "model/graph/boundaries.res"
+spelled = ["monoflake-challenge"]

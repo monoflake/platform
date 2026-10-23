@@ -304,7 +304,7 @@ let main = async () => {
           Host.setExitCode(Host.process, held ? 0 : 1)
         } else {
           let cleaned = clean(target, facts, ~when_="from an earlier run")
-          let scratch = Host.mkdtemp(`${Host.tmpdir()}/monoflake-conform-`)
+          let scratch = Host.mkdtemp(`${Host.tmpdir()}/conform-`)
           let forget = () => Host.rm(scratch, {recursive: true, force: true})
           Host.writeText(`${scratch}/held.json`, holding)
           let served = switch facts.local {

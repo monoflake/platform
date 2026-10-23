@@ -11,8 +11,8 @@ let other = Uint8Array.fromArray(Array.make(~length=32, 0x01))
 
 test("the artifact's address is its hash in the driver's directory", () =>
   deepEqual(
-    Deploying.address(~directory="/var/lib/monoflake/artifacts", ~hash),
-    `file:///var/lib/monoflake/artifacts/${String.repeat("ab", 32)}.tar`,
+    Deploying.address(~directory="/var/lib/driver-machine/artifacts", ~hash),
+    `file:///var/lib/driver-machine/artifacts/${String.repeat("ab", 32)}.tar`,
   )
 )
 

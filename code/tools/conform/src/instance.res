@@ -1,5 +1,5 @@
-let unit = "monoflake-conform"
-let directory = "/run/monoflake-conform"
+let unit = "conform"
+let directory = "/run/conform"
 let port = 47483
 let first = 1000
 let bridge = "conform0"
@@ -10,7 +10,7 @@ let candidates = ["10.250.0.0/24", "10.251.0.0/24", "10.252.0.0/24", "10.253.0.0
 let int = Int.toString
 
 /** The live driver's command line, and `o` printing the first value of one of its flags. */
-let flags = `a=$(systemctl show -p ExecStart --value monoflake-driver) || exit 1
+let flags = `a=$(systemctl show -p ExecStart --value driver-machine) || exit 1
 o() { printf '%s\\n' "$a" | grep -o -- "--$1=[^ ;]*" | head -n 1 | cut -d= -f2-; }
 `
 
@@ -104,7 +104,7 @@ let readFacts = text => {
   }
 }
 
-let served = local => `${local}/monoflake-conform`
+let served = local => `${local}/conform`
 
 type padded = {file: string, from: string, size: float}
 
@@ -206,7 +206,7 @@ let subnet = routes =>
 let started = (~count, ~subnet) => {
   let last = first + count - 1
   `set -e
-${flags}p=$(systemctl show -p Environment --value monoflake-driver | tr ' ' '\\n' | sed -n 's/^PATH=//p')
+${flags}p=$(systemctl show -p Environment --value driver-machine | tr ' ' '\\n' | sed -n 's/^PATH=//p')
 bin=$(printf '%s\\n' "$a" | sed -n 's/^{ path=\\([^ ;]*\\) .*/\\1/p')
 kept=$(printf '%s\\n' "$a" | grep -oE -- '--(runc|crun|youki|plugins|btrfs|largest|local|mount|containerd|workerd)=[^ ;]*' | tr '\\n' ' ')
 d=${directory}

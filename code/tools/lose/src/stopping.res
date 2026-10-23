@@ -1,4 +1,4 @@
-let unit = "monoflake-driver"
+let unit = "driver-machine"
 
 let stop = `systemctl stop ${unit} && ! systemctl is-active --quiet ${unit}
 `

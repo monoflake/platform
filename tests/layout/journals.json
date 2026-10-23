@@ -9,44 +9,44 @@
 		{
 			"first": 0,
 			"pieces": {
-				"xof": "monoflake journal write 0",
+				"xof": "journal write 0",
 				"length": 1000
 			},
-			"head": "010000000147dbb39d71b8625bd34f44a1cde34fffd82c57cbe235c421059cd9cb1acd6bbe4266cc102101f43762fb54",
-			"object": "61885c13fd8e6a64e97e0dc36df86b259a9675879803c23f738b6c6bf7a77762",
+			"head": "01000000019d9a624351d0864de07a0ff4ca11a7cd4f29c524bab404831f2297bd3fa42607ea1d0addd300ad1fdc1a33",
+			"object": "406cf4ec179e8e1cb79a6f68a2809b3df9689167fd8f5ff813089b7bd9c9955d",
 			"length": 1021,
 			"next": 1
 		},
 		{
 			"first": 1,
 			"pieces": {
-				"xof": "monoflake journal write 1",
+				"xof": "journal write 1",
 				"length": 131077
 			},
-			"head": "e34323d461ce3b314c191aac0b5c170b9f55a45746284022c30f5deb631e489a3e0f0a913046aa58357e5929df076114",
-			"object": "2fd0db561b1dc21398767915b36fade0e912e306277dd7917e1e61510d424ffd",
+			"head": "61125a0eb34288b646a0f0b510c26aeae10984a3e89a096d2a01a860003b536e74617e16b485b1bed3e786e51d753ecd",
+			"object": "b9973686a3d756cdd367093d10546bcfa27c3b45c874bb3d9202ace53653db47",
 			"length": 131125,
 			"next": 4
 		},
 		{
 			"first": 4,
 			"pieces": {
-				"xof": "monoflake journal write 2",
+				"xof": "journal write 2",
 				"length": 65536
 			},
-			"head": "704995f94e244fd15f1cb46be95f4f86560aadfe2d1e081a2ca2cdb9fa39abe5d87be1881f965bf41f799d5f8d82aa69",
-			"object": "be7926da23fd931ac7336a3593e5a7587766807902ad3a051ce6ab42aa649092",
+			"head": "be3dd1d20c12460ce675860a0576e0c9c5f389ca4eb9141e7c117f68f137f352c165f0f00bd1b620b8273f7887f53d0c",
+			"object": "dacdc4552225669e72b264563f72e9a75742c022aacd29db7e20b2f8cbe72c89",
 			"length": 65552,
 			"next": 5
 		},
 		{
 			"first": 5,
 			"pieces": {
-				"xof": "monoflake journal write 3",
+				"xof": "journal write 3",
 				"length": 1
 			},
-			"head": "8aeb1683aad3de05200c74c9cf2e2b0f8d",
-			"object": "64d5d53af8aed0ed13e20b3402c9cad72fa1132444bb6625c936862cb1e7ced7",
+			"head": "0e3c68a381786243bef97f71c5e57fdf8d",
+			"object": "1ac15978c7fe640f96030ce00c7696bf4d57ff2038a7d643563d36bacce8e85d",
 			"length": 17,
 			"next": 6
 		}
@@ -54,7 +54,7 @@
 	"exported": {
 		"of": "every write's pieces joined, sealed as a parcel under `key` with the same header",
 		"key": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
-		"sealed": "e768b28df4fbc7f1454a0ee74a45b135e4991a128ea20b589b334f69f26372e8"
+		"sealed": "89753d0b023c89f61e9d03d61dbf0a89b7a06307a15a57b1d6ca38bb6771e77b"
 	},
 	"unsealable": [
 		{

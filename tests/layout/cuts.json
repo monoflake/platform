@@ -4,46 +4,46 @@
 	"cases": [
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 0
 			},
 			"pieces": []
 		},
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 1
 			},
 			"pieces": [1]
 		},
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 262144
 			},
 			"pieces": [262144]
 		},
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 262145
 			},
 			"pieces": [262145]
 		},
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 3145728
 			},
-			"pieces": [1084900, 1201015, 859813]
+			"pieces": [1342651, 523330, 1279747]
 		},
 		{
 			"content": {
-				"xof": "monoflake layout sample",
+				"xof": "layout sample",
 				"length": 12582912
 			},
 			"pieces": [
-				1084900, 1201015, 1116451, 519291, 1849865, 2529001, 1357357, 1274850, 1125293, 524615, 274
+				1342651, 523330, 1412579, 1107530, 1286424, 1748194, 1661089, 931576, 1745871, 823668
 			]
 		},
 		{

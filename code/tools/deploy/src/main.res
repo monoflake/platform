@@ -254,7 +254,7 @@ let main = async () => {
     Host.setExitCode(Host.process, 2)
   | Ok({directory, target: named, app, dry}) =>
     let directory = Host.absolute(directory)
-    let scratch = Host.makeTemporary(Host.join([Host.temporary(), "monoflake-deploy-"]))
+    let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-"]))
     let result = await timed(
       "build",
       async () => built(directory, Host.join([scratch, "out"])),
