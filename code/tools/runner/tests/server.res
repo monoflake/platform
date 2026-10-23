@@ -80,12 +80,13 @@ let respond = (response, ~cbor, answer) => {
   response->end(cbor ? written(value) : Web.utf8(JSON.stringify(json)))
 }
 
-let handle = (objectsOf: dict<string> => option<dict<Uint8Array.t>>, bodies) =>
+let handle = (objectsOf: dict<string> => option<dict<Uint8Array.t>>, bodies, authorizations) =>
   (request, response) =>
     body(request)
     ->Promise.thenResolve(bytes => {
       bodies->Array.push(bytes)
       let headers = request->requestHeaders
+      authorizations->Array.push(headers->Dict.get("authorization"))
       let accept = headers->Dict.get("accept")->Option.getOr("application/cbor")
       let cbor = !(accept->String.startsWith("application/json"))
       let contentType = headers->Dict.get("content-type")->Option.getOr("")
@@ -146,9 +147,10 @@ let handle = (objectsOf: dict<string> => option<dict<Uint8Array.t>>, bodies) =>
 
 /**
  * The server started at `localhost`, on the port given or one of the system's choosing, keeping
- * each body in `bodies`, and where tokens are given each its own objects, a call with none denied.
+ * each body in `bodies` and each `Authorization` in `authorizations`, and where tokens are given
+ * each its own objects, a call with none denied.
  */
-let start = (~port=0, ~bodies=[], ~tokens=?) =>
+let start = (~port=0, ~bodies=[], ~authorizations=[], ~tokens=?) =>
   Promise.make((resolve, _) => {
     let objects = Dict.make()
     let kept =
@@ -160,6 +162,6 @@ let start = (~port=0, ~bodies=[], ~tokens=?) =>
       | None => Some(objects)
       | Some(kept) => headers->Dict.get("authorization")->Option.flatMap(a => kept->Dict.get(a))
       }
-    let server = createServer(handle(objectsOf, bodies))
+    let server = createServer(handle(objectsOf, bodies, authorizations))
     server->listen(port, "localhost", () => resolve(server))
   })

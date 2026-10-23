@@ -188,3 +188,25 @@ testAsync(
     ok(Capability.Signed.verify({...trust, certificates: []}, Call, signed)->Result.isError)
   },
 )
+
+testAsync(
+  "a call carries its binding's token where one is given, and none where none is",
+  async () => {
+    let authorizations = []
+    let server = await Server.start(~authorizations)
+    let read = target =>
+      (target: Run.target).call(
+        ~interface="object",
+        ~operation="read",
+        ~input=JSON.parseOrThrow(`{"name": "a"}`),
+        ~form=Json,
+        ~as_=None,
+      )
+    let _ = await read(
+      Http.target(~base=address(server), ~chain=None, ~bounds=dict{}, ~token="7.x"),
+    )
+    let _ = await read(Http.target(~base=address(server), ~chain=None, ~bounds=dict{}))
+    await stop(server)
+    deepEqual(authorizations, [Some("Bearer 7.x"), None])
+  },
+)
