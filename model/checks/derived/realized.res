@@ -19,7 +19,7 @@ let manifest = (l: Blocks.lang) =>
 
 /**
  * Every block named for a component, by its main name: this repository's with its code written,
- * `Blocks.expected`, and each a sibling declares, its code held by that sibling's own check.
+ * `Blocks.expected`, and each a sibling declares, which its own check refuses unless accepted.
  */
 let mains = {
   let (expected, _, _) = Blocks.expected()

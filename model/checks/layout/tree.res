@@ -305,13 +305,27 @@ let accept = (tree: tree, given: array<string>) => {
   }
 }
 
-/** Every block of a tree held to what it asks, as one dimension. */
-let check = (tree: tree, ~title="Blocks held", ~work=?) => {
+/**
+ * Each name a repository declares its blocks provide whose block is not accepted here, its code
+ * then unwritten, RFC s42ex.
+ */
+let unprovided = (tree: tree, provided: array<string>) =>
+  provided->Array.filterMap(name =>
+    switch tree.blocks->Map.values->Array.fromIterator->Array.find(h => h.name == name) {
+    | None => Some(`${name}: declared as provided, yet no block of this tree is named for it`)
+    | Some(h) if tree.work->Dict.get(h.package) != Some(Accepted) =>
+      Some(`${name}: declared as provided, yet ${h.package} is not accepted`)
+    | Some(_) => None
+    }
+  )
+
+/** Every block of a tree held to what it asks, and each name declared provided, one dimension. */
+let check = (tree: tree, ~title="Blocks held", ~work=?, ~provided=[]) => {
   let held = Code.hold(tree, ~work?)
   dimension(
     title,
     "Does each written block hold what the model asks of it, and is each in work or accepted?",
-    held.found,
+    Array.concat(held.found, unprovided(tree, provided)),
     ~notes=[
       `written: ${held.written->orNone(", ")}`,
       `waiting on an open row: ${held.waiting->orNone("; ")}`,
