@@ -228,6 +228,34 @@
 					"expect": { "failure": "rejected", "reason": "invalid" }
 				}
 			]
+		},
+		{
+			"description": "an empty adopted list is a list with none, and a binding new names no warning",
+			"steps": [
+				{
+					"call": "describe",
+					"input": {},
+					"expect": {
+						"output": {
+							"generation": 0,
+							"policy": 0,
+							"grace": 604800,
+							"items": [],
+							"warnings": { "$absent": null }
+						}
+					}
+				},
+				{
+					"call": "apply",
+					"input": { "generation": 1, "items": [], "adopted": [] },
+					"expect": { "output": { "generation": 1 } }
+				},
+				{
+					"call": "describe",
+					"input": {},
+					"expect": { "output": { "generation": 1, "policy": 0, "grace": 604800, "items": [] } }
+				}
+			]
 		}
 	]
 }

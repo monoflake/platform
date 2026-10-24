@@ -2983,6 +2983,135 @@
 				}
 			]
 		},
+		"management-kind": {
+			"enum": [
+				{
+					"name": "function",
+					"code": 1
+				},
+				{
+					"name": "instance",
+					"code": 2
+				},
+				{
+					"name": "container",
+					"code": 3
+				},
+				{
+					"name": "object",
+					"code": 4
+				},
+				{
+					"name": "volume",
+					"code": 5
+				},
+				{
+					"name": "database",
+					"code": 6
+				}
+			],
+			"ordered": false
+		},
+		"management-adoptable": {
+			"enum": [
+				{
+					"name": "function",
+					"code": 1
+				},
+				{
+					"name": "object",
+					"code": 2
+				},
+				{
+					"name": "database",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
+		"management-adopted-for": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "deployment",
+						"code": 1,
+						"fields": [
+							{
+								"name": "runs",
+								"key": 1,
+								"shape": {
+									"type": "deployment-runs"
+								}
+							}
+						]
+					},
+					{
+						"name": "item",
+						"code": 2,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "capacity"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"management-adopted": {
+			"record": [
+				{
+					"name": "kind",
+					"key": 1,
+					"shape": {
+						"type": "management-adoptable"
+					}
+				},
+				{
+					"name": "name",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "for",
+					"key": 3,
+					"shape": {
+						"type": "management-adopted-for"
+					}
+				}
+			]
+		},
+		"management-warning": {
+			"record": [
+				{
+					"name": "reason",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "message",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "name",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
 		"management-apply": {
 			"record": [
 				{
@@ -3007,6 +3136,16 @@
 					"shape": {
 						"list": {
 							"prim": "hash"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "adopted",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "management-adopted"
 						}
 					},
 					"optional": true
@@ -3174,6 +3313,36 @@
 					"key": 5,
 					"shape": {
 						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "kinds",
+					"key": 6,
+					"shape": {
+						"list": {
+							"type": "management-kind"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "adopted",
+					"key": 7,
+					"shape": {
+						"list": {
+							"type": "management-adopted"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "warnings",
+					"key": 8,
+					"shape": {
+						"list": {
+							"type": "management-warning"
+						}
 					},
 					"optional": true
 				}
