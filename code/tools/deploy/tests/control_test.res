@@ -156,6 +156,7 @@ testAsync("the app is asked at the gateway, and only a gateway's 502 to 504 fail
     sent->Array.map(s => (s.url, s.init.method)),
     [("http://localhost:8787/v1/app-1/", "GET")],
   )
+  // The production control answers `/` with its own 400, which failed every deploy of it, rxmd9.
   let (refusing, _) = faked(dict{"/v1/app-2/": (400, "the path / is not /{interface}/{operation}")})
   deepEqual(
     await Control.asked(refusing, ~app=2.),
