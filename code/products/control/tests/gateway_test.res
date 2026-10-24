@@ -118,3 +118,24 @@ test("a request whose body a first send spent is not sent again", async () => {
   host.drops := 1
   deepEqual((await passing(state, host, empty))->Web.status, 200)
 })
+
+/** A binding as workerd gives one, every name read on it a function, `fetch` answering. */
+let everyName: unit => Stores.env = %raw(`() => ({
+  HOSTS: new Proxy({}, {
+    get: (_, name) => name === "fetch" ? async () => new Response("through") : () => undefined,
+  }),
+})`)
+
+test(
+  "the hosts' binding is reached as it is given, though every name read on it is present",
+  async () => {
+    switch Worker.reachOf(everyName()) {
+    | Some(reach) =>
+      let answer = await reach.fetch(
+        Web.request("http://10.200.0.1:37483/", {method: "GET", headers: dict{}}),
+      )
+      deepEqual(await answer->Web.text, "through")
+    | None => ok(false, ~message="the binding was not taken")
+    }
+  },
+)

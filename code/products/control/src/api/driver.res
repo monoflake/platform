@@ -28,7 +28,10 @@ let call = async (host, envelope, data) => {
     },
   )
   switch await host.reach.fetch(request) {
-  | exception JsExn(_) => unreachable(`the host's driver at ${host.address} did not answer`)
+  | exception JsExn(e) =>
+    let why = e->JsExn.message->Option.getOr("no message")
+    Console.error(`driver: ${host.address}, ${why}`)
+    unreachable(`the host's driver at ${host.address} did not answer, ${why}`)
   | response =>
     let text = await response->Web.text
     switch JSON.parseOrThrow(text) {

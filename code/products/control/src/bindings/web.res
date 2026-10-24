@@ -38,6 +38,8 @@ let responseBytes = async response => Uint8Array.fromBuffer(await response->resp
 /** What sends a request and gives its response, a global fetch or a binding's. */
 type fetch = request => promise<response>
 @val external fetch: fetch = "fetch"
+/** A binding's fetcher, every name read on it present, so an option of it is never unwrapped. */
+@notUndefined
 type fetcher
 @send external fetchThrough: (fetcher, request) => promise<response> = "fetch"
 
