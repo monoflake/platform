@@ -31,6 +31,27 @@ type t = {
   deployment: float => promise<option<deployment>>,
 }
 
+// The key is a secret of the control's own until the keys library derives it from the masters, RFCs fhg6w and b8f35.
+/** A record's secret sealed for its place. */
+let sealed = (sealing, ~kind, ~id, secret) =>
+  Sealing.seal(sealing, ~kind, ~id, ~field="secret", secret)
+
+/**
+ * A record's secret read, a plain one handed to `writeBack` sealed, an empty one a fault and never
+ * a secret.
+ */
+let opened = async (sealing, ~kind, ~id, text, ~writeBack) => {
+  if text == "" {
+    JsError.throwWithMessage(`the ${kind} ${Float.toString(id)} holds an empty secret`)
+  }
+  switch await Sealing.read(sealing, ~kind, ~id, ~field="secret", text) {
+  | Opened(secret) => secret
+  | Plain(secret) =>
+    await writeBack(await sealed(sealing, ~kind, ~id, secret))
+    secret
+  }
+}
+
 /** Rows as D1 answers them, a column with no value `null`. */
 type idRow = {id: float}
 type organizationRow = {id: float, secret: Nullable.t<string>}
@@ -45,15 +66,6 @@ type bindingRow = {
 
 let bindingColumns = "id, organization, secret, tunnel, address, relayed"
 
-let bindingOf = (row: bindingRow) =>
-  Envelope.Hex.decode(row.secret)->Option.map((secret): binding => {
-    id: row.id,
-    organization: row.organization,
-    secret,
-    tunnel: row.tunnel->Nullable.toOption,
-    address: row.address->Nullable.toOption,
-    relayed: row.relayed != 0.,
-  })
 type releaseRow = {hash: string, form: string, size: float}
 type deploymentRow = {app: float, binding: float, release: string, capacity: float}
 
@@ -72,23 +84,52 @@ let formOf = name =>
   | _ => None
   }
 
-let ofDatabase = database => {
+let ofDatabase = (database, ~sealing) => {
   let statement = (sql, values) => database->Stores.prepare(sql)->Stores.bind(values)
   let first = async (sql, values) => (await statement(sql, values)->Stores.first)->Nullable.toOption
   let run = (sql, values) => statement(sql, values)->Stores.run
+  // A plain secret is written back only where it is still kept plain.
+  let secretOf = (~kind, ~id, text) =>
+    opened(sealing, ~kind, ~id, text, ~writeBack=seal =>
+      run(
+        `UPDATE ${kind} SET secret = ? WHERE id = ? AND secret = ?`,
+        [Text(seal), Number(id), Text(text)],
+      )
+    )
+  let bindingOf = async (row: bindingRow): binding => {
+    id: row.id,
+    organization: row.organization,
+    secret: await secretOf(~kind="binding", ~id=row.id, row.secret),
+    tunnel: row.tunnel->Nullable.toOption,
+    address: row.address->Nullable.toOption,
+    relayed: row.relayed != 0.,
+  }
+  let bindingAt = async (sql, values) =>
+    switch await first(sql, values) {
+    | Some(row) => Some(await bindingOf(row))
+    | None => None
+    }
+  let organizationAt = id => first("SELECT id, secret FROM organization WHERE id = ?", [Number(id)])
   {
-    // FIXME fhg6w seals a secret under its control's key, which waits on that key being made.
     openOrganization: async (label, ~secret) => {
-      let hex = Envelope.Hex.encode(secret)
       await run(
-        "INSERT INTO organization (label, secret) VALUES (?, ?)
-        ON CONFLICT (label) DO UPDATE SET secret = coalesce(organization.secret, excluded.secret)",
-        [Text(label), Text(hex)],
+        "INSERT INTO organization (label) VALUES (?) ON CONFLICT (label) DO NOTHING",
+        [Text(label)],
       )
       switch await first("SELECT id, secret FROM organization WHERE label = ?", [Text(label)]) {
-      | Some({id, secret}: organizationRow) =>
-        switch secret->Nullable.toOption->Option.flatMap(Envelope.Hex.decode) {
-        | Some(secret) => {id, secret}
+      | Some({id, secret: kept}: organizationRow) =>
+        if kept->Nullable.toOption == None {
+          let seal = await sealed(sealing, ~kind="organization", ~id, secret)
+          await run(
+            "UPDATE organization SET secret = ? WHERE id = ? AND secret IS NULL",
+            [Text(seal), Number(id)],
+          )
+        }
+        // Another call may have kept its secret first, so the one kept is read.
+        switch (await organizationAt(id))->Option.flatMap(({secret}: organizationRow) =>
+          secret->Nullable.toOption
+        ) {
+        | Some(text) => {id, secret: await secretOf(~kind="organization", ~id, text)}
         | None => JsError.throwWithMessage(`organization ${label} holds no secret once opened`)
         }
       | None => JsError.throwWithMessage(`no organization holds ${label} once opened`)
@@ -100,35 +141,38 @@ let ofDatabase = database => {
       | None => false
       },
     organizationSecret: async id =>
-      (
-        await first("SELECT id, secret FROM organization WHERE id = ?", [Number(id)])
-      )->Option.flatMap(({secret}: organizationRow) =>
-        secret->Nullable.toOption->Option.flatMap(Envelope.Hex.decode)
-      ),
+      switch (await organizationAt(id))->Option.flatMap(({secret}: organizationRow) =>
+        secret->Nullable.toOption
+      ) {
+      | Some(text) => Some(await secretOf(~kind="organization", ~id, text))
+      | None => None
+      },
     openBinding: async (~organization, ~secret, ~relayed) =>
       switch await first(
-        "INSERT INTO binding (organization, secret, relayed) VALUES (?, ?, ?) RETURNING id",
-        [Number(organization), Text(Envelope.Hex.encode(secret)), Number(relayed ? 1. : 0.)],
+        "INSERT INTO binding (organization, secret, relayed) VALUES (?, '', ?) RETURNING id",
+        [Number(organization), Number(relayed ? 1. : 0.)],
       ) {
-      | Some({id}: idRow) => id
+      | Some({id}: idRow) =>
+        // The id is known only once inserted, so its secret is sealed for it after.
+        switch await sealed(sealing, ~kind="binding", ~id, secret) {
+        | seal =>
+          await run("UPDATE binding SET secret = ? WHERE id = ?", [Text(seal), Number(id)])
+          id
+        | exception JsExn(e) =>
+          await run("DELETE FROM binding WHERE id = ?", [Number(id)])
+          throw(JsExn(e))
+        }
       | None => JsError.throwWithMessage("no binding inserted")
       },
-    binding: async id =>
-      (
-        await first(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)])
-      )->Option.flatMap(bindingOf),
-    storage: async organization =>
-      (
-        await first(
-          `SELECT ${bindingColumns} FROM binding
-          WHERE organization = ? AND relayed = 0 AND address IS NOT NULL ORDER BY id LIMIT 1`,
-          [Number(organization)],
-        )
-      )->Option.flatMap(bindingOf),
-    addressedAt: async address =>
-      (
-        await first(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)])
-      )->Option.flatMap(bindingOf),
+    binding: id => bindingAt(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)]),
+    storage: organization =>
+      bindingAt(
+        `SELECT ${bindingColumns} FROM binding
+        WHERE organization = ? AND relayed = 0 AND address IS NOT NULL ORDER BY id LIMIT 1`,
+        [Number(organization)],
+      ),
+    addressedAt: address =>
+      bindingAt(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)]),
     tunneled: (~binding, ~tunnel) =>
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
     addressed: (~binding, ~address) =>
@@ -177,19 +221,19 @@ let field = (json, name) => json->JSON.Decode.object->Option.flatMap(o => o->Dic
 let number = (json, name) => json->field(name)->Option.flatMap(JSON.Decode.float)
 let text = (json, name) => json->field(name)->Option.flatMap(JSON.Decode.string)
 
-let organizationJson = (id, label, secret) => JSON.Object(
+let organizationJson = (id, label, sealed) => JSON.Object(
   dict{
     "id": Number(id),
     "label": String(label),
-    "secret": String(Envelope.Hex.encode(secret)),
+    "secret": String(sealed),
   },
 )
 
-let bindingJson = (b: binding) => {
+let bindingJson = (b: binding, sealed) => {
   let o = dict{
     "id": JSON.Number(b.id),
     "organization": Number(b.organization),
-    "secret": String(Envelope.Hex.encode(b.secret)),
+    "secret": String(sealed),
     "relayed": Boolean(b.relayed),
   }
   b.tunnel->Option.forEach(t => o->Dict.set("tunnel", String(t)))
@@ -197,29 +241,7 @@ let bindingJson = (b: binding) => {
   JSON.Object(o)
 }
 
-let bindingFromJson = json =>
-  switch (
-    json->number("id"),
-    json->number("organization"),
-    json->text("secret")->Option.flatMap(Envelope.Hex.decode),
-  ) {
-  | (Some(id), Some(organization), Some(secret)) =>
-    Some(
-      (
-        {
-          id,
-          organization,
-          secret,
-          tunnel: json->text("tunnel"),
-          address: json->text("address"),
-          relayed: json->field("relayed")->Option.flatMap(JSON.Decode.bool)->Option.getOr(false),
-        }: binding
-      ),
-    )
-  | _ => None
-  }
-
-let ofObjects = (objects: Objects.t) => {
+let ofObjects = (objects: Objects.t, ~sealing) => {
   let readJson = async name =>
     held(await objects.read(name))->Option.map(bytes => JSON.parseOrThrow(Web.fromUtf8(bytes)))
   let writeJson = async (name, json) =>
@@ -239,17 +261,69 @@ let ofObjects = (objects: Objects.t) => {
     all->Array.reduce(0., (most, json) =>
       Math.max(most, json->number("id")->Option.getOr(0.))
     ) +. 1.
+  let organizationAt = id => `state/organizations/${Float.toString(id)}`
   let bindingAt = id => `state/bindings/${Float.toString(id)}`
-  let binding = async id => (await readJson(bindingAt(id)))->Option.flatMap(bindingFromJson)
-  let bindings = async () => (await every("state/bindings/"))->Array.filterMap(bindingFromJson)
+  // A record's secret replaced only where it still holds the plain one read.
+  let replaced = async (name, plain, seal) =>
+    switch await readJson(name) {
+    | Some(json) if json->text("secret") == Some(plain) =>
+      let o = json->JSON.Decode.object->Option.getOr(dict{})->Dict.copy
+      o->Dict.set("secret", JSON.String(seal))
+      await writeJson(name, JSON.Object(o))
+    | Some(_) | None => ()
+    }
+  let rewritten = (name, plain, seal) => serial(() => replaced(name, plain, seal))
+  let bindingFromJson = async (json, ~writeBack) =>
+    switch (json->number("id"), json->number("organization"), json->text("secret")) {
+    | (Some(id), Some(organization), Some(kept)) =>
+      let secret = await opened(sealing, ~kind="binding", ~id, kept, ~writeBack=seal =>
+        writeBack(bindingAt(id), kept, seal)
+      )
+      Some(
+        (
+          {
+            id,
+            organization,
+            secret,
+            tunnel: json->text("tunnel"),
+            address: json->text("address"),
+            relayed: json->field("relayed")->Option.flatMap(JSON.Decode.bool)->Option.getOr(false),
+          }: binding
+        ),
+      )
+    | _ => None
+    }
+  let binding = async id =>
+    switch await readJson(bindingAt(id)) {
+    | Some(json) => await bindingFromJson(json, ~writeBack=rewritten)
+    | None => None
+    }
+  let bindings = async () =>
+    (
+      await Promise.all(
+        (await every("state/bindings/"))->Array.map(json =>
+          bindingFromJson(json, ~writeBack=rewritten)
+        ),
+      )
+    )->Array.filterMap(b => b)
+  let writeBinding = async (b: binding) =>
+    await writeJson(
+      bindingAt(b.id),
+      bindingJson(b, await sealed(sealing, ~kind="binding", ~id=b.id, b.secret)),
+    )
   let changed = (id, f) =>
     serial(async () =>
-      switch await binding(id) {
-      | Some(b) => await writeJson(bindingAt(id), bindingJson(f(b)))
+      switch await readJson(bindingAt(id)) {
+      | Some(json) =>
+        // Written whole and sealed below, so a plain secret read here needs no writing back.
+        switch await bindingFromJson(json, ~writeBack=(_, _, _) => Promise.resolve()) {
+        | Some(b) => await writeBinding(f(b))
+        | None => ()
+        }
       | None => ()
       }
     )
-  let organization = async id => await readJson(`state/organizations/${Float.toString(id)}`)
+  let organization = async id => await readJson(organizationAt(id))
   {
     openOrganization: (label, ~secret) =>
       serial(async () => {
@@ -257,36 +331,43 @@ let ofObjects = (objects: Objects.t) => {
         switch all->Array.find(json => json->text("label") == Some(label)) {
         | Some(json) =>
           let id = json->number("id")->Option.getOr(0.)
-          switch json->text("secret")->Option.flatMap(Envelope.Hex.decode) {
-          | Some(kept) => ({id, secret: kept}: organization)
+          switch json->text("secret") {
+          | Some(kept) =>
+            let secret = await opened(sealing, ~kind="organization", ~id, kept, ~writeBack=seal =>
+              replaced(organizationAt(id), kept, seal)
+            )
+            ({id, secret}: organization)
           | None =>
             await writeJson(
-              `state/organizations/${Float.toString(id)}`,
-              organizationJson(id, label, secret),
+              organizationAt(id),
+              organizationJson(id, label, await sealed(sealing, ~kind="organization", ~id, secret)),
             )
             ({id, secret}: organization)
           }
         | None =>
           let id = next(all)
           await writeJson(
-            `state/organizations/${Float.toString(id)}`,
-            organizationJson(id, label, secret),
+            organizationAt(id),
+            organizationJson(id, label, await sealed(sealing, ~kind="organization", ~id, secret)),
           )
           ({id, secret}: organization)
         }
       }),
     hasOrganization: async id => (await organization(id))->Option.isSome,
     organizationSecret: async id =>
-      (await organization(id))->Option.flatMap(json =>
-        json->text("secret")->Option.flatMap(Envelope.Hex.decode)
-      ),
+      switch (await organization(id))->Option.flatMap(json => json->text("secret")) {
+      | Some(kept) =>
+        Some(
+          await opened(sealing, ~kind="organization", ~id, kept, ~writeBack=seal =>
+            rewritten(organizationAt(id), kept, seal)
+          ),
+        )
+      | None => None
+      },
     openBinding: (~organization, ~secret, ~relayed) =>
       serial(async () => {
         let id = next(await every("state/bindings/"))
-        await writeJson(
-          bindingAt(id),
-          bindingJson({id, organization, secret, tunnel: None, address: None, relayed}),
-        )
+        await writeBinding({id, organization, secret, tunnel: None, address: None, relayed})
         id
       }),
     binding,

@@ -204,7 +204,8 @@ let kept = async (state: State.t) => {
 
 test("a state over objects keeps what the state in memory keeps", async () => {
   let (fetch, objects, _) = stoodOn()
-  let overObjects = await kept(State.ofObjects(Objects.through(~origin, ~token, fetch)))
+  let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
+  let overObjects = await kept(State.ofObjects(Objects.through(~origin, ~token, fetch), ~sealing))
   deepEqual(overObjects, await kept(Memory.state()))
   ok(
     objects->Dict.keysToArray->Array.every(n => n->String.startsWith("state/")),

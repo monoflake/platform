@@ -30,6 +30,7 @@ type env = {
   @as("STANDS_ON_TOKEN") standsOnToken?: string,
   @as("HOSTS") hosts?: Web.fetcher,
   @as("OPERATOR") operator?: string,
+  @as("SEALING_KEY") sealingKey?: string,
   @as("REACH") reach?: string,
   @as("ORIGIN") origin?: string,
   @as("DRIVER_PORT") driverPort?: string,

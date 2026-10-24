@@ -47,11 +47,14 @@ type t = {
   deployment: float => promise<option<deployment>>,
 }
 
-/** The state kept in a D1 database, its tables `migrations/`'. */
-let ofDatabase: Stores.database => t
+/**
+ * The state kept in a D1 database, its tables `migrations/`', each secret sealed under `sealing`; a
+ * binding is inserted with an empty secret, then sealed for the id its insert gave.
+ */
+let ofDatabase: (Stores.database, ~sealing: Sealing.t) => t
 
 /**
  * The state kept as objects, one JSON document a record under `state/`, where the control stands
- * on another and no D1 is bound.
+ * on another and no D1 is bound, each secret sealed under `sealing`.
  */
-let ofObjects: Objects.t => t
+let ofObjects: (Objects.t, ~sealing: Sealing.t) => t

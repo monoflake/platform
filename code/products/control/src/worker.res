@@ -55,7 +55,7 @@ let stoodOf = (env: Stores.env) =>
   | (Some(origin), Some(token)) if origin != "" && token != "" =>
     let objects = Objects.through(~origin, ~token, Web.fetch)
     Ok({
-      state: State.ofObjects(objects),
+      state: State.ofObjects(objects, ~sealing=Sealing.ofKey(env.sealingKey)),
       artifacts: Artifacts.ofObjects(objects),
       reach: switch env.reach {
       | Some(address) if address != "" => Reach.local(address)
@@ -69,7 +69,7 @@ let stoodOf = (env: Stores.env) =>
     switch (env.state, env.artifacts, reachOf(env)) {
     | (Some(database), Some(bucket), Some(reach)) =>
       Ok({
-        state: State.ofDatabase(database),
+        state: State.ofDatabase(database, ~sealing=Sealing.ofKey(env.sealingKey)),
         artifacts: Artifacts.ofBucket(bucket),
         reach,
         tunnels: tunnelsOf(env),

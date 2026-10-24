@@ -83,6 +83,37 @@ let sha256 = async bytes => Uint8Array.fromBuffer(await digestOf("SHA-256", byte
 /** So many random bytes. */
 let random = length => fillRandom(Uint8Array.fromLength(length))
 
+/** An AES-256-GCM key, usable only to seal and open. */
+type cryptoKey
+type aesGcm = {name: string, iv: Uint8Array.t, additionalData: Uint8Array.t}
+
+@val @scope(("crypto", "subtle"))
+external importKey: (
+  @as("raw") _,
+  Uint8Array.t,
+  @as("AES-GCM") _,
+  @as(json`false`) _,
+  array<string>,
+) => promise<cryptoKey> = "importKey"
+@val @scope(("crypto", "subtle"))
+external encrypt: (aesGcm, cryptoKey, Uint8Array.t) => promise<ArrayBuffer.t> = "encrypt"
+@val @scope(("crypto", "subtle"))
+external decrypt: (aesGcm, cryptoKey, Uint8Array.t) => promise<ArrayBuffer.t> = "decrypt"
+
+/** A raw key of 32 bytes taken for AES-GCM. */
+let aesKey = bytes => importKey(bytes, ["encrypt", "decrypt"])
+
+/** Bytes sealed by AES-GCM, the tag after the ciphertext. */
+let sealed = async (key, ~iv, ~additionalData, bytes) =>
+  Uint8Array.fromBuffer(await encrypt({name: "AES-GCM", iv, additionalData}, key, bytes))
+
+/** Bytes opened by AES-GCM, none where the tag does not hold. */
+let opened = async (key, ~iv, ~additionalData, bytes) =>
+  switch await decrypt({name: "AES-GCM", iv, additionalData}, key, bytes) {
+  | buffer => Some(Uint8Array.fromBuffer(buffer))
+  | exception JsExn(_) => None
+  }
+
 @val external setTimeout: (unit => unit, int) => unit = "setTimeout"
 
 /** A promise kept after so many milliseconds. */

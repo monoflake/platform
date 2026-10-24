@@ -216,6 +216,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     ->ignore
     let vars = [
       `OPERATOR:${operator}`,
+      `SEALING_KEY:${Envelope.Base64url.encode(Web.random(32))}`,
       `DRIVER_PORT:${Int.toString(driverPort)}`,
       `ENTRY_PORT:${Int.toString(entryPort)}`,
       `TUNNEL_API:http://127.0.0.1:${Int.toString(apiPort)}/client/v4`,
