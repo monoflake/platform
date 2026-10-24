@@ -101,11 +101,24 @@ let check = (g: graph): checked => {
       }
     )
   )
-  let hardNext = n =>
-    edgesIn(g, n)->Array.filter(x => x.hard && known(x.to_))->Array.map(x => x.to_)
-  cycles(hardNext, g.components->Dict.keysToArray)->Array.forEach(c =>
-    rules->Array.push(foundAt(c->String.split(" -> "), `hard cycle: ${c}`))
-  )
+  // Each cycle once by its nodes, however many hard edges join two of them, each hop's edges named.
+  let hardTo = (n, to_) => edgesIn(g, n)->Array.filter(x => x.hard && x.to_ == to_)
+  let hardNext = n => {
+    let ts = edgesIn(g, n)->Array.filter(x => x.hard && known(x.to_))->Array.map(x => x.to_)
+    ts->Array.filterWithIndex((t, i) => ts->Array.indexOf(t) == i)
+  }
+  let hop = (from, to_) =>
+    `${from} -> ${to_} ${hardTo(from, to_)
+      ->Array.map(x =>
+        `${(x.when_ :> string)}${x.contract->Option.mapOr("", cs => ` ${cs->Array.join("+")}`)}`
+      )
+      ->Array.join(", ")}`
+  cycles(hardNext, g.components->Dict.keysToArray)->Array.forEach(c => {
+    let at = c->String.split(" -> ")
+    let hops =
+      at->Array.slice(~start=1)->Array.mapWithIndex((to_, i) => hop(at->Array.getUnsafe(i), to_))
+    rules->Array.push(foundAt(at, `hard cycle: ${c}, by ${hops->Array.join("; ")}`))
+  })
   cycles(
     n => Libraries.libraries->Dict.get(n)->Option.mapOr([], l => l.uses),
     Libraries.libraries->Dict.keysToArray,

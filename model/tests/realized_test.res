@@ -78,3 +78,43 @@ test("a name not filled is provided by none, though a block with code provides i
 test("a block filling a name runs only where its code is written", () =>
   deepEqual(Realized.runningIn({fills: [("compute", Block("compute"))], targets: []}).mains, [])
 )
+
+let over = (components): Base.graph => {
+  components,
+  own: components,
+  fillers: _ => [],
+  records: [],
+}
+
+test("a block named for a role is held by the rules as a component is", () => {
+  let roled = dict{
+    "r": ({layer: -2, kind: #provided, edges: [], uses: []}: Components.component),
+    "h": node(-2, [to("up")]),
+    "up": node(0, []),
+  }
+  let g = Realized.derive({mains: ["r"], declared: dict{"r": {provides: ["h"], extra: []}}}, roled)
+  deepEqual(g->Dict.get("r")->Option.flatMap(c => c.kind), None)
+  deepEqual(
+    Rules.check(over(g)).violations->Array.map(v => v.text),
+    ["r -> up serve/hard: made here"],
+  )
+})
+
+test("a block named for a driver role is the drivers given filling it, no component", () => {
+  let fillersOf = (r: Realized.running) =>
+    Realized.graphOf(r).fillers("driver(machine)")->Array.map(((name, _)) => name)
+  deepEqual(
+    fillersOf({
+      mains: ["driver(machine)"],
+      declared: dict{"driver(machine)": {provides: ["host"], extra: []}},
+    }),
+    [],
+  )
+  deepEqual(
+    fillersOf({
+      mains: ["driver(machine)", "host"],
+      declared: dict{"host": {provides: ["driver(machine)"], extra: []}},
+    }),
+    ["host"],
+  )
+})

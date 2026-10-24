@@ -1,7 +1,7 @@
 /**
  * The as-built graph, each block in the place of every name it provides, RFC s42ex. A merged
- * node keeps its main name's own attributes and answers what each name it provides answers, and
- * each boundary name it provides.
+ * node keeps its main name's own attributes save a role's kind, and answers what each name it
+ * provides answers, and each boundary name it provides.
  */
 open Base
 
@@ -121,7 +121,9 @@ let derive = (r: running, nodes: dict<Components.component>): dict<Components.co
         ->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([]))
         ->Array.concat([names->Array.filter(n => n->String.startsWith("?"))]),
       )
-      (m, {...main, edges, answers: ?(answers == [] ? None : Some(answers))})
+      // A block named for a role is code that runs, so the rules hold it as they hold a component.
+      let kind = main.kind == Some(#provided) ? None : main.kind
+      (m, {...main, ?kind, edges, answers: ?(answers == [] ? None : Some(answers))})
     })
   )
   let standing =
@@ -140,9 +142,12 @@ let graphOf = (r: running) => {
   {
     components: nodes,
     own: derive(r, Components.own),
+    // A block named for a driver role is the drivers given filling it, RFC 7ykg6, no component.
     fillers: role =>
       design.fillers(role)->Array.concat(
-        providers(r, role)->Array.filterMap(m => nodes->Dict.get(m)->Option.map(c => (m, c))),
+        providers(r, role)
+        ->Array.filter(m => m != role || Drivers.asked->Dict.get(role)->Option.isNone)
+        ->Array.filterMap(m => nodes->Dict.get(m)->Option.map(c => (m, c))),
       ),
     records: Records.records->Array.map(held => {
       ...held,
