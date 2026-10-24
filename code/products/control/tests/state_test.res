@@ -16,6 +16,10 @@ type store = {
   /** A record written as an older control kept it, its secret as given. */
   put: (~kind: string, ~id: float, string) => promise<unit>,
   kept: (~kind: string, ~id: float) => promise<option<string>>,
+  /** A record kept again whole under another id, as a copy beneath the state would. */
+  copy: (~kind: string, ~from: float, ~into: float) => promise<unit>,
+  /** Whether a plain binding's secret is written back sealed as read, or at its next write. */
+  writesBack: bool,
 }
 
 type secretRow = {secret: Nullable.t<string>}
@@ -40,6 +44,19 @@ let d1 = () => {
       (await statement(`SELECT secret FROM ${kind} WHERE id = ?`, [Number(id)])->Stores.first)
       ->Nullable.toOption
       ->Option.flatMap((row: secretRow) => row.secret->Nullable.toOption),
+    copy: (~kind, ~from, ~into) =>
+      kind == "organization"
+        ? statement(
+            "INSERT INTO organization (id, label, secret)
+            SELECT ?, label || '-copy', secret FROM organization WHERE id = ?",
+            [Number(into), Number(from)],
+          )->Stores.run
+        : statement(
+            "INSERT INTO binding (id, organization, secret, relayed)
+            SELECT ?, organization, secret, relayed FROM binding WHERE id = ?",
+            [Number(into), Number(from)],
+          )->Stores.run,
+    writesBack: true,
   }
 }
 
@@ -78,6 +95,11 @@ let objects = () => {
         ->Option.flatMap(o => o->Dict.get("secret"))
         ->Option.flatMap(JSON.Decode.string)
       ),
+    copy: async (~kind, ~from, ~into) =>
+      held
+      ->Dict.get(at(kind, from))
+      ->Option.forEach(bytes => held->Dict.set(at(kind, into), bytes)),
+    writesBack: false,
   }
 }
 
@@ -133,13 +155,24 @@ test("a plain secret is read as it is and written back sealed", async () =>
       (await state.binding(1.))->Option.map(b => b.secret),
     )
     deepEqual(read, (Some(secret), secret, Some(secret)), ~message=store.name)
+    // In objects a binding's write back raced another request's write of it, so none is made.
     deepEqual(
       (
         isSealed(await store.kept(~kind="organization", ~id=1.)),
         isSealed(await store.kept(~kind="organization", ~id=2.)),
-        isSealed(await store.kept(~kind="binding", ~id=1.)),
+        (await store.kept(~kind="binding", ~id=1.)) == Some(plain),
       ),
-      (true, true, true),
+      (true, true, !store.writesBack),
+      ~message=store.name,
+    )
+    // The binding's next write seals it, keeping what that write changed.
+    await state.addressed(~binding=1., ~address="10.200.0.1")
+    deepEqual(
+      (
+        isSealed(await store.kept(~kind="binding", ~id=1.)),
+        (await state.binding(1.))->Option.map(b => (b.secret, b.address)),
+      ),
+      (true, Some((secret, Some("10.200.0.1")))),
       ~message=store.name,
     )
     // Read again, the seals written back open as the plain secrets did.
@@ -175,7 +208,35 @@ test("a seal moved to another record, or an empty secret, is a fault", async () 
   }
 )
 
-test("a control given no key refuses to keep or read a secret, and keeps no binding", async () =>
+test("a whole record copied to another id does not open there", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let store = make()
+    let state = store.state(Sealing.ofKey(key))
+    let organization = await state.openOrganization("label-1", ~secret)
+    let binding = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    await state.addressed(~binding, ~address="10.200.0.1")
+    await store.copy(~kind="organization", ~from=organization.id, ~into=2.)
+    await store.copy(~kind="binding", ~from=binding, ~into=2.)
+    // Objects once opened a copied document under its own id field, so the copy opened.
+    let moved = store.writesBack
+      ? (
+          Some("the secret kept at organization:2:secret does not open under this key"),
+          Some("the secret kept at binding:2:secret does not open under this key"),
+        )
+      : (
+          Some("the record at state/organizations/2 holds another id than its path's"),
+          Some("the record at state/bindings/2 holds another id than its path's"),
+        )
+    deepEqual(
+      (await thrown(() => state.organizationSecret(2.)), await thrown(() => state.binding(2.))),
+      moved,
+      ~message=store.name,
+    )
+  }
+)
+
+test("a control given no key refuses to keep or read a secret, and writes nothing", async () =>
   for i in 0 to stores->Array.length - 1 {
     let make = stores->Array.getUnsafe(i)
     let store = make()
@@ -184,16 +245,72 @@ test("a control given no key refuses to keep or read a secret, and keeps no bind
       await thrown(() => keyless.openOrganization("first", ~secret)),
       await thrown(() => keyless.openBinding(~organization=1., ~secret, ~relayed=false)),
     )
+    // A keyless D1 control once inserted the organization before its seal threw.
+    let opened = await keyless.hasOrganization(1.)
     await store.put(~kind="organization", ~id=5., Envelope.Hex.encode(secret))
     deepEqual(
       (
         refused,
+        opened,
         await thrown(() => keyless.organizationSecret(5.)),
         await keyless.binding(1.),
         await store.kept(~kind="organization", ~id=5.),
       ),
-      ((Some(missing), Some(missing)), Some(missing), None, Some(Envelope.Hex.encode(secret))),
+      (
+        (Some(missing), Some(missing)),
+        false,
+        Some(missing),
+        None,
+        Some(Envelope.Hex.encode(secret)),
+      ),
       ~message=store.name,
     )
   }
 )
+
+test("a secret not 32 bytes is refused before any write", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let store = make()
+    let state = store.state(Sealing.ofKey(key))
+    let short = Uint8Array.fromArray([1, 2, 3])
+    deepEqual(
+      (
+        await thrown(() => state.openOrganization("first", ~secret=short)),
+        await thrown(() => state.openBinding(~organization=1., ~secret=short, ~relayed=false)),
+        await state.hasOrganization(1.),
+        await state.binding(1.),
+      ),
+      (
+        Some("the secret to seal at organization:0:secret is not 32 bytes"),
+        Some("the secret to seal at binding:0:secret is not 32 bytes"),
+        false,
+        None,
+      ),
+      ~message=store.name,
+    )
+  }
+)
+
+type countRow = {count: float}
+
+test("a binding whose secret is not written after its insert is deleted", async () => {
+  let database = Sqlite.database()
+  let state = State.ofDatabase(
+    Sqlite.refusing(database, "UPDATE binding SET secret"),
+    ~sealing=Sealing.ofKey(key),
+  )
+  let {id: organization} = await state.openOrganization("first", ~secret)
+  let refused = await thrown(() => state.openBinding(~organization, ~secret, ~relayed=false))
+  let count =
+    (
+      await database
+      ->Stores.prepare("SELECT COUNT(*) AS count FROM binding")
+      ->Stores.bind([])
+      ->Stores.first
+    )
+    ->Nullable.toOption
+    ->Option.map((row: countRow) => row.count)
+  // The row was deleted where its seal threw, and kept with an empty secret where the update did.
+  deepEqual((refused, count), (Some("refused UPDATE binding SET secret"), Some(0.)))
+})

@@ -15,6 +15,18 @@ let asDatabase: sqlite => Stores.database = %raw(`db => ({
   }),
 })`)
 
+/** A database whose statements beginning with `prefix` throw as they are run. */
+let refusing: (Stores.database, string) => Stores.database = %raw(`(db, prefix) => ({
+  prepare: sql => sql.startsWith(prefix)
+    ? {
+        bind: () => {
+          const refused = async () => { throw new Error("refused " + prefix) }
+          return { first: refused, run: refused }
+        },
+      }
+    : db.prepare(sql),
+})`)
+
 /** A database in memory with the control's migrations applied in order. */
 let database = () => {
   let db = openSqlite(":memory:")

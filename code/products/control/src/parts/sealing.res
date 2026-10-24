@@ -27,8 +27,11 @@ let ofKey = (given: option<string>) =>
 /** Where a secret is kept, `organization:1:secret`, what its seal is bound to. */
 let place = (~kind, ~id, ~field) => Web.utf8(`${kind}:${Float.toString(id)}:${field}`)
 
-/** A secret read, opened from its seal, or plain as it was kept before sealing and so to be sealed. */
+/** A secret read, opened from its seal, or plain as kept before sealing and so to be sealed. */
 type read = Opened(Uint8Array.t) | Plain(Uint8Array.t)
+
+/** The length of every secret the control makes, and the one it seals. */
+let secretLength = 32
 
 let keyOf = sealing =>
   switch sealing {
@@ -36,9 +39,15 @@ let keyOf = sealing =>
   | Unkeyed(why) => JsError.throwWithMessage(why)
   }
 
-/** A secret sealed for its place, as hex. */
+/** A secret sealed for its place, as hex, a secret not 32 bytes refused. */
 let seal = async (sealing, ~kind, ~id, ~field, secret) => {
   let key = await keyOf(sealing)
+  let at = `${kind}:${Float.toString(id)}:${field}`
+
+  // A plain secret is read by its 32 bytes, so a short secret could seal to what reads as plain.
+  if secret->TypedArray.length != secretLength {
+    JsError.throwWithMessage(`the secret to seal at ${at} is not 32 bytes`)
+  }
   let iv = Web.random(nonceLength)
   let sealed = await Web.sealed(key, ~iv, ~additionalData=place(~kind, ~id, ~field), secret)
   let byte = (bytes, i) => bytes->TypedArray.get(i)->Option.getOr(0)
@@ -48,12 +57,12 @@ let seal = async (sealing, ~kind, ~id, ~field, secret) => {
   Envelope.Hex.encode(Uint8Array.fromArray(written))
 }
 
-/** A secret kept as hex read for its place, a seal that does not open thrown and never taken as plain. */
+/** A secret kept as hex read for its place, a seal that does not open thrown, never read plain. */
 let read = async (sealing, ~kind, ~id, ~field, text) => {
   let key = await keyOf(sealing)
   let at = `${kind}:${Float.toString(id)}:${field}`
   switch Envelope.Hex.decode(text) {
-  | Some(bytes) if bytes->TypedArray.length == 32 => Plain(bytes)
+  | Some(bytes) if bytes->TypedArray.length == secretLength => Plain(bytes)
   | Some(bytes)
     if bytes->TypedArray.get(0) == Some(version) &&
       bytes->TypedArray.length > 1 + nonceLength + tagLength =>

@@ -31,23 +31,33 @@ type t = {
   deployment: float => promise<option<deployment>>,
 }
 
-// The key is a secret of the control's own until the keys library derives it from the masters, RFCs fhg6w and b8f35.
+// The key is the control's own until the keys library derives it from the masters.
+// RFCs fhg6w and b8f35 hold that step.
 /** A record's secret sealed for its place. */
 let sealed = (sealing, ~kind, ~id, secret) =>
   Sealing.seal(sealing, ~kind, ~id, ~field="secret", secret)
 
+/** Thrown before any write where the secret could not be sealed, no key given or not 32 bytes. */
+let sealable = async (sealing, ~kind, secret) => {
+  // Id 0 is no record's, and this seal is never kept.
+  let _: string = await sealed(sealing, ~kind, ~id=0., secret)
+}
+
 /**
- * A record's secret read, a plain one handed to `writeBack` sealed, an empty one a fault and never
- * a secret.
+ * A record's secret read, a plain one handed to `writeBack` sealed where one is given, an empty one
+ * a fault and never a secret.
  */
-let opened = async (sealing, ~kind, ~id, text, ~writeBack) => {
+let opened = async (sealing, ~kind, ~id, text, ~writeBack=?) => {
   if text == "" {
     JsError.throwWithMessage(`the ${kind} ${Float.toString(id)} holds an empty secret`)
   }
   switch await Sealing.read(sealing, ~kind, ~id, ~field="secret", text) {
   | Opened(secret) => secret
   | Plain(secret) =>
-    await writeBack(await sealed(sealing, ~kind, ~id, secret))
+    switch writeBack {
+    | Some(writeBack) => await writeBack(await sealed(sealing, ~kind, ~id, secret))
+    | None => ()
+    }
     secret
   }
 }
@@ -112,6 +122,7 @@ let ofDatabase = (database, ~sealing) => {
   let organizationAt = id => first("SELECT id, secret FROM organization WHERE id = ?", [Number(id)])
   {
     openOrganization: async (label, ~secret) => {
+      await sealable(sealing, ~kind="organization", secret)
       await run(
         "INSERT INTO organization (label) VALUES (?) ON CONFLICT (label) DO NOTHING",
         [Text(label)],
@@ -147,23 +158,28 @@ let ofDatabase = (database, ~sealing) => {
       | Some(text) => Some(await secretOf(~kind="organization", ~id, text))
       | None => None
       },
-    openBinding: async (~organization, ~secret, ~relayed) =>
+    openBinding: async (~organization, ~secret, ~relayed) => {
+      await sealable(sealing, ~kind="binding", secret)
+      let written = async id => {
+        let seal = await sealed(sealing, ~kind="binding", ~id, secret)
+        await run("UPDATE binding SET secret = ? WHERE id = ?", [Text(seal), Number(id)])
+      }
       switch await first(
         "INSERT INTO binding (organization, secret, relayed) VALUES (?, '', ?) RETURNING id",
         [Number(organization), Number(relayed ? 1. : 0.)],
       ) {
       | Some({id}: idRow) =>
         // The id is known only once inserted, so its secret is sealed for it after.
-        switch await sealed(sealing, ~kind="binding", ~id, secret) {
-        | seal =>
-          await run("UPDATE binding SET secret = ? WHERE id = ?", [Text(seal), Number(id)])
-          id
+        // Any failure after the insert deletes the row, so none is left with an empty secret.
+        switch await written(id) {
+        | () => id
         | exception JsExn(e) =>
           await run("DELETE FROM binding WHERE id = ?", [Number(id)])
           throw(JsExn(e))
         }
       | None => JsError.throwWithMessage("no binding inserted")
-      },
+      }
+    },
     binding: id => bindingAt(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)]),
     storage: organization =>
       bindingAt(
@@ -246,10 +262,27 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     held(await objects.read(name))->Option.map(bytes => JSON.parseOrThrow(Web.fromUtf8(bytes)))
   let writeJson = async (name, json) =>
     held(await objects.write(name, Web.utf8(JSON.stringify(json))))
+  // A record is read by the id its path names, a document holding another id a fault.
+  let record = async (name, id) =>
+    switch await readJson(name) {
+    | Some(json) if json->number("id") == Some(id) => Some(json)
+    | Some(_) => JsError.throwWithMessage(`the record at ${name} holds another id than its path's`)
+    | None => None
+    }
+  let idOf = name =>
+    switch name->String.split("/")->Array.at(-1)->Option.flatMap(Float.fromString) {
+    | Some(id) => id
+    | None => JsError.throwWithMessage(`the record at ${name} is named by no id`)
+    }
   let every = async prefix =>
-    (await Promise.all(held(await objects.list(prefix))->Array.map(readJson)))->Array.filterMap(j =>
-      j
-    )
+    (
+      await Promise.all(
+        held(await objects.list(prefix))->Array.map(async name => {
+          let id = idOf(name)
+          (await record(name, id))->Option.map(json => (id, json))
+        }),
+      )
+    )->Array.filterMap(j => j)
   // Ids are given one at a time, as one process serves this control, RFC rxmd9.
   let queue = ref(Promise.resolve())
   let serial = f => {
@@ -257,28 +290,24 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     queue := run->Promise.then(_ => Promise.resolve())->Promise.catch(_ => Promise.resolve())
     run
   }
-  let next = all =>
-    all->Array.reduce(0., (most, json) =>
-      Math.max(most, json->number("id")->Option.getOr(0.))
-    ) +. 1.
+  let next = all => all->Array.reduce(0., (most, (id, _)) => Math.max(most, id)) +. 1.
   let organizationAt = id => `state/organizations/${Float.toString(id)}`
   let bindingAt = id => `state/bindings/${Float.toString(id)}`
-  // A record's secret replaced only where it still holds the plain one read.
-  let replaced = async (name, plain, seal) =>
-    switch await readJson(name) {
+  // An organization's plain secret is written back, since no write but its opening changes it.
+  // A binding's is not, since worker.res builds a state per request and another may write it.
+  // A binding's plain secret is sealed at the binding's next write, `changed` below.
+  let replaced = async (id, plain, seal) =>
+    switch await record(organizationAt(id), id) {
     | Some(json) if json->text("secret") == Some(plain) =>
       let o = json->JSON.Decode.object->Option.getOr(dict{})->Dict.copy
       o->Dict.set("secret", JSON.String(seal))
-      await writeJson(name, JSON.Object(o))
+      await writeJson(organizationAt(id), JSON.Object(o))
     | Some(_) | None => ()
     }
-  let rewritten = (name, plain, seal) => serial(() => replaced(name, plain, seal))
-  let bindingFromJson = async (json, ~writeBack) =>
-    switch (json->number("id"), json->number("organization"), json->text("secret")) {
-    | (Some(id), Some(organization), Some(kept)) =>
-      let secret = await opened(sealing, ~kind="binding", ~id, kept, ~writeBack=seal =>
-        writeBack(bindingAt(id), kept, seal)
-      )
+  let bindingFromJson = async (~id, json) =>
+    switch (json->number("organization"), json->text("secret")) {
+    | (Some(organization), Some(kept)) =>
+      let secret = await opened(sealing, ~kind="binding", ~id, kept)
       Some(
         (
           {
@@ -294,16 +323,14 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     | _ => None
     }
   let binding = async id =>
-    switch await readJson(bindingAt(id)) {
-    | Some(json) => await bindingFromJson(json, ~writeBack=rewritten)
+    switch await record(bindingAt(id), id) {
+    | Some(json) => await bindingFromJson(~id, json)
     | None => None
     }
   let bindings = async () =>
     (
       await Promise.all(
-        (await every("state/bindings/"))->Array.map(json =>
-          bindingFromJson(json, ~writeBack=rewritten)
-        ),
+        (await every("state/bindings/"))->Array.map(((id, json)) => bindingFromJson(~id, json)),
       )
     )->Array.filterMap(b => b)
   let writeBinding = async (b: binding) =>
@@ -313,28 +340,28 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     )
   let changed = (id, f) =>
     serial(async () =>
-      switch await readJson(bindingAt(id)) {
+      switch await record(bindingAt(id), id) {
       | Some(json) =>
-        // Written whole and sealed below, so a plain secret read here needs no writing back.
-        switch await bindingFromJson(json, ~writeBack=(_, _, _) => Promise.resolve()) {
+        // Written whole and sealed below, so a plain secret read here is sealed as it is written.
+        switch await bindingFromJson(~id, json) {
         | Some(b) => await writeBinding(f(b))
         | None => ()
         }
       | None => ()
       }
     )
-  let organization = async id => await readJson(organizationAt(id))
+  let organization = id => record(organizationAt(id), id)
   {
     openOrganization: (label, ~secret) =>
       serial(async () => {
+        await sealable(sealing, ~kind="organization", secret)
         let all = await every("state/organizations/")
-        switch all->Array.find(json => json->text("label") == Some(label)) {
-        | Some(json) =>
-          let id = json->number("id")->Option.getOr(0.)
+        switch all->Array.find(((_, json)) => json->text("label") == Some(label)) {
+        | Some((id, json)) =>
           switch json->text("secret") {
           | Some(kept) =>
             let secret = await opened(sealing, ~kind="organization", ~id, kept, ~writeBack=seal =>
-              replaced(organizationAt(id), kept, seal)
+              replaced(id, kept, seal)
             )
             ({id, secret}: organization)
           | None =>
@@ -359,13 +386,14 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
       | Some(kept) =>
         Some(
           await opened(sealing, ~kind="organization", ~id, kept, ~writeBack=seal =>
-            rewritten(organizationAt(id), kept, seal)
+            serial(() => replaced(id, kept, seal))
           ),
         )
       | None => None
       },
     openBinding: (~organization, ~secret, ~relayed) =>
       serial(async () => {
+        await sealable(sealing, ~kind="binding", secret)
         let id = next(await every("state/bindings/"))
         await writeBinding({id, organization, secret, tunnel: None, address: None, relayed})
         id

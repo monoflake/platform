@@ -72,6 +72,19 @@ test("a plain secret of 32 bytes is read as plain, and what is neither is refuse
   )
 })
 
+test("a secret not 32 bytes is refused, so no seal reads as plain", async () => {
+  let sealing = Sealing.ofKey(key)
+  let sealedOf = length =>
+    thrown(() =>
+      Sealing.seal(sealing, ~kind="binding", ~id=1., ~field="secret", Uint8Array.fromLength(length))
+    )
+  // A 3-byte secret once sealed to exactly 32 bytes, which a read took as a plain secret.
+  deepEqual(
+    [await sealedOf(3), await sealedOf(0), await sealedOf(33)],
+    Array.make(~length=3, Some("the secret to seal at binding:1:secret is not 32 bytes")),
+  )
+})
+
 test(
   "a control given no key, or a key not 32 bytes, refuses to keep or read a secret",
   async () => {
