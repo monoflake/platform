@@ -1,7 +1,7 @@
 type t = {name: string, address: string}
 
-/** An origin, its scheme and its authority alone. */
-let origin = /^https?:\/\/[^\/?#]+$/
+/** A control's address, its scheme, its authority and a path where it is an app of another. */
+let origin = /^https?:\/\/[^\/?#]+(\/[^?#]*)?$/
 
 let control = args =>
   switch args->Array.indexOf("--control") {
@@ -13,7 +13,7 @@ let control = args =>
       let trimmed = given->String.endsWith("/") ? given->String.slice(~start=0, ~end=-1) : given
       origin->RegExp.test(trimmed)
         ? Ok((Some(trimmed), rest))
-        : Error(`--control ${given} is no control's origin, http or https and no path`)
+        : Error(`--control ${given} is no control's address, http or https with no query`)
     | None => Error("--control names no control's origin")
     }
   }

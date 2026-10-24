@@ -7,7 +7,10 @@ module Contracts = Envelope.Contracts
 /** The environment variable the operator's secret is read from, never an argument. */
 let operatorVariable: string
 
-/** A target naming a control, `control:<origin>`, its origin, or none where it is ssh's. */
+/**
+ * A target naming a control, `control:<address>`, its address, a path beneath an origin where the
+ * control is an app of another, or none where it is ssh's.
+ */
 let origin: string => option<result<string, string>>
 
 /** The gateway's address of an app, `<origin>/v1/app-<id>/`. */
@@ -23,12 +26,14 @@ type t = {
 /** The release put, its artifact the bundle's bytes. */
 let put: (t, Uint8Array.t) => promise<result<Contracts.ReleaseHeld.t, Machine.refused>>
 
-/** The release deployed as the app onto a binding, as the binding's driver answered. */
+/** The release deployed onto a binding with its secrets and network, as its driver answered. */
 let deploy: (
   t,
   ~binding: float,
   ~app: float,
   ~hash: Uint8Array.t,
+  ~secrets: dict<Uint8Array.t>,
+  ~network: array<Contracts.DeploymentNetwork.t>,
 ) => promise<result<Contracts.DeploymentDescribed.t, Machine.refused>>
 
 /** The app's deployment as its host's driver describes it, through the control. */

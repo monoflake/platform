@@ -9,7 +9,11 @@ test("--control is taken out with its origin, a trailing slash dropped", () => {
   deepEqual(Through.control(["local"]), Ok((None, ["local"])))
   ok(Through.control(["local", "--control"])->Result.isError)
   ok(Through.control(["local", "--control", "localhost:8787"])->Result.isError)
-  ok(Through.control(["local", "--control", "https://c.example/v1"])->Result.isError)
+  deepEqual(
+    Through.control(["local", "--control", "https://c.example/v1/app-2/"]),
+    Ok((Some("https://c.example/v1/app-2"), ["local"])),
+  )
+  ok(Through.control(["local", "--control", "https://c.example/v1?x=1"])->Result.isError)
 })
 
 test("a control's gateway is asked where one is named, the tunnel otherwise", () => {

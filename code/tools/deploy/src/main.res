@@ -4,13 +4,36 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <id>] [--binding <id>] [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app's id, the binding a control deploys it
- * onto, and whether nothing is changed.
+ * onto, the secrets and network a control hands the driver, and whether nothing is changed.
  */
-type args = {directory: string, target: string, app: float, binding: option<float>, dry: bool}
+type args = {
+  directory: string,
+  target: string,
+  app: float,
+  binding: option<float>,
+  secrets: array<string>,
+  network: array<Contracts.DeploymentNetwork.t>,
+  dry: bool,
+}
+
+/** A comma's list, its empty entries passed over. */
+let listed = text => text->String.split(",")->Array.map(String.trim)->Array.filter(s => s != "")
+
+/** A secret's name, as an environment variable writes it. */
+let secretName = /^[A-Z][A-Z0-9_]*$/
+
+let networkOf = name =>
+  switch name {
+  | "http" => Some(Contracts.DeploymentNetwork.Http)
+  | "tcp" => Some(Tcp)
+  | "udp" => Some(Udp)
+  | "icmp" => Some(Icmp)
+  | _ => None
+  }
 
 let id = text =>
   switch Float.fromString(text) {
@@ -30,6 +53,17 @@ let rec parse = (args, given) =>
     switch id(text) {
     | Some(binding) => parse(rest, {...given, binding: Some(binding)})
     | None => Error(`--binding ${text} is no id`)
+    }
+  | list{"--secrets", text, ...rest} =>
+    switch listed(text)->Array.find(n => !(secretName->RegExp.test(n))) {
+    | Some(bad) => Error(`--secrets ${bad} is no secret's name`)
+    | None => parse(rest, {...given, secrets: listed(text)})
+    }
+  | list{"--network", text, ...rest} =>
+    let kinds = listed(text)->Array.map(n => (n, networkOf(n)))
+    switch kinds->Array.find(((_, kind)) => kind == None) {
+    | Some((bad, _)) => Error(`--network ${bad} is none of http, tcp, udp and icmp`)
+    | None => parse(rest, {...given, network: kinds->Array.filterMap(((_, kind)) => kind)})
     }
   | list{flag, ..._} if flag->String.startsWith("--") => Error(`${flag} is no flag of ${usage}`)
   | list{named, ...rest} if given.directory == "" => parse(rest, {...given, directory: named})
@@ -269,7 +303,16 @@ let rec polled = async (ask, ready, ~left=300) =>
   }
 
 /** The release put, deployed onto the binding and running through a control, then asked there. */
-let throughControl = async (control: Control.t, ~app, ~binding, ~hash, ~path, ~dry) => {
+let throughControl = async (
+  control: Control.t,
+  ~app,
+  ~binding,
+  ~hash,
+  ~path,
+  ~secrets,
+  ~network,
+  ~dry,
+) => {
   let progress = async () =>
     switch await Control.describe(control, ~app) {
     | Ok(described) => Ok(Deploying.progress(described, hash))
@@ -288,7 +331,7 @@ let throughControl = async (control: Control.t, ~app, ~binding, ~hash, ~path, ~d
     | Ok(held) if Envelope.Hex.encode(held.hash) != Envelope.Hex.encode(hash) =>
       Error(`the control kept ${Envelope.Hex.encode(held.hash)}, not the bundle packed`)
     | Ok(_) =>
-      switch await Control.deploy(control, ~binding, ~app, ~hash) {
+      switch await Control.deploy(control, ~binding, ~app, ~hash, ~secrets, ~network) {
       | Error(refused) => Error(refusal(refused))
       | Ok(_) => (await polled(progress, running))->Result.map(() => "deployed and running")
       }
@@ -328,6 +371,19 @@ let throughControl = async (control: Control.t, ~app, ~binding, ~hash, ~path, ~d
   )
 }
 
+/** Each secret named, its value the environment's variable of its name, or the first unset. */
+let secretsOf = names =>
+  names->Array.reduce(Ok(dict{}), (held, name) =>
+    held->Result.flatMap(held =>
+      switch Host.env->Dict.get(name) {
+      | Some(value) if value != "" =>
+        held->Dict.set(name, Bytes.utf8(value))
+        Ok(held)
+      | Some(_) | None => Error(`the secret ${name} is unset in the environment`)
+      }
+    )
+  )
+
 /** The control a target names, with the operator's secret, or why it cannot be called. */
 let controlOf = (named, binding) =>
   Control.origin(named)->Option.map(origin =>
@@ -345,10 +401,17 @@ let main = async () => {
   let started = Date.now()
   switch parse(
     List.fromArray(Host.argv->Array.slice(~start=2)),
-    {directory: "", target: "", app: 1., binding: None, dry: false},
+    {directory: "", target: "", app: 1., binding: None, secrets: [], network: [], dry: false},
   ) {
   | Error(why) =>
     Console.error(`deploy: ${why}`)
+    Host.setExitCode(Host.process, 2)
+  | Ok({target: named, secrets, network})
+    if Control.origin(named) == None && (secrets != [] || network != []) =>
+    Console.error(`deploy: --secrets and --network are a control's, and ${named} is a machine`)
+    Host.setExitCode(Host.process, 2)
+  | Ok({secrets}) if secretsOf(secrets)->Result.isError =>
+    secretsOf(secrets)->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     Host.setExitCode(Host.process, 2)
   | Ok({target: named, binding})
     if controlOf(named, binding)->Option.mapOr(false, Result.isError) =>
@@ -356,7 +419,8 @@ let main = async () => {
       c->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     )
     Host.setExitCode(Host.process, 2)
-  | Ok({directory, target: named, app, binding, dry}) =>
+  | Ok({directory, target: named, app, binding, secrets, network, dry}) =>
+    let secrets = secretsOf(secrets)->Result.getOr(dict{})
     let directory = Host.absolute(directory)
     let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-"]))
     let result = await timed(
@@ -373,7 +437,8 @@ let main = async () => {
     )
     ->after(((hash, path, _)) =>
       switch controlOf(named, binding) {
-      | Some(Ok((control, binding))) => throughControl(control, ~app, ~binding, ~hash, ~path, ~dry)
+      | Some(Ok((control, binding))) =>
+        throughControl(control, ~app, ~binding, ~hash, ~path, ~secrets, ~network, ~dry)
       | Some(Error(why)) => Promise.resolve(Error(why))
       | None =>
         timed(

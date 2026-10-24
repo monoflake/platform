@@ -32,14 +32,21 @@ let described = `{"status": "success", "data": {"runs": {"name": "app", "id": 1}
     32,
   )}", "state": {"name": "running", "address": "a", "runtime": "workerd", "isolation": ["isolate"]}}}`
 
-test("a control's target is its origin, http or https with no path, and any other is ssh's", () => {
-  deepEqual(Control.origin("control:http://localhost:8787/"), Some(Ok("http://localhost:8787")))
-  deepEqual(Control.origin("control:https://c.example"), Some(Ok("https://c.example")))
-  ok(Control.origin("control:localhost:8787")->Option.mapOr(false, Result.isError))
-  ok(Control.origin("control:https://c.example/v1")->Option.mapOr(false, Result.isError))
-  deepEqual(Control.origin("root@buf"), None)
-  deepEqual(Control.origin("local"), None)
-})
+test(
+  "a control's target is its address, http or https with no query, and any other is ssh's",
+  () => {
+    deepEqual(Control.origin("control:http://localhost:8787/"), Some(Ok("http://localhost:8787")))
+    deepEqual(Control.origin("control:https://c.example"), Some(Ok("https://c.example")))
+    ok(Control.origin("control:localhost:8787")->Option.mapOr(false, Result.isError))
+    deepEqual(
+      Control.origin("control:https://c.example/v1/app-2/"),
+      Some(Ok("https://c.example/v1/app-2")),
+    )
+    ok(Control.origin("control:https://c.example/v1?x=1")->Option.mapOr(false, Result.isError))
+    deepEqual(Control.origin("root@buf"), None)
+    deepEqual(Control.origin("local"), None)
+  },
+)
 
 test("the gateway's address of an app is its scope under the control's origin", () =>
   deepEqual(
@@ -63,7 +70,11 @@ testAsync(
     )
     let held = await Control.put(control, Uint8Array.fromArray([1, 2, 3]))
     deepEqual(held->Result.map(h => Envelope.Hex.encode(h.hash)), Ok(String.repeat("ab", 32)))
-    ok((await Control.deploy(control, ~binding=2., ~app=1., ~hash))->Result.isOk)
+    ok(
+      (
+        await Control.deploy(control, ~binding=2., ~app=1., ~hash, ~secrets=dict{}, ~network=[])
+      )->Result.isOk,
+    )
     ok((await Control.describe(control, ~app=1.))->Result.isOk)
     deepEqual(
       sent->Array.map(s => (s.url, s.init.method, s.init.headers->Dict.get("authorization"))),
@@ -87,6 +98,35 @@ testAsync(
   },
 )
 
+testAsync("a deploy hands the control the secrets and network it is given", async () => {
+  let (control, sent) = faked(dict{"/releases/deploy": (200, described)})
+  ignore(
+    await Control.deploy(
+      control,
+      ~binding=1.,
+      ~app=2.,
+      ~hash,
+      ~secrets=dict{"OPERATOR": Bytes.utf8("kept")},
+      ~network=[Http],
+    ),
+  )
+  let input =
+    sent
+    ->Array.get(0)
+    ->Option.flatMap(s => s.init.body)
+    ->Option.map(b => JSON.parseOrThrow(b))
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(o => o->Dict.get("input"))
+    ->Option.flatMap(JSON.Decode.object)
+  deepEqual(
+    (
+      input->Option.flatMap(i => i->Dict.get("secrets")),
+      input->Option.flatMap(i => i->Dict.get("network")),
+    ),
+    (Some(JSON.parseOrThrow(`{"OPERATOR": "a2VwdA"}`)), Some(JSON.parseOrThrow(`["http"]`))),
+  )
+})
+
 testAsync(
   "a refusal is its reason and message, and a control that does not answer unreached",
   async () => {
@@ -99,7 +139,7 @@ testAsync(
       },
     )
     deepEqual(
-      await Control.deploy(control, ~binding=2., ~app=1., ~hash),
+      await Control.deploy(control, ~binding=2., ~app=1., ~hash, ~secrets=dict{}, ~network=[]),
       Error({reason: "unbound", message: "not bound"}),
     )
     deepEqual(

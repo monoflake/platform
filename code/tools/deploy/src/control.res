@@ -9,9 +9,9 @@ let origin = target =>
     let given = target->String.slice(~start=String.length("control:"))
     let trimmed = given->String.endsWith("/") ? given->String.slice(~start=0, ~end=-1) : given
     Some(
-      /^https?:\/\/[^\/?#]+$/->RegExp.test(trimmed)
+      /^https?:\/\/[^\/?#]+(\/[^?#]*)?$/->RegExp.test(trimmed)
         ? Ok(trimmed)
-        : Error(`${given} is no control's origin, http or https and no path`),
+        : Error(`${given} is no control's address, http or https with no query`),
     )
   }
 
@@ -61,10 +61,18 @@ let releases = call => Contracts.Interface.Releases.toJson({call, capabilities: 
 let put = (control, artifact) =>
   call(control, releases(Put({form: Modules, artifact})), Contracts.ReleaseHeld.fromJson)
 
-let deploy = (control, ~binding, ~app, ~hash) =>
+let deploy = (control, ~binding, ~app, ~hash, ~secrets, ~network) =>
   call(
     control,
-    releases(Deploy({binding, app, release: hash})),
+    releases(
+      Deploy({
+        binding,
+        app,
+        release: hash,
+        secrets: ?(secrets->Dict.keysToArray == [] ? None : Some(secrets)),
+        network: ?(network == [] ? None : Some(network)),
+      }),
+    ),
     Contracts.DeploymentDescribed.fromJson,
   )
 
