@@ -270,7 +270,11 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     | None => None
     }
   let idOf = name =>
-    switch name->String.split("/")->Array.at(-1)->Option.flatMap(Float.fromString) {
+    switch name
+    ->String.split("/")
+    ->Array.at(-1)
+    ->Option.filter(last => /^[0-9]+$/->RegExp.test(last))
+    ->Option.flatMap(Float.fromString) {
     | Some(id) => id
     | None => JsError.throwWithMessage(`the record at ${name} is named by no id`)
     }
@@ -283,7 +287,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         }),
       )
     )->Array.filterMap(j => j)
-  // Ids are given one at a time, as one process serves this control, RFC rxmd9.
+  // Ids are given one at a time within a request, a state being built for each, RFC rxmd9.
   let queue = ref(Promise.resolve())
   let serial = f => {
     let run = queue.contents->Promise.then(() => f())

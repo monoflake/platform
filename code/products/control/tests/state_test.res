@@ -236,6 +236,27 @@ test("a whole record copied to another id does not open there", async () =>
   }
 )
 
+test("a stale copy beside the records, named by more than an id, is no record", async () => {
+  let held: dict<Uint8Array.t> = dict{}
+  let kept: Objects.t = {
+    write: async (name, bytes) => Ok(held->Dict.set(name, bytes)),
+    read: async name => Ok(held->Dict.get(name)),
+    list: async prefix => Ok(
+      held->Dict.keysToArray->Array.filter(n => n->String.startsWith(prefix)),
+    ),
+  }
+  let state = State.ofObjects(kept, ~sealing=Sealing.ofKey(key))
+  let organization = await state.openOrganization("label-1", ~secret)
+  let binding = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+  await state.addressed(~binding, ~address="10.200.0.1")
+  held->Dict.set("state/bindings/1-old", held->Dict.getUnsafe("state/bindings/1"))
+  // parseFloat once read `1-old` as id 1, so a stale copy could answer for binding 1.
+  deepEqual(
+    await thrown(() => state.addressedAt("10.200.0.1")),
+    Some("the record at state/bindings/1-old is named by no id"),
+  )
+})
+
 test("a control given no key refuses to keep or read a secret, and writes nothing", async () =>
   for i in 0 to stores->Array.length - 1 {
     let make = stores->Array.getUnsafe(i)

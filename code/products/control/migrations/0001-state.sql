@@ -1,7 +1,7 @@
 -- The control's state, src/parts/state.resi; an applied migration is never edited.
 CREATE TABLE organization (id INTEGER PRIMARY KEY, label TEXT NOT NULL UNIQUE);
 
--- The secret sent to the host's driver as its token, kept sealed in hex, src/parts/sealing.res.
+-- The secret in hex, sent to the host's driver as its token on every call, RFC 3d3nt.
 CREATE TABLE binding (
 	id INTEGER PRIMARY KEY,
 	organization INTEGER NOT NULL REFERENCES organization (id),
