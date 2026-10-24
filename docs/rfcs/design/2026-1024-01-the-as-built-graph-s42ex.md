@@ -35,13 +35,25 @@ changes; no design edge is removed. A contract so declared that is not declared 
 reported by Crossing, a scaffold. An edge's type gains a mark that its target is on the platform
 beneath, RFC 94y0d.
 
+**An edge is in the as-built graph only where a block provides its source**, or where a block
+declares it as an extra edge, amended by the author on 2026-10-24. A name no block provides brings
+none of its edges, since a component with no code has no edge that runs; an edge to it stands where
+its source is provided. **An edge to a boundary `?x`, pointed at a block that provides `?x`, carries
+`?x` as its contract**, and that block answers `?x` by its `provides`, amended by the author on
+2026-10-24: the design writes no contract on an edge to a boundary, whose contract is its prose, and
+without it Crossing would report every block that rightly provides a boundary.
+
 **One set of rules runs twice.**
 
 - The design graph is checked as it is now, and a violation there is refused.
 - The as-built graph is checked by the same rules, and a violation there is reported, not refused.
   The list of violations on the as-built graph is the list of scaffolds; no register of scaffolds is
   kept apart from it.
-- The as-built graph's first version runs Rules, Roles and Crossing alone.
+- The as-built graph's first version runs Rules, Roles and Crossing alone. **Pending**, decided by
+  the author on 2026-10-24: D1 to D3 run on the as-built graph too, which find a block that needs a
+  name it provides itself, as `control(organization)` needs and provides `?builder`, a loop the
+  first version cannot see. It waits too on the as-built graph keeping such an edge, which it drops
+  today as internal to the block.
 - **The platform keeps data from the moment the as-built graph has no violation**, which is what
   the words mean. From then on, a violation on the as-built graph is refused.
 

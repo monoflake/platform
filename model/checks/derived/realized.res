@@ -1,6 +1,7 @@
 /**
  * The as-built graph, each block in the place of every name it provides, RFC s42ex. A merged
- * node keeps its main name's own attributes and answers what each name it provides answers.
+ * node keeps its main name's own attributes and answers what each name it provides answers, and
+ * each boundary name it provides.
  */
 open Base
 
@@ -55,14 +56,20 @@ let carry = (main, from, edge: Components.edge) =>
   | None => edge
   }
 
-/** An edge from a node providing `own`, to every node its target is, none where it is internal. */
+/**
+ * An edge from a node providing `own`, to every node its target is, none where it is internal. It
+ * carries `?x` as the contract of an edge to a boundary it points at the provider of.
+ */
 let retarget = (own: array<string>, edge: Components.edge) =>
   if edge.beneath == Some(true) {
     [{...edge, to_: beneath}]
   } else if own->Array.includes(edge.to_) {
     []
   } else {
-    realize(edge.to_)->Array.map(t => {...edge, to_: t})
+    let carried = edge.to_->String.startsWith("?") && edge.contract->Option.getOr([]) == []
+    realize(edge.to_)->Array.map(t =>
+      carried && t != edge.to_ ? {...edge, to_: t, contract: [edge.to_]} : {...edge, to_: t}
+    )
   }
 
 let union = (lists: array<array<string>>) => {
@@ -77,7 +84,10 @@ let union = (lists: array<array<string>>) => {
   out
 }
 
-/** The as-built graph of the design's `nodes`, a block merged from every name it provides. */
+/**
+ * The as-built graph of the design's `nodes`, a block merged from every name it provides. A name no
+ * block provides keeps its node and none of its edges.
+ */
 let derive = (nodes: dict<Components.component>): dict<Components.component> => {
   let merged = mains->Array.filterMap(m =>
     nodes
@@ -92,7 +102,9 @@ let derive = (nodes: dict<Components.component>): dict<Components.component> => 
         ->Array.concat(declaredOf(m)->Option.mapOr([], b => b.extra))
         ->Array.flatMap(e => retarget(names, e))
       let answers = union(
-        names->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([])),
+        names
+        ->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([]))
+        ->Array.concat([names->Array.filter(n => n->String.startsWith("?"))]),
       )
       (m, {...main, edges, answers: ?(answers == [] ? None : Some(answers))})
     })
@@ -101,7 +113,7 @@ let derive = (nodes: dict<Components.component>): dict<Components.component> => 
     nodes
     ->Dict.toArray
     ->Array.filter(((n, _)) => providers(n) == [])
-    ->Array.map(((n, c)) => (n, {...c, edges: c.edges->Array.flatMap(e => retarget([], e))}))
+    ->Array.map(((n, c)) => (n, {...c, edges: []}))
   Array.concatMany(merged, [standing, [(beneath, Provided.beneath)]])
   ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
   ->Dict.fromArray

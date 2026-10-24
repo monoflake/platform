@@ -93,8 +93,10 @@ wrong; and its contract, who defines the format crossing it.
 of the storage and `footing` of `footing(organization)`. A part is answered with its whole,
 `record.writer` with `records` and `bundle.issuer` with `bundle`. Where the source reads a format
 another defines, the edge names them in `reads` and its target answers none of it. A boundary
-`?name` may stand as a contract, the one it writes. The platform beneath answers only its
-products' contracts at layer 0, RFC 94y0d. Crossing holds this, `model/checks/design/crossing.res`.
+`?name` may stand as a contract, the one it writes, and an edge to a boundary that a block provides
+carries it so as built, RFC s42ex. The platform beneath answers only its
+products' contracts at layer 0, RFC 94y0d. Crossing holds this, `model/checks/design/crossing.res`,
+over the as-built graph `model/checks/derived/realized.res` draws.
 
 **A format carried unread is exempt from the contract.** A tablet holding the function product's
 rows runs SQL, whose rules are its own, and reads nothing of what the rows mean: a renamed column
