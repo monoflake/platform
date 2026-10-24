@@ -4,7 +4,7 @@
  */
 open Base
 
-/** The node standing for the platform beneath, to the one above a vendor, RFC 94y0d. */
+/** The name of the node standing for the platform beneath, `Provided.beneath`, RFC 94y0d. */
 let beneath = "beneath"
 
 /** The manifest a block's directory holds for each of its languages once its code is written. */
@@ -45,6 +45,16 @@ let realize = name =>
   | by => by
   }
 
+/** A design edge of `from` as block `main` builds it, the contract it carries declared, s42ex. */
+let carry = (main, from, edge: Components.edge) =>
+  switch declaredOf(main)
+  ->Option.flatMap(b => b.carries)
+  ->Option.getOr([])
+  ->Array.find((c: Provided.carried) => c.from == from && c.to_ == edge.to_) {
+  | Some(c) => {...edge, contract: c.contract}
+  | None => edge
+  }
+
 /** An edge from a node providing `own`, to every node its target is, none where it is internal. */
 let retarget = (own: array<string>, edge: Components.edge) =>
   if edge.beneath == Some(true) {
@@ -76,7 +86,9 @@ let derive = (nodes: dict<Components.component>): dict<Components.component> => 
       let names = provides(m)
       let edges =
         names
-        ->Array.flatMap(n => nodes->Dict.get(n)->Option.mapOr([], c => c.edges))
+        ->Array.flatMap(
+          n => nodes->Dict.get(n)->Option.mapOr([], c => c.edges->Array.map(e => carry(m, n, e))),
+        )
         ->Array.concat(declaredOf(m)->Option.mapOr([], b => b.extra))
         ->Array.flatMap(e => retarget(names, e))
       let answers = union(
@@ -90,13 +102,7 @@ let derive = (nodes: dict<Components.component>): dict<Components.component> => 
     ->Dict.toArray
     ->Array.filter(((n, _)) => providers(n) == [])
     ->Array.map(((n, c)) => (n, {...c, edges: c.edges->Array.flatMap(e => retarget([], e))}))
-  let platformBeneath: Components.component = {
-    layer: Components.vendor,
-    kind: #ground,
-    edges: [],
-    uses: [],
-  }
-  Array.concatMany(merged, [standing, [(beneath, platformBeneath)]])
+  Array.concatMany(merged, [standing, [(beneath, Provided.beneath)]])
   ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
   ->Dict.fromArray
 }

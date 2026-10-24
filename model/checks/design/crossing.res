@@ -1,6 +1,6 @@
 /**
  * Each edge between two of the platform's processes names the contract it carries, one the model
- * declares, an app's WIT or one in `undeclared`. RFC fhg6w.
+ * declares, an app's WIT or one in `undeclared`, and its target answers it. RFC fhg6w.
  */
 open Base
 
@@ -11,7 +11,7 @@ let pending = Components.undeclared->Array.map(((n, _)) => `?${n}`)
 
 /**
  * Why a contract an edge from `name` names is none the model declares, given the half its records
- * are of, or none where it is declared. A contract led by `?` is asked of `pending` alone.
+ * are of, or none. One led by `?` is asked of `pending` and of the boundaries with a contract.
  */
 let fault = (g: graph, name, half, c) =>
   if c->String.startsWith("record.") {
@@ -25,7 +25,9 @@ let fault = (g: graph, name, half, c) =>
       ? None
       : Some(`records, yet ${name} writes none there`)
   } else if c->String.startsWith("?") {
-    pending->Array.includes(c) ? None : Some(`${c}, undeclared and named in no row`)
+    pending->Array.includes(c) || contracted(c)
+      ? None
+      : Some(`${c}, undeclared and named in no row`)
   } else if (
     c == "wit" ||
     interfaces->Array.includes(c) ||
@@ -41,7 +43,35 @@ let fault = (g: graph, name, half, c) =>
 let halfAcross = (g: graph, half, to_) =>
   componentIn(g, to_)->Option.flatMap(t => t.half)->Option.orElse(half)
 
-/** Every edge over one graph that names no contract the model declares, RFC s42ex. */
+/** A name's base, its qualifier in parentheses aside, `footing` of `footing(organization)`. */
+let base = n => n->String.split("(")->Array.get(0)->Option.getOr(n)
+
+/** The whole a contract is a part of, `records` of `record.writer`, or the contract itself. */
+let whole = c =>
+  if c->String.startsWith("record.") {
+    "records"
+  } else if c->String.startsWith("bundle.") {
+    "bundle"
+  } else {
+    c
+  }
+
+/**
+ * Whether `to_` answers `c`, as its `answers` lists it, it is the base name of `to_`, or it is a
+ * part of a whole `to_` answers.
+ */
+let answered = (g: graph, to_, c) =>
+  switch componentIn(g, to_) {
+  | None => true
+  | Some(t) =>
+    let listed = n => t.answers->Option.getOr([])->Array.includes(n) || n == base(to_)
+    listed(c) || listed(whole(c))
+  }
+
+/**
+ * Every edge over one graph that names no contract the model declares, or one its target does not
+ * answer and no `reads` places elsewhere, RFC s42ex.
+ */
 let check = (g: graph): checked => {
   let found = []
   let used = Set.make()
@@ -61,9 +91,30 @@ let check = (g: graph): checked => {
               if c->String.startsWith("?") {
                 used->Set.add(c)
               }
-              fault(g, name, halfAcross(g, p.half, x.to_), c)->Option.forEach(
-                why => found->Array.push(foundAt([name], `${across}: ${why}`)),
-              )
+              switch fault(g, name, halfAcross(g, p.half, x.to_), c) {
+              | Some(why) => found->Array.push(foundAt([name], `${across}: ${why}`))
+              | None =>
+                // An edge with `reads` has those it lists answer the contract, not its target.
+                switch x.reads->Option.getOr([]) {
+                | [] =>
+                  if known(c) && !answered(g, x.to_, c) {
+                    found->Array.push(
+                      foundAt([name], `${across}: ${c}, which ${x.to_} does not answer`),
+                    )
+                  }
+                | readers =>
+                  readers->Array.forEach(
+                    r =>
+                      if component(r) == None {
+                        found->Array.push(foundAt([name], `${across}: reads ${r}, no component`))
+                      } else if known(c) && !answered(g, r, c) {
+                        found->Array.push(
+                          foundAt([name], `${across}: ${c}, which ${r} it reads does not answer`),
+                        )
+                      },
+                  )
+                }
+              }
             },
           )
         }
@@ -71,7 +122,7 @@ let check = (g: graph): checked => {
     )
   )
   pending->Array.forEach(c =>
-    if !(used->Set.has(c)) && c != "?copies" {
+    if !(used->Set.has(c)) {
       found->Array.push(foundAt([], `${c}: undeclared, yet no edge names it`))
     }
   )
@@ -114,7 +165,7 @@ let run = () => {
   let {violations, notes} = check(design)
   dimension(
     "Crossing",
-    "Does every edge between two of the platform's processes name the contract it carries, declared or filed?",
+    "Does every edge between two of the platform's processes name the contract it carries, declared or filed, and one its target answers?",
     violations->Array.map(v => v.text),
     ~notes,
     (),

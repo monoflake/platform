@@ -26,10 +26,14 @@ provided by more than one block. A block declares only which names it provides, 
 provides them. **A block is still named for one main name**, its directory and its package named
 from it as now, and `provides` lists the names it provides beside that one.
 
-**The as-built graph is derived.** It is, for every block, the design graph's edges of each name
-the block provides, together with the extra edges the block declares. A block declares an extra
-edge only where the design graph has none. An edge's type gains a mark that its target is on the
-platform beneath, RFC 94y0d.
+**The as-built graph is derived.** It is, for every block, the design graph's edges of each name the
+block provides, together with the extra edges the block declares. A block declares an extra edge
+only where the design graph has none. **A block may also declare, for a design edge of a name it
+provides, the contract that edge carries as built**, amended by the author on 2026-10-24: in the
+as-built graph that edge carries the declared contract in place of the design's. Only the contract
+changes; no design edge is removed. A contract so declared that is not declared in the model is
+reported by Crossing, a scaffold. An edge's type gains a mark that its target is on the platform
+beneath, RFC 94y0d.
 
 **One set of rules runs twice.**
 
@@ -94,3 +98,7 @@ port, a policy's value. Every entry that describes where what is built departs f
 removed once the as-built graph is built, and is derived from the graph from then on.
 
 **`Steps.deployment` gains the number of machines.**
+
+**It is done when** the scaffolds of structure the as-built graph derives and the scaffolds of
+property the samples measure, a secret unsealed or a bearer's authentication, together reproduce
+the inventory in RFC vgvx6's Evidence.

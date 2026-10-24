@@ -15,8 +15,8 @@ type edge = {
   why: string,
   /** Why this edge's boundary is not yet clear. */
   open_?: string,
-  /** Who defines the format the source reads across this edge, when it is not the target. */
-  reads?: string,
+  /** Who defines each format the source reads across this edge, when not its target. */
+  reads?: array<string>,
   /** Whether this edge is how its component is itself replaced by a new version, D3. */
   replaces?: bool,
   /** Whether its target is on the platform beneath, for a block's extra edge, RFC s42ex. */
@@ -36,8 +36,8 @@ type component = {
    */
   kind?: [#ground | #operator | #provided],
   /**
-   * For a role, the contracts it answers, which every edge to it names; for what fills a role, the
-   * contracts it implements.
+   * The contracts every edge to it may name beside the one named as it is, `docs/scope.md`; for
+   * what fills a role, the ones it implements.
    */
   answers?: array<string>,
   /** For a component another repository gives, the role it fills, RFC 8lkuv. */
@@ -121,6 +121,7 @@ let own: dict<component> = dict{
     layer: 0,
     control: true,
     half: #organization,
+    answers: ["configuration"],
     edges: [
       replaced,
       e(
@@ -271,6 +272,7 @@ let own: dict<component> = dict{
     language: #rescript,
     layer: 0,
     half: #organization,
+    answers: ["wit"],
     edges: [
       replaced,
       e("?runner", #serve, hard, "where a tablet's writer and copies are"),
@@ -341,6 +343,7 @@ let own: dict<component> = dict{
     layer: -1,
     keeps: true,
     half: #organization,
+    answers: ["copies", "database"],
     edges: [
       replaced,
       e(
@@ -411,13 +414,17 @@ let own: dict<component> = dict{
         "parcels and journals put to the scope's stores through the object kind, a call signed by its certificate, b8f35",
         ~contract=["object"],
       ),
-      e(
-        "root",
-        #start,
-        hard,
-        "a scope's salt and key, derived from the masters and deployed beside it as secrets, never in the bundle, v7v3w",
-        ~contract=["deployments"],
-      ),
+      {
+        ...e(
+          "root",
+          #start,
+          hard,
+          "a scope's salt and key, derived from the masters and deployed beside it as secrets, never in the bundle, v7v3w",
+          ~contract=["deployments"],
+        ),
+        // Which driver delivers them is the vendor the blob is deployed on, so both are so.
+        reads: ["driver(machine)", "driver(cloudflare)"],
+      },
       key(),
       e("?clock", #background, soft, "paces a rekey the control plane started, b8f35"),
     ],
@@ -497,6 +504,7 @@ let own: dict<component> = dict{
     language: #rescript,
     layer: -2,
     half: #organization,
+    answers: ["wit"],
     edges: [
       replaced,
       e(
@@ -538,6 +546,7 @@ let own: dict<component> = dict{
   },
   "root": {
     layer: -4,
+    answers: ["certificate"],
     edges: [
       {...e("?source", #deploy, hard, "what it holds reaches each component"), replaces: true},
     ],
@@ -564,7 +573,15 @@ let own: dict<component> = dict{
     edges: [],
     uses: [],
   },
-  "footing(organization)": {layer: vendor, kind: #ground, half: #organization, edges: [], uses: []},
+  "footing(organization)": {
+    layer: vendor,
+    kind: #ground,
+    half: #organization,
+    // The footing's interface reads, writes, bundles and leases, n8jq5.
+    answers: ["footing", "records", "bundle"],
+    edges: [],
+    uses: [],
+  },
   "vendor": {layer: vendor, kind: #ground, edges: [], uses: []},
   "operator": {layer: vendor, kind: #operator, edges: [], uses: []},
 }

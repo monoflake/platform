@@ -62,7 +62,7 @@ let run = () => {
 
   let crossing =
     designed->Array.flatMap(((n, p)) =>
-      p.edges->Array.filterMap(x => x.reads->Option.map(reads => (n, x, reads)))
+      p.edges->Array.flatMap(x => x.reads->Option.getOr([])->Array.map(reads => (n, x, reads)))
     )
   let replaces = (x: Components.edge) => x.replaces->Option.getOr(false)
   // What replaces a component is the edge marked `replaces`; an edge it deploys others by says

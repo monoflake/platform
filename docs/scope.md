@@ -88,6 +88,14 @@ a component needs that no component is yet.
 `background`; what its loss does, `hard`, wrong or stopped, or `soft`, slower or staler and never
 wrong; and its contract, who defines the format crossing it.
 
+**A contract an edge names is one its target answers**: one its `answers` lists in
+`model/graph/components.res`, or the one named as the target is, its qualifier aside, as `storage`
+of the storage and `footing` of `footing(organization)`. A part is answered with its whole,
+`record.writer` with `records` and `bundle.issuer` with `bundle`. Where the source reads a format
+another defines, the edge names them in `reads` and its target answers none of it. A boundary
+`?name` may stand as a contract, the one it writes. The platform beneath answers only its
+products' contracts at layer 0, RFC 94y0d. Crossing holds this, `model/checks/design/crossing.res`.
+
 **A format carried unread is exempt from the contract.** A tablet holding the function product's
 rows runs SQL, whose rules are its own, and reads nothing of what the rows mean: a renamed column
 changes nothing for it. The issuer reading the same rows to decide what to sign must know each

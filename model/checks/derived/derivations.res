@@ -1,6 +1,6 @@
 /**
- * What is derived of what is built against what is designed, reported and never refused, RFC
- * s42ex. A contract a component answers is its own `answers` and every one named on an edge to it.
+ * What is derived of what is built against what is designed, never refused, RFC s42ex. A name
+ * answers its own `answers` and each contract on an edge to it or one whose `reads` names it.
  */
 open Base
 
@@ -28,11 +28,16 @@ let asked = n => {
     ->Array.map(c => (n, component(n)->Option.flatMap(p => p.half), c))
   let pointing = designed->Array.flatMap(((from, p)) =>
     p.edges
-    ->Array.filter(x => x.to_ == n)
+    ->Array.filter(x =>
+      switch x.reads {
+      | Some(names) if names != [] => names->Array.includes(n)
+      | _ => x.to_ == n
+      }
+    )
     ->Array.flatMap(x =>
       x.contract
       ->Option.getOr([])
-      ->Array.map(c => (from, Crossing.halfAcross(design, p.half, n), c))
+      ->Array.map(c => (from, Crossing.halfAcross(design, p.half, x.to_), c))
     )
   )
   Array.concat(answering, pointing)
@@ -96,7 +101,18 @@ let provided = () =>
             : [`${main}: declared, yet no block whose code is written`],
           b.provides
           ->Array.filter(n => !(held->Array.includes(n)))
-          ->Array.map(n => `${main} provides ${n}, which the design holds not`),
+          ->Array.map(n => `${main} provides ${n}, which the design holds not`)
+          ->Array.concat(
+            b.carries
+            ->Option.getOr([])
+            ->Array.filter(c =>
+              !(Realized.provides(main)->Array.includes(c.from)) ||
+              !(edgesOf(c.from)->Array.some(x => x.to_ == c.to_))
+            )
+            ->Array.map(c =>
+              `${main} carries ${c.from} -> ${c.to_}, which it provides not or the design holds not`
+            ),
+          ),
         )
       ),
     ),
