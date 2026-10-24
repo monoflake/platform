@@ -67,7 +67,8 @@ Choices made provisionally while the thread ran, for the author to read.
   reads beside other vendors', `MONOFLAKE_FOOTING` and the secret prefix `MONOFLAKE_`.
 - **The machine's platform option is not added** until code reads it, the workspace's deferred item
   `machine-platform`.
-- **The check's edges**, the workspace's commit 2a8b8419: the author's own account, a person's name, is outside the rule; comments
+- **The check's edges**, the workspace's commit 2a8b8419: the author's own account, a person's name, is outside the rule (amended by the author on
+  2026-10-24: the account name is held as a vendor's, the workspace's `account-name`); comments
   are read; each file repeating a format's data is declared; a `workspace.toml`'s `ids` and
   `spelled` lines pass.
 - **hello was down for a few minutes on each machine** while it was switched, since nothing was
