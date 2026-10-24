@@ -5,7 +5,13 @@
 open Node
 module Contracts = Envelope.Contracts
 
-type sent = {url: string, authorization: option<string>, proxy: option<string>, body: JSON.t}
+type sent = {
+  url: string,
+  authorization: option<string>,
+  proxy: option<string>,
+  edge: option<string>,
+  body: JSON.t,
+}
 
 let json = (status, value) =>
   Web.answered(~status, ~contentType="application/json", JSON.stringify(value))
@@ -25,6 +31,7 @@ let stoodOn = () => {
       url: request->Web.url,
       authorization: header("authorization"),
       proxy: header("proxy-authorization"),
+      edge: header("cf-connecting-ip"),
       body,
     })
     let input = body->JSON.Decode.object->Option.flatMap(o => o->Dict.get("input"))
@@ -128,14 +135,14 @@ test(
         `${at}/deployments/describe`,
         {
           method: "POST",
-          headers: dict{"authorization": "Bearer 1.host"},
+          headers: dict{"authorization": "Bearer 1.host", "cf-connecting-ip": "192.0.2.1"},
         },
       ),
     )
     deepEqual(await answer->Web.text, "relayed /relay/10.200.0.7/37483/deployments/describe")
     deepEqual(
-      sent->Array.map(s => (s.authorization, s.proxy)),
-      [(Some("Bearer 1.host"), Some("Bearer o1.token"))],
+      sent->Array.map(s => (s.authorization, s.proxy, s.edge)),
+      [(Some("Bearer 1.host"), Some("Bearer o1.token"), None)],
     )
   },
 )
