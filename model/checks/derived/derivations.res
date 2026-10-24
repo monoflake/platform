@@ -85,7 +85,7 @@ let provided = () =>
       held
       ->Array.filter(n => !trusted(n))
       ->Array.map(n =>
-        switch Realized.providers(n) {
+        switch Realized.providers(Realized.built, n) {
         | [] if Components.elsewhere(n) => `${n}: another repository's`
         | [] if isRole(n) => `${n}: none, a role not yet filled`
         | [] => `${n}: none`
@@ -106,7 +106,7 @@ let provided = () =>
             b.carries
             ->Option.getOr([])
             ->Array.filter(c =>
-              !(Realized.provides(main)->Array.includes(c.from)) ||
+              !(Realized.provides(Realized.built, main)->Array.includes(c.from)) ||
               !(edgesOf(c.from)->Array.some(x => x.to_ == c.to_))
             )
             ->Array.map(c =>
@@ -149,38 +149,59 @@ let sampled = () => {
   )
 }
 
-/** Every violation on the as-built graph, by the dimension finding it, RFC s42ex. */
-let scaffolds = [
-  ("Rules", Rules.check(Realized.graph)),
-  ("Roles", Roles.check(Realized.graph)),
-  ("Crossing", Crossing.check(Realized.graph)),
-]->Array.flatMap(((title, c)) => c.violations->Array.map(v => (title, v)))
+/** Every violation on an as-built graph, by the dimension finding it, RFC s42ex. */
+let scaffoldsOf = g =>
+  [
+    ("Rules", Rules.check(g)),
+    ("Roles", Roles.check(g)),
+    ("Crossing", Crossing.check(g)),
+  ]->Array.flatMap(((title, c)) => c.violations->Array.map(v => (title, v)))
 
-let violating = Set.fromArray(scaffolds->Array.flatMap(((_, v)) => v.at))
+/**
+ * One as-built graph as the frontier reads it, the blocks running, the names provided apart from
+ * them and the names left to another repository, and the title its sections carry.
+ */
+type view = {
+  title: string,
+  running: Realized.running,
+  scaffolds: array<(string, finding)>,
+  apart: string => bool,
+  elsewhere: string => bool,
+}
+
+let everything = {
+  title: "",
+  running: Realized.built,
+  scaffolds: scaffoldsOf(Realized.graph),
+  apart: _ => false,
+  elsewhere: Components.elsewhere,
+}
 
 /** Whether a name counts as provided where an edge points to it, a violating provider too. */
-let counted = n => Realized.providers(n) != [] || trusted(n) || isRole(n) || Components.elsewhere(n)
+let counted = (v: view, n) =>
+  Realized.providers(v.running, n) != [] || trusted(n) || isRole(n) || v.apart(n) || v.elsewhere(n)
 
-let frontier = () => {
+let frontier = (v: view) => {
+  let providers = n => Realized.providers(v.running, n)
+  let violating = Set.fromArray(v.scaffolds->Array.flatMap(((_, f)) => f.at))
   let candidates =
     held->Array.filter(n =>
-      !trusted(n) && !Components.elsewhere(n) && !(isRole(n) && Realized.providers(n) == [])
+      !trusted(n) && !v.elsewhere(n) && !v.apart(n) && !(isRole(n) && providers(n) == [])
     )
   let unrightly =
-    candidates->Array.filter(n =>
-      !(Realized.providers(n)->Array.some(m => !(violating->Set.has(m))))
-    )
-  let waitsOn = n => edgesOf(n)->Array.filter(x => x.hard && !counted(x.to_))->Array.map(x => x.to_)
+    candidates->Array.filter(n => !(providers(n)->Array.some(m => !(violating->Set.has(m)))))
+  let waitsOn = n =>
+    edgesOf(n)->Array.filter(x => x.hard && !counted(v, x.to_))->Array.map(x => x.to_)
   let (open_, waiting) =
     unrightly->Array.reduce(([], []), ((o, w), n) =>
       waitsOn(n) == [] ? (o->Array.concat([n]), w) : (o, w->Array.concat([n]))
     )
   report(
-    "Frontier",
+    `Frontier${v.title}`,
     "Which names are not yet rightly provided, yet every name their hard edges point to is? Derived, never refused.",
     Array.concat(
       open_->Array.map(n =>
-        switch Realized.providers(n) {
+        switch providers(n) {
         | [] => `${n}: no provider`
         | by => `${n}: ${by->Array.join(", ")}, each violating a rule as built`
         }
@@ -210,14 +231,98 @@ let buildable = () => {
   )
 }
 
+let scaffolds = (v: view) =>
+  report(
+    `Scaffolds${v.title}`,
+    "Which rules does the as-built graph break, run as on the design? Reported, never refused, until the platform keeps data.",
+    v.scaffolds->Array.map(((title, f)) => `${title}: ${f.text}`),
+  )
+
+/** One deployment's as-built graph as the frontier reads it, RFC vgvx6. */
+let viewOf = (name, d: Provided.deployed) => {
+  let running = Realized.runningIn(d)
+  let apart = Realized.filledApart(d)->Array.map(((n, _)) => n)
+  {
+    title: ` in ${name}`,
+    running,
+    scaffolds: scaffoldsOf(Realized.graphOf(running)),
+    apart: n => apart->Array.includes(n),
+    elsewhere: _ => false,
+  }
+}
+
+/** Which blocks and what else fill each name in one deployment, and what its fills mistake. */
+let providedIn = (v: view, d: Provided.deployed) => {
+  let apart = Realized.filledApart(d)
+  let names =
+    held
+    ->Array.filter(n => !trusted(n))
+    ->Array.map(n => {
+      let by = Array.concat(
+        Realized.providers(v.running, n),
+        apart->Array.filter(((m, _)) => m == n)->Array.map(((_, what)) => what),
+      )
+      by == [] ? `${n}: none` : `${n}: ${by->Array.join(", ")}`
+    })
+  let mistaken = d.fills->Array.flatMap(((n, f)) =>
+    Array.concat(
+      held->Array.includes(n) ? [] : [`${n} is filled, which the design holds not`],
+      switch f {
+      | Block(main) if component(main)->Option.isNone => [
+          `${n} is filled by ${main}, which the design names not`,
+        ]
+      | Block(main) =>
+        Array.concat(
+          Realized.mains->Array.includes(main)
+            ? []
+            : [`${n} is filled by ${main}, yet no block whose code is written`],
+          Realized.provides(v.running, main)->Array.includes(n)
+            ? []
+            : [`${n} is filled by ${main}, which declares providing it not`],
+        )
+      | Vendor(_) | Workload(_) => []
+      },
+    )
+  )
+  report(
+    `Provided${v.title}`,
+    "Which blocks, vendors' resources or workloads fill each name the design holds in this deployment? Derived, never refused.",
+    Array.concat(names, mistaken),
+  )
+}
+
+/** Each target's snapshot, each contract's state by RFC s42ex's table, never refused. */
+let statesIn = (v: view, d: Provided.deployed) =>
+  report(
+    `States${v.title}`,
+    "What state does each contract's snapshot show on each target bound to this deployment? Read from the snapshots, unbound, never refused.",
+    d.targets == []
+      ? ["no target bound"]
+      : d.targets->Array.flatMap(t => Measured.lines(t, Measured.read(t))),
+  )
+
+let deployment = (name, d: Provided.deployed) => {
+  let v = viewOf(name, d)
+  if d.fills == [] {
+    ["Provided", "Frontier", "Scaffolds"]->Array.forEach(title =>
+      report(`${title}${v.title}`, "Derived, never refused.", [`nothing filled in ${name}`])
+    )
+  } else {
+    providedIn(v, d)
+    frontier(v)
+    scaffolds(v)
+  }
+  statesIn(v, d)
+}
+
 let run = () => {
   provided()
   sampled()
-  frontier()
+  frontier(everything)
   buildable()
-  report(
-    "Scaffolds",
-    "Which rules does the as-built graph break, run as on the design? Reported, never refused, until the platform keeps data.",
-    scaffolds->Array.map(((title, v)) => `${title}: ${v.text}`),
-  )
+  scaffolds(everything)
+  Provided.deployments
+  ->Dict.toArray
+  ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
+  ->Array.forEach(((name, d)) => deployment(name, d))
 }

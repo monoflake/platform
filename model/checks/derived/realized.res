@@ -37,24 +37,32 @@ let mains = {
   ->Array.toSorted(byText)
 }
 
-let declaredOf = main => Provided.all->Dict.get(main)
+/** The blocks one graph is derived from, by their main names, and what each declares. */
+type running = {mains: array<string>, declared: dict<Provided.block>}
+
+/** Every block with its code, the as-built graph's when no deployment is named. */
+let built = {mains, declared: Provided.all}
+
+let declaredOf = (r: running, main) => r.declared->Dict.get(main)
 
 /** The names a block provides, its main name first. */
-let provides = main => [main]->Array.concat(declaredOf(main)->Option.mapOr([], b => b.provides))
+let provides = (r, main) =>
+  [main]->Array.concat(declaredOf(r, main)->Option.mapOr([], b => b.provides))
 
 /** The blocks providing a name, by their main names. */
-let providers = name => mains->Array.filter(m => provides(m)->Array.includes(name))
+let providers = (r: running, name) =>
+  r.mains->Array.filter(m => provides(r, m)->Array.includes(name))
 
 /** A name as the as-built graph knows it, each block providing it, or the name itself. */
-let realize = name =>
-  switch providers(name) {
+let realize = (r, name) =>
+  switch providers(r, name) {
   | [] => [name]
   | by => by
   }
 
 /** A design edge of `from` as block `main` builds it, the contract it carries declared, s42ex. */
-let carry = (main, from, edge: Components.edge) =>
-  switch declaredOf(main)
+let carry = (r, main, from, edge: Components.edge) =>
+  switch declaredOf(r, main)
   ->Option.flatMap(b => b.carries)
   ->Option.getOr([])
   ->Array.find((c: Provided.carried) => c.from == from && c.to_ == edge.to_) {
@@ -66,14 +74,14 @@ let carry = (main, from, edge: Components.edge) =>
  * An edge from a node providing `own`, to every node its target is, none where it is internal. It
  * carries `?x` as the contract of an edge to a boundary it points at the provider of.
  */
-let retarget = (own: array<string>, edge: Components.edge) =>
+let retarget = (r, own: array<string>, edge: Components.edge) =>
   if edge.beneath == Some(true) {
     [{...edge, to_: beneath}]
   } else if own->Array.includes(edge.to_) {
     []
   } else {
     let carried = edge.to_->String.startsWith("?") && edge.contract->Option.getOr([]) == []
-    realize(edge.to_)->Array.map(t =>
+    realize(r, edge.to_)->Array.map(t =>
       carried && t != edge.to_ ? {...edge, to_: t, contract: [edge.to_]} : {...edge, to_: t}
     )
   }
@@ -91,22 +99,23 @@ let union = (lists: array<array<string>>) => {
 }
 
 /**
- * The as-built graph of the design's `nodes`, a block merged from every name it provides. A name no
- * block provides keeps its node and none of its edges.
+ * The as-built graph of the design's `nodes` with the blocks `r` running, a block merged from every
+ * name it provides. A name no block provides keeps its node and none of its edges.
  */
-let derive = (nodes: dict<Components.component>): dict<Components.component> => {
-  let merged = mains->Array.filterMap(m =>
+let derive = (r: running, nodes: dict<Components.component>): dict<Components.component> => {
+  let merged = r.mains->Array.filterMap(m =>
     nodes
     ->Dict.get(m)
     ->Option.map((main: Components.component) => {
-      let names = provides(m)
+      let names = provides(r, m)
       let edges =
         names
         ->Array.flatMap(
-          n => nodes->Dict.get(n)->Option.mapOr([], c => c.edges->Array.map(e => carry(m, n, e))),
+          n =>
+            nodes->Dict.get(n)->Option.mapOr([], c => c.edges->Array.map(e => carry(r, m, n, e))),
         )
-        ->Array.concat(declaredOf(m)->Option.mapOr([], b => b.extra))
-        ->Array.flatMap(e => retarget(names, e))
+        ->Array.concat(declaredOf(r, m)->Option.mapOr([], b => b.extra))
+        ->Array.flatMap(e => retarget(r, names, e))
       let answers = union(
         names
         ->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([]))
@@ -118,26 +127,56 @@ let derive = (nodes: dict<Components.component>): dict<Components.component> => 
   let standing =
     nodes
     ->Dict.toArray
-    ->Array.filter(((n, _)) => providers(n) == [])
+    ->Array.filter(((n, _)) => providers(r, n) == [])
     ->Array.map(((n, c)) => (n, {...c, edges: []}))
   Array.concatMany(merged, [standing, [(beneath, Provided.beneath)]])
   ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
   ->Dict.fromArray
 }
 
-/** The as-built graph, its records written by the blocks providing each writer. */
-let graph = {
-  let nodes = derive(components)
+/** The as-built graph of the blocks `r` running, its records written by each writer's providers. */
+let graphOf = (r: running) => {
+  let nodes = derive(r, components)
   {
     components: nodes,
-    own: derive(Components.own),
+    own: derive(r, Components.own),
     fillers: role =>
       design.fillers(role)->Array.concat(
-        providers(role)->Array.filterMap(m => nodes->Dict.get(m)->Option.map(c => (m, c))),
+        providers(r, role)->Array.filterMap(m => nodes->Dict.get(m)->Option.map(c => (m, c))),
       ),
-    records: Records.records->Array.map(r => {
-      ...r,
-      writes: union(r.writes->Array.map(realize)),
+    records: Records.records->Array.map(held => {
+      ...held,
+      writes: union(held.writes->Array.map(n => realize(r, n))),
     }),
   }
 }
+
+/** The as-built graph of every block with its code. */
+let graph = graphOf(built)
+
+/** The main names of the blocks a deployment's names are filled by, RFC vgvx6. */
+let blocksIn = (d: Provided.deployed) =>
+  union([
+    d.fills->Array.filterMap(((_, f)) =>
+      switch f {
+      | Block(main) => Some(main)
+      | Vendor(_) | Workload(_) => None
+      }
+    ),
+  ])->Array.toSorted(byText)
+
+/** The blocks running in a deployment, those its names are filled by that the design names. */
+let runningIn = (d: Provided.deployed) => {
+  mains: blocksIn(d)->Array.filter(m => component(m)->Option.isSome),
+  declared: Provided.all,
+}
+
+/** The names a deployment fills by a vendor's resource or a workload, each with what fills it. */
+let filledApart = (d: Provided.deployed) =>
+  d.fills->Array.filterMap(((name, f)) =>
+    switch f {
+    | Block(_) => None
+    | Vendor({vendor, resource}) => Some((name, `${resource}, a resource of ${vendor}`))
+    | Workload(what) => Some((name, `${what}, a workload`))
+    }
+  )
