@@ -1,20 +1,14 @@
-type listener = Driver | Entry
+type relayed = {address: string, port: int, path: string}
 
-type relayed = {binding: float, listener: listener, path: string}
-
-let pattern = /^\/relay\/([1-9][0-9]{0,9})\/(driver|entry)(\/.*)?$/
+let pattern = /^\/relay\/(10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\/([1-9][0-9]{0,4})(\/.*)?$/
 
 let routed = path =>
   switch pattern->RegExp.exec(path) {
   | None => None
   | Some(found) =>
     switch found->RegExp.Result.matches {
-    | [Some(id), Some(which), rest] =>
-      Float.fromString(id)->Option.map(binding => {
-        binding,
-        listener: which == "driver" ? Driver : Entry,
-        path: rest->Option.getOr("/"),
-      })
+    | [Some(address), Some(port), rest] =>
+      Int.fromString(port)->Option.map(port => {address, port, path: rest->Option.getOr("/")})
     | _ => None
     }
   }
@@ -36,32 +30,73 @@ let reached = async (reach: Reach.t, made, ~binding) =>
 let passed = async (state: State.t, reach: Reach.t, ~caller, ~ports, request, relayed, ~search) =>
   switch caller {
   | Access.Organization(organization) =>
-    switch await state.binding(relayed.binding) {
-    | Some({relayed: true, organization: owner, address: Some(address)}) if owner == organization =>
-      let (driver, entry) = ports
-      let port = relayed.listener == Driver ? driver : entry
-      let made = Web.resent(`${reach.origin(~address, ~port)}${relayed.path}${search}`, request)
+    switch await state.addressedAt(relayed.address) {
+    | Some({id, relayed: true, organization: owner})
+      if owner == organization && ports->Array.includes(relayed.port) =>
+      let made = Web.resent(
+        `${reach.origin(~address=relayed.address, ~port=relayed.port)}${relayed.path}${search}`,
+        request,
+      )
       made->Web.requestHeaders->Web.deleteHeader("proxy-authorization")
-      await reached(reach, made, ~binding=relayed.binding)
+      await reached(reach, made, ~binding=id)
     | Some(_) | None =>
       Web.answered(
         ~status=404,
-        `no binding ${Float.toString(relayed.binding)} is relayed for the organization`,
+        `nothing at ${relayed.address}:${Int.toString(
+            relayed.port,
+          )} is relayed for the organization`,
       )
     }
   | Operator | Host(_) | Nobody => Web.answered(~status=403, "a relay is an organization's alone")
   }
 
-let stored = async (state: State.t, reach: Reach.t, ~caller, ~port, request, ~path) =>
+/** Whether an answer is the error a write gets for a full bucket, or for none. */
+let full = async answer =>
+  answer->Web.status >= 400 &&
+    switch JSON.parseOrThrow(await answer->Web.cloneResponse->Web.text) {
+    | exception JsExn(_) => false
+    | json =>
+      json
+      ->JSON.Decode.object
+      ->Option.flatMap(o => o->Dict.get("reason"))
+      ->Option.flatMap(JSON.Decode.string) == Some("storage_full")
+    }
+
+let stored = async (state: State.t, reach: Reach.t, ~caller, ~port, ~wait, request, ~path) =>
   switch caller {
   | Access.Organization(organization) =>
     switch await state.storage(organization) {
     | Some({id, secret, address: Some(address)}) =>
-      let made = Web.resent(`${reach.origin(~address, ~port)}${path}`, request)
-      made
-      ->Web.requestHeaders
-      ->Web.setHeader("authorization", `Bearer ${Access.tokenText(id, secret)}`)
-      await reached(reach, made, ~binding=id)
+      let host: Driver.host = {reach, address, port, token: Access.tokenText(id, secret)}
+      let body = await request->Web.bytesOf
+      let headers = request->Web.requestHeaders
+      let header = name => headers->Web.header(name)->Nullable.toOption->Option.getOr("")
+      let sent = () =>
+        Web.request(
+          `${reach.origin(~address, ~port)}${path}`,
+          {
+            method: "POST",
+            headers: dict{
+              "authorization": `Bearer ${host.token}`,
+              "content-type": header("content-type"),
+              "accept": header("accept"),
+            },
+            body,
+          },
+        )
+      let first = await reached(reach, sent(), ~binding=id)
+      if path == "/object/write" && (await full(first)) {
+        switch await Deploying.bucketed(host, ~wait) {
+        | Ok() => await reached(reach, sent(), ~binding=id)
+        | Error({reason, message}) =>
+          Web.answered(
+            ~status=503,
+            `no bucket was made for the organization, ${reason}, ${message}`,
+          )
+        }
+      } else {
+        first
+      }
     | Some(_) | None =>
       Web.answered(~status=409, "the organization holds no binding its host bound here")
     }

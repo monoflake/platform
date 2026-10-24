@@ -12,6 +12,12 @@ let isContainer = (capacity: Contracts.ManagementCapacity.t) =>
   | Volume(_) | Object(_) | Database(_) => false
   }
 
+let isObject = (capacity: Contracts.ManagementCapacity.t) =>
+  switch capacity {
+  | Object(_) => true
+  | Container(_) | Volume(_) | Database(_) => false
+  }
+
 let isAsked = (state: Contracts.ManagementState.t) =>
   switch state {
   | Making | Made(_) | Failed(_) => true
@@ -42,6 +48,32 @@ let planned = (described: Contracts.ManagementDescribed.t, ~credential) => {
           ", ",
         )} and no container, and describe gives no item's credentials to keep them`,
     )
+  }
+}
+
+let bucketSize = 1073741824.
+
+let bucketPlanned = (described: Contracts.ManagementDescribed.t, ~fresh) => {
+  let asked = described.items->Array.filter(i => isAsked(i.state))
+  switch asked->Array.find(i => isObject(i.capacity)) {
+  | Some(held) => Held({into: held.id})
+  | None =>
+    let into = described.items->Array.reduce(0., (most, i) => Math.max(most, i.id)) +. 1.
+    // Each item asked is asked again, under a credential of its own, as describe gives none.
+    let restated = asked->Array.map((i): Contracts.ManagementItem.t => {
+      id: i.id,
+      capacity: i.capacity,
+      credentials: [fresh()],
+    })
+    Apply({
+      list: {
+        generation: described.generation +. 1.,
+        items: restated->Array.concat([
+          {id: into, capacity: Object({size: bucketSize}), credentials: [fresh()]},
+        ]),
+      },
+      into,
+    })
   }
 }
 
@@ -85,7 +117,7 @@ let rec made = async (host, into, ~wait, ~left=240) =>
       await wait()
       await made(host, into, ~wait, ~left=left - 1)
     | Some({state: Making}) =>
-      Error({reason: "unreachable", message: "no container after a minute"})
+      Error({reason: "unreachable", message: `no item ${Float.toString(into)} after a minute`})
     | Some({state: Failed({reason, ?message})}) =>
       Error(invalid(message->Option.mapOr(reason, m => `${reason}, ${m}`)))
     | Some({state: Unasked(_)}) | None =>
@@ -127,3 +159,17 @@ let described = (host, ~app) =>
     deployments(Describe({runs: App({id: app})})),
     Contracts.DeploymentDescribed.fromJson,
   )
+
+let bucketed = async (host, ~wait) =>
+  switch await describeList(host) {
+  | Error(refused) => Error(refused)
+  | Ok(described) =>
+    switch bucketPlanned(described, ~fresh=() => Web.random(32)) {
+    | Held({into}) => await made(host, into, ~wait)
+    | Apply({list, into}) =>
+      switch await Driver.call(host, management(Apply(list)), Contracts.ManagementHeld.fromJson) {
+      | Error(refused) => Error(refused)
+      | Ok(_) => await made(host, into, ~wait)
+      }
+    }
+  }

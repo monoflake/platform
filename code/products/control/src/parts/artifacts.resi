@@ -9,3 +9,6 @@ type t = {
 }
 
 let ofBucket: Stores.bucket => t
+
+/** Kept as objects under `artifacts/`, each whole, so 16 MiB at most. */
+let ofObjects: Objects.t => t

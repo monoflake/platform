@@ -31,6 +31,8 @@ let state = (): State.t => {
       ->Array.filter(b => b.organization == organization && !b.relayed && b.address != None)
       ->Array.toSorted((a, b) => a.id -. b.id)
       ->Array.get(0),
+    addressedAt: async address =>
+      bindings->Dict.valuesToArray->Array.find(b => b.address == Some(address)),
     tunneled: async (~binding, ~tunnel) => change(binding, b => {...b, tunnel: Some(tunnel)}),
     addressed: async (~binding, ~address) => change(binding, b => {...b, address: Some(address)}),
     putRelease: async release =>

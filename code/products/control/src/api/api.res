@@ -7,6 +7,7 @@ type parts = {
   artifacts: Artifacts.t,
   reach: Reach.t,
   tunnels: option<Tunnels.t>,
+  standing: option<Standing.t>,
   driverPort: int,
   origin: string,
   wait: unit => promise<unit>,
@@ -117,13 +118,30 @@ let bindings = (parts, caller: Access.caller) =>
         | None => denied
         | Some(binding) =>
           let address = addressOf(id)
-          switch parts.tunnels {
-          | None =>
+          switch (parts.standing, parts.tunnels) {
+          | (Some(standing), _) =>
+            switch binding.address {
+            | Some(address) =>
+              bound({binding: id, address, tunnel: ?(binding.tunnel->Option.map(Web.utf8))})
+            | None =>
+              switch await standing.reach() {
+              | Ok({address, tunnel}) =>
+                // An organization's own control keeps the tunnel's token itself, as it makes none.
+                switch tunnel {
+                | Some(tunnel) => await parts.state.tunneled(~binding=id, ~tunnel)
+                | None => ()
+                }
+                await parts.state.addressed(~binding=id, ~address)
+                bound({binding: id, address, tunnel: ?(tunnel->Option.map(Web.utf8))})
+              | Error(why) => refused("unreachable", `the control stood on gave no reach, ${why}`)
+              }
+            }
+          | (None, None) =>
             if binding.address == None {
               await parts.state.addressed(~binding=id, ~address)
             }
             bound({binding: id, address})
-          | Some(tunnels) =>
+          | (None, Some(tunnels)) =>
             switch await tunneled(parts, tunnels, binding, address) {
             | Ok(token) => bound({binding: id, address, tunnel: Web.utf8(token)})
             | Error(why) => refused("unreachable", `the host's tunnel could not be made, ${why}`)

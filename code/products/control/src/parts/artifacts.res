@@ -21,3 +21,18 @@ let ofBucket = bucket => {
       )
     ),
 }
+
+/** Thrown where the store did not answer, as the API answers what throws. */
+let held = result =>
+  switch result {
+  | Ok(value) => value
+  | Error(why) => JsError.throwWithMessage(`the objects were not reached, ${why}`)
+  }
+
+let ofObjects = (objects: Objects.t) => {
+  put: async (hash, bytes) => held(await objects.write(`artifacts/${hash}`, bytes)),
+  served: async hash =>
+    held(await objects.read(`artifacts/${hash}`))->Option.map(bytes =>
+      Web.response(bytes, {status: 200, headers: dict{"content-type": "application/octet-stream"}})
+    ),
+}

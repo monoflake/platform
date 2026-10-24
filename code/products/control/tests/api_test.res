@@ -14,7 +14,7 @@ let untrusted = (): Capability.Signed.trust => {
 
 type stood = {parts: Api.parts, host: Host.t, artifacts: dict<Uint8Array.t>}
 
-let stand = (~tunnels=?) => {
+let stand = (~tunnels=?, ~standing=?) => {
   let host = Host.make()
   let (artifacts, held) = Memory.artifacts()
   {
@@ -23,6 +23,7 @@ let stand = (~tunnels=?) => {
       artifacts,
       reach: host.reach,
       tunnels,
+      standing,
       driverPort: 37483,
       origin: "https://control.test",
       wait: async () => (),
@@ -222,6 +223,35 @@ test("a host bound is made one tunnel and one route, and answered the tunnel's t
     (1, [("tunnel-binding-1", "10.200.0.1")], bound->data),
   )
 })
+
+test(
+  "a host bound through the control stood on is given its reach once, and again alike",
+  async () => {
+    let asked = ref(0)
+    let standing: Standing.t = {
+      reach: async () => {
+        asked := asked.contents + 1
+        Ok({address: "10.200.0.7", tunnel: Some("token of binding-7")})
+      },
+    }
+    let stood = stand(~standing)
+    ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
+    ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
+    let (status, bound) = await called(stood, Host(1.), bindings(Bind({})))
+    let (_, again) = await called(stood, Host(1.), bindings(Bind({})))
+    deepEqual((status, bound->data->member("address")), (200, JSON.String("10.200.0.7")))
+    deepEqual(
+      bound
+      ->data
+      ->member("tunnel")
+      ->JSON.Decode.string
+      ->Option.flatMap(Envelope.Base64url.decode)
+      ->Option.map(Web.fromUtf8),
+      Some("token of binding-7"),
+    )
+    deepEqual((asked.contents, again->data), (1, bound->data))
+  },
+)
 
 test("a tunnel the API does not make is unreachable, and no address is kept", async () => {
   let (faked, _, _) = tunnels(~failing=true)

@@ -31,6 +31,7 @@ type responseInit = {status: int, headers: dict<string>}
 @get external status: response => int = "status"
 @get external responseHeaders: response => headers = "headers"
 @send external text: response => promise<string> = "text"
+@send external cloneResponse: response => response = "clone"
 @send external responseBuffer: response => promise<ArrayBuffer.t> = "arrayBuffer"
 
 /** A response's body whole. */

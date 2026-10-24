@@ -39,6 +39,47 @@ let tunnelsOf = (env: Stores.env) =>
   | _ => None
   }
 
+/** What the control stands on, its own stores, or the control it is an organization of. */
+type stood = {
+  state: State.t,
+  artifacts: Artifacts.t,
+  reach: Reach.t,
+  tunnels: option<Tunnels.t>,
+  standing: option<Standing.t>,
+  /** Whether it gives organizations a relay and objects, as only a control with stores does. */
+  gives: bool,
+}
+
+let stoodOf = (env: Stores.env) =>
+  switch (env.standsOn, env.standsOnToken) {
+  | (Some(origin), Some(token)) if origin != "" && token != "" =>
+    let objects = Objects.through(~origin, ~token, Web.fetch)
+    Ok({
+      state: State.ofObjects(objects),
+      artifacts: Artifacts.ofObjects(objects),
+      reach: switch env.reach {
+      | Some(address) if address != "" => Reach.local(address)
+      | Some(_) | None => Reach.relayed(~origin, ~token, Web.fetch)
+      },
+      tunnels: None,
+      standing: Some(Standing.through(~origin, ~token, Web.fetch)),
+      gives: false,
+    })
+  | _ =>
+    switch (env.state, env.artifacts, reachOf(env)) {
+    | (Some(database), Some(bucket), Some(reach)) =>
+      Ok({
+        state: State.ofDatabase(database),
+        artifacts: Artifacts.ofBucket(bucket),
+        reach,
+        tunnels: tunnelsOf(env),
+        standing: None,
+        gives: true,
+      })
+    | _ => Error("the control is configured with no stores, or no way to reach a host")
+    }
+  }
+
 /** Who presented the credential a header carries. */
 let callerOf = (state: State.t, env: Stores.env, request, name) =>
   Access.caller(
@@ -52,16 +93,16 @@ let callerOf = (state: State.t, env: Stores.env, request, name) =>
     ~organizationSecret=state.organizationSecret,
   )
 
-let api = async (request, env: Stores.env, ~reach, ~origin, ~path) => {
-  let state = State.ofDatabase(env.state)
+let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
   let headers = request->Web.requestHeaders
   let header = name => headers->Web.header(name)->Nullable.toOption
-  let caller = await callerOf(state, env, request, "authorization")
+  let caller = await callerOf(stood.state, env, request, "authorization")
   let parts: Api.parts = {
-    state,
-    artifacts: Artifacts.ofBucket(env.artifacts),
-    reach,
-    tunnels: tunnelsOf(env),
+    state: stood.state,
+    artifacts: stood.artifacts,
+    reach: stood.reach,
+    tunnels: stood.tunnels,
+    standing: stood.standing,
     driverPort: portOf(env.driverPort, driverPort),
     origin,
     wait: () => Web.sleep(250),
@@ -89,14 +130,15 @@ let artifact = /^\/artifacts\/([0-9a-f]{64})$/
 let fetch = async (request, env: Stores.env) => {
   let located = Web.parts(request->Web.url)
   let path = located->Web.pathname
-  switch reachOf(env) {
-  | None => Web.answered(~status=500, "the control is configured with no way to reach a host")
-  | Some(reach) =>
+  switch stoodOf(env) {
+  | Error(why) => Web.answered(~status=500, why)
+  | Ok(stood) =>
+    let driverPort = portOf(env.driverPort, driverPort)
     switch (Gateway.routed(path), artifact->RegExp.exec(path), request->Web.method_) {
     | (Some(routed), _, _) =>
       await Gateway.passed(
-        State.ofDatabase(env.state),
-        reach,
+        stood.state,
+        stood.reach,
         ~port=portOf(env.entryPort, entryPort),
         request,
         routed,
@@ -105,41 +147,40 @@ let fetch = async (request, env: Stores.env) => {
     | (None, Some(found), "GET") =>
       switch found->RegExp.Result.matches {
       | [Some(hash)] =>
-        switch await Artifacts.ofBucket(env.artifacts).served(hash) {
+        switch await stood.artifacts.served(hash) {
         | Some(served) => served
         | None => Web.answered(~status=404, `no artifact ${hash} is kept`)
         }
       | _ => Web.answered(~status=404, "no artifact")
       }
     | (None, _, _) =>
-      let state = State.ofDatabase(env.state)
-      let driverPort = portOf(env.driverPort, driverPort)
-      switch (Relay.routed(path), Relay.objected(path)) {
-      | (Some(relayed), _) =>
+      switch (stood.gives, Relay.routed(path), Relay.objected(path)) {
+      | (true, Some(relayed), _) =>
         await Relay.passed(
-          state,
-          reach,
-          ~caller=await callerOf(state, env, request, "proxy-authorization"),
-          ~ports=(driverPort, portOf(env.entryPort, entryPort)),
+          stood.state,
+          stood.reach,
+          ~caller=await callerOf(stood.state, env, request, "proxy-authorization"),
+          ~ports=[driverPort, portOf(env.entryPort, entryPort)],
           request,
           relayed,
           ~search=located->Web.search,
         )
-      | (None, true) =>
+      | (true, None, true) =>
         await Relay.stored(
-          state,
-          reach,
-          ~caller=await callerOf(state, env, request, "authorization"),
+          stood.state,
+          stood.reach,
+          ~caller=await callerOf(stood.state, env, request, "authorization"),
           ~port=driverPort,
+          ~wait=() => Web.sleep(250),
           request,
           ~path,
         )
-      | (None, false) =>
+      | _ =>
         // A host reaches the control by `ORIGIN` where one is set, as a container on the Mac does.
         await api(
           request,
           env,
-          ~reach,
+          stood,
           ~origin=env.origin
           ->Option.filter(o => o != "")
           ->Option.getOr(located->Web.origin),

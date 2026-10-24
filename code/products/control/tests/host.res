@@ -101,6 +101,22 @@ let make = (): t => {
             success(Contracts.DeploymentDescribed.toJson(described))
           | Error(_) => json(400, JSON.Null)
           }
+        | "/object/write" =>
+          if (
+            items->Array.some(i =>
+              switch i.capacity {
+              | Object(_) => true
+              | Container(_) | Volume(_) | Database(_) => false
+              }
+            )
+          ) {
+            success(JSON.Object(dict{}))
+          } else {
+            json(
+              503,
+              JSON.parseOrThrow(`{"status": "error", "failure": "unavailable", "reason": "storage_full", "message": "the binding holds no bucket"}`),
+            )
+          }
         | "/deployments/describe" =>
           switch running->Dict.get("app") {
           | Some(described) => success(Contracts.DeploymentDescribed.toJson(described))

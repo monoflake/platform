@@ -50,3 +50,15 @@ let described: (
   Driver.host,
   ~app: float,
 ) => promise<result<Contracts.DeploymentDescribed.t, Driver.refused>>
+
+/** The bytes the bucket made for an organization's objects holds, RFC rxmd9. */
+let bucketSize: float
+
+/**
+ * The list with an `object` item added at the next generation where none is asked, every item
+ * asked restated under a fresh credential, since describe gives none to keep.
+ */
+let bucketPlanned: (Contracts.ManagementDescribed.t, ~fresh: unit => Uint8Array.t) => planned
+
+/** The binding's bucket, asked for and made where none is. */
+let bucketed: (Driver.host, ~wait: unit => promise<unit>) => promise<result<unit, Driver.refused>>

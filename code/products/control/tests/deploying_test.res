@@ -35,3 +35,35 @@ test("a container asked already is held, and a list asking only others is refuse
   let volume: Contracts.ManagementHolding.t = {id: 1., capacity: Volume({size: 1.}), state: Making}
   ok(Deploying.planned(described([volume]), ~credential)->Result.isError)
 })
+
+test(
+  "a bucket is asked past every id, each item asked restated, and one asked is held",
+  async () => {
+    let fresh = () => credential
+    deepEqual(
+      Deploying.bucketPlanned(
+        described([holding(1., Made({address: "10.0.0.2"})), holding(4., Unasked({since: 1.}))]),
+        ~fresh,
+      ),
+      Apply({
+        list: {
+          generation: 4.,
+          items: [
+            {id: 1., capacity: Deploying.capacity, credentials: [credential]},
+            {id: 5., capacity: Object({size: Deploying.bucketSize}), credentials: [credential]},
+          ],
+        },
+        into: 5.,
+      }),
+    )
+    let bucket: Contracts.ManagementHolding.t = {
+      id: 2.,
+      capacity: Object({size: 1.}),
+      state: Making,
+    }
+    deepEqual(
+      Deploying.bucketPlanned(described([holding(1., Making), bucket]), ~fresh),
+      Held({into: 2.}),
+    )
+  },
+)

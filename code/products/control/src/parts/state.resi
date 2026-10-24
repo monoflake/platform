@@ -7,8 +7,8 @@
 type organization = {id: float, secret: Uint8Array.t}
 
 /**
- * A binding, its secret, the tunnel made for its host and the address its host is reached at, each
- * absent until it is bound. A relayed one's host is bound to an organization's own control.
+ * A binding, its secret, its tunnel's id or, where the control stood on made it, its token, and its
+ * host's address, each absent until it is bound. A relayed one is an organization's own control's.
  */
 type binding = {
   id: float,
@@ -34,6 +34,8 @@ type t = {
   binding: float => promise<option<binding>>,
   /** The organization's first binding its host bound here, where its objects are kept. */
   storage: float => promise<option<binding>>,
+  /** The binding reached at an address. */
+  addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   /** The address its host is reached at, written once the host can be reached there. */
   addressed: (~binding: float, ~address: string) => promise<unit>,
@@ -47,3 +49,9 @@ type t = {
 
 /** The state kept in a D1 database, its tables `migrations/`'. */
 let ofDatabase: Stores.database => t
+
+/**
+ * The state kept as objects, one JSON document a record under `state/`, where the control stands
+ * on another and no D1 is bound.
+ */
+let ofObjects: Objects.t => t

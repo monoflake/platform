@@ -10,6 +10,8 @@ type parts = {
   reach: Reach.t,
   /** None where the control holds no credential to make tunnels, as when it runs locally. */
   tunnels: option<Tunnels.t>,
+  /** The control this one stands on, which gives its hosts' reaches, as an organization's does. */
+  standing: option<Standing.t>,
   driverPort: int,
   /** The control's origin as its hosts reach it, where a driver fetches an artifact from. */
   origin: string,

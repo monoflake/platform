@@ -22,6 +22,7 @@ type t = {
   openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
   binding: float => promise<option<binding>>,
   storage: float => promise<option<binding>>,
+  addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   addressed: (~binding: float, ~address: string) => promise<unit>,
   putRelease: release => promise<unit>,
@@ -124,6 +125,10 @@ let ofDatabase = database => {
           [Number(organization)],
         )
       )->Option.flatMap(bindingOf),
+    addressedAt: async address =>
+      (
+        await first(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)])
+      )->Option.flatMap(bindingOf),
     tunneled: (~binding, ~tunnel) =>
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
     addressed: (~binding, ~address) =>
@@ -158,5 +163,182 @@ let ofDatabase = database => {
         release: row.release,
         capacity: row.capacity,
       }),
+  }
+}
+
+/** What the store answered, thrown where it did not answer, as the API answers what throws. */
+let held = result =>
+  switch result {
+  | Ok(value) => value
+  | Error(why) => JsError.throwWithMessage(`the objects were not reached, ${why}`)
+  }
+
+let field = (json, name) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))
+let number = (json, name) => json->field(name)->Option.flatMap(JSON.Decode.float)
+let text = (json, name) => json->field(name)->Option.flatMap(JSON.Decode.string)
+
+let organizationJson = (id, label, secret) => JSON.Object(
+  dict{
+    "id": Number(id),
+    "label": String(label),
+    "secret": String(Envelope.Hex.encode(secret)),
+  },
+)
+
+let bindingJson = (b: binding) => {
+  let o = dict{
+    "id": JSON.Number(b.id),
+    "organization": Number(b.organization),
+    "secret": String(Envelope.Hex.encode(b.secret)),
+    "relayed": Boolean(b.relayed),
+  }
+  b.tunnel->Option.forEach(t => o->Dict.set("tunnel", String(t)))
+  b.address->Option.forEach(a => o->Dict.set("address", String(a)))
+  JSON.Object(o)
+}
+
+let bindingFromJson = json =>
+  switch (
+    json->number("id"),
+    json->number("organization"),
+    json->text("secret")->Option.flatMap(Envelope.Hex.decode),
+  ) {
+  | (Some(id), Some(organization), Some(secret)) =>
+    Some(
+      (
+        {
+          id,
+          organization,
+          secret,
+          tunnel: json->text("tunnel"),
+          address: json->text("address"),
+          relayed: json->field("relayed")->Option.flatMap(JSON.Decode.bool)->Option.getOr(false),
+        }: binding
+      ),
+    )
+  | _ => None
+  }
+
+let ofObjects = (objects: Objects.t) => {
+  let readJson = async name =>
+    held(await objects.read(name))->Option.map(bytes => JSON.parseOrThrow(Web.fromUtf8(bytes)))
+  let writeJson = async (name, json) =>
+    held(await objects.write(name, Web.utf8(JSON.stringify(json))))
+  let every = async prefix =>
+    (await Promise.all(held(await objects.list(prefix))->Array.map(readJson)))->Array.filterMap(j =>
+      j
+    )
+  // Ids are given one at a time, as one process serves this control, RFC rxmd9.
+  let queue = ref(Promise.resolve())
+  let serial = f => {
+    let run = queue.contents->Promise.then(() => f())
+    queue := run->Promise.then(_ => Promise.resolve())->Promise.catch(_ => Promise.resolve())
+    run
+  }
+  let next = all =>
+    all->Array.reduce(0., (most, json) =>
+      Math.max(most, json->number("id")->Option.getOr(0.))
+    ) +. 1.
+  let bindingAt = id => `state/bindings/${Float.toString(id)}`
+  let binding = async id => (await readJson(bindingAt(id)))->Option.flatMap(bindingFromJson)
+  let bindings = async () => (await every("state/bindings/"))->Array.filterMap(bindingFromJson)
+  let changed = (id, f) =>
+    serial(async () =>
+      switch await binding(id) {
+      | Some(b) => await writeJson(bindingAt(id), bindingJson(f(b)))
+      | None => ()
+      }
+    )
+  let organization = async id => await readJson(`state/organizations/${Float.toString(id)}`)
+  {
+    openOrganization: (label, ~secret) =>
+      serial(async () => {
+        let all = await every("state/organizations/")
+        switch all->Array.find(json => json->text("label") == Some(label)) {
+        | Some(json) =>
+          let id = json->number("id")->Option.getOr(0.)
+          switch json->text("secret")->Option.flatMap(Envelope.Hex.decode) {
+          | Some(kept) => ({id, secret: kept}: organization)
+          | None =>
+            await writeJson(
+              `state/organizations/${Float.toString(id)}`,
+              organizationJson(id, label, secret),
+            )
+            ({id, secret}: organization)
+          }
+        | None =>
+          let id = next(all)
+          await writeJson(
+            `state/organizations/${Float.toString(id)}`,
+            organizationJson(id, label, secret),
+          )
+          ({id, secret}: organization)
+        }
+      }),
+    hasOrganization: async id => (await organization(id))->Option.isSome,
+    organizationSecret: async id =>
+      (await organization(id))->Option.flatMap(json =>
+        json->text("secret")->Option.flatMap(Envelope.Hex.decode)
+      ),
+    openBinding: (~organization, ~secret, ~relayed) =>
+      serial(async () => {
+        let id = next(await every("state/bindings/"))
+        await writeJson(
+          bindingAt(id),
+          bindingJson({id, organization, secret, tunnel: None, address: None, relayed}),
+        )
+        id
+      }),
+    binding,
+    storage: async organization =>
+      (await bindings())
+      ->Array.filter(b => b.organization == organization && !b.relayed && b.address != None)
+      ->Array.toSorted((a, b) => a.id -. b.id)
+      ->Array.get(0),
+    addressedAt: async address => (await bindings())->Array.find(b => b.address == Some(address)),
+    tunneled: (~binding, ~tunnel) => changed(binding, b => {...b, tunnel: Some(tunnel)}),
+    addressed: (~binding, ~address) => changed(binding, b => {...b, address: Some(address)}),
+    putRelease: async release => {
+      let name = `state/releases/${release.hash}`
+      if (await readJson(name))->Option.isNone {
+        await writeJson(
+          name,
+          JSON.Object(
+            dict{
+              "hash": String(release.hash),
+              "form": String(formName(release.form)),
+              "size": Number(release.size),
+            },
+          ),
+        )
+      }
+    },
+    release: async hash =>
+      (await readJson(`state/releases/${hash}`))->Option.flatMap(json =>
+        switch (json->text("form")->Option.flatMap(formOf), json->number("size")) {
+        | (Some(form), Some(size)) => Some(({hash, form, size}: release))
+        | _ => None
+        }
+      ),
+    deploy: d =>
+      writeJson(
+        `state/deployments/${Float.toString(d.app)}`,
+        JSON.Object(
+          dict{
+            "app": Number(d.app),
+            "binding": Number(d.binding),
+            "release": String(d.release),
+            "capacity": Number(d.capacity),
+          },
+        ),
+      ),
+    deployment: async app =>
+      (await readJson(`state/deployments/${Float.toString(app)}`))->Option.flatMap(json =>
+        switch (json->number("binding"), json->text("release"), json->number("capacity")) {
+        | (Some(binding), Some(release), Some(capacity)) =>
+          Some(({app, binding, release, capacity}: deployment))
+        | _ => None
+        }
+      ),
   }
 }
