@@ -6,7 +6,14 @@
 /** One contract's cases as the runner counted them, each case once in each form. */
 type counted = {passed: int, failed: int, waiting: int, skipped: int}
 
-type snapshot = {target: string, checkout: string, at: string, contracts: dict<counted>}
+/** The revision is what the live driver reports it was built from, absent where it reports none. */
+type snapshot = {
+  target: string,
+  revision?: string,
+  checkout: string,
+  at: string,
+  contracts: dict<counted>,
+}
 
 /** Where the files are written, `Snapshots.directory`. */
 let directory = "~/.local/state/workspace/snapshots/"
@@ -35,21 +42,27 @@ let checkout = (printed: result<string, string>) =>
 let toJson = (snapshot: snapshot) => {
   let number = n => JSON.Number(Int.toFloat(n))
   JSON.Object(
-    dict{
-      "target": JSON.String(snapshot.target),
-      "checkout": JSON.String(snapshot.checkout),
-      "at": JSON.String(snapshot.at),
-      "contracts": JSON.Object(
-        snapshot.contracts->Dict.mapValues(c => JSON.Object(
-          dict{
-            "passed": number(c.passed),
-            "failed": number(c.failed),
-            "waiting": number(c.waiting),
-            "skipped": number(c.skipped),
-          },
-        )),
-      ),
-    },
+    Dict.fromArray(
+      [
+        ("target", JSON.String(snapshot.target)),
+        ...snapshot.revision->Option.mapOr([], r => [("revision", JSON.String(r))]),
+        ("checkout", JSON.String(snapshot.checkout)),
+        ("at", JSON.String(snapshot.at)),
+        (
+          "contracts",
+          JSON.Object(
+            snapshot.contracts->Dict.mapValues(c => JSON.Object(
+              dict{
+                "passed": number(c.passed),
+                "failed": number(c.failed),
+                "waiting": number(c.waiting),
+                "skipped": number(c.skipped),
+              },
+            )),
+          ),
+        ),
+      ],
+    ),
   )
 }
 

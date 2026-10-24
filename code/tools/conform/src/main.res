@@ -284,7 +284,7 @@ let counted = (~scratch) =>
  * The target's snapshot written to its file, the path said, and whether it was. Where nothing was
  * counted its earlier snapshot is removed, so the target reads as unknown rather than out of date.
  */
-let snapshotted = (target, ~scratch) =>
+let snapshotted = (target, ~revision, ~scratch) =>
   switch counted(~scratch) {
   | Error(why) =>
     Snapshot.pathOf(~home=Host.homedir(), target)->Result.forEach(path =>
@@ -295,6 +295,7 @@ let snapshotted = (target, ~scratch) =>
   | Ok(contracts) =>
     let snapshot: Snapshot.snapshot = {
       target,
+      ?revision,
       checkout: Snapshot.checkout(
         ran("jj", ["log", "-r", "@", "--no-graph", "-T", "commit_id"], ~cwd=Host.fromRoot(".")),
       ),
@@ -386,7 +387,8 @@ let main = async () => {
               ~served,
             )
           }
-          let snapshot = snapshotted(named, ~scratch)
+          let revision = before->Result.mapOr(None, described => described.revision)
+          let snapshot = snapshotted(named, ~revision, ~scratch)
           forget()
           let nothingLeft = clean(target, facts, ~when_="after")
           if nothingLeft {

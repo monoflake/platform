@@ -59,12 +59,16 @@ let decode = (j: JSON.t): option<Snapshots.snapshot> =>
     text(j->member("checkout")),
     text(j->member("at")),
     object(j->member("contracts")),
+    j->member("revision"),
   ) {
-  | (Some(target), Some(checkout), Some(at), Some(contracts)) =>
+  | (Some(target), Some(checkout), Some(at), Some(contracts), given)
+    if given->Option.isNone || text(given)->Option.isSome =>
+    let revision = text(given)
     let read = contracts->Dict.toArray->Array.map(((name, c)) => (name, counted(c)))
     read->Array.every(((_, c)) => c->Option.isSome)
       ? Some({
           target,
+          ?revision,
           checkout,
           at,
           contracts: read
@@ -84,19 +88,23 @@ let read = target =>
   }
 
 /**
- * What a target's snapshot shows, each contract's state unbound, since its checkout is the local
- * commit and not one the target reports.
+ * What a target's snapshot shows. Each contract's state is bound where the target reported its
+ * revision, and unbound where only the local checkout is known, which the target does not report.
  */
 let lines = (target, snapshot: option<Snapshots.snapshot>) =>
   switch snapshot {
   | None => [`${target}: ${stateName(Unknown)}, no readable snapshot`]
   | Some(s) =>
-    [`${target}: checkout ${s.checkout} at ${s.at}, unbound`]->Array.concat(
+    let (head, binding) = switch s.revision {
+    | Some(revision) => (`revision ${revision}`, "bound")
+    | None => (`checkout ${s.checkout}`, "unbound")
+    }
+    [`${target}: ${head} at ${s.at}, ${binding}`]->Array.concat(
       s.contracts
       ->Dict.toArray
       ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
       ->Array.map(((name, c)) =>
-        `${target} ${name}: ${stateName(stateOf(c))}, unbound, ${int(c.passed)} passed, ${int(
+        `${target} ${name}: ${stateName(stateOf(c))}, ${binding}, ${int(c.passed)} passed, ${int(
             c.failed,
           )} failed, ${int(c.waiting)} waiting, ${int(c.skipped)} skipped`
       ),

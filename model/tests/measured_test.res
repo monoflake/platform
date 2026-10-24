@@ -37,6 +37,32 @@ test("a snapshot is decoded and its contracts reported unbound", () => {
   )
 })
 
+test("a snapshot holding a revision is reported bound, saying the revision", () => {
+  let snapshot = Measured.decode(
+    JSON.parseOrThrow(`{"target": "root@machine.example", "revision": "4f2e9a1", "checkout": "abc",
+      "at": "2026-10-24T00:00:00Z",
+      "contracts": {"object": {"passed": 2, "failed": 0, "waiting": 1, "skipped": 1}}}`),
+  )
+  deepEqual(snapshot->Option.flatMap(s => s.revision), Some("4f2e9a1"))
+  deepEqual(
+    Measured.lines("root@machine.example", snapshot),
+    [
+      "root@machine.example: revision 4f2e9a1 at 2026-10-24T00:00:00Z, bound",
+      "root@machine.example object: thin, bound, 2 passed, 0 failed, 1 waiting, 1 skipped",
+    ],
+  )
+})
+
+test("a revision that is no text makes the snapshot unreadable", () => {
+  deepEqual(
+    Measured.decode(
+      JSON.parseOrThrow(`{"target": "t", "revision": 7, "checkout": "abc", "at": "now",
+        "contracts": {}}`),
+    ),
+    None,
+  )
+})
+
 test("a snapshot with a count missing is unreadable, so unknown", () => {
   let snapshot = Measured.decode(
     JSON.parseOrThrow(`{"target": "t", "checkout": "abc", "at": "now",

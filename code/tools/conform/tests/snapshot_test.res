@@ -35,6 +35,17 @@ test("a snapshot is the target, checkout, time and each contract's four numbers"
   )
 })
 
+test(
+  "a revision the driver reported is written beside the target, absent where it gave none",
+  () => {
+    deepEqual(
+      JSON.stringify(Snapshot.toJson({...snapshot, revision: "4f2e9a1"})),
+      `{"target":"root@machine.example","revision":"4f2e9a1","checkout":"0123abcd","at":"2026-10-24T12:00:00.000Z","contracts":{"objects.write":{"passed":4,"failed":1,"waiting":2,"skipped":0},"management":{"passed":6,"failed":0,"waiting":0,"skipped":2}}}`,
+    )
+    ok(!(JSON.stringify(Snapshot.toJson(snapshot))->String.includes("revision")))
+  },
+)
+
 test("the commit id jj printed is the checkout, unknown where jj did not run", () => {
   deepEqual(Snapshot.checkout(Ok("9f8e7d\n")), "9f8e7d")
   deepEqual(Snapshot.checkout(Ok("")), "unknown")
