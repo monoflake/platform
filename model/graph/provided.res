@@ -66,3 +66,18 @@ let elsewhere: dict<block> = Fill.part(Fill.provided)->Option.getOr(dict{})
 
 /** Every block's declaration, this repository's and its siblings'. */
 let all = Dict.fromArray(Array.concat(blocks->Dict.toArray, elsewhere->Dict.toArray))
+
+/**
+ * What fills a name in one deployment, RFC vgvx6, a block by its main name, a vendor's resource, or
+ * a user's workload, whose code the model never holds.
+ */
+type filler =
+  | Block(string)
+  | Vendor({vendor: string, resource: string})
+  | Workload(string)
+
+/** One deployment, each name with what fills it as it runs now, and the targets bound to it. */
+type deployed = {fills: array<(string, filler)>, targets: array<string>}
+
+/** Each deployment by its name, given in the fill; none where no fill gives them. */
+let deployments: dict<deployed> = Fill.part(Fill.deployments)->Option.getOr(dict{})

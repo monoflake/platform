@@ -123,6 +123,7 @@ description = "What a commit has to pass: everything formatted, the check, every
 run = [
 	"mise run formatted",
 	"mise run check",
+	"node --test 'model/tests/**/*_test.res.mjs'",
 	"mise run blocks",
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]

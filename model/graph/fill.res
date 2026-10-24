@@ -25,3 +25,9 @@ let drivers = "drivers"
  * as `Provided.block` has it.
  */
 let provided = "provided"
+
+/**
+ * The part giving each deployment of the hosted platform what fills each name in it and its
+ * targets, RFC vgvx6, as `Provided.deployed` has it.
+ */
+let deployments = "deployments"
