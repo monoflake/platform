@@ -6,17 +6,22 @@ type binding = {
   secret: Uint8Array.t,
   tunnel: option<string>,
   address: option<string>,
+  relayed: bool,
 }
+
+type organization = {id: float, secret: Uint8Array.t}
 
 type release = {hash: string, form: DeploymentForm.t, size: float}
 
 type deployment = {app: float, binding: float, release: string, capacity: float}
 
 type t = {
-  openOrganization: string => promise<float>,
+  openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
   hasOrganization: float => promise<bool>,
-  openBinding: (~organization: float, ~secret: Uint8Array.t) => promise<float>,
+  organizationSecret: float => promise<option<Uint8Array.t>>,
+  openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
   binding: float => promise<option<binding>>,
+  storage: float => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   addressed: (~binding: float, ~address: string) => promise<unit>,
   putRelease: release => promise<unit>,
@@ -27,13 +32,27 @@ type t = {
 
 /** Rows as D1 answers them, a column with no value `null`. */
 type idRow = {id: float}
+type organizationRow = {id: float, secret: Nullable.t<string>}
 type bindingRow = {
   id: float,
   organization: float,
   secret: string,
   tunnel: Nullable.t<string>,
   address: Nullable.t<string>,
+  relayed: float,
 }
+
+let bindingColumns = "id, organization, secret, tunnel, address, relayed"
+
+let bindingOf = (row: bindingRow) =>
+  Envelope.Hex.decode(row.secret)->Option.map((secret): binding => {
+    id: row.id,
+    organization: row.organization,
+    secret,
+    tunnel: row.tunnel->Nullable.toOption,
+    address: row.address->Nullable.toOption,
+    relayed: row.relayed != 0.,
+  })
 type releaseRow = {hash: string, form: string, size: float}
 type deploymentRow = {app: float, binding: float, release: string, capacity: float}
 
@@ -57,13 +76,20 @@ let ofDatabase = database => {
   let first = async (sql, values) => (await statement(sql, values)->Stores.first)->Nullable.toOption
   let run = (sql, values) => statement(sql, values)->Stores.run
   {
-    openOrganization: async label => {
+    // FIXME fhg6w seals a secret under its control's key, which waits on that key being made.
+    openOrganization: async (label, ~secret) => {
+      let hex = Envelope.Hex.encode(secret)
       await run(
-        "INSERT INTO organization (label) VALUES (?) ON CONFLICT (label) DO NOTHING",
-        [Text(label)],
+        "INSERT INTO organization (label, secret) VALUES (?, ?)
+        ON CONFLICT (label) DO UPDATE SET secret = coalesce(organization.secret, excluded.secret)",
+        [Text(label), Text(hex)],
       )
-      switch await first("SELECT id FROM organization WHERE label = ?", [Text(label)]) {
-      | Some({id}: idRow) => id
+      switch await first("SELECT id, secret FROM organization WHERE label = ?", [Text(label)]) {
+      | Some({id, secret}: organizationRow) =>
+        switch secret->Nullable.toOption->Option.flatMap(Envelope.Hex.decode) {
+        | Some(secret) => {id, secret}
+        | None => JsError.throwWithMessage(`organization ${label} holds no secret once opened`)
+        }
       | None => JsError.throwWithMessage(`no organization holds ${label} once opened`)
       }
     },
@@ -72,30 +98,32 @@ let ofDatabase = database => {
       | Some(_: idRow) => true
       | None => false
       },
-    // FIXME fhg6w seals a secret under its control's key, which waits on that key being made.
-    openBinding: async (~organization, ~secret) =>
+    organizationSecret: async id =>
+      (
+        await first("SELECT id, secret FROM organization WHERE id = ?", [Number(id)])
+      )->Option.flatMap(({secret}: organizationRow) =>
+        secret->Nullable.toOption->Option.flatMap(Envelope.Hex.decode)
+      ),
+    openBinding: async (~organization, ~secret, ~relayed) =>
       switch await first(
-        "INSERT INTO binding (organization, secret) VALUES (?, ?) RETURNING id",
-        [Number(organization), Text(Envelope.Hex.encode(secret))],
+        "INSERT INTO binding (organization, secret, relayed) VALUES (?, ?, ?) RETURNING id",
+        [Number(organization), Text(Envelope.Hex.encode(secret)), Number(relayed ? 1. : 0.)],
       ) {
       | Some({id}: idRow) => id
       | None => JsError.throwWithMessage("no binding inserted")
       },
     binding: async id =>
       (
+        await first(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)])
+      )->Option.flatMap(bindingOf),
+    storage: async organization =>
+      (
         await first(
-          "SELECT id, organization, secret, tunnel, address FROM binding WHERE id = ?",
-          [Number(id)],
+          `SELECT ${bindingColumns} FROM binding
+          WHERE organization = ? AND relayed = 0 AND address IS NOT NULL ORDER BY id LIMIT 1`,
+          [Number(organization)],
         )
-      )->Option.flatMap((row: bindingRow) =>
-        Envelope.Hex.decode(row.secret)->Option.map((secret): binding => {
-          id: row.id,
-          organization: row.organization,
-          secret,
-          tunnel: row.tunnel->Nullable.toOption,
-          address: row.address->Nullable.toOption,
-        })
-      ),
+      )->Option.flatMap(bindingOf),
     tunneled: (~binding, ~tunnel) =>
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
     addressed: (~binding, ~address) =>

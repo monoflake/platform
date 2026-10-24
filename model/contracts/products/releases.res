@@ -16,13 +16,16 @@ let types: array<declared> = [
     def: Record([field("hash", 1, Prim(#hash)), field("size", 2, Prim(#uint53))]),
     from: "rxmd9",
   },
-  // An app runs on one binding at a time, so deploying it onto another moves it there.
+  // An app runs on one binding at a time, so deploying it onto another moves it there. Its secrets
+  // and network are handed to the driver and kept by no control.
   {
     name: "release-deploy",
     def: Record([
       field("binding", 1, Id("capacity")),
       field("app", 2, Id("app")),
       field("release", 3, Prim(#hash)),
+      optional("secrets", 4, Map(Prim(#secret))),
+      optional("network", 5, List(Type("deployment-network"))),
     ]),
     from: "rxmd9",
   },

@@ -13,6 +13,7 @@ type body
 @get external requestHeaders: request => headers = "headers"
 @send external header: (headers, string) => Nullable.t<string> = "get"
 @send external setHeader: (headers, string, string) => unit = "set"
+@send external deleteHeader: (headers, string) => unit = "delete"
 @send external requestBytes: request => promise<ArrayBuffer.t> = "arrayBuffer"
 @get external requestBody: request => Nullable.t<body> = "body"
 

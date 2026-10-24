@@ -40,10 +40,11 @@ test("bytes are equal only where every byte is, one length or another", async ()
 })
 
 test(
-  "the operator is told by the Worker's secret, a host by its binding's, anyone else is nobody",
+  "the operator is told by the Worker's secret, a host by its binding's, an organization by its own, anyone else is nobody",
   async () => {
     let held = async id => id == 12. ? Some(secret) : None
-    let caller = header => Access.caller(header, ~operator=Some("the operator"), ~secret=held)
+    let caller = header =>
+      Access.caller(header, ~operator=Some("the operator"), ~secret=held, ~organizationSecret=held)
     let wrong = Uint8Array.fromLength(32)
     deepEqual(
       [
@@ -53,11 +54,33 @@ test(
         await caller(Some(`Bearer ${Access.tokenText(12., secret)}`)),
         await caller(Some(`Bearer ${Access.tokenText(12., wrong)}`)),
         await caller(Some(`Bearer ${Access.tokenText(13., secret)}`)),
+        await caller(Some(`Bearer ${Access.organizationText(12., secret)}`)),
+        await caller(Some(`Bearer ${Access.organizationText(12., wrong)}`)),
+        await caller(Some(`Bearer ${Access.organizationText(13., secret)}`)),
         await caller(None),
       ],
-      [Operator, Operator, Nobody, Host(12.), Nobody, Nobody, Nobody],
+      [
+        Operator,
+        Operator,
+        Nobody,
+        Host(12.),
+        Nobody,
+        Nobody,
+        Organization(12.),
+        Nobody,
+        Nobody,
+        Nobody,
+      ],
     )
     // A control given no operator's secret has no operator.
-    deepEqual(await Access.caller(Some("Bearer "), ~operator=Some(""), ~secret=held), Nobody)
+    deepEqual(
+      await Access.caller(
+        Some("Bearer "),
+        ~operator=Some(""),
+        ~secret=held,
+        ~organizationSecret=held,
+      ),
+      Nobody,
+    )
   },
 )

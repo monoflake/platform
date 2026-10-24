@@ -1,6 +1,6 @@
 /**
  * The control's organizations, opened by the operator, the thinnest the thread asks, RFC rxmd9.
- * Opening a label held answers the organization holding it, so a retried call opens nothing more.
+ * Opening a label held answers the organization holding it and its secret, so a retry opens none.
  */
 open Subset
 
@@ -13,7 +13,11 @@ let types: array<declared> = [
   },
   {
     name: "organization-opened",
-    def: Record([field("organization", 1, Id("organization"))]),
+    // The organization's token is `o<organization>.<secret>`, as JSON writes the two.
+    def: Record([
+      field("organization", 1, Id("organization")),
+      optional("secret", 2, Prim(#secret)),
+    ]),
     from: "rxmd9",
   },
 ]

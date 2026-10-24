@@ -1,6 +1,6 @@
 /*** The control's parts kept in memory, as the API's tests stand them in for D1 and R2. */
 let state = (): State.t => {
-  let organizations: dict<float> = dict{}
+  let organizations: dict<State.organization> = dict{}
   let bindings: dict<State.binding> = dict{}
   let releases: dict<State.release> = dict{}
   let deployments: dict<State.deployment> = dict{}
@@ -8,21 +8,29 @@ let state = (): State.t => {
   let change = (id, f) =>
     bindings->Dict.get(key(id))->Option.forEach(b => bindings->Dict.set(key(id), f(b)))
   {
-    openOrganization: async label =>
+    openOrganization: async (label, ~secret) =>
       switch organizations->Dict.get(label) {
-      | Some(id) => id
+      | Some(organization) => organization
       | None =>
         let id = organizations->Dict.keysToArray->Array.length->Int.toFloat +. 1.
-        organizations->Dict.set(label, id)
-        id
+        organizations->Dict.set(label, {id, secret})
+        {id, secret}
       },
-    hasOrganization: async id => organizations->Dict.valuesToArray->Array.includes(id),
-    openBinding: async (~organization, ~secret) => {
+    hasOrganization: async id => organizations->Dict.valuesToArray->Array.some(o => o.id == id),
+    organizationSecret: async id =>
+      organizations->Dict.valuesToArray->Array.find(o => o.id == id)->Option.map(o => o.secret),
+    openBinding: async (~organization, ~secret, ~relayed) => {
       let id = bindings->Dict.keysToArray->Array.length->Int.toFloat +. 1.
-      bindings->Dict.set(key(id), {id, organization, secret, tunnel: None, address: None})
+      bindings->Dict.set(key(id), {id, organization, secret, tunnel: None, address: None, relayed})
       id
     },
     binding: async id => bindings->Dict.get(key(id)),
+    storage: async organization =>
+      bindings
+      ->Dict.valuesToArray
+      ->Array.filter(b => b.organization == organization && !b.relayed && b.address != None)
+      ->Array.toSorted((a, b) => a.id -. b.id)
+      ->Array.get(0),
     tunneled: async (~binding, ~tunnel) => change(binding, b => {...b, tunnel: Some(tunnel)}),
     addressed: async (~binding, ~address) => change(binding, b => {...b, address: Some(address)}),
     putRelease: async release =>

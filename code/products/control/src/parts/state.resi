@@ -3,9 +3,12 @@
  * and behind this record wherever it runs, RFC rxmd9.
  */
 
+/** An organization and the secret its own control presents. */
+type organization = {id: float, secret: Uint8Array.t}
+
 /**
  * A binding, its secret, the tunnel made for its host and the address its host is reached at, each
- * absent until it is bound.
+ * absent until it is bound. A relayed one's host is bound to an organization's own control.
  */
 type binding = {
   id: float,
@@ -13,6 +16,7 @@ type binding = {
   secret: Uint8Array.t,
   tunnel: option<string>,
   address: option<string>,
+  relayed: bool,
 }
 
 /** A release by its hash in hex, its form and its size in bytes. */
@@ -22,11 +26,14 @@ type release = {hash: string, form: Envelope.Contracts.DeploymentForm.t, size: f
 type deployment = {app: float, binding: float, release: string, capacity: float}
 
 type t = {
-  /** The organization holding a label, opened if none does. */
-  openOrganization: string => promise<float>,
+  /** The organization holding a label, opened if none does, the secret given kept where none is. */
+  openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
   hasOrganization: float => promise<bool>,
-  openBinding: (~organization: float, ~secret: Uint8Array.t) => promise<float>,
+  organizationSecret: float => promise<option<Uint8Array.t>>,
+  openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
   binding: float => promise<option<binding>>,
+  /** The organization's first binding its host bound here, where its objects are kept. */
+  storage: float => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   /** The address its host is reached at, written once the host can be reached there. */
   addressed: (~binding: float, ~address: string) => promise<unit>,

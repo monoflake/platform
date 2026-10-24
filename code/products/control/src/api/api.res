@@ -36,17 +36,17 @@ let organizations = (parts, caller: Access.caller) =>
     handle: async (_, {call}) =>
       switch (caller, call) {
       | (Operator, Open({label})) if labeled->RegExp.test(label) =>
-        let organization = await parts.state.openOrganization(label)
+        let {id, secret} = await parts.state.openOrganization(label, ~secret=Web.random(32))
         Output(
           Calls.output(
-            ({organization: organization}: Contracts.OrganizationOpened.t),
+            ({organization: id, secret}: Contracts.OrganizationOpened.t),
             ~toJson=Contracts.OrganizationOpened.toJson,
             ~toCbor=Contracts.OrganizationOpened.toCbor,
           ),
         )
       | (Operator, Open(_)) =>
         refused("invalid", "a label is lowercase letters, digits and hyphens")
-      | (Host(_) | Nobody, _) => denied
+      | (Host(_) | Organization(_) | Nobody, _) => denied
       },
   })
 
@@ -101,7 +101,7 @@ let bindings = (parts, caller: Access.caller) =>
       | (Operator, Open({organization})) =>
         if await parts.state.hasOrganization(organization) {
           let secret = Web.random(32)
-          let binding = await parts.state.openBinding(~organization, ~secret)
+          let binding = await parts.state.openBinding(~organization, ~secret, ~relayed=false)
           Output(
             Calls.output(
               ({binding, secret}: Contracts.BindingOpened.t),
@@ -130,7 +130,42 @@ let bindings = (parts, caller: Access.caller) =>
             }
           }
         }
-      | (Operator | Nobody, Bind(_)) | (Host(_) | Nobody, Open(_)) => denied
+      | (Operator | Organization(_) | Nobody, Bind(_))
+      | (Host(_) | Organization(_) | Nobody, Open(_)) => denied
+      },
+  })
+
+/** An address for an organization's own control, its tunnel made where this control makes them. */
+let reaches = (parts, caller: Access.caller) =>
+  Calls.route({
+    name: "reaches",
+    fromJson: Interface.Reaches.fromJson,
+    fromCbor: Interface.Reaches.fromCbor,
+    reasons: [Interface.Reaches.open_],
+    handle: async (_, {call}) =>
+      switch (caller, call) {
+      | (Organization(organization), Open(_)) =>
+        let id = await parts.state.openBinding(~organization, ~secret=Web.random(32), ~relayed=true)
+        let address = addressOf(id)
+        let opened = (output: Contracts.ReachOpened.t) => Calls.Output(
+          Calls.output(
+            output,
+            ~toJson=Contracts.ReachOpened.toJson,
+            ~toCbor=Contracts.ReachOpened.toCbor,
+          ),
+        )
+        switch (parts.tunnels, await parts.state.binding(id)) {
+        | (_, None) => refused("unreachable", `binding ${Float.toString(id)} was not kept`)
+        | (None, Some(_)) =>
+          await parts.state.addressed(~binding=id, ~address)
+          opened({reach: id, address})
+        | (Some(tunnels), Some(binding)) =>
+          switch await tunneled(parts, tunnels, binding, address) {
+          | Ok(token) => opened({reach: id, address, tunnel: Web.utf8(token)})
+          | Error(why) => refused("unreachable", `the reach's tunnel could not be made, ${why}`)
+          }
+        }
+      | (Operator | Host(_) | Nobody, _) => denied
       },
   })
 
@@ -198,6 +233,8 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
         ~hash=input.release,
         ~form=release.form,
         ~address=`${parts.origin}/artifacts/${hex}`,
+        ~secrets=input.secrets->Option.getOr(dict{}),
+        ~network=input.network->Option.getOr([]),
         ~declared=capacity =>
           parts.state.deploy({app: input.app, binding: input.binding, release: hex, capacity}),
         ~wait=parts.wait,
@@ -227,12 +264,13 @@ let releases = (parts, caller: Access.caller) =>
       | (Operator, Put(input)) => await put(parts, input)
       | (Operator, Deploy(input)) => await deploy(parts, input)
       | (Operator, Describe({app})) => await describe(parts, app)
-      | (Host(_) | Nobody, _) => denied
+      | (Host(_) | Organization(_) | Nobody, _) => denied
       },
   })
 
 let routes = (parts, caller) => [
   organizations(parts, caller),
   bindings(parts, caller),
+  reaches(parts, caller),
   releases(parts, caller),
 ]

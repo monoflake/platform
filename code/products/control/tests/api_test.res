@@ -57,6 +57,7 @@ let called = async (stood, caller, envelope) => {
 let organizations = call => Contracts.Interface.Organizations.toJson({call, capabilities: []})
 let bindings = call => Contracts.Interface.Bindings.toJson({call, capabilities: []})
 let releases = call => Contracts.Interface.Releases.toJson({call, capabilities: []})
+let reaches = call => Contracts.Interface.Reaches.toJson({call, capabilities: []})
 
 let member = (json, name) =>
   json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))->Option.getOr(JSON.Null)
@@ -84,6 +85,22 @@ test("an organization opened twice by its label is one organization", async () =
   deepEqual((status, first->data, again->data), (200, first->data, first->data))
   let (_, bad) = await called(stood, Operator, organizations(Open({label: "Not-A-Label"})))
   deepEqual(bad->reason, Some("invalid"))
+})
+
+test("an organization is answered its secret, the same each time it is opened", async () => {
+  let stood = stand()
+  let (_, first) = await called(stood, Operator, organizations(Open({label: "first"})))
+  let (_, again) = await called(stood, Operator, organizations(Open({label: "first"})))
+  let secret = first->data->member("secret")->JSON.Decode.string
+  deepEqual(
+    secret->Option.flatMap(Envelope.Base64url.decode)->Option.map(TypedArray.length),
+    Some(32),
+  )
+  deepEqual(again->data->member("secret")->JSON.Decode.string, secret)
+  deepEqual(
+    (await stood.parts.state.organizationSecret(1.))->Option.map(Envelope.Base64url.encode),
+    secret,
+  )
 })
 
 test("every operation refuses a caller it is not for as denied", async () => {
@@ -154,6 +171,41 @@ let tunnels = (~failing=false) => {
   }
   (faked, made, routes)
 }
+
+test(
+  "an organization opens a reach, a relayed binding its tunnel made, and no one else may",
+  async () => {
+    let (faked, _, routes) = tunnels()
+    let stood = stand(~tunnels=faked)
+    ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
+    let (status, opened) = await called(stood, Organization(1.), reaches(Open({})))
+    deepEqual(
+      (status, opened->data->member("reach"), opened->data->member("address")),
+      (200, Number(1.), String("10.200.0.1")),
+    )
+    deepEqual(
+      opened
+      ->data
+      ->member("tunnel")
+      ->JSON.Decode.string
+      ->Option.flatMap(Envelope.Base64url.decode)
+      ->Option.map(Web.fromUtf8),
+      Some("token of tunnel-binding-1"),
+    )
+    deepEqual(routes, [("tunnel-binding-1", "10.200.0.1")])
+    deepEqual((await stood.parts.state.binding(1.))->Option.map(b => b.relayed), Some(true))
+    deepEqual(
+      [
+        (await called(stood, Operator, reaches(Open({}))))->Pair.second->reason,
+        (await called(stood, Host(1.), reaches(Open({}))))->Pair.second->reason,
+        (await called(stood, Organization(1.), organizations(Open({label: "second"}))))
+        ->Pair.second
+        ->reason,
+      ],
+      [Some("denied"), Some("denied"), Some("denied")],
+    )
+  },
+)
 
 test("a host bound is made one tunnel and one route, and answered the tunnel's token", async () => {
   let (faked, made, routes) = tunnels()
@@ -240,6 +292,42 @@ test(
     )
     let (_, described) = await called(stood, Operator, releases(Describe({app: 4.})))
     deepEqual(described->data, answer->data)
+  },
+)
+
+test(
+  "a deploy hands the driver the secrets and network it is given, and none where none",
+  async () => {
+    let stood = stand()
+    let (binding, hash) = await opened(stood)
+    let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(32))
+    ignore(await called(stood, Operator, releases(Deploy({binding, app: 1., release}))))
+    deepEqual(
+      stood.host.deployed.contents->Option.map(d => (d.secrets->Dict.keysToArray, d.network)),
+      Some(([], [])),
+    )
+    ignore(
+      await called(
+        stood,
+        Operator,
+        releases(
+          Deploy({
+            binding,
+            app: 1.,
+            release,
+            secrets: dict{"OPERATOR": Web.utf8("kept")},
+            network: [Http],
+          }),
+        ),
+      ),
+    )
+    deepEqual(
+      stood.host.deployed.contents->Option.map(d => (
+        d.secrets->Dict.get("OPERATOR")->Option.map(Web.fromUtf8),
+        d.network,
+      )),
+      Some((Some("kept"), [Contracts.DeploymentNetwork.Http])),
+    )
   },
 )
 

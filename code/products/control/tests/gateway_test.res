@@ -48,8 +48,15 @@ test(
       ~search="?x=1",
     )
     deepEqual(unknown->Web.status, 404)
-    let organization = await state.openOrganization("first")
-    let binding = await state.openBinding(~organization, ~secret=Uint8Array.fromLength(32))
+    let {id: organization} = await state.openOrganization(
+      "first",
+      ~secret=Uint8Array.fromLength(32),
+    )
+    let binding = await state.openBinding(
+      ~organization,
+      ~secret=Uint8Array.fromLength(32),
+      ~relayed=false,
+    )
     await state.addressed(~binding, ~address="10.200.0.1")
     await state.deploy({app: 4., binding, release: "", capacity: 1.})
     let answer = await Gateway.passed(
@@ -78,8 +85,12 @@ test(
 /** A state holding app 4 deployed on a bound binding, its host faked. */
 let deployed = async () => {
   let state = Memory.state()
-  let organization = await state.openOrganization("first")
-  let binding = await state.openBinding(~organization, ~secret=Uint8Array.fromLength(32))
+  let {id: organization} = await state.openOrganization("first", ~secret=Uint8Array.fromLength(32))
+  let binding = await state.openBinding(
+    ~organization,
+    ~secret=Uint8Array.fromLength(32),
+    ~relayed=false,
+  )
   await state.addressed(~binding, ~address="10.200.0.1")
   await state.deploy({app: 4., binding, release: "", capacity: 1.})
   state

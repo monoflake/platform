@@ -1,4 +1,4 @@
-type caller = Operator | Host(float) | Nobody
+type caller = Operator | Host(float) | Organization(float) | Nobody
 
 let bearer = header =>
   header->Option.flatMap(text =>
@@ -26,6 +26,11 @@ let token = text =>
 
 let tokenText = (id, secret) => `${Float.toString(id)}.${Envelope.Base64url.encode(secret)}`
 
+let organizationToken = text =>
+  text->String.startsWith("o") ? token(text->String.slice(~start=1)) : None
+
+let organizationText = (id, secret) => `o${tokenText(id, secret)}`
+
 let equal = (a, b) =>
   a->TypedArray.length == b->TypedArray.length && {
       let differ = ref(0)
@@ -37,17 +42,20 @@ let equal = (a, b) =>
       differ.contents == 0
     }
 
-let caller = async (header, ~operator, ~secret) =>
+let presented = async (kept, presented, called) =>
+  switch await kept {
+  | Some(kept) if equal(kept, presented) => called
+  | Some(_) | None => Nobody
+  }
+
+let caller = async (header, ~operator, ~secret, ~organizationSecret) =>
   switch bearer(header) {
   | None => Nobody
   | Some(given) =>
-    switch token(given) {
-    | Some((id, presented)) =>
-      switch await secret(id) {
-      | Some(kept) if equal(kept, presented) => Host(id)
-      | Some(_) | None => Nobody
-      }
-    | None =>
+    switch (token(given), organizationToken(given)) {
+    | (Some((id, bytes)), _) => await presented(secret(id), bytes, Host(id))
+    | (None, Some((id, bytes))) => await presented(organizationSecret(id), bytes, Organization(id))
+    | (None, None) =>
       switch operator {
       | Some(kept) if kept != "" =>
         equal(await Web.sha256(Web.utf8(kept)), await Web.sha256(Web.utf8(given)))

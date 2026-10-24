@@ -1,6 +1,6 @@
 /***
- * The control's API, `organizations`, `bindings` and `releases`, each operation answering only the
- * caller it is for, RFC rxmd9, and refusing every other as `denied`.
+ * The control's API, `organizations`, `bindings`, `reaches` and `releases`, each operation
+ * answering only the caller it is for, RFC rxmd9, and refusing every other as `denied`.
  */
 
 /** The parts the API stands on, each behind its own record, and what it is configured with. */

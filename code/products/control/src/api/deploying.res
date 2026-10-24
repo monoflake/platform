@@ -45,7 +45,15 @@ let planned = (described: Contracts.ManagementDescribed.t, ~credential) => {
   }
 }
 
-let deploy = (~app, ~hash, ~form, ~address, ~into): Contracts.DeploymentDeploy.t => {
+let deploy = (
+  ~app,
+  ~hash,
+  ~form,
+  ~address,
+  ~secrets,
+  ~network,
+  ~into,
+): Contracts.DeploymentDeploy.t => {
   runs: App({id: app}),
   version: hash,
   form,
@@ -53,8 +61,8 @@ let deploy = (~app, ~hash, ~form, ~address, ~into): Contracts.DeploymentDeploy.t
   artifact: {address, hash},
   // No footing is built yet, so the address is one that answers nothing.
   footing: "https://footing.invalid",
-  secrets: dict{},
-  network: [],
+  secrets,
+  network,
   into,
 }
 
@@ -101,14 +109,14 @@ let container = async (host, ~wait) =>
     }
   }
 
-let deployed = async (host, ~app, ~hash, ~form, ~address, ~declared, ~wait) =>
+let deployed = async (host, ~app, ~hash, ~form, ~address, ~secrets, ~network, ~declared, ~wait) =>
   switch await container(host, ~wait) {
   | Error(refused) => Error(refused)
   | Ok(into) =>
     await declared(into)
     await Driver.call(
       host,
-      deployments(Deploy(deploy(~app, ~hash, ~form, ~address, ~into))),
+      deployments(Deploy(deploy(~app, ~hash, ~form, ~address, ~secrets, ~network, ~into))),
       Contracts.DeploymentDescribed.fromJson,
     )
   }

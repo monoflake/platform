@@ -24,6 +24,8 @@ let deploy: (
   ~hash: Uint8Array.t,
   ~form: Contracts.DeploymentForm.t,
   ~address: string,
+  ~secrets: dict<Uint8Array.t>,
+  ~network: array<Contracts.DeploymentNetwork.t>,
   ~into: float,
 ) => Contracts.DeploymentDeploy.t
 
@@ -37,6 +39,8 @@ let deployed: (
   ~hash: Uint8Array.t,
   ~form: Contracts.DeploymentForm.t,
   ~address: string,
+  ~secrets: dict<Uint8Array.t>,
+  ~network: array<Contracts.DeploymentNetwork.t>,
   ~declared: float => promise<unit>,
   ~wait: unit => promise<unit>,
 ) => promise<result<Contracts.DeploymentDescribed.t, Driver.refused>>

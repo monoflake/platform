@@ -39,15 +39,24 @@ let tunnelsOf = (env: Stores.env) =>
   | _ => None
   }
 
+/** Who presented the credential a header carries. */
+let callerOf = (state: State.t, env: Stores.env, request, name) =>
+  Access.caller(
+    request->Web.requestHeaders->Web.header(name)->Nullable.toOption,
+    ~operator=env.operator,
+    ~secret=async id =>
+      switch await state.binding(id) {
+      | Some({relayed: false, secret}) => Some(secret)
+      | Some({relayed: true}) | None => None
+      },
+    ~organizationSecret=state.organizationSecret,
+  )
+
 let api = async (request, env: Stores.env, ~reach, ~origin, ~path) => {
   let state = State.ofDatabase(env.state)
   let headers = request->Web.requestHeaders
   let header = name => headers->Web.header(name)->Nullable.toOption
-  let caller = await Access.caller(
-    header("authorization"),
-    ~operator=env.operator,
-    ~secret=async id => (await state.binding(id))->Option.map(b => b.secret),
-  )
+  let caller = await callerOf(state, env, request, "authorization")
   let parts: Api.parts = {
     state,
     artifacts: Artifacts.ofBucket(env.artifacts),
@@ -103,16 +112,40 @@ let fetch = async (request, env: Stores.env) => {
       | _ => Web.answered(~status=404, "no artifact")
       }
     | (None, _, _) =>
-      // A host reaches the control by `ORIGIN` where one is set, as a container on the Mac does.
-      await api(
-        request,
-        env,
-        ~reach,
-        ~origin=env.origin
-        ->Option.filter(o => o != "")
-        ->Option.getOr(located->Web.origin),
-        ~path,
-      )
+      let state = State.ofDatabase(env.state)
+      let driverPort = portOf(env.driverPort, driverPort)
+      switch (Relay.routed(path), Relay.objected(path)) {
+      | (Some(relayed), _) =>
+        await Relay.passed(
+          state,
+          reach,
+          ~caller=await callerOf(state, env, request, "proxy-authorization"),
+          ~ports=(driverPort, portOf(env.entryPort, entryPort)),
+          request,
+          relayed,
+          ~search=located->Web.search,
+        )
+      | (None, true) =>
+        await Relay.stored(
+          state,
+          reach,
+          ~caller=await callerOf(state, env, request, "authorization"),
+          ~port=driverPort,
+          request,
+          ~path,
+        )
+      | (None, false) =>
+        // A host reaches the control by `ORIGIN` where one is set, as a container on the Mac does.
+        await api(
+          request,
+          env,
+          ~reach,
+          ~origin=env.origin
+          ->Option.filter(o => o != "")
+          ->Option.getOr(located->Web.origin),
+          ~path,
+        )
+      }
     }
   }
 }

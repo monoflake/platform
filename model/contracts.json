@@ -5383,6 +5383,14 @@
 					"shape": {
 						"id": "organization"
 					}
+				},
+				{
+					"name": "secret",
+					"key": 2,
+					"shape": {
+						"prim": "secret"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -5502,6 +5510,26 @@
 					"shape": {
 						"prim": "hash"
 					}
+				},
+				{
+					"name": "secrets",
+					"key": 4,
+					"shape": {
+						"map": {
+							"prim": "secret"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "network",
+					"key": 5,
+					"shape": {
+						"list": {
+							"type": "deployment-network"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -5513,6 +5541,35 @@
 					"shape": {
 						"id": "app"
 					}
+				}
+			]
+		},
+		"reach-open": {
+			"record": []
+		},
+		"reach-opened": {
+			"record": [
+				{
+					"name": "reach",
+					"key": 1,
+					"shape": {
+						"id": "capacity"
+					}
+				},
+				{
+					"name": "address",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "tunnel",
+					"key": 3,
+					"shape": {
+						"prim": "secret"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -7685,6 +7742,24 @@
 							"name": "not_found",
 							"failure": "rejected"
 						},
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
+						}
+					]
+				}
+			]
+		},
+		"reaches": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "open",
+					"input": "reach-open",
+					"output": "reach-opened",
+					"reasons": [
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
