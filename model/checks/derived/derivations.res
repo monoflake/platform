@@ -92,7 +92,7 @@ let provided = () =>
         | by => `${n}: ${by->Array.join(", ")}`
         }
       ),
-      Provided.blocks
+      Provided.all
       ->Dict.toArray
       ->Array.flatMap(((main, b)) =>
         Array.concat(

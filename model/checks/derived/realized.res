@@ -28,10 +28,13 @@ let mains = {
       h.languages->Array.every(l => existsSync(urlIn(`${path}/${manifest(l)}`, root)))
   )
   ->Array.map(((_, h)) => h.name)
+  ->Array.concat(
+    Provided.elsewhere->Dict.keysToArray->Array.filter(n => component(n)->Option.isSome),
+  )
   ->Array.toSorted(byText)
 }
 
-let declaredOf = main => Provided.blocks->Dict.get(main)
+let declaredOf = main => Provided.all->Dict.get(main)
 
 /** The names a block provides, its main name first. */
 let provides = main => [main]->Array.concat(declaredOf(main)->Option.mapOr([], b => b.provides))

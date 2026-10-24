@@ -60,3 +60,9 @@ let blocks: dict<block> = dict{
     ],
   },
 }
+
+/** What a sibling repository's blocks provide, given in the fill, its code written there. */
+let elsewhere: dict<block> = Fill.part(Fill.provided)->Option.getOr(dict{})
+
+/** Every block's declaration, this repository's and its siblings'. */
+let all = Dict.fromArray(Array.concat(blocks->Dict.toArray, elsewhere->Dict.toArray))

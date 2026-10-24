@@ -19,3 +19,9 @@ let part: string => option<'a> = key => given->Dict.get(key)->Option.map(Obj.mag
  * version of each kind's contract and of `management`, held to `model/ground/drivers.res`.
  */
 let drivers = "drivers"
+
+/**
+ * The part declaring what a sibling repository's blocks provide, RFC s42ex, each by its main name
+ * as `Provided.block` has it.
+ */
+let provided = "provided"
