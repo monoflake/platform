@@ -14,7 +14,7 @@ let local = given => {
   fetch: request => Web.fetch(request),
 }
 
-/** Whether a header is one Cloudflare's edge sets, which it refuses on a request sent back to it. */
+/** Whether Cloudflare's edge set a header, which it refuses on a request sent back to it. */
 let edge = name =>
   name->String.startsWith("cf-") || ["cdn-loop", "true-client-ip"]->Array.includes(name)
 
