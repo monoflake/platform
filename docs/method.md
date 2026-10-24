@@ -73,8 +73,8 @@ once built, and what is open is a new draft beside it, RFC 1dj2c.
 
 ## A block's decisions in one round, the most urgent block first
 
-Agreed with the author on 2026-10-18, and since 2026-10-20 a block's questions are brought
-together, as the workspace's `docs/agent-protocol.md` has it, "The questions of one block are asked
+Agreed with the author on 2026-10-18, and since 2026-10-20 a block's questions are brought together,
+as the workspace's `docs/agents/agent-protocol.md` has it, "The questions of one block are asked
 together".
 
 The most urgent block is chosen in this order: a contradiction in the core the model passes, since that
