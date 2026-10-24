@@ -39,5 +39,5 @@ let deploy: (
 /** The app's deployment as its host's driver describes it, through the control. */
 let describe: (t, ~app: float) => promise<result<Contracts.DeploymentDescribed.t, Machine.refused>>
 
-/** The app asked for its root through the gateway, its answer's body where it is 200. */
+/** The app asked for its root through the gateway, its status and first line where it answered. */
 let asked: (t, ~app: float) => promise<result<string, string>>

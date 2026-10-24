@@ -85,8 +85,11 @@ let asked = async (control, ~app) => {
   | exception JsExn(e) => Error(`${address} did not answer, ${e->JsExn.message->Option.getOr("")}`)
   | response =>
     let body = await response->Web.text
-    response->Web.status == 200
-      ? Ok(body->String.trim)
-      : Error(`${address} answered ${Int.toString(response->Web.status)}, ${body->String.trim}`)
+    let status = response->Web.status
+    let first = body->String.trim->String.split("\n")->Array.get(0)->Option.getOr("")
+    // Any answer is the app serving, a control refusing `/` among them, but a gateway's 502 to 504.
+    [502, 503, 504]->Array.includes(status)
+      ? Error(`${address} answered ${Int.toString(status)}, ${body->String.trim}`)
+      : Ok(`${Int.toString(status)}, ${first}`)
   }
 }

@@ -149,13 +149,18 @@ testAsync(
   },
 )
 
-testAsync("the app is asked at the gateway, and an answer that is not 200 fails", async () => {
+testAsync("the app is asked at the gateway, and only a gateway's 502 to 504 fails", async () => {
   let (control, sent) = faked(dict{"/v1/app-1/": (200, "hello from a machine\n")})
-  deepEqual(await Control.asked(control, ~app=1.), Ok("hello from a machine"))
+  deepEqual(await Control.asked(control, ~app=1.), Ok("200, hello from a machine"))
   deepEqual(
     sent->Array.map(s => (s.url, s.init.method)),
     [("http://localhost:8787/v1/app-1/", "GET")],
   )
-  let (missing, _) = faked(dict{"/v1/app-2/": (404, "no app 2 is deployed")})
-  ok((await Control.asked(missing, ~app=2.))->Result.isError)
+  let (refusing, _) = faked(dict{"/v1/app-2/": (400, "the path / is not /{interface}/{operation}")})
+  deepEqual(
+    await Control.asked(refusing, ~app=2.),
+    Ok("400, the path / is not /{interface}/{operation}"),
+  )
+  let (unbound, _) = faked(dict{"/v1/app-3/": (503, "the host of app 3 is not bound")})
+  ok((await Control.asked(unbound, ~app=3.))->Result.isError)
 })
