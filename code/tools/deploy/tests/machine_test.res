@@ -10,9 +10,9 @@ test("local is localhost's port 2222, and any other name is ssh's own", () => {
   let local = Machine.target("local")
   deepEqual(local.host, "root@localhost")
   ok(local.options->Array.includes("2222"))
-  let buf = Machine.target("root@buf")
-  deepEqual(buf.host, "root@buf")
-  ok(!(buf.options->Array.includes("2222")))
+  let machine = Machine.target("root@machine.example")
+  deepEqual(machine.host, "root@machine.example")
+  ok(!(machine.options->Array.includes("2222")))
 })
 
 test("the facts give the directory, the binding and a tunnel only where one answers", () => {

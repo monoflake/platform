@@ -45,7 +45,7 @@ Decided by the author on 2026-10-23, the names proposed by the dispatcher and ta
 - **The rule is checked**: the workspace's names part refuses an owner the registry lists, spelled
   in a repository's code, outside a manifest's name, a published address and a format a module
   declares, `model/rules/naming.res`'s `own-name` held by it rather than `Pending`.
-- **Acceptance**: `conform`, `lose` and `replace` pass on the local machine, buf and sin under the new
+- **Acceptance**: `conform`, `lose` and `replace` pass on the local machine and both test machines under the new
   names, and the check finds no own name left.
 
 ### Ledger

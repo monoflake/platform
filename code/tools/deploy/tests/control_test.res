@@ -43,7 +43,7 @@ test(
       Some(Ok("https://c.example/v1/app-2")),
     )
     ok(Control.origin("control:https://c.example/v1?x=1")->Option.mapOr(false, Result.isError))
-    deepEqual(Control.origin("root@buf"), None)
+    deepEqual(Control.origin("root@machine.example"), None)
     deepEqual(Control.origin("local"), None)
   },
 )

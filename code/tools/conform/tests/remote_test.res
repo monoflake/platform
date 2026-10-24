@@ -7,13 +7,13 @@ test("local is localhost's port 2222, and any other name is ssh's own", () => {
   let local = Remote.target("local")
   deepEqual(local.host, "root@localhost")
   ok(local.options->Array.includes("2222"))
-  let buf = Remote.target("root@buf")
-  deepEqual(buf.host, "root@buf")
-  ok(!(buf.options->Array.includes("2222")))
+  let machine = Remote.target("root@machine.example")
+  deepEqual(machine.host, "root@machine.example")
+  ok(!(machine.options->Array.includes("2222")))
 })
 
 test("a forward holds a port of the machine's loopback on a connection shared with nothing", () => {
-  let args = Remote.forward(Remote.target("root@buf"), ~local=50000, ~remote=47483)
+  let args = Remote.forward(Remote.target("root@machine.example"), ~local=50000, ~remote=47483)
   // ssh takes an option's first value, so what comes first wins over the shared connection's.
   deepEqual(
     args->Array.slice(~start=0, ~end=4),
@@ -21,5 +21,5 @@ test("a forward holds a port of the machine's loopback on a connection shared wi
   )
   ok(args->Array.includes("50000:127.0.0.1:47483"))
   ok(args->Array.includes("-N"))
-  deepEqual(args->Array.at(-1), Some("root@buf"))
+  deepEqual(args->Array.at(-1), Some("root@machine.example"))
 })

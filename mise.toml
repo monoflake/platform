@@ -69,7 +69,7 @@ run = "rescript build > /dev/null && node model/built.res.mjs"
 description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver or a control: `deploy <directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run]`"
 usage = '''
 arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed"
-arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
+arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
 flag "--app <id>" help="The app's id, its deployment's and its host's, 1 unless given"
 flag "--binding <id>" help="The binding a control deploys the app onto, asked with a control: target"
 flag "--secrets <names>" help="The secrets a control hands the driver, by name, each its environment variable's value"
@@ -82,7 +82,7 @@ run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/sr
 [tasks.conform]
 description = "Run the kinds' samples against the driver a test machine runs, on a second driver beside it, and report: `conform <target> [--control <origin>] [--dry-run]`"
 usage = '''
-arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
 flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"
 flag "-n --dry-run" help="Ask the machine and the live driver, and start nothing"
 '''
@@ -92,7 +92,7 @@ run = 'rescript build code/tools/runner > /dev/null && rescript build code/tools
 [tasks.lose]
 description = "Stop a test machine's driver while hello is asked through its entry and tunnel, start it again and report: `lose <target> [--control <origin>] [--dry-run]`"
 usage = '''
-arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
 flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"
 flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and stop nothing"
 '''
@@ -102,7 +102,7 @@ run = 'rescript build code/tools/lose > /dev/null && node code/tools/lose/src/ma
 [tasks.replace]
 description = "Restart a test machine's driver, entry and containerd and copy a new build in while hello is asked through its entry and tunnel, and report: `replace <target> [--control <origin>] [--no-build | --during <command>] [--dry-run]`"
 usage = '''
-arg "<target>" help="The machine as ssh reaches it, root@buf, or local for monoflake/machine's local machine"
+arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
 flag "--no-build" help="Restart the units alone, and build and copy nothing"
 flag "--during <command>" help="Run this command here as the one action under load, in place of every other"
 flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"

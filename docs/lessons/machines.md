@@ -168,7 +168,7 @@ youki in turn:
 - A CNI bridge plugin run by hand leaves an nftables table, `cni_plugins_masquerade`, which its
   `DEL` does not remove when the bridge goes.
 
-**zswap on NixOS's kernel, read on 2026-10-21** from buf's `/proc/config.gz`, Linux 6.18: zswap and
+**zswap on NixOS's kernel, read on 2026-10-21** from a test machine's `/proc/config.gz`, Linux 6.18: zswap and
 zsmalloc are built in, and so is zstd, its default compressor, while lz4 is a module; a compressor
 named on the kernel's line that is not yet loaded falls back to the default, so lz4 is written to
 `/sys/module/zswap/parameters/compressor` once the system is up, which loads the module. No
@@ -193,7 +193,7 @@ from the picture, never by hand. Its columns are its rows times the picture's wi
 divided by a cell's width over its height, 0.52 in Menlo -- not another drawing's proportions,
 which made one 6 percent too wide.
 
-**A service that makes network namespaces cannot have a mount namespace of its own**, tried on buf
+**A service that makes network namespaces cannot have a mount namespace of its own**, tried on a test machine
 on 2026-10-22 under `systemd-run`, NixOS 26.05: `ip netns add` mounts the namespace under
 `/run/netns`, and under `ProtectSystem`, `ProtectHome`, `PrivateTmp` or any setting that gives the
 unit its own mount namespace that mount stays inside the unit, so containerd, outside it, never
