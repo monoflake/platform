@@ -295,7 +295,7 @@ let providedIn = (v: view, d: Provided.deployed) => {
 let statesIn = (v: view, d: Provided.deployed) =>
   report(
     `States${v.title}`,
-    "What state does each contract's snapshot show on each target bound to this deployment? Read from the snapshots, unbound, never refused.",
+    "What state does each contract's snapshot show on each target bound to this deployment? Read from the snapshots, bound where the driver reports its revision, never refused.",
     d.targets == []
       ? ["no target bound"]
       : d.targets->Array.flatMap(t => Measured.lines(t, Measured.read(t))),
