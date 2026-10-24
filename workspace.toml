@@ -2,6 +2,10 @@
 base = "https://github.com/canmi21/canmi.git"
 
 # What the workspace's update moves here besides this repository's own task, its docs/toolchain.md.
+# What a push of it declares, read by the workspace's push, its docs/agents/pushing.md.
+[push]
+visibility = "public"
+
 [update]
 packages = true
 
