@@ -21,7 +21,8 @@ first.
 
 ```
 model/      the spec: graph/, ground/, bootstrap/, names/; contracts/, in subset/, kinds/ and
-            records/; plan/, the checklist; checks/, in design/, written/, layout/ and derived/
+            records/; plan/, the checklist; checks/, in design/, written/, layout/ and derived/;
+            tests/, the model's own, run by node --test
 code/       the code, a component placed by its layer: apps/, products/, primitives/, substrate/;
             and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;
@@ -63,7 +64,7 @@ alone.
 | `mise run check --ready`         | asks whether building may begin                                  |
 | `mise run check --write`         | writes `model/contracts.json` again from the model               |
 | `mise run fmt`                   | formats the ReScript, the prose and the JSON                     |
-| `mise run verify`                | everything formatted, the check, the blocks, the deny            |
+| `mise run verify`                | everything formatted, the check, the model's tests, the blocks   |
 | `mise run brief <name>`          | one block's brief, read from the model                           |
 | `mise run accept <name>`         | one block held to its brief, alone                               |
 | `mise run built <name>`          | one block built, formatted, linted and tested alone              |

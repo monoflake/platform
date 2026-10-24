@@ -1,5 +1,5 @@
 /***
- * A target's sends made as the host component makes a call, `Host.Handed.call`: the deployment
+ * A target's sends made as the host component makes a call, `Host.Handed.call`, the deployment
  * running at the address a step sends to described through the same target first, a stopped one
  * refused, and only then the request posted, RFCs b8f35 and p8e8k.
  */

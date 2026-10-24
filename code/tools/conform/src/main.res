@@ -273,38 +273,43 @@ let clean = (target, facts: Instance.facts, ~when_) =>
     left == []
   }
 
-/** What the runner counted, nothing where it wrote no counts. */
+/** What the runner counted, or why there is nothing to read. */
 let counted = (~scratch) =>
   switch Host.readText(`${scratch}/counts.json`) {
-  | text =>
-    switch Snapshot.readCounts(text) {
-    | Ok(contracts) => contracts
-    | Error(why) =>
-      say(`the runner's counts are not read, ${why}`)
-      Dict.make()
-    }
-  | exception JsExn(_) => Dict.make()
+  | text => Snapshot.readCounts(text)
+  | exception JsExn(_) => Error("the runner wrote no counts")
   }
 
-/** The target's snapshot written to its file, the path said, and whether it was. */
-let snapshotted = (target, ~scratch) => {
-  let snapshot: Snapshot.snapshot = {
-    target,
-    checkout: Snapshot.checkout(
-      ran("jj", ["log", "-r", "@", "--no-graph", "-T", "commit_id"], ~cwd=Host.fromRoot(".")),
-    ),
-    at: Date.make()->Date.toISOString,
-    contracts: counted(~scratch),
-  }
-  switch Snapshot.write(snapshot, ~home=Host.homedir()) {
-  | Ok(path) =>
-    say(`snapshot written to ${path}`)
-    true
+/**
+ * The target's snapshot written to its file, the path said, and whether it was. Where nothing was
+ * counted its earlier snapshot is removed, so the target reads as unknown rather than out of date.
+ */
+let snapshotted = (target, ~scratch) =>
+  switch counted(~scratch) {
   | Error(why) =>
-    say(`failed: the snapshot is not written, ${why}`)
+    Snapshot.pathOf(~home=Host.homedir(), target)->Result.forEach(path =>
+      Host.rm(path, {recursive: false, force: true})
+    )
+    say(`failed: no snapshot is written and any earlier one is removed, ${why}`)
     false
+  | Ok(contracts) =>
+    let snapshot: Snapshot.snapshot = {
+      target,
+      checkout: Snapshot.checkout(
+        ran("jj", ["log", "-r", "@", "--no-graph", "-T", "commit_id"], ~cwd=Host.fromRoot(".")),
+      ),
+      at: Date.make()->Date.toISOString,
+      contracts,
+    }
+    switch Snapshot.write(snapshot, ~home=Host.homedir()) {
+    | Ok(path) =>
+      say(`snapshot written to ${path}`)
+      true
+    | Error(why) =>
+      say(`failed: the snapshot is not written, ${why}`)
+      false
+    }
   }
-}
 
 let main = async () => {
   let started = Date.now()

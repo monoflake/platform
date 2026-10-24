@@ -165,9 +165,9 @@ let blocksIn = (d: Provided.deployed) =>
     ),
   ])->Array.toSorted(byText)
 
-/** The blocks running in a deployment, those its names are filled by that the design names. */
+/** The blocks running in a deployment, those its names are filled by whose code is written. */
 let runningIn = (d: Provided.deployed) => {
-  mains: blocksIn(d)->Array.filter(m => component(m)->Option.isSome),
+  mains: blocksIn(d)->Array.filter(m => mains->Array.includes(m)),
   declared: Provided.all,
 }
 

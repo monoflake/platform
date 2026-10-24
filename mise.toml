@@ -119,7 +119,7 @@ depends = ["//:build"]
 run = "node {{env.WORKSPACE}}/scripts/clean.res.mjs code/libs/envelope/generated"
 
 [tasks.verify]
-description = "What a commit has to pass: everything formatted, the check, every block alone, and the crates' dependencies once there are crates"
+description = "What a commit has to pass: everything formatted, the check, the model's tests, every block alone, and the crates' dependencies once there are crates"
 run = [
 	"mise run formatted",
 	"mise run check",

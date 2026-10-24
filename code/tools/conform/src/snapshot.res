@@ -1,6 +1,6 @@
 /***
  * What conform writes of a target once its run ends, RFC s42ex, in the shape of
- * `model/graph/snapshots.res`: one JSON file for each target under the snapshots directory.
+ * `model/graph/snapshots.res`, one JSON file for each target under the snapshots directory.
  */
 
 /** One contract's cases as the runner counted them, each case once in each form. */

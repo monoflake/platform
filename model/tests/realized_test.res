@@ -67,9 +67,14 @@ test("a name a vendor or a workload fills is provided apart, its text kept", () 
   )
 )
 
-test("a name not filled is provided by none, though a block with code provides it", () =>
+test("a name not filled is provided by none, though a block with code provides it", () => {
+  deepEqual(Realized.providers(Realized.built, "control(organization)"), ["control(organization)"])
   deepEqual(
     Realized.providers(Realized.runningIn({fills: [], targets: []}), "control(organization)"),
     [],
   )
+})
+
+test("a block filling a name runs only where its code is written", () =>
+  deepEqual(Realized.runningIn({fills: [("compute", Block("compute"))], targets: []}).mains, [])
 )
