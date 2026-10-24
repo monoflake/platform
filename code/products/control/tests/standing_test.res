@@ -9,7 +9,7 @@ type sent = {
   url: string,
   authorization: option<string>,
   proxy: option<string>,
-  edge: option<string>,
+  edges: array<string>,
   body: JSON.t,
 }
 
@@ -31,7 +31,10 @@ let stoodOn = () => {
       url: request->Web.url,
       authorization: header("authorization"),
       proxy: header("proxy-authorization"),
-      edge: header("cf-connecting-ip"),
+      edges: headers
+      ->Web.headerNames
+      ->Iterator.toArray
+      ->Array.filter(n => n->String.startsWith("cf-") || n == "cdn-loop" || n == "true-client-ip"),
       body,
     })
     let input = body->JSON.Decode.object->Option.flatMap(o => o->Dict.get("input"))
@@ -135,17 +138,41 @@ test(
         `${at}/deployments/describe`,
         {
           method: "POST",
-          headers: dict{"authorization": "Bearer 1.host", "cf-connecting-ip": "192.0.2.1"},
+          headers: dict{"authorization": "Bearer 1.host"},
         },
       ),
     )
     deepEqual(await answer->Web.text, "relayed /relay/10.200.0.7/37483/deployments/describe")
     deepEqual(
-      sent->Array.map(s => (s.authorization, s.proxy, s.edge)),
-      [(Some("Bearer 1.host"), Some("Bearer o1.token"), None)],
+      sent->Array.map(s => (s.authorization, s.proxy)),
+      [(Some("Bearer 1.host"), Some("Bearer o1.token"))],
     )
   },
 )
+
+test("a relayed request carries none of the headers Cloudflare's edge set", async () => {
+  let (fetch, _, sent) = stoodOn()
+  let reach = Reach.relayed(~origin, ~token, fetch)
+  let at = reach.origin(~address="10.200.0.7", ~port=36879)
+  let _ = await reach.fetch(
+    Web.request(
+      `${at}/`,
+      {
+        method: "GET",
+        headers: dict{
+          "cf-connecting-ip": "192.0.2.1",
+          "cf-ray": "0-LAX",
+          "cf-ipcountry": "US",
+          "cdn-loop": "cloudflare",
+          "true-client-ip": "192.0.2.1",
+          "x-forwarded-host": "app-1.b1",
+        },
+      },
+    ),
+  )
+  // Sent back through Cloudflare, CF-Connecting-IP among them got its edge's 403, rxmd9's step 5.
+  deepEqual(sent->Array.map(s => s.edges), [[]])
+})
 
 /** What a state keeps, asked alike of each kind of state. */
 let kept = async (state: State.t) => {
