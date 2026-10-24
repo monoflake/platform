@@ -26,10 +26,13 @@ let fromRoot = path => pathOf(urlIn(`../../../../../${path}`, importMetaUrl))
 @module("node:fs") external mkdtemp: string => string = "mkdtempSync"
 type removed = {recursive: bool, force: bool}
 @module("node:fs") external rm: (string, removed) => unit = "rmSync"
+type made = {recursive: bool}
+@module("node:fs") external mkdir: (string, made) => unit = "mkdirSync"
 @module("node:os") external tmpdir: unit => string = "tmpdir"
+@module("node:os") external homedir: unit => string = "homedir"
 
 type spawned = {status: Nullable.t<int>, stdout: Nullable.t<string>, stderr: Nullable.t<string>}
-type spawnOptions = {input?: string, stdio: array<string>, encoding: string}
+type spawnOptions = {input?: string, stdio: array<string>, encoding: string, cwd?: string}
 @module("node:child_process")
 external spawnSync: (string, array<string>, spawnOptions) => spawned = "spawnSync"
 type bytesOptions = {input: Uint8Array.t, stdio: array<string>, encoding: string}

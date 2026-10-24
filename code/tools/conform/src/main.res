@@ -22,11 +22,11 @@ let holding = `{
 let say = line => Console.log(`conform: ${line}`)
 
 /** A program run, what it wrote, or why it failed with what it wrote to stderr. */
-let ran = (program, args, ~input=?) => {
+let ran = (program, args, ~input=?, ~cwd=?) => {
   let done = Host.spawnSync(
     program,
     args,
-    {?input, stdio: ["pipe", "pipe", "pipe"], encoding: "utf8"},
+    {?input, ?cwd, stdio: ["pipe", "pipe", "pipe"], encoding: "utf8"},
   )
   let said = text => text->Nullable.toOption->Option.getOr("")
   switch done.status->Nullable.toOption {
@@ -219,6 +219,8 @@ let run = async (target: Remote.target, facts, tokens, files, ~scratch, ~served)
         `${scratch}/bounds.json`,
         "--held",
         `${scratch}/held.json`,
+        "--counts",
+        `${scratch}/counts.json`,
         // A send is made on the machine, as only it reaches a deployment's address on its bridge.
         "--send-through",
         JSON.stringify(
@@ -270,6 +272,39 @@ let clean = (target, facts: Instance.facts, ~when_) =>
     left->Array.forEach(what => say(`${when_}, failed: left ${what}`))
     left == []
   }
+
+/** What the runner counted, nothing where it wrote no counts. */
+let counted = (~scratch) =>
+  switch Host.readText(`${scratch}/counts.json`) {
+  | text =>
+    switch Snapshot.readCounts(text) {
+    | Ok(contracts) => contracts
+    | Error(why) =>
+      say(`the runner's counts are not read, ${why}`)
+      Dict.make()
+    }
+  | exception JsExn(_) => Dict.make()
+  }
+
+/** The target's snapshot written to its file, the path said, and whether it was. */
+let snapshotted = (target, ~scratch) => {
+  let snapshot: Snapshot.snapshot = {
+    target,
+    checkout: Snapshot.checkout(
+      ran("jj", ["log", "-r", "@", "--no-graph", "-T", "commit_id"], ~cwd=Host.fromRoot(".")),
+    ),
+    at: Date.make()->Date.toISOString,
+    contracts: counted(~scratch),
+  }
+  switch Snapshot.write(snapshot, ~home=Host.homedir()) {
+  | Ok(path) =>
+    say(`snapshot written to ${path}`)
+    true
+  | Error(why) =>
+    say(`failed: the snapshot is not written, ${why}`)
+    false
+  }
+}
 
 let main = async () => {
   let started = Date.now()
@@ -346,6 +381,7 @@ let main = async () => {
               ~served,
             )
           }
+          let snapshot = snapshotted(named, ~scratch)
           forget()
           let nothingLeft = clean(target, facts, ~when_="after")
           if nothingLeft {
@@ -359,7 +395,7 @@ let main = async () => {
           | (Error(_), _) | (_, Error(_)) => false
           }
           say(same ? "after, the live list is as it was" : "failed: the live list changed")
-          let met = code == 0 && held && still && same && nothingLeft && cleaned
+          let met = code == 0 && held && still && same && nothingLeft && cleaned && snapshot
           say(
             `${named} ${met
                 ? "meets its contracts, but what waits"

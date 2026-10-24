@@ -2,7 +2,7 @@
  * Runs each behavior file's cases against the implementation at `base` over HTTP, RFC p8e8k, as
  * `usage` says. It prints the chain's root and certificates first.
  */
-let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] [--held <json file>] [--fixtures <directory> [--served <address>]] [--send-through <json array of ssh's arguments>] <behavior file>..."
+let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] [--held <json file>] [--counts <file to write>] [--fixtures <directory> [--served <address>]] [--send-through <json array of ssh's arguments>] <behavior file>..."
 
 let refuse = why => {
   Console.error(`runner: ${why}`)
@@ -257,6 +257,7 @@ let main = async () => {
             )
           }
           let total = {passed: 0, failed: 0, waiting: 0, skipped: 0}
+          let byInterface = Dict.make()
           let taken = ref(0)
           // Each token taken in turn, the next binding a case's CBOR or JSON runs on.
           let next = tokens =>
@@ -297,6 +298,15 @@ let main = async () => {
                 )
               )
               Console.log(`  ${counted(tally)}`)
+              byInterface->Counts.add(
+                ~interface=file.interface,
+                {
+                  passed: tally.passed,
+                  failed: tally.failed,
+                  waiting: tally.waiting,
+                  skipped: tally.skipped,
+                },
+              )
               await each(n + 1)
             }
           await each(0)
@@ -306,7 +316,22 @@ let main = async () => {
                 run,
               )} behavior file${run == 1 ? "" : "s"}`,
           )
-          System.setExitCode(System.process, total.failed > 0 || refused.contents ? 1 : 0)
+          let written = switch flags->Dict.get("counts") {
+          | None => true
+          | Some(path) =>
+            try {
+              System.writeText(path, JSON.stringify(Counts.toJson(byInterface)))
+              true
+            } catch {
+            | JsExn(e) =>
+              Console.log(`${path}: counts not written, ${e->JsExn.message->Option.getOr("")}`)
+              false
+            }
+          }
+          System.setExitCode(
+            System.process,
+            total.failed > 0 || refused.contents || !written ? 1 : 0,
+          )
         }
       }
     }
