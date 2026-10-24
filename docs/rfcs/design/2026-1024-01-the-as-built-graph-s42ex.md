@@ -88,6 +88,10 @@ judged for each provider on each target:
 | proven      | whole, and filled by a provider that violates no rule on the as-built graph |
 | unknown     | its snapshot is out of date or missing                                      |
 
+**A skipped case is not a pass**, decided by the author on 2026-10-24: it counts as one still waiting,
+so whole is every case passed, as `docs/code.md` has it, "a test held back is a question, never a
+pass".
+
 **A case is given to no one component.** It is measured for each provider on each target apart,
 and a component's state on a deployment is what was measured of the provider filling it there at
 the time. The `samples` field a component holds by hand is not read.
