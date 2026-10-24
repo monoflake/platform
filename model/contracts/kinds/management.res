@@ -86,8 +86,8 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
-  // What the driver holds, the list's and the policy's generations, the grace and each item. Use
-  // reported is open [C18].
+  // What the driver holds and the git revision it was built from, absent where it was given none,
+  // wnqvu. Use reported is open [C18].
   {
     name: "management-described",
     def: Record([
@@ -95,6 +95,7 @@ let types: array<declared> = [
       field("policy", 2, Prim(#uint53)),
       field("grace", 3, Prim(#uint32)),
       field("items", 4, List(Type("management-holding"))),
+      optional("revision", 5, Prim(#string)),
     ]),
     from: "vr5lw",
   },

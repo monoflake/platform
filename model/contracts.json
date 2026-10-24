@@ -3168,6 +3168,14 @@
 							"type": "management-holding"
 						}
 					}
+				},
+				{
+					"name": "revision",
+					"key": 5,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
 				}
 			]
 		},

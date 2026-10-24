@@ -8,7 +8,14 @@ let directory = "~/.local/state/workspace/snapshots/"
 type counted = {passed: int, failed: int, waiting: int, skipped: int}
 
 /**
- * One target's snapshot, the commit of the checkout conform ran from, which binds nothing the
- * target reports, the time it ran, and each contract's counts by its interface's name.
+ * One target's snapshot, the revision its driver reports it was built from, which binds it, absent
+ * where it reports none, the commit of the checkout conform ran from, which binds nothing, the time
+ * it ran, and each contract's counts by its interface's name.
  */
-type snapshot = {target: string, checkout: string, at: string, contracts: dict<counted>}
+type snapshot = {
+  target: string,
+  revision?: string,
+  checkout: string,
+  at: string,
+  contracts: dict<counted>,
+}
