@@ -17,7 +17,10 @@ let manifest = (l: Blocks.lang) =>
   | #docker => "Dockerfile"
   }
 
-/** Every block named for a component with its code written, by its main name, `Blocks.expected`. */
+/**
+ * Every block named for a component, by its main name: this repository's with its code written,
+ * `Blocks.expected`, and each a sibling declares, its code held by that sibling's own check.
+ */
 let mains = {
   let (expected, _, _) = Blocks.expected()
   expected

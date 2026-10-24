@@ -98,6 +98,12 @@ let lines = (tree: tree, path, h: held) => {
     "Read first: the workspace's AGENTS.md and docs/lessons.md, this repository's AGENTS.md, and",
     "docs/code.md, how code is written here.",
     "",
+    "Other blocks may be in work beside you in this tree. Touch none of them; a failure of theirs is",
+    "not yours, and none of it fails your acceptance.",
+    "",
+    "Ask, never change: anything under model/, tests/, vendor/ or docs/, an interface file, a",
+    "manifest at the root, or a rule that seems wrong. Report it and stop on that point.",
+    "",
     `While writing, run \`mise run built ${h.package}\` at this repository's root, as often as you`,
     `like. Once written, run \`mise run accept ${h.package} --from <base>\` once, the wave's base the`,
     "integrator names; when both pass, stop and hand back. Write unit tests only for logic inside",
@@ -107,12 +113,6 @@ let lines = (tree: tree, path, h: held) => {
     "cost little and their scope is plain, while running none would leave a failure to the merge,",
     "where several blocks are already mixed. The whole is the integrator's to hold, and so is",
     "what changed since you began, which it reads with jj as you report.",
-    "",
-    "Other blocks may be in work beside you in this tree. Touch none of them; a failure of theirs is",
-    "not yours, and none of it fails your acceptance.",
-    "",
-    "Ask, never change: anything under model/, tests/, vendor/ or docs/, an interface file, a",
-    "manifest at the root, or a rule that seems wrong. Report it and stop on that point.",
   ]
 }
 
