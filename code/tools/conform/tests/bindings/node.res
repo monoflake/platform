@@ -1,4 +1,5 @@
-/*** What the tests take of node, its test runner, strict assertions and a directory of their own. */
+/*** What the tests take of node, its test runner, strict assertions
+and a directory of their own. */
 @module("node:test") external test: (string, unit => unit) => unit = "test"
 
 @module("node:assert/strict")
