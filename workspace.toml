@@ -9,6 +9,10 @@ packages = true
 [rfcs]
 ids = "monoflake"
 
+# Suffixes this repository alone tracks, formatted by nothing, the workspace's docs/lint-format.md.
+[format]
+unformatted = [".sql", ".wit"]
+
 # Where the project's own name is data a format or a key derivation defines, and the vectors
 # repeating it, the workspace's docs/naming.md.
 [[names.data]]

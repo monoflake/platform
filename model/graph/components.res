@@ -19,6 +19,8 @@ type edge = {
   reads?: string,
   /** Whether this edge is how its component is itself replaced by a new version, D3. */
   replaces?: bool,
+  /** Whether its target is on the platform beneath, for a block's extra edge, RFC s42ex. */
+  beneath?: bool,
   /**
    * What crosses this edge between two processes, a contract of `model/contracts/`, `wit`, or
    * `?{name}` not yet declared, RFC fhg6w.

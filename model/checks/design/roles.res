@@ -86,14 +86,14 @@ let meets = (role, asked: Drivers.driver, given: Drivers.driver) =>
     ],
   )
 
-let run = () => {
+/** What each role is asked and how it is filled over one graph, RFC s42ex. */
+let check = (g: graph): checked => {
   let found = []
   let roles = Components.own->Dict.toArray->Array.filter(((_, c)) => c.kind == Some(#provided))
-  let given = Components.given->Dict.toArray
-  let filling = given != []
+  let filling = Components.given->Dict.keysToArray != []
   let notes = []
   roles->Array.forEach(((role, r)) => {
-    Components.own
+    g.own
     ->Dict.toArray
     ->Array.forEach(((from, c)) =>
       c.edges->Array.forEach(
@@ -104,43 +104,65 @@ let run = () => {
             ->Array.forEach(
               named =>
                 if !(r.answers->Option.getOr([])->Array.includes(named)) {
-                  found->Array.push(`${from} -> ${role}: ${named} is no contract ${role} answers`)
+                  found->Array.push(
+                    foundAt(
+                      [from, role],
+                      `${from} -> ${role}: ${named} is no contract ${role} answers`,
+                    ),
+                  )
                 },
             )
           },
       )
     )
-    let fillers = given->Array.filter(((_, c)) => c.fills == Some(role))
+    let fillers = g.fillers(role)
+    let ofRole = texts => texts->Array.map(t => foundAt([role], t))
     switch (Drivers.asked->Dict.get(role), fillers) {
     | (Some(asked), []) =>
-      found->Array.pushMany(consistent(role, r, asked))
+      found->Array.pushMany(ofRole(consistent(role, r, asked)))
       switch Drivers.given->Option.map(d => d->Dict.get(role)) {
       | None => notes->Array.push(`${role}: unfilled, an assumption`)
-      | Some(None) => found->Array.push(`${role}: the drivers given fill it not`)
+      | Some(None) => found->Array.push(foundAt([role], `${role}: the drivers given fill it not`))
       | Some(Some(d)) =>
-        found->Array.pushMany(meets(role, asked, d))
+        found->Array.pushMany(ofRole(meets(role, asked, d)))
         notes->Array.push(`${role}: filled by the drivers given`)
       }
-    | (Some(_), _) => found->Array.push(`${role}: a driver role, filled by a component`)
-    | (None, []) if filling => found->Array.push(`${role}: nothing given fills it`)
+    | (Some(_), many) =>
+      found->Array.push(
+        foundAt(
+          [role, ...many->Array.map(((name, _)) => name)],
+          `${role}: a driver role, filled by a component`,
+        ),
+      )
+    | (None, []) if filling => found->Array.push(foundAt([role], `${role}: nothing given fills it`))
     | (None, []) => notes->Array.push(`${role}: unfilled, an assumption`)
     | (None, [(name, c)]) =>
       if c.layer != r.layer || c.half != r.half || c.control != r.control {
-        found->Array.push(`${name} fills ${role} at another layer, half or control than it has`)
+        found->Array.push(
+          foundAt(
+            [name, role],
+            `${name} fills ${role} at another layer, half or control than it has`,
+          ),
+        )
       }
       r.answers
       ->Option.getOr([])
       ->Array.forEach(named =>
         if !(c.answers->Option.getOr([])->Array.includes(named)) {
-          found->Array.push(`${name} fills ${role} and implements not ${named}`)
+          found->Array.push(
+            foundAt([name, role], `${name} fills ${role} and implements not ${named}`),
+          )
         }
       )
       notes->Array.push(`${role}: ${name}`)
     | (None, many) =>
       found->Array.push(
-        `${role}: filled ${int(many->Array.length)} times, by ${many
-          ->Array.map(((name, _)) => name)
-          ->Array.join(", ")}`,
+        foundAt(
+          [role, ...many->Array.map(((name, _)) => name)],
+          `${role}: filled ${int(many->Array.length)} times, by ${many
+            ->Array.map(((name, _)) => name)
+            ->Array.join(", ")}`,
+        ),
       )
     }
   })
@@ -149,13 +171,20 @@ let run = () => {
   ->Dict.keysToArray
   ->Array.forEach(name =>
     if Drivers.asked->Dict.get(name)->Option.isNone {
-      found->Array.push(`${name}: given as a driver, yet no driver role is so named`)
+      found->Array.push(
+        foundAt([name], `${name}: given as a driver, yet no driver role is so named`),
+      )
     }
   )
+  {violations: found, notes}
+}
+
+let run = () => {
+  let {violations, notes} = check(design)
   dimension(
     "Roles",
     "Does every edge to a role name a contract it answers, and is each role filled once, where it stands, a driver as it is asked?",
-    found,
+    violations->Array.map(v => v.text),
     ~notes,
     (),
   )

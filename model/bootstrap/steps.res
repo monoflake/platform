@@ -20,4 +20,6 @@ type deployment = {
   move: move,
   /** The vendor's plan its Cloudflare account is on. */
   plan?: plan,
+  /** How many machines it stands on, RFC s42ex. */
+  machines?: int,
 }

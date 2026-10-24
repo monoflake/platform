@@ -21,7 +21,7 @@ first.
 
 ```
 model/      the spec: graph/, ground/, bootstrap/, names/; contracts/, in subset/, kinds/ and
-            records/; plan/, the checklist; checks/, in design/, written/ and layout/
+            records/; plan/, the checklist; checks/, in design/, written/, layout/ and derived/
 code/       the code, a component placed by its layer: apps/, products/, primitives/, substrate/;
             and libs/, tools/
 docs/       what is read: rfcs/, the drafts; lessons/, facts with their sources; method.md;

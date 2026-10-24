@@ -61,6 +61,37 @@ let cycles = (next: string => array<string>, names: array<string>): array<string
 
 let layerOf = n => component(n)->Option.mapOr(0, p => p.layer)
 
+/** A graph the design's rules run over, the design's own or the as-built one, RFC s42ex. */
+type graph = {
+  /** Its nodes by name, each edge ending at a node or at a boundary. */
+  components: dict<Components.component>,
+  /** Its nodes before a role filled by a component given gives way to it, as Roles reads them. */
+  own: dict<Components.component>,
+  /** What fills each role, by name, a component given or a block providing it. */
+  fillers: string => array<(string, Components.component)>,
+  /** Every kind of record, each writer named as this graph names it. */
+  records: array<Records.held>,
+}
+
+/** The design graph, which every other check reads as `components`. */
+let design = {
+  components,
+  own: Components.own,
+  fillers: role => Components.given->Dict.toArray->Array.filter(((_, c)) => c.fills == Some(role)),
+  records: Records.records,
+}
+
+let componentIn = (g: graph, n) => g.components->Dict.get(n)
+let edgesIn = (g, n) => componentIn(g, n)->Option.mapOr([], p => p.edges)
+let designedIn = g => g.components->Dict.toArray->Array.filter(((_, p)) => p.kind == None)
+
+/** A violation and the nodes it is found at, so one on the as-built graph is known by block. */
+type finding = {at: array<string>, text: string}
+let foundAt = (nodes, text) => {at: nodes, text}
+
+/** What a check finds over one graph, and what it notes. */
+type checked = {violations: array<finding>, notes: array<string>}
+
 /** The order the edges `when_` selects allow, the ground first. */
 let order = (when_: Components.edge => bool): array<string> => {
   let out = []
@@ -135,6 +166,14 @@ let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
   if violations->Array.length > 0 {
     failed := true
   }
+}
+
+/** A dimension that reports and never refuses, its lines listed and none where it has none. */
+let report = (title, question, lines) => {
+  Console.log(`\n# ${title}\n${question}`)
+  Console.log(
+    lines->Array.length > 0 ? lines->Array.map(l => `  ${l}`)->Array.join("\n") : "  none",
+  )
 }
 
 /** A value of JSON read as one kind, or none, so no match leaves the wildcard warning 4 refuses. */
