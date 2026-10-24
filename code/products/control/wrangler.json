@@ -13,7 +13,7 @@
 			"migrations_dir": "migrations"
 		}
 	],
-	"r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "control-artifacts" }],
+	"r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "artifacts" }],
 	"vpc_networks": [{ "binding": "HOSTS", "network_id": "cf1:network" }],
 	"vars": {
 		"TUNNEL_API": "https://api.cloudflare.com/client/v4",
@@ -29,7 +29,7 @@
 					"migrations_dir": "migrations"
 				}
 			],
-			"r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "control-artifacts" }],
+			"r2_buckets": [{ "binding": "ARTIFACTS", "bucket_name": "artifacts" }],
 			"vars": { "REACH": "localhost" }
 		}
 	}
