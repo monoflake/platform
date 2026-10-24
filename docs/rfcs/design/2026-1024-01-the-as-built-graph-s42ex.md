@@ -101,6 +101,13 @@ the time. The `samples` field a component holds by hand is not read.
 component was built from, as the target itself reports it. A snapshot out of date or missing is
 shown as unknown. The part of check that refuses never reads a snapshot.
 
+**What binds a snapshot**, decided by the author on 2026-10-24: a driver answers, in management's
+describe, the git revision it was built from, `revision`, given at its build as `DRIVER_REVISION`.
+**A build gives one only where its source stands whole on a commit**, a release from Nix's input
+and a development build from a working copy holding no change alike; from changed source it gives
+none. A snapshot holding the revision reports its states bound; one without falls back to the
+checkout conform ran from, `checkout`, and reports them unbound.
+
 **A block's declarations live with its code.** A block's `provides` and its extra edges are written
 in the repository that holds the block's code. **A path into a sibling repository is written only in
 a declaration of a dependency**: `package.json`, `Cargo.toml`, `rescript.json`, the inputs of
