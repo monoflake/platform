@@ -52,3 +52,27 @@ at an organization's control, exchanged for that member's capabilities.
 held by the subset check as a fill's types and contents are, and left out of `contracts.json`,
 which holds this repository's own alone, RFC 8lkuv. Its samples are run by this repository's
 runner, whose chain gains an account and the operator, RFC p8e8k.
+
+### Ledger
+
+Choices made provisionally while the thread runs, read by the author at its end.
+
+- **The gate's fixed order**, provisional, chosen by the advisor on 2026-10-24, reading the author's
+  words "fix the authentication by order; one that needs none passes directly" as the gate's steps,
+  run in this order for every call:
+  1. Decode the call. Failing that answers `malformed`.
+  2. Look up the operation and read the caller it declares.
+  3. If the operation is declared public, it passes. No proof is read, and none is required.
+  4. Otherwise the gate verifies the one proof that declaration names: for an account, the call's
+     `credential`, verified to the account key's chain; for an organization's control, the call
+     signed under a certificate of that organization; for the operator, the call signed under a
+     certificate of role `operator`, chained to the root.
+  5. A missing or invalid proof answers `denied`. A proof that fails never falls through to a
+     weaker check.
+
+  If an operation later declares more than one caller, the gate decides by the proof the call
+  carries, a signature or a `credential`, never by trying each kind in turn. Until an operation
+  needs that, each declares one caller.
+
+- **The `credential` key is 5**, provisional, chosen by the advisor on 2026-10-24, the next free key
+  of the call, in `monoflake:call:2`.
