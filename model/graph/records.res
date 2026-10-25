@@ -33,17 +33,18 @@ let own: array<held> = [
    * A footing's own tables, b8f35. A tablet's rows and an app's database are their own schema, so
    * neither is a kind here.
    */
+  // The footing advances it in the batch of every write it applies, 8yl4b.
   {
     half: #organization,
     kind: "generation",
-    writes: ["control(organization)"],
-    from: "b8f35, v7v3w",
+    writes: ["footing(organization)"],
+    from: "b8f35, v7v3w, 8yl4b",
   },
   {half: #organization, kind: "store", writes: ["control(organization)"], from: "b8f35"},
   {half: #organization, kind: "content", writes: ["blob"], from: "b8f35"},
   {half: #organization, kind: "piece", writes: ["blob"], from: "b8f35"},
-  {half: #organization, kind: "parcel", writes: ["blob"], from: "b8f35"},
-  {half: #organization, kind: "journal", writes: ["blob"], from: "b8f35"},
+  {half: #organization, kind: "parcel", writes: ["blob", "extent"], from: "b8f35, 8yl4b"},
+  {half: #organization, kind: "journal", writes: ["blob", "extent"], from: "b8f35, 8yl4b"},
   {half: #organization, kind: "writer", writes: ["tablet"], from: "b8f35, vuanj"},
   /*
    * A clock's lock, who holds a name and until when, compute's alone since the executor stores

@@ -473,7 +473,14 @@ let own: dict<component> = dict{
         #serve,
         hard,
         "the extent's records and the scope's stores, the bundle's backing section, b8f35",
-        ~contract=["footing", "record.content", "record.piece", "record.parcel", "bundle.backing"],
+        ~contract=[
+          "footing",
+          "record.content",
+          "record.piece",
+          "record.parcel",
+          "record.journal",
+          "bundle.backing",
+        ],
       ),
       e(
         "driver(machine)",

@@ -8323,7 +8323,7 @@
 		{
 			"kind": "generation",
 			"half": "organization",
-			"writes": ["control(organization)"],
+			"writes": ["footing(organization)"],
 			"version": 1,
 			"content": "generation",
 			"unique": [["generation"]]
@@ -8355,7 +8355,7 @@
 		{
 			"kind": "parcel",
 			"half": "organization",
-			"writes": ["blob"],
+			"writes": ["blob", "extent"],
 			"version": 1,
 			"content": "parcel",
 			"unique": [["parcel"]]
@@ -8363,7 +8363,7 @@
 		{
 			"kind": "journal",
 			"half": "organization",
-			"writes": ["blob"],
+			"writes": ["blob", "extent"],
 			"version": 1,
 			"content": "journal",
 			"unique": [["placement"]]
