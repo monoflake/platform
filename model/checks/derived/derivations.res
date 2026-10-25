@@ -238,6 +238,23 @@ let scaffolds = (v: view) =>
     v.scaffolds->Array.map(((title, f)) => `${title}: ${f.text}`),
   )
 
+/** Whether `name` is a product at layer 0 the platform beneath answers, RFC 94y0d's way down. */
+let throughProduct = name =>
+  Provided.beneath.answers->Option.getOr([])->Array.includes(name) &&
+    component(name)->Option.mapOr(false, c => c.layer == 0)
+
+/** Each name a column takes down through anything but a product at layer 0, RFC btzlt. */
+let downward = (column, d: Provided.deployed) =>
+  Realized.filledBeneath(d)
+  ->Array.filter(b => !throughProduct(b.name))
+  ->Array.map(b => (
+    "Beneath",
+    foundAt(
+      [b.filled],
+      `${column} fills ${b.filled} by ${b.name} in ${b.deployment}, no product at layer 0 beneath answers, against RFC 94y0d`,
+    ),
+  ))
+
 /** One deployment's as-built graph as the frontier reads it, RFC vgvx6. */
 let viewOf = (name, d: Provided.deployed) => {
   let running = Realized.runningIn(d)
@@ -245,22 +262,55 @@ let viewOf = (name, d: Provided.deployed) => {
   {
     title: ` in ${name}`,
     running,
-    scaffolds: scaffoldsOf(Realized.graphOf(running)),
+    scaffolds: Array.concat(scaffoldsOf(Realized.graphOf(running)), downward(name, d)),
     apart: n => apart->Array.includes(n),
     elsewhere: _ => false,
   }
 }
 
+/** Whether a name is provided in a deployment, by a block providing it there or a fill there. */
+let providedThere = (d: Provided.deployed, name) =>
+  d.fills->Array.some(((n, _)) => n == name) ||
+    Realized.providers(Realized.runningIn(d), name) != []
+
+/** What a column's `Beneath` fills mistake, one deployment beneath and never its own, btzlt. */
+let mistakenBeneath = (~deployments=Provided.deployments, column, d: Provided.deployed) => {
+  let fills = Realized.filledBeneath(d)
+  let named = Realized.union([fills->Array.map(b => b.deployment)])
+  Array.concat(
+    named->Array.length > 1
+      ? [`${column} stands on ${named->Array.join(", ")}, more than one deployment beneath`]
+      : [],
+    fills->Array.flatMap(b =>
+      switch deployments->Dict.get(b.deployment) {
+      | _ if b.deployment == column => [
+          `${b.filled} is filled from beneath by ${column}, the deployment's own`,
+        ]
+      | None => [`${b.filled} is filled from beneath by ${b.deployment}, which is no deployment`]
+      | Some(there) if !providedThere(there, b.name) => [
+          `${b.filled} is filled by ${b.name} in ${b.deployment}, which provides it not there`,
+        ]
+      | Some(_) => []
+      }
+    ),
+  )
+}
+
 /** Which blocks and what else fill each name in one deployment, and what its fills mistake. */
-let providedIn = (v: view, d: Provided.deployed) => {
+let providedIn = (column, v: view, d: Provided.deployed) => {
   let apart = Realized.filledApart(d)
+  let below = Realized.filledBeneath(d)
+  let fromBeneath = n =>
+    below
+    ->Array.filter(b => b.filled == n)
+    ->Array.map(b => `${Realized.beneath}, ${b.name} in ${b.deployment}`)
   let names =
     held
-    ->Array.filter(n => !trusted(n))
+    ->Array.filter(n => !trusted(n) || below->Array.some(b => b.filled == n))
     ->Array.map(n => {
-      let by = Array.concat(
-        Realized.providers(v.running, n),
-        apart->Array.filter(((m, _)) => m == n)->Array.map(((_, what)) => what),
+      let by = Array.concatMany(
+        Realized.providers(v.running, n)->Array.filter(m => m != Realized.beneath),
+        [fromBeneath(n), apart->Array.filter(((m, _)) => m == n)->Array.map(((_, what)) => what)],
       )
       by == [] ? `${n}: none` : `${n}: ${by->Array.join(", ")}`
     })
@@ -280,14 +330,14 @@ let providedIn = (v: view, d: Provided.deployed) => {
             ? []
             : [`${n} is filled by ${main}, which declares providing it not`],
         )
-      | Vendor(_) | Workload(_) => []
+      | Vendor(_) | Workload(_) | Beneath(_) => []
       },
     )
   )
   report(
     `Provided${v.title}`,
-    "Which blocks, vendors' resources or workloads fill each name the design holds in this deployment? Derived, never refused.",
-    Array.concat(names, mistaken),
+    "Which blocks, vendors' resources, workloads or the platform beneath fill each name the design holds in this deployment? Derived, never refused.",
+    Array.concatMany(names, [mistaken, mistakenBeneath(column, d)]),
   )
 }
 
@@ -308,7 +358,7 @@ let deployment = (name, d: Provided.deployed) => {
       report(`${title}${v.title}`, "Derived, never refused.", [`nothing filled in ${name}`])
     )
   } else {
-    providedIn(v, d)
+    providedIn(name, v, d)
     frontier(v)
     scaffolds(v)
   }

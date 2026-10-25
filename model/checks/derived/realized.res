@@ -37,11 +37,32 @@ let mains = {
   ->Array.toSorted(byText)
 }
 
-/** The blocks one graph is derived from, by their main names, and what each declares. */
-type running = {mains: array<string>, declared: dict<Provided.block>}
+/** A name a column fills by `Beneath`, the deployment named and the name taken there, btzlt. */
+type below = {filled: string, deployment: string, name: string}
+
+/**
+ * What stands beneath one graph, btzlt. Design-wide every edge marked `beneath` reaches it, a
+ * column with no `Beneath` has none, and in one holding some it stands for the deployment named.
+ */
+type under =
+  | Anywhere
+  | Nothing
+  | Below(array<below>)
+
+/** The blocks one graph is derived from, by main name, what each declares, and what is beneath. */
+type running = {mains: array<string>, declared: dict<Provided.block>, under?: under}
 
 /** Every block with its code, the as-built graph's when no deployment is named. */
 let built = {mains, declared: Provided.all}
+
+let underOf = (r: running) => r.under->Option.getOr(Anywhere)
+
+/** The names a graph has filled by the platform beneath, each with what it takes down. */
+let belowOf = (r: running) =>
+  switch underOf(r) {
+  | Below(fills) => fills
+  | Anywhere | Nothing => []
+  }
 
 let declaredOf = (r: running, main) => r.declared->Dict.get(main)
 
@@ -49,9 +70,11 @@ let declaredOf = (r: running, main) => r.declared->Dict.get(main)
 let provides = (r, main) =>
   [main]->Array.concat(declaredOf(r, main)->Option.mapOr([], b => b.provides))
 
-/** The blocks providing a name, by their main names. */
+/** The blocks providing a name, by their main names, and `beneath` where a `Beneath` fills it. */
 let providers = (r: running, name) =>
-  r.mains->Array.filter(m => provides(r, m)->Array.includes(name))
+  r.mains
+  ->Array.filter(m => provides(r, m)->Array.includes(name))
+  ->Array.concat(belowOf(r)->Array.some(b => b.filled == name) ? [beneath] : [])
 
 /** A name as the as-built graph knows it, each block providing it, or the name itself. */
 let realize = (r, name) =>
@@ -76,7 +99,7 @@ let carry = (r, main, from, edge: Components.edge) =>
  */
 let retarget = (r, own: array<string>, edge: Components.edge) =>
   if edge.beneath == Some(true) {
-    [{...edge, to_: beneath}]
+    underOf(r) == Nothing ? [] : [{...edge, to_: beneath}]
   } else if own->Array.includes(edge.to_) {
     []
   } else {
@@ -131,7 +154,19 @@ let derive = (r: running, nodes: dict<Components.component>): dict<Components.co
     ->Dict.toArray
     ->Array.filter(((n, _)) => providers(r, n) == [])
     ->Array.map(((n, c)) => (n, {...c, edges: []}))
-  Array.concatMany(merged, [standing, [(beneath, Provided.beneath)]])
+  // Beneath answers what each name it is filled for answers, as a merged block does.
+  let below = {
+    let answers = union(
+      [
+        Provided.beneath.answers->Option.getOr([]),
+        ...belowOf(r)->Array.map(b =>
+          nodes->Dict.get(b.filled)->Option.flatMap(c => c.answers)->Option.getOr([])
+        ),
+      ],
+    )
+    underOf(r) == Nothing ? [] : [(beneath, {...Provided.beneath, answers})]
+  }
+  Array.concatMany(merged, [standing, below])
   ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
   ->Dict.fromArray
 }
@@ -165,22 +200,38 @@ let blocksIn = (d: Provided.deployed) =>
     d.fills->Array.filterMap(((_, f)) =>
       switch f {
       | Block(main) => Some(main)
-      | Vendor(_) | Workload(_) => None
+      | Vendor(_) | Workload(_) | Beneath(_) => None
       }
     ),
   ])->Array.toSorted(byText)
 
-/** The blocks running in a deployment, those its names are filled by whose code is written. */
+/** The names a deployment fills by the platform beneath, each with what it takes down, btzlt. */
+let filledBeneath = (d: Provided.deployed) =>
+  d.fills->Array.filterMap(((filled, f)) =>
+    switch f {
+    | Beneath({deployment, name}) => Some({filled, deployment, name})
+    | Block(_) | Vendor(_) | Workload(_) => None
+    }
+  )
+
+/**
+ * The blocks running in a deployment, those its names are filled by whose code is written, and the
+ * platform beneath where a `Beneath` fills a name, none where none does.
+ */
 let runningIn = (d: Provided.deployed) => {
   mains: blocksIn(d)->Array.filter(m => mains->Array.includes(m)),
   declared: Provided.all,
+  under: switch filledBeneath(d) {
+  | [] => Nothing
+  | fills => Below(fills)
+  },
 }
 
 /** The names a deployment fills by a vendor's resource or a workload, each with what fills it. */
 let filledApart = (d: Provided.deployed) =>
   d.fills->Array.filterMap(((name, f)) =>
     switch f {
-    | Block(_) => None
+    | Block(_) | Beneath(_) => None
     | Vendor({vendor, resource}) => Some((name, `${resource}, a resource of ${vendor}`))
     | Workload(what) => Some((name, `${what}, a workload`))
     }
