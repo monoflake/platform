@@ -126,6 +126,32 @@ loader replaced by NixOS's `stub-ld`, and the emergency shell could not start. A
 reinstalled from the provider's image by https://github.com/bin456789/reinstall instead, `nixos
 26.05 --username root --ssh-key <key>`, which installs NixOS through its own netboot.
 
+**reinstall's own NixOS install can die in `nix-build`**, tried on 2026-10-25 with reinstall at
+01e1e259: in its Alpine its nix 2.34.9 hit a bus error in `nix-build` itself, twice at the same
+place on an Oracle Ampere machine with 20 GB of memory free and the disk nearly empty, and once on a
+1 GB x86 machine while it fetched from the cache, so it is intermittent and not tied to the
+architecture; three other x86 machines of about 1 GB, two at Oracle and one at Azure, installed
+through the same script that night. The Ampere machine's kexec from Ubuntu into the 26.05 installer
+had never answered on SSH either. Nothing needs evaluating on the machine, though: the system is
+built elsewhere and copied into reinstall's Alpine, which installs it. disko's own script needs 445
+MiB in the store, more than a 1 GB machine's tmpfs holds, so the six machines installed that night
+were partitioned by `sgdisk` with disk.nix's labels in disko's order, and formatted by hand. Alpine
+there has no udev, so `/dev/disk/by-partlabel` appears only after `mdev -s`; eudev added instead
+deletes the partition nodes a repartitioning makes. reinstall's nix lives on the disk that is wiped,
+so its closure is moved to the tmpfs first, and `nixos-install` is not in a system's closure, so
+`nixos-install-tools` is copied beside it.
+
+**A copy into a machine's store that breaks can leave its nix-daemon holding the path's lock**,
+seen on 2026-10-25: two copies across the Pacific dropped together, the daemon each had started
+on its target kept running, and the copy run again waited on that path with nothing moving until
+the old daemon was killed. Copied through a jump host on the tailnet instead, they did not drop.
+
+**A machine installed with public SSH closed is locked out until it is on the tailnet**, seen on
+2026-10-25: monoflake/machine's module trusts the tailnet alone, so a new machine booted to its
+login prompt and answered nothing on 22, and only the provider's console reached it; on Oracle
+the GRUB menu shows on the VNC console alone, not the serial one. A new machine's first
+configuration opens SSH for its install, monoflake/cloud's `docs/upgrades.md`.
+
 **What the machine runs moved to unstable, 2026-10-21**: the release, 26.05, carried tailscale
 1.98.10, containerd 2.3.3, runc 1.4.3, crun 1.27.1 and btrfs-progs 6.19.1 the day unstable carried
 1.104.1, 2.4.1, 1.5.2, 1.30.1 and 7.1, both locked the same day; the kernel, 6.18.57, was one. Taking
