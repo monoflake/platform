@@ -573,15 +573,28 @@ let own: dict<component> = dict{
     edges: [],
     uses: [],
   },
+  // The footing, written here and held to samples, alone on the vendor's database, RFC 8yl4b.
   "footing(organization)": {
-    layer: vendor,
-    kind: #ground,
+    language: #rescript,
+    layer: -3,
     half: #organization,
     // The footing's interface reads, writes, bundles and leases, n8jq5.
     answers: ["footing", "records", "bundle"],
-    edges: [],
-    uses: [],
+    edges: [
+      replaced,
+      e(
+        "database(vendor)",
+        #serve,
+        hard,
+        "its rows, on the platform's own ground, the footing alone reaching it, 8yl4b",
+        ~contract=["database"],
+      ),
+      key(),
+    ],
+    uses: ["capability*", "serve*", "envelope*", "codec*"],
   },
+  // The vendor's database, SQLite's dialect, atomic batches, at most 10 GB, docs/scope.md.
+  "database(vendor)": {layer: vendor, kind: #ground, answers: ["database"], edges: [], uses: []},
   "vendor": {layer: vendor, kind: #ground, edges: [], uses: []},
   "operator": {layer: vendor, kind: #operator, edges: [], uses: []},
 }

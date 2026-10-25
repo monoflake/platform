@@ -56,14 +56,16 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 | below, ground    | a vendor's written guarantee, a published standard, a proven algorithm, a physical fact | trusted and never designed; the failures it states are taken into a failure model |
 | beside, operator | a person, holding the root private key and running day one's manual commands            | ideal, above                                                                      |
 
-**The footing is ground: trusted and never designed.** A footing is what an owner stands on from
-beneath it: one compute, which keeps nothing; one storage; and one database, each meeting one kind
-of its class at least, RFC vr5lw. A control stands on it and nothing else does: the platform half's,
-under its own; and each organization's, which the platform gives it, under that organization's own
-control. What is kept
-is backed up, the database and the storage, and only the database is held to the contract below.
-The platform stands on one database, RFC v7v3w,
-which the model takes to be up and to keep what it confirmed; whether it is made redundant is
+**The footing is two layers: a component the platform designs, on ground that is the vendor's
+database**, RFC 8yl4b. The footing component answers RFC n8jq5's interface to every component and is
+held to samples; it alone stands on the vendor's database, trusted and never designed, and every
+other component reaches it through the footing's interface, so no component writes SQL. A footing is
+what an owner stands on from beneath it: one compute, which keeps nothing; one storage; and one
+database, each meeting one kind of its class at least, RFC vr5lw: the platform half's, under its own
+control; and each organization's, which the platform gives it, under that organization's own
+control. What is kept is backed up, the database and the storage, and only the database is held to
+the contract below. The platform stands on one database, RFC v7v3w, which the model takes to be up
+and to keep what it confirmed; whether it is made redundant is
 beneath its contract and its owner's. **Its contract is frozen and carries no version**: SQLite's
 dialect; atomic batches, a fixed list of statements that all hold or none, never a transaction that
 reads and then decides; at most 10 GB, or less where its vendor's plan holds less, revised when the
