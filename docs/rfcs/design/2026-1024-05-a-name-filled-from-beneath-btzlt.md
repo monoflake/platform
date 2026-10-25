@@ -53,5 +53,30 @@ Choices made provisionally while the thread runs, read by the author at its end.
   `Beneath` in a column names the same deployment, and never the column's own, or it is reported as
   mistaken. RFC 94y0d has a platform stand on one other, and nothing yet designs two.
 - **An edge marked `beneath` goes to `beneath` only in a column holding a `Beneath`**, chosen by the
-  integrator on 2026-10-24 to follow the entry above, for the advisor to read: a column with none has
-  no platform beneath, so such an edge is no edge there.
+  integrator, accepted by the advisor on 2026-10-24: a column with none has no platform beneath, so
+  such an edge is no edge there.
+- **The Crossing does not report again what check two reports**, provisional, chosen by the advisor
+  on 2026-10-24. One fact is reported once, as the duplicated cycle was deduplicated; check two's
+  line is the one that names RFC 94y0d, which is the reason.
+- **The Provided report lists every name a column fills explicitly**, provisional, chosen by the
+  advisor on 2026-10-24, `Vendor`, `Workload` and `Beneath` alike, so the foundation's
+  `footing(organization)` shows as filled by its vendor resource. A report that lists one filler's
+  names and hides another's misleads by omission.
+- **Check one is read literally, with one addition**, provisional, chosen by the advisor on
+  2026-10-24. A chain of `Beneath` is followed to its end, and a chain that comes back to a column
+  already passed is mistaken, two columns standing on each other among them. An unbuilt Block counts
+  as providing in check one, since its own column already reports it as unbuilt.
+- **Each name a `Beneath` fills keeps its own node in that column**, provisional, chosen by the
+  advisor on 2026-10-24, after review. It carries the filled name's own attributes, its layer, kind,
+  half and role, is marked as provided from beneath, and its answers are the filled name's
+  contracts; check two holds that node against the beneath node's answers. The generic `beneath`
+  node stays for the edges marked `beneath` alone, judged only by its own answers. Rejected:
+  reporting mistaken when several filled names differ, which would forbid a column filling the
+  footing and `?clock` from beneath alike, as decisions of 2026-10-24 do.
+- **Check two passes a product at layer 0 by its name or its contracts**, provisional, chosen by the
+  advisor on 2026-10-24, after review: a component at layer 0 passes when its own name or any of its
+  answers is among the beneath node's answers, so `compute` passes as `storage` and `database` do.
+- **A name filled through a `Beneath` that check one or two finds wrong is not rightly provided** in
+  the Frontier, provisional, chosen by the advisor on 2026-10-24, after review.
+- **A scaffold's line keeps the name an edge went to**, provisional, chosen by the advisor on
+  2026-10-24, after review, as `-> footing(organization) (beneath)`.

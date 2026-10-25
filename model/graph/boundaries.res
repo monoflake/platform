@@ -10,6 +10,8 @@ type boundary = {
   triage?: [#"decided now" | #"by hand on day one" | #later],
   /** Which half keeps it, where one does, RFC v7v3w. */
   half?: Components.half,
+  /** The interfaces a block providing it answers as it, by name. */
+  interfaces?: array<string>,
 }
 
 let own: dict<boundary> = dict{
@@ -37,6 +39,8 @@ let own: dict<boundary> = dict{
     contract: "places each tablet's writer and read copies at run time, on places the roster lists that offer instance, 49qyg, and answers where a tablet's writer and copies are now; it decides when a writer is handed over. Placing a tablet the configuration names is the data plane's, so it goes on while the control plane is lost; creating a database is configuration, the control plane's, zn3u5. It promises at least one writer, never exactly one: two may be placed for a moment, and the vendor, or the generation a majority of a tablet's copies took, refuses all but one, vuanj. Its record of which copies hold a tablet on machines is the footing's `writer` row and never in a tablet, which needs it to start, and a planned restart brings each tablet back where it was. It reads only that record, never a tablet's contents. Keyed daemons, one per key, may come to be placed the same way, 49qyg",
   },
   "?roster": {
+    // A host added reports itself through `bindings`, RFC rxmd9.
+    interfaces: ["bindings"],
     keptBy: "the operator: on day one a static list of hosts, delivered with what the root delivers, ?source; what each offers, each host reports itself, b8f35; the places an organization's work may go are the resources bound to it, v7v3w",
     triage: #"by hand on day one",
     contract: "lists the places that can run something, each with its address and what it offers, in the vocabulary of capabilities -- the sandboxes, the network and the rest, 49qyg. The executor, the runner and the deployer read it. Reading it is the data plane's: while the control plane is lost, the last list is still read. Changing it, a place added or removed, is the control plane's, and on day one the operator's. The list is kept on disk, and it is up before any of its readers",
