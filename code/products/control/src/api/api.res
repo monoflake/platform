@@ -101,8 +101,8 @@ let tunneled = async (parts, tunnels: Tunnels.t, binding: State.binding) =>
     | Error(why) => await given(why)
     | Ok(tunnel) =>
       switch await tunnels.route(~tunnel, ~address) {
-      // A failed route keeps its address unbound, never another binding's while held, monoflake/cloud's
-      // RFC vgvx6.
+      // A failed route keeps its address unbound, never another binding's while it holds it,
+      // monoflake/cloud's RFC vgvx6.
       | Error(why) => Error(Unmade(why))
       | Ok() =>
         await parts.state.routed(~binding=binding.id)
