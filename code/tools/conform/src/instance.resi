@@ -9,6 +9,9 @@ let unit: string
 /** The directory holding its tokens, its state and its secrets, on the machine's tmpfs. */
 let directory: string
 
+/** The file naming each binding a run opened, written before the first and kept by a reboot. */
+let recorded: string
+
 /** The port it listens on, on the machine's loopback alone. */
 let port: int
 
@@ -92,9 +95,9 @@ let readTokens: (string, ~count: int) => result<array<string>, string>
 /**
  * The shell stopping the driver and removing all it made, the served directory among it, a line
  * `removed` each, and then a line `left` for each still there, the subvolumes counted against
- * `subvolumes`; only the `count` bindings from `first` are the run's, in either form of their name.
+ * `subvolumes`; only the bindings `recorded` names are the run's, in either form of their name.
  */
-let cleaned: (~mount: string, ~subvolumes: int, ~served: option<string>, ~count: int) => string
+let cleaned: (~mount: string, ~subvolumes: int, ~served: option<string>) => string
 
 /** What `cleaned` removed and what it left. */
 type cleaned = {removed: array<string>, left: array<string>}

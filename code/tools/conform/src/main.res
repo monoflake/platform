@@ -251,14 +251,13 @@ let run = async (target: Remote.target, facts, tokens, files, ~app, ~scratch, ~s
 }
 
 /** Everything the instance made removed, each said, and whether nothing is left. */
-let clean = (target, facts: Instance.facts, ~when_, ~count) =>
+let clean = (target, facts: Instance.facts, ~when_) =>
   switch remote(
     target,
     Instance.cleaned(
       ~mount=facts.mount,
       ~subvolumes=facts.subvolumes,
       ~served=facts.local->Option.map(Instance.served),
-      ~count,
     ),
   ) {
   | Error(why) =>
@@ -353,8 +352,10 @@ let main = async () => {
         if dry {
           say(`nothing started, as --dry-run asks, ${took()}s`)
           Host.setExitCode(Host.process, held ? 0 : 1)
+        } else if !clean(target, facts, ~when_="from an earlier run") {
+          say(`failed: what an earlier run left is still there, so nothing starts, ${took()}s`)
+          Host.setExitCode(Host.process, 1)
         } else {
-          let cleaned = clean(target, facts, ~when_="from an earlier run", ~count)
           let scratch = Host.mkdtemp(`${Host.tmpdir()}/conform-`)
           let forget = () => Host.rm(scratch, {recursive: true, force: true})
           Host.writeText(`${scratch}/held.json`, holding)
@@ -383,7 +384,7 @@ let main = async () => {
             say(`started ${Instance.unit} from the binary the live driver runs, ${took()}s`)
             Host.onSignal(Host.process, "SIGINT", () => {
               children->Array.forEach(child => child->Host.kill->ignore)
-              clean(target, facts, ~when_="stopped", ~count)->ignore
+              clean(target, facts, ~when_="stopped")->ignore
               forget()
               Host.exit(Host.process, 130)
             })
@@ -400,7 +401,7 @@ let main = async () => {
           let revision = before->Result.mapOr(None, described => described.revision)
           let snapshot = snapshotted(named, ~revision, ~scratch)
           forget()
-          let nothingLeft = clean(target, facts, ~when_="after", ~count)
+          let nothingLeft = clean(target, facts, ~when_="after")
           if nothingLeft {
             say("after, nothing the run made is left")
           }
@@ -412,7 +413,7 @@ let main = async () => {
           | (Error(_), _) | (_, Error(_)) => false
           }
           say(same ? "after, the live list is as it was" : "failed: the live list changed")
-          let met = code == 0 && held && still && same && nothingLeft && cleaned && snapshot
+          let met = code == 0 && held && still && same && nothingLeft && snapshot
           say(
             `${named} ${met
                 ? "meets its contracts, but what waits"

@@ -5,6 +5,8 @@ let port = 47483
 let entry = 46879
 let first = 1000
 let bridge = "conform0"
+// Kept apart from `directory`, which a reboot empties while the bindings' namespaces stay.
+let recorded = "/var/lib/conform/made"
 
 /** The subnets it may take, each a /24 apart from the live driver's. */
 let candidates = ["10.250.0.0/24", "10.251.0.0/24", "10.252.0.0/24", "10.253.0.0/24"]
@@ -34,6 +36,15 @@ p=$(systemctl show -p MainPID --value ${unit}.service 2> /dev/null)
 echo "local=$(o local)"
 echo "largest=$(o largest)"
 echo "architecture=$(uname -m)"
+c=$(o containerd)
+if n=$(ctr --address "\${c:-/run/containerd/containerd.sock}" namespaces ls -q); then
+  printf '%s\\n' "$n" | awk 'NF { print "namespace=" $1 }'
+else
+  echo "namespaces=unread"
+fi
+for u2 in volumes buckets; do for h in "$m/$u2"/*; do [ -d "$h" ] && echo "held=\${h##*/}"; done; done
+btrfs qgroup show --raw "$m" 2> /dev/null | awk '$1 ~ /^1\\// { print "held=" substr($1, 3) }'
+[ ! -f ${recorded} ] || awk '{ print "recorded=" $1 }' ${recorded}
 `
 
 type facts = {
@@ -92,6 +103,35 @@ let portOf = address =>
   | at => whole(address->String.slice(~start=at + 1))
   }
 
+/** A namespace's binding, its 8 characters read as hex as the driver writes them, else decimal. */
+let bindingOf = name =>
+  switch name->String.split("-")->Array.get(0) {
+  | Some(head) if head->String.startsWith("b") =>
+    let k = head->String.slice(~start=1)
+    if /^[0-9a-f]{8}$/->RegExp.test(k) {
+      Int.fromString(k, ~radix=16)
+    } else if /^[0-9]{1,9}$/->RegExp.test(k) {
+      Int.fromString(k)
+    } else {
+      None
+    }
+  | _ => None
+  }
+
+/** The first of the run's bindings the machine holds while no earlier run recorded it. */
+let foreign = (said, ~count) => {
+  let held = [
+    ...valuesOf(said, "namespace")->Array.filterMap(bindingOf),
+    ...valuesOf(said, "held")->Array.filterMap(id =>
+      /^[0-9]{1,9}$/->RegExp.test(id) ? Int.fromString(id) : None
+    ),
+  ]
+  let kept = valuesOf(said, "recorded")
+  Array.fromInitializer(~length=count, k => first + k)->Array.find(id =>
+    held->Array.includes(id) && !(kept->Array.includes(int(id)))
+  )
+}
+
 let readFacts = (text, ~count) => {
   let said = said(text)
   let one = name => valuesOf(said, name)->Array.get(0)
@@ -109,6 +149,14 @@ let readFacts = (text, ~count) => {
       `the live binding ${Float.toString(binding)} is among the ${int(count)} from ${int(
           first,
         )} this run takes`,
+    )
+  | (_, Some(_)) if valuesOf(said, "namespaces")->Array.includes("unread") =>
+    Error("containerd did not list its namespaces")
+  | (_, Some(_)) if foreign(said, ~count)->Option.isSome =>
+    Error(
+      `binding ${foreign(said, ~count)->Option.mapOr("", id =>
+          int(id)
+        )} is held already, a namespace, volume, bucket or qgroup of it, and no earlier run recorded it`,
     )
   | (_, Some(_)) if others->Array.includes(port) =>
     Error(`something listens on port ${int(port)} already`)
@@ -266,12 +314,17 @@ kept=$(printf '%s\\n' "$a" | grep -oE -- '--(runc|crun|youki|plugins|btrfs|large
 d=${directory}
 mkdir -m 700 "$d"
 mkdir -m 700 "$d/bindings" "$d/state" "$d/secrets"
+r=${recorded}
+mkdir -p -m 700 "\${r%/*}"
+: > "$r.new"
 i=${int(first)}
 while [ "$i" -le ${int(last)} ]; do
   printf '%s.%s\\n' "$i" "$(head -c 32 /dev/urandom | basenc --base64url | tr -d '=')" > "$d/bindings/$i"
   set -- "$@" "--bindings=$d/bindings/$i"
+  printf '%s\\n' "$i" >> "$r.new"
   i=$((i + 1))
 done
+mv "$r.new" "$r"
 systemd-run --quiet --collect --unit=${unit} --setenv=PATH="$p" "$bin" $kept "$@" \\
   --listen=127.0.0.1:${int(port)} \\
   --state="$d/state" --secrets="$d/secrets" --bridge=${bridge} --subnet=${subnet} \\
@@ -323,13 +376,15 @@ let fenced = `fenced() { nft list set inet fence reaching 2> /dev/null | tr -d '
   awk '$5 == ${int(entry)} && $1 ~ /^(${ownReachers})\\./ { print $1 " . " $3 " . " $5 }'; }
 `
 
-// A namespace of eight characters names its binding in hex as the driver writes it, a shorter one
-// in decimal, and only the run's own bindings are cleaned, a qgroup's id always decimal.
-let cleaned = (~mount, ~subvolumes, ~served, ~count) =>
-  `${fenced}u=${unit} e=${entryUnit} d=${directory} m=${mount} f=${int(first)} l=${int(
-      first + count,
-    )} br=${bridge} v='${served->Option.getOr("")}'
-numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge "$f" ] && [ "$1" -lt "$l" ]; }
+// Only a binding the record names is the run's, its namespace in hex or in decimal, its qgroup
+// decimal; the record narrows to what is left, kept whole where containerd could not be read.
+let cleaned = (~mount, ~subvolumes, ~served) =>
+  `${fenced}u=${unit} e=${entryUnit} d=${directory} m=${mount} r=${recorded} br=${bridge} v='${served->Option.getOr(
+      "",
+    )}' left= unread=
+keep() { left=1; [ ! -f "$r" ] || printf '%s\\n' "$1" >> "$r.left"; }
+[ ! -f "$r" ] || : > "$r.left"
+numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ -f "$r" ] && grep -qx -- "$1" "$r"; }
 mine() { k=\${1#b}; k=\${k%%-*}; case "$k" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) k=$((0x$k));; esac; numbered "$k"; }
 q=inet\\ cni_plugins_masquerade\\ masq_checks
 rules() { nft -a list chain $q 2> /dev/null | grep "net: $br," | sed 's/.*# handle //'; }
@@ -386,21 +441,25 @@ for c in /sys/fs/cgroup/b*; do
 done
 if [ -e "$d" ]; then rm -rf "$d" && echo "removed $d"; fi
 if [ -n "$v" ] && [ -e "$v" ]; then rm -rf "$v" && echo "removed $v"; fi
-systemctl list-units --all --no-legend "$u.service" | grep -q . && echo "left the unit $u"
+systemctl list-units --all --no-legend "$u.service" | grep -q . && echo "left the unit $u" && left=1
 for k in socket service; do
-  systemctl list-units --all --no-legend "$e.$k" | grep -q . && echo "left the unit $e.$k"
+  systemctl list-units --all --no-legend "$e.$k" | grep -q . && echo "left the unit $e.$k" && left=1
 done
-for ns in $(ctr namespaces ls -q); do mine "$ns" && echo "left the namespace $ns"; done
+if all=$(ctr namespaces ls -q); then
+  for ns in $all; do mine "$ns" && echo "left the namespace $ns" && keep "$k"; done
+else
+  echo "left the namespaces unread, containerd not answering"; left=1 unread=1
+fi
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
-  numbered "\${g#1/}" && echo "left the qgroup $g"
+  numbered "\${g#1/}" && echo "left the qgroup $g" && keep "\${g#1/}"
 done
-for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the network namespace $n"; done
+for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the network namespace $n" && keep "$k"; done
 [ -z "$(rules)" ] || echo "left a masquerade rule of $br"
 fenced | while read -r el; do echo "left the fence element $el"; done
 ip link show "$br" > /dev/null 2>&1 && echo "left the bridge $br"
-for c in /sys/fs/cgroup/b*; do [ -d "$c" ] && mine "\${c##*/}" && echo "left the cgroup $c"; done
+for c in /sys/fs/cgroup/b*; do [ -d "$c" ] && mine "\${c##*/}" && echo "left the cgroup $c" && keep "$k"; done
 for u2 in volumes buckets; do
-  for b in "$m/$u2"/*; do [ -d "$b" ] && numbered "\${b##*/}" && echo "left $b"; done
+  for b in "$m/$u2"/*; do [ -d "$b" ] && numbered "\${b##*/}" && echo "left $b" && keep "\${b##*/}"; done
 done
 [ -e "$d" ] && echo "left $d"
 [ -n "$v" ] && [ -e "$v" ] && echo "left $v"
@@ -408,6 +467,14 @@ s=$(btrfs subvolume list "$m" | wc -l)
 [ "$s" -le ${int(subvolumes)} ] || echo "left $((s - ${int(
       subvolumes,
     )})) subvolumes more than before"
+if [ -n "$unread" ] || [ ! -f "$r" ]; then
+  :
+elif [ -n "$left" ]; then
+  sort -nu "$r.left" > "$r.new" && mv "$r.new" "$r" && echo "narrowed the record $r to what is left"
+else
+  rm "$r" && echo "removed the record $r"
+fi
+rm -f "$r.left"
 true
 `
 

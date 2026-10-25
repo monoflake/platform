@@ -156,12 +156,7 @@ test("what cleaning said is read as removed and left", () => {
     Instance.readCleaned("removed the unit u\nremoved /run/x\nleft the qgroup 1/1000\nnoise\n"),
     {removed: ["the unit u", "/run/x"], left: ["the qgroup 1/1000"]},
   )
-  let shell = Instance.cleaned(
-    ~mount="/data",
-    ~subvolumes=16,
-    ~served=Some("/srv/a/conform"),
-    ~count=8,
-  )
+  let shell = Instance.cleaned(~mount="/data", ~subvolumes=16, ~served=Some("/srv/a/conform"))
   ok(shell->String.includes("-le 16"))
   ok(shell->String.includes("v='/srv/a/conform'"))
   ok(shell->String.includes("for u2 in volumes buckets"))
@@ -185,19 +180,58 @@ test("what cleaning said is read as removed and left", () => {
   ok(at("fenced | while read") > at("fenced() {"))
 })
 
-test("a name is the run's only where its binding is one of the run's, in hex or in decimal", () => {
-  let shell = Instance.cleaned(~mount="/data", ~subvolumes=0, ~served=None, ~count=8)
-  ok(
-    shell->String.includes(
-      `f=${Int.toString(Instance.first)} l=${Int.toString(Instance.first + 8)}`,
-    ),
-  )
-  ok(shell->String.includes(`[ "$1" -ge "$f" ] && [ "$1" -lt "$l" ]`))
+test("a name is the run's only where the record names its binding, in hex or in decimal", () => {
+  let shell = Instance.cleaned(~mount="/data", ~subvolumes=0, ~served=None)
+  ok(shell->String.includes(`r=${Instance.recorded}`))
+  ok(shell->String.includes(`[ -f "$r" ] && grep -qx -- "$1" "$r"`))
+  // No numbered range is read, so a binding the record lacks is never taken.
+  ok(!(shell->String.includes(`-ge "$f"`)) && !(shell->String.includes(`-lt "$l"`)))
   // Eight characters are hex, so b000003e8 is binding 1000 and b00000001 a live one.
   ok(shell->String.includes(`[0-9a-f]`->String.repeat(8) ++ ") k=$((0x$k));;"))
   // A qgroup's id is decimal, so it is never read as hex.
   ok(shell->String.includes(`numbered "\${g#1/}" || continue`))
-  ok(!(shell->String.includes(`mine "b\${g#1/}"`)))
+  // Each binding something is left of is kept in the record, and only those.
+  let kept = shell->String.split(`&& keep "`)->Array.length - 1
+  ok(kept == 5)
+  ok(shell->String.includes(`echo "left the namespace $ns" && keep "$k"`))
+  ok(shell->String.includes(`echo "left the qgroup $g" && keep "\${g#1/}"`))
+  ok(shell->String.includes(`sort -nu "$r.left" > "$r.new" && mv "$r.new" "$r"`))
+  ok(shell->String.includes(`rm "$r" && echo "removed the record $r"`))
+  // A listing containerd did not answer leaves the record whole, and counts as something left.
+  ok(shell->String.includes(`left=1 unread=1`))
+  ok(shell->String.includes(`if [ -n "$unread" ] || [ ! -f "$r" ]; then`))
+  // A unit still there counts as something left.
+  ok(shell->String.includes(`echo "left the unit $u" && left=1`))
+})
+
+test("the record is written before the driver starts, one binding a line", () => {
+  let shell = Instance.started(~count=2, ~subnet="10.250.0.0/24")
+  let at = text => shell->String.indexOf(text)
+  ok(shell->String.includes(`printf '%s\\n' "$i" >> "$r.new"`))
+  let moved = at(`mv "$r.new" "$r"`)
+  ok(moved >= 0 && moved < at(`systemd-run --quiet --collect --unit=${Instance.unit} `))
+  ok(Instance.recorded->String.startsWith("/var/lib/"))
+})
+
+test("a volume, bucket or qgroup of the run's bindings no earlier run recorded is refused", () => {
+  let base = "binding=1\nsubvolumes=0\nnamespace=b1\nheld=1\n"
+  ok(readFacts(base)->Result.isOk)
+  ok(readFacts(base ++ "held=1005\n")->Result.isError)
+  ok(readFacts(base ++ "held=1005\nrecorded=1005\n")->Result.isOk)
+  ok(readFacts(base ++ "namespace=b000003ed\n")->Result.isError)
+  ok(readFacts(base ++ "namespace=b000003ed-x\nrecorded=1005\n")->Result.isOk)
+  ok(readFacts(base ++ "namespaces=unread\n")->Result.isError)
+})
+
+test("a namespace of the run's bindings no earlier run recorded is refused", () => {
+  let base = "binding=1\nsubvolumes=0\nnamespace=b1\n"
+  ok(readFacts(base)->Result.isOk)
+  ok(readFacts(base ++ "namespace=b000003e8\n")->Result.isError)
+  ok(readFacts(base ++ "namespace=b1001\n")->Result.isError)
+  ok(readFacts(base ++ "namespace=b000003e8\nrecorded=1000\n")->Result.isOk)
+  ok(readFacts(base ++ "namespace=b000003e8\nrecorded=1001\n")->Result.isError)
+  // A binding beyond the run's own is never its business.
+  ok(readFacts(base ++ "namespace=b000003f0\n")->Result.isOk)
 })
 
 test("a directory, a bound or an architecture the machine does not give is none", () => {
