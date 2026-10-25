@@ -39,7 +39,12 @@ let types: array<declared> = [
       tag: "name",
       cases: [
         {name: "app", code: 1, fields: [field("id", 1, Id("app"))]},
-        {name: "component", code: 2, fields: [field("component", 1, Prim(#string))]},
+        // A component deployed into a scope is that scope's resource, its id drawn by the deployer.
+        {
+          name: "component",
+          code: 2,
+          fields: [field("component", 1, Prim(#string)), field("id", 2, Id("component"))],
+        },
       ],
     }),
     from: "vr5lw",
@@ -125,7 +130,7 @@ let types: array<declared> = [
  */
 let interface_: interface_ = {
   name: "deployments",
-  version: 2,
+  version: 3,
   declared: ["artifact"],
   from: "vr5lw",
   operations: [

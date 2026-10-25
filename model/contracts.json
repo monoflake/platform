@@ -1581,6 +1581,25 @@
 				}
 			]
 		},
+		"component": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
 		"bundle-gateway": {
 			"record": [
 				{
@@ -3477,6 +3496,13 @@
 								"shape": {
 									"prim": "string"
 								}
+							},
+							{
+								"name": "id",
+								"key": 2,
+								"shape": {
+									"id": "component"
+								}
 							}
 						]
 					}
@@ -4726,6 +4752,44 @@
 								"optional": true
 							}
 						]
+					},
+					{
+						"name": "component",
+						"code": 12,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "component"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "component"
+								},
+								"optional": true
+							}
+						]
 					}
 				]
 			}
@@ -5254,6 +5318,41 @@
 								"key": 4,
 								"shape": {
 									"type": "capacity"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "component",
+						"code": 12,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "component"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "component"
 								},
 								"optional": true
 							}
@@ -7256,7 +7355,7 @@
 			]
 		},
 		"management": {
-			"version": 2,
+			"version": 3,
 			"bounds": {},
 			"declared": [],
 			"operations": [
@@ -7306,7 +7405,7 @@
 			]
 		},
 		"deployments": {
-			"version": 2,
+			"version": 3,
 			"bounds": {},
 			"declared": ["artifact"],
 			"operations": [
@@ -7697,7 +7796,7 @@
 			]
 		},
 		"configuration": {
-			"version": 1,
+			"version": 2,
 			"bounds": {},
 			"declared": [],
 			"operations": [
@@ -7854,7 +7953,7 @@
 			]
 		},
 		"releases": {
-			"version": 1,
+			"version": 2,
 			"bounds": {
 				"artifact": 33554432
 			},
@@ -8480,6 +8579,14 @@
 			"version": 2,
 			"content": "capacity",
 			"unique": []
+		},
+		{
+			"kind": "component",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "component",
+			"unique": [["name"]]
 		},
 		{
 			"kind": "organization",

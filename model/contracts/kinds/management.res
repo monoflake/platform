@@ -176,7 +176,7 @@ let types: array<declared> = [
  */
 let interface_: interface_ = {
   name: "management",
-  version: 2,
+  version: 3,
   from: "vr5lw",
   operations: [
     op(

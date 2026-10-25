@@ -35,7 +35,7 @@ let types: array<declared> = [
 /** A host that does not answer is `unreachable`, and the caller retries, rxmd9. */
 let interface_: interface_ = {
   name: "releases",
-  version: 1,
+  version: 2,
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [

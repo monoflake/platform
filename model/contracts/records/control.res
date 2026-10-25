@@ -173,6 +173,8 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
+  // A component deployed into the scope, its resource, by the name the model gives it, nrs5v.
+  {name: "component", def: Record([field("name", 1, Prim(#string))]), from: "nrs5v"},
   // The gateway's section of a bundle, every name bound and every mount as the control holds them.
   {
     name: "bundle-gateway",
@@ -208,4 +210,5 @@ let contents: array<content> = [
   {half: #organization, kind: "scope", version: 1, content: "scope", unique: [["scope"]]},
   {half: #organization, kind: "extension", version: 3, content: "extension"},
   {half: #organization, kind: "capacity", version: 2, content: "capacity"},
+  {half: #organization, kind: "component", version: 1, content: "component", unique: [["name"]]},
 ]

@@ -193,7 +193,7 @@ let types: array<declared> = [
  */
 let interface_: interface_ = {
   name: "configuration",
-  version: 1,
+  version: 2,
   from: "v7v3w, vr5lw",
   operations: [
     op(
