@@ -71,7 +71,18 @@ type graph = {
   fillers: string => array<(string, Components.component)>,
   /** Every kind of record, each writer named as this graph names it. */
   records: array<Records.held>,
+  /** The nodes provided from the platform beneath, each name a `Beneath` fills, RFC btzlt. */
+  below?: array<string>,
+  /** What an edge's target answers that edge alone, the interfaces of the boundary it named. */
+  answering?: Components.edge => array<string>,
 }
+
+/** A node as a line names it, marked where it is provided from beneath, RFC btzlt. */
+let shown = (g: graph, n) => g.below->Option.getOr([])->Array.includes(n) ? `${n} (beneath)` : n
+
+/** An edge as a line over one graph names it, its target shown. */
+let lineIn = (g, from, edge: Components.edge) =>
+  `${from} -> ${shown(g, edge.to_)} ${tag(edge)}: ${edge.why}`
 
 /** The design graph, which every other check reads as `components`. */
 let design = {

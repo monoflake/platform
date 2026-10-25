@@ -41,14 +41,14 @@ Choices made provisionally while the thread runs, read by the author at its end.
   the deployment the `Beneath` names. The check follows it into that column and holds that the name
   is provided there; and a name taken down must be a product at layer 0, one `beneath` answers, or it
   is reported among that column's scaffolds as against RFC 94y0d.
-- **Fill it as it truly is**, provisional, chosen by the advisor on 2026-10-24: the production
-  column's `footing(organization)` is `Beneath({deployment: "foundation", name:
-  "control(organization)"})`, so check two reports the violation, the relay path reported by
-  derivation, not by prose. The as-built graph states what runs, never what RFC 94y0d expects, RFCs
+- **Fill it as it truly is**, provisional, chosen by the advisor on 2026-10-24: a column standing
+  on another fills its `footing(organization)` by the name that really keeps it there, that
+  column's control where it does, so check two reports the violation, the relay path reported by
+  derivation, not by prose; the hosted platform's own fill is monoflake/cloud's. The as-built graph states what runs, never what RFC 94y0d expects, RFCs
   s42ex and vgvx6; writing `database` would make the derivation lie to stay quiet.
 - **Only `footing(organization)` is filled now**, provisional, chosen by the advisor on 2026-10-24.
   Which design names the objects and the reach taken down stand for is decided from the derivation's
-  report of the production column, not guessed now.
+  report of the column standing on another, not guessed now.
 - **One deployment beneath per column**, provisional, chosen by the advisor on 2026-10-24: every
   `Beneath` in a column names the same deployment, and never the column's own, or it is reported as
   mistaken. RFC 94y0d has a platform stand on one other, and nothing yet designs two.
@@ -59,8 +59,8 @@ Choices made provisionally while the thread runs, read by the author at its end.
   on 2026-10-24. One fact is reported once, as the duplicated cycle was deduplicated; check two's
   line is the one that names RFC 94y0d, which is the reason.
 - **The Provided report lists every name a column fills explicitly**, provisional, chosen by the
-  advisor on 2026-10-24, `Vendor`, `Workload` and `Beneath` alike, so the foundation's
-  `footing(organization)` shows as filled by its vendor resource. A report that lists one filler's
+  advisor on 2026-10-24, `Vendor`, `Workload` and `Beneath` alike, so a footing a vendor's resource
+  fills shows as filled by it. A report that lists one filler's
   names and hides another's misleads by omission.
 - **Check one is read literally, with one addition**, provisional, chosen by the advisor on
   2026-10-24. A chain of `Beneath` is followed to its end, and a chain that comes back to a column
@@ -68,8 +68,8 @@ Choices made provisionally while the thread runs, read by the author at its end.
   as providing in check one, since its own column already reports it as unbuilt.
 - **Each name a `Beneath` fills keeps its own node in that column**, provisional, chosen by the
   advisor on 2026-10-24, after review. It carries the filled name's own attributes, its layer, kind,
-  half and role, is marked as provided from beneath, and its answers are the filled name's
-  contracts; check two holds that node against the beneath node's answers. The generic `beneath`
+  half and role, and is marked as provided from beneath; check two judges the name taken from
+  beneath, whether it is a product at layer 0 the beneath node answers. The generic `beneath`
   node stays for the edges marked `beneath` alone, judged only by its own answers. Rejected:
   reporting mistaken when several filled names differ, which would forbid a column filling the
   footing and `?clock` from beneath alike, as decisions of 2026-10-24 do.
@@ -79,4 +79,10 @@ Choices made provisionally while the thread runs, read by the author at its end.
 - **A name filled through a `Beneath` that check one or two finds wrong is not rightly provided** in
   the Frontier, provisional, chosen by the advisor on 2026-10-24, after review.
 - **A scaffold's line keeps the name an edge went to**, provisional, chosen by the advisor on
-  2026-10-24, after review, as `-> footing(organization) (beneath)`.
+  2026-10-24, after review, as `-> footing(organization) (beneath)`. The suffix is added: a scaffold
+  line that names the filled name alone hides the very fact the line exists to show, that the name
+  is provided from beneath.
+- **Every contract the filled name answers must be answered by the name taken from beneath**, or the
+  column reports it as mistaken, provisional, chosen by the advisor on 2026-10-24. Being a layer-0
+  product is necessary but not enough: filling `footing(organization)` by `database` would pass
+  while the footing's `footing`, `records` and `bundle` go unanswered.

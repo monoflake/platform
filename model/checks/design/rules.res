@@ -16,9 +16,9 @@ let check = (g: graph): checked => {
         | Some(target) =>
           if target.layer > p.layer && target.kind == None {
             if edge.hard {
-              rules->Array.push(foundAt([name], line(name, edge)))
+              rules->Array.push(foundAt([name], lineIn(g, name, edge)))
             } else {
-              softUp->Array.push(line(name, edge))
+              softUp->Array.push(lineIn(g, name, edge))
             }
           }
         }
@@ -44,7 +44,9 @@ let check = (g: graph): checked => {
     if p.layer <= 0 {
       p.edges->Array.forEach(edge =>
         if componentIn(g, edge.to_)->Option.flatMap(t => t.asOwner)->Option.getOr(false) {
-          rules->Array.push(foundAt([name], `runs as an owner, needed below: ${line(name, edge)}`))
+          rules->Array.push(
+            foundAt([name], `runs as an owner, needed below: ${lineIn(g, name, edge)}`),
+          )
         }
       )
     }
@@ -60,7 +62,10 @@ let check = (g: graph): checked => {
       p.edges->Array.forEach(edge =>
         if (edge.when_ == #serve || edge.when_ == #start) && halfOf(edge.to_) == Some(#platform) {
           rules->Array.push(
-            foundAt([name], `the organization's half needs the platform's: ${line(name, edge)}`),
+            foundAt(
+              [name],
+              `the organization's half needs the platform's: ${lineIn(g, name, edge)}`,
+            ),
           )
         }
       )
@@ -95,7 +100,7 @@ let check = (g: graph): checked => {
       switch componentIn(g, edge.to_) {
       | Some(t) if t.kind == Some(#ground) && t.half != None && t.half != p.half =>
         rules->Array.push(
-          foundAt([name], `stands on the other half's footing: ${line(name, edge)}`),
+          foundAt([name], `stands on the other half's footing: ${lineIn(g, name, edge)}`),
         )
       | _ => ()
       }

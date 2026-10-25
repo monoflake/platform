@@ -70,15 +70,21 @@ let declaredOf = (r: running, main) => r.declared->Dict.get(main)
 let provides = (r, main) =>
   [main]->Array.concat(declaredOf(r, main)->Option.mapOr([], b => b.provides))
 
+/** Whether a `Beneath` fills a name in the graph `r` derives, btzlt. */
+let fromBeneath = (r, name) => belowOf(r)->Array.some(b => b.filled == name)
+
 /** The blocks providing a name, by their main names, and `beneath` where a `Beneath` fills it. */
 let providers = (r: running, name) =>
   r.mains
   ->Array.filter(m => provides(r, m)->Array.includes(name))
-  ->Array.concat(belowOf(r)->Array.some(b => b.filled == name) ? [beneath] : [])
+  ->Array.concat(fromBeneath(r, name) ? [beneath] : [])
 
-/** A name as the as-built graph knows it, each block providing it, or the name itself. */
+/**
+ * A name as the as-built graph knows it, each block providing it, or the name itself, its own node
+ * kept where a `Beneath` fills it.
+ */
 let realize = (r, name) =>
-  switch providers(r, name) {
+  switch providers(r, name)->Array.map(m => m == beneath ? name : m) {
   | [] => [name]
   | by => by
   }
@@ -97,16 +103,21 @@ let carry = (r, main, from, edge: Components.edge) =>
  * An edge from a node providing `own`, to every node its target is, none where it is internal. It
  * carries `?x` as the contract of an edge to a boundary it points at the provider of.
  */
-let retarget = (r, own: array<string>, edge: Components.edge) =>
+let retarget = (~pointed=Map.make(), r, own: array<string>, edge: Components.edge) =>
   if edge.beneath == Some(true) {
     underOf(r) == Nothing ? [] : [{...edge, to_: beneath}]
   } else if own->Array.includes(edge.to_) {
     []
   } else {
     let carried = edge.to_->String.startsWith("?") && edge.contract->Option.getOr([]) == []
-    realize(r, edge.to_)->Array.map(t =>
-      carried && t != edge.to_ ? {...edge, to_: t, contract: [edge.to_]} : {...edge, to_: t}
-    )
+    realize(r, edge.to_)->Array.map(t => {
+      let moved =
+        carried && t != edge.to_ ? {...edge, to_: t, contract: [edge.to_]} : {...edge, to_: t}
+      if t != edge.to_ && !known(edge.to_) {
+        pointed->Map.set(moved, edge.to_)
+      }
+      moved
+    })
   }
 
 let union = (lists: array<array<string>>) => {
@@ -121,11 +132,19 @@ let union = (lists: array<array<string>>) => {
   out
 }
 
+/** The interfaces a block answers as a boundary it provides, b75yr. */
+let interfacesOf = n =>
+  Boundaries.boundaries->Dict.get(n)->Option.flatMap(b => b.interfaces)->Option.getOr([])
+
+/** An as-built graph's nodes, and the boundary each edge retargeted to its provider pointed to. */
+type derived = {nodes: dict<Components.component>, pointed: Map.t<Components.edge, string>}
+
 /**
- * The as-built graph of the design's `nodes` with the blocks `r` running, a block merged from every
- * name it provides. A name no block provides keeps its node and none of its edges.
+ * The as-built graph of `nodes` with the blocks `r` running, a block merged from every name it
+ * provides, and a name no block provides, or one filled from beneath, kept with none of its edges.
  */
-let derive = (r: running, nodes: dict<Components.component>): dict<Components.component> => {
+let derived = (r: running, nodes: dict<Components.component>): derived => {
+  let pointed = Map.make()
   let merged = r.mains->Array.filterMap(m =>
     nodes
     ->Dict.get(m)
@@ -138,7 +157,7 @@ let derive = (r: running, nodes: dict<Components.component>): dict<Components.co
             nodes->Dict.get(n)->Option.mapOr([], c => c.edges->Array.map(e => carry(r, m, n, e))),
         )
         ->Array.concat(declaredOf(r, m)->Option.mapOr([], b => b.extra))
-        ->Array.flatMap(e => retarget(r, names, e))
+        ->Array.flatMap(e => retarget(~pointed, r, names, e))
       let answers = union(
         names
         ->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([]))
@@ -152,35 +171,36 @@ let derive = (r: running, nodes: dict<Components.component>): dict<Components.co
   let standing =
     nodes
     ->Dict.toArray
-    ->Array.filter(((n, _)) => providers(r, n) == [])
+    ->Array.filter(((n, _)) => fromBeneath(r, n) || providers(r, n) == [])
     ->Array.map(((n, c)) => (n, {...c, edges: []}))
-  // Beneath answers what each name it is filled for answers, as a merged block does.
-  let below = {
-    let answers = union(
-      [
-        Provided.beneath.answers->Option.getOr([]),
-        ...belowOf(r)->Array.map(b =>
-          nodes->Dict.get(b.filled)->Option.flatMap(c => c.answers)->Option.getOr([])
-        ),
-      ],
-    )
-    underOf(r) == Nothing ? [] : [(beneath, {...Provided.beneath, answers})]
+  // Beneath answers its own products alone, each name filled from it standing apart, btzlt.
+  let below = underOf(r) == Nothing ? [] : [(beneath, Provided.beneath)]
+  {
+    nodes: Array.concatMany(merged, [standing, below])
+    ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
+    ->Dict.fromArray,
+    pointed,
   }
-  Array.concatMany(merged, [standing, below])
-  ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
-  ->Dict.fromArray
 }
 
-/** The as-built graph of the blocks `r` running, its records written by each writer's providers. */
-let graphOf = (r: running) => {
-  let nodes = derive(r, components)
+/** The nodes of the as-built graph of `nodes` with the blocks `r` running. */
+let derive = (r, nodes) => derived(r, nodes).nodes
+
+/**
+ * The as-built graph of the blocks `r` running over the design's `nodes`, its records written by
+ * each writer's providers, each name filled from beneath marked.
+ */
+let graphIn = (r: running, ~nodes=components, ~own=Components.own) => {
+  let {nodes, pointed} = derived(r, nodes)
   {
     components: nodes,
-    own: derive(r, Components.own),
+    own: derive(r, own),
     // A block named for a driver role is the drivers given filling it, RFC 7ykg6, no component.
     fillers: role =>
       design.fillers(role)->Array.concat(
         providers(r, role)
+        // A role filled from beneath is its own node, as the design draws it.
+        ->Array.map(m => m == beneath ? role : m)
         ->Array.filter(m => m != role || Drivers.asked->Dict.get(role)->Option.isNone)
         ->Array.filterMap(m => nodes->Dict.get(m)->Option.map(c => (m, c))),
       ),
@@ -188,8 +208,13 @@ let graphOf = (r: running) => {
       ...held,
       writes: union(held.writes->Array.map(n => realize(r, n))),
     }),
+    below: belowOf(r)->Array.map(b => b.filled),
+    // A boundary's interfaces answer an edge that pointed to it, never one to its provider.
+    answering: x => pointed->Map.get(x)->Option.mapOr([], interfacesOf),
   }
 }
+
+let graphOf = r => graphIn(r)
 
 /** The as-built graph of every block with its code. */
 let graph = graphOf(built)

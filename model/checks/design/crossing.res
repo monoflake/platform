@@ -57,14 +57,15 @@ let whole = c =>
   }
 
 /**
- * Whether `to_` answers `c`, as its `answers` lists it, it is the base name of `to_`, or it is a
- * part of a whole `to_` answers.
+ * Whether `to_` answers `c`, as its `answers` or `extra` lists it, it is the base name of `to_`, or
+ * it is a part of a whole `to_` answers.
  */
-let answered = (g: graph, to_, c) =>
+let answered = (g: graph, ~extra=[], to_, c) =>
   switch componentIn(g, to_) {
   | None => true
   | Some(t) =>
-    let listed = n => t.answers->Option.getOr([])->Array.includes(n) || n == base(to_)
+    let answers = t.answers->Option.getOr([])->Array.concat(extra)
+    let listed = n => answers->Array.includes(n) || n == base(to_)
     listed(c) || listed(whole(c))
   }
 
@@ -77,10 +78,11 @@ let check = (g: graph): checked => {
   let used = Set.make()
   let named = ref(0)
   let nodes = designedIn(g)
+  let answering = x => g.answering->Option.mapOr([], f => f(x))
   nodes->Array.forEach(((name, p)) =>
     p.edges->Array.forEach(x =>
       if x.replaces != Some(true) && known(x.to_) && x.to_ != "vendor" {
-        let across = `${name} -> ${x.to_}`
+        let across = `${name} -> ${shown(g, x.to_)}`
         switch x.contract {
         | None | Some([]) =>
           found->Array.push(foundAt([name], `${across}: names no contract, ${x.why}`))
@@ -97,7 +99,7 @@ let check = (g: graph): checked => {
                 // An edge with `reads` has those it lists answer the contract, not its target.
                 switch x.reads->Option.getOr([]) {
                 | [] =>
-                  if known(c) && !answered(g, x.to_, c) {
+                  if known(c) && !answered(g, ~extra=answering(x), x.to_, c) {
                     found->Array.push(
                       foundAt([name], `${across}: ${c}, which ${x.to_} does not answer`),
                     )
