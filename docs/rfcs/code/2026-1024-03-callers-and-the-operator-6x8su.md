@@ -53,6 +53,22 @@ held by the subset check as a fill's types and contents are, and left out of `co
 which holds this repository's own alone, RFC 8lkuv. Its samples are run by this repository's
 runner, whose chain gains an account and the operator, RFC p8e8k.
 
+**A caller is one of eight kinds**, decided by the author on 2026-10-24, extending RFC 6dheo's
+four and RFC jy0s5's component, each known by a proof of its own:
+
+- **`host`**: a host's driver, by the one-time binding token `open` issued, which `bindings.bind`
+  takes. A host has no certificate before it binds, since binding is how it joins.
+- **`capability`**: an app, by a capability it carries. The gate verifies the capability is signed
+  under the issuer's chain for this scope, a missing or invalid one answering `denied` and never
+  falling through; what it grants is still judged inside the operation. Storage's operations take
+  it. Rejected: declaring them `anyone`, which would show storage as public in the model, which it
+  is not; and since an identity is not a right, RFC 6dheo, a capability is a proof of its own.
+- **`authority`**: the platform half's control, by its certificate of role `authority`, which
+  `notice` takes, RFC 7xpd3. It is neither an organization's control nor a component, its
+  certificate's role being `authority`.
+
+The other five stand: anyone, an account, an organization's control, the operator, and a component.
+
 ### Ledger
 
 Choices made provisionally while the thread runs, read by the author at its end.
@@ -61,18 +77,24 @@ Choices made provisionally while the thread runs, read by the author at its end.
   words "fix the authentication by order; one that needs none passes directly" as the gate's steps,
   run in this order for every call:
   1. Decode the call. Failing that answers `malformed`.
-  2. Look up the operation and read the caller it declares.
+  2. Look up the operation and read the callers it declares.
   3. If the operation is declared public, it passes. No proof is read, and none is required.
-  4. Otherwise the gate verifies the one proof that declaration names: for an account, the call's
-     `credential`, verified to the account key's chain; for an organization's control, the call
-     signed under a certificate of that organization; for the operator, the call signed under a
-     certificate of role `operator`, chained to the root.
+  4. Otherwise the gate verifies the proof the call carries against the kinds the operation
+     declares, each kind known by its own proof:
+     - an account, by the call's `credential`, verified to the account key's chain;
+     - an organization's control, by the call signed under a certificate of that organization;
+     - the operator, by the call signed under a certificate of role `operator`, chained to the root;
+     - a component, by the call signed under its instance's certificate of role `component`;
+     - the authority, by the call signed under a certificate of role `authority`;
+     - a host, by the one-time binding token `open` issued;
+     - an app, by a capability signed under the issuer's chain for this scope.
   5. A missing or invalid proof answers `denied`. A proof that fails never falls through to a
      weaker check.
 
-  If an operation later declares more than one caller, the gate decides by the proof the call
-  carries, a signature or a `credential`, never by trying each kind in turn. Until an operation
-  needs that, each declares one caller.
+  An operation may declare several callers, provisional, chosen by the advisor on 2026-10-24,
+  since several need two now, an organization's control and a component. The gate picks the check
+  by the proof the call carries, a signature under a certificate of a given role, a `credential`, a
+  binding token or a capability, and never tries each kind in turn.
 
 - **The `credential` key is 5**, provisional, chosen by the advisor on 2026-10-24, the next free key
   of the call, in `monoflake:call:2`.
