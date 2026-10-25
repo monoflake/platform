@@ -156,7 +156,12 @@ test("what cleaning said is read as removed and left", () => {
     Instance.readCleaned("removed the unit u\nremoved /run/x\nleft the qgroup 1/1000\nnoise\n"),
     {removed: ["the unit u", "/run/x"], left: ["the qgroup 1/1000"]},
   )
-  let shell = Instance.cleaned(~mount="/data", ~subvolumes=16, ~served=Some("/srv/a/conform"))
+  let shell = Instance.cleaned(
+    ~mount="/data",
+    ~subvolumes=16,
+    ~served=Some("/srv/a/conform"),
+    ~count=8,
+  )
   ok(shell->String.includes("-le 16"))
   ok(shell->String.includes("v='/srv/a/conform'"))
   ok(shell->String.includes("for u2 in volumes buckets"))
@@ -178,6 +183,21 @@ test("what cleaning said is read as removed and left", () => {
   ok(shell->String.includes(`$5 == ${Int.toString(Instance.entry)} && $1 ~ /^(10\\.250\\.0|`))
   ok(!(shell->String.includes("10\\.88")) && !(shell->String.includes("36879")))
   ok(at("fenced | while read") > at("fenced() {"))
+})
+
+test("a name is the run's only where its binding is one of the run's, in hex or in decimal", () => {
+  let shell = Instance.cleaned(~mount="/data", ~subvolumes=0, ~served=None, ~count=8)
+  ok(
+    shell->String.includes(
+      `f=${Int.toString(Instance.first)} l=${Int.toString(Instance.first + 8)}`,
+    ),
+  )
+  ok(shell->String.includes(`[ "$1" -ge "$f" ] && [ "$1" -lt "$l" ]`))
+  // Eight characters are hex, so b000003e8 is binding 1000 and b00000001 a live one.
+  ok(shell->String.includes(`[0-9a-f]`->String.repeat(8) ++ ") k=$((0x$k));;"))
+  // A qgroup's id is decimal, so it is never read as hex.
+  ok(shell->String.includes(`numbered "\${g#1/}" || continue`))
+  ok(!(shell->String.includes(`mine "b\${g#1/}"`)))
 })
 
 test("a directory, a bound or an architecture the machine does not give is none", () => {

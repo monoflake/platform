@@ -323,12 +323,14 @@ let fenced = `fenced() { nft list set inet fence reaching 2> /dev/null | tr -d '
   awk '$5 == ${int(entry)} && $1 ~ /^(${ownReachers})\\./ { print $1 " . " $3 " . " $5 }'; }
 `
 
-let cleaned = (~mount, ~subvolumes, ~served) =>
-  `${fenced}u=${unit} e=${entryUnit} d=${directory} m=${mount} f=${int(
-      first,
+// A namespace of eight characters names its binding in hex as the driver writes it, a shorter one
+// in decimal, and only the run's own bindings are cleaned, a qgroup's id always decimal.
+let cleaned = (~mount, ~subvolumes, ~served, ~count) =>
+  `${fenced}u=${unit} e=${entryUnit} d=${directory} m=${mount} f=${int(first)} l=${int(
+      first + count,
     )} br=${bridge} v='${served->Option.getOr("")}'
-numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge "$f" ]; }
-mine() { k=\${1#b}; k=\${k%%-*}; case "$k" in ''|*[!0-9]*) return 1;; esac; [ "$k" -ge "$f" ]; }
+numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge "$f" ] && [ "$1" -lt "$l" ]; }
+mine() { k=\${1#b}; k=\${k%%-*}; case "$k" in [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]) k=$((0x$k));; esac; numbered "$k"; }
 q=inet\\ cni_plugins_masquerade\\ masq_checks
 rules() { nft -a list chain $q 2> /dev/null | grep "net: $br," | sed 's/.*# handle //'; }
 for k in socket service; do
@@ -365,7 +367,7 @@ for u2 in volumes buckets; do
 done
 btrfs qgroup clear-stale "$m" > /dev/null 2>&1
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
-  mine "b\${g#1/}" || continue
+  numbered "\${g#1/}" || continue
   for c in $(btrfs qgroup show --raw -c "$m" 2> /dev/null | awk -v g="$g" '$1 == g { print $4 }' | tr ',' ' '); do
     case "$c" in 0/*) btrfs qgroup remove "$c" "$g" "$m" > /dev/null 2>&1;; esac
   done
@@ -390,7 +392,7 @@ for k in socket service; do
 done
 for ns in $(ctr namespaces ls -q); do mine "$ns" && echo "left the namespace $ns"; done
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
-  mine "b\${g#1/}" && echo "left the qgroup $g"
+  numbered "\${g#1/}" && echo "left the qgroup $g"
 done
 for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the network namespace $n"; done
 [ -z "$(rules)" ] || echo "left a masquerade rule of $br"
