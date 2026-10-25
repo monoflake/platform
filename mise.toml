@@ -70,7 +70,7 @@ description = "Build an app's Worker with wrangler and deploy it to a test machi
 usage = '''
 arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed"
 arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
-flag "--app <id>" help="The app's id, its deployment's and its host's, 1 unless given"
+flag "--app <id>" help="The app's id in 8 lowercase hex digits, to deploy it again; a new app, its id drawn and printed, unless given"
 flag "--binding <id>" help="The binding a control deploys the app onto, asked with a control: target"
 flag "--secrets <names>" help="The secrets a control hands the driver, by name, each its environment variable's value"
 flag "--network <kinds>" help="The network a control lets the app reach, http, tcp, udp or icmp, by commas"
@@ -80,35 +80,38 @@ run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/sr
 
 # The samples sent to what a test machine runs, RFC n0o4l.
 [tasks.conform]
-description = "Run the kinds' samples against the driver a test machine runs, on a second driver beside it, and report: `conform <target> [--control <origin>] [--dry-run]`"
+description = "Run the kinds' samples against the driver a test machine runs, on a second driver beside it, and report: `conform <target> --app <id> [--control <origin>] [--dry-run]`"
 usage = '''
 arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
-flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"
+flag "--app <id>" help="Hello's id in 8 lowercase hex digits, as its deploy printed it" required=#true
+flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/<id>/, in place of the machine's tunnel"
 flag "-n --dry-run" help="Ask the machine and the live driver, and start nothing"
 '''
-run = 'rescript build code/tools/runner > /dev/null && rescript build code/tools/conform > /dev/null && node code/tools/conform/src/main.res.mjs "$usage_target" ${usage_control:+--control "$usage_control"} ${usage_dry_run:+--dry-run}'
+run = 'rescript build code/tools/runner > /dev/null && rescript build code/tools/conform > /dev/null && node code/tools/conform/src/main.res.mjs "$usage_target" --app "$usage_app" ${usage_control:+--control "$usage_control"} ${usage_dry_run:+--dry-run}'
 
 # The control plane lost on a test machine while hello is asked, RFC rmll5.
 [tasks.lose]
-description = "Stop a test machine's driver while hello is asked through its entry and tunnel, start it again and report: `lose <target> [--control <origin>] [--dry-run]`"
+description = "Stop a test machine's driver while hello is asked through its entry and tunnel, start it again and report: `lose <target> --app <id> [--control <origin>] [--dry-run]`"
 usage = '''
 arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
-flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"
+flag "--app <id>" help="Hello's id in 8 lowercase hex digits, as its deploy printed it" required=#true
+flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/<id>/, in place of the machine's tunnel"
 flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and stop nothing"
 '''
-run = 'rescript build code/tools/lose > /dev/null && node code/tools/lose/src/main.res.mjs "$usage_target" ${usage_control:+--control "$usage_control"} ${usage_dry_run:+--dry-run}'
+run = 'rescript build code/tools/lose > /dev/null && node code/tools/lose/src/main.res.mjs "$usage_target" --app "$usage_app" ${usage_control:+--control "$usage_control"} ${usage_dry_run:+--dry-run}'
 
 # The driver and the entry replaced on a test machine while hello is asked, RFC ehm48.
 [tasks.replace]
-description = "Restart a test machine's driver, entry and containerd and copy a new build in while hello is asked through its entry and tunnel, and report: `replace <target> [--control <origin>] [--no-build | --during <command>] [--dry-run]`"
+description = "Restart a test machine's driver, entry and containerd and copy a new build in while hello is asked through its entry and tunnel, and report: `replace <target> --app <id> [--control <origin>] [--no-build | --during <command>] [--dry-run]`"
 usage = '''
 arg "<target>" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine"
 flag "--no-build" help="Restart the units alone, and build and copy nothing"
 flag "--during <command>" help="Run this command here as the one action under load, in place of every other"
-flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/app-1/, in place of the machine's tunnel"
+flag "--app <id>" help="Hello's id in 8 lowercase hex digits, as its deploy printed it" required=#true
+flag "--control <origin>" help="A control whose gateway hello is asked through, at /v1/<id>/, in place of the machine's tunnel"
 flag "-n --dry-run" help="Ask the machine, the entry and the tunnel, and replace nothing"
 '''
-run = 'rescript build code/tools/replace > /dev/null && node code/tools/replace/src/main.res.mjs "$usage_target" ${usage_control:+--control "$usage_control"} ${usage_no_build:+--no-build} ${usage_during:+--during "$usage_during"} ${usage_dry_run:+--dry-run}'
+run = 'rescript build code/tools/replace > /dev/null && node code/tools/replace/src/main.res.mjs "$usage_target" --app "$usage_app" ${usage_control:+--control "$usage_control"} ${usage_no_build:+--no-build} ${usage_during:+--during "$usage_during"} ${usage_dry_run:+--dry-run}'
 
 [tasks.clean]
 description = "Remove what cargo, ReScript and the generator built, never an installed dependency or local state: `clean [--dry-run]`"
