@@ -50,3 +50,70 @@ the record the platform manages the organization by. A platform standing on anot
 organizations' footing from the platform beneath, its public export imported, RFC nge39, which
 replaces a relay; the model draws `footing(organization)` on `database(vendor)`, the vendor's
 database, whoever's account a deployment puts it on.
+
+**One footing, written once, an instance per half**, decided by the author on 2026-10-24. The one
+footing component is written in monoflake/platform. The platform deploys one instance for its own
+half and one for each organization. Each instance accepts only its half's record kinds, as
+`model/graph/records.res` lists them, and stands on a vendor database of its own. The halves are
+kept apart by instance and database: the platform's instance holds no organization's records, and an
+organization's none of the platform's. monoflake/cloud deploys the platform's instance from this
+repository's code, which is the two repositories' split, RFC 8lkuv. The interface and samples are
+one, so the code is one; what differs is which kinds an instance holds, which `records.res` already
+splits by half, and separate instances and databases keep the halves apart more surely than two
+codes would. Rejected: two implementations, one interface written and tested twice, bound to
+drift. How the model says one code fills a name in each half is not settled yet, and nothing of it
+is built.
+
+**No migration when the footing lands**, decided by the author on 2026-10-24. Both platforms' state
+is rebuilt from nothing: organizations opened again, every machine and account bound again, and
+hello deployed again. Everything live is test data, and today's ids are sequential against RFC b8f35
+and would be drawn again anyway; a one-shot migration would be code written and tested to run once.
+Rejected: a migration script carrying the rows across.
+
+### Ledger
+
+Choices made provisionally while the thread runs, read by the author at its end.
+
+- **One generation counter per footing instance**, provisional, chosen by the advisor on 2026-10-24,
+  advanced by the footing itself in the same batch as every write it applies. The `generation` row
+  is the footing's to write, not the control's, and `records.res` says so. No configuration sample
+  assumes generations step by one with configuration alone: every generation in
+  `tests/products/configuration/` is matched as any, captured or used again, never a number.
+- **History is kept for configuration kinds alone**, provisional, chosen by the advisor on
+  2026-10-24, the kinds the control writes. `read` gains an optional generation for those kinds,
+  answering rows as they were then, deleted ones absent. Data-plane kinds keep no history, so a
+  frequent `lease` or `writer` row costs none.
+- **The bundle is a record kind `bundle`, keyed by generation**, provisional, chosen by the advisor
+  on 2026-10-24, written by the control alone through `write`, as its other rows are. It is read
+  whole through `bundle`, as `footing-bundle` says, since its signature covers every section; a
+  reader takes its section after verifying. RFC b8f35's `origin` is dropped from its key: an
+  instance holds one half's bundles alone, so there is nothing left for it to tell apart.
+- **A new row's id is drawn by the footing**, provisional, chosen by the advisor on 2026-10-24: 8
+  hex digits at random, checked by a conditional insert and drawn again on a conflict, in one space
+  per scope across every kind, RFC b8f35. A content's id is its BLAKE3 hash and never drawn. A
+  write whose "absent" condition meets an existing unique key answers `stale`, since its condition
+  failed.
+- **A lease's holder is the instance**, provisional, chosen by the advisor on 2026-10-24, named by
+  the `kid` of its instance key, never the component's `sub`, so two instances of one component are
+  told apart and `single_instance` can hold. `until` is in milliseconds, RFC b8f35. `seconds` is 30
+  when absent and at most 300. Only the holder renews or releases; another's `take`, `renew` or
+  `release` while it is held answers `held`, and once it lapses anyone may take it.
+- **Bounds are set below D1's own limits with a margin and declared in the footing's contract**,
+  provisional, chosen by the advisor on 2026-10-24, D8: a row's size, a change's rows and bytes,
+  `limit`'s default and most, and `next` an opaque cursor. D1's own, as Cloudflare states them: a
+  row, string or BLOB 2,000,000 bytes, a statement 100,000 bytes, 100 bound parameters a query, a
+  batch one query of an invocation and bounded by the 30 seconds a query may run.
+- **Each `write` is one D1 batch, all or none**, provisional, chosen by the advisor on 2026-10-24.
+  Group commit is not built now. Reads go to D1's primary, so RFC e69rc stays a draft with nothing
+  stale to bound yet.
+- **Where two RFCs disagree, the later decision holds**, provisional, chosen by the advisor on
+  2026-10-24, as done already for RFC b8f35 against RFC 7xpd3. `records.res` has the extent write
+  `parcel` and `journal`, with the `record.journal` edge it lacked. RFC vr5lw, worked out on
+  2026-10-18, holds a database's writer by a lease in the footing; RFC vuanj, decided by the author
+  on 2026-10-20, holds it by whatever gives it, its lease the copies' own and never a row of the
+  footing. That one is held for the author. The clock's table stays on the machine's disk, RFC
+  p6fg3.
+- **The footing's bench**, provisional, chosen by the advisor on 2026-10-24, RFC 9bq0y: two
+  instances of one component with distinct keys, so `lease` and `single_instance` are tested; `wait`
+  sleeps where the footing's clock cannot be held, marked slow, RFC p8e8k; `cases.res` adds the
+  footing to the components and a records seed to `given`.
