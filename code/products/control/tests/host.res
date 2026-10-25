@@ -19,6 +19,8 @@ type t = {
   drops: ref<int>,
   /** The last deploy sent. */
   deployed: ref<option<Contracts.DeploymentDeploy.t>>,
+  /** Whether the driver has lost what it ran, answering a stop and a delete `not_found`. */
+  lost: ref<bool>,
 }
 
 let json = (status, value) =>
@@ -35,6 +37,12 @@ let make = (): t => {
   let gone = ref(false)
   let drops = ref(0)
   let deployed = ref(None)
+  let lost = ref(false)
+  let notFound = () =>
+    json(
+      404,
+      JSON.parseOrThrow(`{"status": "error", "failure": "rejected", "reason": "not_found", "message": "none"}`),
+    )
   {
     reach: {
       origin: (~address, ~port) => `http://${address}:${Int.toString(port)}`,
@@ -117,6 +125,27 @@ let make = (): t => {
               JSON.parseOrThrow(`{"status": "error", "failure": "unavailable", "reason": "storage_full", "message": "the binding holds no bucket"}`),
             )
           }
+        // A stop leaves the deployment stopped, and a delete refuses one still running.
+        | "/deployments/stop" =>
+          switch running->Dict.get("app") {
+          | Some(described) if !lost.contents =>
+            let stopped = {...described, state: Stopped}
+            running->Dict.set("app", stopped)
+            success(Contracts.DeploymentDescribed.toJson(stopped))
+          | Some(_) | None => notFound()
+          }
+        | "/deployments/delete" if lost.contents => notFound()
+        | "/deployments/delete" =>
+          switch running->Dict.get("app") {
+          | Some({state: Running(_)}) =>
+            json(
+              409,
+              JSON.parseOrThrow(`{"status": "error", "failure": "rejected", "reason": "still_running", "message": "it runs"}`),
+            )
+          | Some({state: Making | Stopped | Failed(_)}) | None =>
+            running->Dict.delete("app")
+            success(Contracts.DeploymentDeleted.toJson({}))
+          }
         | "/deployments/describe" =>
           switch running->Dict.get("app") {
           | Some(described) => success(Contracts.DeploymentDescribed.toJson(described))
@@ -141,5 +170,6 @@ let make = (): t => {
     gone,
     drops,
     deployed,
+    lost,
   }
 }

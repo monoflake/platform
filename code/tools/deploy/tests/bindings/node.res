@@ -8,3 +8,10 @@ external deepEqual: ('a, 'a, ~message: string=?) => unit = "deepStrictEqual"
 
 /** A response as a fetch gives it, its status and its body. */
 @new external response: (string, {"status": int}) => Web.response = "Response"
+
+/** What a program run to its end gave, its status and what it wrote. */
+type spawned = {status: Nullable.t<int>, stdout: string, stderr: string}
+@module("node:child_process")
+external spawnSync: (string, array<string>, {"env": dict<string>, "encoding": string}) => spawned =
+  "spawnSync"
+@val external env: dict<string> = "process.env"

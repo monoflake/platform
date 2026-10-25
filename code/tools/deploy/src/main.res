@@ -435,6 +435,31 @@ let forgotten = async (control: Control.t, ~app, ~dry) =>
     }
   }
 
+/** The app that ran retired through a control, or what a dry run would ask. */
+let retired = async (control: Control.t, ~app, ~dry) =>
+  if dry {
+    Ok(`app ${Ids.Id.text(app)} would be stopped, deleted by its driver and removed`)
+  } else {
+    switch await Control.retire(control, ~app) {
+    | Ok({app}) => Ok(`app ${Ids.Id.text(app)} retired`)
+    | Error(refused) => Error(refusal(refused))
+    }
+  }
+
+/** A call a control's target alone takes, timed under its name. */
+let onControl = async (named, name, run) =>
+  // Arguments refused a machine's target already, so this one names a control.
+  switch controlOf(named)->Option.getOr(Error(`${named} names no control`)) {
+  | Ok(control) =>
+    switch await timed(name, () => run(control), said => said) {
+    | Ok(_) => ()
+    | Error(_) => Host.setExitCode(Host.process, 1)
+    }
+  | Error(why) =>
+    Console.error(`deploy: ${why}`)
+    Host.setExitCode(Host.process, 2)
+  }
+
 let main = async () => {
   let started = Date.now()
   switch Arguments.parse(Host.argv->Array.slice(~start=2)) {
@@ -442,17 +467,9 @@ let main = async () => {
     Console.error(`deploy: ${why}`)
     Host.setExitCode(Host.process, 2)
   | Ok({target: named, forget: Some(app), dry}) =>
-    // Arguments refused a machine's target already, so this one names a control.
-    switch controlOf(named)->Option.getOr(Error(`${named} names no control`)) {
-    | Ok(control) =>
-      switch await timed("forget", () => forgotten(control, ~app, ~dry), said => said) {
-      | Ok(_) => ()
-      | Error(_) => Host.setExitCode(Host.process, 1)
-      }
-    | Error(why) =>
-      Console.error(`deploy: ${why}`)
-      Host.setExitCode(Host.process, 2)
-    }
+    await onControl(named, "forget", control => forgotten(control, ~app, ~dry))
+  | Ok({target: named, retire: Some(app), dry}) =>
+    await onControl(named, "retire", control => retired(control, ~app, ~dry))
   | Ok({target: named, secrets, network})
     if Control.origin(named) == None && (secrets != [] || network != []) =>
     Console.error(`deploy: --secrets and --network are a control's, and ${named} is a machine`)

@@ -72,6 +72,13 @@ type t = {
   drawApp: (~random: unit => float) => promise<float>,
   /** An app drawn and never run removed, no deployment or one of capacity 0, and whether it was. */
   forgetApp: float => promise<bool>,
+  /** Whether an app's record is kept, drawn or kept for a deployment before ids were drawn. */
+  hasApp: float => promise<bool>,
+  /**
+   * An app's deployment and record removed whatever they hold, once its driver answered its
+   * deployment gone, the record first so a removal cut short leaves the app held.
+   */
+  retireApp: float => promise<unit>,
   /** What was declared of an app's deployment, written before its host is called. */
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,

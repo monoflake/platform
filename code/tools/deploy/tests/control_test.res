@@ -259,3 +259,64 @@ testAsync("a forget names the app to the control, and its refusal is said as it 
   )
   deepEqual(await Control.forget(refusing, ~app=1.), Error({reason: "deployed", message: "it ran"}))
 })
+
+testAsync("a retire names the app to the control, and its refusal is said as it came", async () => {
+  let (control, sent) = faked(
+    dict{"/releases/retire": (200, `{"status": "success", "data": {"app": 1}}`)},
+  )
+  deepEqual((await Control.retire(control, ~app=1.))->Result.map(f => f.app), Ok(1.))
+  deepEqual(
+    sent->Array.map(s => (
+      s.url,
+      s.init.headers->Dict.get("authorization"),
+      s.init.body->Option.map(b => JSON.parseOrThrow(b)),
+    )),
+    [
+      (
+        "http://localhost:8787/releases/retire",
+        Some("Bearer the secret"),
+        Some(
+          JSON.parseOrThrow(`{"interface": "releases", "operation": "retire", "input": {"app": 1}}`),
+        ),
+      ),
+    ],
+  )
+  let (refusing, _) = faked(
+    dict{
+      "/releases/retire": (
+        400,
+        `{"status": "error", "failure": "rejected", "reason": "not_deployed", "message": "it never ran"}`,
+      ),
+    },
+  )
+  deepEqual(
+    await Control.retire(refusing, ~app=1.),
+    Error({reason: "not_deployed", message: "it never ran"}),
+  )
+})
+
+test("a retire's dry run asks the control nothing, where the same retire asked fails", () => {
+  let given = Dict.copy(env)
+  given->Dict.set(Control.operatorVariable, "the secret")
+  // Nothing listens on the discard port, so only a call never made can succeed.
+  let run = more =>
+    spawnSync(
+      "node",
+      ["src/main.res.mjs", "control:http://localhost:9", "--retire", "00000001", ...more],
+      {"env": given, "encoding": "utf8"},
+    )
+  let dry = run(["--dry-run"])
+  let asked = run([])
+  deepEqual(
+    (
+      dry.status->Nullable.toOption,
+      dry.stdout->String.includes(
+        "app 00000001 would be stopped, deleted by its driver and removed",
+      ),
+      asked.status->Nullable.toOption,
+      asked.stderr->String.includes("unreached: http://localhost:9 did not answer"),
+    ),
+    (Some(0), true, Some(1), true),
+    ~message=`${dry.stdout}${dry.stderr}${asked.stdout}${asked.stderr}`,
+  )
+})

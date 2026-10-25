@@ -65,7 +65,7 @@ let interface_: interface_ = {
       ~callers=[#operator],
     ),
     // An app whose id was drawn and that never ran, no container and capacity 0, removed; an app
-    // that ran is `deployed`, removed by its own path and never this one.
+    // that ran is `deployed`, retired and never forgotten.
     op(
       "forget",
       "release-of",
@@ -74,12 +74,19 @@ let interface_: interface_ = {
       ~callers=[#operator],
     ),
     // An app that ran, its deployment stopped and deleted by its binding's driver and then its
-    // rows removed; one that never ran is `not_deployed`, forget's and never this one's.
+    // rows removed; one that never ran is `not_deployed`, forget's and never this one's. What the
+    // driver refused the stop or the delete for is passed on.
     op(
       "retire",
       "release-of",
       "release-of",
-      [("not_found", #rejected), ("not_deployed", #rejected), ("unreachable", #unavailable)],
+      [
+        ("not_found", #rejected),
+        ("not_deployed", #rejected),
+        ("still_running", #rejected),
+        ("invalid", #rejected),
+        ("unreachable", #unavailable),
+      ],
       ~callers=[#operator],
     ),
   ],

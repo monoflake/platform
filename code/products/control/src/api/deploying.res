@@ -160,6 +160,25 @@ let described = (host, ~app) =>
     Contracts.DeploymentDescribed.fromJson,
   )
 
+/** A driver's answer with `not_found` taken as done, as a deployment gone is what was asked. */
+let gone = (answered: result<'output, Driver.refused>) =>
+  switch answered {
+  | Ok(_) => Ok()
+  | Error({reason: "not_found"}) => Ok()
+  | Error(refused) => Error(refused)
+  }
+
+let retired = async (host, ~app) => {
+  let of_: Contracts.DeploymentOf.t = {runs: App({id: app})}
+  switch gone(
+    await Driver.call(host, deployments(Stop(of_)), Contracts.DeploymentDescribed.fromJson),
+  ) {
+  | Error(refused) => Error(refused)
+  | Ok() =>
+    gone(await Driver.call(host, deployments(Delete(of_)), Contracts.DeploymentDeleted.fromJson))
+  }
+}
+
 let bucketed = async (host, ~wait) =>
   switch await describeList(host) {
   | Error(refused) => Error(refused)

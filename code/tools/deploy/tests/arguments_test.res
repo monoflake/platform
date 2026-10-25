@@ -1,4 +1,7 @@
-/*** `Arguments` held to RFC b8f35, a deploy's and a forget's arguments, each id 8 hex digits. */
+/***
+ * `Arguments` held to RFC b8f35, a deploy's, a forget's and a retire's arguments, each id 8 hex
+ * digits.
+ */
 open Node
 
 let deploy: Arguments.t = {
@@ -7,6 +10,7 @@ let deploy: Arguments.t = {
   app: None,
   binding: None,
   forget: None,
+  retire: None,
   secrets: [],
   network: [],
   dry: false,
@@ -76,3 +80,46 @@ test("a forget is refused to a machine ssh reaches, as only a control drew the i
   )
   ok(Arguments.parse(["local", "--forget", "0a1b2c3d"])->Result.isError)
 })
+
+test(
+  "a retire takes a control's target alone, its app 8 hex digits, and never with a forget",
+  () => {
+    deepEqual(
+      Arguments.parse(["control:https://c.example", "--retire", "00000001"]),
+      Ok({...deploy, directory: "", retire: Some(1.)}),
+    )
+    deepEqual(
+      Arguments.parse(["--retire", "0a1b2c3d", "control:https://c.example", "--dry-run"]),
+      Ok({...deploy, directory: "", retire: Some(169552957.), dry: true}),
+    )
+    ok(Arguments.parse(["control:https://c.example", "--retire", "1"])->Result.isError)
+    ok(Arguments.parse(["control:https://c.example", "--retire"])->Result.isError)
+    ok(Arguments.parse(["--retire", "0a1b2c3d"])->Result.isError)
+    ok(
+      Arguments.parse([
+        "apps/hello",
+        "control:https://c.example",
+        "--retire",
+        "0a1b2c3d",
+      ])->Result.isError,
+    )
+    deepEqual(
+      Arguments.parse(["control:https://c.example", "--retire", "0a1b2c3d", "--app", "00000002"]),
+      Error("--retire takes the control's target alone, and --dry-run"),
+    )
+    deepEqual(
+      Arguments.parse(["root@machine.example", "--retire", "0a1b2c3d"]),
+      Error("--retire asks a control, and root@machine.example is a machine ssh reaches"),
+    )
+    deepEqual(
+      Arguments.parse([
+        "control:https://c.example",
+        "--retire",
+        "0a1b2c3d",
+        "--forget",
+        "0a1b2c3e",
+      ]),
+      Error("--forget and --retire are two calls, made one at a time"),
+    )
+  },
+)

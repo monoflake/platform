@@ -8246,6 +8246,14 @@
 							"failure": "rejected"
 						},
 						{
+							"name": "still_running",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
 							"name": "unreachable",
 							"failure": "unavailable"
 						}

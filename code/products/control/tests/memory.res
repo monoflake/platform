@@ -136,6 +136,14 @@ let state = (): State.t => {
         deployments->Dict.delete(key(app))
         true
       },
+    hasApp: async app => apps->Array.includes(app),
+    retireApp: async app => {
+      switch apps->Array.indexOf(app) {
+      | -1 => ()
+      | at => apps->Array.splice(~start=at, ~remove=1, ~insert=[])
+      }
+      deployments->Dict.delete(key(app))
+    },
   }
 }
 

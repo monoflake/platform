@@ -1,12 +1,12 @@
 /*** The deploy tool's arguments read, each id 8 lowercase hex digits, RFC b8f35. */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <control target> --retire <8 hex> [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
- * it onto, the app a control forgets, the secrets and network it hands the driver, and whether
- * nothing is changed.
+ * it onto, the app a control forgets or retires, the secrets and network it hands the driver, and
+ * whether nothing is changed.
  */
 type t = {
   directory: string,
@@ -14,6 +14,7 @@ type t = {
   app: option<float>,
   binding: option<float>,
   forget: option<float>,
+  retire: option<float>,
   secrets: array<string>,
   network: array<Contracts.DeploymentNetwork.t>,
   dry: bool,
@@ -55,46 +56,56 @@ let rec read = (args, given) =>
   | list{} => Ok(given)
   }
 
-/** What a forget takes, the target alone and a dry run, its one positional read as the target. */
-let forgetting = (given: t) =>
+/**
+ * What a forget or a retire takes, the target alone and a dry run, its one positional read as the
+ * target, `flag` naming which.
+ */
+let controlOnly = (given: t, ~flag) =>
   switch (given.directory, given.target) {
   | ("", _) => Error(usage)
-  | (_, more) if more != "" => Error(`${more} is one argument too many, as --forget builds nothing`)
+  | (_, more) if more != "" =>
+    Error(`${more} is one argument too many, as --${flag} builds nothing`)
   | (named, _) if Control.origin(named) == None =>
-    Error(`--forget asks a control, and ${named} is a machine ssh reaches`)
+    Error(`--${flag} asks a control, and ${named} is a machine ssh reaches`)
   | _ if given.app != None || given.binding != None || given.secrets != [] || given.network != [] =>
-    Error("--forget takes the control's target alone, and --dry-run")
+    Error(`--${flag} takes the control's target alone, and --dry-run`)
   | (named, _) => Ok({...given, directory: "", target: named})
   }
 
-/** The arguments read, or why they are not a deploy's or a forget's. */
+/** The arguments read, or why they are not a deploy's, a forget's or a retire's. */
 let parse = args => {
   let ids =
     Ids.Id.taken(args, ~flag="app")->Result.flatMap(((app, rest)) =>
       Ids.Id.taken(rest, ~flag="binding")->Result.flatMap(((binding, rest)) =>
-        Ids.Id.taken(rest, ~flag="forget")->Result.map(
-          ((forget, rest)) => (app, binding, forget, rest),
+        Ids.Id.taken(rest, ~flag="forget")->Result.flatMap(
+          ((forget, rest)) =>
+            Ids.Id.taken(rest, ~flag="retire")->Result.map(
+              ((retire, rest)) => (app, binding, forget, retire, rest),
+            ),
         )
       )
     )
   switch ids {
   | Error(why) => Error(why)
-  | Ok((app, binding, forget, rest)) =>
+  | Ok((app, binding, forget, retire, rest)) =>
     let empty = {
       directory: "",
       target: "",
       app,
       binding,
       forget,
+      retire,
       secrets: [],
       network: [],
       dry: false,
     }
-    switch (read(List.fromArray(rest), empty), forget) {
-    | (Error(why), _) => Error(why)
-    | (Ok(given), Some(_)) => forgetting(given)
-    | (Ok({target: ""}), None) => Error(usage)
-    | (Ok(given), None) => Ok(given)
+    switch (read(List.fromArray(rest), empty), forget, retire) {
+    | (Error(why), _, _) => Error(why)
+    | (Ok(_), Some(_), Some(_)) => Error("--forget and --retire are two calls, made one at a time")
+    | (Ok(given), Some(_), None) => controlOnly(given, ~flag="forget")
+    | (Ok(given), None, Some(_)) => controlOnly(given, ~flag="retire")
+    | (Ok({target: ""}), None, None) => Error(usage)
+    | (Ok(given), None, None) => Ok(given)
     }
   }
 }

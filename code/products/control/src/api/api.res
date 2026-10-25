@@ -492,7 +492,7 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
 /** A refusal's message naming the app drawn for it, `app <8 hex>, ` before what it says. */
 let naming = (app, message) => `app ${Ids.text(app)}, ${message}`
 
-/** Thrown where a deploy's container is declared for an app forgotten since it began. */
+/** Thrown where a deploy's container is declared for an app removed since it began. */
 exception Forgotten
 
 let undeployed = app => refused("not_found", `no app ${Ids.text(app)} is deployed`)
@@ -546,7 +546,7 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
       | exception Forgotten =>
         Error({
           reason: "not_found",
-          message: `app ${Ids.text(app)} was forgotten as it was deployed`,
+          message: `app ${Ids.text(app)} was removed as it was deployed`,
         })
       }
       described(
@@ -571,8 +571,7 @@ let describe = async (parts, app) =>
  * id the control does not hold as `not_found`.
  */
 let forget = async (parts, app) => {
-  let ran = () =>
-    refused("deployed", `app ${Ids.text(app)} has run, so it is removed by its own path`)
+  let ran = () => refused("deployed", `app ${Ids.text(app)} has run, so it is removed by retire`)
   switch await parts.state.deployment(app) {
   | Some({capacity}) if capacity != 0. => ran()
   | Some(_) | None =>
@@ -594,6 +593,50 @@ let forget = async (parts, app) => {
   }
 }
 
+/**
+ * An app that ran stopped and deleted by its binding's driver, and its rows removed only once the
+ * driver answers it gone; one that never ran is `not_deployed`, an id not held `not_found`.
+ */
+let retire = async (parts, app) => {
+  let named = Ids.text(app)
+  let never = () => refused("not_deployed", `app ${named} never ran, so it is removed by forget`)
+  switch await parts.state.deployment(app) {
+  | Some({capacity, binding}) if capacity != 0. =>
+    switch await hostOf(parts, binding) {
+    // A binding not yet bound has no driver to reach, so the app is kept for a retry.
+    | Error(Refused({reason: "unbound", message})) =>
+      refused("unreachable", message->Option.getOr(`binding ${Ids.text(binding)} is unbound`))
+    // A binding the control no longer holds leaves no driver to ask, so nothing is removed.
+    | Error(Refused({reason: "not_found"})) =>
+      refused(
+        "unreachable",
+        `app ${named} runs on binding ${Ids.text(
+            binding,
+          )}, which is not held, so no driver is asked`,
+      )
+    | Error((Refused(_) | Output(_)) as answer) => answer
+    | Ok(host) =>
+      switch await Deploying.retired(host, ~app) {
+      | Error({reason, message}) => refused(reason, message)
+      | Ok() =>
+        // A deploy declaring its container after this asks no driver; one declared before it and
+        // reaching its driver after the delete is the deferred item retire-deploy-race.
+        await parts.state.retireApp(app)
+        Output(
+          Calls.output(
+            ({app: app}: Contracts.ReleaseOf.t),
+            ~toJson=Contracts.ReleaseOf.toJson,
+            ~toCbor=Contracts.ReleaseOf.toCbor,
+          ),
+        )
+      }
+    }
+  | Some(_) => never()
+  | None if await parts.state.hasApp(app) => never()
+  | None => refused("not_found", `no app ${named} is held`)
+  }
+}
+
 let releases = (parts, caller: Access.caller) =>
   Calls.route({
     name: "releases",
@@ -604,6 +647,7 @@ let releases = (parts, caller: Access.caller) =>
       Interface.Releases.deploy,
       Interface.Releases.describe,
       Interface.Releases.forget,
+      Interface.Releases.retire,
     ],
     handle: async (_, {call}) =>
       switch (caller, call) {
@@ -611,6 +655,7 @@ let releases = (parts, caller: Access.caller) =>
       | (Operator, Deploy(input)) => await deploy(parts, input)
       | (Operator, Describe({app})) => await describe(parts, app)
       | (Operator, Forget({app})) => await forget(parts, app)
+      | (Operator, Retire({app})) => await retire(parts, app)
       | (Host(_) | Organization(_) | Nobody, _) => denied
       },
   })

@@ -293,3 +293,32 @@ test("a forget over a control that does not delete, or keeps what it deleted, fa
     deepEqual((failed, again), (true, true), ~message=Int.toString(i))
   }
 })
+
+test("a retire over a control that does not delete, or keeps what it deleted, fails", async () => {
+  let refusing = `{"status": "error", "failure": "rejected", "reason": "malformed", "message": "the interface object has no operation delete"}`
+  let answering = [
+    _ => json(400, JSON.parseOrThrow(refusing)),
+    _ => success(Contracts.ObjectDeleted.toJson({})),
+  ]
+  for i in 0 to answering->Array.length - 1 {
+    let (fetch, _, _) = stoodOn()
+    let answer = answering->Array.getUnsafe(i)
+    let old = async request =>
+      Web.parts(request->Web.url)->Web.pathname == "/object/delete"
+        ? answer(request)
+        : await fetch(request)
+    let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
+    let state = State.ofObjects(Objects.through(~origin, ~token, old), ~sealing)
+    let app = await state.drawApp(~random=() => 16777224.)
+    await state.deploy({app, binding: 2., release: "aa", capacity: 1.})
+    let failed = switch await state.retireApp(app) {
+    | () => false
+    | exception JsExn(_) => true
+    }
+    deepEqual(
+      (failed, (await state.deployment(app))->Option.isSome),
+      (true, true),
+      ~message=Int.toString(i),
+    )
+  }
+})

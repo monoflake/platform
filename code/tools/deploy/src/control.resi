@@ -42,6 +42,12 @@ let deploy: (
 /** The app forgotten, one whose id was drawn and that never ran, as the control answered. */
 let forget: (t, ~app: float) => promise<result<Contracts.ReleaseOf.t, Machine.refused>>
 
+/**
+ * The app retired, one that ran, its deployment stopped and deleted by its driver and then removed,
+ * as the control answered.
+ */
+let retire: (t, ~app: float) => promise<result<Contracts.ReleaseOf.t, Machine.refused>>
+
 /** The app's deployment as its host's driver describes it, through the control. */
 let describe: (t, ~app: float) => promise<result<Contracts.DeploymentDescribed.t, Machine.refused>>
 

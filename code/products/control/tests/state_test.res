@@ -24,6 +24,8 @@ type store = {
   app: float => promise<unit>,
   /** A deployment of no container on a binding, with no app record, as a forget halfway leaves. */
   orphan: (~app: float, ~binding: float) => promise<unit>,
+  /** A deployment of a container with no app record, as one kept before ids were drawn. */
+  numbered: (~app: float, ~binding: float) => promise<unit>,
 }
 
 type secretRow = {secret: Nullable.t<string>}
@@ -65,6 +67,11 @@ let d1 = () => {
     orphan: (~app, ~binding) =>
       statement(
         "INSERT INTO deployment (app, binding, release, capacity) VALUES (?, ?, 'aa', 0)",
+        [Number(app), Number(binding)],
+      )->Stores.run,
+    numbered: (~app, ~binding) =>
+      statement(
+        "INSERT INTO deployment (app, binding, release, capacity) VALUES (?, ?, 'aa', 1)",
         [Number(app), Number(binding)],
       )->Stores.run,
   }
@@ -127,6 +134,22 @@ let objects = () => {
                 "binding": Number(binding),
                 "release": String("aa"),
                 "capacity": Number(0.),
+              },
+            ),
+          ),
+        ),
+      ),
+    numbered: async (~app, ~binding) =>
+      held->Dict.set(
+        `state/deployments/${Float.toString(app)}`,
+        Web.utf8(
+          JSON.stringify(
+            Object(
+              dict{
+                "app": Number(app),
+                "binding": Number(binding),
+                "release": String("aa"),
+                "capacity": Number(1.),
               },
             ),
           ),
@@ -910,4 +933,43 @@ test(
       (Some((Some("10.200.0.2"), Some(2.))), Some(2.), Some((Some("10.200.0.1"), Some(3.)))),
     )
   },
+)
+
+test(
+  "an app that ran is retired whatever it holds, one numbered before ids were drawn too",
+  async () =>
+    for i in 0 to stores->Array.length - 1 {
+      let make = stores->Array.getUnsafe(i)
+      let store = make()
+      let state = store.state(Sealing.ofKey(key))
+      let organization = await state.openOrganization("first", ~secret)
+      let binding = await state.openBinding(
+        ~organization=organization.id,
+        ~secret,
+        ~relayed=false,
+        ~random=scripted(list{16777218.}),
+      )
+      await state.putRelease({hash: "aa", form: Modules, size: 3.})
+      let ran = await state.drawApp(~random=scripted(list{16777221.}))
+      await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
+      await store.numbered(~app=1., ~binding)
+      let before = (await state.hasApp(ran), await state.hasApp(1.), await state.hasApp(99.))
+      await state.retireApp(ran)
+      await state.retireApp(1.)
+      // Nothing held is no failure.
+      await state.retireApp(99.)
+      // A deploy declared after the removal lands nowhere.
+      await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
+      deepEqual(
+        (
+          before,
+          await state.hasApp(ran),
+          await state.deployment(ran),
+          await state.deployment(1.),
+          await state.drawApp(~random=scripted(list{16777221.})),
+        ),
+        ((true, false, false), false, None, None, 16777221.),
+        ~message=store.name,
+      )
+    },
 )

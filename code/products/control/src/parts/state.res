@@ -39,6 +39,8 @@ type t = {
   release: string => promise<option<release>>,
   drawApp: (~random: unit => float) => promise<float>,
   forgetApp: float => promise<bool>,
+  hasApp: float => promise<bool>,
+  retireApp: float => promise<unit>,
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,
 }
@@ -352,6 +354,14 @@ let ofDatabase = (database, ~sealing) => {
         deleted->Option.isSome &&
           (await first(`SELECT 1 AS id WHERE ${appHeld("?1")}`, [Number(app)]))->Option.isNone
       }
+    },
+    hasApp: async app => {
+      let row: option<idRow> = await first("SELECT id FROM app WHERE id = ?", [Number(app)])
+      row->Option.isSome
+    },
+    retireApp: async app => {
+      await run("DELETE FROM app WHERE id = ?", [Number(app)])
+      await run("DELETE FROM deployment WHERE app = ?", [Number(app)])
     },
   }
 }
@@ -717,6 +727,19 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           | [None, None] => true
           | _ => JsError.throwWithMessage(`app ${Ids.text(app)} is still kept once deleted`)
           }
+        }
+      }),
+    hasApp: async app => (await readJson(`state/apps/${Float.toString(app)}`))->Option.isSome,
+    // Taken within the queue as a forget is, the record before the deployment.
+    retireApp: app =>
+      serial(async () => {
+        let at = `state/apps/${Float.toString(app)}`
+        let deploymentAt = `state/deployments/${Float.toString(app)}`
+        held(await objects.delete(at))
+        held(await objects.delete(deploymentAt))
+        switch await Promise.all([readJson(at), readJson(deploymentAt)]) {
+        | [None, None] => ()
+        | _ => JsError.throwWithMessage(`app ${Ids.text(app)} is still kept once deleted`)
         }
       }),
   }

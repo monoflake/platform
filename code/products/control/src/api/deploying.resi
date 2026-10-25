@@ -51,6 +51,12 @@ let described: (
   ~app: float,
 ) => promise<result<Contracts.DeploymentDescribed.t, Driver.refused>>
 
+/**
+ * The app's deployment stopped and then deleted by its host's driver, gone once the delete is
+ * answered; `not_found` from either is a deployment gone already.
+ */
+let retired: (Driver.host, ~app: float) => promise<result<unit, Driver.refused>>
+
 /** The bytes the bucket made for an organization's objects holds, RFC rxmd9. */
 let bucketSize: float
 

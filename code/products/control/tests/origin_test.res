@@ -392,7 +392,7 @@ test(
         (
           404,
           Some("not_found"),
-          Some(`app ${Ids.text(app)}, app ${Ids.text(app)} was forgotten as it was deployed`),
+          Some(`app ${Ids.text(app)}, app ${Ids.text(app)} was removed as it was deployed`),
         ),
         None,
         None,
