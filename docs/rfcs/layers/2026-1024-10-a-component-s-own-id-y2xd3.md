@@ -153,3 +153,9 @@ Choices made provisionally while the thread runs, read by the author at its end.
   `reaching.json` holds the allowed half alone; the refusal is held by driver(machine)'s entry
   tests, by `Host` and by an ignored `X-Forwarded-Host`, and by a machine's rehearsal, curl from a
   reacher's namespace naming a target it does not reach and getting the 403 whole.
+- **A container's forwarding headers carry nothing through**, a small matter, provisional, chosen
+  by the advisor on 2026-10-25: from the containers' subnet the entry drops `X-Forwarded-For`,
+  `Forwarded`, `X-Forwarded-Proto`, `X-Real-IP` and any other forwarding header, the chain starting
+  at the container's source alone; proxy paths keep theirs. The earlier entries' "the sample expects
+  the entry's own 403" gave way to the allowed half alone, above; the fence's two drivers and
+  conform's bridge are monoflake/driver's RFC p95sv's Ledger of 2026-10-25.
