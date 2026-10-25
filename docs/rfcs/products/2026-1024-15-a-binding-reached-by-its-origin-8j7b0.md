@@ -85,3 +85,27 @@ Choices made provisionally while the thread runs, read by the author at its end.
   2026-10-24: `--organization` is required by any selected case using the run's organization, and
   the runner refuses before running anything where it is missing, naming those cases. It never opens
   an organization on the control under test.
+- **A binding's reach is fixed by its first successful bind**, a small matter, provisional, chosen
+  by the advisor on 2026-10-24: after a tunnel bind an origin bind is refused, and the other way
+  round, answering `invalid`, so deploy, describe, the gateway and the relay never disagree about
+  where a binding lives.
+- **An origin binding's token is spent on `bind` by its first successful bind**, a small matter,
+  provisional, chosen by the advisor on 2026-10-24, after the author's own word, a host known by
+  "the one-time binding token `open` issued", RFC 6x8su. A second bind with it answers `denied`, and
+  moving an origin binding to another origin takes the operator opening it again, never the token
+  alone; so a token's holder cannot carry a bound binding off to a server of their own, nor two
+  holders flip it. The call back proves the origin answers, never who holds the token. The token
+  stays the secret the control presents to the binding's driver on every call.
+- **The gateway and the relay answer `beyond_host` for an origin binding**, a small matter,
+  provisional, chosen by the advisor on 2026-10-24: its data plane never passes through the
+  control, monoflake/driver's RFC nrs5v and the workspace's deferred `inline-data-path`, so they
+  guess no path. Storage places nothing on such a binding either, choosing only a binding with an
+  address, until that path lands.
+- **Cloudflare's own 521 to 524 and 530 on the call back answer `unreachable`**, a small matter,
+  provisional, chosen by the advisor on 2026-10-24, as the issuer's do; `not_proven` is only for an
+  origin that answered and is not that binding's driver. A failed call back answers a fixed message,
+  never the fetch's own text.
+- **A name resolving to a private address passes the form check**, a fact recorded by the advisor on
+  2026-10-24, a wildcard DNS service's name for a loopback address among them: the runtime stops it,
+  Cloudflare's edge for a control on Cloudflare and workerd's `allow = ["public"]` for a control
+  running as an app with `http` declared, which the run sheet checks.
