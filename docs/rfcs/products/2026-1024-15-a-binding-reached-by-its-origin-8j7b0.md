@@ -109,3 +109,16 @@ Choices made provisionally while the thread runs, read by the author at its end.
   2026-10-24, a wildcard DNS service's name for a loopback address among them: the runtime stops it,
   Cloudflare's edge for a control on Cloudflare and workerd's `allow = ["public"]` for a control
   running as an app with `http` declared, which the run sheet checks.
+- **A tunnel binding's `bind` accepts its token again**, provisional, chosen by the advisor on
+  2026-10-24, a scaffold of property against the one-time token: today only the operator runs it
+  again by hand, through monoflake/cloud's bind script. A bind again answers the tunnel's
+  credentials, so a token's holder could take a tunnel binding's traffic too. The extra risk is
+  small today, since the same token already lets its holder speak to the driver as the control, a
+  leaked token being the whole compromise already. It retires once a bound host is known by a
+  certificate of its own, RFC b8f35, a bind again then proven by that certificate and the binding
+  token no longer the control's secret toward the driver.
+- **A kind's interface declares `component` that no driver accepts yet**, provisional, chosen by
+  the advisor on 2026-10-24, a scaffold of property retiring with RFC 6x8su's gate: `object`,
+  `deployments` and `database` declare `component` among their callers, while both drivers accept
+  only the binding's token. The path RFC b8f35 describes, the blob and the extent moving parcels
+  through the object kind under a certificate, does not exist yet.
