@@ -12,7 +12,7 @@ let fake = (~ready=Float.Constants.positiveInfinity) => {
   let clock = ref(0.)
   let waits = []
   let calls = []
-  let call = async (~interface as _, ~operation, ~input, ~form, ~as_ as _) => {
+  let call = async (~interface as _, ~operation, ~input, ~form, ~as_ as _, ~bearer as _) => {
     calls->Array.push((operation, form))
     let name =
       input
@@ -61,6 +61,9 @@ let fake = (~ready=Float.Constants.positiveInfinity) => {
       waits->Array.push(ms)
       clock := clock.contents +. Int.toFloat(ms)
     },
+    network: false,
+    tunnel: false,
+    captured: dict{},
   }
   (target, waits, calls)
 }
@@ -254,7 +257,14 @@ testAsync(
     let inputs = []
     let target: Run.target = {
       ...target,
-      call: async (~interface as _, ~operation as _, ~input, ~form as _, ~as_ as _) => {
+      call: async (
+        ~interface as _,
+        ~operation as _,
+        ~input,
+        ~form as _,
+        ~as_ as _,
+        ~bearer as _,
+      ) => {
         inputs->Array.push(input)
         Ok(Run.Answered(JSON.Object(dict{})))
       },
@@ -300,6 +310,131 @@ testAsync(
           ),
         ],
       },
+    )
+  },
+)
+
+/** A target answering `open` with a binding's token and keeping each call's bearer and input. */
+let binder = (~network) => {
+  let (target, _, _) = fake()
+  let seen = []
+  let target: Run.target = {
+    ...target,
+    call: async (~interface as _, ~operation, ~input, ~form as _, ~as_, ~bearer) => {
+      seen->Array.push((operation, as_, bearer, input))
+      Ok(
+        Run.Answered(
+          operation == "open"
+            ? parse(`{"binding": 4, "secret": "c2VjcmV0"}`)
+            : parse(`{"binding": 4, "reached": {"name": "tunnel", "address": "10.200.0.4"}}`),
+        ),
+      )
+    },
+    network,
+    tunnel: false,
+    captured: dict{"organization": JSON.Number(7.)},
+  }
+  (target, seen)
+}
+
+let bound = fileOf(`{"interface": "bindings", "cases": [{"description": "bound", "steps": [
+  {"call": "open", "as": "operator", "input": {"organization": {"$use": "organization"}}, "expect": {"output": {"$capture": "opened"}}},
+  {"call": "bind", "bearer": {"$use": "opened"}, "input": {"reach": {"name": "tunnel"}}, "expect": {"output": {"binding": 4}}}
+]}]}`)
+
+testAsync(
+  "a step carries the token a whole capture of open forms, after the run's organization",
+  async () => {
+    let (target, seen) = binder(~network=false)
+    let results = await Run.file(bound, target)
+    deepEqual(results, [{description: "bound", outcomes: [(Cbor, Passed), (Json, Passed)]}])
+    deepEqual(
+      seen->Array.slice(~start=0, ~end=2),
+      [
+        ("open", Some("operator"), None, parse(`{"organization": 7}`)),
+        ("bind", None, Some("4.c2VjcmV0"), parse(`{"reach": {"name": "tunnel"}}`)),
+      ],
+    )
+  },
+)
+
+testAsync("a bearer captured by no step before, or no token, fails its step", async () => {
+  let (target, _) = binder(~network=false)
+  let file = fileOf(`{"interface": "bindings", "cases": [{"description": "unbound", "steps": [
+    {"call": "open", "input": {}, "expect": {"output": {"secret": {"$capture": "secret"}}}},
+    {"call": "bind", "bearer": {"$use": "secret"}, "input": {}, "expect": {"output": {}}}
+  ]}, {"description": "uncaptured", "steps": [
+    {"call": "bind", "bearer": {"$use": "never"}, "input": {}, "expect": {"output": {}}}
+  ]}]}`)
+  let results = await Run.file(file, target)
+  deepEqual(
+    results->Array.map(r => r.outcomes->Array.map(((_, o)) => o)->Array.get(0)),
+    [
+      Some(
+        Failed({
+          step: 1,
+          why: `the bearer secret, captured as "c2VjcmV0" and no binding's token`,
+        }),
+      ),
+      Some(Failed({step: 0, why: "the bearer never, captured by no step before"})),
+    ],
+  )
+})
+
+testAsync(
+  "a case needing the network is skipped where the run has none, and run where it has",
+  async () => {
+    let file = fileOf(`{"interface": "bindings", "cases": [{"description": "far", "network": true, "steps": [
+    {"call": "bind", "input": {}, "expect": {"output": {"binding": 4}}}
+  ]}]}`)
+    let (offline, unseen) = binder(~network=false)
+    let (online, _) = binder(~network=true)
+    let skipped = await Run.file(file, offline)
+    let ran = await Run.file(file, online)
+    deepEqual(
+      skipped->Array.flatMap(r =>
+        r.outcomes->Array.map(
+          ((form, outcome)) =>
+            switch outcome {
+            | Skipped(why) => (form, why->String.includes("needs the network"))
+            | Passed | Failed(_) => (form, false)
+            },
+        )
+      ),
+      [(Cbor, true), (Json, true)],
+    )
+    deepEqual(
+      (unseen, ran),
+      ([], [{description: "far", outcomes: [(Cbor, Passed), (Json, Passed)]}]),
+    )
+  },
+)
+
+testAsync(
+  "a case binding by a tunnel is skipped unless the run binds one, and run where it does",
+  async () => {
+    let file = fileOf(`{"interface": "bindings", "cases": [{"description": "tunneled", "tunnel": true, "steps": [
+    {"call": "bind", "input": {}, "expect": {"output": {"binding": 4}}}
+  ]}]}`)
+    let (untunneled, unseen) = binder(~network=true)
+    let (tunneled, _) = binder(~network=false)
+    let skipped = await Run.file(file, untunneled)
+    let ran = await Run.file(file, {...tunneled, tunnel: true})
+    deepEqual(
+      skipped->Array.flatMap(r =>
+        r.outcomes->Array.map(
+          ((form, outcome)) =>
+            switch outcome {
+            | Skipped(why) => (form, why->String.includes("binds by a tunnel"))
+            | Passed | Failed(_) => (form, false)
+            },
+        )
+      ),
+      [(Cbor, true), (Json, true)],
+    )
+    deepEqual(
+      (unseen, ran),
+      ([], [{description: "tunneled", outcomes: [(Cbor, Passed), (Json, Passed)]}]),
     )
   },
 )

@@ -27,5 +27,13 @@ let interface_: interface_ = {
   name: "directory",
   version: 1,
   from: "4dijn",
-  operations: [op("row", "directory-read", "directory-answer", [("not_found", #rejected)])],
+  operations: [
+    op(
+      "row",
+      "directory-read",
+      "directory-answer",
+      [("not_found", #rejected)],
+      ~callers=[#component],
+    ),
+  ],
 }

@@ -104,6 +104,8 @@ let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
     tunnels: stood.tunnels,
     standing: stood.standing,
     driverPort: portOf(env.driverPort, driverPort),
+    // Called as a method, the global fetch would be given a receiver workerd refuses.
+    direct: request => Web.fetch(request),
     origin,
     wait: () => Web.sleep(250),
   }

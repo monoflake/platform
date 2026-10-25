@@ -3,6 +3,7 @@
  * repository's root and of their own, and programs run.
  */
 @module("node:process") external argv: array<string> = "argv"
+@module("node:process") external env: dict<string> = "env"
 type process
 @module("node:process") external process: process = "default"
 @set external setExitCode: (process, int) => unit = "exitCode"

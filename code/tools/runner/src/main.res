@@ -2,7 +2,7 @@
  * Runs each behavior file's cases against the implementation at `base` over HTTP, RFC p8e8k, as
  * `usage` says. It prints the chain's root and certificates first.
  */
-let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] [--held <json file>] [--counts <file to write>] [--fixtures <directory> [--served <address>]] [--send-through <json array of ssh's arguments>] <behavior file>..."
+let usage = "node src/main.res.mjs --base <url> [--bounds <json file>] [--components a,b] [--tokens <file or ->] [--waits <json file>] [--held <json file>] [--counts <file to write>] [--fixtures <directory> [--served <address>]] [--send-through <json array of ssh's arguments>] [--network <yes or no>] [--tunnel <yes or no>] [--organization <id>] <behavior file>..., a call as the operator carrying CONTROL_OPERATOR"
 
 let refuse = why => {
   Console.error(`runner: ${why}`)
@@ -171,6 +171,7 @@ let main = async () => {
             c.steps->Array.filterMap(
               step =>
                 switch step {
+                | Call({as_: Some(name)}) if name == Operating.operator => None
                 | Call({as_}) => as_
                 | Send(_) | Lose(_) | Wait(_) => None
                 },
@@ -243,7 +244,13 @@ let main = async () => {
             Handing.target(
               {
                 ...target,
-                given: Holding.given(~call=target.call, ~now=target.now, ~wait=target.wait, ~held),
+                given: Holding.given(
+                  ~call=(~interface, ~operation, ~input, ~form, ~as_) =>
+                    target.call(~interface, ~operation, ~input, ~form, ~as_, ~bearer=None),
+                  ~now=target.now,
+                  ~wait=target.wait,
+                  ~held,
+                ),
                 fixture: fixture->Option.getOr(target.fixture),
               },
               ~post=through->Option.mapOr(Http.handedPost, Remote.post),
@@ -256,82 +263,120 @@ let main = async () => {
                 ->Array.join(", ")}`,
             )
           }
-          let total = {passed: 0, failed: 0, waiting: 0, skipped: 0}
-          let byInterface = Dict.make()
-          let taken = ref(0)
-          // Each token taken in turn, the next binding a case's CBOR or JSON runs on.
-          let next = tokens =>
-            () => {
-              taken := taken.contents + 1
-              tokens->Array.get(taken.contents - 1)->Option.getOr("")
+          let credential =
+            System.env->Dict.get(Operating.variable)->Option.filter(text => text != "")
+          let operated = Operating.operated(
+            try JSON.parseOrThrow(System.fromRoot("model/contracts.json")) catch {
+            | JsExn(_) => JSON.Null
+            },
+          )
+          let reached = Reaching.reaches(flags->Dict.get("network"))
+          let tunneled = Reaching.tunnels(flags->Dict.get("tunnel"), ~base)
+          let captured = Operating.captured(
+            flags->Dict.get("organization"),
+            ~using=files->Array.flatMap(((path, file: Sample.file)) =>
+              file.cases
+              ->Array.filter(Operating.usedBy)
+              ->Array.map(c => `${path}: ${c.description}`)
+            ),
+          )
+          switch (reached, tunneled, captured) {
+          | (Error(why), _, _) | (_, Error(why), _) | (_, _, Error(why)) => refuse(why)
+          | (Ok(reached), Ok(tunneled), Ok(captured)) =>
+            Console.log(
+              reached
+                ? "the network is reached, as --network yes says, so a case needing it is run"
+                : "no network is reached unless --network yes, so a case needing it is skipped",
+            )
+            Console.log(
+              tunneled
+                ? "a tunnel bind is run, as --tunnel yes says against a control on the loopback"
+                : "no tunnel bind is run unless --tunnel yes, so a case binding one is skipped",
+            )
+            // Every case begins with the run's organization captured, calling as the operator.
+            let made = (target: Run.target): Run.target => {
+              ...offered(Operating.target(target, ~credential, ~operated)),
+              network: reached,
+              tunnel: tunneled,
+              captured,
             }
-          let rec each = async n =>
-            switch files->Array.get(n) {
-            | None => ()
-            | Some((path, file)) =>
-              let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
-              let bounds = Dict.assign(own->Dict.copy, given)
-              Console.log(`${path}, ${file.interface}:`)
-              let tally = {passed: 0, failed: 0, waiting: 0, skipped: 0}
-              let results = switch tokens {
-              | None =>
-                (
-                  await Run.file(file, offered(Http.target(~base, ~chain, ~bounds)))
-                )->Array.filterMapWithIndex((result, k) =>
-                  file.cases->Array.get(k)->Option.map(case => (case, result))
-                )
-              | Some(tokens) =>
-                await Bearer.file(
-                  file,
-                  ~at=(~token) => offered(Http.target(~base, ~chain, ~bounds, ~token)),
-                  ~next=next(tokens),
-                )
+            let total = {passed: 0, failed: 0, waiting: 0, skipped: 0}
+            let byInterface = Dict.make()
+            let taken = ref(0)
+            // Each token taken in turn, the next binding a case's CBOR or JSON runs on.
+            let next = tokens =>
+              () => {
+                taken := taken.contents + 1
+                tokens->Array.get(taken.contents - 1)->Option.getOr("")
               }
-              results->Array.forEach(((case, result)) =>
-                result.outcomes->Array.forEach(((form, outcome)) =>
-                  told(
-                    [tally, total],
-                    form,
-                    result.description,
-                    Waiting.reported(rules, ~interface=file.interface, ~case, outcome),
+            let rec each = async n =>
+              switch files->Array.get(n) {
+              | None => ()
+              | Some((path, file)) =>
+                let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
+                let bounds = Dict.assign(own->Dict.copy, given)
+                Console.log(`${path}, ${file.interface}:`)
+                let tally = {passed: 0, failed: 0, waiting: 0, skipped: 0}
+                let results = switch tokens {
+                | None =>
+                  (
+                    await Run.file(file, made(Http.target(~base, ~chain, ~bounds)))
+                  )->Array.filterMapWithIndex((result, k) =>
+                    file.cases->Array.get(k)->Option.map(case => (case, result))
+                  )
+                | Some(tokens) =>
+                  await Bearer.file(
+                    file,
+                    ~at=(~token) => made(Http.target(~base, ~chain, ~bounds, ~token)),
+                    ~next=next(tokens),
+                  )
+                }
+                results->Array.forEach(((case, result)) =>
+                  result.outcomes->Array.forEach(((form, outcome)) =>
+                    told(
+                      [tally, total],
+                      form,
+                      result.description,
+                      Waiting.reported(rules, ~interface=file.interface, ~case, outcome),
+                    )
                   )
                 )
-              )
-              Console.log(`  ${counted(tally)}`)
-              byInterface->Counts.add(
-                ~interface=file.interface,
-                {
-                  passed: tally.passed,
-                  failed: tally.failed,
-                  waiting: tally.waiting,
-                  skipped: tally.skipped,
-                },
-              )
-              await each(n + 1)
+                Console.log(`  ${counted(tally)}`)
+                byInterface->Counts.add(
+                  ~interface=file.interface,
+                  {
+                    passed: tally.passed,
+                    failed: tally.failed,
+                    waiting: tally.waiting,
+                    skipped: tally.skipped,
+                  },
+                )
+                await each(n + 1)
+              }
+            await each(0)
+            let run = files->Array.length
+            Console.log(
+              `${counted(total)}, each case once in each form, of ${Int.toString(
+                  run,
+                )} behavior file${run == 1 ? "" : "s"}`,
+            )
+            let written = switch flags->Dict.get("counts") {
+            | None => true
+            | Some(path) =>
+              try {
+                System.writeText(path, JSON.stringify(Counts.toJson(byInterface)))
+                true
+              } catch {
+              | JsExn(e) =>
+                Console.log(`${path}: counts not written, ${e->JsExn.message->Option.getOr("")}`)
+                false
+              }
             }
-          await each(0)
-          let run = files->Array.length
-          Console.log(
-            `${counted(total)}, each case once in each form, of ${Int.toString(
-                run,
-              )} behavior file${run == 1 ? "" : "s"}`,
-          )
-          let written = switch flags->Dict.get("counts") {
-          | None => true
-          | Some(path) =>
-            try {
-              System.writeText(path, JSON.stringify(Counts.toJson(byInterface)))
-              true
-            } catch {
-            | JsExn(e) =>
-              Console.log(`${path}: counts not written, ${e->JsExn.message->Option.getOr("")}`)
-              false
-            }
+            System.setExitCode(
+              System.process,
+              total.failed > 0 || refused.contents || !written ? 1 : 0,
+            )
           }
-          System.setExitCode(
-            System.process,
-            total.failed > 0 || refused.contents || !written ? 1 : 0,
-          )
         }
       }
     }

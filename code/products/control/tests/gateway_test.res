@@ -150,3 +150,27 @@ test(
     }
   },
 )
+
+test("an app on a binding reached by its origin is beyond the gateway's host", async () => {
+  let state = Memory.state()
+  let host = Host.make()
+  let secret = Uint8Array.fromLength(32)
+  let {id: organization} = await state.openOrganization("first", ~secret)
+  let binding = await state.openBinding(~organization, ~secret, ~relayed=false)
+  ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
+  await state.deploy({app: 4., binding, release: "", capacity: 1.})
+  let answer = await Gateway.passed(
+    state,
+    host.reach,
+    ~port=36879,
+    Web.request("https://control.test/v1/app-4/", {method: "GET", headers: dict{}}),
+    {app: 4., path: "/"},
+    ~search="",
+  )
+  let reason =
+    JSON.parseOrThrow(await answer->Web.text)
+    ->JSON.Decode.object
+    ->Option.flatMap(o => o->Dict.get("reason"))
+    ->Option.flatMap(JSON.Decode.string)
+  deepEqual((answer->Web.status, reason, host.seen), (400, Some("beyond_host"), []))
+})

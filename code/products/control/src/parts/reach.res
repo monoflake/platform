@@ -31,3 +31,9 @@ let relayed = (~origin, ~token, fetch: Web.fetch) => {
     fetch(request)
   },
 }
+
+let direct = (origin, fetch: Web.fetch) => {
+  origin: (~address as _, ~port as _) => origin,
+  // A redirect could aim the binding's token at another host, so it is answered and not followed.
+  fetch: request => fetch(Web.unredirected(request)),
+}

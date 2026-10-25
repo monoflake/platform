@@ -30,7 +30,8 @@ repository's; it is neutral, using the platform's kind names, never a vendor's r
 Choices made provisionally while the thread runs, read by the author at its end.
 
 - **The fields go in management's interface, optional fields only**, provisional, chosen by the
-  advisor on 2026-10-24, so the version stays 2, as `revision` was added under RFC wnqvu.
+  advisor on 2026-10-24; the interface is raised to 3 with the component's id, RFC y2xd3, in one
+  change, these fields not yet pushed.
 - **`management-described` gains three**, provisional, chosen by the advisor on 2026-10-24:
   - `kinds`, key 6, optional: the kinds this binding offers. Absent means every kind the model gives
     that driver.

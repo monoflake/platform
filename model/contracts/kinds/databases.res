@@ -84,7 +84,14 @@ let interface_: interface_ = {
         ("storage_full", #unavailable),
         ("read_only", #unavailable),
       ],
+      ~callers=[#organization, #component],
     ),
-    op("rewind", "database-rewind", "database-rewound", [("beyond_window", #rejected)]),
+    op(
+      "rewind",
+      "database-rewind",
+      "database-rewound",
+      [("beyond_window", #rejected)],
+      ~callers=[#organization, #component],
+    ),
   ],
 }

@@ -68,12 +68,19 @@ let interface_: interface_ = {
   version: 2,
   from: "7xpd3",
   operations: [
-    op("pull", "authority-pull", "authority-pulled", [("ahead", #rejected)]),
+    op(
+      "pull",
+      "authority-pull",
+      "authority-pulled",
+      [("ahead", #rejected)],
+      ~callers=[#organization, #component],
+    ),
     op(
       "certify",
       "authority-certify",
       "authority-certified",
       [("role_refused", #rejected), ("suspended", #rejected)],
+      ~callers=[#organization],
     ),
   ],
 }
@@ -83,5 +90,5 @@ let notices: interface_ = {
   name: "notices",
   version: 1,
   from: "7xpd3",
-  operations: [op("notice", "notice", "noticed", [])],
+  operations: [op("notice", "notice", "noticed", [], ~callers=[#authority])],
 }

@@ -110,14 +110,21 @@ let interface_: interface_ = {
   version: 1,
   from: "n8jq5",
   operations: [
-    op("read", "footing-read", "footing-rows", [("no_kind", #rejected)]),
+    op("read", "footing-read", "footing-rows", [("no_kind", #rejected)], ~callers=[#component]),
     op(
       "write",
       "footing-write",
       "footing-written",
       [("stale", #rejected), ("no_kind", #rejected), ("too_large", #rejected)],
+      ~callers=[#component],
     ),
-    op("bundle", "footing-bundle-of", "footing-bundle", [("behind", #unavailable)]),
-    op("lease", "footing-lease", "footing-leased", [("held", #rejected)]),
+    op(
+      "bundle",
+      "footing-bundle-of",
+      "footing-bundle",
+      [("behind", #unavailable)],
+      ~callers=[#component],
+    ),
+    op("lease", "footing-lease", "footing-leased", [("held", #rejected)], ~callers=[#component]),
   ],
 }

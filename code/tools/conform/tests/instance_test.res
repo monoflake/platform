@@ -33,6 +33,11 @@ test("a machine whose binding or ports the run would take is refused", () => {
       `binding=1\nsubvolumes=0\nlistening=127.0.0.1:${Int.toString(Instance.port)}\n`,
     )->Result.isError,
   )
+  ok(
+    Instance.readFacts(
+      `binding=1\nsubvolumes=0\nlistening=0.0.0.0:${Int.toString(Instance.entry)}\n`,
+    )->Result.isError,
+  )
 })
 
 test("networks overlap where one holds an address of the other", () => {
@@ -68,8 +73,9 @@ test("the shell starts the driver on the bindings, its own port, bridge and subn
   let shell = Instance.started(~count=2, ~subnet="10.250.0.0/24")
   ok(shell->String.includes(`--unit=${Instance.unit}`))
   ok(shell->String.includes(`--listen=127.0.0.1:${Int.toString(Instance.port)}`))
-  // The entry is a unit of its own, so the second driver is given none, RFC rmll5.
-  ok(!(shell->String.includes("--entry")))
+  // The entry is a unit of its own, so the second driver is given a port of its own to name.
+  ok(shell->String.includes(`--entry=${Int.toString(Instance.entry)}`))
+  ok(Instance.entry != 36879 && Instance.entry != 37483 && Instance.entry != Instance.port)
   ok(shell->String.includes(`--bridge=${Instance.bridge} --subnet=10.250.0.0/24`))
   ok(shell->String.includes(`-le ${Int.toString(Instance.first + 1)}`))
 })

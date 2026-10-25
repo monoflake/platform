@@ -27,6 +27,7 @@ let own: array<held> = [
   {half: #organization, kind: "extension", writes: ["control(organization)"], from: "v7v3w"},
   /* A share of what an extension holds, an item of its driver's list, vr5lw. */
   {half: #organization, kind: "capacity", writes: ["control(organization)"], from: "vr5lw"},
+  {half: #organization, kind: "component", writes: ["control(organization)"], from: "nrs5v"},
   {half: #platform, kind: "account", writes: ["authority"], from: "v7v3w", elsewhere: true},
   {half: #platform, kind: "organization", writes: ["authority"], from: "v7v3w"},
   /*

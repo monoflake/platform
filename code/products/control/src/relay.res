@@ -15,6 +15,17 @@ let routed = path =>
 
 let objected = path => /^\/object\/[a-z_]+$/->RegExp.test(path)
 
+/** What answers for a binding reached by its origin, whose data never passes here, 8j7b0. */
+let beyondHost = message =>
+  Web.answered(
+    ~status=400,
+    ~contentType="application/json",
+    Envelope.Contracts.Answer.toJson(
+      Error({failure: Rejected, reason: "beyond_host", message}),
+      _ => JSON.Null,
+    )->JSON.stringify,
+  )
+
 /** The host's answer, or why it gave none. */
 let reached = async (reach: Reach.t, made, ~binding) =>
   switch await reach.fetch(made) {
@@ -31,6 +42,7 @@ let passed = async (state: State.t, reach: Reach.t, ~caller, ~ports, request, re
   switch caller {
   | Access.Organization(organization) =>
     switch await state.addressedAt(relayed.address) {
+    | Some({origin: Some(_)}) => beyondHost("a binding reached by its origin is relayed by no one")
     | Some({id, relayed: true, organization: owner})
       if owner == organization && ports->Array.includes(relayed.port) =>
       let made = Web.resent(
@@ -66,6 +78,8 @@ let stored = async (state: State.t, reach: Reach.t, ~caller, ~port, ~wait, reque
   switch caller {
   | Access.Organization(organization) =>
     switch await state.storage(organization) {
+    | Some({origin: Some(_)}) =>
+      beyondHost("the organization's objects are on a binding reached by its origin")
     | Some({id, secret, address: Some(address)}) =>
       let host: Driver.host = {reach, address, port, token: Access.tokenText(id, secret)}
       let body = await request->Web.bytesOf

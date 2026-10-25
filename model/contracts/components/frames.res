@@ -61,8 +61,9 @@ let interface_: interface_ = {
       "copies-append",
       "copies-held",
       [("stale", #rejected), ("gap", #rejected), ("too_large", #rejected)],
+      ~callers=[#component],
     ),
-    op("take", "copies-take", "copies-held", [("stale", #rejected)]),
-    op("fetch", "copies-fetch", "copies-fetched", [("gap", #rejected)]),
+    op("take", "copies-take", "copies-held", [("stale", #rejected)], ~callers=[#component]),
+    op("fetch", "copies-fetch", "copies-fetched", [("gap", #rejected)], ~callers=[#component]),
   ],
 }

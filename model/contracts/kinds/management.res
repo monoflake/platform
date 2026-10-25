@@ -34,16 +34,81 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
+  // A kind a binding offers, chosen as its driver is installed, vbg0u.
+  {
+    name: "management-kind",
+    def: Enum({
+      choices: [
+        {name: "function", code: 1},
+        {name: "instance", code: 2},
+        {name: "container", code: 3},
+        {name: "object", code: 4},
+        {name: "volume", code: 5},
+        {name: "database", code: 6},
+      ],
+      ordered: false,
+    }),
+    from: "vbg0u",
+  },
+  // A kind whose resource an organization's admin may list as the driver's own, vbg0u.
+  {
+    name: "management-adoptable",
+    def: Enum({
+      choices: [
+        {name: "function", code: 1},
+        {name: "object", code: 2},
+        {name: "database", code: 3},
+      ],
+      ordered: false,
+    }),
+    from: "vbg0u",
+  },
+  // What an adopted resource stands for, a deployment as the deployments interface names it, or a
+  // management item by its id.
+  {
+    name: "management-adopted-for",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "deployment", code: 1, fields: [field("runs", 1, Type("deployment-runs"))]},
+        {name: "item", code: 2, fields: [field("id", 1, Id("capacity"))]},
+      ],
+    }),
+    from: "vbg0u",
+  },
+  // A resource on the bound host by its exact name, never a pattern, which the driver manages as
+  // its own and only ever updates, never deletes, nrs5v and vbg0u.
+  {
+    name: "management-adopted",
+    def: Record([
+      field("kind", 1, Type("management-adoptable")),
+      field("name", 2, Prim(#string)),
+      field("for", 3, Type("management-adopted-for")),
+    ]),
+    from: "vbg0u",
+  },
+  // What a person should act on, `delete_by_hand` a listed resource released, named, kept until it
+  // no longer exists, vbg0u.
+  {
+    name: "management-warning",
+    def: Record([
+      field("reason", 1, Prim(#string)),
+      field("message", 2, Prim(#string)),
+      field("name", 3, Prim(#string)),
+    ]),
+    from: "vbg0u",
+  },
   // `tokens`, where given, are the binding's tokens still in force by their BLAKE3, and the driver
-  // forgets every other it holds, 3d3nt.
+  // forgets every other it holds, 3d3nt. `adopted` is the exception list, vbg0u.
   {
     name: "management-apply",
     def: Record([
       field("generation", 1, Prim(#uint53)),
       field("items", 2, List(Type("management-item"))),
       optional("tokens", 3, List(Prim(#hash))),
+      optional("adopted", 4, List(Type("management-adopted"))),
     ]),
-    from: "vr5lw, 3d3nt",
+    from: "vr5lw, 3d3nt, vbg0u",
   },
   // The generation the driver holds, the one sent or a newer it took before.
   {name: "management-held", def: Record([field("generation", 1, Prim(#uint53))]), from: "vr5lw"},
@@ -87,7 +152,7 @@ let types: array<declared> = [
     from: "vr5lw",
   },
   // What the driver holds and the git revision it was built from, absent where it was given none,
-  // wnqvu. Use reported is open [C18].
+  // wnqvu. Use reported is open [C18]. `kinds` absent is every kind the model gives that driver.
   {
     name: "management-described",
     def: Record([
@@ -96,8 +161,11 @@ let types: array<declared> = [
       field("grace", 3, Prim(#uint32)),
       field("items", 4, List(Type("management-holding"))),
       optional("revision", 5, Prim(#string)),
+      optional("kinds", 6, List(Type("management-kind"))),
+      optional("adopted", 7, List(Type("management-adopted"))),
+      optional("warnings", 8, List(Type("management-warning"))),
     ]),
-    from: "vr5lw",
+    from: "vr5lw, vbg0u",
   },
   {name: "management-end", def: Record([field("id", 1, Id("capacity"))]), from: "vr5lw"},
   {name: "management-ended", def: Record([]), from: "vr5lw"},
@@ -108,7 +176,7 @@ let types: array<declared> = [
  */
 let interface_: interface_ = {
   name: "management",
-  version: 2,
+  version: 3,
   from: "vr5lw",
   operations: [
     op(
@@ -116,9 +184,22 @@ let interface_: interface_ = {
       "management-apply",
       "management-held",
       [("beyond_host", #rejected), ("invalid", #rejected)],
+      ~callers=[#organization],
     ),
-    op("set_policy", "management-policy", "management-held", [("invalid", #rejected)]),
-    op("describe", "management-describe", "management-described", []),
-    op("end", "management-end", "management-ended", [("still_asked", #rejected)]),
+    op(
+      "set_policy",
+      "management-policy",
+      "management-held",
+      [("invalid", #rejected)],
+      ~callers=[#organization],
+    ),
+    op("describe", "management-describe", "management-described", [], ~callers=[#organization]),
+    op(
+      "end",
+      "management-end",
+      "management-ended",
+      [("still_asked", #rejected)],
+      ~callers=[#organization],
+    ),
   ],
 }

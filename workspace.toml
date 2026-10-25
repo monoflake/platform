@@ -70,3 +70,7 @@ spelled = ["\"monoflake\""]
 [[names.data]]
 file = "model/graph/boundaries.res"
 spelled = ["monoflake-challenge"]
+
+[[names.data]]
+file = "model/contracts/kinds/deployments.res"
+spelled = ["MONOFLAKE_"]

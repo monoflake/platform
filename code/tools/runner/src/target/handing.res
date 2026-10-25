@@ -36,8 +36,8 @@ let answerOf = (answered: Run.answered) =>
 
 let target = (target: Run.target, ~post) => {
   let deployed = Dict.make()
-  let call = async (~interface, ~operation, ~input, ~form, ~as_) => {
-    let answered = await target.call(~interface, ~operation, ~input, ~form, ~as_)
+  let call = async (~interface, ~operation, ~input, ~form, ~as_, ~bearer) => {
+    let answered = await target.call(~interface, ~operation, ~input, ~form, ~as_, ~bearer)
     switch (interface, answered) {
     | ("deployments", Ok(Run.Answered(json))) =>
       running(json)->Option.forEach(((address, runs)) => deployed->Dict.set(address, runs))
@@ -57,6 +57,7 @@ let target = (target: Run.target, ~post) => {
             ~input=Contracts.DeploymentOf.toJson(of_),
             ~form,
             ~as_=None,
+            ~bearer=None,
           ) {
           | Ok(answered) =>
             switch answerOf(answered) {

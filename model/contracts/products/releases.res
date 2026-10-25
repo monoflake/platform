@@ -35,11 +35,11 @@ let types: array<declared> = [
 /** A host that does not answer is `unreachable`, and the caller retries, rxmd9. */
 let interface_: interface_ = {
   name: "releases",
-  version: 1,
+  version: 2,
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [
-    op("put", "release-put", "release-held", [("too_large", #rejected)]),
+    op("put", "release-put", "release-held", [("too_large", #rejected)], ~callers=[#operator]),
     op(
       "deploy",
       "release-deploy",
@@ -54,12 +54,14 @@ let interface_: interface_ = {
         ("unfetchable", #unavailable),
         ("unreachable", #unavailable),
       ],
+      ~callers=[#operator],
     ),
     op(
       "describe",
       "release-of",
       "deployment-described",
       [("not_found", #rejected), ("unreachable", #unavailable)],
+      ~callers=[#operator],
     ),
   ],
 }

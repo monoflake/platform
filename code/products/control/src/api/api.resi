@@ -13,6 +13,8 @@ type parts = {
   /** The control this one stands on, which gives its hosts' reaches, as an organization's does. */
   standing: option<Standing.t>,
   driverPort: int,
+  /** What a binding's driver at a public origin is called through, the global fetch. */
+  direct: Web.fetch,
   /** The control's origin as its hosts reach it, where a driver fetches an artifact from. */
   origin: string,
   /** What paces the asking while a host makes a container. */

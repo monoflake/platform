@@ -6,6 +6,7 @@ type binding = {
   secret: Uint8Array.t,
   tunnel: option<string>,
   address: option<string>,
+  origin: option<string>,
   relayed: bool,
 }
 
@@ -25,6 +26,7 @@ type t = {
   addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   addressed: (~binding: float, ~address: string) => promise<unit>,
+  originated: (~binding: float, ~origin: string) => promise<bool>,
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
   deploy: deployment => promise<unit>,
@@ -71,10 +73,11 @@ type bindingRow = {
   secret: string,
   tunnel: Nullable.t<string>,
   address: Nullable.t<string>,
+  origin: Nullable.t<string>,
   relayed: float,
 }
 
-let bindingColumns = "id, organization, secret, tunnel, address, relayed"
+let bindingColumns = "id, organization, secret, tunnel, address, origin, relayed"
 
 type releaseRow = {hash: string, form: string, size: float}
 type deploymentRow = {app: float, binding: float, release: string, capacity: float}
@@ -112,6 +115,7 @@ let ofDatabase = (database, ~sealing) => {
     secret: await secretOf(~kind="binding", ~id=row.id, row.secret),
     tunnel: row.tunnel->Nullable.toOption,
     address: row.address->Nullable.toOption,
+    origin: row.origin->Nullable.toOption,
     relayed: row.relayed != 0.,
   }
   let bindingAt = async (sql, values) =>
@@ -184,7 +188,8 @@ let ofDatabase = (database, ~sealing) => {
     storage: organization =>
       bindingAt(
         `SELECT ${bindingColumns} FROM binding
-        WHERE organization = ? AND relayed = 0 AND address IS NOT NULL ORDER BY id LIMIT 1`,
+        WHERE organization = ? AND relayed = 0 AND address IS NOT NULL AND origin IS NULL
+        ORDER BY id LIMIT 1`,
         [Number(organization)],
       ),
     addressedAt: address =>
@@ -193,6 +198,16 @@ let ofDatabase = (database, ~sealing) => {
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
     addressed: (~binding, ~address) =>
       run("UPDATE binding SET address = ? WHERE id = ?", [Text(address), Number(binding)]),
+    // Written only where no bind fixed its reach first, so one of two binds at once wins.
+    originated: async (~binding, ~origin) =>
+      switch await first(
+        "UPDATE binding SET origin = ? WHERE id = ? AND origin IS NULL AND address IS NULL
+        RETURNING id",
+        [Text(origin), Number(binding)],
+      ) {
+      | Some(_: idRow) => true
+      | None => false
+      },
     putRelease: release =>
       run(
         "INSERT INTO release (hash, form, size) VALUES (?, ?, ?) ON CONFLICT (hash) DO NOTHING",
@@ -254,6 +269,7 @@ let bindingJson = (b: binding, sealed) => {
   }
   b.tunnel->Option.forEach(t => o->Dict.set("tunnel", String(t)))
   b.address->Option.forEach(a => o->Dict.set("address", String(a)))
+  b.origin->Option.forEach(a => o->Dict.set("origin", String(a)))
   JSON.Object(o)
 }
 
@@ -320,6 +336,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
             secret,
             tunnel: json->text("tunnel"),
             address: json->text("address"),
+            origin: json->text("origin"),
             relayed: json->field("relayed")->Option.flatMap(JSON.Decode.bool)->Option.getOr(false),
           }: binding
         ),
@@ -399,18 +416,37 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
       serial(async () => {
         await sealable(sealing, ~kind="binding", secret)
         let id = next(await every("state/bindings/"))
-        await writeBinding({id, organization, secret, tunnel: None, address: None, relayed})
+        await writeBinding({
+          id,
+          organization,
+          secret,
+          tunnel: None,
+          address: None,
+          origin: None,
+          relayed,
+        })
         id
       }),
     binding,
     storage: async organization =>
       (await bindings())
-      ->Array.filter(b => b.organization == organization && !b.relayed && b.address != None)
+      ->Array.filter(b =>
+        b.organization == organization && !b.relayed && b.address != None && b.origin == None
+      )
       ->Array.toSorted((a, b) => a.id -. b.id)
       ->Array.get(0),
     addressedAt: async address => (await bindings())->Array.find(b => b.address == Some(address)),
     tunneled: (~binding, ~tunnel) => changed(binding, b => {...b, tunnel: Some(tunnel)}),
     addressed: (~binding, ~address) => changed(binding, b => {...b, address: Some(address)}),
+    originated: (~binding as id, ~origin) =>
+      serial(async () =>
+        switch await binding(id) {
+        | Some(b) if b.origin == None && b.address == None =>
+          await writeBinding({...b, origin: Some(origin)})
+          true
+        | Some(_) | None => false
+        }
+      ),
     putRelease: async release => {
       let name = `state/releases/${release.hash}`
       if (await readJson(name))->Option.isNone {

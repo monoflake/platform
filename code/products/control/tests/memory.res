@@ -21,20 +21,32 @@ let state = (): State.t => {
       organizations->Dict.valuesToArray->Array.find(o => o.id == id)->Option.map(o => o.secret),
     openBinding: async (~organization, ~secret, ~relayed) => {
       let id = bindings->Dict.keysToArray->Array.length->Int.toFloat +. 1.
-      bindings->Dict.set(key(id), {id, organization, secret, tunnel: None, address: None, relayed})
+      bindings->Dict.set(
+        key(id),
+        {id, organization, secret, tunnel: None, address: None, origin: None, relayed},
+      )
       id
     },
     binding: async id => bindings->Dict.get(key(id)),
     storage: async organization =>
       bindings
       ->Dict.valuesToArray
-      ->Array.filter(b => b.organization == organization && !b.relayed && b.address != None)
+      ->Array.filter(b =>
+        b.organization == organization && !b.relayed && b.address != None && b.origin == None
+      )
       ->Array.toSorted((a, b) => a.id -. b.id)
       ->Array.get(0),
     addressedAt: async address =>
       bindings->Dict.valuesToArray->Array.find(b => b.address == Some(address)),
     tunneled: async (~binding, ~tunnel) => change(binding, b => {...b, tunnel: Some(tunnel)}),
     addressed: async (~binding, ~address) => change(binding, b => {...b, address: Some(address)}),
+    originated: async (~binding, ~origin) =>
+      switch bindings->Dict.get(key(binding)) {
+      | Some(b) if b.origin == None && b.address == None =>
+        bindings->Dict.set(key(binding), {...b, origin: Some(origin)})
+        true
+      | Some(_) | None => false
+      },
     putRelease: async release =>
       if releases->Dict.get(release.hash) == None {
         releases->Dict.set(release.hash, release)

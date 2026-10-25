@@ -193,7 +193,7 @@ let types: array<declared> = [
  */
 let interface_: interface_ = {
   name: "configuration",
-  version: 1,
+  version: 2,
   from: "v7v3w, vr5lw",
   operations: [
     op(
@@ -210,17 +210,31 @@ let interface_: interface_ = {
         ("calls_unmatched", #rejected),
         ("call_cycle", #rejected),
       ],
+      ~callers=[#account],
     ),
-    op("read", "record-read", "record-found", [("no_kind", #rejected), ("not_found", #rejected)]),
-    op("list", "record-list", "record-listed", [("no_kind", #rejected)]),
-    op("generations", "generation-list", "generation-listed", []),
-    op("generation", "generation-of", "generation-status", [("not_found", #rejected)]),
-    op("warnings", "warning-list", "warning-listed", []),
+    op(
+      "read",
+      "record-read",
+      "record-found",
+      [("no_kind", #rejected), ("not_found", #rejected)],
+      ~callers=[#account],
+    ),
+    op("list", "record-list", "record-listed", [("no_kind", #rejected)], ~callers=[#account]),
+    op("generations", "generation-list", "generation-listed", [], ~callers=[#account]),
+    op(
+      "generation",
+      "generation-of",
+      "generation-status",
+      [("not_found", #rejected)],
+      ~callers=[#account],
+    ),
+    op("warnings", "warning-list", "warning-listed", [], ~callers=[#account]),
     op(
       "dismiss",
       "warning-dismiss",
       "warning-dismissed",
       [("not_found", #rejected), ("not_dismissible", #rejected)],
+      ~callers=[#account],
     ),
   ],
 }
