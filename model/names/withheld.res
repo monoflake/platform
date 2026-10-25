@@ -5,8 +5,6 @@
 let names = [
   "control(platform)",
   "platform's control",
-  "footing(platform)",
-  "platform's footing",
   "anchor",
   "console",
   "foundation platform",

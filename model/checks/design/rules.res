@@ -94,11 +94,13 @@ let check = (g: graph): checked => {
     )
   })
   // A footing is the platform's or an organization's, and each half stands on its own alone, by any
-  // edge, RFC vr5lw.
+  // edge, RFC vr5lw; a footing is a node answering `footing` or a ground with a half, 8yl4b.
+  let footing = (t: Components.component) =>
+    t.kind == Some(#ground) || t.answers->Option.getOr([])->Array.includes("footing")
   nodes->Array.forEach(((name, p)) =>
     p.edges->Array.forEach(edge =>
       switch componentIn(g, edge.to_) {
-      | Some(t) if t.kind == Some(#ground) && t.half != None && t.half != p.half =>
+      | Some(t) if footing(t) && t.half != None && t.half != p.half =>
         rules->Array.push(
           foundAt([name], `stands on the other half's footing: ${lineIn(g, name, edge)}`),
         )

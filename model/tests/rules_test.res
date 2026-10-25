@@ -26,3 +26,27 @@ test("a cycle is found once however many hard edges join its nodes, each hop's e
   )
   deepEqual(found->Array.map(v => v.at), [["a", "b", "a"]])
 })
+
+test("a component of one half reaching the other half's footing by any edge is reported", () => {
+  let footing = (half): Components.component => {
+    layer: -3,
+    half,
+    answers: ["footing"],
+    edges: [],
+    uses: [],
+  }
+  let g = over(
+    dict{
+      "footing(organization)": footing(#organization),
+      "footing(platform)": footing(#platform),
+      "mine": {...node(-2, [to("footing(organization)", #serve)]), half: #organization},
+      "theirs": {...node(-2, [to("footing(platform)", #deploy)]), half: #organization},
+      "control": {...node(-2, [to("footing(platform)", #serve)]), half: #platform},
+    },
+  )
+  let found =
+    Rules.check(g).violations->Array.filter(v =>
+      v.text->String.startsWith("stands on the other half's footing")
+    )
+  deepEqual(found->Array.map(v => v.at), [["theirs"]])
+})

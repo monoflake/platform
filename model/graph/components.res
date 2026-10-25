@@ -86,6 +86,30 @@ let key = (~to_="root", ()) =>
  * The organization's control, its footing and the roles this half needs of the platform half,
  * v7v3w, vr5lw and 8lkuv.
  */
+/**
+ * The footing, written here and held to samples, alone on the vendor's database, one code with an
+ * instance in each half, RFC 8yl4b.
+ */
+let footing = (half: half): component => {
+  language: #rescript,
+  layer: -3,
+  half,
+  // The footing's interface reads, writes, bundles and leases, n8jq5.
+  answers: ["footing", "records", "bundle"],
+  edges: [
+    replaced,
+    e(
+      "database(vendor)",
+      #serve,
+      hard,
+      "its rows, on the platform's own ground, the footing alone reaching it, 8yl4b",
+      ~contract=["database"],
+    ),
+    key(),
+  ],
+  uses: ["capability*", "serve*", "envelope*", "codec*"],
+}
+
 let own: dict<component> = dict{
   "app": {
     layer: 1,
@@ -580,26 +604,9 @@ let own: dict<component> = dict{
     edges: [],
     uses: [],
   },
-  // The footing, written here and held to samples, alone on the vendor's database, RFC 8yl4b.
-  "footing(organization)": {
-    language: #rescript,
-    layer: -3,
-    half: #organization,
-    // The footing's interface reads, writes, bundles and leases, n8jq5.
-    answers: ["footing", "records", "bundle"],
-    edges: [
-      replaced,
-      e(
-        "database(vendor)",
-        #serve,
-        hard,
-        "its rows, on the platform's own ground, the footing alone reaching it, 8yl4b",
-        ~contract=["database"],
-      ),
-      key(),
-    ],
-    uses: ["capability*", "serve*", "envelope*", "codec*"],
-  },
+  // One footing written here, an instance for each half, its own kinds alone, 8yl4b.
+  "footing(organization)": footing(#organization),
+  "footing(platform)": footing(#platform),
   // The vendor's database, SQLite's dialect, atomic batches, at most 10 GB, docs/scope.md.
   "database(vendor)": {layer: vendor, kind: #ground, answers: ["database"], edges: [], uses: []},
   "vendor": {layer: vendor, kind: #ground, edges: [], uses: []},
