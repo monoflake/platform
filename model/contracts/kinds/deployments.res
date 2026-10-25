@@ -49,6 +49,21 @@ let types: array<declared> = [
     }),
     from: "vr5lw",
   },
+  // What the platform hands a deployment, each value typed as it is, bound under its reserved
+  // `MONOFLAKE_` name, never one of the deployment's own secrets, y2xd3.
+  {
+    name: "deployment-handed",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "root", code: 1, fields: [field("value", 1, Prim(#bytes))]},
+        {name: "key", code: 2, fields: [field("value", 1, Prim(#secret))]},
+        {name: "certificate", code: 3, fields: [field("value", 1, Prim(#bytes))]},
+        {name: "signing_key", code: 4, fields: [field("value", 1, Prim(#secret))]},
+      ],
+    }),
+    from: "y2xd3",
+  },
   // The machine an image is built for, as OCI names it, ge55b.
   {
     name: "architecture",
@@ -82,6 +97,8 @@ let types: array<declared> = [
       field("network", 9, List(Type("deployment-network"))),
       optional("into", 10, Id("capacity")),
       optional("port", 11, Prim(#uint32)),
+      optional("handed", 12, List(Type("deployment-handed"))),
+      optional("reaching", 13, List(Type("deployment-runs"))),
     ]),
     from: "vr5lw, v7v3w, 49qyg",
   },
@@ -143,6 +160,7 @@ let interface_: interface_ = {
         ("too_large", #rejected),
         ("hash_mismatch", #rejected),
         ("unfetchable", #unavailable),
+        ("invalid", #rejected),
       ],
     ),
     op("stop", "deployment-of", "deployment-described", [("not_found", #rejected)]),

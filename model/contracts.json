@@ -3509,6 +3509,65 @@
 				]
 			}
 		},
+		"deployment-handed": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "root",
+						"code": 1,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "bytes"
+								}
+							}
+						]
+					},
+					{
+						"name": "key",
+						"code": 2,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "secret"
+								}
+							}
+						]
+					},
+					{
+						"name": "certificate",
+						"code": 3,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "bytes"
+								}
+							}
+						]
+					},
+					{
+						"name": "signing_key",
+						"code": 4,
+						"fields": [
+							{
+								"name": "value",
+								"key": 1,
+								"shape": {
+									"prim": "secret"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
 		"architecture": {
 			"enum": [
 				{
@@ -3633,6 +3692,26 @@
 					"key": 11,
 					"shape": {
 						"prim": "uint32"
+					},
+					"optional": true
+				},
+				{
+					"name": "handed",
+					"key": 12,
+					"shape": {
+						"list": {
+							"type": "deployment-handed"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "reaching",
+					"key": 13,
+					"shape": {
+						"list": {
+							"type": "deployment-runs"
+						}
 					},
 					"optional": true
 				}
@@ -7429,6 +7508,10 @@
 						{
 							"name": "unfetchable",
 							"failure": "unavailable"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
 						}
 					]
 				},

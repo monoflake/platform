@@ -129,6 +129,27 @@
 			]
 		},
 		{
+			"description": "a value the platform hands a deployment twice is refused",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": { "name": "app", "id": 1 },
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"],
+						"handed": [
+							{ "name": "root", "value": "AQID" },
+							{ "name": "root", "value": "BAUG" }
+						]
+					},
+					"expect": { "failure": "rejected", "reason": "invalid" }
+				}
+			]
+		},
+		{
 			"description": "code past the artifact its driver takes is refused",
 			"steps": [
 				{
