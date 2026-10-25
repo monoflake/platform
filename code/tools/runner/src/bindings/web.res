@@ -48,3 +48,14 @@ let random = length => fillRandom(Uint8Array.fromLength(length))
 
 /** Bytes written into another array from an offset. */
 @send external copyInto: (Uint8Array.t, Uint8Array.t, int) => unit = "set"
+
+type url
+@new external makeUrl: string => url = "URL"
+@get external hostname: url => string = "hostname"
+
+/** A URL's host as the WHATWG parser leaves it, or none where it refuses the text. */
+let hostOf = text =>
+  switch makeUrl(text) {
+  | url => Some(url->hostname)
+  | exception JsExn(_) => None
+  }

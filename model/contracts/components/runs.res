@@ -64,6 +64,7 @@ let interface_: interface_ = {
       "run",
       "ran",
       [("not_found", #rejected), ("no_export", #rejected), ("no_sandbox", #unavailable)],
+      ~callers=[#component],
     ),
   ],
 }

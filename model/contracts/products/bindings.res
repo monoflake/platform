@@ -16,27 +16,67 @@ let types: array<declared> = [
     def: Record([field("binding", 1, Id("capacity")), field("secret", 2, Prim(#secret))]),
     from: "3d3nt, rxmd9",
   },
-  {name: "binding-bind", def: Record([]), from: "rxmd9"},
-  // The private address the control reaches the host at, and the tunnel's token where the control
-  // makes the host a tunnel, its text's UTF-8.
+  // What the host is reached by, a tunnel the control makes or an origin it calls back, 8j7b0. An
+  // origin is `https` on a DNS name and the default port, with nothing after its host.
+  {
+    name: "binding-reach",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "tunnel", code: 1, fields: []},
+        {name: "origin", code: 2, fields: [field("origin", 1, Prim(#string))]},
+      ],
+    }),
+    from: "rxmd9, 8j7b0",
+  },
+  {
+    name: "binding-bind",
+    def: Record([field("reach", 1, Type("binding-reach"))]),
+    from: "rxmd9, 8j7b0",
+  },
+  // The private address the control reaches a tunneled host at and the tunnel's token where it
+  // makes one, its text's UTF-8, or the origin proven by its call back.
+  {
+    name: "binding-reached",
+    def: Union({
+      tag: "name",
+      cases: [
+        {
+          name: "tunnel",
+          code: 1,
+          fields: [field("address", 1, Prim(#string)), optional("tunnel", 2, Prim(#secret))],
+        },
+        {name: "origin", code: 2, fields: [field("origin", 1, Prim(#string))]},
+      ],
+    }),
+    from: "rxmd9, 8j7b0",
+  },
   {
     name: "binding-bound",
     def: Record([
       field("binding", 1, Id("capacity")),
-      field("address", 2, Prim(#string)),
-      optional("tunnel", 3, Prim(#secret)),
+      field("reached", 2, Type("binding-reached")),
     ]),
-    from: "rxmd9",
+    from: "rxmd9, 8j7b0",
   },
 ]
 
-/** Binding again answers the same address and tunnel, so a host restarted binds as it first did. */
+/**
+ * Binding again answers the same address and tunnel, so a host restarted binds as it first did; an
+ * origin is called back before it is kept, `not_proven` where no driver of the binding answers.
+ */
 let interface_: interface_ = {
   name: "bindings",
-  version: 1,
-  from: "rxmd9",
+  version: 2,
+  from: "rxmd9, 8j7b0",
   operations: [
-    op("open", "binding-open", "binding-opened", [("not_found", #rejected)]),
-    op("bind", "binding-bind", "binding-bound", [("unreachable", #unavailable)]),
+    op("open", "binding-open", "binding-opened", [("not_found", #rejected)], ~callers=[#operator]),
+    op(
+      "bind",
+      "binding-bind",
+      "binding-bound",
+      [("unreachable", #unavailable), ("not_proven", #rejected), ("invalid", #rejected)],
+      ~callers=[#host],
+    ),
   ],
 }

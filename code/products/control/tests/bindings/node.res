@@ -124,3 +124,6 @@ type bundle = {
 let bundle: unit => promise<
   bundle,
 > = %raw(`() => import("../../../../tools/deploy/src/bundle.res.mjs")`)
+
+/** How a request follows a redirect, as fetch reads it. */
+@get external redirectOf: Web.request => string = "redirect"

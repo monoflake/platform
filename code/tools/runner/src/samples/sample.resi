@@ -12,7 +12,10 @@ type expect =
 /** A send, what is deployed called at its address by an export, and for an instance a key. */
 type send = {to: JSON.t, export: string, key: option<string>, body: option<JSON.t>}
 
-/** A step, in one of its four forms; `within` in milliseconds, `as_` a component's name. */
+/**
+ * A step, in one of its four forms; `within` in milliseconds, `as_` a component's name or
+ * `operator`, `bearer` the name of a capture whose token the call carries, RFC 8j7b0.
+ */
 type step =
   | Call({
       operation: string,
@@ -20,6 +23,7 @@ type step =
       expect: expect,
       within: option<int>,
       as_: option<string>,
+      bearer: option<string>,
       fixture: option<string>,
     })
   | Send({send: send, expect: expect, within: option<int>})
@@ -27,9 +31,17 @@ type step =
   | Wait(int)
 
 /**
- * A case, its description, what it is given, the copies a database case is held on and its steps.
+ * A case, its description, what it is given, the copies a database case is held on, whether it
+ * needs the network, whether it binds by a tunnel, and its steps.
  */
-type case = {description: string, given: option<JSON.t>, copies: option<int>, steps: array<step>}
+type case = {
+  description: string,
+  given: option<JSON.t>,
+  copies: option<int>,
+  network: bool,
+  tunnel: bool,
+  steps: array<step>,
+}
 
 /** A behavior file, its interface and its cases. */
 type file = {interface: string, cases: array<case>}

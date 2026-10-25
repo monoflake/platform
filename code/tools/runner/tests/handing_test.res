@@ -10,7 +10,7 @@ let runs = `{"name": "app", "id": 1}`
 let deployment = () => {
   let stopped = ref(false)
   let forms = []
-  let call = async (~interface as _, ~operation, ~input as _, ~form, ~as_ as _) => {
+  let call = async (~interface as _, ~operation, ~input as _, ~form, ~as_ as _, ~bearer as _) => {
     if operation == "describe" {
       forms->Array.push(form)
     }
@@ -35,6 +35,9 @@ let deployment = () => {
     signed: (_, _) => Error("none"),
     now: () => 0.,
     wait: async _ => (),
+    network: false,
+    tunnel: false,
+    captured: dict{},
   }
   let posted = []
   let post = async (url, request: Host.Handed.request): result<Host.Handed.response, _> => {
@@ -51,6 +54,7 @@ let describe = (target: Run.target) =>
     ~input=JSON.parseOrThrow(`{"runs": ${runs}}`),
     ~form=Cbor,
     ~as_=None,
+    ~bearer=None,
   )
 
 let body = Some(JSON.parseOrThrow(`{"text": "hello"}`))

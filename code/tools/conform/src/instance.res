@@ -1,6 +1,8 @@
 let unit = "conform"
 let directory = "/run/conform"
 let port = 47483
+// The live entry's 36879 moved as far as the live driver's 37483 is moved to `port`.
+let entry = 46879
 let first = 1000
 let bridge = "conform0"
 
@@ -88,6 +90,8 @@ let readFacts = text => {
     Error(`the live binding ${int(binding)} is among those from ${int(first)} this run takes`)
   | (_, Some(_)) if listening->Array.includes(port) =>
     Error(`something listens on port ${int(port)} already`)
+  | (_, Some(_)) if listening->Array.includes(entry) =>
+    Error(`something listens on port ${int(entry)}, the second driver's entry, already`)
   | (Some(binding), Some(subvolumes)) =>
     Ok({
       binding,
@@ -220,7 +224,8 @@ while [ "$i" -le ${int(last)} ]; do
 done
 systemd-run --quiet --collect --unit=${unit} --setenv=PATH="$p" "$bin" $kept "$@" \\
   --listen=127.0.0.1:${int(port)} \\
-  --state="$d/state" --secrets="$d/secrets" --bridge=${bridge} --subnet=${subnet}
+  --state="$d/state" --secrets="$d/secrets" --bridge=${bridge} --subnet=${subnet} \\
+  --entry=${int(entry)}
 n=0
 until [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:${int(
       port,

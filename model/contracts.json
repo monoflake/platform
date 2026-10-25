@@ -5416,8 +5416,82 @@
 				}
 			]
 		},
+		"binding-reach": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "tunnel",
+						"code": 1,
+						"fields": []
+					},
+					{
+						"name": "origin",
+						"code": 2,
+						"fields": [
+							{
+								"name": "origin",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
 		"binding-bind": {
-			"record": []
+			"record": [
+				{
+					"name": "reach",
+					"key": 1,
+					"shape": {
+						"type": "binding-reach"
+					}
+				}
+			]
+		},
+		"binding-reached": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "tunnel",
+						"code": 1,
+						"fields": [
+							{
+								"name": "address",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							},
+							{
+								"name": "tunnel",
+								"key": 2,
+								"shape": {
+									"prim": "secret"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "origin",
+						"code": 2,
+						"fields": [
+							{
+								"name": "origin",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					}
+				]
+			}
 		},
 		"binding-bound": {
 			"record": [
@@ -5429,19 +5503,11 @@
 					}
 				},
 				{
-					"name": "address",
+					"name": "reached",
 					"key": 2,
 					"shape": {
-						"prim": "string"
+						"type": "binding-reached"
 					}
-				},
-				{
-					"name": "tunnel",
-					"key": 3,
-					"shape": {
-						"prim": "secret"
-					},
-					"optional": true
 				}
 			]
 		},
@@ -6880,6 +6946,7 @@
 		"not_found": "Nothing of that name or id exists",
 		"not_granted": "The grants do not give what is asked",
 		"not_permitted": "The space does not permit what is asked",
+		"not_proven": "The origin called back is not the binding's driver",
 		"not_retiring": "The key named is not being retired",
 		"overloaded": "The implementation is busy for a moment; try again",
 		"quota_exceeded": "The write would go past the quota",
@@ -6989,7 +7056,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "read",
@@ -7000,25 +7068,29 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "describe",
 					"input": "object-name",
 					"output": "object-described",
-					"reasons": []
+					"reasons": [],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "delete",
 					"input": "object-name",
 					"output": "object-deleted",
-					"reasons": []
+					"reasons": [],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "list",
 					"input": "object-list",
 					"output": "object-listed",
-					"reasons": []
+					"reasons": [],
+					"callers": ["organization", "component"]
 				}
 			]
 		},
@@ -7056,7 +7128,8 @@
 							"name": "read_only",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "rewind",
@@ -7067,7 +7140,8 @@
 							"name": "beyond_window",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				}
 			]
 		},
@@ -7089,7 +7163,8 @@
 							"name": "invalid",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization"]
 				},
 				{
 					"name": "set_policy",
@@ -7100,13 +7175,15 @@
 							"name": "invalid",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization"]
 				},
 				{
 					"name": "describe",
 					"input": "management-describe",
 					"output": "management-described",
-					"reasons": []
+					"reasons": [],
+					"callers": ["organization"]
 				},
 				{
 					"name": "end",
@@ -7117,7 +7194,8 @@
 							"name": "still_asked",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization"]
 				}
 			]
 		},
@@ -7147,7 +7225,8 @@
 							"name": "unfetchable",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "stop",
@@ -7158,7 +7237,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "resume",
@@ -7169,7 +7249,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "describe",
@@ -7180,7 +7261,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "delete",
@@ -7191,7 +7273,8 @@
 							"name": "still_running",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				}
 			]
 		},
@@ -7232,7 +7315,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_upload_begin",
@@ -7255,7 +7339,8 @@
 							"name": "quota_exceeded",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_upload_append",
@@ -7282,7 +7367,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_upload_describe",
@@ -7293,7 +7379,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_upload_finish",
@@ -7316,13 +7403,15 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_upload_abort",
 					"input": "file-upload-name",
 					"output": "file-upload-aborted",
-					"reasons": []
+					"reasons": [],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_read",
@@ -7341,7 +7430,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_describe",
@@ -7356,7 +7446,8 @@
 							"name": "wrong_type",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_delete",
@@ -7375,7 +7466,8 @@
 							"name": "expectation_failed",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "file_list",
@@ -7390,7 +7482,8 @@
 							"name": "wrong_type",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "object_write",
@@ -7421,7 +7514,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "object_read",
@@ -7440,7 +7534,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "object_describe",
@@ -7455,7 +7550,8 @@
 							"name": "wrong_type",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "object_delete",
@@ -7470,7 +7566,8 @@
 							"name": "wrong_type",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "object_list",
@@ -7485,7 +7582,8 @@
 							"name": "wrong_type",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				},
 				{
 					"name": "publish",
@@ -7508,7 +7606,8 @@
 							"name": "quota_exceeded",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["capability"]
 				}
 			]
 		},
@@ -7554,7 +7653,8 @@
 							"name": "call_cycle",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["account"]
 				},
 				{
 					"name": "read",
@@ -7569,7 +7669,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["account"]
 				},
 				{
 					"name": "list",
@@ -7580,13 +7681,15 @@
 							"name": "no_kind",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["account"]
 				},
 				{
 					"name": "generations",
 					"input": "generation-list",
 					"output": "generation-listed",
-					"reasons": []
+					"reasons": [],
+					"callers": ["account"]
 				},
 				{
 					"name": "generation",
@@ -7597,13 +7700,15 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["account"]
 				},
 				{
 					"name": "warnings",
 					"input": "warning-list",
 					"output": "warning-listed",
-					"reasons": []
+					"reasons": [],
+					"callers": ["account"]
 				},
 				{
 					"name": "dismiss",
@@ -7618,7 +7723,8 @@
 							"name": "not_dismissible",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["account"]
 				}
 			]
 		},
@@ -7636,12 +7742,13 @@
 							"name": "invalid",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["operator"]
 				}
 			]
 		},
 		"bindings": {
-			"version": 1,
+			"version": 2,
 			"bounds": {},
 			"declared": [],
 			"operations": [
@@ -7654,7 +7761,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["operator"]
 				},
 				{
 					"name": "bind",
@@ -7664,8 +7772,17 @@
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
+						},
+						{
+							"name": "not_proven",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["host"]
 				}
 			]
 		},
@@ -7685,7 +7802,8 @@
 							"name": "too_large",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["operator"]
 				},
 				{
 					"name": "deploy",
@@ -7724,7 +7842,8 @@
 							"name": "unreachable",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["operator"]
 				},
 				{
 					"name": "describe",
@@ -7739,7 +7858,8 @@
 							"name": "unreachable",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["operator"]
 				}
 			]
 		},
@@ -7757,7 +7877,8 @@
 							"name": "unreachable",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["organization"]
 				}
 			]
 		},
@@ -7785,7 +7906,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "upload_begin",
@@ -7796,7 +7918,8 @@
 							"name": "unplaceable",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "upload_append",
@@ -7819,7 +7942,8 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "upload_describe",
@@ -7830,7 +7954,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "upload_finish",
@@ -7849,13 +7974,15 @@
 							"name": "storage_full",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "upload_abort",
 					"input": "blob-upload-name",
 					"output": "blob-upload-aborted",
-					"reasons": []
+					"reasons": [],
+					"callers": ["component"]
 				},
 				{
 					"name": "get",
@@ -7866,13 +7993,15 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "describe",
 					"input": "blob-name",
 					"output": "blob-described",
-					"reasons": []
+					"reasons": [],
+					"callers": ["component"]
 				},
 				{
 					"name": "place",
@@ -7887,19 +8016,22 @@
 							"name": "unplaceable",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "delete",
 					"input": "blob-name",
 					"output": "blob-deleted",
-					"reasons": []
+					"reasons": [],
+					"callers": ["component"]
 				},
 				{
 					"name": "list",
 					"input": "blob-list",
 					"output": "blob-listed",
-					"reasons": []
+					"reasons": [],
+					"callers": ["component"]
 				},
 				{
 					"name": "rekey",
@@ -7910,7 +8042,8 @@
 							"name": "not_retiring",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "task",
@@ -7921,7 +8054,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		},
@@ -7943,7 +8077,8 @@
 							"name": "suspended",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "for_space",
@@ -7958,7 +8093,8 @@
 							"name": "suspended",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		},
@@ -7984,7 +8120,8 @@
 							"name": "no_sandbox",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		},
@@ -8012,7 +8149,8 @@
 							"name": "too_large",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "take",
@@ -8023,7 +8161,8 @@
 							"name": "stale",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "fetch",
@@ -8034,7 +8173,8 @@
 							"name": "gap",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		},
@@ -8052,7 +8192,8 @@
 							"name": "no_kind",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "write",
@@ -8071,7 +8212,8 @@
 							"name": "too_large",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "bundle",
@@ -8082,7 +8224,8 @@
 							"name": "behind",
 							"failure": "unavailable"
 						}
-					]
+					],
+					"callers": ["component"]
 				},
 				{
 					"name": "lease",
@@ -8093,7 +8236,8 @@
 							"name": "held",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		},
@@ -8111,7 +8255,8 @@
 							"name": "ahead",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization", "component"]
 				},
 				{
 					"name": "certify",
@@ -8126,7 +8271,8 @@
 							"name": "suspended",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["organization"]
 				}
 			]
 		},
@@ -8139,7 +8285,8 @@
 					"name": "notice",
 					"input": "notice",
 					"output": "noticed",
-					"reasons": []
+					"reasons": [],
+					"callers": ["authority"]
 				}
 			]
 		},
@@ -8157,7 +8304,8 @@
 							"name": "not_found",
 							"failure": "rejected"
 						}
-					]
+					],
+					"callers": ["component"]
 				}
 			]
 		}

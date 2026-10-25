@@ -1,0 +1,429 @@
+{
+	"interface": "bindings",
+	"cases": [
+		{
+			"description": "an organization that is not open is given no binding",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": 4294967295
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin over plain http is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "http://driver.example.com"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin whose host is an IPv4 literal is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://192.0.2.10"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin whose host is an IPv6 literal is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://[2001:db8::10]"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin naming a port is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.example.com:8443"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin with a path is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.example.com/management"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin with a query is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.example.com?binding=1"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin with a user is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://admin@driver.example.com"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin with a fragment is malformed",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.example.com#describe"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin that never answers is unreachable",
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.invalid"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "unreachable"
+					}
+				}
+			]
+		},
+		{
+			"description": "an origin that answers as no driver of the binding is not proven",
+			"network": true,
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://example.com"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_proven"
+					}
+				}
+			]
+		},
+		{
+			"description": "a binding bound by a tunnel is refused an origin, its reach fixed by its first bind",
+			"tunnel": true,
+			"steps": [
+				{
+					"call": "open",
+					"as": "operator",
+					"input": {
+						"organization": {
+							"$use": "organization"
+						}
+					},
+					"expect": {
+						"output": {
+							"$capture": "opened"
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "tunnel"
+						}
+					},
+					"expect": {
+						"output": {
+							"binding": {
+								"$any": null
+							},
+							"reached": {
+								"$any": null
+							}
+						}
+					}
+				},
+				{
+					"call": "bind",
+					"bearer": {
+						"$use": "opened"
+					},
+					"input": {
+						"reach": {
+							"name": "origin",
+							"origin": "https://driver.example.com"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		}
+	]
+}

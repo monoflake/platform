@@ -69,6 +69,7 @@ testAsync(
       ~input=JSON.parseOrThrow(`{"name": "a"}`),
       ~form=Json,
       ~as_=None,
+      ~bearer=None,
     )
     await stop(server)
     deepEqual(
@@ -98,7 +99,14 @@ test(
   () => {
     let called = []
     let target = (name): Run.target => {
-      call: async (~interface as _, ~operation as _, ~input as _, ~form as _, ~as_ as _) => {
+      call: async (
+        ~interface as _,
+        ~operation as _,
+        ~input as _,
+        ~form as _,
+        ~as_ as _,
+        ~bearer as _,
+      ) => {
         called->Array.push(name)
         Ok(Answered(JSON.Null))
       },
@@ -116,10 +124,20 @@ test(
       signed: (_, _) => Error("none"),
       now: () => 0.,
       wait: async _ => (),
+      network: false,
+      tunnel: false,
+      captured: dict{},
     }
     let split = Bearer.split(~cbor=target("cbor"), ~json=target("json"))
     let call = form =>
-      split.call(~interface="object", ~operation="read", ~input=JSON.Null, ~form, ~as_=None)->ignore
+      split.call(
+        ~interface="object",
+        ~operation="read",
+        ~input=JSON.Null,
+        ~form,
+        ~as_=None,
+        ~bearer=None,
+      )->ignore
     call(Json)
     call(Cbor)
     split.given(~interface="object", ~form=Json, None)->ignore

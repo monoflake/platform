@@ -49,6 +49,7 @@ let messages: dict<string> = dict{
   "not_found": "Nothing of that name or id exists",
   "not_granted": "The grants do not give what is asked",
   "not_permitted": "The space does not permit what is asked",
+  "not_proven": "The origin called back is not the binding's driver",
   "not_retiring": "The key named is not being retired",
   "quota_exceeded": "The write would go past the quota",
   "read_only": "The database is read-only for now",

@@ -21,8 +21,16 @@ type body
 /** A request whole. */
 let bytesOf = async request => Uint8Array.fromBuffer(await request->requestBytes)
 
-type requestInit = {method: string, headers: dict<string>, body?: Uint8Array.t}
+/** What ends a request at a deadline. */
+type signal
+@val @scope("AbortSignal") external deadline: int => signal = "timeout"
+
+type requestInit = {method: string, headers: dict<string>, body?: Uint8Array.t, signal?: signal}
 @new external request: (string, requestInit) => request = "Request"
+type redirectInit = {redirect: string}
+@new external withRedirect: (request, redirectInit) => request = "Request"
+/** A request as it is, its redirect answered rather than followed. */
+let unredirected = request => withRedirect(request, {redirect: "manual"})
 /** A request as it came, sent to another URL. */
 @new external resent: (string, request) => request = "Request"
 
@@ -51,6 +59,19 @@ type parts
 @get external origin: parts => string = "origin"
 @get external pathname: parts => string = "pathname"
 @get external search: parts => string = "search"
+@get external protocol: parts => string = "protocol"
+@get external hostname: parts => string = "hostname"
+@get external port: parts => string = "port"
+@get external username: parts => string = "username"
+@get external password: parts => string = "password"
+@get external hash: parts => string = "hash"
+
+/** A URL as the WHATWG parser reads it, or none where it refuses the text. */
+let parsed = text =>
+  switch parts(text) {
+  | url => Some(url)
+  | exception JsExn(_) => None
+  }
 
 type encoder
 @new external makeEncoder: unit => encoder = "TextEncoder"

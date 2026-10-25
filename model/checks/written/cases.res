@@ -326,6 +326,70 @@ let componentGiven = [
 /** How a fixture is served, as built, under a hash not its own, or from where nothing answers. */
 let served = ["as_built", "hash_mismatched", "unfetchable"]
 
+/** What every case begins with captured, the one organization a run is about, 8j7b0. */
+let capturedFirst = ["organization"]
+
+/**
+ * A case's marker, `network` where it needs the network or `tunnel` where it binds by a tunnel,
+ * true or false, each case so marked skipped by the runner unless told otherwise, p8e8k and 8j7b0.
+ */
+let marked = (found, c, at, name) =>
+  switch (c->member(name), truth(c->member(name))) {
+  | (None, _) | (Some(_), Some(_)) => ()
+  | (Some(_), None) => found->Array.push(`${at}: ${name}, true or false`)
+  }
+
+/**
+ * A step's `as`, a component calling a component, or the operator calling an operation whose
+ * callers the model declares include it, 6x8su and 8j7b0.
+ */
+let caller = (found, ~interface, ~operation: Subset.operation, st, at) =>
+  switch (st->member("as"), text(st->member("as"))) {
+  | (None, _) => ()
+  | (Some(_), Some(who))
+    if components->Array.includes(interface) && Components.components->Dict.get(who) != None => ()
+  | (Some(_), Some("operator")) if operation.callers->Array.includes(#operator) =>
+    if st->member("bearer") != None {
+      found->Array.push(`${at}: as the operator and a bearer at once`)
+    }
+  | (Some(_), Some("operator")) =>
+    found->Array.push(`${at}: as the operator, on ${operation.name}, which is not the operator's`)
+  | (Some(_), _) =>
+    found->Array.push(`${at}: as, a component to a component or the operator to its own operation`)
+  }
+
+/**
+ * A case binding by a tunnel carries `"tunnel": true`, so the runner binds none unless told, since
+ * a tunnel bind against a control not local makes a real tunnel, 8j7b0.
+ */
+let tunneling = (found, ~interface, c, at) => {
+  let binds = items(c->member("steps"))->Array.some(st =>
+    text(st->member("call")) == Some("bind") &&
+      st
+      ->member("input")
+      ->Option.flatMap(i => i->member("reach"))
+      ->Option.flatMap(r => text(r->member("name"))) == Some("tunnel")
+  )
+  if interface == Bindings.interface_.name && binds && truth(c->member("tunnel")) != Some(true) {
+    found->Array.push(`${at}: binds by a tunnel, which only a case marked tunnel true may`)
+  }
+}
+
+/** A step's bearer, `{"$use": name}` alone, the name captured by a step before, 8j7b0. */
+let bearer = (s: scope, st, at) =>
+  switch st->member("bearer")->Option.map(placeholder) {
+  | None => ()
+  | Some(Some(("$use", v))) =>
+    switch v->JSON.Decode.string {
+    | Some(n) if capturedFirst->Array.includes(n) =>
+      s.found->Array.push(`${at}: bearer uses ${n}, which is no binding's token`)
+    | Some(n) if s.captured->Set.has(n) => ()
+    | Some(n) => s.found->Array.push(`${at}: bearer uses ${n}, captured by no step before`)
+    | None => s.found->Array.push(`${at}: bearer, {"$use": name} alone`)
+    }
+  | Some(Some(_) | None) => s.found->Array.push(`${at}: bearer, {"$use": name} alone`)
+  }
+
 /** The checkers a property names, each written in the runner, never in a sample. */
 let checkers = ["single_instance", "read_after_write"]
 
@@ -434,7 +498,7 @@ let run = () => {
           let at = `${path}#${int(n)}`
           let s = {
             found,
-            captured: Set.make(),
+            captured: Set.fromArray(capturedFirst),
             bounds: i.bounds->Option.getOr(dict{}),
             declared: i.declared->Option.getOr([]),
             fixtures: fixtures->Dict.keysToArray,
@@ -442,6 +506,8 @@ let run = () => {
           if text(c->member("description")) == None {
             found->Array.push(`${at}: no description`)
           }
+          ["network", "tunnel"]->Array.forEach(name => marked(found, c, at, name))
+          tunneling(found, ~interface=name, c, at)
           // What the runner holds for the case before its first step, as capacity of its kind.
           switch c->member("given") {
           | None => ()
@@ -515,15 +581,8 @@ let run = () => {
                 | None => found->Array.push(`${at}: ${call}, no operation of ${name}`)
                 | Some(o) =>
                   called->Set.add(`${name}.${call}`)
-                  // A call made `as` a component, signed by its certificate, to a component alone.
-                  switch (st->member("as"), text(st->member("as"))) {
-                  | (None, _) => ()
-                  | (Some(_), Some(who))
-                    if components->Array.includes(name) &&
-                      Components.components->Dict.get(who) != None => ()
-                  | (Some(_), _) =>
-                    found->Array.push(`${at}: as, a component of the model and to a component`)
-                  }
+                  caller(found, ~interface=name, ~operation=o, st, at)
+                  bearer(s, st, at)
                   // A fixture's version, form and artifact are the runner's to write, where a step
                   // writes none.
                   let fixture = st->member("fixture")

@@ -15,13 +15,21 @@ type step =
       expect: expect,
       within: option<int>,
       as_: option<string>,
+      bearer: option<string>,
       fixture: option<string>,
     })
   | Send({send: send, expect: expect, within: option<int>})
   | Lose(int)
   | Wait(int)
 
-type case = {description: string, given: option<JSON.t>, copies: option<int>, steps: array<step>}
+type case = {
+  description: string,
+  given: option<JSON.t>,
+  copies: option<int>,
+  network: bool,
+  tunnel: bool,
+  steps: array<step>,
+}
 
 type file = {interface: string, cases: array<case>}
 
@@ -70,6 +78,28 @@ let int = (o, name) =>
   | None => fail(`${name}: absent`)
   }
 
+let optionalBool = (o, name) =>
+  switch member(o, name)->Option.map(JSON.Decode.bool) {
+  | Some(Some(truth)) => truth
+  | Some(None) => fail(`${name}: not a boolean`)
+  | None => false
+  }
+
+/** A step's bearer, `{"$use": name}` and nothing more, by the name of what a step captured. */
+let bearerOf = o =>
+  switch member(o, "bearer") {
+  | None => None
+  | Some(bearer) =>
+    switch bearer->JSON.Decode.object->Option.map(Dict.toArray) {
+    | Some([("$use", name)]) =>
+      switch name->JSON.Decode.string {
+      | Some(name) => Some(name)
+      | None => fail("bearer: a $use names a capture")
+      }
+    | Some(_) | None => fail(`bearer: not {"$use": name}`)
+    }
+  }
+
 let list = (o, name) =>
   switch member(o, name)->Option.map(JSON.Decode.array) {
   | Some(Some(items)) => items
@@ -98,6 +128,7 @@ let stepOf = json => {
       expect: expectOf(o),
       within: optionalInt(o, "within"),
       as_: optionalString(o, "as"),
+      bearer: bearerOf(o),
       fixture: optionalString(o, "fixture"),
     })
   | (None, Some(send), _, _) =>
@@ -127,6 +158,8 @@ let caseOf = json => {
     description: string(o, "description"),
     given: member(o, "given"),
     copies: optionalInt(o, "copies"),
+    network: optionalBool(o, "network"),
+    tunnel: optionalBool(o, "tunnel"),
     steps: list(o, "steps")->Array.mapWithIndex((step, k) =>
       within(`steps/${Int.toString(k)}`, () => stepOf(step))
     ),

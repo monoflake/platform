@@ -12,6 +12,9 @@ let directory: string
 /** The port it listens on, on the machine's loopback alone. */
 let port: int
 
+/** The port it names as its entry's, one of its own beside the live entry's, as `port` is. */
+let entry: int
+
 /** The first binding it holds, above every id a live binding takes. */
 let first: int
 

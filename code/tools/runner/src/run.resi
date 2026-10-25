@@ -17,13 +17,17 @@ type fixture = {form: string, address: string, hash: string, architecture: optio
 
 /** What reaches an implementation, and what it offers a run beyond its calls. */
 type target = {
-  /** An operation called with its input in a form, signed as a component if named. */
+  /**
+   * An operation called with its input in a form, signed as a component if named, carrying a
+   * bearer's token in place of the run's own where one is given.
+   */
   call: (
     ~interface: string,
     ~operation: string,
     ~input: JSON.t,
     ~form: form,
     ~as_: option<string>,
+    ~bearer: option<string>,
   ) => promise<result<answered, string>>,
   /**
    * What is deployed called at its address, by an export, for an instance by its key, in a case's
@@ -57,6 +61,15 @@ type target = {
   now: unit => float,
   /** So many milliseconds passed, by a clock the target holds or by sleeping. */
   wait: int => promise<unit>,
+  /** Whether the run reaches the network, a case needing it skipped where it does not. */
+  network: bool,
+  /**
+   * Whether a case binding by a tunnel is run, as against a control in local mode alone, RFC
+   * 8j7b0, a case doing so skipped where it is not.
+   */
+  tunnel: bool,
+  /** What every case begins with captured, the run's organization as `organization`. */
+  captured: Matching.captures,
 }
 
 /** How a case ended in a form, passed, failed at a step with why, or skipped with why. */

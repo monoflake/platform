@@ -308,7 +308,7 @@ let handedPost = async (url, request: Host.Handed.request): result<
 
 let target = (~base, ~chain, ~bounds, ~token=?) => {
   let base = base->String.endsWith("/") ? base->String.slice(~start=0, ~end=-1) : base
-  let call = async (~interface, ~operation, ~input, ~form, ~as_) => {
+  let call = async (~interface, ~operation, ~input, ~form, ~as_, ~bearer) => {
     let call = JSON.Object(
       dict{
         "interface": JSON.String(interface),
@@ -354,7 +354,9 @@ let target = (~base, ~chain, ~bounds, ~token=?) => {
               [
                 ("content-type", contentType),
                 ("accept", media(form)),
-                ...token->Option.mapOr([], token => [("authorization", `Bearer ${token}`)]),
+                ...bearer
+                ->Option.orElse(token)
+                ->Option.mapOr([], token => [("authorization", `Bearer ${token}`)]),
               ],
             ),
             ~body=Some(body),
@@ -392,6 +394,9 @@ let target = (~base, ~chain, ~bounds, ~token=?) => {
     signed: (bytes, record) => verified(chain, bytes, record),
     now: Date.now,
     wait: Web.sleep,
+    network: false,
+    tunnel: false,
+    captured: dict{},
   }
   target
 }

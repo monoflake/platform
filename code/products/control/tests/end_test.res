@@ -268,12 +268,16 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     let bound = await call(
       origin,
       ~bearer=token,
-      Contracts.Interface.Bindings.toJson({call: Bind({}), capabilities: []}),
+      Contracts.Interface.Bindings.toJson({call: Bind({reach: Tunnel}), capabilities: []}),
     )
     deepEqual(
       (
-        bound->text("address"),
-        bound->text("tunnel")->Envelope.Base64url.decode->Option.map(Web.fromUtf8),
+        bound->member("reached")->text("address"),
+        bound
+        ->member("reached")
+        ->text("tunnel")
+        ->Envelope.Base64url.decode
+        ->Option.map(Web.fromUtf8),
       ),
       ("10.200.0.1", Some("e2e-token")),
     )

@@ -121,3 +121,50 @@ test(
     )
   },
 )
+
+/** An answer's status and its reason, as a client of the relay reads an error. */
+let reasoned = async answer => (
+  answer->Web.status,
+  JSON.parseOrThrow(await answer->Web.text)
+  ->JSON.Decode.object
+  ->Option.flatMap(o => o->Dict.get("reason"))
+  ->Option.flatMap(JSON.Decode.string),
+)
+
+test(
+  "a binding reached by its origin is beyond the relay's host, its driver never called",
+  async () => {
+    let state = Memory.state()
+    let {id: organization} = await state.openOrganization("first", ~secret)
+    let binding = await state.openBinding(~organization, ~secret, ~relayed=true)
+    ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
+    // Storage chooses no origin binding, so a state that did is stood in for here.
+    let origined =
+      (await state.binding(binding))->Option.map(b => {...b, address: Some("10.200.0.2")})
+    let state = {...state, storage: async _ => origined, addressedAt: async _ => origined}
+    let host = Host.make()
+    let stored = await Relay.stored(
+      state,
+      host.reach,
+      ~caller=Organization(organization),
+      ~port=37483,
+      ~wait=async () => (),
+      request("https://control.test/object/write", dict{}),
+      ~path="/object/write",
+    )
+    let passed = await Relay.passed(
+      state,
+      host.reach,
+      ~caller=Organization(organization),
+      ~ports=[37483],
+      request("https://control.test/relay", dict{}),
+      {address: "10.200.0.2", port: 37483, path: "/"},
+      ~search="",
+    )
+    deepEqual(
+      [await reasoned(stored), await reasoned(passed)],
+      [(400, Some("beyond_host")), (400, Some("beyond_host"))],
+    )
+    deepEqual(host.seen, [])
+  },
+)

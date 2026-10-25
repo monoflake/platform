@@ -14,6 +14,7 @@ type target = {
     ~input: JSON.t,
     ~form: form,
     ~as_: option<string>,
+    ~bearer: option<string>,
   ) => promise<result<answered, string>>,
   send: (
     ~to: string,
@@ -33,6 +34,9 @@ type target = {
   signed: Matching.signed,
   now: unit => float,
   wait: int => promise<unit>,
+  network: bool,
+  tunnel: bool,
+  captured: Matching.captures,
 }
 
 type outcome =
@@ -126,6 +130,25 @@ let withFixture = (input, fixture: fixture) => {
   JSON.Object(fields)
 }
 
+/** Why a case needing the network is not run, as p8e8k reports it. */
+let offline = "needs the network, which this run does not reach, so it is skipped and never passed"
+
+/** The token a capture of `open`'s answer forms, `<binding>.<secret>`, RFC 3d3nt. */
+let tokenOf = (captures: Matching.captures, name) =>
+  switch captures->Dict.get(name) {
+  | None => Error(`the bearer ${name}, captured by no step before`)
+  | Some(captured) =>
+    let field = key => captured->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
+    switch (
+      field("binding")->Option.flatMap(JSON.Decode.float),
+      field("secret")->Option.flatMap(JSON.Decode.string),
+    ) {
+    | (Some(binding), Some(secret)) => Ok(`${Float.toString(binding)}.${secret}`)
+    | _ =>
+      Error(`the bearer ${name}, captured as ${JSON.stringify(captured)} and no binding's token`)
+    }
+  }
+
 let step = async (target, file: Sample.file, case: Sample.case, form, captures, k, step) => {
   let context: Filling.context = {
     description: case.description,
@@ -141,7 +164,7 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
     | Error(why) => Ended(Failed({step: k, why}))
     }
   switch (step: Sample.step) {
-  | Call({operation, input, expect, within, as_, fixture}) =>
+  | Call({operation, input, expect, within, as_, bearer, fixture}) =>
     let input = switch fixture {
     | None => Ok(input)
     | Some(name) =>
@@ -150,10 +173,16 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
       | Error(why) => Error(Filling.Unoffered(`the fixture ${name}, ${why}`))
       }
     }
-    switch input->Result.flatMap(input => Filling.fill(input, context)) {
-    | Error(unfilled) => refusedOf(unfilled, k)
-    | Ok(input) =>
-      let attempt = () => target.call(~interface=file.interface, ~operation, ~input, ~form, ~as_)
+    let token = switch bearer {
+    | None => Ok(None)
+    | Some(name) => tokenOf(captures, name)->Result.map(token => Some(token))
+    }
+    switch (input->Result.flatMap(input => Filling.fill(input, context)), token) {
+    | (Error(unfilled), _) => refusedOf(unfilled, k)
+    | (Ok(_), Error(why)) => Ended(Failed({step: k, why}))
+    | (Ok(input), Ok(bearer)) =>
+      let attempt = () =>
+        target.call(~interface=file.interface, ~operation, ~input, ~form, ~as_, ~bearer)
       finish(await attempted(target, ~within=within->Option.getOr(0), attempt, expect, captures))
     }
   | Send({send, expect, within}) =>
@@ -183,8 +212,8 @@ let step = async (target, file: Sample.file, case: Sample.case, form, captures, 
   }
 }
 
-/** A case run from nothing, in one form. */
-let case = async (target, file: Sample.file, case: Sample.case, form) => {
+/** A case run from what it is given, in one form. */
+let fromGiven = async (target, file: Sample.file, case: Sample.case, form) => {
   switch await target.given(~interface=file.interface, ~form, case.given) {
   | Error(Unoffered(what)) => Skipped(unoffered(what))
   | Error(Unwritten(why)) => Failed({step: 0, why: `given before its first step: ${why}`})
@@ -198,9 +227,20 @@ let case = async (target, file: Sample.file, case: Sample.case, form) => {
         | Ended(outcome) => outcome
         }
       }
-    await go(0, Dict.make())
+    await go(0, target.captured->Dict.copy)
   }
 }
+
+/** Why a case binding by a tunnel is not run, as `offline` says of the network. */
+let untunneled = "binds by a tunnel, which this run does not, so it is skipped and never passed"
+
+/** A case run from nothing in one form, skipped where it needs what the run lacks. */
+let case = (target, file, case: Sample.case, form) =>
+  switch (case.network && !target.network, case.tunnel && !target.tunnel) {
+  | (true, _) => Promise.resolve(Skipped(offline))
+  | (false, true) => Promise.resolve(Skipped(untunneled))
+  | (false, false) => fromGiven(target, file, case, form)
+  }
 
 let file = async (file: Sample.file, target) => {
   let rec go = async (n, results) =>

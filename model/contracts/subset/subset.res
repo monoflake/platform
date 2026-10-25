@@ -92,8 +92,32 @@ type failure = [#rejected | #unavailable | #unknown]
 
 type reason = {name: string, failure: failure}
 
-/** An operation, its declared input and output records and the reasons it may fail for. */
-type operation = {name: string, input: string, output: string, reasons: array<reason>}
+/**
+ * Who may call an operation, each kind known by a proof of its own, RFC 6x8su; `anyone` declared
+ * outright, never assumed.
+ */
+type caller = [
+  | #anyone
+  | #account
+  | #organization
+  | #operator
+  | #component
+  | #authority
+  | #host
+  | #capability
+]
+
+/**
+ * An operation, its declared input and output records, the reasons it may fail for and who may call
+ * it.
+ */
+type operation = {
+  name: string,
+  input: string,
+  output: string,
+  reasons: array<reason>,
+  callers: array<caller>,
+}
 
 /**
  * An interface, reached at `POST /{interface}/{operation}` with a `call` and answered in JSON or
@@ -114,11 +138,12 @@ type interface_ = {
 
 let field = (name, key, shape) => {name, key, shape}
 let optional = (name, key, shape) => {name, key, shape, optional: true}
-let op = (name, input, output, reasons) => {
+let op = (name, input, output, reasons, ~callers) => {
   name,
   input,
   output,
   reasons: reasons->Array.map(((name, failure)) => {name, failure}),
+  callers,
 }
 let codes = names => names->Array.mapWithIndex((name, i) => {name, code: i + 1})
 
@@ -261,6 +286,7 @@ let interfaceJson = (i: interface_): JSON.t => Object(
               dict{"name": String(r.name), "failure": String((r.failure :> string))},
             )),
           ),
+          "callers": Array(o.callers->Array.map(c => JSON.String((c :> string)))),
         },
       )),
     ),

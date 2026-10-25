@@ -335,3 +335,44 @@ test("a binding whose secret is not written after its insert is deleted", async 
   // The row was deleted where its seal threw, and kept with an empty secret where the update did.
   deepEqual((refused, count), (Some("refused UPDATE binding SET secret"), Some(0.)))
 })
+
+test("a binding's origin is written once, and never over another reach", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let state = make().state(Sealing.ofKey(key))
+    let organization = await state.openOrganization("first", ~secret)
+    let first = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    let second = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    let origin = async id => (await state.binding(id))->Option.flatMap(b => b.origin)
+    let fresh = await origin(first)
+    let written = await state.originated(~binding=first, ~origin="https://driver.example.com")
+    let again = await state.originated(~binding=first, ~origin="https://other.example.com")
+    await state.addressed(~binding=second, ~address="10.200.0.2")
+    let tunneled = await state.originated(~binding=second, ~origin="https://driver.example.com")
+    deepEqual(
+      (fresh, written, again, await origin(first), tunneled, await origin(second)),
+      (None, true, false, Some("https://driver.example.com"), false, None),
+      ~message=make().name,
+    )
+  }
+)
+
+test("storage is never a binding reached by its origin", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let state = make().state(Sealing.ofKey(key))
+    let organization = await state.openOrganization("first", ~secret)
+    let first = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    let second = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    ignore(await state.originated(~binding=first, ~origin="https://driver.example.com"))
+    // A tunnel bind racing the origin's may still write an address beside it.
+    await state.addressed(~binding=first, ~address="10.200.0.1")
+    let none = await state.storage(organization.id)
+    await state.addressed(~binding=second, ~address="10.200.0.2")
+    deepEqual(
+      (none, (await state.storage(organization.id))->Option.map(b => b.id)),
+      (None, Some(second)),
+      ~message=make().name,
+    )
+  }
+)

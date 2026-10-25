@@ -12,10 +12,10 @@ let tokens = text => text->String.split("\n")->Array.map(String.trim)->Array.fil
  */
 let split = (~cbor: Run.target, ~json: Run.target): Run.target => {
   ...cbor,
-  call: (~interface, ~operation, ~input, ~form, ~as_) =>
+  call: (~interface, ~operation, ~input, ~form, ~as_, ~bearer) =>
     switch form {
-    | Cbor => cbor.call(~interface, ~operation, ~input, ~form, ~as_)
-    | Json => json.call(~interface, ~operation, ~input, ~form, ~as_)
+    | Cbor => cbor.call(~interface, ~operation, ~input, ~form, ~as_, ~bearer)
+    | Json => json.call(~interface, ~operation, ~input, ~form, ~as_, ~bearer)
     },
   send: (~to, ~export, ~key, ~body, ~form) =>
     switch form {

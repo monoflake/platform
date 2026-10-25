@@ -23,5 +23,13 @@ let interface_: interface_ = {
   name: "reaches",
   version: 1,
   from: "rxmd9",
-  operations: [op("open", "reach-open", "reach-opened", [("unreachable", #unavailable)])],
+  operations: [
+    op(
+      "open",
+      "reach-open",
+      "reach-opened",
+      [("unreachable", #unavailable)],
+      ~callers=[#organization],
+    ),
+  ],
 }

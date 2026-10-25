@@ -7,8 +7,8 @@
 type organization = {id: float, secret: Uint8Array.t}
 
 /**
- * A binding, its secret, its tunnel's id or, where the control stood on made it, its token, and its
- * host's address, each absent until it is bound. A relayed one is an organization's own control's.
+ * A binding, its secret, its tunnel's id or token, its host's address or its driver's origin, RFC
+ * 8j7b0, each absent until it is bound. A relayed one is an organization's own control's.
  */
 type binding = {
   id: float,
@@ -16,6 +16,7 @@ type binding = {
   secret: Uint8Array.t,
   tunnel: option<string>,
   address: option<string>,
+  origin: option<string>,
   relayed: bool,
 }
 
@@ -32,13 +33,21 @@ type t = {
   organizationSecret: float => promise<option<Uint8Array.t>>,
   openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
   binding: float => promise<option<binding>>,
-  /** The organization's first binding its host bound here, where its objects are kept. */
+  /**
+   * The organization's first binding its host bound here by a tunnel, where its objects are kept,
+   * never one reached by its origin, RFC 8j7b0.
+   */
   storage: float => promise<option<binding>>,
   /** The binding reached at an address. */
   addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
   /** The address its host is reached at, written once the host can be reached there. */
   addressed: (~binding: float, ~address: string) => promise<unit>,
+  /**
+   * The origin its driver is called at, written once proven and only where no bind fixed its reach
+   * first, answering whether it was written, RFC 8j7b0.
+   */
+  originated: (~binding: float, ~origin: string) => promise<bool>,
   /** A release kept, a second put of one hash changing nothing. */
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,

@@ -47,7 +47,14 @@ testAsync("an answer is read by its status, in the form asked", async () => {
   let server = await Server.start()
   let target = Http.target(~base=address(server), ~chain=None, ~bounds=dict{})
   let call = (operation, input, form) =>
-    target.call(~interface="object", ~operation, ~input=JSON.parseOrThrow(input), ~form, ~as_=None)
+    target.call(
+      ~interface="object",
+      ~operation,
+      ~input=JSON.parseOrThrow(input),
+      ~form,
+      ~as_=None,
+      ~bearer=None,
+    )
   let forms = [Run.Cbor, Json]
   for i in 0 to 1 {
     let form = forms->Array.get(i)->Option.getOr(Cbor)
@@ -80,6 +87,7 @@ testAsync("an answer is read by its status, in the form asked", async () => {
       ~input=JSON.parseOrThrow(`{"name": "a"}`),
       ~form=Cbor,
       ~as_=Some("compute"),
+      ~bearer=None,
     ),
     Error("no chain the run made to sign as compute"),
   )
@@ -103,6 +111,7 @@ testAsync(
       ~input=JSON.parseOrThrow(`{"name": "who", "content": "AA"}`),
       ~form=Cbor,
       ~as_=Some("compute"),
+      ~bearer=None,
     )
     deepEqual(written, Ok(Answered(JSON.parseOrThrow("{}"))))
     let read = await ours.call(
@@ -111,6 +120,7 @@ testAsync(
       ~input=JSON.parseOrThrow(`{"name": "who"}`),
       ~form=Json,
       ~as_=None,
+      ~bearer=None,
     )
     await stop(server)
     let certificate = switch read {
@@ -161,6 +171,7 @@ testAsync(
       ~input=JSON.parseOrThrow(`{"name": "a", "content": "AA"}`),
       ~form=Json,
       ~as_=Some("compute"),
+      ~bearer=None,
     )
     await stop(server)
     deepEqual(answered, Ok(Answered(JSON.parseOrThrow("{}"))))
@@ -190,7 +201,7 @@ testAsync(
 )
 
 testAsync(
-  "a call carries its binding's token where one is given, and none where none is",
+  "a call carries its binding's token where one is given, a step's bearer before it",
   async () => {
     let authorizations = []
     let server = await Server.start(~authorizations)
@@ -201,12 +212,23 @@ testAsync(
         ~input=JSON.parseOrThrow(`{"name": "a"}`),
         ~form=Json,
         ~as_=None,
+        ~bearer=None,
       )
     let _ = await read(
       Http.target(~base=address(server), ~chain=None, ~bounds=dict{}, ~token="7.x"),
     )
     let _ = await read(Http.target(~base=address(server), ~chain=None, ~bounds=dict{}))
+    let _ = await (
+      Http.target(~base=address(server), ~chain=None, ~bounds=dict{}, ~token="7.x"): Run.target
+    ).call(
+      ~interface="object",
+      ~operation="read",
+      ~input=JSON.parseOrThrow(`{"name": "a"}`),
+      ~form=Json,
+      ~as_=None,
+      ~bearer=Some("4.y"),
+    )
     await stop(server)
-    deepEqual(authorizations, [Some("Bearer 7.x"), None])
+    deepEqual(authorizations, [Some("Bearer 7.x"), None, Some("Bearer 4.y")])
   },
 )

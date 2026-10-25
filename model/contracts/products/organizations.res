@@ -26,5 +26,13 @@ let interface_: interface_ = {
   name: "organizations",
   version: 1,
   from: "rxmd9",
-  operations: [op("open", "organization-open", "organization-opened", [("invalid", #rejected)])],
+  operations: [
+    op(
+      "open",
+      "organization-open",
+      "organization-opened",
+      [("invalid", #rejected)],
+      ~callers=[#operator],
+    ),
+  ],
 }

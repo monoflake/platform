@@ -1,6 +1,7 @@
 /***
  * A host reached at a port of its private address, through the Worker's `vpc_networks` binding,
- * the relay of the control stood on, or locally at one address for every host, RFC rxmd9.
+ * the relay of the control stood on, or locally at one address for every host, RFC rxmd9; or a
+ * binding's driver at a public `https` origin, RFC 8j7b0.
  */
 type t = {
   /** The origin a port of a host's address is reached at. */
@@ -19,3 +20,9 @@ let local: string => t
  * `Proxy-Authorization`.
  */
 let relayed: (~origin: string, ~token: string, Web.fetch) => t
+
+/**
+ * At one `https` origin, whatever address and port a call names, through the fetch given, a
+ * redirect answered as it is and never followed.
+ */
+let direct: (string, Web.fetch) => t

@@ -25,11 +25,28 @@ let resendable = request =>
   | _ => request->Web.requestBody->Nullable.isNullable
   }
 
+/** What answers for a binding reached by its origin, whose data never passes here, 8j7b0. */
+let beyondHost = message =>
+  Web.answered(
+    ~status=400,
+    ~contentType="application/json",
+    Envelope.Contracts.Answer.toJson(
+      Error({failure: Rejected, reason: "beyond_host", message}),
+      _ => JSON.Null,
+    )->JSON.stringify,
+  )
+
 let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~search) =>
   switch await state.deployment(routed.app) {
   | None => Web.answered(~status=404, `no app ${Float.toString(routed.app)} is deployed`)
   | Some(deployment) =>
     switch await state.binding(deployment.binding) {
+    | Some({origin: Some(_)}) =>
+      beyondHost(
+        `app ${Float.toString(
+            routed.app,
+          )} runs on a binding reached by its origin, never through here`,
+      )
     | Some({address: Some(address)}) =>
       let named = host(~app=routed.app, ~binding=deployment.binding)
       let sent = () => {

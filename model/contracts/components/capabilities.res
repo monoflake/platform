@@ -61,12 +61,14 @@ let interface_: interface_ = {
       "capabilities-for-app",
       "capabilities-issued",
       [("not_granted", #rejected), ("suspended", #rejected)],
+      ~callers=[#component],
     ),
     op(
       "for_space",
       "capability-for-space",
       "space-capability-issued",
       [("not_permitted", #rejected), ("suspended", #rejected)],
+      ~callers=[#component],
     ),
   ],
 }
