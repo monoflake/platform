@@ -61,8 +61,7 @@ repository's code, which is the two repositories' split, RFC 8lkuv. The interfac
 one, so the code is one; what differs is which kinds an instance holds, which `records.res` already
 splits by half, and separate instances and databases keep the halves apart more surely than two
 codes would. Rejected: two implementations, one interface written and tested twice, bound to
-drift. How the model says one code fills a name in each half is not settled yet, and nothing of it
-is built.
+drift. How the model says it is in the Ledger.
 
 **No migration when the footing lands**, decided by the author on 2026-10-24. Both platforms' state
 is rebuilt from nothing: organizations opened again, every machine and account bound again, and
@@ -102,7 +101,10 @@ Choices made provisionally while the thread runs, read by the author at its end.
   provisional, chosen by the advisor on 2026-10-24, D8: a row's size, a change's rows and bytes,
   `limit`'s default and most, and `next` an opaque cursor. D1's own, as Cloudflare states them: a
   row, string or BLOB 2,000,000 bytes, a statement 100,000 bytes, 100 bound parameters a query, a
-  batch one query of an invocation and bounded by the 30 seconds a query may run.
+  batch one query of an invocation and bounded by the 30 seconds a query may run. The footing's, as
+  the integrator proposed them and the advisor accepted on 2026-10-24: a row's content at most
+  1,000,000 bytes; a change at most 100 rows and 4,000,000 bytes; `limit` 100 when absent and at
+  most 1,000, a page ending early past 4,000,000 bytes; `next` opaque bytes.
 - **Each `write` is one D1 batch, all or none**, provisional, chosen by the advisor on 2026-10-24.
   Group commit is not built now. Reads go to D1's primary, so RFC e69rc stays a draft with nothing
   stale to bound yet.
@@ -111,9 +113,22 @@ Choices made provisionally while the thread runs, read by the author at its end.
   `parcel` and `journal`, with the `record.journal` edge it lacked. RFC vr5lw, worked out on
   2026-10-18, holds a database's writer by a lease in the footing; RFC vuanj, decided by the author
   on 2026-10-20, holds it by whatever gives it, its lease the copies' own and never a row of the
-  footing. That one is held for the author. The clock's table stays on the machine's disk, RFC
-  p6fg3.
+  footing. By that rule RFC vuanj's holds, the later: a database's writer is held by its
+  provider, its lease the copies', never a row of the footing; nothing in the model held it
+  otherwise. The clock's table stays on the machine's disk, RFC p6fg3.
 - **The footing's bench**, provisional, chosen by the advisor on 2026-10-24, RFC 9bq0y: two
   instances of one component with distinct keys, so `lease` and `single_instance` are tested; `wait`
   sleeps where the footing's clock cannot be held, marked slow, RFC p8e8k; `cases.res` adds the
   footing to the components and a records seed to `given`.
+- **The model declares the footing once**, provisional, chosen by the advisor on 2026-10-24:
+  `footing(half)` in `model/graph/components.res` makes both nodes, `footing(organization)` and
+  `footing(platform)`, and monoflake/cloud's fill holds no copy. The half rule reads every node
+  answering `footing`, over any edge, so an organization's component reaching `footing(platform)`
+  is reported, and a test holds it. An instance learns its half from its own certificate chain.
+- **The footing's callers are generated at build from the merged model**, provisional, chosen by the
+  advisor on 2026-10-24, RFC jy0s5: the platform's instance is built in monoflake/cloud with its
+  fill, so its callers come from there. A caller's `sub` maps to design names by the model: the
+  footing allows a component what the names it provides may do, RFC s42ex's `provides`, so one
+  providing `authority` writes what `authority` writes. An edge reading the platform's footing's
+  rows carries the footing's contract, `footing`, as monoflake/cloud's RFC 6dheo strikes its own
+  undeclared contract for the records.
