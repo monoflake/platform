@@ -75,12 +75,7 @@ let interface_: interface_ = {
       "bind",
       "binding-bind",
       "binding-bound",
-      [
-        ("unreachable", #unavailable),
-        ("not_proven", #rejected),
-        ("invalid", #rejected),
-        ("no_address", #rejected),
-      ],
+      [("unreachable", #unavailable), ("not_proven", #rejected), ("invalid", #rejected)],
       ~callers=[#host],
     ),
   ],

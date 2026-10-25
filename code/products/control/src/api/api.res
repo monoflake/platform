@@ -61,11 +61,12 @@ let bound = (output: Contracts.BindingBound.t) => Calls.Output(
 /** Why a binding is given no address, every one of the range held. */
 let spent = id => `no address of 10.200.0.0/16 is left for binding ${Ids.text(id)}`
 
-/** What answers a binding given no address, denied where its origin fixed its reach first. */
+/** What answers a binding given no address, denied where its origin fixed its reach first, and
+ * else unreachable, as a range spent frees as bindings close, monoflake/cloud's RFC vgvx6. */
 let unaddressed = async (parts, id) =>
   switch await parts.state.binding(id) {
   | Some({origin: Some(_)}) => denied
-  | Some(_) | None => refused("no_address", spent(id))
+  | Some(_) | None => refused("unreachable", spent(id))
   }
 
 /** Why a tunnel was not given, no address taken for it or a step of Cloudflare's refused. */
@@ -100,7 +101,8 @@ let tunneled = async (parts, tunnels: Tunnels.t, binding: State.binding) =>
     | Error(why) => await given(why)
     | Ok(tunnel) =>
       switch await tunnels.route(~tunnel, ~address) {
-      // A failed route keeps its address unbound, never another binding's while held, RFC vgvx6.
+      // A failed route keeps its address unbound, never another binding's while held, monoflake/cloud's
+      // RFC vgvx6.
       | Error(why) => Error(Unmade(why))
       | Ok() =>
         await parts.state.routed(~binding=binding.id)

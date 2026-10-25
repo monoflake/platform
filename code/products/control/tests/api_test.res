@@ -577,17 +577,18 @@ test("a range spent is answered as a refusal, to a bind and to a reach alike", a
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
     let id = await openBinding(stood, 1.)
     let (status, answer) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+    // A bind is told to try again, as a spent range frees when a binding closes.
     answers->Array.push((
-      status,
-      answer->reason,
+      (status, answer->reason),
+      (503, Some("unreachable")),
       answer->member("message")->JSON.Decode.string,
       `no address of 10.200.0.0/16 is left for binding ${Ids.text(id)}`,
     ))
     let (status, answer) = await called(stood, Organization(1.), reaches(Open({})))
-    answers->Array.push((status, answer->reason, None, ""))
+    answers->Array.push(((status, answer->reason), (400, Some("no_address")), None, ""))
   }
-  answers->Array.forEach(((status, reason, message, expected)) => {
-    deepEqual((status, reason), (400, Some("no_address")))
+  answers->Array.forEach(((answered, wanted, message, expected)) => {
+    deepEqual(answered, wanted)
     message->Option.forEach(m => deepEqual(m, expected))
   })
   // An address is asked before any tunnel is made, so a spent range makes neither.

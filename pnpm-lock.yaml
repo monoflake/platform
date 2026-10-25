@@ -43,6 +43,8 @@ importers:
         specifier: workspace:*
         version: link:../envelope
 
+  code/libs/ids: {}
+
   code/libs/keys:
     dependencies:
       '@noble/hashes':
@@ -123,12 +125,18 @@ importers:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
 
   code/tools/deploy:
     dependencies:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
 
   code/tools/envelope-generator: {}
 
@@ -140,6 +148,9 @@ importers:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
 
   code/tools/replace:
     dependencies:
@@ -149,6 +160,9 @@ importers:
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
       '@monoflake/lose':
         specifier: workspace:*
         version: link:../lose

@@ -8134,10 +8134,6 @@
 						{
 							"name": "invalid",
 							"failure": "rejected"
-						},
-						{
-							"name": "no_address",
-							"failure": "rejected"
 						}
 					],
 					"callers": ["host"]
