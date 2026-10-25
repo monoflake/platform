@@ -204,6 +204,23 @@ test("a name is the run's only where the record names its binding, in hex or in 
   ok(shell->String.includes(`echo "left the unit $u" && left=1`))
 })
 
+test(
+  "its driver roots runtimes apart where the live one roots them, and the roots go with it",
+  () => {
+    let started = Instance.started(~count=1, ~subnet="10.250.0.0/24")
+    ok(
+      started->String.includes(
+        `case "$a" in *--roots=*) set -- "--roots=${Instance.roots}";; esac`,
+      ),
+    )
+    ok(Instance.roots != "/nix/var/nix/gcroots/driver-machine")
+    let shell = Instance.cleaned(~mount="/data", ~subvolumes=0, ~served=None)
+    let at = text => shell->String.indexOf(text)
+    ok(at(`rm -rf ${Instance.roots}`) > at("ctr -n \"$ns\" containers rm"))
+    ok(shell->String.includes(`echo "left ${Instance.roots}" && left=1`))
+  },
+)
+
 test("the record is written before the driver starts, one binding a line", () => {
   let shell = Instance.started(~count=2, ~subnet="10.250.0.0/24")
   let at = text => shell->String.indexOf(text)

@@ -7,6 +7,8 @@ let first = 1000
 let bridge = "conform0"
 // Kept apart from `directory`, which a reboot empties while the bindings' namespaces stay.
 let recorded = "/var/lib/conform/made"
+// Its driver's runtime roots, apart from the live driver's so neither reconciles the other's.
+let roots = "/nix/var/nix/gcroots/conform"
 
 /** The subnets it may take, each a /24 apart from the live driver's. */
 let candidates = ["10.250.0.0/24", "10.251.0.0/24", "10.252.0.0/24", "10.253.0.0/24"]
@@ -311,6 +313,7 @@ let started = (~count, ~subnet) => {
 ${flags}p=$(systemctl show -p Environment --value driver-machine | tr ' ' '\\n' | sed -n 's/^PATH=//p')
 bin=$(printf '%s\\n' "$a" | sed -n 's/^{ path=\\([^ ;]*\\) .*/\\1/p')
 kept=$(printf '%s\\n' "$a" | grep -oE -- '--(runc|crun|youki|plugins|btrfs|largest|local|mount|containerd|workerd)=[^ ;]*' | tr '\\n' ' ')
+case "$a" in *--roots=*) set -- "--roots=${roots}";; esac
 d=${directory}
 mkdir -m 700 "$d"
 mkdir -m 700 "$d/bindings" "$d/state" "$d/secrets"
@@ -441,6 +444,7 @@ for c in /sys/fs/cgroup/b*; do
 done
 if [ -e "$d" ]; then rm -rf "$d" && echo "removed $d"; fi
 if [ -n "$v" ] && [ -e "$v" ]; then rm -rf "$v" && echo "removed $v"; fi
+if [ -e ${roots} ]; then rm -rf ${roots} && echo "removed ${roots}"; fi
 systemctl list-units --all --no-legend "$u.service" | grep -q . && echo "left the unit $u" && left=1
 for k in socket service; do
   systemctl list-units --all --no-legend "$e.$k" | grep -q . && echo "left the unit $e.$k" && left=1
@@ -463,6 +467,7 @@ for u2 in volumes buckets; do
 done
 [ -e "$d" ] && echo "left $d"
 [ -n "$v" ] && [ -e "$v" ] && echo "left $v"
+[ -e ${roots} ] && echo "left ${roots}" && left=1
 s=$(btrfs subvolume list "$m" | wc -l)
 [ "$s" -le ${int(subvolumes)} ] || echo "left $((s - ${int(
       subvolumes,

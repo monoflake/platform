@@ -12,6 +12,9 @@ let directory: string
 /** The file naming each binding a run opened, written before the first and kept by a reboot. */
 let recorded: string
 
+/** Where its driver roots each container's runtime, where the live driver roots its own. */
+let roots: string
+
 /** The port it listens on, on the machine's loopback alone. */
 let port: int
 
