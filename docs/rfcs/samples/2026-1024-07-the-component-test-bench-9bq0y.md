@@ -42,3 +42,23 @@ What follows from it:
   runner is its authority", so the runner's chain gains the role `issuer`.
 - **The authority certifies the issuer's working keys**, as `docs/signed.md` and RFC 7xpd3 have it;
   RFC b8f35's line that the intermediate does is the earlier word, and the later decision holds.
+
+**The bench stands in for the footing, for now**, decided by the author on 2026-10-24, a
+safe-bootstrapping stand-in: something temporary hired in while the real mechanism is not there,
+then replaced by it. The bench answers the footing's contract for reading a bundle alone, as RFC
+n8jq5 declares it in the model. It makes each case's bundle from the case's grants and signs it with
+the run's chain, which gains the role `bundle`. Rejected: handing the bundle to the issuer with its
+deployment, which would change the issuer's edge in the design; and holding the issuer until the
+real footing exists. The stand-in is tracked so it cannot become permanent, a scaffold of the bench
+retired when the footing and its samples land, the workspace's deferred item `bench-footing`; then
+the issuer's run reads the real footing and the stand-in is deleted.
+
+### Ledger
+
+Choices made provisionally while the thread runs, read by the author at its end.
+
+- **C36, how soon a new bundle is seen, stays open as a number**, provisional, chosen by the advisor
+  on 2026-10-24. In a run, a case expecting a new bundle's effect uses `within`, which the runner
+  retries, RFC p8e8k, with the bound the case writes.
+- **`capabilities` are answered in the order the bundle lists the grants**, provisional, chosen by
+  the advisor on 2026-10-24, so a positional match is deterministic.
