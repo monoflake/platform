@@ -145,3 +145,11 @@ Choices made provisionally while the thread runs, read by the author at its end.
   driver(cloudflare)'s `beyond_host` is held by its own tests until `inline-data-path` replaces them
   with the file. The sample expects the entry's own 403 carried back whole; the fence's checks stay
   in a machine's rehearsal.
+- **The entry reads `X-Forwarded-Host` only on its proxy paths**, a small matter, provisional,
+  chosen by the advisor on 2026-10-25: cloudflared on loopback and the gateway's path through the
+  tunnel. A request from the containers' subnet is named by its `Host` alone, any
+  `X-Forwarded-Host` or request target's authority on it ignored, since a container is nobody's
+  proxy and a gate letting a caller pick the name it is judged by does not fail closed. So
+  `reaching.json` holds the allowed half alone; the refusal is held by driver(machine)'s entry
+  tests, by `Host` and by an ignored `X-Forwarded-Host`, and by a machine's rehearsal, curl from a
+  reacher's namespace naming a target it does not reach and getting the 403 whole.
