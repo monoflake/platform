@@ -139,7 +139,8 @@ were partitioned by `sgdisk` with disk.nix's labels in disko's order, and format
 there has no udev, so `/dev/disk/by-partlabel` appears only after `mdev -s`; eudev added instead
 deletes the partition nodes a repartitioning makes. reinstall's nix lives on the disk that is wiped,
 so its closure is moved to the tmpfs first, and `nixos-install` is not in a system's closure, so
-`nixos-install-tools` is copied beside it.
+`nixos-install-tools` is copied beside it. That Alpine opens a swap file on `/os` after a failed
+install, so `swapoff -a` comes before `/os` is unmounted.
 
 **A copy into a machine's store that breaks can leave its nix-daemon holding the path's lock**,
 seen on 2026-10-25: two copies across the Pacific dropped together, the daemon each had started
