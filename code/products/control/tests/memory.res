@@ -1,8 +1,8 @@
 /*** The control's parts kept in memory, as the API's tests stand them in for D1 and R2. */
 
-/** Draws counting up from 1, as bindings were numbered before they were drawn. */
+/** Draws counting up from the floor, the first id a draw may give. */
 let counting = () => {
-  let n = ref(0.)
+  let n = ref(Ids.floor -. 1.)
   () => {
     n := n.contents +. 1.
     n.contents

@@ -108,7 +108,7 @@ test(
     let state = Memory.state()
     let host = Host.make()
     let request = Web.request(
-      "https://control.test/v1/00000004/hello?x=1",
+      "https://control.test/v1/01000004/hello?x=1",
       {method: "GET", headers: dict{}},
     )
     let unknown = await Gateway.passed(
@@ -116,7 +116,7 @@ test(
       host.reach,
       ~port=36879,
       request,
-      {app: 4., path: "/hello"},
+      {app: 16777220., path: "/hello"},
       ~search="?x=1",
     )
     deepEqual(unknown->Web.status, 404)
@@ -132,17 +132,17 @@ test(
     )
     ignore(await state.addressed(~binding, ~address="10.200.0.1"))
     await state.routed(~binding)
-    ignore(await state.drawApp(~random=() => 4.))
-    await state.deploy({app: 4., binding, release: "", capacity: 1.})
+    ignore(await state.drawApp(~random=() => 16777220.))
+    await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
     let answer = await Gateway.passed(
       state,
       host.reach,
       ~port=36879,
       request,
-      {app: 4., path: "/hello"},
+      {app: 16777220., path: "/hello"},
       ~search="?x=1",
     )
-    deepEqual(await answer->Web.text, "entry asked /hello for 00000004.b0a1b2c3d")
+    deepEqual(await answer->Web.text, "entry asked /hello for 01000004.b0a1b2c3d")
     deepEqual(host.seen->Array.map(s => s.url), ["http://10.200.0.1:36879/hello?x=1"])
     host.gone := true
     let gone = await Gateway.passed(
@@ -150,7 +150,7 @@ test(
       host.reach,
       ~port=36879,
       request,
-      {app: 4., path: "/hello"},
+      {app: 16777220., path: "/hello"},
       ~search="",
     )
     deepEqual(gone->Web.status, 503)
@@ -209,7 +209,7 @@ test(
   },
 )
 
-/** A state holding app 4 deployed on a bound binding, its host faked. */
+/** A state holding app 01000004 deployed on a bound binding, its host faked. */
 let deployed = async () => {
   let state = Memory.state()
   let {id: organization} = await state.openOrganization("first", ~secret=Uint8Array.fromLength(32))
@@ -221,13 +221,13 @@ let deployed = async () => {
   )
   ignore(await state.addressed(~binding, ~address="10.200.0.1"))
   await state.routed(~binding)
-  ignore(await state.drawApp(~random=() => 4.))
-  await state.deploy({app: 4., binding, release: "", capacity: 1.})
+  ignore(await state.drawApp(~random=() => 16777220.))
+  await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
   state
 }
 
 let passing = (state, host: Host.t, request) =>
-  Gateway.passed(state, host.reach, ~port=36879, request, {app: 4., path: "/"}, ~search="")
+  Gateway.passed(state, host.reach, ~port=36879, request, {app: 16777220., path: "/"}, ~search="")
 
 test(
   "a request with no body that fails before any answer is sent once more, and answered",
@@ -236,7 +236,7 @@ test(
     let state = await deployed()
     let host = Host.make()
     host.drops := 1
-    let asked = Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}})
+    let asked = Web.request("https://control.test/v1/01000004/", {method: "GET", headers: dict{}})
     let answer = await passing(state, host, asked)
     deepEqual((answer->Web.status, host.seen->Array.length), (200, 2))
     host.drops := 2
@@ -250,12 +250,12 @@ test("a request whose body a first send spent is not sent again", async () => {
   let host = Host.make()
   host.drops := 1
   let posted = Web.request(
-    "https://control.test/v1/00000004/",
+    "https://control.test/v1/01000004/",
     {method: "POST", headers: dict{}, body: Web.utf8("once")},
   )
   let answer = await passing(state, host, posted)
   deepEqual((answer->Web.status, host.seen->Array.length), (503, 1))
-  let empty = Web.request("https://control.test/v1/00000004/", {method: "POST", headers: dict{}})
+  let empty = Web.request("https://control.test/v1/01000004/", {method: "POST", headers: dict{}})
   host.drops := 1
   deepEqual((await passing(state, host, empty))->Web.status, 200)
 })
@@ -286,14 +286,14 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
     ~random=Memory.counting(),
   )
   ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
-  ignore(await state.drawApp(~random=() => 4.))
-  await state.deploy({app: 4., binding, release: "", capacity: 1.})
+  ignore(await state.drawApp(~random=() => 16777220.))
+  await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
   let answer = await Gateway.passed(
     state,
     host.reach,
     ~port=36879,
-    Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}}),
-    {app: 4., path: "/"},
+    Web.request("https://control.test/v1/01000004/", {method: "GET", headers: dict{}}),
+    {app: 16777220., path: "/"},
     ~search="",
   )
   let reason =

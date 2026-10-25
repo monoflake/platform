@@ -20,8 +20,10 @@ type store = {
   copy: (~kind: string, ~from: float, ~into: float) => promise<unit>,
   /** Whether a plain binding's secret is written back sealed as read, or at its next write. */
   writesBack: bool,
-  /** A deployment of no container on binding 2, with no app record, as a forget halfway leaves. */
-  orphan: float => promise<unit>,
+  /** An app's record written directly, as a migration or an older control kept it. */
+  app: float => promise<unit>,
+  /** A deployment of no container on a binding, with no app record, as a forget halfway leaves. */
+  orphan: (~app: float, ~binding: float) => promise<unit>,
 }
 
 type secretRow = {secret: Nullable.t<string>}
@@ -59,10 +61,11 @@ let d1 = () => {
             [Number(into), Number(from)],
           )->Stores.run,
     writesBack: true,
-    orphan: app =>
+    app: id => statement("INSERT INTO app (id) VALUES (?)", [Number(id)])->Stores.run,
+    orphan: (~app, ~binding) =>
       statement(
-        "INSERT INTO deployment (app, binding, release, capacity) VALUES (?, 2, 'aa', 0)",
-        [Number(app)],
+        "INSERT INTO deployment (app, binding, release, capacity) VALUES (?, ?, 'aa', 0)",
+        [Number(app), Number(binding)],
       )->Stores.run,
   }
 }
@@ -108,7 +111,12 @@ let objects = () => {
       ->Dict.get(at(kind, from))
       ->Option.forEach(bytes => held->Dict.set(at(kind, into), bytes)),
     writesBack: false,
-    orphan: async app =>
+    app: async id =>
+      held->Dict.set(
+        `state/apps/${Float.toString(id)}`,
+        Web.utf8(JSON.stringify(Object(dict{"id": Number(id)}))),
+      ),
+    orphan: async (~app, ~binding) =>
       held->Dict.set(
         `state/deployments/${Float.toString(app)}`,
         Web.utf8(
@@ -116,7 +124,7 @@ let objects = () => {
             Object(
               dict{
                 "app": Number(app),
-                "binding": Number(2.),
+                "binding": Number(binding),
                 "release": String("aa"),
                 "capacity": Number(0.),
               },
@@ -476,6 +484,8 @@ test("an app's id drawn is unique among every id held, and drawn again on a conf
     let store = make()
     let state = store.state(Sealing.ofKey(key))
     let organization = await state.openOrganization("first", ~secret)
+    // Organizations are counted below the floor, so one above it is written directly.
+    await store.put(~kind="organization", ~id=16909060., Envelope.Hex.encode(secret))
     let binding = await state.openBinding(
       ~organization=organization.id,
       ~secret,
@@ -491,15 +501,15 @@ test("an app's id drawn is unique among every id held, and drawn again on a conf
     await state.putRelease({hash: "aa", form: Modules, size: 3.})
     ignore(await state.drawApp(~random=() => 169552957.))
     await state.deploy({app: 169552957., binding, release: "aa", capacity: 1.})
-    // The organization's id, a binding's, a deployed app's and 0 are each drawn again.
+    // An organization's id, a binding's, a deployed app's and 0 are each drawn again.
     let first = await state.drawApp(
-      ~random=scripted(list{organization.id, other, 169552957., 0., 4275878552.}),
+      ~random=scripted(list{16909060., other, 169552957., 0., 4275878552.}),
     )
-    let second = await state.drawApp(~random=scripted(list{4275878552., 7.}))
-    let exhausted = await thrown(() => state.drawApp(~random=() => 7.))
+    let second = await state.drawApp(~random=scripted(list{4275878552., 16777223.}))
+    let exhausted = await thrown(() => state.drawApp(~random=() => second))
     deepEqual(
       (first, second, exhausted),
-      (4275878552., 7., Some("every one of 16 app ids drawn is held already")),
+      (4275878552., 16777223., Some("every one of 16 app ids drawn is held already")),
       ~message=store.name,
     )
   }
@@ -535,18 +545,42 @@ test("an organization's next id is counted on past every id an app or a binding 
     let store = make()
     let state = store.state(Sealing.ofKey(key))
     let first = await state.openOrganization("first", ~secret)
+    // Held below the floor as kept before ids were drawn, since no draw gives them.
+    await store.put(~kind="binding", ~id=2., Envelope.Hex.encode(secret))
+    await store.app(3.)
+    await store.app(4.)
+    await state.putRelease({hash: "aa", form: Modules, size: 3.})
+    await state.deploy({app: 4., binding: 2., release: "aa", capacity: 1.})
+    let second = await state.openOrganization("second", ~secret)
+    deepEqual(
+      (
+        (await state.binding(2.))->Option.map(b => b.organization),
+        (await state.deployment(4.))->Option.map(d => d.capacity),
+        second.id,
+      ),
+      (Some(first.id), Some(1.), 5.),
+      ~message=store.name,
+    )
+  }
+)
+
+test("an organization opened after ids drawn above the floor is given the next low one", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let store = make()
+    let state = store.state(Sealing.ofKey(key))
+    let first = await state.openOrganization("first", ~secret)
     let binding = await state.openBinding(
       ~organization=first.id,
       ~secret,
       ~relayed=false,
-      ~random=scripted(list{2.}),
+      ~random=Memory.counting(),
     )
-    let app = await state.drawApp(~random=scripted(list{3.}))
+    let app = await state.drawApp(~random=Memory.counting())
     await state.putRelease({hash: "aa", form: Modules, size: 3.})
-    ignore(await state.drawApp(~random=() => 4.))
-    await state.deploy({app: 4., binding, release: "aa", capacity: 1.})
+    await state.deploy({app, binding, release: "aa", capacity: 1.})
     let second = await state.openOrganization("second", ~secret)
-    deepEqual((binding, app, second.id), (2., 3., 5.), ~message=store.name)
+    deepEqual((binding, app, second.id), (16777216., 16777217., 2.), ~message=store.name)
   }
 )
 
@@ -558,16 +592,18 @@ test(
       let store = make()
       let state = store.state(Sealing.ofKey(key))
       let organization = await state.openOrganization("first", ~secret)
+      // Organizations are counted below the floor, so one above it is written directly.
+      await store.put(~kind="organization", ~id=16909060., Envelope.Hex.encode(secret))
       let open_ = random =>
         state.openBinding(~organization=organization.id, ~secret, ~relayed=false, ~random)
-      // The organization's id and 0 are each drawn again.
-      let first = await open_(scripted(list{organization.id, 0., 169552957.}))
-      let app = await state.drawApp(~random=scripted(list{first, 7.}))
+      // An organization's id and 0 are each drawn again.
+      let first = await open_(scripted(list{16909060., 0., 169552957.}))
+      let app = await state.drawApp(~random=scripted(list{first, 16777223.}))
       await state.putRelease({hash: "aa", form: Modules, size: 3.})
-      ignore(await state.drawApp(~random=() => 9.))
-      await state.deploy({app: 9., binding: first, release: "aa", capacity: 1.})
+      ignore(await state.drawApp(~random=() => 16777225.))
+      await state.deploy({app: 16777225., binding: first, release: "aa", capacity: 1.})
       // A binding's, an app's and a deployed app's are each drawn again.
-      let second = await open_(scripted(list{first, app, 9., 4275878552.}))
+      let second = await open_(scripted(list{first, app, 16777225., 4275878552.}))
       let asked = ref(0)
       let exhausted = await thrown(() =>
         open_(
@@ -581,7 +617,7 @@ test(
         (first, app, second, exhausted, asked.contents),
         (
           169552957.,
-          7.,
+          16777223.,
           4275878552.,
           Some("every one of 16 binding ids drawn is held already"),
           16,
@@ -604,7 +640,7 @@ test("a binding's address is the one given, else the lowest free, and once held 
         ~relayed=false,
         ~random=scripted(list{id}),
       )
-    let (a, b, c) = (await open_(2.), await open_(3.), await open_(4.))
+    let (a, b, c) = (await open_(16777218.), await open_(16777219.), await open_(16777220.))
     deepEqual(
       (
         await state.addressed(~binding=a, ~address="10.200.0.7"),
@@ -657,14 +693,14 @@ test("an app drawn and never run is forgotten, one that ran or none held is not"
       ~organization=organization.id,
       ~secret,
       ~relayed=false,
-      ~random=scripted(list{2.}),
+      ~random=scripted(list{16777218.}),
     )
     await state.putRelease({hash: "aa", form: Modules, size: 3.})
-    let never = await state.drawApp(~random=scripted(list{5.}))
+    let never = await state.drawApp(~random=scripted(list{16777221.}))
     await state.deploy({app: never, binding, release: "aa", capacity: 0.})
-    let ran = await state.drawApp(~random=scripted(list{6.}))
+    let ran = await state.drawApp(~random=scripted(list{16777222.}))
     await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
-    let bare = await state.drawApp(~random=scripted(list{7.}))
+    let bare = await state.drawApp(~random=scripted(list{16777223.}))
     deepEqual(
       (
         await state.forgetApp(never),
@@ -675,9 +711,9 @@ test("an app drawn and never run is forgotten, one that ran or none held is not"
         await state.deployment(never),
         (await state.deployment(ran))->Option.map(d => d.capacity),
         // A forgotten id is free to be drawn again.
-        await state.drawApp(~random=scripted(list{5.})),
+        await state.drawApp(~random=scripted(list{16777221.})),
       ),
-      (true, false, true, false, false, None, Some(1.), 5.),
+      (true, false, true, false, false, None, Some(1.), 16777221.),
       ~message=store.name,
     )
   }
@@ -735,13 +771,13 @@ test(
           ~random=scripted(list{id}),
         )
       // Addressed first and never routed, a binding is no storage and is never bound.
-      let unrouted = await open_(3.)
+      let unrouted = await open_(16777219.)
       ignore(await state.addressed(~binding=unrouted))
       let high = await open_(4275878552.)
       ignore(await state.addressed(~binding=high))
       let none = await state.storage(organization.id)
       await state.routed(~binding=high)
-      let low = await open_(2.)
+      let low = await open_(16777218.)
       ignore(await state.addressed(~binding=low))
       await state.routed(~binding=low)
       // A bound binding's address is never given back.
@@ -772,7 +808,9 @@ test("bindings given an address before keep the order their ids gave them", asyn
     (2, 1, '${Envelope.Hex.encode(secret)}', '10.200.0.2', 2)`,
   )
   let state = State.ofDatabase(database, ~sealing=Sealing.ofKey(key))
-  let low = await state.openBinding(~organization=1., ~secret, ~relayed=false, ~random=() => 9.)
+  let low = await state.openBinding(~organization=1., ~secret, ~relayed=false, ~random=() =>
+    16777225.
+  )
   ignore(await state.addressed(~binding=low))
   await state.routed(~binding=low)
   deepEqual(
@@ -822,17 +860,17 @@ test("a forgotten app's deploy lands nowhere, and a halfway forget is finished a
       ~organization=organization.id,
       ~secret,
       ~relayed=false,
-      ~random=scripted(list{2.}),
+      ~random=scripted(list{16777218.}),
     )
     await state.putRelease({hash: "aa", form: Modules, size: 3.})
-    let app = await state.drawApp(~random=scripted(list{5.}))
+    let app = await state.drawApp(~random=scripted(list{16777221.}))
     await state.deploy({app, binding, release: "aa", capacity: 0.})
     let forgotten = await state.forgetApp(app)
     // The deploy's container is declared after the forget, as a deploy racing it would.
     await state.deploy({app, binding, release: "aa", capacity: 1.})
     let landed = await state.deployment(app)
-    await store.orphan(7.)
-    let orphaned = (await state.forgetApp(7.), await state.deployment(7.))
+    await store.orphan(~app=16777223., ~binding)
+    let orphaned = (await state.forgetApp(16777223.), await state.deployment(16777223.))
     deepEqual((forgotten, landed, orphaned), (true, None, (true, None)), ~message=store.name)
   }
 )
@@ -858,7 +896,9 @@ test(
       `{"id": 2, "organization": 1, "secret": "${plain}", "relayed": false, "tunnel": "t-2", "address": "10.200.0.2"}`,
     )
     let state = State.ofObjects(kept, ~sealing=Sealing.ofKey(key))
-    let later = await state.openBinding(~organization=1., ~secret, ~relayed=false, ~random=() => 7.)
+    let later = await state.openBinding(~organization=1., ~secret, ~relayed=false, ~random=() =>
+      16777223.
+    )
     ignore(await state.addressed(~binding=later))
     await state.routed(~binding=later)
     deepEqual(

@@ -20,6 +20,9 @@ let ofBytes = (bytes: Uint8Array.t) =>
 /** How many ids are drawn before a draw gives up, each one a conflict. */
 let draws = 16
 
+// Below 2^24 lie the numbered ids, the scaffold's and conform's block, none drawn, RFC b8f35.
+let floor = 16777216.
+
 /**
  * An id of a kind drawn by `random` and kept by `kept`, drawn again where it answers it was held
  * already.
@@ -32,8 +35,8 @@ let drawn = async (~random, ~kind, kept) => {
       )
     } else {
       let id = random()
-      // Id 0 is no record's, so a draw of it is a conflict.
-      switch id > 0. && (await kept(id)) {
+      // A draw below the floor is drawn again, as a conflict is.
+      switch id >= floor && (await kept(id)) {
       | true => id
       | false => await draw(left - 1)
       }

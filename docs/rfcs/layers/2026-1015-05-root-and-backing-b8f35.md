@@ -289,6 +289,10 @@ where it is shown, lowercase and at its full width, leading zeros kept:
   among all of its resources, whatever their kind, so an id names one resource and carries its
   type, worked out with the author on 2026-10-18 -- and two platforms, one on another, check theirs
   apart, RFC 94y0d, so one id may name different things on each.
+- **No id of 8 hex digits is drawn below 2^24**, `01000000`, a draw there drawn again, provisional,
+  chosen by the advisor on 2026-10-25: below it lie the ids numbered before ids were drawn, the
+  names their decimal scaffold gives, the bindings conform opens from 1000, and test fixtures, and
+  none can then meet a drawn one, at 1/256 of the space.
 - **An id derived is never checked and never shortened**: 256 bits are taken as never colliding,
   and a match is taken as the same content, so a shortened one would hand one owner another's.
 - **Stored, it is an integer or bytes**: 8 hex digits as an integer, 64 as 32 bytes, base36 as an

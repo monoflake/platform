@@ -217,14 +217,14 @@ let kept = async (state: State.t) => {
   await state.putRelease({hash: "aa", form: Modules, size: 3.})
   await state.putRelease({hash: "aa", form: Image, size: 9.})
   await state.deploy({app: 4., binding: storage, release: "aa", capacity: 1.})
-  let drawn = await state.drawApp(~random=() => 8.)
+  let drawn = await state.drawApp(~random=() => 16777224.)
   await state.deploy({app: drawn, binding: storage, release: "aa", capacity: 0.})
   let forgotten = (
     await state.forgetApp(4.),
     await state.forgetApp(drawn),
     await state.forgetApp(drawn),
     await state.deployment(drawn),
-    await state.drawApp(~random=() => 8.),
+    await state.drawApp(~random=() => 16777224.),
   )
   (
     forgotten,
@@ -246,7 +246,7 @@ test("a state over objects keeps what the state in memory keeps", async () => {
   deepEqual(overObjects, await kept(Memory.state()))
   // An app that ran is kept, one drawn and never run forgotten once, and its id drawn again.
   let (forgotten, _, _, _, _, _, _, _, _) = overObjects
-  deepEqual(forgotten, (false, true, false, None, 8.))
+  deepEqual(forgotten, (false, true, false, None, 16777224.))
   ok(
     objects->Dict.keysToArray->Array.every(n => n->String.startsWith("state/")),
     ~message="every record is under state/",
@@ -281,12 +281,12 @@ test("a forget over a control that does not delete, or keeps what it deleted, fa
         : await fetch(request)
     let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
     let state = State.ofObjects(Objects.through(~origin, ~token, old), ~sealing)
-    let app = await state.drawApp(~random=() => 8.)
+    let app = await state.drawApp(~random=() => 16777224.)
     let failed = switch await state.forgetApp(app) {
     | _ => false
     | exception JsExn(_) => true
     }
-    let again = switch await state.drawApp(~random=() => 8.) {
+    let again = switch await state.drawApp(~random=() => 16777224.) {
     | _ => false
     | exception JsExn(_) => true
     }
