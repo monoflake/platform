@@ -41,3 +41,22 @@ moves to a private path over Cloudflare's network, monoflake/driver's RFC 5n9cy.
 This is the control plane alone, a control reaching a binding's driver. An app reaching its storage
 on the same account is the data plane, inlined inside Cloudflare and never through the control,
 the workspace's deferred `inline-data-path`.
+
+### Ledger
+
+Choices made provisionally while the thread runs, read by the author at its end.
+
+- **The contract's shape**, a small matter, provisional, chosen by the advisor on 2026-10-24.
+  `binding-bind` carries a union, `tunnel` or `origin`; `binding-bound` is `{binding, reached}`,
+  `reached` a union; `bindings` goes 1 to 2; `bind` gains `not_proven`, rejected, a call back that
+  is not that binding's driver, and a call back not reached stays `unreachable`.
+- **What an origin may be**, a small matter, provisional, chosen by the advisor on 2026-10-24:
+  `https`, its host a DNS name and never an IP literal, on the default port, with no path, query,
+  user or fragment; anything else answers `malformed`, and samples hold each refused form. The
+  control calls back whatever the binder reports, so the origin's shape is the one place to keep
+  that call from being aimed at an address the control can reach and the public cannot. The
+  control's own `http` network, public destinations alone, is the second guard.
+- **A machine's driver moves with the control**, a small matter, provisional, chosen by the advisor
+  on 2026-10-24: a driver sending the empty input of version 1 cannot bind under version 2, so the
+  switch moves both machines' drivers with the control in one step, and its rollback moves them
+  back together.
