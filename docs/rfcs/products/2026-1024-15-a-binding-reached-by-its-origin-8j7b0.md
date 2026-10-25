@@ -122,3 +122,18 @@ Choices made provisionally while the thread runs, read by the author at its end.
   `deployments` and `database` declare `component` among their callers, while both drivers accept
   only the binding's token. The path RFC b8f35 describes, the blob and the extent moving parcels
   through the object kind under a certificate, does not exist yet.
+- **A sample that makes the control bind a tunnel is marked and off by default**, a small matter,
+  provisional, chosen by the advisor on 2026-10-24, as one needing the network is: `"tunnel": true`
+  on the case, each skipped case named, and only `--tunnel yes` runs it, against a control in local
+  mode alone, where a bind allocates an address and touches nothing outside. The runner refuses
+  `--tunnel yes` against a control it cannot tell is local, since a tunnel bind on Cloudflare makes
+  a real tunnel in the platform's own account. `bind` declares `invalid` rather than answering it as
+  `unknown`, which would be a deviation made only to save a sample.
+- **A spent token answers `denied` before any reach is read**, a small matter, provisional, chosen
+  by the advisor on 2026-10-24, the gate's own order, RFC 6x8su: the proof is checked before the
+  operation reads any state, so a tunnel bind after an origin bind answers `denied`, never
+  `invalid`, and a spent token learns nothing of the binding.
+- **An origin's default port and its punycode are judged as parsed**, a fact recorded by the advisor
+  on 2026-10-24: an `https` origin naming port 443 is accepted, the parser dropping the default
+  port, and each `xn--` label must decode and come back the same through the parser, or it is
+  `malformed`.
