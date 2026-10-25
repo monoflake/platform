@@ -60,3 +60,8 @@ Choices made provisionally while the thread runs, read by the author at its end.
   on 2026-10-24: a driver sending the empty input of version 1 cannot bind under version 2, so the
   switch moves both machines' drivers with the control in one step, and its rollback moves them
   back together.
+- **The bind samples' origins are reserved names**, a small matter, provisional, chosen by the
+  advisor on 2026-10-24: `https://example.com` answers and is no driver, RFC 2606, and a `.invalid`
+  name never answers, RFC 6761. The `.invalid` case needs no network; the `example.com` case does,
+  so the runner marks it as needing the network and reports it skipped, never passed, where there
+  is none, RFC p8e8k. The runner carries a bearer for a product's sample.
