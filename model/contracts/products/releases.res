@@ -36,7 +36,7 @@ let types: array<declared> = [
 /** A host that does not answer is `unreachable`, and the caller retries, rxmd9. */
 let interface_: interface_ = {
   name: "releases",
-  version: 3,
+  version: 4,
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [
@@ -62,6 +62,15 @@ let interface_: interface_ = {
       "release-of",
       "deployment-described",
       [("not_found", #rejected), ("unreachable", #unavailable)],
+      ~callers=[#operator],
+    ),
+    // An app whose id was drawn and that never ran, no container and capacity 0, removed; an app
+    // that ran is `deployed`, removed by its own path and never this one.
+    op(
+      "forget",
+      "release-of",
+      "release-of",
+      [("not_found", #rejected), ("deployed", #rejected)],
       ~callers=[#operator],
     ),
   ],

@@ -63,6 +63,12 @@ let libraries: dict<library> = dict{
     agrees: false,
     uses: ["envelope*", "codec*", "capability*"],
   },
+  "ids*": {
+    languages: [#rescript],
+    what: "an id of b8f35 written and read as the tools give it, 8 lowercase hex digits with no prefix, an app's and a binding's alike, and taken from a tool's arguments",
+    agrees: false,
+    uses: [],
+  },
   "scope*": {
     languages: [#rescript],
     what: "a scope, a concept and never a process: its status and allowance read from its organization's bundle, and whether a need fits it, judged alike by every reader, vuanj",

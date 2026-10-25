@@ -16,7 +16,7 @@ let clients: int
  * The shell asking hello through the entry from `clients` loops on the machine, each asking again
  * as an answer comes, until the file `stop` exists or half an hour has passed, one line per ask.
  */
-let shell: (~app: int, ~binding: int, ~stop: string) => string
+let shell: (~app: float, ~binding: float, ~stop: string) => string
 
 /** A line the shell printed, read as its ask, none where it is no such line. */
 let read: string => option<asked>

@@ -8139,7 +8139,7 @@
 			]
 		},
 		"releases": {
-			"version": 3,
+			"version": 4,
 			"bounds": {
 				"artifact": 33554432
 			},
@@ -8209,6 +8209,22 @@
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
+						}
+					],
+					"callers": ["operator"]
+				},
+				{
+					"name": "forget",
+					"input": "release-of",
+					"output": "release-of",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "deployed",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["operator"]

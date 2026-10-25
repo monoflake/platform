@@ -10,10 +10,10 @@ type t = {name: string, address: string}
 let control: array<string> => result<(option<string>, array<string>), string>
 
 /** The gateway's address of an app, `<origin>/v1/<id in 8 hex>/`. */
-let gateway: (~origin: string, ~app: int) => string
+let gateway: (~origin: string, ~app: float) => string
 
 /**
  * The gateway where a control is named, or else the tunnel the machine printed, none where it
  * printed none.
  */
-let chosen: (~control: option<string>, ~tunnel: result<string, string>, ~app: int) => option<t>
+let chosen: (~control: option<string>, ~tunnel: result<string, string>, ~app: float) => option<t>

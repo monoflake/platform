@@ -20,7 +20,7 @@ let untokened: string
 let unknown: string
 
 /** The shell calling deployments' describe of an app's deployment with the live binding's token. */
-let deployment: (~app: int) => string
+let deployment: (~app: float) => string
 
 /** The shell printing the live binding's id, what stands before its token's dot. */
 let binding: string
@@ -29,7 +29,7 @@ let binding: string
 let entered: string
 
 /** The shell asking the live entry for `/` by the host of an app's deployment on the binding. */
-let hello: (~app: int, ~binding: int) => string
+let hello: (~app: float, ~binding: float) => string
 
 /** The shell printing the machine's tunnel address, none where it has none. */
 let tunnel: string

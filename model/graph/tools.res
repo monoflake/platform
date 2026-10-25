@@ -25,23 +25,23 @@ let tools: dict<tool> = dict{
   "deploy": {
     what: "a Worker's bundle, built by wrangler, packed as the function kind takes it and sent to a test machine as a list and a deployment, what a user runs to deploy an app of their own, n0o4l",
     languages: [#rescript],
-    uses: ["envelope*"],
+    uses: ["envelope*", "ids*"],
   },
   "conform": {
     what: "the kinds' samples run by the runner against the driver a test machine runs, on a second driver started from its binary with bindings of its own, the live one asked beside it and everything the run made removed after, n0o4l",
     languages: [#rescript],
-    uses: ["envelope*"],
+    uses: ["envelope*", "ids*"],
   },
   "lose": {
     what: "a test machine's driver stopped while hello is asked through its entry and its tunnel, its calls found refused, and the driver started again and found as it was, rmll5",
     languages: [#rescript],
-    uses: ["envelope*"],
+    uses: ["envelope*", "ids*"],
     blocks: ["conform"],
   },
   "replace": {
     what: "a test machine's driver, entry and containerd restarted and a new build copied in while hello is asked by several clients at once through its entry and its tunnel, each request refused or failed counted against the action it fell in, ehm48",
     languages: [#rescript],
-    uses: ["envelope*"],
+    uses: ["envelope*", "ids*"],
     blocks: ["conform", "lose"],
   },
   "runner": {

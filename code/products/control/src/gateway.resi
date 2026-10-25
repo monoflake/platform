@@ -13,7 +13,7 @@ type routed = {app: float, path: string}
  */
 let routed: string => option<routed>
 
-/** The host the entry hands to an app's deployment, `<id in 8 hex>.b<binding>`. */
+/** The host the entry hands to an app's deployment, `<id in 8 hex>.b<binding's id in 8 hex>`. */
 let host: (~app: float, ~binding: float) => string
 
 /**
