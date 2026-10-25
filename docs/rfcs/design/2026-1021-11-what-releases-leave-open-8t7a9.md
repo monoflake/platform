@@ -23,4 +23,5 @@ Deferred by the author on 2026-10-22:
   `repository_dispatch` from this repository's CI may be the main trigger and the schedule a
   fallback.
 - A binary cache of the machine's NixOS, so a machine downloads its system rather than building it,
-  cannot be a release asset; where it is kept, an object store with Nix's signing key, is open.
+  cannot be a release asset; where it is kept, an object store with Nix's signing key, is open. The
+  hosted fleet's own answer is monoflake/cloud's RFC u9fxz.
