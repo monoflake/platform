@@ -74,3 +74,7 @@ spelled = ["monoflake-challenge"]
 [[names.data]]
 file = "model/contracts/kinds/deployments.res"
 spelled = ["MONOFLAKE_"]
+
+[[names.data]]
+file = "code/tools/runner/fixtures/reach-modules/reach.js"
+spelled = ["env.MONOFLAKE_REACHING", "MONOFLAKE_REACHING"]

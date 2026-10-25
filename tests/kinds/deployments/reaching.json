@@ -1,0 +1,162 @@
+{
+	"interface": "deployments",
+	"cases": [
+		{
+			"description": "a deployment reaches by name what its reaching lists, through the entry, and is answered as the target answers",
+			"steps": [
+				{
+					"call": "deploy",
+					"fixture": "echo-modules",
+					"input": {
+						"runs": {
+							"name": "app",
+							"id": 2
+						},
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"]
+					},
+					"expect": {
+						"output": {
+							"runs": {
+								"name": "app",
+								"id": 2
+							},
+							"version": {
+								"$any": null
+							},
+							"state": {
+								"$any": null
+							}
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": {
+						"runs": {
+							"name": "app",
+							"id": 2
+						}
+					},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": {
+								"name": "app",
+								"id": 2
+							},
+							"version": {
+								"$any": null
+							},
+							"state": {
+								"name": "running",
+								"runtime": {
+									"$any": null
+								},
+								"isolation": {
+									"$any": null
+								},
+								"address": {
+									"$any": null
+								}
+							}
+						}
+					}
+				},
+				{
+					"call": "deploy",
+					"fixture": "reach-modules",
+					"input": {
+						"runs": {
+							"name": "app",
+							"id": 3
+						},
+						"isolation": ["isolate"],
+						"footing": "https://footing.invalid",
+						"secrets": {},
+						"network": ["http"],
+						"reaching": [
+							{
+								"name": "app",
+								"id": 2
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"runs": {
+								"name": "app",
+								"id": 3
+							},
+							"version": {
+								"$any": null
+							},
+							"state": {
+								"$any": null
+							}
+						}
+					}
+				},
+				{
+					"call": "describe",
+					"input": {
+						"runs": {
+							"name": "app",
+							"id": 3
+						}
+					},
+					"within": 60000,
+					"expect": {
+						"output": {
+							"runs": {
+								"name": "app",
+								"id": 3
+							},
+							"version": {
+								"$any": null
+							},
+							"state": {
+								"name": "running",
+								"runtime": {
+									"$any": null
+								},
+								"isolation": {
+									"$any": null
+								},
+								"address": {
+									"$capture": "reacher"
+								}
+							}
+						}
+					}
+				},
+				{
+					"send": {
+						"to": {
+							"$use": "reacher"
+						},
+						"export": "reach",
+						"body": {
+							"id": "00000002",
+							"body": {
+								"text": "hello",
+								"count": "5"
+							}
+						}
+					},
+					"expect": {
+						"answer": {
+							"status": 200,
+							"body": {
+								"text": "hello",
+								"count": "5"
+							}
+						}
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,5 @@
+{
+	"description": "asks a target it reaches by its id through the entry, and answers what came back with its status, RFC y2xd3",
+	"form": "modules",
+	"exports": ["reach"]
+}

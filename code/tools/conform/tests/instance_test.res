@@ -40,6 +40,44 @@ test("a machine whose binding or ports the run would take is refused", () => {
   )
 })
 
+test(
+  "a port an earlier run's unit holds is passed, and refused where anything else holds it",
+  () => {
+    let entryAt = `10.250.0.1:${Int.toString(Instance.entry)}`
+    let driverAt = `127.0.0.1:${Int.toString(Instance.port)}`
+    let leftover = `binding=1\nsubvolumes=0\nlistening=${entryAt}\nlistening=${driverAt}\nours=${entryAt}\nours=${driverAt}\n`
+    ok(Instance.readFacts(leftover)->Result.isOk)
+    // What the run left is still told as listening, so only the excuse is new.
+    deepEqual(
+      Instance.readFacts(leftover)->Result.map(f => f.listening),
+      Ok([Instance.entry, Instance.port]),
+    )
+    ok(
+      Instance.readFacts(
+        `binding=1\nsubvolumes=0\nlistening=0.0.0.0:${Int.toString(
+            Instance.entry,
+          )}\nours=${entryAt}\n`,
+      )->Result.isError,
+    )
+    ok(
+      Instance.readFacts(
+        `binding=1\nsubvolumes=0\nlistening=${driverAt}\nlistening=[::1]:${Int.toString(
+            Instance.port,
+          )}\nours=${driverAt}\n`,
+      )->Result.isError,
+    )
+    // The shell names an address ours by the entry's socket and by the driver's own process.
+    ok(
+      Instance.facts->String.includes(
+        `systemctl show -p Listen --value ${Instance.unit}-entry.socket`,
+      ),
+    )
+    ok(
+      Instance.facts->String.includes(`systemctl show -p MainPID --value ${Instance.unit}.service`),
+    )
+  },
+)
+
 test("networks overlap where one holds an address of the other", () => {
   ok(Instance.overlaps("10.250.0.0/24", "10.0.0.0/8"))
   ok(Instance.overlaps("10.250.0.0/24", "10.250.0.7"))
@@ -80,6 +118,23 @@ test("the shell starts the driver on the bindings, its own port, bridge and subn
   ok(shell->String.includes(`-le ${Int.toString(Instance.first + 1)}`))
 })
 
+test(
+  "the shell starts an entry of its own on the bridge's address, its subnet and containerd",
+  () => {
+    let shell = Instance.started(~count=1, ~subnet="10.251.0.0/24")
+    let at = `10.251.0.1:${Int.toString(Instance.entry)}`
+    ok(shell->String.includes(`--unit=${Instance.unit}-entry`))
+    ok(
+      shell->String.includes(`--socket-property=ListenStream=${at} --socket-property=FreeBind=yes`),
+    )
+    ok(shell->String.includes(`entry --listen=${at} --containerd="$c" --subnet=10.251.0.0/24`))
+    ok(shell->String.includes("c=${c:-/run/containerd/containerd.sock}"))
+    // The live entry's port is never taken, nor the address on the live bridge.
+    ok(!(shell->String.includes(":36879")) && !(shell->String.includes("10.88.")))
+    ok(shell->String.includes(`systemctl is-active --quiet ${Instance.unit}-entry.service`))
+  },
+)
+
 test("what cleaning said is read as removed and left", () => {
   deepEqual(
     Instance.readCleaned("removed the unit u\nremoved /run/x\nleft the qgroup 1/1000\nnoise\n"),
@@ -95,6 +150,18 @@ test("what cleaning said is read as removed and left", () => {
   ok(at("btrfs qgroup remove") < at("btrfs qgroup destroy"))
   // A name tested as the run's is never the variable a loop reads it from.
   ok(shell->String.includes("mine() { k=") && !(shell->String.includes("mine() { n=")))
+  // The entry's socket and service are stopped before the driver and looked for again after.
+  ok(shell->String.includes(`e=${Instance.unit}-entry `))
+  ok(at(`systemctl stop "$e.$k"`) < at(`systemctl stop "$u.service"`))
+  ok(shell->String.includes(`echo "removed the unit $e.$k"`))
+  ok(shell->String.includes(`echo "left the unit $e.$k"`))
+  ok(shell->String.includes("for k in socket service"))
+  // A reacher's fence element is removed where it is the run's own, and looked for again after.
+  ok(shell->String.includes(`nft delete element inet fence reaching "{ $el }"`))
+  ok(shell->String.includes(`echo "left the fence element $el"`))
+  ok(shell->String.includes(`$5 == ${Int.toString(Instance.entry)} && $1 ~ /^(10\\.250\\.0|`))
+  ok(!(shell->String.includes("10\\.88")) && !(shell->String.includes("36879")))
+  ok(at("fenced | while read") > at("fenced() {"))
 })
 
 test("a directory, a bound or an architecture the machine does not give is none", () => {

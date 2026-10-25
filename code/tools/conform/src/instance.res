@@ -9,6 +9,9 @@ let bridge = "conform0"
 /** The subnets it may take, each a /24 apart from the live driver's. */
 let candidates = ["10.250.0.0/24", "10.251.0.0/24", "10.252.0.0/24", "10.253.0.0/24"]
 
+/** The unit its entry runs as, a socket and the service it starts. */
+let entryUnit = `${unit}-entry`
+
 let int = Int.toString
 
 /** The live driver's command line, and `o` printing the first value of one of its flags. */
@@ -16,7 +19,8 @@ let flags = `a=$(systemctl show -p ExecStart --value driver-machine) || exit 1
 o() { printf '%s\\n' "$a" | grep -o -- "--$1=[^ ;]*" | head -n 1 | cut -d= -f2-; }
 `
 
-// The live token's id is what stands before its dot, and only that is printed.
+// The live token's id is what stands before its dot, and only that is printed. An address an
+// earlier run's unit still holds is printed as ours, so the clean before the start removes it.
 let facts = `${flags}b=$(o bindings) && [ -n "$b" ] || { echo "the driver names no binding" >&2; exit 1; }
 m=$(o mount); m=\${m:-/data}
 echo "binding=$(head -n 1 "$b" | cut -s -d. -f1)"
@@ -24,6 +28,9 @@ echo "mount=$m"
 echo "subvolumes=$(btrfs subvolume list "$m" | wc -l)"
 ip -4 route show | awk '{ print "route=" $1 }'
 ss -Hltn | awk '{ print "listening=" $4 }'
+systemctl show -p Listen --value ${entryUnit}.socket 2> /dev/null | awk 'NF { print "ours=" $1 }'
+p=$(systemctl show -p MainPID --value ${unit}.service 2> /dev/null)
+[ "\${p:-0}" = 0 ] || ss -Hltnp | grep -F "pid=$p," | awk '{ print "ours=" $4 }'
 echo "local=$(o local)"
 echo "largest=$(o largest)"
 echo "architecture=$(uname -m)"
@@ -83,14 +90,19 @@ let readFacts = text => {
   let said = said(text)
   let one = name => valuesOf(said, name)->Array.get(0)
   let listening = valuesOf(said, "listening")->Array.filterMap(portOf)
+  let ours = valuesOf(said, "ours")
+  let others =
+    valuesOf(said, "listening")
+    ->Array.filter(address => !(ours->Array.includes(address)))
+    ->Array.filterMap(portOf)
   switch (one("binding")->Option.flatMap(whole), one("subvolumes")->Option.flatMap(whole)) {
   | (None, _) => Error("the live binding's token names no id before its dot")
   | (_, None) => Error("the subvolumes of the mount were not counted")
   | (Some(binding), _) if binding >= first =>
     Error(`the live binding ${int(binding)} is among those from ${int(first)} this run takes`)
-  | (_, Some(_)) if listening->Array.includes(port) =>
+  | (_, Some(_)) if others->Array.includes(port) =>
     Error(`something listens on port ${int(port)} already`)
-  | (_, Some(_)) if listening->Array.includes(entry) =>
+  | (_, Some(_)) if others->Array.includes(entry) =>
     Error(`something listens on port ${int(entry)}, the second driver's entry, already`)
   | (Some(binding), Some(subvolumes)) =>
     Ok({
@@ -207,6 +219,34 @@ let overlaps = (a, b) =>
 let subnet = routes =>
   candidates->Array.find(c => !(routes->Array.some(r => r != "default" && overlaps(c, r))))
 
+/** An IPv4 address written as four octets. */
+let dotted = n =>
+  [16777216., 65536., 256., 1.]
+  ->Array.map(d => Math.floor(n /. d)->Float.mod(256.)->Float.toInt->Int.toString)
+  ->Array.join(".")
+
+/** The bridge's own address, the first of its subnet, as host-local gives a gateway. */
+let gatewayOf = subnet =>
+  networkOf(subnet)->Option.map(((a, n)) => {
+    let size = Math.pow(2., ~exp=Int.toFloat(32 - n))
+    dotted(Math.floor(a /. size) *. size +. 1.)
+  })
+
+// FreeBind lets the socket take the bridge's address before the first container makes the bridge.
+let entryStarted = (~subnet) =>
+  switch gatewayOf(subnet) {
+  | None =>
+    `echo "the subnet ${subnet} gives no address for the entry" >&2; exit 1
+`
+  | Some(address) =>
+    `c=$(o containerd); c=\${c:-/run/containerd/containerd.sock}
+systemd-run --quiet --collect --unit=${entryUnit} \\
+  --socket-property=ListenStream=${address}:${int(entry)} --socket-property=FreeBind=yes \\
+  "$bin" entry --listen=${address}:${int(entry)} --containerd="$c" --subnet=${subnet}
+systemctl start ${entryUnit}.service
+`
+  }
+
 let started = (~count, ~subnet) => {
   let last = first + count - 1
   `set -e
@@ -226,7 +266,7 @@ systemd-run --quiet --collect --unit=${unit} --setenv=PATH="$p" "$bin" $kept "$@
   --listen=127.0.0.1:${int(port)} \\
   --state="$d/state" --secrets="$d/secrets" --bridge=${bridge} --subnet=${subnet} \\
   --entry=${int(entry)}
-n=0
+${entryStarted(~subnet)}n=0
 until [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:${int(
       port,
     )}/management/describe)" = 403 ]; do
@@ -234,6 +274,7 @@ until [ "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:${int
   [ "$n" -lt 100 ] || { echo "the driver did not answer within 10 s" >&2; journalctl -u ${unit} -n 20 --no-pager >&2; exit 1; }
   sleep 0.1
 done
+systemctl is-active --quiet ${entryUnit}.service || { echo "the entry is not running" >&2; journalctl -u ${entryUnit} -n 20 --no-pager >&2; exit 1; }
 i=${int(first)}
 while [ "$i" -le ${int(last)} ]; do cat "$d/bindings/$i"; i=$((i + 1)); done
 `
@@ -260,12 +301,31 @@ let readTokens = (text, ~count) => {
   }
 }
 
+/** The first three octets of each subnet of its own, as an awk pattern of a reacher's address. */
+let ownReachers =
+  candidates
+  ->Array.map(c => c->String.split(".")->Array.slice(~start=0, ~end=3)->Array.join("\\."))
+  ->Array.join("|")
+
+// A reacher's element names the reacher, the entry and its port, and a run's own is in its subnet.
+let fenced = `fenced() { nft list set inet fence reaching 2> /dev/null | tr -d '\\n' |
+  sed -n 's/.*elements = {\\([^}]*\\)}.*/\\1/p' | tr ',' '\\n' |
+  awk '$5 == ${int(entry)} && $1 ~ /^(${ownReachers})\\./ { print $1 " . " $3 " . " $5 }'; }
+`
+
 let cleaned = (~mount, ~subvolumes, ~served) =>
-  `u=${unit} d=${directory} m=${mount} f=${int(first)} br=${bridge} v='${served->Option.getOr("")}'
+  `${fenced}u=${unit} e=${entryUnit} d=${directory} m=${mount} f=${int(
+      first,
+    )} br=${bridge} v='${served->Option.getOr("")}'
 numbered() { case "$1" in ''|*[!0-9]*) return 1;; esac; [ "$1" -ge "$f" ]; }
 mine() { k=\${1#b}; k=\${k%%-*}; case "$k" in ''|*[!0-9]*) return 1;; esac; [ "$k" -ge "$f" ]; }
 q=inet\\ cni_plugins_masquerade\\ masq_checks
 rules() { nft -a list chain $q 2> /dev/null | grep "net: $br," | sed 's/.*# handle //'; }
+for k in socket service; do
+  systemctl list-units --all --no-legend "$e.$k" | grep -q . || continue
+  systemctl stop "$e.$k" 2> /dev/null; systemctl reset-failed "$e.$k" 2> /dev/null
+  echo "removed the unit $e.$k"
+done
 if systemctl list-units --all --no-legend "$u.service" | grep -q .; then
   systemctl stop "$u.service" 2> /dev/null; systemctl reset-failed "$u.service" 2> /dev/null
   echo "removed the unit $u"
@@ -305,6 +365,9 @@ for n in $(ip netns list | awk '{ print $1 }'); do
   mine "$n" && ip netns delete "$n" && echo "removed the network namespace $n"
 done
 for h in $(rules); do nft delete rule $q handle "$h" && echo "removed a masquerade rule of $br"; done
+fenced | while read -r el; do
+  nft delete element inet fence reaching "{ $el }" && echo "removed the fence element $el"
+done
 if ip link show "$br" > /dev/null 2>&1; then ip link delete "$br" && echo "removed the bridge $br"; fi
 for c in /sys/fs/cgroup/b*; do
   [ -d "$c" ] && mine "\${c##*/}" && find "$c" -depth -type d -exec rmdir {} + && echo "removed the cgroup $c"
@@ -312,12 +375,16 @@ done
 if [ -e "$d" ]; then rm -rf "$d" && echo "removed $d"; fi
 if [ -n "$v" ] && [ -e "$v" ]; then rm -rf "$v" && echo "removed $v"; fi
 systemctl list-units --all --no-legend "$u.service" | grep -q . && echo "left the unit $u"
+for k in socket service; do
+  systemctl list-units --all --no-legend "$e.$k" | grep -q . && echo "left the unit $e.$k"
+done
 for ns in $(ctr namespaces ls -q); do mine "$ns" && echo "left the namespace $ns"; done
 for g in $(btrfs qgroup show --raw "$m" 2> /dev/null | awk '{ print $1 }' | grep '^1/'); do
   mine "b\${g#1/}" && echo "left the qgroup $g"
 done
 for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the network namespace $n"; done
 [ -z "$(rules)" ] || echo "left a masquerade rule of $br"
+fenced | while read -r el; do echo "left the fence element $el"; done
 ip link show "$br" > /dev/null 2>&1 && echo "left the bridge $br"
 for c in /sys/fs/cgroup/b*; do [ -d "$c" ] && mine "\${c##*/}" && echo "left the cgroup $c"; done
 for u2 in volumes buckets; do
