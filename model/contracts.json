@@ -7278,7 +7278,7 @@
 		"constraint": "The statement breaks a constraint of the database",
 		"denied": "The call carries no credential, or one that does not allow it",
 		"depended_on": "Something else depends on what the change removes",
-		"deployed": "The app has run; it is removed by its own path, not forgotten",
+		"deployed": "The app has run; it is retired, not forgotten",
 		"expectation_failed": "What is held is not what the call expected",
 		"extension_invalid": "The extension named is not valid here",
 		"fault": "The implementation failed while answering",
@@ -7292,6 +7292,7 @@
 		"no_kind": "No kind of that name exists",
 		"no_sandbox": "No host offers the sandbox asked for",
 		"not_a_bucket": "No bucket of that name exists",
+		"not_deployed": "The app never ran; it is forgotten, not retired",
 		"not_dismissible": "The warning cannot be dismissed",
 		"not_found": "Nothing of that name or id exists",
 		"not_granted": "The grants do not give what is asked",
@@ -8141,7 +8142,7 @@
 			]
 		},
 		"releases": {
-			"version": 4,
+			"version": 5,
 			"bounds": {
 				"artifact": 33554432
 			},
@@ -8227,6 +8228,26 @@
 						{
 							"name": "deployed",
 							"failure": "rejected"
+						}
+					],
+					"callers": ["operator"]
+				},
+				{
+					"name": "retire",
+					"input": "release-of",
+					"output": "release-of",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_deployed",
+							"failure": "rejected"
+						},
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
 						}
 					],
 					"callers": ["operator"]
