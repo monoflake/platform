@@ -4,13 +4,10 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "conform <target> [--control <origin>] [--dry-run]"
+let usage = "conform <target> --app <id> [--control <origin>] [--dry-run]"
 
 /** The kinds whose samples the machine's driver is held to, each a directory of `tests/kinds/`. */
 let kinds = ["management", "deployments", "objects", "databases"]
-
-/** The app whose deployment hello is, as deploy makes it. */
-let app = 1
 
 /** What a case of each kind is held where it gives none, a container as deploy holds hello's. */
 let holding = `{
@@ -121,7 +118,7 @@ let samples = () =>
   })
 
 /** The live driver's list, its refusals and hello, each with what it showed or why it failed. */
-let asked = async (target, facts: Instance.facts, ~control) => {
+let asked = async (target, facts: Instance.facts, ~app, ~control) => {
   let ask = (command, read) =>
     remote(target, command)->Result.flatMap(Live.readAnswered)->Result.flatMap(read)
   let list = ask(Live.described, Live.list)
@@ -141,7 +138,7 @@ let asked = async (target, facts: Instance.facts, ~control) => {
     ("a call with no token is denied", ask(Live.untokened, Live.denied)),
     ("an unknown interface is refused", ask(Live.unknown, Live.refused)),
     (
-      `the entry answers hello for app-${Int.toString(app)}.b${Int.toString(facts.binding)}`,
+      `the entry answers hello for ${Ids.text(app)}.b${Int.toString(facts.binding)}`,
       ask(Live.hello(~app, ~binding=facts.binding), Live.greeted),
     ),
     ...through->Option.mapOr([], check => [check]),
@@ -163,7 +160,7 @@ let told = (when_, checks) =>
   )
 
 /** hello asked every two seconds until `running` says the run is over, its answers counted. */
-let watched = async (target, facts: Instance.facts, running) => {
+let watched = async (target, facts: Instance.facts, ~app, running) => {
   let asked = ref(0)
   let answered = ref(0)
   while running() {
@@ -195,7 +192,7 @@ let rec reached = async (base, ~left=100) =>
 let children = []
 
 /** The samples run by the runner on the instance through a forward, hello watched beside them. */
-let run = async (target: Remote.target, facts, tokens, files, ~scratch, ~served) => {
+let run = async (target: Remote.target, facts, tokens, files, ~app, ~scratch, ~served) => {
   let local = await Host.freePort()
   let forward = Host.spawn(
     "ssh",
@@ -239,7 +236,7 @@ let run = async (target: Remote.target, facts, tokens, files, ~scratch, ~served)
     children->Array.push(runner)
     runner->Host.stdin->Host.endWith(tokens->Array.join("\n") ++ "\n")
     let over = ref(false)
-    let watching = watched(target, facts, () => !over.contents)
+    let watching = watched(target, facts, ~app, () => !over.contents)
     let code = await Host.ended(runner)
     over := true
     let (answered, asked) = await watching
@@ -317,8 +314,10 @@ let main = async () => {
   let took = () => ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
-  switch Through.control(args->Array.filter(a => a != "--dry-run")) {
-  | Ok((control, [named])) if !(named->String.startsWith("--")) =>
+  switch Ids.app(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
+    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+  ) {
+  | Ok((app, control, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let files = samples()
     let count = files->Array.reduce(0, (n, (_, cases)) => n + cases * 2)
@@ -332,7 +331,7 @@ let main = async () => {
         say(`failed: every subnet of its own overlaps a route of ${named}`)
         Host.setExitCode(Host.process, 1)
       | Some(subnet) =>
-        let (before, checks) = await asked(target, facts, ~control)
+        let (before, checks) = await asked(target, facts, ~app, ~control)
         let held = told("before", checks)
         say(
           `${Int.toString(files->Array.length)} behavior files, ${Int.toString(
@@ -383,6 +382,7 @@ let main = async () => {
               facts,
               tokens,
               files->Array.map(((path, _)) => path),
+              ~app,
               ~scratch,
               ~served,
             )
@@ -394,7 +394,7 @@ let main = async () => {
           if nothingLeft {
             say("after, nothing the run made is left")
           }
-          let (after, checks) = await asked(target, facts, ~control)
+          let (after, checks) = await asked(target, facts, ~app, ~control)
           let still = told("after", checks)
           let same = switch (before, after) {
           | (Ok(b), Ok(a)) =>

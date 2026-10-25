@@ -15,7 +15,7 @@ let origin = target =>
     )
   }
 
-let gateway = (~origin, ~app) => `${origin}/v1/app-${Float.toString(app)}/`
+let gateway = (~origin, ~app) => `${origin}/v1/${Ids.text(app)}/`
 
 type t = {
   origin: string,
@@ -67,7 +67,7 @@ let deploy = (control, ~binding, ~app, ~hash, ~secrets, ~network) =>
     releases(
       Deploy({
         binding,
-        app,
+        ?app,
         release: hash,
         secrets: ?(secrets->Dict.keysToArray == [] ? None : Some(secrets)),
         network: ?(network == [] ? None : Some(network)),

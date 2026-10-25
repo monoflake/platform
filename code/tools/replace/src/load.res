@@ -12,9 +12,9 @@ let shell = (~app, ~binding, ~stop) =>
 ask() {
   while [ ! -e "$stop" ] && [ "$(date +%s)" -lt "$most" ]; do
     b=$(date +%s%3N)
-    s=$(curl -s -o /dev/null -m 5 -w '%{http_code}' -H 'Host: app-${Int.toString(
-      app,
-    )}.b${Int.toString(binding)}' "http://$e/"); c=$?
+    s=$(curl -s -o /dev/null -m 5 -w '%{http_code}' -H 'Host: ${Ids.text(app)}.b${Int.toString(
+      binding,
+    )}' "http://$e/"); c=$?
     echo "$1 $b $(date +%s%3N) $c $s"
   done
 }

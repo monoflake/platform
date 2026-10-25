@@ -18,7 +18,7 @@ let control = args =>
     }
   }
 
-let gateway = (~origin, ~app) => `${origin}/v1/app-${Int.toString(app)}/`
+let gateway = (~origin, ~app) => `${origin}/v1/${Ids.text(app)}/`
 
 let chosen = (~control, ~tunnel, ~app) =>
   switch (control, tunnel->Result.map(String.trim)) {

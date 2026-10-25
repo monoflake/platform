@@ -4,16 +4,16 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run]"
 
 /**
- * The arguments, the app's directory, the target, the app's id, the binding a control deploys it
- * onto, the secrets and network a control hands the driver, and whether nothing is changed.
+ * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
+ * it onto, the secrets and network a control hands the driver, and whether nothing is changed.
  */
 type args = {
   directory: string,
   target: string,
-  app: float,
+  app: option<float>,
   binding: option<float>,
   secrets: array<string>,
   network: array<Contracts.DeploymentNetwork.t>,
@@ -45,9 +45,9 @@ let rec parse = (args, given) =>
   switch args {
   | list{"--dry-run", ...rest} => parse(rest, {...given, dry: true})
   | list{"--app", text, ...rest} =>
-    switch id(text) {
-    | Some(app) => parse(rest, {...given, app})
-    | None => Error(`--app ${text} is no id`)
+    switch Ids.ofText(text) {
+    | Some(app) => parse(rest, {...given, app: Some(app)})
+    | None => Error(`--app ${text} is no app's id, 8 lowercase hex digits`)
     }
   | list{"--binding", text, ...rest} =>
     switch id(text) {
@@ -254,31 +254,73 @@ let deployed = async (target, ~app, ~hash, ~address, ~into, ~dry) => {
   }
 }
 
+/**
+ * The app's id, the one given, or one drawn where none is that neither the machine's list nor its
+ * deployments hold, as no control is there to draw it.
+ */
+let appOf = (target, app) =>
+  switch app {
+  | Some(app) => Ok((app, "given"))
+  | None =>
+    describeList(target)
+    ->Result.mapError(refusal)
+    ->Result.flatMap(described => {
+      let listed = Ids.listed(described)
+      Ids.drawn(
+        ~random=() => Ids.ofBytes(Host.fillRandom(Uint8Array.fromLength(4))),
+        ~held=id =>
+          listed->Array.includes(id)
+            ? Ok(true)
+            : switch describeDeployment(target, id) {
+              | Error({reason: "not_found"}) => Ok(false)
+              | Ok(_) => Ok(true)
+              | Error(refused) => Error(refusal(refused))
+              },
+      )->Result.map(id => (id, "drawn, as no control draws it"))
+    })
+  }
+
 /** The archive sent to the machine and deployed there, then the entry asked for the app. */
 let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
   let target = Machine.target(named)
   let address = Deploying.address(~directory=facts.directory, ~hash)
-  let host = Deploying.host(~app, ~binding=facts.binding)
   let copy = dry
     ? async () => Ok("nothing copied, as --dry-run asks")
     : async () => copied(target, path, facts, Deploying.fileName(hash))
-  let answered = await timed("copy", copy, said => said)
-  ->after(_ => timed("list", () => listed(target, ~dry), ((_, said)) => said))
-  ->after(((into, _)) =>
-    timed("deploy", () => deployed(target, ~app, ~hash, ~address, ~into, ~dry), said => said)
+  let answered = await timed(
+    "app",
+    async () => appOf(target, app),
+    ((app, how)) => `${Ids.text(app)}, ${how}`,
   )
-  ->after(async _ =>
+  ->after(((app, _)) =>
+    timed("copy", copy, said => said)->Promise.thenResolve(r => r->Result.map(_ => app))
+  )
+  ->after(app =>
+    timed("list", () => listed(target, ~dry), ((_, said)) => said)->Promise.thenResolve(r =>
+      r->Result.map(((into, _)) => (app, into))
+    )
+  )
+  ->after(((app, into)) =>
+    timed(
+      "deploy",
+      () => deployed(target, ~app, ~hash, ~address, ~into, ~dry),
+      said => said,
+    )->Promise.thenResolve(r => r->Result.map(_ => app))
+  )
+  ->after(async app => {
+    let host = Deploying.host(~app, ~binding=facts.binding)
     dry
-      ? Ok(None)
+      ? Ok((app, host, None))
       : (
           await timed(
             "answer",
             async () => remote(target, Machine.asked(host)),
             _ => `the entry for ${host} answered`,
           )
-        )->Result.map(answer => Some(answer))
-  )
-  answered->Result.map(answer =>
+        )->Result.map(answer => (app, host, Some(answer)))
+  })
+  answered->Result.map(((app, host, answer)) => {
+    Console.log(`deploy: app ${Ids.text(app)}`)
     answer->Option.forEach(answer => {
       Console.log(answer)
       if Machine.isLocal(named) {
@@ -288,7 +330,7 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
         tunnel => Console.log(`deploy: open ${tunnel}, the machine's tunnel`),
       )
     })
-  )
+  })
 }
 
 /** Asked again until `ready` says it is done or a minute has passed, each ask awaited. */
@@ -302,7 +344,17 @@ let rec polled = async (ask, ready, ~left=300) =>
   | Error(why) => Error(why)
   }
 
-/** The release put, deployed onto the binding and running through a control, then asked there. */
+/** The id a control answered a deploy with, the app it drew where none was given. */
+let ranAs = (described: Contracts.DeploymentDescribed.t) =>
+  switch described.runs {
+  | App({id}) => Ok(id)
+  | Component({component}) => Error(`the control answered the component ${component}, no app`)
+  }
+
+/**
+ * The release put, deployed onto the binding and running through a control, then asked there, a
+ * new app opened where none is given and its id the control drew said.
+ */
 let throughControl = async (
   control: Control.t,
   ~app,
@@ -313,7 +365,7 @@ let throughControl = async (
   ~network,
   ~dry,
 ) => {
-  let progress = async () =>
+  let progress = async app =>
     switch await Control.describe(control, ~app) {
     | Ok(described) => Ok(Deploying.progress(described, hash))
     | Error({reason: "not_found"}) => Ok(Deploying.Elsewhere)
@@ -332,40 +384,67 @@ let throughControl = async (
       Error(`the control kept ${Envelope.Hex.encode(held.hash)}, not the bundle packed`)
     | Ok(_) =>
       switch await Control.deploy(control, ~binding, ~app, ~hash, ~secrets, ~network) {
-      | Error(refused) => Error(refusal(refused))
-      | Ok(_) => (await polled(progress, running))->Result.map(() => "deployed and running")
+      | Error(refused) =>
+        Error(Ids.retried(~given=app, ~drawn=Ids.named(refused.message), refusal(refused)))
+      | Ok(described) =>
+        switch ranAs(described) {
+        | Error(why) => Error(why)
+        | Ok(id) =>
+          (await polled(() => progress(id), running))
+          ->Result.map(() => id)
+          ->Result.mapError(why => Ids.retried(~given=app, ~drawn=Some(id), why))
+        }
       }
     }
-  let answered = await timed("describe", progress, p =>
-    switch p {
-    | Deploying.Running => "running this version already"
-    | Waiting | Elsewhere | Failed(_) => "not running this version"
-    }
-  )
+  let described = switch app {
+  // A new app has nothing to describe until the control draws its id.
+  | None => Promise.resolve(Ok(Deploying.Elsewhere))
+  | Some(app) =>
+    timed(
+      "describe",
+      () => progress(app),
+      p =>
+        switch p {
+        | Deploying.Running => "running this version already"
+        | Waiting | Elsewhere | Failed(_) => "not running this version"
+        },
+    )
+  }
+  let answered = await described
   ->after(async p =>
-    switch p {
-    | Deploying.Running =>
+    switch (p, app) {
+    | (Deploying.Running, Some(app)) =>
       Console.log("deploy: running this version already, nothing sent")
-      Ok("nothing sent")
-    | Waiting | Elsewhere | Failed(_) if dry =>
+      Ok(Some(app))
+    | (Running | Waiting | Elsewhere | Failed(_), _) if dry =>
+      let as_ = app->Option.mapOr("a new app the control draws", app => `app ${Ids.text(app)}`)
       Console.log(
-        `deploy: the release would be put and deployed onto binding ${Float.toString(binding)}`,
+        `deploy: the release would be put and deployed onto binding ${Float.toString(
+            binding,
+          )} as ${as_}`,
       )
-      Ok("nothing sent, as --dry-run asks")
-    | Waiting | Elsewhere | Failed(_) =>
-      await timed("deploy", sent, said => `binding ${Float.toString(binding)}, ${said}`)
+      Ok(app)
+    | (Running | Waiting | Elsewhere | Failed(_), _) =>
+      (
+        await timed("deploy", sent, id =>
+          `binding ${Float.toString(binding)}, app ${Ids.text(id)}, deployed and running`
+        )
+      )->Result.map(id => Some(id))
     }
   )
-  ->after(async _ =>
-    dry
-      ? Ok(None)
-      : (
-          await timed("answer", () => Control.asked(control, ~app), _ => "the gateway answered")
-        )->Result.map(answer => Some(answer))
+  ->after(async app =>
+    switch app {
+    | Some(app) if !dry =>
+      (
+        await timed("answer", () => Control.asked(control, ~app), _ => "the gateway answered")
+      )->Result.map(answer => Some((app, answer)))
+    | Some(_) | None => Ok(None)
+    }
   )
   answered->Result.map(answer =>
-    answer->Option.forEach(answer => {
+    answer->Option.forEach(((app, answer)) => {
       Console.log(answer)
+      Console.log(`deploy: app ${Ids.text(app)}`)
       Console.log(`deploy: open ${Control.gateway(~origin=control.origin, ~app)}`)
     })
   )
@@ -401,7 +480,7 @@ let main = async () => {
   let started = Date.now()
   switch parse(
     List.fromArray(Host.argv->Array.slice(~start=2)),
-    {directory: "", target: "", app: 1., binding: None, secrets: [], network: [], dry: false},
+    {directory: "", target: "", app: None, binding: None, secrets: [], network: [], dry: false},
   ) {
   | Error(why) =>
     Console.error(`deploy: ${why}`)

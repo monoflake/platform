@@ -4,6 +4,7 @@ let state = (): State.t => {
   let bindings: dict<State.binding> = dict{}
   let releases: dict<State.release> = dict{}
   let deployments: dict<State.deployment> = dict{}
+  let apps = []
   let key = Float.toString
   let change = (id, f) =>
     bindings->Dict.get(key(id))->Option.forEach(b => bindings->Dict.set(key(id), f(b)))
@@ -54,6 +55,18 @@ let state = (): State.t => {
     release: async hash => releases->Dict.get(hash),
     deploy: async d => deployments->Dict.set(key(d.app), d),
     deployment: async app => deployments->Dict.get(key(app)),
+    drawApp: (~random) =>
+      Ids.drawn(~random, async id => {
+        let held =
+          apps->Array.includes(id) ||
+          bindings->Dict.has(key(id)) ||
+          organizations->Dict.valuesToArray->Array.some(o => o.id == id) ||
+          deployments->Dict.has(key(id))
+        if !held {
+          apps->Array.push(id)
+        }
+        !held
+      }),
   }
 }
 

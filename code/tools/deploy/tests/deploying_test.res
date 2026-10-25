@@ -19,13 +19,13 @@ test("the artifact's address is its hash in the driver's directory", () =>
 test("a deploy is read back by the contract as the bundle of modules it was written as", () => {
   let address = Deploying.address(~directory="/d", ~hash)
   let written = Contracts.DeploymentDeploy.toJson(
-    Deploying.deploy(~app=1., ~hash, ~address, ~into=2.),
+    Deploying.deploy(~app=4275878552., ~hash, ~address, ~into=2.),
   )
   deepEqual(
     written,
     JSON.parseOrThrow(
       `{
-      "runs": {"name": "app", "id": 1},
+      "runs": {"name": "app", "id": 4275878552},
       "version": "${String.repeat("ab", 32)}",
       "form": "modules",
       "isolation": ["isolate"],
@@ -40,9 +40,10 @@ test("a deploy is read back by the contract as the bundle of modules it was writ
   ok(Contracts.DeploymentDeploy.fromJson(written)->Result.isOk)
 })
 
-test("the entry's host is the app's and the binding's labels", () =>
-  deepEqual(Deploying.host(~app=1., ~binding="1"), "app-1.b1")
-)
+test("the entry's host is the app's id in 8 hex digits, then the binding", () => {
+  deepEqual(Deploying.host(~app=1., ~binding="3"), "00000001.b3")
+  deepEqual(Deploying.host(~app=169552957., ~binding="12"), "0a1b2c3d.b12")
+})
 
 test("a deployment is running, waiting, elsewhere or failed, by its version and state", () => {
   let at = (version, state): Contracts.DeploymentDescribed.t => {

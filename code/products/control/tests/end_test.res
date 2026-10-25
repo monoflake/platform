@@ -150,8 +150,12 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
   // The entry hands the app's host to hello itself, once deployed, as the real entry would.
   let entered = async request => {
     let named = request->Web.requestHeaders->Web.header("x-forwarded-host")->Nullable.toOption
-    switch (host.deployed.contents, named) {
-    | (Some(_), Some("app-1.b1")) =>
+    let app = switch host.deployed.contents->Option.map(d => d.runs) {
+    | Some(App({id})) => Some(Gateway.host(~app=id, ~binding=1.))
+    | Some(Component(_)) | None => None
+    }
+    switch (app, named) {
+    | (Some(app), Some(named)) if named == app =>
       let at = Web.parts(request->Web.url)
       await Web.fetch(Web.resent(`${helloOrigin}${at->Web.pathname}${at->Web.search}`, request))
     | _ => await host.reach.fetch(request)
@@ -305,13 +309,14 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
       Contracts.Interface.Releases.toJson({
         call: Deploy({
           binding: opened->number("binding"),
-          app: 1.,
           release: Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0)),
         }),
         capabilities: [],
       }),
     )
     deepEqual(deployed->member("state")->member("name"), JSON.String("running"))
+    // No app was named, so the control drew its id and answered it.
+    let app = deployed->member("runs")->number("id")
     // What the driver was handed is fetched from the control as the driver would fetch it.
     let address = host.deployed.contents->Option.mapOr("", d => d.artifact.address)
     deepEqual(address, `http://127.0.0.1:${Int.toString(port)}/artifacts/${hash}`)
@@ -320,7 +325,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     let described = await call(
       origin,
       ~bearer=operator,
-      Contracts.Interface.Releases.toJson({call: Describe({app: 1.}), capabilities: []}),
+      Contracts.Interface.Releases.toJson({call: Describe({app: app}), capabilities: []}),
     )
     deepEqual(described, deployed)
     let direct = await (
@@ -328,7 +333,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     )->Web.text
     ok(direct->String.startsWith("hello from "), ~message=`hello answered ${direct}`)
     let asked = await Web.fetch(
-      Web.request(`${origin}/v1/app-1/`, {method: "GET", headers: dict{}}),
+      Web.request(`${origin}/v1/${Ids.text(app)}/`, {method: "GET", headers: dict{}}),
     )
     deepEqual((asked->Web.status, await asked->Web.text), (200, direct))
     await finished()

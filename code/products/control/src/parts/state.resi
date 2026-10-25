@@ -51,6 +51,11 @@ type t = {
   /** A release kept, a second put of one hash changing nothing. */
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
+  /**
+   * An app's id drawn by `random`, kept by a conditional insert only where no app, binding or
+   * organization holds it, and drawn again on a conflict, RFC b8f35.
+   */
+  drawApp: (~random: unit => float) => promise<float>,
   /** What was declared of an app's deployment, written before its host is called. */
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,

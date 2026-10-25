@@ -1,22 +1,29 @@
 type routed = {app: float, path: string}
 
 /** A scope of an app until an organization's own scopes are kept, RFC vr5lw's `scope` rows. */
-let scoped = /^\/v[0-9]+\/app-([1-9][0-9]{0,9})(\/.*)?$/
+let scoped = /^\/v[0-9]+\/([0-9a-f]{8})(\/.*)?$/
 
-let routed = path =>
-  switch scoped->RegExp.exec(path) {
+// A scaffold for ids deployed before they were drawn in hex, retired with B at RFC 8yl4b.
+let decimal = /^\/v[0-9]+\/app-([1-9][0-9]{0,9})(\/.*)?$/
+
+/** The id and the rest a pattern found, the id read by `read`. */
+let found = (pattern, path, read) =>
+  switch pattern->RegExp.exec(path) {
   | Some(found) =>
     switch found->RegExp.Result.matches {
-    | [Some(id), rest] =>
-      Float.fromString(id)
-      ->Option.filter(id => id <= 4294967295.)
-      ->Option.map(app => {app, path: rest->Option.getOr("/")})
+    | [Some(id), rest] => read(id)->Option.map(app => {app, path: rest->Option.getOr("/")})
     | _ => None
     }
   | None => None
   }
 
-let host = (~app, ~binding) => `app-${Float.toString(app)}.b${Float.toString(binding)}`
+let routed = path =>
+  switch found(scoped, path, Ids.ofText) {
+  | Some(routed) => Some(routed)
+  | None => found(decimal, path, id => Float.fromString(id)->Option.filter(id => id <= 4294967295.))
+  }
+
+let host = (~app, ~binding) => `${Ids.text(app)}.b${Float.toString(binding)}`
 
 /** Whether a request can be sent again, its body none that a first send would have spent. */
 let resendable = request =>
@@ -38,14 +45,12 @@ let beyondHost = message =>
 
 let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~search) =>
   switch await state.deployment(routed.app) {
-  | None => Web.answered(~status=404, `no app ${Float.toString(routed.app)} is deployed`)
+  | None => Web.answered(~status=404, `no app ${Ids.text(routed.app)} is deployed`)
   | Some(deployment) =>
     switch await state.binding(deployment.binding) {
     | Some({origin: Some(_)}) =>
       beyondHost(
-        `app ${Float.toString(
-            routed.app,
-          )} runs on a binding reached by its origin, never through here`,
+        `app ${Ids.text(routed.app)} runs on a binding reached by its origin, never through here`,
       )
     | Some({address: Some(address)}) =>
       let named = host(~app=routed.app, ~binding=deployment.binding)
@@ -58,10 +63,10 @@ let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~sea
       }
       let unanswered = e => {
         let why = e->JsExn.message->Option.getOr("no message")
-        Console.error(`gateway: app ${Float.toString(routed.app)}, ${why}`)
+        Console.error(`gateway: app ${Ids.text(routed.app)}, ${why}`)
         Web.answered(
           ~status=503,
-          `the host running app ${Float.toString(routed.app)} did not answer, ${why}`,
+          `the host running app ${Ids.text(routed.app)} did not answer, ${why}`,
         )
       }
       switch await reach.fetch(sent()) {
@@ -76,6 +81,6 @@ let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~sea
       | exception JsExn(e) => unanswered(e)
       }
     | Some({address: None}) | None =>
-      Web.answered(~status=503, `the host of app ${Float.toString(routed.app)} is not bound`)
+      Web.answered(~status=503, `the host of app ${Ids.text(routed.app)} is not bound`)
     }
   }

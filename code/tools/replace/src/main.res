@@ -8,10 +8,7 @@ module Remote = Conform.Remote
 module Through = Conform.Through
 module Run = Lose.Run
 
-let usage = "replace <target> [--control <origin>] [--no-build | --during <command>] [--dry-run]"
-
-/** The app whose deployment hello is, as deploy makes it. */
-let app = 1
+let usage = "replace <target> --app <id> [--control <origin>] [--no-build | --during <command>] [--dry-run]"
 
 /** How long the load runs before the first action, and how long after each before the next. */
 let warm = 1000.
@@ -94,7 +91,7 @@ let told = (when_, checks) =>
   )
 
 /** Every unit active and hello answering once through each path. */
-let looked = async (target, ~binding, ~tunnel, ~when_) => {
+let looked = async (target, ~app, ~binding, ~tunnel, ~when_) => {
   let units = (await remote(target, Actions.states))->Result.flatMap(Actions.active)
   let entry =
     (await remote(target, Live.hello(~app, ~binding)))
@@ -137,7 +134,7 @@ let taken = async (target: Remote.target, (name, action)) =>
   }
 
 /** The load started, each action taken in turn with a pause after it, and the load stopped. */
-let replaced = async (target: Remote.target, ~binding, ~tunnel, ~stop, ~actions) => {
+let replaced = async (target: Remote.target, ~app, ~binding, ~tunnel, ~stop, ~actions) => {
   let entry = Streamed.started(
     "ssh",
     [...target.options, target.host, Load.shell(~app, ~binding, ~stop)],
@@ -227,11 +224,13 @@ let main = async () => {
   | at => (args->Array.get(at + 1), args->Array.filterWithIndex((_, i) => i != at && i != at + 1))
   }
   let known = ["--dry-run", "--no-build"]
-  switch Through.control(args) {
+  switch Ids.app(args)->Result.flatMap(((app, rest)) =>
+    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+  ) {
   | Error(why) =>
     Console.error(`replace: ${why}`)
     Host.setExitCode(Host.process, 2)
-  | Ok((control, rest)) =>
+  | Ok((app, control, rest)) =>
     let flags = rest->Array.filter(a => a->String.startsWith("--"))
     switch rest->Array.filter(a => !(a->String.startsWith("--"))) {
     | [named] if flags->Array.every(f => known->Array.includes(f)) =>
@@ -257,7 +256,7 @@ let main = async () => {
         }
         let names = actions->Array.map(((name, _)) => name)->Array.join(", then ")
         let through = tunnel->Option.mapOr("the entry", t => `the entry and the ${t.name}`)
-        if !(await looked(target, ~binding, ~tunnel, ~when_="before")) {
+        if !(await looked(target, ~app, ~binding, ~tunnel, ~when_="before")) {
           say(`${named} does not serve as it should, so nothing is replaced, ${took()}s`)
           Host.setExitCode(Host.process, 1)
         } else if dry {
@@ -274,7 +273,7 @@ let main = async () => {
             })
           )
           say(`hello asked through ${through}, ${Int.toString(Load.clients)} clients on each`)
-          let run = try await replaced(target, ~binding, ~tunnel, ~stop, ~actions) catch {
+          let run = try await replaced(target, ~app, ~binding, ~tunnel, ~stop, ~actions) catch {
           | JsExn(e) => Error(e->JsExn.message->Option.getOr("the run threw"))
           }
           let back =
@@ -286,7 +285,7 @@ let main = async () => {
             say(`failed: ${why}`)
             false
           }
-          let still = await looked(target, ~binding, ~tunnel, ~when_="after")
+          let still = await looked(target, ~app, ~binding, ~tunnel, ~when_="after")
           let met = kept && back && still
           say(
             `${named} ${met

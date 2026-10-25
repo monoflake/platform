@@ -376,3 +376,82 @@ test("storage is never a binding reached by its origin", async () =>
     )
   }
 )
+
+/** Draws given in turn, each asked of `random`. */
+let scripted = draws => {
+  let left = ref(draws)
+  () =>
+    switch left.contents {
+    | list{next, ...rest} =>
+      left := rest
+      next
+    | list{} => JsError.throwWithMessage("no draw left")
+    }
+}
+
+test("an app's id drawn is unique among every id held, and drawn again on a conflict", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let store = make()
+    let state = store.state(Sealing.ofKey(key))
+    let organization = await state.openOrganization("first", ~secret)
+    let binding = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    let other = await state.openBinding(~organization=organization.id, ~secret, ~relayed=false)
+    await state.putRelease({hash: "aa", form: Modules, size: 3.})
+    await state.deploy({app: 169552957., binding, release: "aa", capacity: 1.})
+    // The organization's id, a binding's, a deployed app's and 0 are each drawn again.
+    let first = await state.drawApp(
+      ~random=scripted(list{organization.id, other, 169552957., 0., 4275878552.}),
+    )
+    let second = await state.drawApp(~random=scripted(list{4275878552., 7.}))
+    let exhausted = await thrown(() => state.drawApp(~random=() => 7.))
+    deepEqual(
+      (first, second, exhausted),
+      (4275878552., 7., Some("every one of 16 app ids drawn is held already")),
+      ~message=store.name,
+    )
+  }
+)
+
+test("an app deployed before ids were drawn is held once migrated", async () => {
+  let db = Sqlite.openSqlite(":memory:")
+  let migrations = fromRoot("code/products/control/migrations")
+  let applied = names =>
+    names->Array.forEach(name => db->Sqlite.exec(readText(join([migrations, name]))))
+  applied(["0001-state.sql", "0002-organizations.sql", "0003-origin.sql"])
+  db->Sqlite.exec("INSERT INTO organization (id, label) VALUES (1, 'first');
+    INSERT INTO binding (id, organization, secret) VALUES (1, 1, '');
+    INSERT INTO release (hash, form, size) VALUES ('aa', 'modules', 3);
+    INSERT INTO deployment (app, binding, release, capacity) VALUES (2, 1, 'aa', 1);")
+  applied(["0004-app.sql"])
+  deepEqual(
+    (
+      await Sqlite.asDatabase(db)
+      ->Stores.prepare("SELECT id FROM app")
+      ->Stores.bind([])
+      ->Stores.first
+    )
+    ->Nullable.toOption
+    ->Option.map((row: {"id": float}) => row["id"]),
+    Some(2.),
+  )
+})
+
+test(
+  "a binding's and an organization's next id is counted on past every id an app holds",
+  async () =>
+    for i in 0 to stores->Array.length - 1 {
+      let make = stores->Array.getUnsafe(i)
+      let store = make()
+      let state = store.state(Sealing.ofKey(key))
+      let first = await state.openOrganization("first", ~secret)
+      let binding = await state.openBinding(~organization=first.id, ~secret, ~relayed=false)
+      let app = await state.drawApp(~random=scripted(list{2.}))
+      await state.putRelease({hash: "aa", form: Modules, size: 3.})
+      await state.deploy({app: 4., binding, release: "aa", capacity: 1.})
+      let next = await state.openBinding(~organization=first.id, ~secret, ~relayed=false)
+      let after = await state.openBinding(~organization=first.id, ~secret, ~relayed=false)
+      let second = await state.openOrganization("second", ~secret)
+      deepEqual((binding, app, next, after, second.id), (1., 2., 3., 5., 3.), ~message=store.name)
+    },
+)

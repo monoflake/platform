@@ -46,8 +46,10 @@ test("through the tunnel, a 200 saying hello answers and a refused cause refuses
 
 test("the shell asks the app's host on a new connection each time until it is stopped", () => {
   let shell = Load.shell(~app=1, ~binding=2, ~stop="/tmp/stop")
-  ok(shell->String.includes("Host: app-1.b2"))
+  ok(shell->String.includes("Host: 00000001.b2"))
   ok(shell->String.includes(`[ ! -e "$stop" ]`))
   ok(shell->String.includes(`seq ${Int.toString(Load.clients)}`))
   ok(shell->String.includes("--value driver-machine-entry"))
+  let high = Load.shell(~app=Ids.ofText("fedcba98")->Option.getOr(0), ~binding=3, ~stop="/s")
+  ok(high->String.includes("-H 'Host: fedcba98.b3'"))
 })

@@ -83,6 +83,17 @@ let opened = async stood => {
   (id, hash)
 }
 
+/** The app a deploy answered it runs. */
+let ranAs = answer => answer->data->member("runs")->member("id")->JSON.Decode.float
+
+/** The app a refusal names as drawn for the deploy it refused, `app <8 hex>, ` first. */
+let named = answer =>
+  switch answer->member("message")->JSON.Decode.string {
+  | Some(message) if /^app [0-9a-f]{8}, /->RegExp.test(message) =>
+    Ids.ofText(message->String.slice(~start=4, ~end=12))
+  | Some(_) | None => None
+  }
+
 test("an organization opened twice by its label is one organization", async () => {
   let stood = stand()
   let (status, first) = await called(stood, Operator, organizations(Open({label: "first"})))
@@ -301,18 +312,15 @@ test(
     stood.host.slow := true
     let (binding, hash) = await opened(stood)
     let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
-    let (status, answer) = await called(
-      stood,
-      Operator,
-      releases(Deploy({binding, app: 4., release})),
-    )
+    let (status, answer) = await called(stood, Operator, releases(Deploy({binding, release})))
     deepEqual(
       (status, answer->data->member("state")->member("name")),
       (200, JSON.String("running")),
     )
+    let app = answer->ranAs->Option.getOr(0.)
     deepEqual(
-      await stood.parts.state.deployment(4.),
-      Some({app: 4., binding, release: hash, capacity: 1.}),
+      await stood.parts.state.deployment(app),
+      Some({app, binding, release: hash, capacity: 1.}),
     )
     deepEqual(
       stood.host.deployed.contents->Option.map(d => (d.artifact.address, d.into)),
@@ -336,7 +344,7 @@ test(
         "/deployments/deploy",
       ],
     )
-    let (_, described) = await called(stood, Operator, releases(Describe({app: 4.})))
+    let (_, described) = await called(stood, Operator, releases(Describe({app: app})))
     deepEqual(described->data, answer->data)
   },
 )
@@ -347,7 +355,7 @@ test(
     let stood = stand()
     let (binding, hash) = await opened(stood)
     let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(32))
-    ignore(await called(stood, Operator, releases(Deploy({binding, app: 1., release}))))
+    let (_, first) = await called(stood, Operator, releases(Deploy({binding, release})))
     deepEqual(
       stood.host.deployed.contents->Option.map(d => (d.secrets->Dict.keysToArray, d.network)),
       Some(([], [])),
@@ -359,7 +367,7 @@ test(
         releases(
           Deploy({
             binding,
-            app: 1.,
+            app: ?(first->ranAs),
             release,
             secrets: dict{"OPERATOR": Web.utf8("kept")},
             network: [Http],
@@ -384,18 +392,10 @@ test(
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
     ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
     let release = Uint8Array.fromLength(32)
-    let (_, unbound) = await called(
-      stood,
-      Operator,
-      releases(Deploy({binding: 1., app: 1., release})),
-    )
-    let (_, none) = await called(stood, Operator, releases(Deploy({binding: 2., app: 1., release})))
+    let (_, unbound) = await called(stood, Operator, releases(Deploy({binding: 1., release})))
+    let (_, none) = await called(stood, Operator, releases(Deploy({binding: 2., release})))
     ignore(await called(stood, Host(1.), bindings(Bind({reach: Tunnel}))))
-    let (_, unkept) = await called(
-      stood,
-      Operator,
-      releases(Deploy({binding: 1., app: 1., release})),
-    )
+    let (_, unkept) = await called(stood, Operator, releases(Deploy({binding: 1., release})))
     let (_, undeployed) = await called(stood, Operator, releases(Describe({app: 1.})))
     deepEqual(
       [unbound, none, unkept, undeployed]->Array.map(reason),
@@ -410,16 +410,94 @@ test("a host that does not answer is unreachable, and the caller may try again",
   let (binding, hash) = await opened(stood)
   stood.host.gone := true
   let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
-  let (status, refused) = await called(
-    stood,
-    Operator,
-    releases(Deploy({binding, app: 1., release})),
-  )
+  let (status, refused) = await called(stood, Operator, releases(Deploy({binding, release})))
   deepEqual((status, refused->reason), (503, Some("unreachable")))
   stood.host.gone := false
-  let (again, _) = await called(stood, Operator, releases(Deploy({binding, app: 1., release})))
-  deepEqual(again, 200)
+  let app = refused->named
+  ok(app != None, ~message="the refusal names the app drawn")
+  let (again, answer) = await called(stood, Operator, releases(Deploy({binding, ?app, release})))
+  deepEqual((again, answer->ranAs), (200, app))
 })
+
+test("a drawn deploy the driver fails names its app, and a retry by it lands there", async () => {
+  let stood = stand()
+  let (binding, hash) = await opened(stood)
+  let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+  // The container is made, and the deploy alone is never answered.
+  let failing = ref(true)
+  let stood = {
+    ...stood,
+    parts: {
+      ...stood.parts,
+      reach: {
+        ...stood.host.reach,
+        fetch: request =>
+          failing.contents && request->Web.url->String.endsWith("/deployments/deploy")
+            ? Promise.reject(JsExn.anyToExnInternal("connection reset"))
+            : stood.host.reach.fetch(request),
+      },
+    },
+  }
+  let (status, refused) = await called(stood, Operator, releases(Deploy({binding, release})))
+  let app = refused->named
+  deepEqual((status, refused->reason, app != None), (503, Some("unreachable"), true))
+  deepEqual(
+    (await stood.parts.state.deployment(app->Option.getOr(0.)))->Option.map(d => d.binding),
+    Some(binding),
+  )
+  failing := false
+  let (again, answer) = await called(stood, Operator, releases(Deploy({binding, ?app, release})))
+  deepEqual((again, answer->ranAs), (200, app))
+  // A deploy naming its app is refused with its own message, no app named before it.
+  failing := true
+  let (_, plain) = await called(stood, Operator, releases(Deploy({binding, ?app, release})))
+  deepEqual(plain->named, None)
+})
+
+test("a deploy with no app opens a new one, its id drawn, distinct and answered", async () => {
+  let stood = stand()
+  let (binding, hash) = await opened(stood)
+  let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+  let (_, first) = await called(stood, Operator, releases(Deploy({binding, release})))
+  let (_, second) = await called(stood, Operator, releases(Deploy({binding, release})))
+  let ids = [first, second]->Array.filterMap(ranAs)
+  deepEqual(ids->Array.length, 2)
+  ok(ids->Array.every(id => id > 0. && id <= 4294967295. && Math.floor(id) == id))
+  ok(ids->Array.get(0) != ids->Array.get(1), ~message="each new app is drawn its own id")
+  // The id is the driver's too, as the deploy sent it.
+  deepEqual(
+    stood.host.deployed.contents->Option.map(d => d.runs),
+    ids->Array.get(1)->Option.map(id => Contracts.DeploymentRuns.App({id: id})),
+  )
+  let held = await Promise.all(ids->Array.map(stood.parts.state.deployment))
+  deepEqual(held->Array.map(d => d->Option.map(d => d.binding)), [Some(binding), Some(binding)])
+})
+
+test(
+  "a deploy naming an app redeploys it under its id, and one never deployed is not found",
+  async () => {
+    let stood = stand()
+    let (binding, hash) = await opened(stood)
+    let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+    let (_, first) = await called(stood, Operator, releases(Deploy({binding, release})))
+    let app = first->ranAs->Option.getOr(0.)
+    let (status, again) = await called(stood, Operator, releases(Deploy({binding, app, release})))
+    deepEqual((status, again->ranAs), (200, Some(app)))
+    let seen = stood.host.seen->Array.length
+    let unknown = app == 169552957. ? 169552958. : 169552957.
+    let (status, refused) = await called(
+      stood,
+      Operator,
+      releases(Deploy({binding, app: unknown, release})),
+    )
+    deepEqual(
+      (status, refused->reason, refused->member("message")),
+      (404, Some("not_found"), JSON.String(`no app ${Ids.text(unknown)} is deployed`)),
+    )
+    deepEqual(stood.host.seen->Array.length, seen)
+    deepEqual(await stood.parts.state.deployment(unknown), None)
+  },
+)
 
 test("a binding's address is its id within 10.200.0.0/16", async () =>
   deepEqual(
@@ -682,7 +760,7 @@ test("a binding bound by its origin is called there for every call", async () =>
   ignore(await called(stood, Host(1.), byOrigin("https://driver.example.com")))
   ignore(await called(stood, Operator, releases(Put({form: Modules, artifact}))))
   let release = await Web.sha256(artifact)
-  ignore(await called(stood, Operator, releases(Deploy({binding: 1., app: 1., release}))))
+  ignore(await called(stood, Operator, releases(Deploy({binding: 1., release}))))
   // The bind's call back, then the deploy's own, which the faked origin answers only in part.
   deepEqual(
     seen->Array.slice(~start=0, ~end=3)->Array.map(s => s.url),

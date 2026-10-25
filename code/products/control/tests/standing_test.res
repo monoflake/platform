@@ -165,7 +165,7 @@ test("a relayed request carries none of the headers Cloudflare's edge set", asyn
           "cf-ipcountry": "US",
           "cdn-loop": "cloudflare",
           "true-client-ip": "192.0.2.1",
-          "x-forwarded-host": "app-1.b1",
+          "x-forwarded-host": "00000001.b1",
         },
       },
     ),

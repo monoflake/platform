@@ -4,19 +4,25 @@ open Node
 test("a path under an app's scope hands the app what follows it, its root at least", async () =>
   deepEqual(
     [
-      "/v1/app-1",
-      "/v1/app-1/",
-      "/v2/app-42/a/b",
-      "/v1/app-0/",
-      "/v1/app-1x/",
-      "/app-1/",
+      "/v1/0a1b2c3d",
+      "/v1/0a1b2c3d/",
+      "/v2/fedcba98/a/b",
+      "/v1/00000000/",
+      "/v1/0A1B2C3D/",
+      "/v1/a1b2c3d/",
+      "/v1/0a1b2c3d0/",
+      "/v1/0a1b2c3dx/",
+      "/0a1b2c3d/",
       "/v1/",
       "/organizations/open",
     ]->Array.map(Gateway.routed),
     [
-      Some({app: 1., path: "/"}),
-      Some({app: 1., path: "/"}),
-      Some({app: 42., path: "/a/b"}),
+      Some({app: 169552957., path: "/"}),
+      Some({app: 169552957., path: "/"}),
+      Some({app: 4275878552., path: "/a/b"}),
+      None,
+      None,
+      None,
       None,
       None,
       None,
@@ -26,8 +32,74 @@ test("a path under an app's scope hands the app what follows it, its root at lea
   )
 )
 
-test("the entry is asked by the host deploy names, app then binding", async () =>
-  deepEqual(Gateway.host(~app=1., ~binding=3.), "app-1.b3")
+test("an id deployed before hex is still routed by its decimal, to the same app", async () => {
+  deepEqual(
+    [
+      "/v1/app-2",
+      "/v1/app-2/",
+      "/v1/app-4294967295/a",
+      "/v1/app-0/",
+      "/v1/app-02/",
+      "/v1/app-1x/",
+      "/v1/app-4294967296/",
+      "/app-2/",
+    ]->Array.map(Gateway.routed),
+    [
+      Some({app: 2., path: "/"}),
+      Some({app: 2., path: "/"}),
+      Some({app: 4294967295., path: "/a"}),
+      None,
+      None,
+      None,
+      None,
+      None,
+    ],
+  )
+  deepEqual(Gateway.routed("/v1/app-2/x"), Gateway.routed("/v1/00000002/x"))
+})
+
+test(
+  "no path of the control's own is read as an app's, every interface's operation among them",
+  async () => {
+    let contracts = JSON.parseOrThrow(readText(fromRoot("model/contracts.json")))
+    let field = (json, name) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))
+    let interfaces =
+      contracts->field("interfaces")->Option.flatMap(JSON.Decode.object)->Option.getOr(dict{})
+    let operations =
+      interfaces
+      ->Dict.toArray
+      ->Array.flatMap(((name, interface_)) =>
+        interface_
+        ->field("operations")
+        ->Option.flatMap(JSON.Decode.array)
+        ->Option.getOr([])
+        ->Array.filterMap(op => op->field("name")->Option.flatMap(JSON.Decode.string))
+        ->Array.map(op => `/${name}/${op}`)
+      )
+    ok(operations->Array.includes("/releases/deploy"), ~message="the model's operations were read")
+    let paths = [
+      ...operations,
+      `/artifacts/${String.repeat("ab", 32)}`,
+      "/relay/10.200.0.1/36879/",
+      "/relay/10.200.0.1/37483/management/describe",
+      "/object/read",
+      "/",
+    ]
+    deepEqual(paths->Array.filter(p => Gateway.routed(p) != None), [])
+  },
+)
+
+test(
+  "the entry is asked by the host deploy names, the app in 8 hex digits then the binding",
+  async () => {
+    deepEqual(Gateway.host(~app=1., ~binding=3.), "00000001.b3")
+    deepEqual(Gateway.host(~app=4275878552., ~binding=12.), "fedcba98.b12")
+    // An app routed by its decimal is handed on by its hex form all the same.
+    deepEqual(
+      Gateway.routed("/v1/app-2/")->Option.map(r => Gateway.host(~app=r.app, ~binding=1.)),
+      Some("00000002.b1"),
+    )
+  },
 )
 
 test(
@@ -36,7 +108,7 @@ test(
     let state = Memory.state()
     let host = Host.make()
     let request = Web.request(
-      "https://control.test/v1/app-4/hello?x=1",
+      "https://control.test/v1/00000004/hello?x=1",
       {method: "GET", headers: dict{}},
     )
     let unknown = await Gateway.passed(
@@ -67,7 +139,7 @@ test(
       {app: 4., path: "/hello"},
       ~search="?x=1",
     )
-    deepEqual(await answer->Web.text, "entry asked /hello for app-4.b1")
+    deepEqual(await answer->Web.text, "entry asked /hello for 00000004.b1")
     deepEqual(host.seen->Array.map(s => s.url), ["http://10.200.0.1:36879/hello?x=1"])
     host.gone := true
     let gone = await Gateway.passed(
@@ -106,7 +178,7 @@ test(
     let state = await deployed()
     let host = Host.make()
     host.drops := 1
-    let asked = Web.request("https://control.test/v1/app-4/", {method: "GET", headers: dict{}})
+    let asked = Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}})
     let answer = await passing(state, host, asked)
     deepEqual((answer->Web.status, host.seen->Array.length), (200, 2))
     host.drops := 2
@@ -120,27 +192,20 @@ test("a request whose body a first send spent is not sent again", async () => {
   let host = Host.make()
   host.drops := 1
   let posted = Web.request(
-    "https://control.test/v1/app-4/",
+    "https://control.test/v1/00000004/",
     {method: "POST", headers: dict{}, body: Web.utf8("once")},
   )
   let answer = await passing(state, host, posted)
   deepEqual((answer->Web.status, host.seen->Array.length), (503, 1))
-  let empty = Web.request("https://control.test/v1/app-4/", {method: "POST", headers: dict{}})
+  let empty = Web.request("https://control.test/v1/00000004/", {method: "POST", headers: dict{}})
   host.drops := 1
   deepEqual((await passing(state, host, empty))->Web.status, 200)
 })
 
-/** A binding as workerd gives one, every name read on it a function, `fetch` answering. */
-let everyName: unit => Stores.env = %raw(`() => ({
-  HOSTS: new Proxy({}, {
-    get: (_, name) => name === "fetch" ? async () => new Response("through") : () => undefined,
-  }),
-})`)
-
 test(
   "the hosts' binding is reached as it is given, though every name read on it is present",
   async () => {
-    switch Worker.reachOf(everyName()) {
+    switch Worker.reachOf(Workerd.everyName()) {
     | Some(reach) =>
       let answer = await reach.fetch(
         Web.request("http://10.200.0.1:37483/", {method: "GET", headers: dict{}}),
@@ -163,7 +228,7 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
     state,
     host.reach,
     ~port=36879,
-    Web.request("https://control.test/v1/app-4/", {method: "GET", headers: dict{}}),
+    Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}}),
     {app: 4., path: "/"},
     ~search="",
   )

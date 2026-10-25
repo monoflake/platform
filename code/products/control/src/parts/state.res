@@ -29,6 +29,7 @@ type t = {
   originated: (~binding: float, ~origin: string) => promise<bool>,
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
+  drawApp: (~random: unit => float) => promise<float>,
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,
 }
@@ -97,6 +98,12 @@ let formOf = name =>
   | _ => None
   }
 
+/** The next id of a table, as `n`'s greatest, counted on past every id an app holds. */
+let following = table =>
+  `WITH RECURSIVE n(v) AS (SELECT COALESCE(MAX(id), 0) + 1 FROM ${table}
+  UNION ALL SELECT v + 1 FROM n
+  WHERE EXISTS (SELECT 1 FROM app WHERE id = v) OR EXISTS (SELECT 1 FROM deployment WHERE app = v))`
+
 let ofDatabase = (database, ~sealing) => {
   let statement = (sql, values) => database->Stores.prepare(sql)->Stores.bind(values)
   let first = async (sql, values) => (await statement(sql, values)->Stores.first)->Nullable.toOption
@@ -128,7 +135,8 @@ let ofDatabase = (database, ~sealing) => {
     openOrganization: async (label, ~secret) => {
       await sealable(sealing, ~kind="organization", secret)
       await run(
-        "INSERT INTO organization (label) VALUES (?) ON CONFLICT (label) DO NOTHING",
+        `${following("organization")} INSERT INTO organization (id, label) SELECT MAX(v), ? FROM n
+        WHERE true ON CONFLICT (label) DO NOTHING`,
         [Text(label)],
       )
       switch await first("SELECT id, secret FROM organization WHERE label = ?", [Text(label)]) {
@@ -169,7 +177,8 @@ let ofDatabase = (database, ~sealing) => {
         await run("UPDATE binding SET secret = ? WHERE id = ?", [Text(seal), Number(id)])
       }
       switch await first(
-        "INSERT INTO binding (organization, secret, relayed) VALUES (?, '', ?) RETURNING id",
+        `${following("binding")} INSERT INTO binding (id, organization, secret, relayed)
+        SELECT MAX(v), ?, '', ? FROM n RETURNING id`,
         [Number(organization), Number(relayed ? 1. : 0.)],
       ) {
       | Some({id}: idRow) =>
@@ -238,6 +247,20 @@ let ofDatabase = (database, ~sealing) => {
         release: row.release,
         capacity: row.capacity,
       }),
+    // One statement, so no id of any kind can be taken between its check and its insert.
+    drawApp: (~random) =>
+      Ids.drawn(~random, async id =>
+        switch await first(
+          "INSERT INTO app (id) SELECT ?1 WHERE NOT EXISTS (SELECT 1 FROM binding WHERE id = ?1)
+          AND NOT EXISTS (SELECT 1 FROM organization WHERE id = ?1)
+          AND NOT EXISTS (SELECT 1 FROM deployment WHERE app = ?1)
+          ON CONFLICT (id) DO NOTHING RETURNING id",
+          [Number(id)],
+        ) {
+        | Some(_: idRow) => true
+        | None => false
+        }
+      ),
   }
 }
 
@@ -310,7 +333,16 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     queue := run->Promise.then(_ => Promise.resolve())->Promise.catch(_ => Promise.resolve())
     run
   }
-  let next = all => all->Array.reduce(0., (most, (id, _)) => Math.max(most, id)) +. 1.
+  // The id after the greatest, counted on past every id an app holds.
+  let rec past = async id =>
+    switch await Promise.all([
+      readJson(`state/apps/${Float.toString(id)}`),
+      readJson(`state/deployments/${Float.toString(id)}`),
+    ]) {
+    | [None, None] => id
+    | _ => await past(id +. 1.)
+    }
+  let next = all => past(all->Array.reduce(0., (most, (id, _)) => Math.max(most, id)) +. 1.)
   let organizationAt = id => `state/organizations/${Float.toString(id)}`
   let bindingAt = id => `state/bindings/${Float.toString(id)}`
   // An organization's plain secret is written back, since no write but its opening changes it.
@@ -393,7 +425,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
             ({id, secret}: organization)
           }
         | None =>
-          let id = next(all)
+          let id = await next(all)
           await writeJson(
             organizationAt(id),
             organizationJson(id, label, await sealed(sealing, ~kind="organization", ~id, secret)),
@@ -415,7 +447,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     openBinding: (~organization, ~secret, ~relayed) =>
       serial(async () => {
         await sealable(sealing, ~kind="binding", secret)
-        let id = next(await every("state/bindings/"))
+        let id = await next(await every("state/bindings/"))
         await writeBinding({
           id,
           organization,
@@ -488,6 +520,25 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           Some(({app, binding, release, capacity}: deployment))
         | _ => None
         }
+      ),
+    // Checked and written within the queue, as a binding's id is given.
+    drawApp: (~random) =>
+      serial(() =>
+        Ids.drawn(~random, async id => {
+          let at = `state/apps/${Float.toString(id)}`
+          let held = [
+            at,
+            organizationAt(id),
+            bindingAt(id),
+            `state/deployments/${Float.toString(id)}`,
+          ]
+          switch await Promise.all(held->Array.map(readJson)) {
+          | found if found->Array.every(Option.isNone) =>
+            await writeJson(at, JSON.Object(dict{"id": JSON.Number(id)}))
+            true
+          | _ => false
+          }
+        })
       ),
   }
 }

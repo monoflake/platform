@@ -442,32 +442,62 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
   }
 }
 
+/** An app's id drawn at random over 32 bits, 0 among them, which the state draws again. */
+let random = () => Ids.ofBytes(Web.random(4))
+
+/** A refusal's message naming the app drawn for it, `app <8 hex>, ` before what it says. */
+let naming = (app, message) => `app ${Ids.text(app)}, ${message}`
+
+let undeployed = app => refused("not_found", `no app ${Ids.text(app)} is deployed`)
+
+/**
+ * The release deployed as the app given, one the control deployed before, or as a new app whose
+ * id the control draws, so no caller makes an id, RFC b8f35.
+ */
 let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
   let hex = Envelope.Hex.encode(input.release)
-  switch (await hostOf(parts, input.binding), await parts.state.release(hex)) {
-  | (Error(answer), _) => answer
-  | (Ok(_), None) => refused("not_found", `no release ${hex} is kept`)
-  | (Ok(host), Some(release)) =>
-    described(
-      await Deploying.deployed(
+  let unknown = switch input.app {
+  | Some(app) => (await parts.state.deployment(app))->Option.isNone ? Some(app) : None
+  | None => None
+  }
+  switch unknown {
+  | Some(app) => undeployed(app)
+  | None =>
+    switch (await hostOf(parts, input.binding), await parts.state.release(hex)) {
+    | (Error(answer), _) => answer
+    | (Ok(_), None) => refused("not_found", `no release ${hex} is kept`)
+    | (Ok(host), Some(release)) =>
+      let (app, drawn) = switch input.app {
+      | Some(app) => (app, false)
+      | None =>
+        let app = await parts.state.drawApp(~random)
+        // Kept before the host is called, its container 0 for none yet, so a deploy that fails
+        // is retried under this id.
+        await parts.state.deploy({app, binding: input.binding, release: hex, capacity: 0.})
+        (app, true)
+      }
+      let answer = await Deploying.deployed(
         host,
-        ~app=input.app,
+        ~app,
         ~hash=input.release,
         ~form=release.form,
         ~address=`${parts.origin}/artifacts/${hex}`,
         ~secrets=input.secrets->Option.getOr(dict{}),
         ~network=input.network->Option.getOr([]),
         ~declared=capacity =>
-          parts.state.deploy({app: input.app, binding: input.binding, release: hex, capacity}),
+          parts.state.deploy({app, binding: input.binding, release: hex, capacity}),
         ~wait=parts.wait,
-      ),
-    )
+      )
+      described(
+        drawn ? answer->Result.mapError(r => {...r, message: naming(app, r.message)}) : answer,
+      )
+    }
   }
 }
 
 let describe = async (parts, app) =>
   switch await parts.state.deployment(app) {
-  | None => refused("not_found", `no app ${Float.toString(app)} is deployed`)
+  | None => undeployed(app)
   | Some(deployment) =>
     switch await hostOf(parts, deployment.binding) {
     | Error(answer) => answer

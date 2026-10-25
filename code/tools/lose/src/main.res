@@ -8,10 +8,7 @@ module Live = Conform.Live
 module Remote = Conform.Remote
 module Through = Conform.Through
 
-let usage = "lose <target> [--control <origin>] [--dry-run]"
-
-/** The app whose deployment hello is, as deploy makes it. */
-let app = 1
+let usage = "lose <target> --app <id> [--control <origin>] [--dry-run]"
 
 /** How long the driver is kept stopped, and how often each path is asked meanwhile. */
 let window = 20000.
@@ -40,7 +37,7 @@ let startedNow = (target: Remote.target) => {
 }
 
 /** hello asked through the entry, on the machine. */
-let throughEntry = (target, ~binding) =>
+let throughEntry = (target, ~app, ~binding) =>
   async () =>
     (await remote(target, Live.hello(~app, ~binding)))
     ->Result.flatMap(Live.readAnswered)
@@ -123,7 +120,7 @@ let probed = async (target: Remote.target, shell) => {
 }
 
 /** The driver stopped, each path watched through the window, and its calls made while stopped. */
-let lost = async (target, paths) =>
+let lost = async (target, paths, ~app) =>
   switch await remote(target, Stopping.stop) {
   | Error(why) => Error(`${Stopping.unit} did not stop, ${why}`)
   | Ok(_) =>
@@ -171,8 +168,10 @@ let main = async () => {
   let took = () => seconds(Date.now() -. started)
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
-  switch Through.control(args->Array.filter(a => a != "--dry-run")) {
-  | Ok((control, [named])) if !(named->String.startsWith("--")) =>
+  switch Ids.app(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
+    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+  ) {
+  | Ok((app, control, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let binding =
       (await remote(target, Live.binding))->Result.flatMap(text =>
@@ -191,7 +190,7 @@ let main = async () => {
       | None => []
       | Some({name, address}) => [(name, throughTunnel(address))]
       }
-      let paths = [("entry", throughEntry(target, ~binding)), ...tunnel]
+      let paths = [("entry", throughEntry(target, ~app, ~binding)), ...tunnel]
       let (before, held) = await looked(target, paths, ~when_="before")
       if !held {
         say(`${named} does not serve as it should, so nothing is stopped, ${took()}s`)
@@ -210,7 +209,7 @@ let main = async () => {
             Host.exit(Host.process, 130)
           })
         )
-        let lost = try await lost(target, paths) catch {
+        let lost = try await lost(target, paths, ~app) catch {
         | JsExn(e) => Error(e->JsExn.message->Option.getOr("the run threw"))
         }
         let back = (await remote(target, Stopping.start))->Result.isOk || again()

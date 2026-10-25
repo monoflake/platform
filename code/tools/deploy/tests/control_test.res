@@ -39,8 +39,8 @@ test(
     deepEqual(Control.origin("control:https://c.example"), Some(Ok("https://c.example")))
     ok(Control.origin("control:localhost:8787")->Option.mapOr(false, Result.isError))
     deepEqual(
-      Control.origin("control:https://c.example/v1/app-2/"),
-      Some(Ok("https://c.example/v1/app-2")),
+      Control.origin("control:https://c.example/v1/00000002/"),
+      Some(Ok("https://c.example/v1/00000002")),
     )
     ok(Control.origin("control:https://c.example/v1?x=1")->Option.mapOr(false, Result.isError))
     deepEqual(Control.origin("root@machine.example"), None)
@@ -48,12 +48,16 @@ test(
   },
 )
 
-test("the gateway's address of an app is its scope under the control's origin", () =>
+test("the gateway's address of an app is its scope under the control's origin, in hex", () => {
   deepEqual(
     Control.gateway(~origin="http://localhost:8787", ~app=3.),
-    "http://localhost:8787/v1/app-3/",
+    "http://localhost:8787/v1/00000003/",
   )
-)
+  deepEqual(
+    Control.gateway(~origin="https://c.example", ~app=4275878552.),
+    "https://c.example/v1/fedcba98/",
+  )
+})
 
 testAsync(
   "a release is put, deployed and described as the operator, its secret the bearer",
@@ -72,7 +76,14 @@ testAsync(
     deepEqual(held->Result.map(h => Envelope.Hex.encode(h.hash)), Ok(String.repeat("ab", 32)))
     ok(
       (
-        await Control.deploy(control, ~binding=2., ~app=1., ~hash, ~secrets=dict{}, ~network=[])
+        await Control.deploy(
+          control,
+          ~binding=2.,
+          ~app=Some(1.),
+          ~hash,
+          ~secrets=dict{},
+          ~network=[],
+        )
       )->Result.isOk,
     )
     ok((await Control.describe(control, ~app=1.))->Result.isOk)
@@ -104,7 +115,7 @@ testAsync("a deploy hands the control the secrets and network it is given", asyn
     await Control.deploy(
       control,
       ~binding=1.,
-      ~app=2.,
+      ~app=Some(2.),
       ~hash,
       ~secrets=dict{"OPERATOR": Bytes.utf8("kept")},
       ~network=[Http],
@@ -139,7 +150,14 @@ testAsync(
       },
     )
     deepEqual(
-      await Control.deploy(control, ~binding=2., ~app=1., ~hash, ~secrets=dict{}, ~network=[]),
+      await Control.deploy(
+        control,
+        ~binding=2.,
+        ~app=Some(1.),
+        ~hash,
+        ~secrets=dict{},
+        ~network=[],
+      ),
       Error({reason: "unbound", message: "not bound"}),
     )
     deepEqual(
@@ -150,18 +168,59 @@ testAsync(
 )
 
 testAsync("the app is asked at the gateway, and only a gateway's 502 to 504 fails", async () => {
-  let (control, sent) = faked(dict{"/v1/app-1/": (200, "hello from a machine\n")})
+  let (control, sent) = faked(dict{"/v1/00000001/": (200, "hello from a machine\n")})
   deepEqual(await Control.asked(control, ~app=1.), Ok("200, hello from a machine"))
   deepEqual(
     sent->Array.map(s => (s.url, s.init.method)),
-    [("http://localhost:8787/v1/app-1/", "GET")],
+    [("http://localhost:8787/v1/00000001/", "GET")],
   )
   // The production control answers `/` with its own 400, which failed every deploy of it, rxmd9.
-  let (refusing, _) = faked(dict{"/v1/app-2/": (400, "the path / is not /{interface}/{operation}")})
+  let (refusing, _) = faked(
+    dict{"/v1/00000002/": (400, "the path / is not /{interface}/{operation}")},
+  )
   deepEqual(
     await Control.asked(refusing, ~app=2.),
     Ok("400, the path / is not /{interface}/{operation}"),
   )
-  let (unbound, _) = faked(dict{"/v1/app-3/": (503, "the host of app 3 is not bound")})
+  let (unbound, _) = faked(dict{"/v1/00000003/": (503, "the host of app 00000003 is not bound")})
   ok((await Control.asked(unbound, ~app=3.))->Result.isError)
 })
+
+testAsync(
+  "a deploy with no app names none, and the control's answer gives the id it drew",
+  async () => {
+    let drawn = `{"status": "success", "data": {"runs": {"name": "app", "id": 2882400018}, "version": "${String.repeat(
+        "ab",
+        32,
+      )}", "state": {"name": "making"}}}`
+    let (control, sent) = faked(dict{"/releases/deploy": (200, drawn)})
+    let answered = await Control.deploy(
+      control,
+      ~binding=2.,
+      ~app=None,
+      ~hash,
+      ~secrets=dict{},
+      ~network=[],
+    )
+    deepEqual(
+      sent->Array.get(0)->Option.flatMap(s => s.init.body)->Option.map(b => JSON.parseOrThrow(b)),
+      Some(
+        JSON.parseOrThrow(
+          `{"interface": "releases", "operation": "deploy", "input": {"binding": 2, "release": "${String.repeat(
+              "ab",
+              32,
+            )}"}}`,
+        ),
+      ),
+    )
+    deepEqual(
+      answered->Result.map(d =>
+        switch d.runs {
+        | App({id}) => Ids.text(id)
+        | Component(_) => ""
+        }
+      ),
+      Ok("abcdef12"),
+    )
+  },
+)
