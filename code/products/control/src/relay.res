@@ -32,10 +32,7 @@ let reached = async (reach: Reach.t, made, ~binding) =>
   | answer => answer
   | exception JsExn(e) =>
     let why = e->JsExn.message->Option.getOr("no message")
-    Web.answered(
-      ~status=502,
-      `the host of binding ${Float.toString(binding)} did not answer, ${why}`,
-    )
+    Web.answered(~status=502, `the host of binding ${Ids.text(binding)} did not answer, ${why}`)
   }
 
 let passed = async (state: State.t, reach: Reach.t, ~caller, ~ports, request, relayed, ~search) =>
@@ -43,7 +40,7 @@ let passed = async (state: State.t, reach: Reach.t, ~caller, ~ports, request, re
   | Access.Organization(organization) =>
     switch await state.addressedAt(relayed.address) {
     | Some({origin: Some(_)}) => beyondHost("a binding reached by its origin is relayed by no one")
-    | Some({id, relayed: true, organization: owner})
+    | Some({id, relayed: true, bound: Some(_), organization: owner})
       if owner == organization && ports->Array.includes(relayed.port) =>
       let made = Web.resent(
         `${reach.origin(~address=relayed.address, ~port=relayed.port)}${relayed.path}${search}`,

@@ -18,6 +18,8 @@ type binding = {
   address: option<string>,
   origin: option<string>,
   relayed: bool,
+  /** The order it was bound in by a tunnel once its route was made; never for an origin binding. */
+  bound: option<float>,
 }
 
 /** A release by its hash in hex, its form and its size in bytes. */
@@ -31,7 +33,12 @@ type t = {
   openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
   hasOrganization: float => promise<bool>,
   organizationSecret: float => promise<option<Uint8Array.t>>,
-  openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
+  openBinding: (
+    ~organization: float,
+    ~secret: Uint8Array.t,
+    ~relayed: bool,
+    ~random: unit => float,
+  ) => promise<float>,
   binding: float => promise<option<binding>>,
   /**
    * The organization's first binding its host bound here by a tunnel, where its objects are kept,
@@ -41,8 +48,15 @@ type t = {
   /** The binding reached at an address. */
   addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
-  /** The address its host is reached at, written once the host can be reached there. */
-  addressed: (~binding: float, ~address: string) => promise<unit>,
+  /**
+   * The address its host is reached at, `address` where given and it holds none, else the lowest in
+   * `10.200.0.0/16` no binding holds, taken in one step; the one it holds, none where none is left.
+   */
+  addressed: (~binding: float, ~address: string=?) => promise<option<string>>,
+  /** A binding's address given back, only where it still holds that one, as a failed make does. */
+  unaddressed: (~binding: float, ~address: string) => promise<unit>,
+  /** A binding's route made, its order taken after every one before, where it holds an address. */
+  routed: (~binding: float) => promise<unit>,
   /**
    * The origin its driver is called at, written once proven and only where no bind fixed its reach
    * first, answering whether it was written, RFC 8j7b0.
@@ -56,6 +70,8 @@ type t = {
    * organization holds it, and drawn again on a conflict, RFC b8f35.
    */
   drawApp: (~random: unit => float) => promise<float>,
+  /** An app drawn and never run removed, no deployment or one of capacity 0, and whether it was. */
+  forgetApp: float => promise<bool>,
   /** What was declared of an app's deployment, written before its host is called. */
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,

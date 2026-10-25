@@ -1,25 +1,8 @@
 /***
- * An app's id written as 8 lowercase hex digits, RFC b8f35, and one drawn where no control draws
- * it, checked against what the machine holds.
+ * An app's id drawn where no control draws it, checked against what the machine holds, RFC b8f35,
+ * and the app a control drew for a deploy it refused.
  */
 module Contracts = Envelope.Contracts
-
-/** The id written out, leading zeros kept. */
-let text = id => id->Float.toString(~radix=16)->String.padStart(8, "0")
-
-let written = /^[0-9a-f]{8}$/
-
-/** The id 8 lowercase hex digits write, none for any other text or for 0, which no id is. */
-let ofText = text =>
-  written->RegExp.test(text)
-    ? Some(Float.parseInt(text, ~radix=16))->Option.filter(id => id > 0.)
-    : None
-
-/** The 32 bits of 4 bytes read big-endian, as an id is read from its bytes. */
-let ofBytes = (bytes: Uint8Array.t) =>
-  [0, 1, 2, 3]->Array.reduce(0., (id, i) =>
-    id *. 256. +. bytes->TypedArray.get(i)->Option.mapOr(0., Int.toFloat)
-  )
 
 /** Every id the machine's list holds, its items' and those of what it adopted. */
 let listed = (described: Contracts.ManagementDescribed.t) =>
@@ -67,7 +50,7 @@ let named = message =>
   switch naming->RegExp.exec(message) {
   | Some(found) =>
     switch found->RegExp.Result.matches {
-    | [Some(id)] => ofText(id)
+    | [Some(id)] => Ids.Id.ofText(id)
     | _ => None
     }
   | None => None
@@ -80,6 +63,8 @@ let named = message =>
 let retried = (~given, ~drawn, why) =>
   switch (given, drawn) {
   | (None, Some(id)) =>
-    `${why}; app ${text(id)} was opened, so deploy again with --app ${text(id)} to redeploy it`
+    `${why}; app ${Ids.Id.text(id)} was opened, so deploy again with --app ${Ids.Id.text(
+        id,
+      )} to redeploy it`
   | (Some(_), _) | (None, None) => why
   }

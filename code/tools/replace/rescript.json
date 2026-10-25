@@ -5,7 +5,12 @@
 		{ "dir": "src", "subdirs": true },
 		{ "dir": "tests", "subdirs": true, "type": "dev" }
 	],
-	"dependencies": ["@monoflake/envelope", "@monoflake/conform", "@monoflake/lose"],
+	"dependencies": [
+		"@monoflake/envelope",
+		"@monoflake/ids",
+		"@monoflake/conform",
+		"@monoflake/lose"
+	],
 	"package-specs": [{ "module": "esmodule", "in-source": true }],
 	"suffix": ".res.mjs",
 	"warnings": { "number": "+4", "error": "+a-110" }

@@ -23,7 +23,7 @@ let routed = path =>
   | None => found(decimal, path, id => Float.fromString(id)->Option.filter(id => id <= 4294967295.))
   }
 
-let host = (~app, ~binding) => `${Ids.text(app)}.b${Float.toString(binding)}`
+let host = (~app, ~binding) => `${Ids.text(app)}.b${Ids.text(binding)}`
 
 /** Whether a request can be sent again, its body none that a first send would have spent. */
 let resendable = request =>
@@ -52,7 +52,7 @@ let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~sea
       beyondHost(
         `app ${Ids.text(routed.app)} runs on a binding reached by its origin, never through here`,
       )
-    | Some({address: Some(address)}) =>
+    | Some({bound: Some(_), address: Some(address)}) =>
       let named = host(~app=routed.app, ~binding=deployment.binding)
       let sent = () => {
         let made = Web.resent(`${reach.origin(~address, ~port)}${routed.path}${search}`, request)
@@ -80,7 +80,7 @@ let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~sea
         }
       | exception JsExn(e) => unanswered(e)
       }
-    | Some({address: None}) | None =>
+    | Some({bound: None}) | Some({address: None}) | None =>
       Web.answered(~status=503, `the host of app ${Ids.text(routed.app)} is not bound`)
     }
   }

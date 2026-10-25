@@ -37,7 +37,7 @@ echo "architecture=$(uname -m)"
 `
 
 type facts = {
-  binding: int,
+  binding: float,
   mount: string,
   routes: array<string>,
   listening: array<int>,
@@ -73,6 +73,12 @@ let said = text =>
 let valuesOf = (said, name) =>
   said->Array.filterMap(((key, value)) => key == name && value != "" ? Some(value) : None)
 
+/** A binding's id as its token writes it before its dot, a decimal of 32 bits, RFC 3d3nt. */
+let tokenId = text =>
+  /^[1-9][0-9]{0,9}$/->RegExp.test(text)
+    ? Float.fromString(text)->Option.filter(id => id <= 4294967295.)
+    : None
+
 let whole = text =>
   switch Int.fromString(text) {
   | Some(n) if Int.toString(n) == text => Some(n)
@@ -86,7 +92,7 @@ let portOf = address =>
   | at => whole(address->String.slice(~start=at + 1))
   }
 
-let readFacts = text => {
+let readFacts = (text, ~count) => {
   let said = said(text)
   let one = name => valuesOf(said, name)->Array.get(0)
   let listening = valuesOf(said, "listening")->Array.filterMap(portOf)
@@ -95,11 +101,15 @@ let readFacts = text => {
     valuesOf(said, "listening")
     ->Array.filter(address => !(ours->Array.includes(address)))
     ->Array.filterMap(portOf)
-  switch (one("binding")->Option.flatMap(whole), one("subvolumes")->Option.flatMap(whole)) {
+  switch (one("binding")->Option.flatMap(tokenId), one("subvolumes")->Option.flatMap(whole)) {
   | (None, _) => Error("the live binding's token names no id before its dot")
   | (_, None) => Error("the subvolumes of the mount were not counted")
-  | (Some(binding), _) if binding >= first =>
-    Error(`the live binding ${int(binding)} is among those from ${int(first)} this run takes`)
+  | (Some(binding), _) if binding >= Int.toFloat(first) && binding < Int.toFloat(first + count) =>
+    Error(
+      `the live binding ${Float.toString(binding)} is among the ${int(count)} from ${int(
+          first,
+        )} this run takes`,
+    )
   | (_, Some(_)) if others->Array.includes(port) =>
     Error(`something listens on port ${int(port)} already`)
   | (_, Some(_)) if others->Array.includes(entry) =>

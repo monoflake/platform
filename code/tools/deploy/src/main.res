@@ -4,75 +4,6 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run]"
-
-/**
- * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
- * it onto, the secrets and network a control hands the driver, and whether nothing is changed.
- */
-type args = {
-  directory: string,
-  target: string,
-  app: option<float>,
-  binding: option<float>,
-  secrets: array<string>,
-  network: array<Contracts.DeploymentNetwork.t>,
-  dry: bool,
-}
-
-/** A comma's list, its empty entries passed over. */
-let listed = text => text->String.split(",")->Array.map(String.trim)->Array.filter(s => s != "")
-
-/** A secret's name, as an environment variable writes it. */
-let secretName = /^[A-Z][A-Z0-9_]*$/
-
-let networkOf = name =>
-  switch name {
-  | "http" => Some(Contracts.DeploymentNetwork.Http)
-  | "tcp" => Some(Tcp)
-  | "udp" => Some(Udp)
-  | "icmp" => Some(Icmp)
-  | _ => None
-  }
-
-let id = text =>
-  switch Float.fromString(text) {
-  | Some(n) if Math.floor(n) == n && n >= 1. => Some(n)
-  | _ => None
-  }
-
-let rec parse = (args, given) =>
-  switch args {
-  | list{"--dry-run", ...rest} => parse(rest, {...given, dry: true})
-  | list{"--app", text, ...rest} =>
-    switch Ids.ofText(text) {
-    | Some(app) => parse(rest, {...given, app: Some(app)})
-    | None => Error(`--app ${text} is no app's id, 8 lowercase hex digits`)
-    }
-  | list{"--binding", text, ...rest} =>
-    switch id(text) {
-    | Some(binding) => parse(rest, {...given, binding: Some(binding)})
-    | None => Error(`--binding ${text} is no id`)
-    }
-  | list{"--secrets", text, ...rest} =>
-    switch listed(text)->Array.find(n => !(secretName->RegExp.test(n))) {
-    | Some(bad) => Error(`--secrets ${bad} is no secret's name`)
-    | None => parse(rest, {...given, secrets: listed(text)})
-    }
-  | list{"--network", text, ...rest} =>
-    let kinds = listed(text)->Array.map(n => (n, networkOf(n)))
-    switch kinds->Array.find(((_, kind)) => kind == None) {
-    | Some((bad, _)) => Error(`--network ${bad} is none of http, tcp, udp and icmp`)
-    | None => parse(rest, {...given, network: kinds->Array.filterMap(((_, kind)) => kind)})
-    }
-  | list{flag, ..._} if flag->String.startsWith("--") => Error(`${flag} is no flag of ${usage}`)
-  | list{named, ...rest} if given.directory == "" => parse(rest, {...given, directory: named})
-  | list{named, ...rest} if given.target == "" => parse(rest, {...given, target: named})
-  | list{named, ..._} => Error(`${named} is one argument too many`)
-  | list{} if given.target == "" => Error(usage)
-  | list{} => Ok(given)
-  }
-
 /** A phase run and its time printed, beside what `said` makes of its value or why it failed. */
 let timed = async (name, run, said) => {
   let started = Date.now()
@@ -265,9 +196,9 @@ let appOf = (target, app) =>
     describeList(target)
     ->Result.mapError(refusal)
     ->Result.flatMap(described => {
-      let listed = Ids.listed(described)
-      Ids.drawn(
-        ~random=() => Ids.ofBytes(Host.fillRandom(Uint8Array.fromLength(4))),
+      let listed = Drawing.listed(described)
+      Drawing.drawn(
+        ~random=() => Ids.Id.ofBytes(Host.fillRandom(Uint8Array.fromLength(4))),
         ~held=id =>
           listed->Array.includes(id)
             ? Ok(true)
@@ -281,7 +212,7 @@ let appOf = (target, app) =>
   }
 
 /** The archive sent to the machine and deployed there, then the entry asked for the app. */
-let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
+let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~binding, ~dry) => {
   let target = Machine.target(named)
   let address = Deploying.address(~directory=facts.directory, ~hash)
   let copy = dry
@@ -290,7 +221,7 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
   let answered = await timed(
     "app",
     async () => appOf(target, app),
-    ((app, how)) => `${Ids.text(app)}, ${how}`,
+    ((app, how)) => `${Ids.Id.text(app)}, ${how}`,
   )
   ->after(((app, _)) =>
     timed("copy", copy, said => said)->Promise.thenResolve(r => r->Result.map(_ => app))
@@ -308,7 +239,7 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
     )->Promise.thenResolve(r => r->Result.map(_ => app))
   )
   ->after(async app => {
-    let host = Deploying.host(~app, ~binding=facts.binding)
+    let host = Deploying.host(~app, ~binding)
     dry
       ? Ok((app, host, None))
       : (
@@ -320,7 +251,7 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~dry) => {
         )->Result.map(answer => (app, host, Some(answer)))
   })
   answered->Result.map(((app, host, answer)) => {
-    Console.log(`deploy: app ${Ids.text(app)}`)
+    Console.log(`deploy: app ${Ids.Id.text(app)}`)
     answer->Option.forEach(answer => {
       Console.log(answer)
       if Machine.isLocal(named) {
@@ -385,14 +316,14 @@ let throughControl = async (
     | Ok(_) =>
       switch await Control.deploy(control, ~binding, ~app, ~hash, ~secrets, ~network) {
       | Error(refused) =>
-        Error(Ids.retried(~given=app, ~drawn=Ids.named(refused.message), refusal(refused)))
+        Error(Drawing.retried(~given=app, ~drawn=Drawing.named(refused.message), refusal(refused)))
       | Ok(described) =>
         switch ranAs(described) {
         | Error(why) => Error(why)
         | Ok(id) =>
           (await polled(() => progress(id), running))
           ->Result.map(() => id)
-          ->Result.mapError(why => Ids.retried(~given=app, ~drawn=Some(id), why))
+          ->Result.mapError(why => Drawing.retried(~given=app, ~drawn=Some(id), why))
         }
       }
     }
@@ -417,9 +348,9 @@ let throughControl = async (
       Console.log("deploy: running this version already, nothing sent")
       Ok(Some(app))
     | (Running | Waiting | Elsewhere | Failed(_), _) if dry =>
-      let as_ = app->Option.mapOr("a new app the control draws", app => `app ${Ids.text(app)}`)
+      let as_ = app->Option.mapOr("a new app the control draws", app => `app ${Ids.Id.text(app)}`)
       Console.log(
-        `deploy: the release would be put and deployed onto binding ${Float.toString(
+        `deploy: the release would be put and deployed onto binding ${Ids.Id.text(
             binding,
           )} as ${as_}`,
       )
@@ -427,7 +358,7 @@ let throughControl = async (
     | (Running | Waiting | Elsewhere | Failed(_), _) =>
       (
         await timed("deploy", sent, id =>
-          `binding ${Float.toString(binding)}, app ${Ids.text(id)}, deployed and running`
+          `binding ${Ids.Id.text(binding)}, app ${Ids.Id.text(id)}, deployed and running`
         )
       )->Result.map(id => Some(id))
     }
@@ -444,7 +375,7 @@ let throughControl = async (
   answered->Result.map(answer =>
     answer->Option.forEach(((app, answer)) => {
       Console.log(answer)
-      Console.log(`deploy: app ${Ids.text(app)}`)
+      Console.log(`deploy: app ${Ids.Id.text(app)}`)
       Console.log(`deploy: open ${Control.gateway(~origin=control.origin, ~app)}`)
     })
   )
@@ -464,27 +395,64 @@ let secretsOf = names =>
   )
 
 /** The control a target names, with the operator's secret, or why it cannot be called. */
-let controlOf = (named, binding) =>
+let controlOf = named =>
   Control.origin(named)->Option.map(origin =>
-    switch (origin, binding, Host.env->Dict.get(Control.operatorVariable)) {
-    | (Error(why), _, _) => Error(why)
-    | (Ok(_), None, _) => Error(`a control's target asks --binding, the binding to deploy onto`)
-    | (Ok(_), Some(_), None | Some("")) =>
+    switch (origin, Host.env->Dict.get(Control.operatorVariable)) {
+    | (Error(why), _) => Error(why)
+    | (Ok(_), None | Some("")) =>
       Error(`${Control.operatorVariable} holds no operator's secret for the control`)
-    | (Ok(origin), Some(binding), Some(operator)) =>
-      Ok(({origin, operator, fetch: Web.fetch}: Control.t), binding)
+    | (Ok(origin), Some(operator)) => Ok(({origin, operator, fetch: Web.fetch}: Control.t))
     }
   )
 
+/** The control a deploy is sent through, with the binding it deploys onto. */
+let deployingOf = (named, binding) =>
+  controlOf(named)->Option.map(control =>
+    control->Result.flatMap(control =>
+      switch binding {
+      | Some(binding) => Ok((control, binding))
+      | None => Error(`a control's target asks --binding, the binding to deploy onto`)
+      }
+    )
+  )
+
+/** The binding's id its token names before its dot, a decimal, as a token writes it. */
+let tokenBinding = (facts: Machine.facts) =>
+  switch Float.fromString(facts.binding) {
+  | Some(id) if /^[1-9][0-9]{0,9}$/->RegExp.test(facts.binding) && id <= 4294967295. =>
+    Ok((facts, id))
+  | Some(_) | None => Error(`the binding's token names ${facts.binding}, no binding's id`)
+  }
+
+/** The app a control drew and never ran, forgotten there, or what a dry run would ask. */
+let forgotten = async (control: Control.t, ~app, ~dry) =>
+  if dry {
+    Ok(`app ${Ids.Id.text(app)} would be forgotten`)
+  } else {
+    switch await Control.forget(control, ~app) {
+    | Ok({app}) => Ok(`app ${Ids.Id.text(app)} forgotten`)
+    | Error(refused) => Error(refusal(refused))
+    }
+  }
+
 let main = async () => {
   let started = Date.now()
-  switch parse(
-    List.fromArray(Host.argv->Array.slice(~start=2)),
-    {directory: "", target: "", app: None, binding: None, secrets: [], network: [], dry: false},
-  ) {
+  switch Arguments.parse(Host.argv->Array.slice(~start=2)) {
   | Error(why) =>
     Console.error(`deploy: ${why}`)
     Host.setExitCode(Host.process, 2)
+  | Ok({target: named, forget: Some(app), dry}) =>
+    // Arguments refused a machine's target already, so this one names a control.
+    switch controlOf(named)->Option.getOr(Error(`${named} names no control`)) {
+    | Ok(control) =>
+      switch await timed("forget", () => forgotten(control, ~app, ~dry), said => said) {
+      | Ok(_) => ()
+      | Error(_) => Host.setExitCode(Host.process, 1)
+      }
+    | Error(why) =>
+      Console.error(`deploy: ${why}`)
+      Host.setExitCode(Host.process, 2)
+    }
   | Ok({target: named, secrets, network})
     if Control.origin(named) == None && (secrets != [] || network != []) =>
     Console.error(`deploy: --secrets and --network are a control's, and ${named} is a machine`)
@@ -493,8 +461,8 @@ let main = async () => {
     secretsOf(secrets)->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     Host.setExitCode(Host.process, 2)
   | Ok({target: named, binding})
-    if controlOf(named, binding)->Option.mapOr(false, Result.isError) =>
-    controlOf(named, binding)->Option.forEach(c =>
+    if deployingOf(named, binding)->Option.mapOr(false, Result.isError) =>
+    deployingOf(named, binding)->Option.forEach(c =>
       c->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     )
     Host.setExitCode(Host.process, 2)
@@ -515,7 +483,7 @@ let main = async () => {
       )
     )
     ->after(((hash, path, _)) =>
-      switch controlOf(named, binding) {
+      switch deployingOf(named, binding) {
       | Some(Ok((control, binding))) =>
         throughControl(control, ~app, ~binding, ~hash, ~path, ~secrets, ~network, ~dry)
       | Some(Error(why)) => Promise.resolve(Error(why))
@@ -523,9 +491,11 @@ let main = async () => {
         timed(
           "ask",
           async () =>
-            remote(Machine.target(named), Machine.facts)->Result.flatMap(Machine.readFacts),
-          (facts: Machine.facts) => `binding ${facts.binding}`,
-        )->after(facts => sent(named, ~app, ~hash, ~path, ~facts, ~dry))
+            remote(Machine.target(named), Machine.facts)
+            ->Result.flatMap(Machine.readFacts)
+            ->Result.flatMap(tokenBinding),
+          ((_, binding)) => `binding ${Ids.Id.text(binding)}`,
+        )->after(((facts, binding)) => sent(named, ~app, ~hash, ~path, ~facts, ~binding, ~dry))
       }
     )
     Host.remove(scratch, {recursive: true, force: true})

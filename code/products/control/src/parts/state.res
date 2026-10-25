@@ -8,6 +8,7 @@ type binding = {
   address: option<string>,
   origin: option<string>,
   relayed: bool,
+  bound: option<float>,
 }
 
 type organization = {id: float, secret: Uint8Array.t}
@@ -20,16 +21,24 @@ type t = {
   openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
   hasOrganization: float => promise<bool>,
   organizationSecret: float => promise<option<Uint8Array.t>>,
-  openBinding: (~organization: float, ~secret: Uint8Array.t, ~relayed: bool) => promise<float>,
+  openBinding: (
+    ~organization: float,
+    ~secret: Uint8Array.t,
+    ~relayed: bool,
+    ~random: unit => float,
+  ) => promise<float>,
   binding: float => promise<option<binding>>,
   storage: float => promise<option<binding>>,
   addressedAt: string => promise<option<binding>>,
   tunneled: (~binding: float, ~tunnel: string) => promise<unit>,
-  addressed: (~binding: float, ~address: string) => promise<unit>,
+  addressed: (~binding: float, ~address: string=?) => promise<option<string>>,
+  unaddressed: (~binding: float, ~address: string) => promise<unit>,
+  routed: (~binding: float) => promise<unit>,
   originated: (~binding: float, ~origin: string) => promise<bool>,
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
   drawApp: (~random: unit => float) => promise<float>,
+  forgetApp: float => promise<bool>,
   deploy: deployment => promise<unit>,
   deployment: float => promise<option<deployment>>,
 }
@@ -76,9 +85,10 @@ type bindingRow = {
   address: Nullable.t<string>,
   origin: Nullable.t<string>,
   relayed: float,
+  bound: Nullable.t<float>,
 }
 
-let bindingColumns = "id, organization, secret, tunnel, address, origin, relayed"
+let bindingColumns = "id, organization, secret, tunnel, address, origin, relayed, bound"
 
 type releaseRow = {hash: string, form: string, size: float}
 type deploymentRow = {app: float, binding: float, release: string, capacity: float}
@@ -98,11 +108,31 @@ let formOf = name =>
   | _ => None
   }
 
-/** The next id of a table, as `n`'s greatest, counted on past every id an app holds. */
+/**
+ * The next id of a table, as `n`'s greatest, counted on past every id an app or a binding holds.
+ */
 let following = table =>
   `WITH RECURSIVE n(v) AS (SELECT COALESCE(MAX(id), 0) + 1 FROM ${table}
   UNION ALL SELECT v + 1 FROM n
-  WHERE EXISTS (SELECT 1 FROM app WHERE id = v) OR EXISTS (SELECT 1 FROM deployment WHERE app = v))`
+  WHERE EXISTS (SELECT 1 FROM app WHERE id = v) OR EXISTS (SELECT 1 FROM deployment WHERE app = v)
+  OR EXISTS (SELECT 1 FROM binding WHERE id = v))`
+
+/** The lowest address of the range no binding holds, as `a`'s one row. */
+let unaddressed = `WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n
+  WHERE v < ${Int.toString(Addresses.count)}),
+  a(address) AS (SELECT '10.200.' || (v / 256) || '.' || (v % 256) FROM n
+  WHERE '10.200.' || (v / 256) || '.' || (v % 256)
+  NOT IN (SELECT address FROM binding WHERE address IS NOT NULL) ORDER BY v LIMIT 1)`
+
+type addressRow = {address: Nullable.t<string>}
+
+/** Whether the app a parameter names is held, its record kept or a container declared for it. */
+let appHeld = app =>
+  `(EXISTS (SELECT 1 FROM app WHERE id = ${app})
+  OR EXISTS (SELECT 1 FROM deployment WHERE app = ${app} AND capacity != 0))`
+
+/** The order a binding is given its address in, after every one given before, RFC rxmd9. */
+let followingBound = "(SELECT COALESCE(MAX(bound), 0) + 1 FROM binding)"
 
 let ofDatabase = (database, ~sealing) => {
   let statement = (sql, values) => database->Stores.prepare(sql)->Stores.bind(values)
@@ -124,6 +154,7 @@ let ofDatabase = (database, ~sealing) => {
     address: row.address->Nullable.toOption,
     origin: row.origin->Nullable.toOption,
     relayed: row.relayed != 0.,
+    bound: row.bound->Nullable.toOption,
   }
   let bindingAt = async (sql, values) =>
     switch await first(sql, values) {
@@ -170,47 +201,88 @@ let ofDatabase = (database, ~sealing) => {
       | Some(text) => Some(await secretOf(~kind="organization", ~id, text))
       | None => None
       },
-    openBinding: async (~organization, ~secret, ~relayed) => {
+    openBinding: async (~organization, ~secret, ~relayed, ~random) => {
       await sealable(sealing, ~kind="binding", secret)
       let written = async id => {
         let seal = await sealed(sealing, ~kind="binding", ~id, secret)
         await run("UPDATE binding SET secret = ? WHERE id = ?", [Text(seal), Number(id)])
       }
-      switch await first(
-        `${following("binding")} INSERT INTO binding (id, organization, secret, relayed)
-        SELECT MAX(v), ?, '', ? FROM n RETURNING id`,
-        [Number(organization), Number(relayed ? 1. : 0.)],
-      ) {
-      | Some({id}: idRow) =>
-        // The id is known only once inserted, so its secret is sealed for it after.
-        // Any failure after the insert deletes the row, so none is left with an empty secret.
-        switch await written(id) {
-        | () => id
-        | exception JsExn(e) =>
-          await run("DELETE FROM binding WHERE id = ?", [Number(id)])
-          throw(JsExn(e))
+      // One statement, so no id of any kind can be taken between its check and its insert.
+      let id = await Ids.drawn(~random, ~kind="binding", async id =>
+        switch await first(
+          "INSERT INTO binding (id, organization, secret, relayed) SELECT ?1, ?2, '', ?3
+          WHERE NOT EXISTS (SELECT 1 FROM app WHERE id = ?1)
+          AND NOT EXISTS (SELECT 1 FROM organization WHERE id = ?1)
+          AND NOT EXISTS (SELECT 1 FROM deployment WHERE app = ?1)
+          ON CONFLICT (id) DO NOTHING RETURNING id",
+          [Number(id), Number(organization), Number(relayed ? 1. : 0.)],
+        ) {
+        | Some(_: idRow) => true
+        | None => false
         }
-      | None => JsError.throwWithMessage("no binding inserted")
+      )
+      // Any failure after the insert deletes the row, so none is left with an empty secret.
+      switch await written(id) {
+      | () => id
+      | exception JsExn(e) =>
+        await run("DELETE FROM binding WHERE id = ?", [Number(id)])
+        throw(JsExn(e))
       }
     },
     binding: id => bindingAt(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)]),
     storage: organization =>
       bindingAt(
         `SELECT ${bindingColumns} FROM binding
-        WHERE organization = ? AND relayed = 0 AND address IS NOT NULL AND origin IS NULL
-        ORDER BY id LIMIT 1`,
+        WHERE organization = ? AND relayed = 0 AND bound IS NOT NULL AND origin IS NULL
+        ORDER BY bound LIMIT 1`,
         [Number(organization)],
       ),
     addressedAt: address =>
       bindingAt(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)]),
     tunneled: (~binding, ~tunnel) =>
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
-    addressed: (~binding, ~address) =>
-      run("UPDATE binding SET address = ? WHERE id = ?", [Text(address), Number(binding)]),
+    // Taken and written in one statement, so no two bindings are given one address.
+    addressed: async (~binding, ~address=?) => {
+      let taken = switch address {
+      | Some(given) =>
+        first(
+          "UPDATE binding SET address = ? WHERE id = ? AND address IS NULL AND origin IS NULL
+          RETURNING address",
+          [Text(given), Number(binding)],
+        )
+      | None =>
+        first(
+          `${unaddressed} UPDATE binding SET address = (SELECT address FROM a)
+          WHERE id = ? AND address IS NULL AND origin IS NULL AND EXISTS (SELECT 1 FROM a)
+          RETURNING address`,
+          [Number(binding)],
+        )
+      }
+      switch await taken {
+      | Some({address}: addressRow) => address->Nullable.toOption
+      | None =>
+        (
+          await first("SELECT address FROM binding WHERE id = ?", [Number(binding)])
+        )->Option.flatMap(({address}: addressRow) => address->Nullable.toOption)
+      }
+    },
+    // Given back only where it still holds that one unbound, as it was taken.
+    unaddressed: (~binding, ~address) =>
+      run(
+        "UPDATE binding SET address = NULL WHERE id = ? AND address = ? AND bound IS NULL",
+        [Number(binding), Text(address)],
+      ),
+    // Its order taken in the statement that writes it, after every one bound before.
+    routed: (~binding) =>
+      run(
+        `UPDATE binding SET bound = ${followingBound}
+        WHERE id = ? AND address IS NOT NULL AND bound IS NULL AND origin IS NULL`,
+        [Number(binding)],
+      ),
     // Written only where no bind fixed its reach first, so one of two binds at once wins.
     originated: async (~binding, ~origin) =>
       switch await first(
-        "UPDATE binding SET origin = ? WHERE id = ? AND origin IS NULL AND address IS NULL
+        "UPDATE binding SET origin = ? WHERE id = ? AND origin IS NULL AND bound IS NULL
         RETURNING id",
         [Text(origin), Number(binding)],
       ) {
@@ -228,11 +300,12 @@ let ofDatabase = (database, ~sealing) => {
       )->Option.flatMap((row: releaseRow) =>
         formOf(row.form)->Option.map((form): release => {hash: row.hash, form, size: row.size})
       ),
+    // Written only where the app is held, so a forgotten app's deploy never lands.
     deploy: d =>
       run(
-        "INSERT INTO deployment (app, binding, release, capacity) VALUES (?, ?, ?, ?)
-        ON CONFLICT (app) DO UPDATE SET binding = excluded.binding, release = excluded.release,
-        capacity = excluded.capacity",
+        `INSERT INTO deployment (app, binding, release, capacity) SELECT ?1, ?2, ?3, ?4
+        WHERE ${appHeld("?1")} ON CONFLICT (app) DO UPDATE SET binding = excluded.binding,
+        release = excluded.release, capacity = excluded.capacity`,
         [Number(d.app), Number(d.binding), Text(d.release), Number(d.capacity)],
       ),
     deployment: async app =>
@@ -249,7 +322,7 @@ let ofDatabase = (database, ~sealing) => {
       }),
     // One statement, so no id of any kind can be taken between its check and its insert.
     drawApp: (~random) =>
-      Ids.drawn(~random, async id =>
+      Ids.drawn(~random, ~kind="app", async id =>
         switch await first(
           "INSERT INTO app (id) SELECT ?1 WHERE NOT EXISTS (SELECT 1 FROM binding WHERE id = ?1)
           AND NOT EXISTS (SELECT 1 FROM organization WHERE id = ?1)
@@ -261,6 +334,25 @@ let ofDatabase = (database, ~sealing) => {
         | None => false
         }
       ),
+    // The deployment goes first, and the app only where none is left, so a deploy declaring a
+    // container between the two statements keeps both, and one after them finds the app gone.
+    forgetApp: async app => {
+      let deleted = await first(
+        "DELETE FROM deployment WHERE app = ? AND capacity = 0 RETURNING app",
+        [Number(app)],
+      )
+      switch await first(
+        "DELETE FROM app WHERE id = ?1
+        AND NOT EXISTS (SELECT 1 FROM deployment WHERE app = ?1) RETURNING id",
+        [Number(app)],
+      ) {
+      | Some(_: idRow) => true
+      // A deployment of no container kept with no app record is forgotten alike.
+      | None =>
+        deleted->Option.isSome &&
+          (await first(`SELECT 1 AS id WHERE ${appHeld("?1")}`, [Number(app)]))->Option.isNone
+      }
+    },
   }
 }
 
@@ -290,6 +382,8 @@ let bindingJson = (b: binding, sealed) => {
     "secret": String(sealed),
     "relayed": Boolean(b.relayed),
   }
+  // Written even where none, so a record with no field at all is one kept before the order was.
+  o->Dict.set("bound", b.bound->Option.mapOr(JSON.Null, n => JSON.Number(n)))
   b.tunnel->Option.forEach(t => o->Dict.set("tunnel", String(t)))
   b.address->Option.forEach(a => o->Dict.set("address", String(a)))
   b.origin->Option.forEach(a => o->Dict.set("origin", String(a)))
@@ -333,13 +427,14 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     queue := run->Promise.then(_ => Promise.resolve())->Promise.catch(_ => Promise.resolve())
     run
   }
-  // The id after the greatest, counted on past every id an app holds.
+  // The id after the greatest, counted on past every id an app or a binding holds.
   let rec past = async id =>
     switch await Promise.all([
       readJson(`state/apps/${Float.toString(id)}`),
       readJson(`state/deployments/${Float.toString(id)}`),
+      readJson(`state/bindings/${Float.toString(id)}`),
     ]) {
-    | [None, None] => id
+    | [None, None, None] => id
     | _ => await past(id +. 1.)
     }
   let next = all => past(all->Array.reduce(0., (most, (id, _)) => Math.max(most, id)) +. 1.)
@@ -370,6 +465,11 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
             address: json->text("address"),
             origin: json->text("origin"),
             relayed: json->field("relayed")->Option.flatMap(JSON.Decode.bool)->Option.getOr(false),
+            // A record kept with an address before the order was is bound by its id, as 0006 does.
+            bound: switch json->field("bound") {
+            | Some(order) => order->JSON.Decode.float
+            | None => json->text("address")->Option.map(_ => id)
+            },
           }: binding
         ),
       )
@@ -444,36 +544,88 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         )
       | None => None
       },
-    openBinding: (~organization, ~secret, ~relayed) =>
+    // Checked and written within the queue, as an app's id is drawn.
+    openBinding: (~organization, ~secret, ~relayed, ~random) =>
       serial(async () => {
         await sealable(sealing, ~kind="binding", secret)
-        let id = await next(await every("state/bindings/"))
-        await writeBinding({
-          id,
-          organization,
-          secret,
-          tunnel: None,
-          address: None,
-          origin: None,
-          relayed,
+        await Ids.drawn(~random, ~kind="binding", async id => {
+          let held = [
+            bindingAt(id),
+            `state/apps/${Float.toString(id)}`,
+            organizationAt(id),
+            `state/deployments/${Float.toString(id)}`,
+          ]
+          switch await Promise.all(held->Array.map(readJson)) {
+          | found if found->Array.every(Option.isNone) =>
+            await writeBinding({
+              id,
+              organization,
+              secret,
+              tunnel: None,
+              address: None,
+              origin: None,
+              relayed,
+              bound: None,
+            })
+            true
+          | _ => false
+          }
         })
-        id
       }),
     binding,
     storage: async organization =>
       (await bindings())
-      ->Array.filter(b =>
-        b.organization == organization && !b.relayed && b.address != None && b.origin == None
+      ->Array.filterMap(b =>
+        b.organization == organization && !b.relayed && b.origin == None
+          ? b.bound->Option.map(order => (order, b))
+          : None
       )
-      ->Array.toSorted((a, b) => a.id -. b.id)
-      ->Array.get(0),
+      ->Array.toSorted(((a, _), (b, _)) => a -. b)
+      ->Array.get(0)
+      ->Option.map(((_, b)) => b),
     addressedAt: async address => (await bindings())->Array.find(b => b.address == Some(address)),
     tunneled: (~binding, ~tunnel) => changed(binding, b => {...b, tunnel: Some(tunnel)}),
-    addressed: (~binding, ~address) => changed(binding, b => {...b, address: Some(address)}),
+    // Taken within the queue, which orders one request's calls alone, as a state is built for each.
+    // Two requests at once may each take one address, as D1's one statement never does.
+    addressed: (~binding as id, ~address as given=?) =>
+      serial(async () =>
+        switch await binding(id) {
+        | Some({address: Some(address)}) => Some(address)
+        | Some(b) if b.origin == None =>
+          let chosen = switch given {
+          | Some(given) => Some(given)
+          | None => Addresses.lowest((await bindings())->Array.filterMap(b => b.address))
+          }
+          switch chosen {
+          | Some(address) =>
+            await writeBinding({...b, address: Some(address)})
+            Some(address)
+          | None => None
+          }
+        | Some(_) | None => None
+        }
+      ),
+    unaddressed: (~binding as id, ~address) =>
+      serial(async () =>
+        switch await binding(id) {
+        | Some(b) if b.address == Some(address) && b.bound == None =>
+          await writeBinding({...b, address: None})
+        | Some(_) | None => ()
+        }
+      ),
+    routed: (~binding as id) =>
+      serial(async () =>
+        switch await binding(id) {
+        | Some({address: Some(_), bound: None, origin: None} as b) =>
+          let order = (await bindings())->Array.filterMap(b => b.bound)->Array.reduce(0., Math.max)
+          await writeBinding({...b, bound: Some(order +. 1.)})
+        | Some(_) | None => ()
+        }
+      ),
     originated: (~binding as id, ~origin) =>
       serial(async () =>
         switch await binding(id) {
-        | Some(b) if b.origin == None && b.address == None =>
+        | Some(b) if b.origin == None && b.bound == None =>
           await writeBinding({...b, origin: Some(origin)})
           true
         | Some(_) | None => false
@@ -501,18 +653,27 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | _ => None
         }
       ),
+    // Written within the queue only where the app is held, as D1 writes it.
     deploy: d =>
-      writeJson(
-        `state/deployments/${Float.toString(d.app)}`,
-        JSON.Object(
-          dict{
-            "app": Number(d.app),
-            "binding": Number(d.binding),
-            "release": String(d.release),
-            "capacity": Number(d.capacity),
-          },
-        ),
-      ),
+      serial(async () => {
+        let at = `state/deployments/${Float.toString(d.app)}`
+        switch await Promise.all([readJson(`state/apps/${Float.toString(d.app)}`), readJson(at)]) {
+        | [None, None] => ()
+        | [None, Some(json)] if json->number("capacity")->Option.getOr(0.) == 0. => ()
+        | _ =>
+          await writeJson(
+            at,
+            JSON.Object(
+              dict{
+                "app": Number(d.app),
+                "binding": Number(d.binding),
+                "release": String(d.release),
+                "capacity": Number(d.capacity),
+              },
+            ),
+          )
+        }
+      }),
     deployment: async app =>
       (await readJson(`state/deployments/${Float.toString(app)}`))->Option.flatMap(json =>
         switch (json->number("binding"), json->text("release"), json->number("capacity")) {
@@ -521,10 +682,10 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | _ => None
         }
       ),
-    // Checked and written within the queue, as a binding's id is given.
+    // Checked and written within the queue, as a binding's id is drawn.
     drawApp: (~random) =>
       serial(() =>
-        Ids.drawn(~random, async id => {
+        Ids.drawn(~random, ~kind="app", async id => {
           let at = `state/apps/${Float.toString(id)}`
           let held = [
             at,
@@ -540,5 +701,23 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           }
         })
       ),
+    // The deployment goes before the app, so an id is held until both are gone.
+    forgetApp: app =>
+      serial(async () => {
+        let at = `state/apps/${Float.toString(app)}`
+        let deploymentAt = `state/deployments/${Float.toString(app)}`
+        switch await Promise.all([readJson(at), readJson(deploymentAt)]) {
+        | [None, None] => false
+        | [_, Some(json)] if json->number("capacity") != Some(0.) => false
+        | _ =>
+          held(await objects.delete(deploymentAt))
+          held(await objects.delete(at))
+          // A control stood on that answers a delete as done while keeping the object is a fault.
+          switch await Promise.all([readJson(at), readJson(deploymentAt)]) {
+          | [None, None] => true
+          | _ => JsError.throwWithMessage(`app ${Ids.text(app)} is still kept once deleted`)
+          }
+        }
+      }),
   }
 }

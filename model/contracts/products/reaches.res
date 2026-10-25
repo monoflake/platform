@@ -28,7 +28,7 @@ let interface_: interface_ = {
       "open",
       "reach-open",
       "reach-opened",
-      [("unreachable", #unavailable)],
+      [("unreachable", #unavailable), ("no_address", #rejected)],
       ~callers=[#organization],
     ),
   ],

@@ -40,9 +40,9 @@ test("a deploy is read back by the contract as the bundle of modules it was writ
   ok(Contracts.DeploymentDeploy.fromJson(written)->Result.isOk)
 })
 
-test("the entry's host is the app's id in 8 hex digits, then the binding", () => {
-  deepEqual(Deploying.host(~app=1., ~binding="3"), "00000001.b3")
-  deepEqual(Deploying.host(~app=169552957., ~binding="12"), "0a1b2c3d.b12")
+test("the entry's host is the app's id in 8 hex digits, then the binding's", () => {
+  deepEqual(Deploying.host(~app=1., ~binding=1.), "00000001.b00000001")
+  deepEqual(Deploying.host(~app=169552957., ~binding=4275878552.), "0a1b2c3d.bfedcba98")
 })
 
 test("a deployment is running, waiting, elsewhere or failed, by its version and state", () => {

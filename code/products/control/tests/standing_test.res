@@ -64,6 +64,17 @@ let stoodOn = () => {
           JSON.parseOrThrow(`{"status": "error", "failure": "rejected", "reason": "not_found", "message": "none"}`),
         )
       }
+    | "/object/delete" =>
+      switch text("name") {
+      | Some(name) if objects->Dict.get(name) != None =>
+        objects->Dict.delete(name)
+        success(Contracts.ObjectDeleted.toJson({}))
+      | Some(_) | None =>
+        json(
+          404,
+          JSON.parseOrThrow(`{"status": "error", "failure": "rejected", "reason": "not_found", "message": "none"}`),
+        )
+      }
     | "/object/list" =>
       let prefix = text("prefix")->Option.getOr("")
       let after = text("after")
@@ -112,6 +123,10 @@ test(
     )
     deepEqual(await objects.read("state/none"), Ok(None))
     deepEqual(await objects.list("state/"), Ok(["state/a", "state/b", "state/c"]))
+    // An object removed is read as none, and one removed twice is no fault.
+    deepEqual(await objects.delete("state/c"), Ok())
+    deepEqual(await objects.delete("state/c"), Ok())
+    deepEqual(await objects.read("state/c"), Ok(None))
     deepEqual(
       sent->Array.slice(~start=0, ~end=1)->Array.map(s => (s.url, s.authorization)),
       [("https://foundation.test/object/write", Some("Bearer o1.token"))],
@@ -181,16 +196,38 @@ let kept = async (state: State.t) => {
   let first = await state.openOrganization("first", ~secret)
   let again = await state.openOrganization("first", ~secret=other)
   let second = await state.openOrganization("second", ~secret=other)
-  let storage = await state.openBinding(~organization=first.id, ~secret, ~relayed=false)
-  let relayed = await state.openBinding(~organization=first.id, ~secret, ~relayed=true)
-  await state.addressed(~binding=relayed, ~address="10.200.0.2")
+  let storage = await state.openBinding(
+    ~organization=first.id,
+    ~secret,
+    ~relayed=false,
+    ~random=Memory.counting(),
+  )
+  let relayed = await state.openBinding(
+    ~organization=first.id,
+    ~secret,
+    ~relayed=true,
+    ~random=Memory.counting(),
+  )
+  ignore(await state.addressed(~binding=relayed, ~address="10.200.0.2"))
+  await state.routed(~binding=relayed)
   let unbound = await state.storage(first.id)
-  await state.addressed(~binding=storage, ~address="10.200.0.1")
+  ignore(await state.addressed(~binding=storage, ~address="10.200.0.1"))
+  await state.routed(~binding=storage)
   await state.tunneled(~binding=storage, ~tunnel="tunnel-1")
   await state.putRelease({hash: "aa", form: Modules, size: 3.})
   await state.putRelease({hash: "aa", form: Image, size: 9.})
   await state.deploy({app: 4., binding: storage, release: "aa", capacity: 1.})
+  let drawn = await state.drawApp(~random=() => 8.)
+  await state.deploy({app: drawn, binding: storage, release: "aa", capacity: 0.})
+  let forgotten = (
+    await state.forgetApp(4.),
+    await state.forgetApp(drawn),
+    await state.forgetApp(drawn),
+    await state.deployment(drawn),
+    await state.drawApp(~random=() => 8.),
+  )
   (
+    forgotten,
     (first.id, again.id, again.secret == secret, second.id),
     (await state.hasOrganization(2.), await state.hasOrganization(3.)),
     (await state.organizationSecret(2.))->Option.map(s => s == other),
@@ -207,6 +244,9 @@ test("a state over objects keeps what the state in memory keeps", async () => {
   let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
   let overObjects = await kept(State.ofObjects(Objects.through(~origin, ~token, fetch), ~sealing))
   deepEqual(overObjects, await kept(Memory.state()))
+  // An app that ran is kept, one drawn and never run forgotten once, and its id drawn again.
+  let (forgotten, _, _, _, _, _, _, _, _) = overObjects
+  deepEqual(forgotten, (false, true, false, None, 8.))
   ok(
     objects->Dict.keysToArray->Array.every(n => n->String.startsWith("state/")),
     ~message="every record is under state/",
@@ -222,4 +262,34 @@ test("an artifact kept as an object is served whole, and one not kept is none", 
   | None => ok(false, ~message="the artifact was not served")
   }
   deepEqual((await artifacts.served("cd"))->Option.isSome, false)
+})
+
+test("a forget over a control that does not delete, or keeps what it deleted, fails", async () => {
+  let refusing = `{"status": "error", "failure": "rejected", "reason": "malformed", "message": "the interface object has no operation delete"}`
+  let answering = [
+    // A control stood on relays the delete to its driver, and a refusal there is no removal.
+    _ => json(400, JSON.parseOrThrow(refusing)),
+    // One that answers done and keeps the object is no removal either.
+    _ => success(Contracts.ObjectDeleted.toJson({})),
+  ]
+  for i in 0 to answering->Array.length - 1 {
+    let (fetch, _, _) = stoodOn()
+    let answer = answering->Array.getUnsafe(i)
+    let old = async request =>
+      Web.parts(request->Web.url)->Web.pathname == "/object/delete"
+        ? answer(request)
+        : await fetch(request)
+    let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
+    let state = State.ofObjects(Objects.through(~origin, ~token, old), ~sealing)
+    let app = await state.drawApp(~random=() => 8.)
+    let failed = switch await state.forgetApp(app) {
+    | _ => false
+    | exception JsExn(_) => true
+    }
+    let again = switch await state.drawApp(~random=() => 8.) {
+    | _ => false
+    | exception JsExn(_) => true
+    }
+    deepEqual((failed, again), (true, true), ~message=Int.toString(i))
+  }
 })

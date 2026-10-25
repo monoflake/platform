@@ -16,12 +16,10 @@ type parts = {
 
 let artifactBound = 33554432.
 
-let addressOf = id => {
-  let n = id->Float.toInt
-  `10.200.${Int.toString(n / 256)}.${Int.toString(mod(n, 256))}`
-}
-
 let tunnelName = id => `binding-${Float.toString(id)}`
+
+/** An id drawn at random over 32 bits, 0 among them, which the state draws again, RFC b8f35. */
+let random = () => Ids.ofBytes(Web.random(4))
 
 let refused = (reason, message) => Calls.Refused({reason, message: Some(message)})
 let denied = Calls.Refused({reason: "denied", message: None})
@@ -60,49 +58,69 @@ let bound = (output: Contracts.BindingBound.t) => Calls.Output(
   ),
 )
 
-/** A host's tunnel made, its route to the host's address and its token, each kept as it is made. */
-let tunneled = async (parts, tunnels: Tunnels.t, binding: State.binding, address) => {
-  let tunnel = switch binding.tunnel {
-  | Some(tunnel) => Ok(tunnel)
-  | None =>
-    switch await tunnels.make(tunnelName(binding.id)) {
-    | Ok(tunnel) =>
-      await parts.state.tunneled(~binding=binding.id, ~tunnel)
-      Ok(tunnel)
-    | Error(why) => Error(why)
-    }
+/** Why a binding is given no address, every one of the range held. */
+let spent = id => `no address of 10.200.0.0/16 is left for binding ${Ids.text(id)}`
+
+/** What answers a binding given no address, denied where its origin fixed its reach first. */
+let unaddressed = async (parts, id) =>
+  switch await parts.state.binding(id) {
+  | Some({origin: Some(_)}) => denied
+  | Some(_) | None => refused("no_address", spent(id))
   }
-  switch tunnel {
-  | Error(why) => Error(why)
-  | Ok(tunnel) =>
-    let routed = switch binding.address {
-    | Some(_) => Ok()
+
+/** Why a tunnel was not given, no address taken for it or a step of Cloudflare's refused. */
+type untunneled = Unaddressed | Unmade(string)
+
+/**
+ * A host's address taken, its tunnel made, the route to it and its token, each kept as it is made,
+ * and the binding bound once its route is. The route is asked on every bind, one made before kept.
+ */
+let tunneled = async (parts, tunnels: Tunnels.t, binding: State.binding) =>
+  switch await parts.state.addressed(~binding=binding.id) {
+  | None => Error(Unaddressed)
+  | Some(address) =>
+    // No route can exist before its tunnel, so an address taken for a tunnel not made goes back.
+    let given = async why => {
+      if binding.address == None {
+        await parts.state.unaddressed(~binding=binding.id, ~address)
+      }
+      Error(Unmade(why))
+    }
+    let tunnel = switch binding.tunnel {
+    | Some(tunnel) => Ok(tunnel)
     | None =>
-      switch await tunnels.route(~tunnel, ~address) {
-      | Ok() =>
-        await parts.state.addressed(~binding=binding.id, ~address)
-        Ok()
+      switch await tunnels.make(tunnelName(binding.id)) {
+      | Ok(tunnel) =>
+        await parts.state.tunneled(~binding=binding.id, ~tunnel)
+        Ok(tunnel)
       | Error(why) => Error(why)
       }
     }
-    switch routed {
-    | Ok() => await tunnels.token(tunnel)
-    | Error(why) => Error(why)
+    switch tunnel {
+    | Error(why) => await given(why)
+    | Ok(tunnel) =>
+      switch await tunnels.route(~tunnel, ~address) {
+      // A failed route keeps its address unbound, never another binding's while held, RFC vgvx6.
+      | Error(why) => Error(Unmade(why))
+      | Ok() =>
+        await parts.state.routed(~binding=binding.id)
+        (await tunnels.token(tunnel))
+        ->Result.map(token => (address, token))
+        ->Result.mapError(why => Unmade(why))
+      }
     }
   }
-}
 
 /** A host bound by a tunnel, as rxmd9 binds one. */
 let tunnelBound = async (parts, binding: State.binding) => {
   let id = binding.id
-  let address = addressOf(id)
   let tunnelOf = (address, tunnel) => Contracts.BindingReached.Tunnel({address, ?tunnel})
   switch (parts.standing, parts.tunnels) {
   | (Some(standing), _) =>
-    switch binding.address {
-    | Some(address) =>
+    switch binding {
+    | {bound: Some(_), address: Some(address)} =>
       bound({binding: id, reached: tunnelOf(address, binding.tunnel->Option.map(Web.utf8))})
-    | None =>
+    | {bound: None} | {address: None} =>
       switch await standing.reach() {
       | Ok({address, tunnel}) =>
         // An organization's own control keeps the tunnel's token itself, as it makes none.
@@ -110,27 +128,39 @@ let tunnelBound = async (parts, binding: State.binding) => {
         | Some(tunnel) => await parts.state.tunneled(~binding=id, ~tunnel)
         | None => ()
         }
-        await parts.state.addressed(~binding=id, ~address)
-        bound({binding: id, reached: tunnelOf(address, tunnel->Option.map(Web.utf8))})
+        // The address kept is answered, the first bind's in D1. Over objects, ordered within one
+        // request alone, two binds at once may each be answered the one it gave.
+        // The control stood on routed the reach it gave, so the binding is bound at once.
+        switch await parts.state.addressed(~binding=id, ~address) {
+        | Some(address) =>
+          await parts.state.routed(~binding=id)
+          bound({binding: id, reached: tunnelOf(address, tunnel->Option.map(Web.utf8))})
+        | None => denied
+        }
       | Error(why) => refused("unreachable", `the control stood on gave no reach, ${why}`)
       }
     }
   | (None, None) =>
-    if binding.address == None {
-      await parts.state.addressed(~binding=id, ~address)
+    // With no tunnel to make the host is reached at its address directly, bound as it is taken.
+    switch await parts.state.addressed(~binding=id) {
+    | Some(address) =>
+      await parts.state.routed(~binding=id)
+      bound({binding: id, reached: tunnelOf(address, None)})
+    | None => await unaddressed(parts, id)
     }
-    bound({binding: id, reached: tunnelOf(address, None)})
   | (None, Some(tunnels)) =>
-    switch await tunneled(parts, tunnels, binding, address) {
-    | Ok(token) => bound({binding: id, reached: tunnelOf(address, Some(Web.utf8(token)))})
-    | Error(why) => refused("unreachable", `the host's tunnel could not be made, ${why}`)
+    switch await tunneled(parts, tunnels, binding) {
+    | Ok((address, token)) =>
+      bound({binding: id, reached: tunnelOf(address, Some(Web.utf8(token)))})
+    | Error(Unaddressed) => await unaddressed(parts, id)
+    | Error(Unmade(why)) => refused("unreachable", `the host's tunnel could not be made, ${why}`)
     }
   }
 }
 
 /** Why an origin bind is refused once a tunnel fixed the binding's reach, 8j7b0. */
 let tunneledFirst = id =>
-  refused("invalid", `binding ${Float.toString(id)} is reached by its tunnel, and stays so`)
+  refused("invalid", `binding ${Ids.text(id)} is reached by its tunnel, and stays so`)
 
 /** A last label naming no DNS name, as the parser leaves an IPv4 address. */
 let numeric = /^(0x[0-9a-f]*|[0-9]+)$/
@@ -287,7 +317,7 @@ let proven = async (parts, ~origin, ~token) => {
 /** A host bound by its driver's origin, kept only once the origin's call back proves it. */
 let originBound = async (parts, binding: State.binding, given) => {
   let id = binding.id
-  let named = Float.toString(id)
+  let named = Ids.text(id)
   switch originOf(given) {
   | None =>
     refused("malformed", "an origin is https on a DNS name and its default port, and no more")
@@ -299,7 +329,7 @@ let originBound = async (parts, binding: State.binding, given) => {
       } else {
         // Another bind fixed its reach while this one was called back.
         switch await parts.state.binding(id) {
-        | Some({address: Some(_)}) => tunneledFirst(id)
+        | Some({bound: Some(_)}) => tunneledFirst(id)
         | Some(_) | None => denied
         }
       }
@@ -321,7 +351,12 @@ let bindings = (parts, caller: Access.caller) =>
       | (Operator, Open({organization})) =>
         if await parts.state.hasOrganization(organization) {
           let secret = Web.random(32)
-          let binding = await parts.state.openBinding(~organization, ~secret, ~relayed=false)
+          let binding = await parts.state.openBinding(
+            ~organization,
+            ~secret,
+            ~relayed=false,
+            ~random,
+          )
           Output(
             Calls.output(
               ({binding, secret}: Contracts.BindingOpened.t),
@@ -337,7 +372,7 @@ let bindings = (parts, caller: Access.caller) =>
         | (None, _) => denied
         // An origin binding's token is spent by its first bind, so no bind moves it, 8j7b0.
         | (Some({origin: Some(_)}), _) => denied
-        | (Some({address: Some(_)}), Origin(_)) => tunneledFirst(id)
+        | (Some({bound: Some(_)}), Origin(_)) => tunneledFirst(id)
         | (Some(binding), Tunnel) => await tunnelBound(parts, binding)
         | (Some(binding), Origin({origin})) => await originBound(parts, binding, origin)
         }
@@ -356,8 +391,12 @@ let reaches = (parts, caller: Access.caller) =>
     handle: async (_, {call}) =>
       switch (caller, call) {
       | (Organization(organization), Open(_)) =>
-        let id = await parts.state.openBinding(~organization, ~secret=Web.random(32), ~relayed=true)
-        let address = addressOf(id)
+        let id = await parts.state.openBinding(
+          ~organization,
+          ~secret=Web.random(32),
+          ~relayed=true,
+          ~random,
+        )
         let opened = (output: Contracts.ReachOpened.t) => Calls.Output(
           Calls.output(
             output,
@@ -366,14 +405,20 @@ let reaches = (parts, caller: Access.caller) =>
           ),
         )
         switch (parts.tunnels, await parts.state.binding(id)) {
-        | (_, None) => refused("unreachable", `binding ${Float.toString(id)} was not kept`)
+        | (_, None) => refused("unreachable", `binding ${Ids.text(id)} was not kept`)
         | (None, Some(_)) =>
-          await parts.state.addressed(~binding=id, ~address)
-          opened({reach: id, address})
+          switch await parts.state.addressed(~binding=id) {
+          | Some(address) =>
+            await parts.state.routed(~binding=id)
+            opened({reach: id, address})
+          | None => refused("no_address", spent(id))
+          }
         | (Some(tunnels), Some(binding)) =>
-          switch await tunneled(parts, tunnels, binding, address) {
-          | Ok(token) => opened({reach: id, address, tunnel: Web.utf8(token)})
-          | Error(why) => refused("unreachable", `the reach's tunnel could not be made, ${why}`)
+          switch await tunneled(parts, tunnels, binding) {
+          | Ok((address, token)) => opened({reach: id, address, tunnel: Web.utf8(token)})
+          | Error(Unaddressed) => refused("no_address", spent(id))
+          | Error(Unmade(why)) =>
+            refused("unreachable", `the reach's tunnel could not be made, ${why}`)
           }
         }
       | (Operator | Host(_) | Nobody, _) => denied
@@ -396,7 +441,7 @@ let described = result =>
 /** The host a binding's driver is reached at, or why it cannot be. */
 let hostOf = async (parts, id) =>
   switch await parts.state.binding(id) {
-  | None => Error(refused("not_found", `no binding ${Float.toString(id)} is open`))
+  | None => Error(refused("not_found", `no binding ${Ids.text(id)} is open`))
   | Some({origin: Some(origin), secret}) =>
     Ok(
       (
@@ -408,9 +453,9 @@ let hostOf = async (parts, id) =>
         }: Driver.host
       ),
     )
-  | Some({address: None}) =>
-    Error(refused("unbound", `binding ${Float.toString(id)} has not been bound by its host`))
-  | Some({address: Some(address), secret}) =>
+  | Some({bound: None}) | Some({address: None}) =>
+    Error(refused("unbound", `binding ${Ids.text(id)} has not been bound by its host`))
+  | Some({bound: Some(_), address: Some(address), secret}) =>
     Ok(
       (
         {
@@ -442,11 +487,11 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
   }
 }
 
-/** An app's id drawn at random over 32 bits, 0 among them, which the state draws again. */
-let random = () => Ids.ofBytes(Web.random(4))
-
 /** A refusal's message naming the app drawn for it, `app <8 hex>, ` before what it says. */
 let naming = (app, message) => `app ${Ids.text(app)}, ${message}`
+
+/** Thrown where a deploy's container is declared for an app forgotten since it began. */
+exception Forgotten
 
 let undeployed = app => refused("not_found", `no app ${Ids.text(app)} is deployed`)
 
@@ -476,7 +521,15 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
         await parts.state.deploy({app, binding: input.binding, release: hex, capacity: 0.})
         (app, true)
       }
-      let answer = await Deploying.deployed(
+      // A container declared for an app forgotten meanwhile is kept nowhere, so its host is not
+      // asked to run it.
+      let declared = async capacity => {
+        await parts.state.deploy({app, binding: input.binding, release: hex, capacity})
+        if (await parts.state.deployment(app))->Option.isNone {
+          throw(Forgotten)
+        }
+      }
+      let answer = switch await Deploying.deployed(
         host,
         ~app,
         ~hash=input.release,
@@ -484,10 +537,16 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
         ~address=`${parts.origin}/artifacts/${hex}`,
         ~secrets=input.secrets->Option.getOr(dict{}),
         ~network=input.network->Option.getOr([]),
-        ~declared=capacity =>
-          parts.state.deploy({app, binding: input.binding, release: hex, capacity}),
+        ~declared,
         ~wait=parts.wait,
-      )
+      ) {
+      | answer => answer
+      | exception Forgotten =>
+        Error({
+          reason: "not_found",
+          message: `app ${Ids.text(app)} was forgotten as it was deployed`,
+        })
+      }
       described(
         drawn ? answer->Result.mapError(r => {...r, message: naming(app, r.message)}) : answer,
       )
@@ -505,17 +564,51 @@ let describe = async (parts, app) =>
     }
   }
 
+/**
+ * An app whose id was drawn and that never ran removed, one that ran refused as `deployed`, and an
+ * id the control does not hold as `not_found`.
+ */
+let forget = async (parts, app) => {
+  let ran = () =>
+    refused("deployed", `app ${Ids.text(app)} has run, so it is removed by its own path`)
+  switch await parts.state.deployment(app) {
+  | Some({capacity}) if capacity != 0. => ran()
+  | Some(_) | None =>
+    if await parts.state.forgetApp(app) {
+      Output(
+        Calls.output(
+          ({app: app}: Contracts.ReleaseOf.t),
+          ~toJson=Contracts.ReleaseOf.toJson,
+          ~toCbor=Contracts.ReleaseOf.toCbor,
+        ),
+      )
+    } else {
+      // A deploy may have declared its container since it was read.
+      switch await parts.state.deployment(app) {
+      | Some(_) => ran()
+      | None => refused("not_found", `no app ${Ids.text(app)} is held`)
+      }
+    }
+  }
+}
+
 let releases = (parts, caller: Access.caller) =>
   Calls.route({
     name: "releases",
     fromJson: Interface.Releases.fromJson,
     fromCbor: Interface.Releases.fromCbor,
-    reasons: [Interface.Releases.put, Interface.Releases.deploy, Interface.Releases.describe],
+    reasons: [
+      Interface.Releases.put,
+      Interface.Releases.deploy,
+      Interface.Releases.describe,
+      Interface.Releases.forget,
+    ],
     handle: async (_, {call}) =>
       switch (caller, call) {
       | (Operator, Put(input)) => await put(parts, input)
       | (Operator, Deploy(input)) => await deploy(parts, input)
       | (Operator, Describe({app})) => await describe(parts, app)
+      | (Operator, Forget({app})) => await forget(parts, app)
       | (Host(_) | Organization(_) | Nobody, _) => denied
       },
   })

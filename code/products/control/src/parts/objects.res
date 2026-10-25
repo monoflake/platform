@@ -4,6 +4,7 @@ type t = {
   write: (string, Uint8Array.t) => promise<result<unit, string>>,
   read: string => promise<result<option<Uint8Array.t>, string>>,
   list: string => promise<result<array<string>, string>>,
+  delete: string => promise<result<unit, string>>,
 }
 
 let through = (~origin, ~token, fetch) => {
@@ -39,5 +40,10 @@ let through = (~origin, ~token, fetch) => {
       | Error(refused) => Error(why(refused))
       },
     list: prefix => listed(prefix, None, []),
+    delete: async name =>
+      switch await called(Delete({name: name}), Contracts.ObjectDeleted.fromJson) {
+      | Ok(_) | Error({reason: "not_found"}) => Ok()
+      | Error(refused) => Error(why(refused))
+      },
   }
 }

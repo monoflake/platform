@@ -19,7 +19,7 @@ let deploy = (~app, ~hash, ~address, ~into): Contracts.DeploymentDeploy.t => {
 
 let of_ = (app): Contracts.DeploymentOf.t => {runs: App({id: app})}
 
-let host = (~app, ~binding) => `${Ids.text(app)}.b${binding}`
+let host = (~app, ~binding) => `${Ids.Id.text(app)}.b${Ids.Id.text(binding)}`
 
 type progress = Running | Waiting | Elsewhere | Failed(string)
 

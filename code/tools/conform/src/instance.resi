@@ -15,7 +15,7 @@ let port: int
 /** The port it names as its entry's, one of its own beside the live entry's, as `port` is. */
 let entry: int
 
-/** The first binding it holds, above every id a live binding takes. */
+/** The first of the bindings it holds, counted up from it, none of which is the live binding. */
 let first: int
 
 /** Its bridge, beside the live driver's. */
@@ -30,7 +30,7 @@ let facts: string
 /** What the machine said of itself. */
 type facts = {
   /** The live driver's binding. */
-  binding: int,
+  binding: float,
   /** The mount its btrfs lies on. */
   mount: string,
   /** Every IPv4 route's destination, `default` among them. */
@@ -47,8 +47,11 @@ type facts = {
   architecture: option<string>,
 }
 
-/** What `facts` printed, or why the machine cannot hold a second driver. */
-let readFacts: string => result<facts, string>
+/**
+ * What `facts` printed, or why the machine cannot hold a second driver, its live binding among the
+ * `count` it would hold from `first` among the reasons.
+ */
+let readFacts: (string, ~count: int) => result<facts, string>
 
 /** The directory under the live driver's `--local` the run's fixtures are copied into. */
 let served: string => string

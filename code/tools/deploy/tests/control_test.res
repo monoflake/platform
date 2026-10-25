@@ -216,7 +216,7 @@ testAsync(
     deepEqual(
       answered->Result.map(d =>
         switch d.runs {
-        | App({id}) => Ids.text(id)
+        | App({id}) => Ids.Id.text(id)
         | Component(_) => ""
         }
       ),
@@ -224,3 +224,38 @@ testAsync(
     )
   },
 )
+
+testAsync("a forget names the app to the control, and its refusal is said as it came", async () => {
+  let (control, sent) = faked(
+    dict{"/releases/forget": (200, `{"status": "success", "data": {"app": 169552957}}`)},
+  )
+  deepEqual(
+    (await Control.forget(control, ~app=169552957.))->Result.map(f => f.app),
+    Ok(169552957.),
+  )
+  deepEqual(
+    sent->Array.map(s => (
+      s.url,
+      s.init.headers->Dict.get("authorization"),
+      s.init.body->Option.map(b => JSON.parseOrThrow(b)),
+    )),
+    [
+      (
+        "http://localhost:8787/releases/forget",
+        Some("Bearer the secret"),
+        Some(
+          JSON.parseOrThrow(`{"interface": "releases", "operation": "forget", "input": {"app": 169552957}}`),
+        ),
+      ),
+    ],
+  )
+  let (refusing, _) = faked(
+    dict{
+      "/releases/forget": (
+        400,
+        `{"status": "error", "failure": "rejected", "reason": "deployed", "message": "it ran"}`,
+      ),
+    },
+  )
+  deepEqual(await Control.forget(refusing, ~app=1.), Error({reason: "deployed", message: "it ran"}))
+})

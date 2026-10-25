@@ -4,15 +4,18 @@
  */
 open Node
 
+/** What the machine said read for a run of 8 bindings. */
+let readFacts = text => Instance.readFacts(text, ~count=8)
+
 let facts = "binding=1\nmount=/data\nsubvolumes=16\nroute=default\nroute=10.88.0.0/16\nroute=192.168.65.0/24\nlistening=0.0.0.0:37483\nlistening=[::]:22\nlistening=127.0.0.1%lo:53\nlocal=/var/lib/driver-machine/artifacts\nlargest=1073741824\narchitecture=aarch64\n"
 
 test(
   "the facts give the live binding, the mount, the routes, the ports and what serves artifacts",
   () =>
     deepEqual(
-      Instance.readFacts(facts),
+      readFacts(facts),
       Ok({
-        binding: 1,
+        binding: 1.,
         mount: "/data",
         routes: ["default", "10.88.0.0/16", "192.168.65.0/24"],
         listening: [37483, 22, 53],
@@ -24,17 +27,30 @@ test(
     ),
 )
 
+test("the live binding is read as its token writes it, a decimal of 32 bits", () => {
+  let binding = text =>
+    readFacts(`binding=${text}\nsubvolumes=0\n`)->Result.map(facts => facts.binding)
+  deepEqual(binding("4275878552"), Ok(4275878552.))
+  deepEqual(binding("999"), Ok(999.))
+  deepEqual(binding("1008"), Ok(1008.))
+  ok(binding("0")->Result.isError)
+  ok(binding("01")->Result.isError)
+  ok(binding("4294967296")->Result.isError)
+  ok(binding("fedcba98")->Result.isError)
+})
+
 test("a machine whose binding or ports the run would take is refused", () => {
-  ok(Instance.readFacts("binding=1000\nsubvolumes=0\n")->Result.isError)
-  ok(Instance.readFacts("binding=\nsubvolumes=0\n")->Result.isError)
-  ok(Instance.readFacts("binding=1\n")->Result.isError)
+  ok(readFacts("binding=1000\nsubvolumes=0\n")->Result.isError)
+  ok(readFacts("binding=1007\nsubvolumes=0\n")->Result.isError)
+  ok(readFacts("binding=\nsubvolumes=0\n")->Result.isError)
+  ok(readFacts("binding=1\n")->Result.isError)
   ok(
-    Instance.readFacts(
+    readFacts(
       `binding=1\nsubvolumes=0\nlistening=127.0.0.1:${Int.toString(Instance.port)}\n`,
     )->Result.isError,
   )
   ok(
-    Instance.readFacts(
+    readFacts(
       `binding=1\nsubvolumes=0\nlistening=0.0.0.0:${Int.toString(Instance.entry)}\n`,
     )->Result.isError,
   )
@@ -46,21 +62,21 @@ test(
     let entryAt = `10.250.0.1:${Int.toString(Instance.entry)}`
     let driverAt = `127.0.0.1:${Int.toString(Instance.port)}`
     let leftover = `binding=1\nsubvolumes=0\nlistening=${entryAt}\nlistening=${driverAt}\nours=${entryAt}\nours=${driverAt}\n`
-    ok(Instance.readFacts(leftover)->Result.isOk)
+    ok(readFacts(leftover)->Result.isOk)
     // What the run left is still told as listening, so only the excuse is new.
     deepEqual(
-      Instance.readFacts(leftover)->Result.map(f => f.listening),
+      readFacts(leftover)->Result.map(f => f.listening),
       Ok([Instance.entry, Instance.port]),
     )
     ok(
-      Instance.readFacts(
+      readFacts(
         `binding=1\nsubvolumes=0\nlistening=0.0.0.0:${Int.toString(
             Instance.entry,
           )}\nours=${entryAt}\n`,
       )->Result.isError,
     )
     ok(
-      Instance.readFacts(
+      readFacts(
         `binding=1\nsubvolumes=0\nlistening=${driverAt}\nlistening=[::1]:${Int.toString(
             Instance.port,
           )}\nours=${driverAt}\n`,
@@ -165,7 +181,7 @@ test("what cleaning said is read as removed and left", () => {
 })
 
 test("a directory, a bound or an architecture the machine does not give is none", () => {
-  let read = Instance.readFacts(
+  let read = readFacts(
     "binding=1\nsubvolumes=0\nlocal=/var/lib/a'b\nlargest=many\narchitecture=riscv64\n",
   )
   deepEqual(read->Result.map(f => (f.local, f.largest, f.architecture)), Ok((None, None, None)))

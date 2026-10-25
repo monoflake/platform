@@ -148,10 +148,11 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
   let helloPort = await freePort()
   let helloOrigin = `http://127.0.0.1:${Int.toString(helloPort)}`
   // The entry hands the app's host to hello itself, once deployed, as the real entry would.
+  let binding = ref(0.)
   let entered = async request => {
     let named = request->Web.requestHeaders->Web.header("x-forwarded-host")->Nullable.toOption
     let app = switch host.deployed.contents->Option.map(d => d.runs) {
-    | Some(App({id})) => Some(Gateway.host(~app=id, ~binding=1.))
+    | Some(App({id})) => Some(Gateway.host(~app=id, ~binding=binding.contents))
     | Some(Component(_)) | None => None
     }
     switch (app, named) {
@@ -268,7 +269,8 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
         capabilities: [],
       }),
     )
-    let token = `${Float.toString(opened->number("binding"))}.${opened->text("secret")}`
+    binding := opened->number("binding")
+    let token = `${Float.toString(binding.contents)}.${opened->text("secret")}`
     let bound = await call(
       origin,
       ~bearer=token,

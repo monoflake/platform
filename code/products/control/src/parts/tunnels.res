@@ -56,21 +56,29 @@ let through = (config, fetch: Web.fetch) => {
         ->Option.flatMap(JSON.Decode.string)
         ->Option.mapOr(Error("the API answered a tunnel with no id"), id => Ok(id))
       ),
-    route: async (~tunnel, ~address) =>
-      (
-        await called(
-          "POST",
-          "/teamnet/routes",
-          Some(
-            JSON.Object(
-              dict{
-                "network": String(`${address}/32`),
-                "tunnel_id": String(tunnel),
-              },
-            ),
-          ),
-        )
-      )->Result.map(_ => ()),
+    // A route refused is looked for among the tunnel's, so a bind asked again finds its own made.
+    route: async (~tunnel, ~address) => {
+      let network = `${address}/32`
+      switch await called(
+        "POST",
+        "/teamnet/routes",
+        Some(JSON.Object(dict{"network": String(network), "tunnel_id": String(tunnel)})),
+      ) {
+      | Ok(_) => Ok()
+      | Error(why) =>
+        switch await called("GET", `/teamnet/routes?tunnel_id=${tunnel}&is_deleted=false`, None) {
+        | Ok(routes)
+          if routes
+          ->JSON.Decode.array
+          ->Option.getOr([])
+          ->Array.some(r =>
+            member(r, "network")->Option.flatMap(JSON.Decode.string) == Some(network)
+          ) =>
+          Ok()
+        | Ok(_) | Error(_) => Error(why)
+        }
+      }
+    },
     token: async tunnel =>
       (await called("GET", `/cfd_tunnel/${tunnel}/token`, None))->Result.flatMap(result =>
         result->JSON.Decode.string->Option.mapOr(Error("the API answered no token"), t => Ok(t))

@@ -138,7 +138,7 @@ let asked = async (target, facts: Instance.facts, ~app, ~control) => {
     ("a call with no token is denied", ask(Live.untokened, Live.denied)),
     ("an unknown interface is refused", ask(Live.unknown, Live.refused)),
     (
-      `the entry answers hello for ${Ids.text(app)}.b${Int.toString(facts.binding)}`,
+      `the entry answers hello for ${Ids.Id.text(app)}.b${Ids.Id.text(facts.binding)}`,
       ask(Live.hello(~app, ~binding=facts.binding), Live.greeted),
     ),
     ...through->Option.mapOr([], check => [check]),
@@ -309,19 +309,28 @@ let snapshotted = (target, ~revision, ~scratch) =>
     }
   }
 
+/** `--app <id>` taken out of the arguments, hello's id and what is left, or why not. */
+let hello = args =>
+  Ids.Id.taken(args, ~flag="app")->Result.flatMap(((app, rest)) =>
+    switch app {
+    | Some(app) => Ok((app, rest))
+    | None => Error("--app names no app, the 8 hex digits of hello's id")
+    }
+  )
+
 let main = async () => {
   let started = Date.now()
   let took = () => ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
-  switch Ids.app(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
+  switch hello(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
     Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
   ) {
   | Ok((app, control, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let files = samples()
     let count = files->Array.reduce(0, (n, (_, cases)) => n + cases * 2)
-    switch remote(target, Instance.facts)->Result.flatMap(Instance.readFacts) {
+    switch remote(target, Instance.facts)->Result.flatMap(Instance.readFacts(_, ~count)) {
     | Error(why) =>
       say(`failed: ${named} cannot hold a second driver, ${why}`)
       Host.setExitCode(Host.process, 1)

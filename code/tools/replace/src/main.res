@@ -213,6 +213,25 @@ let reported = ((phases, ending: phase, done, entryAsks, tunnelAsks), ~tunnel: o
   held.contents
 }
 
+/** `--app <id>` taken out of the arguments, hello's id and what is left, or why not. */
+let hello = args =>
+  Ids.Id.taken(args, ~flag="app")->Result.flatMap(((app, rest)) =>
+    switch app {
+    | Some(app) => Ok((app, rest))
+    | None => Error("--app names no app, the 8 hex digits of hello's id")
+    }
+  )
+
+/** The live binding's id as its token writes it before its dot, a decimal of 32 bits. */
+let tokenId = text =>
+  switch text->String.trim {
+  | id if /^[1-9][0-9]{0,9}$/->RegExp.test(id) =>
+    Float.fromString(id)
+    ->Option.filter(id => id <= 4294967295.)
+    ->Option.mapOr(Error(`${id} is no id`), id => Ok(id))
+  | id => Error(`${id} is no id`)
+  }
+
 let main = async () => {
   let started = Date.now()
   let took = () => seconds(Date.now() -. started)
@@ -224,7 +243,7 @@ let main = async () => {
   | at => (args->Array.get(at + 1), args->Array.filterWithIndex((_, i) => i != at && i != at + 1))
   }
   let known = ["--dry-run", "--no-build"]
-  switch Ids.app(args)->Result.flatMap(((app, rest)) =>
+  switch hello(args)->Result.flatMap(((app, rest)) =>
     Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
   ) {
   | Error(why) =>
@@ -235,10 +254,7 @@ let main = async () => {
     switch rest->Array.filter(a => !(a->String.startsWith("--"))) {
     | [named] if flags->Array.every(f => known->Array.includes(f)) =>
       let target = Remote.target(named)
-      let binding =
-        (await remote(target, Live.binding))->Result.flatMap(text =>
-          Int.fromString(text->String.trim)->Option.mapOr(Error(`${text} is no id`), id => Ok(id))
-        )
+      let binding = (await remote(target, Live.binding))->Result.flatMap(text => tokenId(text))
       switch binding {
       | Error(why) =>
         say(`failed: the live binding of ${named} was not read, ${why}`)

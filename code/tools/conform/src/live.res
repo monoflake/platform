@@ -31,7 +31,7 @@ let deployment = (~app) =>
     ~interface="deployments",
     ~token=true,
     ~body=Contracts.Interface.Deployments.toJson({
-      call: Describe({runs: App({id: Ids.toFloat(app)})}),
+      call: Describe({runs: App({id: app})}),
       capabilities: [],
     })->JSON.stringify,
   )
@@ -45,7 +45,7 @@ let entered = `e=$(systemctl show -p ExecStart --value driver-machine-entry | gr
 `
 
 let hello = (~app, ~binding) =>
-  `${entered}curl -sS -m 10 -w '\\n%{http_code}' -H 'Host: ${Ids.text(app)}.b${Int.toString(
+  `${entered}curl -sS -m 10 -w '\\n%{http_code}' -H 'Host: ${Ids.Id.text(app)}.b${Ids.Id.text(
       binding,
     )}' "http://$e/"
 `

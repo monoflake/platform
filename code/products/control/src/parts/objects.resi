@@ -9,6 +9,8 @@ type t = {
   read: string => promise<result<option<Uint8Array.t>, string>>,
   /** Every name under a prefix, in byte order. */
   list: string => promise<result<array<string>, string>>,
+  /** An object removed, none of that name being no fault. */
+  delete: string => promise<result<unit, string>>,
 }
 
 /** The control stood on, by its origin, and the organization's token. */

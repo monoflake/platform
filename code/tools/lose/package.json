@@ -6,6 +6,7 @@
 	"type": "module",
 	"dependencies": {
 		"@monoflake/conform": "workspace:*",
-		"@monoflake/envelope": "workspace:*"
+		"@monoflake/envelope": "workspace:*",
+		"@monoflake/ids": "workspace:*"
 	}
 }

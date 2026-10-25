@@ -8,10 +8,19 @@ let stood = async () => {
   let state = Memory.state()
   let {id: first} = await state.openOrganization("first", ~secret)
   let {id: second} = await state.openOrganization("second", ~secret)
-  let storage = await state.openBinding(~organization=first, ~secret, ~relayed=false)
-  await state.addressed(~binding=storage, ~address="10.200.0.1")
-  let relayed = await state.openBinding(~organization=first, ~secret, ~relayed=true)
-  await state.addressed(~binding=relayed, ~address="10.200.0.2")
+  let storage = await state.openBinding(~organization=first, ~secret, ~relayed=false, ~random=() =>
+    169552957.
+  )
+  ignore(await state.addressed(~binding=storage, ~address="10.200.0.1"))
+  await state.routed(~binding=storage)
+  let relayed = await state.openBinding(
+    ~organization=first,
+    ~secret,
+    ~relayed=true,
+    ~random=Memory.counting(),
+  )
+  ignore(await state.addressed(~binding=relayed, ~address="10.200.0.2"))
+  await state.routed(~binding=relayed)
   (state, first, second, relayed)
 }
 
@@ -85,13 +94,44 @@ test("an object call reaches the storage binding's driver by that binding's toke
   ignore(await stored(Organization(first)))
   deepEqual(
     host.seen->Array.slice(~start=0, ~end=1)->Array.map(s => (s.url, s.authorization)),
-    [("http://10.200.0.1:37483/object/write", Some(`Bearer ${Access.tokenText(1., secret)}`))],
+    [
+      (
+        "http://10.200.0.1:37483/object/write",
+        Some(`Bearer ${Access.tokenText(169552957., secret)}`),
+      ),
+    ],
   )
   deepEqual(
     [(await stored(Organization(second)))->Web.status, (await stored(Host(1.)))->Web.status],
     [409, 403],
   )
   deepEqual([Relay.objected("/object/write"), Relay.objected("/object/")], [true, false])
+})
+
+test("a delete is passed to the storage binding's driver as every object call is", async () => {
+  let (state, first, _, _) = await stood()
+  let host = Host.make()
+  ignore(
+    await Relay.stored(
+      state,
+      host.reach,
+      ~caller=Organization(first),
+      ~port=37483,
+      ~wait=async () => (),
+      request("https://control.test/object/delete", dict{"authorization": "Bearer the org's"}),
+      ~path="/object/delete",
+    ),
+  )
+  deepEqual(Relay.objected("/object/delete"), true)
+  deepEqual(
+    host.seen->Array.map(s => (s.url, s.authorization)),
+    [
+      (
+        "http://10.200.0.1:37483/object/delete",
+        Some(`Bearer ${Access.tokenText(169552957., secret)}`),
+      ),
+    ],
+  )
 })
 
 test(
@@ -136,7 +176,12 @@ test(
   async () => {
     let state = Memory.state()
     let {id: organization} = await state.openOrganization("first", ~secret)
-    let binding = await state.openBinding(~organization, ~secret, ~relayed=true)
+    let binding = await state.openBinding(
+      ~organization,
+      ~secret,
+      ~relayed=true,
+      ~random=Memory.counting(),
+    )
     ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
     // Storage chooses no origin binding, so a state that did is stood in for here.
     let origined =

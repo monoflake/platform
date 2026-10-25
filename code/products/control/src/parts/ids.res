@@ -20,11 +20,16 @@ let ofBytes = (bytes: Uint8Array.t) =>
 /** How many ids are drawn before a draw gives up, each one a conflict. */
 let draws = 16
 
-/** An id drawn by `random` and kept by `kept`, drawn again where it answers it was held already. */
-let drawn = async (~random, kept) => {
+/**
+ * An id of a kind drawn by `random` and kept by `kept`, drawn again where it answers it was held
+ * already.
+ */
+let drawn = async (~random, ~kind, kept) => {
   let rec draw = async left =>
     if left == 0 {
-      JsError.throwWithMessage(`every one of ${Int.toString(draws)} app ids drawn is held already`)
+      JsError.throwWithMessage(
+        `every one of ${Int.toString(draws)} ${kind} ids drawn is held already`,
+      )
     } else {
       let id = random()
       // Id 0 is no record's, so a draw of it is a conflict.

@@ -1,4 +1,14 @@
 /*** The control's parts kept in memory, as the API's tests stand them in for D1 and R2. */
+
+/** Draws counting up from 1, as bindings were numbered before they were drawn. */
+let counting = () => {
+  let n = ref(0.)
+  () => {
+    n := n.contents +. 1.
+    n.contents
+  }
+}
+
 let state = (): State.t => {
   let organizations: dict<State.organization> = dict{}
   let bindings: dict<State.binding> = dict{}
@@ -20,30 +30,73 @@ let state = (): State.t => {
     hasOrganization: async id => organizations->Dict.valuesToArray->Array.some(o => o.id == id),
     organizationSecret: async id =>
       organizations->Dict.valuesToArray->Array.find(o => o.id == id)->Option.map(o => o.secret),
-    openBinding: async (~organization, ~secret, ~relayed) => {
-      let id = bindings->Dict.keysToArray->Array.length->Int.toFloat +. 1.
-      bindings->Dict.set(
-        key(id),
-        {id, organization, secret, tunnel: None, address: None, origin: None, relayed},
-      )
-      id
-    },
+    openBinding: (~organization, ~secret, ~relayed, ~random) =>
+      Ids.drawn(~random, ~kind="binding", async id => {
+        let held =
+          apps->Array.includes(id) ||
+          bindings->Dict.has(key(id)) ||
+          organizations->Dict.valuesToArray->Array.some(o => o.id == id) ||
+          deployments->Dict.has(key(id))
+        if !held {
+          bindings->Dict.set(
+            key(id),
+            {
+              id,
+              organization,
+              secret,
+              tunnel: None,
+              address: None,
+              origin: None,
+              relayed,
+              bound: None,
+            },
+          )
+        }
+        !held
+      }),
     binding: async id => bindings->Dict.get(key(id)),
     storage: async organization =>
       bindings
       ->Dict.valuesToArray
       ->Array.filter(b =>
-        b.organization == organization && !b.relayed && b.address != None && b.origin == None
+        b.organization == organization && !b.relayed && b.bound != None && b.origin == None
       )
-      ->Array.toSorted((a, b) => a.id -. b.id)
+      ->Array.toSorted((a, b) => a.bound->Option.getOr(0.) -. b.bound->Option.getOr(0.))
       ->Array.get(0),
     addressedAt: async address =>
       bindings->Dict.valuesToArray->Array.find(b => b.address == Some(address)),
     tunneled: async (~binding, ~tunnel) => change(binding, b => {...b, tunnel: Some(tunnel)}),
-    addressed: async (~binding, ~address) => change(binding, b => {...b, address: Some(address)}),
+    addressed: async (~binding, ~address=?) =>
+      switch bindings->Dict.get(key(binding)) {
+      | Some({address: Some(held)}) => Some(held)
+      | Some(b) if b.origin == None =>
+        let chosen = switch address {
+        | Some(given) => Some(given)
+        | None => Addresses.lowest(bindings->Dict.valuesToArray->Array.filterMap(b => b.address))
+        }
+        chosen->Option.forEach(address =>
+          bindings->Dict.set(key(binding), {...b, address: Some(address)})
+        )
+        chosen
+      | Some(_) | None => None
+      },
+    unaddressed: async (~binding, ~address) =>
+      switch bindings->Dict.get(key(binding)) {
+      | Some(b) if b.address == Some(address) && b.bound == None =>
+        bindings->Dict.set(key(binding), {...b, address: None})
+      | Some(_) | None => ()
+      },
+    routed: async (~binding) =>
+      switch bindings->Dict.get(key(binding)) {
+      | Some({address: Some(_), bound: None, origin: None} as b) =>
+        let order =
+          bindings->Dict.valuesToArray->Array.filterMap(b => b.bound)->Array.reduce(0., Math.max)
+        bindings->Dict.set(key(binding), {...b, bound: Some(order +. 1.)})
+      | Some(_) | None => ()
+      },
     originated: async (~binding, ~origin) =>
       switch bindings->Dict.get(key(binding)) {
-      | Some(b) if b.origin == None && b.address == None =>
+      | Some(b) if b.origin == None && b.bound == None =>
         bindings->Dict.set(key(binding), {...b, origin: Some(origin)})
         true
       | Some(_) | None => false
@@ -53,10 +106,15 @@ let state = (): State.t => {
         releases->Dict.set(release.hash, release)
       },
     release: async hash => releases->Dict.get(hash),
-    deploy: async d => deployments->Dict.set(key(d.app), d),
+    deploy: async d =>
+      switch (apps->Array.includes(d.app), deployments->Dict.get(key(d.app))) {
+      | (true, _) => deployments->Dict.set(key(d.app), d)
+      | (false, Some({capacity})) if capacity != 0. => deployments->Dict.set(key(d.app), d)
+      | (false, Some(_) | None) => ()
+      },
     deployment: async app => deployments->Dict.get(key(app)),
     drawApp: (~random) =>
-      Ids.drawn(~random, async id => {
+      Ids.drawn(~random, ~kind="app", async id => {
         let held =
           apps->Array.includes(id) ||
           bindings->Dict.has(key(id)) ||
@@ -67,6 +125,17 @@ let state = (): State.t => {
         }
         !held
       }),
+    forgetApp: async app =>
+      switch (apps->Array.indexOf(app), deployments->Dict.get(key(app))) {
+      | (_, Some({capacity})) if capacity != 0. => false
+      | (-1, None) => false
+      | (at, _) =>
+        if at >= 0 {
+          apps->Array.splice(~start=at, ~remove=1, ~insert=[])
+        }
+        deployments->Dict.delete(key(app))
+        true
+      },
   }
 }
 

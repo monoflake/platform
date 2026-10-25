@@ -15,7 +15,7 @@ let origin = target =>
     )
   }
 
-let gateway = (~origin, ~app) => `${origin}/v1/${Ids.text(app)}/`
+let gateway = (~origin, ~app) => `${origin}/v1/${Ids.Id.text(app)}/`
 
 type t = {
   origin: string,
@@ -75,6 +75,9 @@ let deploy = (control, ~binding, ~app, ~hash, ~secrets, ~network) =>
     ),
     Contracts.DeploymentDescribed.fromJson,
   )
+
+let forget = (control, ~app) =>
+  call(control, releases(Forget({app: app})), Contracts.ReleaseOf.fromJson)
 
 let describe = (control, ~app) =>
   call(control, releases(Describe({app: app})), Contracts.DeploymentDescribed.fromJson)

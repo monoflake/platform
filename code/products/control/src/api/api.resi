@@ -24,9 +24,6 @@ type parts = {
 /** The bytes a release's artifact may hold, `releases`' bound in the model. */
 let artifactBound: float
 
-/** The private address a binding's host is reached at, `10.200.0.0/16` by its id. */
-let addressOf: float => string
-
 /** The tunnel's name for a binding's host. */
 let tunnelName: float => string
 

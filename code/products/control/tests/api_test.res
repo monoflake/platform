@@ -71,6 +71,12 @@ let reason = json => json->member("reason")->JSON.Decode.string
 
 let artifact = Web.utf8("a bundle")
 
+/** The binding opened for an organization, its id as the control drew it. */
+let openBinding = async (stood, organization) => {
+  let (_, opened) = await called(stood, Operator, bindings(Open({organization: organization})))
+  opened->data->member("binding")->JSON.Decode.float->Option.getOr(0.)
+}
+
 /** An organization, a bound binding and a release, as the operator and the host make them. */
 let opened = async stood => {
   let (_, org) = await called(stood, Operator, organizations(Open({label: "first"})))
@@ -147,12 +153,13 @@ test("a binding is opened for an organization that is open, its secret answered 
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
   let (status, opened) = await called(stood, Operator, bindings(Open({organization: 1.})))
   let secret = opened->data->member("secret")->JSON.Decode.string->Option.getOr("")
+  let id = opened->data->member("binding")->JSON.Decode.float->Option.getOr(0.)
   deepEqual(
     (status, Envelope.Base64url.decode(secret)->Option.map(TypedArray.length)),
     (200, Some(32)),
   )
   deepEqual(
-    (await stood.parts.state.binding(1.))->Option.map(b => Envelope.Base64url.encode(b.secret)),
+    (await stood.parts.state.binding(id))->Option.map(b => Envelope.Base64url.encode(b.secret)),
     Some(secret),
   )
 })
@@ -160,21 +167,29 @@ test("a binding is opened for an organization that is open, its secret answered 
 test("a host bound with no tunnel to make is answered its address alone, again alike", async () => {
   let stood = stand()
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-  ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
-  let (status, bound) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
-  let (_, again) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
+  let id = await openBinding(stood, 1.)
+  let (status, bound) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+  let (_, again) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
   deepEqual(
     (status, bound->data),
     (
       200,
-      JSON.parseOrThrow(`{"binding": 1, "reached": {"name": "tunnel", "address": "10.200.0.1"}}`),
+      JSON.parseOrThrow(
+        `{"binding": ${Float.toString(
+            id,
+          )}, "reached": {"name": "tunnel", "address": "10.200.0.1"}}`,
+      ),
     ),
   )
   deepEqual(again->data, bound->data)
+  // A second binding is given the lowest address no binding holds.
+  let next = await openBinding(stood, 1.)
+  let (_, other) = await called(stood, Host(next), bindings(Bind({reach: Tunnel})))
+  deepEqual(other->data->member("reached")->member("address"), JSON.String("10.200.0.2"))
 })
 
 /** Tunnels faked, counting what each made. */
-let tunnels = (~failing=false) => {
+let tunnels = (~failing=false, ~unrouted=0) => {
   let made = ref(0)
   let routes = []
   let faked: Tunnels.t = {
@@ -184,7 +199,8 @@ let tunnels = (~failing=false) => {
     },
     route: async (~tunnel, ~address) => {
       routes->Array.push((tunnel, address))
-      Ok()
+      // The first `unrouted` routes asked are refused.
+      routes->Array.length <= unrouted ? Error("the route conflicts with another") : Ok()
     },
     token: async tunnel => Ok(`token of ${tunnel}`),
   }
@@ -198,10 +214,9 @@ test(
     let stood = stand(~tunnels=faked)
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
     let (status, opened) = await called(stood, Organization(1.), reaches(Open({})))
-    deepEqual(
-      (status, opened->data->member("reach"), opened->data->member("address")),
-      (200, Number(1.), String("10.200.0.1")),
-    )
+    let id = opened->data->member("reach")->JSON.Decode.float->Option.getOr(0.)
+    let tunnel = `tunnel-${Api.tunnelName(id)}`
+    deepEqual((status, opened->data->member("address")), (200, String("10.200.0.1")))
     deepEqual(
       opened
       ->data
@@ -209,14 +224,14 @@ test(
       ->JSON.Decode.string
       ->Option.flatMap(Envelope.Base64url.decode)
       ->Option.map(Web.fromUtf8),
-      Some("token of tunnel-binding-1"),
+      Some(`token of ${tunnel}`),
     )
-    deepEqual(routes, [("tunnel-binding-1", "10.200.0.1")])
-    deepEqual((await stood.parts.state.binding(1.))->Option.map(b => b.relayed), Some(true))
+    deepEqual(routes, [(tunnel, "10.200.0.1")])
+    deepEqual((await stood.parts.state.binding(id))->Option.map(b => b.relayed), Some(true))
     deepEqual(
       [
         (await called(stood, Operator, reaches(Open({}))))->Pair.second->reason,
-        (await called(stood, Host(1.), reaches(Open({}))))->Pair.second->reason,
+        (await called(stood, Host(id), reaches(Open({}))))->Pair.second->reason,
         (await called(stood, Organization(1.), organizations(Open({label: "second"}))))
         ->Pair.second
         ->reason,
@@ -230,9 +245,10 @@ test("a host bound is made one tunnel and one route, and answered the tunnel's t
   let (faked, made, routes) = tunnels()
   let stood = stand(~tunnels=faked)
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-  ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
-  let (_, bound) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
-  let (_, again) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
+  let id = await openBinding(stood, 1.)
+  let (_, bound) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+  let (_, again) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+  let name = `tunnel-${Api.tunnelName(id)}`
   let tunnel =
     bound
     ->data
@@ -240,10 +256,11 @@ test("a host bound is made one tunnel and one route, and answered the tunnel's t
     ->member("tunnel")
     ->JSON.Decode.string
     ->Option.flatMap(Envelope.Base64url.decode)
-  deepEqual(tunnel->Option.map(Web.fromUtf8), Some("token of tunnel-binding-1"))
+  deepEqual(tunnel->Option.map(Web.fromUtf8), Some(`token of ${name}`))
+  // The route is asked on every bind, as its address was taken before it was made.
   deepEqual(
     (made.contents, routes, again->data),
-    (1, [("tunnel-binding-1", "10.200.0.1")], bound->data),
+    (1, [(name, "10.200.0.1"), (name, "10.200.0.1")], bound->data),
   )
 })
 
@@ -259,9 +276,9 @@ test(
     }
     let stood = stand(~standing)
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-    ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
-    let (status, bound) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
-    let (_, again) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
+    let id = await openBinding(stood, 1.)
+    let (status, bound) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+    let (_, again) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
     deepEqual(
       (status, bound->data->member("reached")->member("address")),
       (200, JSON.String("10.200.0.7")),
@@ -284,10 +301,10 @@ test("a tunnel the API does not make is unreachable, and no address is kept", as
   let (faked, _, _) = tunnels(~failing=true)
   let stood = stand(~tunnels=faked)
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-  ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
-  let (status, refused) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
+  let id = await openBinding(stood, 1.)
+  let (status, refused) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
   deepEqual((status, refused->reason), (503, Some("unreachable")))
-  deepEqual((await stood.parts.state.binding(1.))->Option.flatMap(b => b.address), None)
+  deepEqual((await stood.parts.state.binding(id))->Option.flatMap(b => b.address), None)
 })
 
 test("a release is kept by the SHA-256 of its artifact, and past its bound refused", async () => {
@@ -390,12 +407,12 @@ test(
   async () => {
     let stood = stand()
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-    ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
+    let binding = await openBinding(stood, 1.)
     let release = Uint8Array.fromLength(32)
-    let (_, unbound) = await called(stood, Operator, releases(Deploy({binding: 1., release})))
+    let (_, unbound) = await called(stood, Operator, releases(Deploy({binding, release})))
     let (_, none) = await called(stood, Operator, releases(Deploy({binding: 2., release})))
-    ignore(await called(stood, Host(1.), bindings(Bind({reach: Tunnel}))))
-    let (_, unkept) = await called(stood, Operator, releases(Deploy({binding: 1., release})))
+    ignore(await called(stood, Host(binding), bindings(Bind({reach: Tunnel}))))
+    let (_, unkept) = await called(stood, Operator, releases(Deploy({binding, release})))
     let (_, undeployed) = await called(stood, Operator, releases(Describe({app: 1.})))
     deepEqual(
       [unbound, none, unkept, undeployed]->Array.map(reason),
@@ -499,11 +516,98 @@ test(
   },
 )
 
-test("a binding's address is its id within 10.200.0.0/16", async () =>
-  deepEqual(
-    [1., 255., 256., 65535.]->Array.map(Api.addressOf),
-    ["10.200.0.1", "10.200.0.255", "10.200.1.0", "10.200.255.255"],
-  )
+test(
+  "forget removes an app drawn and never run, and refuses one that ran or none held",
+  async () => {
+    let stood = stand()
+    let (binding, hash) = await opened(stood)
+    let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+    // A drawn deploy its host never answered leaves an app with no container.
+    stood.host.gone := true
+    let (_, refused) = await called(stood, Operator, releases(Deploy({binding, release})))
+    stood.host.gone := false
+    let never = refused->named->Option.getOr(0.)
+    let (_, deployed) = await called(stood, Operator, releases(Deploy({binding, release})))
+    let ran = deployed->ranAs->Option.getOr(0.)
+    let seen = stood.host.seen->Array.length
+    let forget = app => releases(Forget({app: app}))
+    let (status, forgotten) = await called(stood, Operator, forget(never))
+    let refusals = [
+      await called(stood, Operator, forget(never)),
+      await called(stood, Operator, forget(ran)),
+      await called(stood, Operator, forget(4275878552.)),
+      await called(stood, Host(binding), forget(ran)),
+    ]
+    deepEqual(
+      (status, forgotten->data),
+      (200, JSON.parseOrThrow(`{"app": ${Float.toString(never)}}`)),
+    )
+    deepEqual(
+      refusals->Array.map(((_, answer)) => (
+        answer->reason,
+        answer->member("message")->JSON.Decode.string->Option.getOr(""),
+      )),
+      [
+        (Some("not_found"), `no app ${Ids.text(never)} is held`),
+        (Some("deployed"), `app ${Ids.text(ran)} has run, so it is removed by its own path`),
+        (Some("not_found"), "no app fedcba98 is held"),
+        (Some("denied"), "The call carries no credential, or one that does not allow it"),
+      ],
+    )
+    // Nothing is asked of the host, and the app that ran is still deployed.
+    deepEqual(stood.host.seen->Array.length, seen)
+    deepEqual(await stood.parts.state.deployment(never), None)
+    ok((await stood.parts.state.deployment(ran))->Option.isSome)
+  },
+)
+
+test("a range spent is answered as a refusal, to a bind and to a reach alike", async () => {
+  let spent = (stood: stood): stood => {
+    ...stood,
+    parts: {
+      ...stood.parts,
+      state: {...stood.parts.state, addressed: async (~binding as _, ~address as _=?) => None},
+    },
+  }
+  let (faked, made, routes) = tunnels()
+  let answers = []
+  let stands = [spent(stand()), spent(stand(~tunnels=faked))]
+  for i in 0 to stands->Array.length - 1 {
+    let stood = stands->Array.getUnsafe(i)
+    ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
+    let id = await openBinding(stood, 1.)
+    let (status, answer) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+    answers->Array.push((
+      status,
+      answer->reason,
+      answer->member("message")->JSON.Decode.string,
+      `no address of 10.200.0.0/16 is left for binding ${Ids.text(id)}`,
+    ))
+    let (status, answer) = await called(stood, Organization(1.), reaches(Open({})))
+    answers->Array.push((status, answer->reason, None, ""))
+  }
+  answers->Array.forEach(((status, reason, message, expected)) => {
+    deepEqual((status, reason), (400, Some("no_address")))
+    message->Option.forEach(m => deepEqual(m, expected))
+  })
+  // An address is asked before any tunnel is made, so a spent range makes neither.
+  deepEqual((made.contents, routes), (0, []))
+})
+
+test(
+  "a binding's address is the lowest of 10.200.0.0/16 none holds, its first never, as ids gave",
+  async () => {
+    deepEqual(
+      [1, 255, 256, 65535]->Array.map(Addresses.nth),
+      ["10.200.0.1", "10.200.0.255", "10.200.1.0", "10.200.255.255"],
+    )
+    deepEqual(Addresses.lowest([]), Some("10.200.0.1"))
+    deepEqual(Addresses.lowest(["10.200.0.1", "10.200.0.3"]), Some("10.200.0.2"))
+    deepEqual(
+      Addresses.lowest(Array.fromInitializer(~length=Addresses.count, i => Addresses.nth(i + 1))),
+      None,
+    )
+  },
 )
 
 /** A request an origin was sent, its URL, its bearer and how it follows a redirect. */
@@ -550,13 +654,13 @@ let origin = (answering: ref<answering>) => {
   (direct, seen)
 }
 
-/** A stand with an open binding 1 whose origin answers as given. */
+/** A stand with an open binding whose origin answers as given, and the binding's id. */
 let originStand = async (~tunnels=?, answering) => {
   let (direct, seen) = origin(answering)
   let stood = stand(~tunnels?, ~direct)
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-  ignore(await called(stood, Operator, bindings(Open({organization: 1.}))))
-  (stood, seen)
+  let id = await openBinding(stood, 1.)
+  (stood, seen, id)
 }
 
 let byOrigin = origin => bindings(Bind({reach: Origin({origin: origin})}))
@@ -569,7 +673,7 @@ let message = json => json->member("message")->JSON.Decode.string->Option.getOr(
 test(
   "an origin the parser refuses, or not https on a DNS name and its default port, is malformed",
   async () => {
-    let (stood, seen) = await originStand(ref(Driver))
+    let (stood, seen, id) = await originStand(ref(Driver))
     let refused = [
       "http://driver.example.com",
       "https://192.0.2.10",
@@ -599,11 +703,11 @@ test(
     ]
     for i in 0 to refused->Array.length - 1 {
       let given = refused->Array.getUnsafe(i)
-      let (status, answer) = await called(stood, Host(1.), byOrigin(given))
+      let (status, answer) = await called(stood, Host(id), byOrigin(given))
       deepEqual((status, answer->reason), (400, Some("malformed")), ~message=given)
     }
     deepEqual(seen, [])
-    deepEqual(await originOf(stood, 1.), None)
+    deepEqual(await originOf(stood, id), None)
   },
 )
 
@@ -618,8 +722,8 @@ test(
     ]
     for i in 0 to given->Array.length - 1 {
       let (text, kept) = given->Array.getUnsafe(i)
-      let (stood, seen) = await originStand(ref(Driver))
-      let (_, bound) = await called(stood, Host(1.), byOrigin(text))
+      let (stood, seen, id) = await originStand(ref(Driver))
+      let (_, bound) = await called(stood, Host(id), byOrigin(text))
       deepEqual(
         (bound->data->member("reached")->member("origin"), seen->Array.map(s => s.url)),
         (JSON.String(kept), [`${kept}/management/describe`]),
@@ -630,17 +734,21 @@ test(
 )
 
 test("an origin proven by its call back is kept and answered", async () => {
-  let (stood, seen) = await originStand(ref(Driver))
-  let (status, bound) = await called(stood, Host(1.), byOrigin("https://driver.example.com"))
+  let (stood, seen, id) = await originStand(ref(Driver))
+  let (status, bound) = await called(stood, Host(id), byOrigin("https://driver.example.com"))
   deepEqual(
     (status, bound->data),
     (
       200,
-      JSON.parseOrThrow(`{"binding": 1, "reached": {"name": "origin", "origin": "https://driver.example.com"}}`),
+      JSON.parseOrThrow(
+        `{"binding": ${Float.toString(
+            id,
+          )}, "reached": {"name": "origin", "origin": "https://driver.example.com"}}`,
+      ),
     ),
   )
   let token =
-    (await stood.parts.state.binding(1.))->Option.map(b =>
+    (await stood.parts.state.binding(id))->Option.map(b =>
       `Bearer ${Access.tokenText(b.id, b.secret)}`
     )
   deepEqual(
@@ -653,30 +761,34 @@ test("an origin proven by its call back is kept and answered", async () => {
       },
     ],
   )
-  deepEqual(await originOf(stood, 1.), Some("https://driver.example.com"))
+  deepEqual(await originOf(stood, id), Some("https://driver.example.com"))
 })
 
 test(
   "an origin that answered and is no driver of the binding is not proven, and not kept",
   async () => {
     let answering = ref(Page)
-    let (stood, _) = await originStand(answering)
+    let (stood, _, id) = await originStand(answering)
     let answers = []
     [Page, Refusing, Moved, Edge(500), Edge(404)]->Array.forEach(a => answers->Array.push(a))
     let reasons = []
     for i in 0 to answers->Array.length - 1 {
       answering := answers->Array.getUnsafe(i)
-      let (status, answer) = await called(stood, Host(1.), byOrigin("https://example.com"))
+      let (status, answer) = await called(stood, Host(id), byOrigin("https://example.com"))
       reasons->Array.push((status, answer->reason, answer->message))
     }
     deepEqual(
       reasons,
       Array.make(
         ~length=5,
-        (400, Some("not_proven"), "https://example.com answered, and not as binding 1's driver"),
+        (
+          400,
+          Some("not_proven"),
+          `https://example.com answered, and not as binding ${Ids.text(id)}'s driver`,
+        ),
       ),
     )
-    deepEqual(await originOf(stood, 1.), None)
+    deepEqual(await originOf(stood, id), None)
   },
 )
 
@@ -684,39 +796,43 @@ test(
   "an origin not answering, or Cloudflare's edge saying so, is unreachable in one message",
   async () => {
     let answering = ref(Silent)
-    let (stood, _) = await originStand(answering)
+    let (stood, _, id) = await originStand(answering)
     let answers = [Silent, Edge(521), Edge(522), Edge(523), Edge(524), Edge(530)]
     let reasons = []
     for i in 0 to answers->Array.length - 1 {
       answering := answers->Array.getUnsafe(i)
-      let (status, answer) = await called(stood, Host(1.), byOrigin("https://driver.invalid"))
+      let (status, answer) = await called(stood, Host(id), byOrigin("https://driver.invalid"))
       reasons->Array.push((status, answer->reason, answer->message))
     }
     deepEqual(
       reasons,
       Array.make(
         ~length=6,
-        (503, Some("unreachable"), "https://driver.invalid did not answer binding 1's call back"),
+        (
+          503,
+          Some("unreachable"),
+          `https://driver.invalid did not answer binding ${Ids.text(id)}'s call back`,
+        ),
       ),
     )
-    deepEqual(await originOf(stood, 1.), None)
+    deepEqual(await originOf(stood, id), None)
   },
 )
 
 test("an origin binding's token is spent by its first bind, any bind after it denied", async () => {
-  let (stood, seen) = await originStand(ref(Driver))
-  ignore(await called(stood, Host(1.), byOrigin("https://driver.example.com")))
+  let (stood, seen, id) = await originStand(ref(Driver))
+  ignore(await called(stood, Host(id), byOrigin("https://driver.example.com")))
   let again = [
-    await called(stood, Host(1.), byOrigin("https://driver.example.com")),
-    await called(stood, Host(1.), byOrigin("https://other.example.com")),
-    await called(stood, Host(1.), bindings(Bind({reach: Tunnel}))),
+    await called(stood, Host(id), byOrigin("https://driver.example.com")),
+    await called(stood, Host(id), byOrigin("https://other.example.com")),
+    await called(stood, Host(id), bindings(Bind({reach: Tunnel}))),
   ]
   deepEqual(
     again->Array.map(((status, answer)) => (status, answer->reason)),
     Array.make(~length=3, (403, Some("denied"))),
   )
   deepEqual(
-    (seen->Array.length, await originOf(stood, 1.)),
+    (seen->Array.length, await originOf(stood, id)),
     (1, Some("https://driver.example.com")),
   )
 })
@@ -724,30 +840,30 @@ test("an origin binding's token is spent by its first bind, any bind after it de
 test("two binds by origin at once fix one origin, and the other is denied", async () => {
   let release = ref(() => ())
   let gate = Promise.make((resolve, _) => release := (() => resolve()))
-  let (stood, seen) = await originStand(ref(Gated(gate)))
-  let first = called(stood, Host(1.), byOrigin("https://driver.example.com"))
-  let second = called(stood, Host(1.), byOrigin("https://other.example.com"))
+  let (stood, seen, id) = await originStand(ref(Gated(gate)))
+  let first = called(stood, Host(id), byOrigin("https://driver.example.com"))
+  let second = called(stood, Host(id), byOrigin("https://other.example.com"))
   release.contents()
   let answers = await Promise.all([first, second])
   deepEqual(
     (answers->Array.map(((_, a)) => a->reason), seen->Array.length),
     ([None, Some("denied")], 2),
   )
-  deepEqual(await originOf(stood, 1.), Some("https://driver.example.com"))
+  deepEqual(await originOf(stood, id), Some("https://driver.example.com"))
 })
 
 test(
   "a binding bound by its tunnel is refused an origin as invalid, never called back",
   async () => {
-    let (stood, seen) = await originStand(ref(Driver))
-    ignore(await called(stood, Host(1.), bindings(Bind({reach: Tunnel}))))
-    let (status, refused) = await called(stood, Host(1.), byOrigin("https://driver.example.com"))
-    let (_, again) = await called(stood, Host(1.), bindings(Bind({reach: Tunnel})))
+    let (stood, seen, id) = await originStand(ref(Driver))
+    ignore(await called(stood, Host(id), bindings(Bind({reach: Tunnel}))))
+    let (status, refused) = await called(stood, Host(id), byOrigin("https://driver.example.com"))
+    let (_, again) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
     deepEqual(
       (
         (status, refused->member("failure"), refused->reason),
         seen,
-        await originOf(stood, 1.),
+        await originOf(stood, id),
         again->data->member("reached")->member("name"),
       ),
       ((400, JSON.String("rejected"), Some("invalid")), [], None, JSON.String("tunnel")),
@@ -756,11 +872,11 @@ test(
 )
 
 test("a binding bound by its origin is called there for every call", async () => {
-  let (stood, seen) = await originStand(ref(Driver))
-  ignore(await called(stood, Host(1.), byOrigin("https://driver.example.com")))
+  let (stood, seen, id) = await originStand(ref(Driver))
+  ignore(await called(stood, Host(id), byOrigin("https://driver.example.com")))
   ignore(await called(stood, Operator, releases(Put({form: Modules, artifact}))))
   let release = await Web.sha256(artifact)
-  ignore(await called(stood, Operator, releases(Deploy({binding: 1., release}))))
+  ignore(await called(stood, Operator, releases(Deploy({binding: id, release}))))
   // The bind's call back, then the deploy's own, which the faked origin answers only in part.
   deepEqual(
     seen->Array.slice(~start=0, ~end=3)->Array.map(s => s.url),
@@ -771,7 +887,7 @@ test("a binding bound by its origin is called there for every call", async () =>
     ],
   )
   let token =
-    (await stood.parts.state.binding(1.))->Option.map(b =>
+    (await stood.parts.state.binding(id))->Option.map(b =>
       `Bearer ${Access.tokenText(b.id, b.secret)}`
     )
   ok(seen->Array.every(s => s.authorization == token), ~message="every call carries the token")
@@ -793,5 +909,118 @@ test(
       ),
     )
     deepEqual(sent.contents, Some("manual"))
+  },
+)
+
+test(
+  "a route not made keeps its address unbound, the next binding taking the next and binding",
+  async () => {
+    let (faked, made, routes) = tunnels(~unrouted=1)
+    let (stood, _, id) = await originStand(~tunnels=faked, ref(Driver))
+    let (status, refused) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+    let kept = (await stood.parts.state.binding(id))->Option.map(b => (b.address, b.bound))
+    let next = await openBinding(stood, 1.)
+    let (nextStatus, nextBound) = await called(stood, Host(next), bindings(Bind({reach: Tunnel})))
+    // Unbound, it is no host to deploy onto, and may still be bound by its origin.
+    let release = Uint8Array.fromLength(32)
+    let (_, unbound) = await called(stood, Operator, releases(Deploy({binding: id, release})))
+    let (bound, answer) = await called(stood, Host(id), byOrigin("https://driver.example.com"))
+    deepEqual(
+      (
+        (status, refused->reason, kept),
+        (nextStatus, nextBound->data->member("reached")->member("address")),
+        (made.contents, routes),
+        unbound->reason,
+        (bound, answer->data->member("reached")->member("name")),
+      ),
+      (
+        (503, Some("unreachable"), Some((Some("10.200.0.1"), None))),
+        (200, JSON.String("10.200.0.2")),
+        (
+          2,
+          [
+            (`tunnel-${Api.tunnelName(id)}`, "10.200.0.1"),
+            (`tunnel-${Api.tunnelName(next)}`, "10.200.0.2"),
+          ],
+        ),
+        Some("unbound"),
+        (200, JSON.String("origin")),
+      ),
+    )
+  },
+)
+
+test(
+  "a deploy whose app is forgotten as its container is made is never sent to its host",
+  async () => {
+    let base = stand()
+    base.host.slow := true
+    let drawn = ref(0.)
+    let caller = ref(None)
+    let forgotten = ref(None)
+    let state = base.parts.state
+    let stood = {
+      ...base,
+      parts: {
+        ...base.parts,
+        state: {
+          ...state,
+          drawApp: async (~random) => {
+            drawn := (await state.drawApp(~random))
+            drawn.contents
+          },
+        },
+        // The forget lands while the host makes the deploy's container, before it is declared.
+        wait: async () =>
+          switch (caller.contents, forgotten.contents) {
+          | (Some(stood), None) =>
+            forgotten :=
+              Some(await called(stood, Operator, releases(Forget({app: drawn.contents}))))
+          | (Some(_) | None, _) => ()
+          },
+      },
+    }
+    caller := Some(stood)
+    let (binding, hash) = await opened(stood)
+    let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+    let (status, answer) = await called(stood, Operator, releases(Deploy({binding, release})))
+    let app = drawn.contents
+    deepEqual(
+      (
+        forgotten.contents->Option.map(((status, _)) => status),
+        (status, answer->reason, answer->member("message")->JSON.Decode.string),
+        stood.host.deployed.contents,
+        await stood.parts.state.deployment(app),
+      ),
+      (
+        Some(200),
+        (
+          404,
+          Some("not_found"),
+          Some(`app ${Ids.text(app)}, app ${Ids.text(app)} was forgotten as it was deployed`),
+        ),
+        None,
+        None,
+      ),
+    )
+  },
+)
+
+test(
+  "a tunnel not made gives its address back, so the binding may still be bound by its origin",
+  async () => {
+    let (faked, made, routes) = tunnels(~failing=true)
+    let (stood, _, id) = await originStand(~tunnels=faked, ref(Driver))
+    let (status, refused) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
+    let kept = (await stood.parts.state.binding(id))->Option.flatMap(b => b.address)
+    let (bound, answer) = await called(stood, Host(id), byOrigin("https://driver.example.com"))
+    deepEqual(
+      (
+        (status, refused->reason, kept),
+        (made.contents, routes),
+        (bound, answer->data->member("reached")->member("name")),
+      ),
+      ((503, Some("unreachable"), None), (1, []), (200, JSON.String("origin"))),
+    )
   },
 )

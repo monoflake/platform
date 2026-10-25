@@ -90,14 +90,14 @@ test(
 )
 
 test(
-  "the entry is asked by the host deploy names, the app in 8 hex digits then the binding",
+  "the entry is asked by the host deploy names, the app in 8 hex digits then the binding's",
   async () => {
-    deepEqual(Gateway.host(~app=1., ~binding=3.), "00000001.b3")
-    deepEqual(Gateway.host(~app=4275878552., ~binding=12.), "fedcba98.b12")
+    deepEqual(Gateway.host(~app=1., ~binding=3.), "00000001.b00000003")
+    deepEqual(Gateway.host(~app=4275878552., ~binding=169552957.), "fedcba98.b0a1b2c3d")
     // An app routed by its decimal is handed on by its hex form all the same.
     deepEqual(
       Gateway.routed("/v1/app-2/")->Option.map(r => Gateway.host(~app=r.app, ~binding=1.)),
-      Some("00000002.b1"),
+      Some("00000002.b00000001"),
     )
   },
 )
@@ -128,8 +128,11 @@ test(
       ~organization,
       ~secret=Uint8Array.fromLength(32),
       ~relayed=false,
+      ~random=() => 169552957.,
     )
-    await state.addressed(~binding, ~address="10.200.0.1")
+    ignore(await state.addressed(~binding, ~address="10.200.0.1"))
+    await state.routed(~binding)
+    ignore(await state.drawApp(~random=() => 4.))
     await state.deploy({app: 4., binding, release: "", capacity: 1.})
     let answer = await Gateway.passed(
       state,
@@ -139,7 +142,7 @@ test(
       {app: 4., path: "/hello"},
       ~search="?x=1",
     )
-    deepEqual(await answer->Web.text, "entry asked /hello for 00000004.b1")
+    deepEqual(await answer->Web.text, "entry asked /hello for 00000004.b0a1b2c3d")
     deepEqual(host.seen->Array.map(s => s.url), ["http://10.200.0.1:36879/hello?x=1"])
     host.gone := true
     let gone = await Gateway.passed(
@@ -154,6 +157,58 @@ test(
   },
 )
 
+test(
+  "a binding kept before ids were drawn is still bound, and served by its hex form",
+  async () => {
+    let database = Sqlite.database()
+    let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+    await run("INSERT INTO organization (id, label) VALUES (2, 'first')")
+    await run(
+      `INSERT INTO binding (id, organization, secret, address, bound) VALUES (1, 2, '${String.repeat(
+          "ab",
+          32,
+        )}', '10.200.0.1', 1)`,
+    )
+    await run("INSERT INTO release (hash, form, size) VALUES ('aa', 'modules', 3)")
+    await run("INSERT INTO deployment (app, binding, release, capacity) VALUES (4, 1, 'aa', 1)")
+    await run("INSERT INTO app (id) VALUES (4)")
+    let key = Some(Envelope.Base64url.encode(Uint8Array.fromLength(32)))
+    let state = State.ofDatabase(database, ~sealing=Sealing.ofKey(key))
+    let host = Host.make()
+    let answer = await Gateway.passed(
+      state,
+      host.reach,
+      ~port=36879,
+      Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}}),
+      {app: 4., path: "/"},
+      ~search="",
+    )
+    // A binding opened after it is drawn, and given the next address free.
+    let next = await state.openBinding(
+      ~organization=2.,
+      ~secret=Uint8Array.fromLength(32),
+      ~relayed=false,
+      ~random=() => 169552957.,
+    )
+    deepEqual(
+      (
+        await answer->Web.text,
+        host.seen->Array.map(s => s.url),
+        await state.addressed(~binding=1.),
+        next,
+        await state.addressed(~binding=next),
+      ),
+      (
+        "entry asked / for 00000004.b00000001",
+        ["http://10.200.0.1:36879/"],
+        Some("10.200.0.1"),
+        169552957.,
+        Some("10.200.0.2"),
+      ),
+    )
+  },
+)
+
 /** A state holding app 4 deployed on a bound binding, its host faked. */
 let deployed = async () => {
   let state = Memory.state()
@@ -162,8 +217,11 @@ let deployed = async () => {
     ~organization,
     ~secret=Uint8Array.fromLength(32),
     ~relayed=false,
+    ~random=Memory.counting(),
   )
-  await state.addressed(~binding, ~address="10.200.0.1")
+  ignore(await state.addressed(~binding, ~address="10.200.0.1"))
+  await state.routed(~binding)
+  ignore(await state.drawApp(~random=() => 4.))
   await state.deploy({app: 4., binding, release: "", capacity: 1.})
   state
 }
@@ -221,8 +279,14 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
   let host = Host.make()
   let secret = Uint8Array.fromLength(32)
   let {id: organization} = await state.openOrganization("first", ~secret)
-  let binding = await state.openBinding(~organization, ~secret, ~relayed=false)
+  let binding = await state.openBinding(
+    ~organization,
+    ~secret,
+    ~relayed=false,
+    ~random=Memory.counting(),
+  )
   ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
+  ignore(await state.drawApp(~random=() => 4.))
   await state.deploy({app: 4., binding, release: "", capacity: 1.})
   let answer = await Gateway.passed(
     state,

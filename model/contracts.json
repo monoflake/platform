@@ -7278,6 +7278,7 @@
 		"constraint": "The statement breaks a constraint of the database",
 		"denied": "The call carries no credential, or one that does not allow it",
 		"depended_on": "Something else depends on what the change removes",
+		"deployed": "The app has run; it is removed by its own path, not forgotten",
 		"expectation_failed": "What is held is not what the call expected",
 		"extension_invalid": "The extension named is not valid here",
 		"fault": "The implementation failed while answering",
@@ -7286,6 +7287,7 @@
 		"held": "The lease is held by another until it ends",
 		"invalid": "The input is well formed but not valid",
 		"malformed": "The call is not as its interface writes it",
+		"no_address": "No private address of the range is left for the host",
 		"no_export": "No export of that name is deployed",
 		"no_kind": "No kind of that name exists",
 		"no_sandbox": "No host offers the sandbox asked for",
@@ -8132,6 +8134,10 @@
 						{
 							"name": "invalid",
 							"failure": "rejected"
+						},
+						{
+							"name": "no_address",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["host"]
@@ -8244,6 +8250,10 @@
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
+						},
+						{
+							"name": "no_address",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["organization"]
