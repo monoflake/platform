@@ -13,7 +13,7 @@ let operatorVariable: string
  */
 let origin: string => option<result<string, string>>
 
-/** The gateway's address of an app, `<origin>/v1/app-<id>/`. */
+/** The gateway's address of an app, `<origin>/v1/<id in 8 hex>/`. */
 let gateway: (~origin: string, ~app: float) => string
 
 /** A control as the operator calls it, and the fetch it is called through. */
@@ -26,11 +26,14 @@ type t = {
 /** The release put, its artifact the bundle's bytes. */
 let put: (t, Uint8Array.t) => promise<result<Contracts.ReleaseHeld.t, Machine.refused>>
 
-/** The release deployed onto a binding with its secrets and network, as its driver answered. */
+/**
+ * The release deployed onto a binding with its secrets and network, as its driver answered, under
+ * the app given, or a new one the control draws where none is, its id in the answer's `runs`.
+ */
 let deploy: (
   t,
   ~binding: float,
-  ~app: float,
+  ~app: option<float>,
   ~hash: Uint8Array.t,
   ~secrets: dict<Uint8Array.t>,
   ~network: array<Contracts.DeploymentNetwork.t>,

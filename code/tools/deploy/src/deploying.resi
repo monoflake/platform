@@ -24,7 +24,7 @@ let deploy: (
 /** The app's deployment, as describe asks it. */
 let of_: float => Contracts.DeploymentOf.t
 
-/** The host the entry hands to the app's deployment, `app-<id>.b<binding>`. */
+/** The host the entry hands to the app's deployment, `<id in 8 hex>.b<binding>`. */
 let host: (~app: float, ~binding: string) => string
 
 /** How far a deployment of a version has come. */

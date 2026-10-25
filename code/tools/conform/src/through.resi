@@ -9,7 +9,7 @@ type t = {name: string, address: string}
 /** `--control <origin>` taken out of the arguments, the origin and what is left, or why not. */
 let control: array<string> => result<(option<string>, array<string>), string>
 
-/** The gateway's address of an app, `<origin>/v1/app-<id>/`. */
+/** The gateway's address of an app, `<origin>/v1/<id in 8 hex>/`. */
 let gateway: (~origin: string, ~app: int) => string
 
 /**

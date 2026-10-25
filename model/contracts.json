@@ -5908,7 +5908,8 @@
 					"key": 2,
 					"shape": {
 						"id": "app"
-					}
+					},
+					"optional": true
 				},
 				{
 					"name": "release",
@@ -8138,7 +8139,7 @@
 			]
 		},
 		"releases": {
-			"version": 2,
+			"version": 3,
 			"bounds": {
 				"artifact": 33554432
 			},

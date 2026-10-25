@@ -17,12 +17,13 @@ let types: array<declared> = [
     from: "rxmd9",
   },
   // An app runs on one binding at a time, so deploying it onto another moves it there. Its secrets
-  // and network are handed to the driver and kept by no control.
+  // and network are handed to the driver and kept by no control. With no app the control draws
+  // one by b8f35 and answers it, so no caller makes an id.
   {
     name: "release-deploy",
     def: Record([
       field("binding", 1, Id("capacity")),
-      field("app", 2, Id("app")),
+      optional("app", 2, Id("app")),
       field("release", 3, Prim(#hash)),
       optional("secrets", 4, Map(Prim(#secret))),
       optional("network", 5, List(Type("deployment-network"))),
@@ -35,7 +36,7 @@ let types: array<declared> = [
 /** A host that does not answer is `unreachable`, and the caller retries, rxmd9. */
 let interface_: interface_ = {
   name: "releases",
-  version: 2,
+  version: 3,
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [

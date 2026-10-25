@@ -7,12 +7,13 @@
 type routed = {app: float, path: string}
 
 /**
- * `/v{n}/app-{id}/...`, the app handed what follows, `/` at least, so it runs as it does on
- * Cloudflare, `docs/method.md`; none where the path is no app's.
+ * `/v{n}/{id}/...`, the id 8 lowercase hex digits, RFC b8f35, the app handed what follows, `/` at
+ * least, so it runs as it does on Cloudflare, `docs/method.md`; none where the path is no app's.
+ * `/v{n}/app-{decimal id}/...` is read too, a scaffold retired with B at RFC 8yl4b.
  */
 let routed: string => option<routed>
 
-/** The host the entry hands to an app's deployment, `app-<id>.b<binding>`. */
+/** The host the entry hands to an app's deployment, `<id in 8 hex>.b<binding>`. */
 let host: (~app: float, ~binding: float) => string
 
 /**
