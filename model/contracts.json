@@ -2168,21 +2168,6 @@
 								}
 							}
 						]
-					},
-					{
-						"name": "records",
-						"code": 3,
-						"fields": [
-							{
-								"name": "kinds",
-								"key": 1,
-								"shape": {
-									"list": {
-										"prim": "string"
-									}
-								}
-							}
-						]
 					}
 				]
 			}
@@ -6926,9 +6911,9 @@
 		"records": [
 			{
 				"name": "capability",
-				"version": 3,
+				"version": 4,
 				"form": "claims",
-				"typ": "monoflake:capability:3",
+				"typ": "monoflake:capability:4",
 				"content": "capability"
 			},
 			{

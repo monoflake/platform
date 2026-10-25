@@ -49,14 +49,6 @@
 			"cbor": "a200020103"
 		},
 		{
-			"type": "capability-target",
-			"json": {
-				"name": "records",
-				"kinds": ["lease", "writer"]
-			},
-			"cbor": "a200030182656c6561736566777269746572"
-		},
-		{
 			"type": "account-credential",
 			"json": {
 				"iat": 1760000000,

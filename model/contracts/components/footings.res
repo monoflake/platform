@@ -82,8 +82,8 @@ let types: array<declared> = [
     def: Enum({choices: codes(["take", "renew", "release"]), ordered: false}),
     from: "n8jq5",
   },
-  // A lease by name, for so many seconds of the footing's clock; its holder is the capability's
-  // `sub`.
+  // A lease by name, for so many seconds of the footing's clock; its holder is the caller's
+  // instance, by its key's `kid`, 8yl4b.
   {
     name: "footing-lease",
     def: Record([
@@ -102,8 +102,8 @@ let types: array<declared> = [
 ]
 
 /**
- * A capability's `records` target names the kinds a call reaches and its rights what it does; a
- * lease is a row of kind `lease`, and any capability of the scope reads the bundle.
+ * A call is signed by its caller's instance key and judged by the model, a write by the kind's
+ * writers and the rest by the caller's edges to the footing, jy0s5.
  */
 let interface_: interface_ = {
   name: "footing",

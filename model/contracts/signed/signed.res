@@ -66,8 +66,8 @@ let types: array<declared> = [
     }),
     from: "b8f35",
   },
-  // What a capability reaches, a resource by its id, a product's blob space, or the footing's
-  // records of the kinds named, b8f35 and n8jq5.
+  // What a capability reaches, a resource by its id or a product's blob space, b8f35; the footing
+  // judges its callers by their certificates instead, jy0s5.
   {
     name: "capability-target",
     def: Union({
@@ -75,10 +75,9 @@ let types: array<declared> = [
       cases: [
         {name: "resource", code: 1, fields: [field("id", 1, Across(#organization, "*"))]},
         {name: "space", code: 2, fields: [field("space", 1, Type("blob-space"))]},
-        {name: "records", code: 3, fields: [field("kinds", 1, List(Prim(#string)))]},
       ],
     }),
-    from: "b8f35, n8jq5",
+    from: "b8f35, jy0s5",
   },
   // `sub` is the account, app or component it was given to, logged and never checked.
   {
@@ -207,7 +206,7 @@ let types: array<declared> = [
 ]
 
 let signed: array<signed> = [
-  {name: "capability", version: 3, form: #claims, content: "capability"},
+  {name: "capability", version: 4, form: #claims, content: "capability"},
   {name: "certificate", version: 1, form: #claims, content: "certificate"},
   {name: "account", version: 1, form: #claims, content: "account-credential"},
   {name: "bundle", version: 1, form: #record, content: "bundle"},
