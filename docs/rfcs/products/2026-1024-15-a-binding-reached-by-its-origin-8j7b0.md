@@ -65,3 +65,23 @@ Choices made provisionally while the thread runs, read by the author at its end.
   name never answers, RFC 6761. The `.invalid` case needs no network; the `example.com` case does,
   so the runner marks it as needing the network and reports it skipped, never passed, where there
   is none, RFC p8e8k. The runner carries a bearer for a product's sample.
+- **The call back waits 10 seconds and never follows a redirect**, a small matter, provisional,
+  chosen by the advisor on 2026-10-24.
+- **The runner runs as if there were no network unless told otherwise**, a small matter,
+  provisional, chosen by the advisor on 2026-10-24: with no `--network`, a case needing the network
+  is skipped, each named with its reason and the count skipped printed beside the count passed;
+  only `--network yes` runs them. A probe that decides by itself gives a result that depends on the
+  room it runs in and proves nothing of the target, so none is built.
+- **An origin's host is judged as the WHATWG parser leaves it**, a small matter, provisional, chosen
+  by the advisor on 2026-10-24, the parser a Worker's `URL` uses, so hex, octal and dotless IPv4
+  forms are normalized before they are judged, and a trailing dot and punycode are judged in their
+  parsed form. `localhost`, `.local`, `.internal`, `home.arpa` and a host whose last label is a
+  number are refused too, for the reason an IP literal is: the call back must go only where the
+  public reaches.
+- **A step runs as the operator only on an operation the model declares the operator's**, a small
+  matter, provisional, chosen by the advisor on 2026-10-24, today bindings' `open`, every other
+  refused, the set read from the model's callers, RFC 6x8su, never kept as a list in the runner.
+- **A run is told its organization**, a small matter, provisional, chosen by the advisor on
+  2026-10-24: `--organization` is required by any selected case using the run's organization, and
+  the runner refuses before running anything where it is missing, naming those cases. It never opens
+  an organization on the control under test.
