@@ -153,6 +153,11 @@ login prompt and answered nothing on 22, and only the provider's console reached
 the GRUB menu shows on the VNC console alone, not the serial one. A new machine's first
 configuration opens SSH for its install, monoflake/cloud's `docs/upgrades.md`.
 
+**U-Boot reads ext4 without replaying its journal**, seen on 2026-10-25 on a board booted from an
+extlinux `/boot`: power was lost right after a switch had rewritten `extlinux.conf`, Linux then
+read the new default, and U-Boot had booted the generation before it. So after a bootloader write
+to such a `/boot`, `sync` comes before any power event.
+
 **What the machine runs moved to unstable, 2026-10-21**: the release, 26.05, carried tailscale
 1.98.10, containerd 2.3.3, runc 1.4.3, crun 1.27.1 and btrfs-progs 6.19.1 the day unstable carried
 1.104.1, 2.4.1, 1.5.2, 1.30.1 and 7.1, both locked the same day; the kernel, 6.18.57, was one. Taking
