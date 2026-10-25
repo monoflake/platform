@@ -137,3 +137,11 @@ Choices made provisionally while the thread runs, read by the author at its end.
   provisional, chosen by the advisor on 2026-10-24: a source missing from that binding's list is
   refused, and a deploy already refuses a `reaching` target of another binding, so a container of
   one binding never reaches another's deployment.
+- **`reaching`'s sample is a file of its own, `tests/kinds/deployments/reaching.json`**, a small
+  matter, provisional, chosen by the advisor on 2026-10-25. A sample file named for a feature is run
+  by the drivers that offer that feature and by no others: each driver's in-process sample test
+  lists its files by name and lists this one only where it offers `reaching`, conform reads the
+  whole directory since driver(machine) offers it, and a third driver decides by the same rule.
+  driver(cloudflare)'s `beyond_host` is held by its own tests until `inline-data-path` replaces them
+  with the file. The sample expects the entry's own 403 carried back whole; the fence's checks stay
+  in a machine's rehearsal.
