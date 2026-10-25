@@ -399,6 +399,7 @@ let own: array<item> = [
     step: 6,
     done: "13ixj, b8f35",
   },
+  // A deploy carries no binding yet, so the inline path waits, the workspace's `inline-data-path`.
   {
     id: "C5",
     group: #C,
