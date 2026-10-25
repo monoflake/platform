@@ -159,3 +159,9 @@ Choices made provisionally while the thread runs, read by the author at its end.
   at the container's source alone; proxy paths keep theirs. The earlier entries' "the sample expects
   the entry's own 403" gave way to the allowed half alone, above; the fence's two drivers and
   conform's bridge are monoflake/driver's RFC p95sv's Ledger of 2026-10-25.
+- **No header describing forwarding or the client carries through from the subnet**, a small
+  matter, provisional, chosen by the advisor on 2026-10-25, completing the entry above: `Via`,
+  `Forwarded`, `CDN-Loop`, every `X-Forwarded-*` and `X-Original-Forwarded-*`, every `CF-*`, and
+  `True-Client-IP`, `X-Real-IP`, `X-Client-IP`, `X-Cluster-Client-IP`, `Client-IP` and
+  `Fastly-Client-IP`, each matched with `_` read as `-`, since some servers fold the two. A request
+  from the subnet carrying `Host` more than once is answered 400, never judged by one of them.
