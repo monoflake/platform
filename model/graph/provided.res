@@ -68,13 +68,14 @@ let elsewhere: dict<block> = Fill.part(Fill.provided)->Option.getOr(dict{})
 let all = Dict.fromArray(Array.concat(blocks->Dict.toArray, elsewhere->Dict.toArray))
 
 /**
- * What fills a name in one deployment, RFC vgvx6, a block by its main name, a vendor's resource, or
- * a user's workload, whose code the model never holds.
+ * What fills a name in one deployment, RFC vgvx6, a block by its main name, a vendor's resource, a
+ * user's workload, whose code the model never holds, or a name another deployment provides, btzlt.
  */
 type filler =
   | Block(string)
   | Vendor({vendor: string, resource: string})
   | Workload(string)
+  | Beneath({deployment: string, name: string})
 
 /** One deployment, each name with what fills it as it runs now, and the targets bound to it. */
 type deployed = {fills: array<(string, filler)>, targets: array<string>}
