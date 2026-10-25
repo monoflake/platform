@@ -137,3 +137,11 @@ Choices made provisionally while the thread runs, read by the author at its end.
   on 2026-10-24: an `https` origin naming port 443 is accepted, the parser dropping the default
   port, and each `xn--` label must decode and come back the same through the parser, or it is
   `malformed`.
+- **A local control is told by its base alone, and reports no mode**, a small matter, provisional,
+  chosen by the advisor on 2026-10-24: which deployment a control is belongs to no interface, and a
+  contract carrying it only so a test can read it would publish a fact about the deployment to every
+  caller. The runner's guard stays a loopback base. **Whatever starts a local control starts it
+  without tunnel credentials**, cloud's `install --local` and the control's own end test alike;
+  as of 2026-10-24 the first passes none and the second passes made-up ones to an API on the
+  loopback. A person starting a local control by hand with real credentials is the risk left, a
+  fact recorded and not closed.
