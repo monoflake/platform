@@ -280,3 +280,17 @@ that holds all of your customers' Workers", invoked by a dispatch Worker through
 namespace, on a plan of $25 a month. Sources:
 https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/how-workers-for-platforms-works/,
 https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/
+
+## Where R2 places a bucket, read 2026-10-26
+
+**A location hint is honored only the first time a name is created.** "Location Hints are a best
+effort and not a guarantee"; with none, R2 "chooses a bucket location in the closest available
+region to the create bucket request", "based on the location of the caller"; "Location Hints are
+only honored the first time a bucket with a given name is created", and "If you delete and recreate
+a bucket with the same name, the original bucket's location will be used." So a bucket made with no
+hint from a computer in the East stays in the East under its name for good, made again with
+`--location wnam` or not; on 2026-10-26 a bucket so made read `ENAM` after it. A jurisdiction is
+fixed the same way: "Once an R2 bucket is created, the jurisdiction cannot be changed." The API's
+Create Bucket is the one method naming a location; none changes it. Sources:
+https://developers.cloudflare.com/r2/reference/data-location/,
+https://developers.cloudflare.com/api/resources/r2/subresources/buckets/methods/create/
