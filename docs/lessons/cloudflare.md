@@ -242,3 +242,41 @@ storage may go on unaware. So a Durable Object fences its own writer, and keeps 
 footing for it. Sources:
 https://developers.cloudflare.com/durable-objects/platform/known-issues/,
 https://blog.cloudflare.com/durable-objects-easy-fast-correct-choose-three/
+
+## A name reaching a Worker of another account, read 2026-10-26
+
+**A Worker Custom Domain is made only on a zone its account owns.** It cannot be made "on a
+hostname with an existing CNAME DNS record or on a zone you do not own", and asks "an active
+Cloudflare zone". It is made under an account, `PUT /accounts/{account_id}/workers/domains`,
+naming the hostname, the Worker and the zone holding the hostname. Neither page says in words that
+the zone and the Worker share an account; that follows from the zone being one the account owns.
+Sources: https://developers.cloudflare.com/workers/configuration/routing/custom-domains/,
+https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/update/
+
+**A CNAME across accounts fails as 1014 unless its target uses Cloudflare for SaaS.** "A CNAME
+record between domains in different Cloudflare accounts is prohibited", and for one to resolve to
+another account "the domain owner of the CNAME target must use Cloudflare for SaaS". Source:
+https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-1xxx-errors/error-1014/
+
+**Cloudflare for SaaS serves a hostname of another's on a zone of its own.** The SaaS zone is on
+"a Free plan" at least, its fallback origin "must be proxied", and the hostname's holder adds "a
+CNAME record ... that points to your CNAME target"; a hostname is validated before it is proxied,
+and its certificate by TXT, delegated DCV or HTTP. Free, Pro and Business include 100 custom
+hostnames, $0.10 a hostname past them. A Worker serves them as the fallback origin on a route
+`*/*`, which "automatically captures all traffic entering your zone", the fallback origin "only
+an originless DNS record". Sources:
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/getting-started/,
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/plans/,
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/start/advanced-settings/worker-as-origin/
+
+**Orange-to-orange is a proxied CNAME from one account's zone to another's SaaS zone.** "The
+settings configured in your Cloudflare zone will be applied to the traffic first"; it "only
+applies when the two zones are part of different Cloudflare accounts", is never asked for, and no
+setting shows whether it is active. Source:
+https://developers.cloudflare.com/cloudflare-for-platforms/cloudflare-for-saas/saas-customers/how-it-works/
+
+**Workers for Platforms keeps its Workers in one account.** A dispatch namespace is "a container
+that holds all of your customers' Workers", invoked by a dispatch Worker through a binding of the
+namespace, on a plan of $25 a month. Sources:
+https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/how-workers-for-platforms-works/,
+https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/platform/pricing/
