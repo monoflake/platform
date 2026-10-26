@@ -17,6 +17,12 @@ type t = {
   gone: ref<bool>,
   /** How many of the next requests fail before any answer, as a connection closed would. */
   drops: ref<int>,
+  /** A path whose every request fails before any answer, as a connection closed would. */
+  cut: ref<option<string>>,
+  /** The kinds the driver's describe answers it offers, none where it names none. */
+  kinds: ref<option<array<Contracts.ManagementKind.t>>>,
+  /** The last list applied. */
+  applied: ref<option<Contracts.ManagementApply.t>>,
   /** The last deploy sent. */
   deployed: ref<option<Contracts.DeploymentDeploy.t>>,
   /** Whether the driver has lost what it ran, answering a stop and a delete `not_found`. */
@@ -36,6 +42,9 @@ let make = (): t => {
   let slow = ref(false)
   let gone = ref(false)
   let drops = ref(0)
+  let cut = ref(None)
+  let kinds = ref(None)
+  let applied = ref(None)
   let deployed = ref(None)
   let lost = ref(false)
   let notFound = () =>
@@ -62,6 +71,9 @@ let make = (): t => {
           JsError.throwWithMessage("Network connection lost.")
         }
         let path = Web.parts(request->Web.url)->Web.pathname
+        if cut.contents == Some(path) {
+          JsError.throwWithMessage("Network connection lost.")
+        }
         let input = async () =>
           JSON.parseOrThrow(Web.fromUtf8(await request->Web.bytesOf))
           ->JSON.Decode.object
@@ -74,6 +86,7 @@ let make = (): t => {
             policy: 0.,
             grace: 0.,
             items: items->Array.copy,
+            kinds: ?kinds.contents,
           }
           items->Array.forEachWithIndex((i, at) =>
             switch i.state {
@@ -85,6 +98,7 @@ let make = (): t => {
         | "/management/apply" =>
           switch Contracts.ManagementApply.fromJson(await input()) {
           | Ok(list) =>
+            applied := Some(list)
             generation := list.generation
             list.items->Array.forEach(i =>
               items->Array.push({
@@ -169,6 +183,9 @@ let make = (): t => {
     slow,
     gone,
     drops,
+    cut,
+    kinds,
+    applied,
     deployed,
     lost,
   }

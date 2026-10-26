@@ -22,11 +22,28 @@ type binding = {
   bound: option<float>,
 }
 
-/** A release by its hash in hex, its form and its size in bytes. */
-type release = {hash: string, form: Envelope.Contracts.DeploymentForm.t, size: float}
+/** A release by its hash in hex, its form, its size in bytes and the kinds it declares, emgxf. */
+type release = {
+  hash: string,
+  form: Envelope.Contracts.DeploymentForm.t,
+  size: float,
+  kinds: option<array<Envelope.Contracts.DeploymentKind.t>>,
+}
 
-/** An app's deployment, the binding running it, the release and the container it runs in. */
-type deployment = {app: float, binding: float, release: string, capacity: float}
+/**
+ * An app's deployment, the binding running it, the release, the container it runs in, 0 for none,
+ * and the kind it was declared to run as, none before it was, RFC emgxf.
+ */
+type deployment = {
+  app: float,
+  binding: float,
+  release: string,
+  capacity: float,
+  kind: option<Envelope.Contracts.DeploymentKind.t>,
+}
+
+/** Whether an app ran, its kind declared, or its capacity not 0 where it holds no kind, emgxf. */
+let ran: deployment => bool
 
 type t = {
   /** The organization holding a label, opened if none does, the secret given kept where none is. */
@@ -70,7 +87,7 @@ type t = {
    * organization holds it, and drawn again on a conflict, RFC b8f35.
    */
   drawApp: (~random: unit => float) => promise<float>,
-  /** An app drawn and never run removed, no deployment or one of capacity 0, and whether it was. */
+  /** An app drawn and never run removed, its deployment none or never run, and whether it was. */
   forgetApp: float => promise<bool>,
   /** Whether an app's record is kept, drawn or kept for a deployment before ids were drawn. */
   hasApp: float => promise<bool>,

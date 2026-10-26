@@ -18,7 +18,28 @@ type planned =
  */
 let planned: (Contracts.ManagementDescribed.t, ~credential: Uint8Array.t) => result<planned, string>
 
-/** A deploy of a release's bundle for the app, its version the artifact's hash. */
+/** The kinds a release runs as, those it declares or its form's where it declares none, emgxf. */
+let runsAs: (
+  ~kinds: option<array<Contracts.DeploymentKind.t>>,
+  ~form: Contracts.DeploymentForm.t,
+) => array<Contracts.DeploymentKind.t>
+
+/** The kinds a binding offers, function and container where its describe names none, emgxf. */
+let offered: Contracts.ManagementDescribed.t => array<Contracts.ManagementKind.t>
+
+/**
+ * The first of a release's kinds, in its order, that the binding offers; never instance, which the
+ * control deploys nowhere yet, emgxf.
+ */
+let chosen: (
+  ~runs: array<Contracts.DeploymentKind.t>,
+  ~offered: array<Contracts.ManagementKind.t>,
+) => option<Contracts.DeploymentKind.t>
+
+/**
+ * A deploy of a release's bundle for the app, its version the artifact's hash, into the container
+ * given or none.
+ */
 let deploy: (
   ~app: float,
   ~hash: Uint8Array.t,
@@ -26,15 +47,17 @@ let deploy: (
   ~address: string,
   ~secrets: dict<Uint8Array.t>,
   ~network: array<Contracts.DeploymentNetwork.t>,
-  ~into: float,
+  ~into: float=?,
 ) => Contracts.DeploymentDeploy.t
 
-/**
- * The app deployed at the release, its container made first, `declared` told the container before
- * the deploy is sent, and the driver's answer; `wait` paces the asking while the container is made.
- */
+/** The binding's list as its driver's management describes it. */
+let describeList: Driver.host => promise<result<Contracts.ManagementDescribed.t, Driver.refused>>
+
+/** The app deployed on the binding `described`, into its container made first where it offers one
+ * and `declared` told it, 0 for none, before the deploy; `wait` paces the asking, emgxf. */
 let deployed: (
   Driver.host,
+  ~described: Contracts.ManagementDescribed.t,
   ~app: float,
   ~hash: Uint8Array.t,
   ~form: Contracts.DeploymentForm.t,

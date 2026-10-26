@@ -1,4 +1,5 @@
 module DeploymentForm = Envelope.Contracts.DeploymentForm
+module DeploymentKind = Envelope.Contracts.DeploymentKind
 
 type binding = {
   id: float,
@@ -13,9 +14,22 @@ type binding = {
 
 type organization = {id: float, secret: Uint8Array.t}
 
-type release = {hash: string, form: DeploymentForm.t, size: float}
+type release = {
+  hash: string,
+  form: DeploymentForm.t,
+  size: float,
+  kinds: option<array<DeploymentKind.t>>,
+}
 
-type deployment = {app: float, binding: float, release: string, capacity: float}
+type deployment = {
+  app: float,
+  binding: float,
+  release: string,
+  capacity: float,
+  kind: option<DeploymentKind.t>,
+}
+
+let ran = (d: deployment) => d.kind->Option.isSome || d.capacity != 0.
 
 type t = {
   openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
@@ -92,8 +106,14 @@ type bindingRow = {
 
 let bindingColumns = "id, organization, secret, tunnel, address, origin, relayed, bound"
 
-type releaseRow = {hash: string, form: string, size: float}
-type deploymentRow = {app: float, binding: float, release: string, capacity: float}
+type releaseRow = {hash: string, form: string, size: float, kinds: Nullable.t<string>}
+type deploymentRow = {
+  app: float,
+  binding: float,
+  release: string,
+  capacity: float,
+  kind: Nullable.t<string>,
+}
 
 let formName = (form: DeploymentForm.t) =>
   switch form {
@@ -109,6 +129,30 @@ let formOf = name =>
   | "modules" => Some(Modules)
   | _ => None
   }
+
+let kindName = (kind: DeploymentKind.t) => (kind :> string)
+
+let kindOf = name =>
+  switch name {
+  | "function" => Some(DeploymentKind.Function)
+  | "instance" => Some(Instance)
+  | "container" => Some(Container)
+  | _ => None
+  }
+
+/** Kinds read by their names, none where one is no kind's. */
+let kindsOf = names => {
+  let kinds = names->Array.filterMap(kindOf)
+  kinds->Array.length == names->Array.length ? Some(kinds) : None
+}
+
+/** A release's kinds as D1 keeps them, their names joined by commas, an empty list as ''. */
+let kindsText = kinds => kinds->Array.map(kindName)->Array.join(",")
+
+let kindsOfText = text => text == "" ? Some([]) : kindsOf(text->String.split(","))
+
+/** Whether a deployment row ran, as `ran` reads a deployment. */
+let ranRow = "(kind IS NOT NULL OR capacity != 0)"
 
 /**
  * The next id of a table, as `n`'s greatest, counted on past every id an app or a binding holds.
@@ -128,10 +172,10 @@ let unaddressed = `WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM 
 
 type addressRow = {address: Nullable.t<string>}
 
-/** Whether the app a parameter names is held, its record kept or a container declared for it. */
+/** Whether the app a parameter names is held, its record kept or a deployment kept that ran. */
 let appHeld = app =>
   `(EXISTS (SELECT 1 FROM app WHERE id = ${app})
-  OR EXISTS (SELECT 1 FROM deployment WHERE app = ${app} AND capacity != 0))`
+  OR EXISTS (SELECT 1 FROM deployment WHERE app = ${app} AND ${ranRow}))`
 
 /** The order a binding is given its address in, after every one given before, RFC rxmd9. */
 let followingBound = "(SELECT COALESCE(MAX(bound), 0) + 1 FROM binding)"
@@ -293,34 +337,60 @@ let ofDatabase = (database, ~sealing) => {
       },
     putRelease: release =>
       run(
-        "INSERT INTO release (hash, form, size) VALUES (?, ?, ?) ON CONFLICT (hash) DO NOTHING",
-        [Text(release.hash), Text(formName(release.form)), Number(release.size)],
+        "INSERT INTO release (hash, form, size, kinds) VALUES (?, ?, ?, ?)
+        ON CONFLICT (hash) DO NOTHING",
+        [
+          Text(release.hash),
+          Text(formName(release.form)),
+          Number(release.size),
+          release.kinds->Option.mapOr(Stores.Null, kinds => Text(kindsText(kinds))),
+        ],
       ),
     release: async hash =>
       (
-        await first("SELECT hash, form, size FROM release WHERE hash = ?", [Text(hash)])
+        await first("SELECT hash, form, size, kinds FROM release WHERE hash = ?", [Text(hash)])
       )->Option.flatMap((row: releaseRow) =>
-        formOf(row.form)->Option.map((form): release => {hash: row.hash, form, size: row.size})
+        switch (formOf(row.form), row.kinds->Nullable.toOption) {
+        | (Some(form), None) => Some(({hash: row.hash, form, size: row.size, kinds: None}: release))
+        | (Some(form), Some(text)) =>
+          kindsOfText(text)->Option.map((kinds): release => {
+            hash: row.hash,
+            form,
+            size: row.size,
+            kinds: Some(kinds),
+          })
+        | (None, _) => None
+        }
       ),
     // Written only where the app is held, so a forgotten app's deploy never lands.
     deploy: d =>
       run(
-        `INSERT INTO deployment (app, binding, release, capacity) SELECT ?1, ?2, ?3, ?4
+        `INSERT INTO deployment (app, binding, release, capacity, kind) SELECT ?1, ?2, ?3, ?4, ?5
         WHERE ${appHeld("?1")} ON CONFLICT (app) DO UPDATE SET binding = excluded.binding,
-        release = excluded.release, capacity = excluded.capacity`,
-        [Number(d.app), Number(d.binding), Text(d.release), Number(d.capacity)],
+        release = excluded.release, capacity = excluded.capacity, kind = excluded.kind`,
+        [
+          Number(d.app),
+          Number(d.binding),
+          Text(d.release),
+          Number(d.capacity),
+          d.kind->Option.mapOr(Stores.Null, kind => Text(kindName(kind))),
+        ],
       ),
+    // A kind kept that names no kind reads as no deployment, as an unknown form reads no release.
     deployment: async app =>
       (
         await first(
-          "SELECT app, binding, release, capacity FROM deployment WHERE app = ?",
+          "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
           [Number(app)],
         )
-      )->Option.map((row: deploymentRow): deployment => {
-        app: row.app,
-        binding: row.binding,
-        release: row.release,
-        capacity: row.capacity,
+      )->Option.flatMap((row: deploymentRow) => {
+        let {app, binding, release, capacity} = row
+        switch row.kind->Nullable.toOption->Option.map(kindOf) {
+        | None => Some(({app, binding, release, capacity, kind: None}: deployment))
+        | Some(Some(kind)) =>
+          Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
+        | Some(None) => None
+        }
       }),
     // One statement, so no id of any kind can be taken between its check and its insert.
     drawApp: (~random) =>
@@ -336,11 +406,11 @@ let ofDatabase = (database, ~sealing) => {
         | None => false
         }
       ),
-    // The deployment goes first, and the app only where none is left, so a deploy declaring a
-    // container between the two statements keeps both, and one after them finds the app gone.
+    // The deployment goes first, and the app only where none is left, so a deploy declaring its
+    // kind between the two statements keeps both, and one after them finds the app gone.
     forgetApp: async app => {
       let deleted = await first(
-        "DELETE FROM deployment WHERE app = ? AND capacity = 0 RETURNING app",
+        `DELETE FROM deployment WHERE app = ? AND NOT ${ranRow} RETURNING app`,
         [Number(app)],
       )
       switch await first(
@@ -349,7 +419,7 @@ let ofDatabase = (database, ~sealing) => {
         [Number(app)],
       ) {
       | Some(_: idRow) => true
-      // A deployment of no container kept with no app record is forgotten alike.
+      // A deployment that never ran kept with no app record is forgotten alike.
       | None =>
         deleted->Option.isSome &&
           (await first(`SELECT 1 AS id WHERE ${appHeld("?1")}`, [Number(app)]))->Option.isNone
@@ -644,51 +714,70 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     putRelease: async release => {
       let name = `state/releases/${release.hash}`
       if (await readJson(name))->Option.isNone {
-        await writeJson(
-          name,
-          JSON.Object(
-            dict{
-              "hash": String(release.hash),
-              "form": String(formName(release.form)),
-              "size": Number(release.size),
-            },
-          ),
+        let o = dict{
+          "hash": JSON.String(release.hash),
+          "form": String(formName(release.form)),
+          "size": Number(release.size),
+        }
+        release.kinds->Option.forEach(kinds =>
+          o->Dict.set("kinds", Array(kinds->Array.map(kind => JSON.String(kindName(kind)))))
         )
+        await writeJson(name, JSON.Object(o))
       }
     },
     release: async hash =>
-      (await readJson(`state/releases/${hash}`))->Option.flatMap(json =>
-        switch (json->text("form")->Option.flatMap(formOf), json->number("size")) {
-        | (Some(form), Some(size)) => Some(({hash, form, size}: release))
+      (await readJson(`state/releases/${hash}`))->Option.flatMap(json => {
+        let kinds =
+          json
+          ->field("kinds")
+          ->Option.map(kinds =>
+            kinds
+            ->JSON.Decode.array
+            ->Option.flatMap(
+              names => {
+                let texts = names->Array.filterMap(JSON.Decode.string)
+                texts->Array.length == names->Array.length ? kindsOf(texts) : None
+              },
+            )
+          )
+        switch (json->text("form")->Option.flatMap(formOf), json->number("size"), kinds) {
+        | (Some(form), Some(size), None) => Some(({hash, form, size, kinds: None}: release))
+        | (Some(form), Some(size), Some(Some(kinds))) =>
+          Some(({hash, form, size, kinds: Some(kinds)}: release))
         | _ => None
         }
-      ),
+      }),
     // Written within the queue only where the app is held, as D1 writes it.
     deploy: d =>
       serial(async () => {
         let at = `state/deployments/${Float.toString(d.app)}`
         switch await Promise.all([readJson(`state/apps/${Float.toString(d.app)}`), readJson(at)]) {
         | [None, None] => ()
-        | [None, Some(json)] if json->number("capacity")->Option.getOr(0.) == 0. => ()
+        | [None, Some(json)]
+          if json->text("kind") == None && json->number("capacity")->Option.getOr(0.) == 0. => ()
         | _ =>
-          await writeJson(
-            at,
-            JSON.Object(
-              dict{
-                "app": Number(d.app),
-                "binding": Number(d.binding),
-                "release": String(d.release),
-                "capacity": Number(d.capacity),
-              },
-            ),
-          )
+          let o = dict{
+            "app": JSON.Number(d.app),
+            "binding": Number(d.binding),
+            "release": String(d.release),
+            "capacity": Number(d.capacity),
+          }
+          d.kind->Option.forEach(kind => o->Dict.set("kind", String(kindName(kind))))
+          await writeJson(at, JSON.Object(o))
         }
       }),
     deployment: async app =>
       (await readJson(`state/deployments/${Float.toString(app)}`))->Option.flatMap(json =>
-        switch (json->number("binding"), json->text("release"), json->number("capacity")) {
-        | (Some(binding), Some(release), Some(capacity)) =>
-          Some(({app, binding, release, capacity}: deployment))
+        switch (
+          json->number("binding"),
+          json->text("release"),
+          json->number("capacity"),
+          json->text("kind")->Option.map(kindOf),
+        ) {
+        | (Some(binding), Some(release), Some(capacity), None) =>
+          Some(({app, binding, release, capacity, kind: None}: deployment))
+        | (Some(binding), Some(release), Some(capacity), Some(Some(kind))) =>
+          Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
         | _ => None
         }
       ),
@@ -718,7 +807,8 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         let deploymentAt = `state/deployments/${Float.toString(app)}`
         switch await Promise.all([readJson(at), readJson(deploymentAt)]) {
         | [None, None] => false
-        | [_, Some(json)] if json->number("capacity") != Some(0.) => false
+        | [_, Some(json)]
+          if json->text("kind") != None || json->number("capacity") != Some(0.) => false
         | _ =>
           held(await objects.delete(deploymentAt))
           held(await objects.delete(at))

@@ -109,7 +109,7 @@ let state = (): State.t => {
     deploy: async d =>
       switch (apps->Array.includes(d.app), deployments->Dict.get(key(d.app))) {
       | (true, _) => deployments->Dict.set(key(d.app), d)
-      | (false, Some({capacity})) if capacity != 0. => deployments->Dict.set(key(d.app), d)
+      | (false, Some(held)) if State.ran(held) => deployments->Dict.set(key(d.app), d)
       | (false, Some(_) | None) => ()
       },
     deployment: async app => deployments->Dict.get(key(app)),
@@ -127,7 +127,7 @@ let state = (): State.t => {
       }),
     forgetApp: async app =>
       switch (apps->Array.indexOf(app), deployments->Dict.get(key(app))) {
-      | (_, Some({capacity})) if capacity != 0. => false
+      | (_, Some(held)) if State.ran(held) => false
       | (-1, None) => false
       | (at, _) =>
         if at >= 0 {

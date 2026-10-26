@@ -67,3 +67,31 @@ test(
     )
   },
 )
+
+test(
+  "a release runs as its kinds or its form's, and the first of them offered is chosen",
+  async () => {
+    deepEqual(
+      (
+        Deploying.runsAs(~kinds=None, ~form=Modules),
+        Deploying.runsAs(~kinds=None, ~form=Component),
+        Deploying.runsAs(~kinds=None, ~form=Image),
+        Deploying.runsAs(~kinds=Some([]), ~form=Image),
+      ),
+      ([Contracts.DeploymentKind.Function], [Function], [Container], []),
+    )
+    deepEqual(
+      (Deploying.offered(described([])), Deploying.offered({...described([]), kinds: [Object]})),
+      ([Contracts.ManagementKind.Function, Container], [Object]),
+    )
+    let offered: array<Contracts.ManagementKind.t> = [Function, Instance, Container]
+    deepEqual(
+      (
+        Deploying.chosen(~runs=[Instance, Container, Function], ~offered),
+        Deploying.chosen(~runs=[Instance], ~offered),
+        Deploying.chosen(~runs=[], ~offered),
+      ),
+      (Some(Contracts.DeploymentKind.Container), None, None),
+    )
+  },
+)

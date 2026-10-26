@@ -521,9 +521,9 @@ test("an app's id drawn is unique among every id held, and drawn again on a conf
       ~relayed=false,
       ~random=Memory.counting(),
     )
-    await state.putRelease({hash: "aa", form: Modules, size: 3.})
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
     ignore(await state.drawApp(~random=() => 169552957.))
-    await state.deploy({app: 169552957., binding, release: "aa", capacity: 1.})
+    await state.deploy({app: 169552957., binding, release: "aa", capacity: 1., kind: None})
     // An organization's id, a binding's, a deployed app's and 0 are each drawn again.
     let first = await state.drawApp(
       ~random=scripted(list{16909060., other, 169552957., 0., 4275878552.}),
@@ -572,8 +572,8 @@ test("an organization's next id is counted on past every id an app or a binding 
     await store.put(~kind="binding", ~id=2., Envelope.Hex.encode(secret))
     await store.app(3.)
     await store.app(4.)
-    await state.putRelease({hash: "aa", form: Modules, size: 3.})
-    await state.deploy({app: 4., binding: 2., release: "aa", capacity: 1.})
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
+    await state.deploy({app: 4., binding: 2., release: "aa", capacity: 1., kind: None})
     let second = await state.openOrganization("second", ~secret)
     deepEqual(
       (
@@ -600,8 +600,8 @@ test("an organization opened after ids drawn above the floor is given the next l
       ~random=Memory.counting(),
     )
     let app = await state.drawApp(~random=Memory.counting())
-    await state.putRelease({hash: "aa", form: Modules, size: 3.})
-    await state.deploy({app, binding, release: "aa", capacity: 1.})
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
+    await state.deploy({app, binding, release: "aa", capacity: 1., kind: None})
     let second = await state.openOrganization("second", ~secret)
     deepEqual((binding, app, second.id), (16777216., 16777217., 2.), ~message=store.name)
   }
@@ -622,9 +622,9 @@ test(
       // An organization's id and 0 are each drawn again.
       let first = await open_(scripted(list{16909060., 0., 169552957.}))
       let app = await state.drawApp(~random=scripted(list{first, 16777223.}))
-      await state.putRelease({hash: "aa", form: Modules, size: 3.})
+      await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
       ignore(await state.drawApp(~random=() => 16777225.))
-      await state.deploy({app: 16777225., binding: first, release: "aa", capacity: 1.})
+      await state.deploy({app: 16777225., binding: first, release: "aa", capacity: 1., kind: None})
       // A binding's, an app's and a deployed app's are each drawn again.
       let second = await open_(scripted(list{first, app, 16777225., 4275878552.}))
       let asked = ref(0)
@@ -718,12 +718,21 @@ test("an app drawn and never run is forgotten, one that ran or none held is not"
       ~relayed=false,
       ~random=scripted(list{16777218.}),
     )
-    await state.putRelease({hash: "aa", form: Modules, size: 3.})
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
     let never = await state.drawApp(~random=scripted(list{16777221.}))
-    await state.deploy({app: never, binding, release: "aa", capacity: 0.})
+    await state.deploy({app: never, binding, release: "aa", capacity: 0., kind: None})
     let ran = await state.drawApp(~random=scripted(list{16777222.}))
-    await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
+    await state.deploy({app: ran, binding, release: "aa", capacity: 1., kind: None})
     let bare = await state.drawApp(~random=scripted(list{16777223.}))
+    // A function deployed into no container ran though its capacity is 0, emgxf.
+    let uncontained = await state.drawApp(~random=scripted(list{16777224.}))
+    await state.deploy({
+      app: uncontained,
+      binding,
+      release: "aa",
+      capacity: 0.,
+      kind: Some(Function),
+    })
     deepEqual(
       (
         await state.forgetApp(never),
@@ -731,12 +740,25 @@ test("an app drawn and never run is forgotten, one that ran or none held is not"
         await state.forgetApp(bare),
         await state.forgetApp(99.),
         await state.forgetApp(never),
+        await state.forgetApp(uncontained),
         await state.deployment(never),
         (await state.deployment(ran))->Option.map(d => d.capacity),
+        (await state.deployment(uncontained))->Option.map(d => (d.capacity, d.kind)),
         // A forgotten id is free to be drawn again.
         await state.drawApp(~random=scripted(list{16777221.})),
       ),
-      (true, false, true, false, false, None, Some(1.), 16777221.),
+      (
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        None,
+        Some(1.),
+        Some((0., Some(Envelope.Contracts.DeploymentKind.Function))),
+        16777221.,
+      ),
       ~message=store.name,
     )
   }
@@ -885,12 +907,12 @@ test("a forgotten app's deploy lands nowhere, and a halfway forget is finished a
       ~relayed=false,
       ~random=scripted(list{16777218.}),
     )
-    await state.putRelease({hash: "aa", form: Modules, size: 3.})
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
     let app = await state.drawApp(~random=scripted(list{16777221.}))
-    await state.deploy({app, binding, release: "aa", capacity: 0.})
+    await state.deploy({app, binding, release: "aa", capacity: 0., kind: None})
     let forgotten = await state.forgetApp(app)
     // The deploy's container is declared after the forget, as a deploy racing it would.
-    await state.deploy({app, binding, release: "aa", capacity: 1.})
+    await state.deploy({app, binding, release: "aa", capacity: 1., kind: None})
     let landed = await state.deployment(app)
     await store.orphan(~app=16777223., ~binding)
     let orphaned = (await state.forgetApp(16777223.), await state.deployment(16777223.))
@@ -949,9 +971,9 @@ test(
         ~relayed=false,
         ~random=scripted(list{16777218.}),
       )
-      await state.putRelease({hash: "aa", form: Modules, size: 3.})
+      await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
       let ran = await state.drawApp(~random=scripted(list{16777221.}))
-      await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
+      await state.deploy({app: ran, binding, release: "aa", capacity: 1., kind: None})
       await store.numbered(~app=1., ~binding)
       let before = (await state.hasApp(ran), await state.hasApp(1.), await state.hasApp(99.))
       await state.retireApp(ran)
@@ -959,7 +981,7 @@ test(
       // Nothing held is no failure.
       await state.retireApp(99.)
       // A deploy declared after the removal lands nowhere.
-      await state.deploy({app: ran, binding, release: "aa", capacity: 1.})
+      await state.deploy({app: ran, binding, release: "aa", capacity: 1., kind: None})
       deepEqual(
         (
           before,
@@ -973,3 +995,82 @@ test(
       )
     },
 )
+
+test("a release's kinds and a deployment's kind are kept as given, none where none", async () =>
+  for i in 0 to stores->Array.length - 1 {
+    let make = stores->Array.getUnsafe(i)
+    let store = make()
+    let state = store.state(Sealing.ofKey(key))
+    let organization = await state.openOrganization("first", ~secret)
+    let binding = await state.openBinding(
+      ~organization=organization.id,
+      ~secret,
+      ~relayed=false,
+      ~random=scripted(list{16777218.}),
+    )
+    await state.putRelease({
+      hash: "aa",
+      form: Modules,
+      size: 3.,
+      kinds: Some([Container, Function]),
+    })
+    // A second put of one hash changes nothing.
+    await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
+    await state.putRelease({hash: "bb", form: Image, size: 3., kinds: Some([])})
+    await state.putRelease({hash: "cc", form: Modules, size: 3., kinds: None})
+    let app = await state.drawApp(~random=scripted(list{16777221.}))
+    await state.deploy({app, binding, release: "aa", capacity: 1., kind: Some(Container)})
+    let kindsOf = async hash => (await state.release(hash))->Option.map(r => r.kinds)
+    deepEqual(
+      (
+        await kindsOf("aa"),
+        await kindsOf("bb"),
+        await kindsOf("cc"),
+        (await state.deployment(app))->Option.map(d => d.kind),
+      ),
+      (
+        Some(Some([Envelope.Contracts.DeploymentKind.Container, Function])),
+        Some(Some([])),
+        Some(None),
+        Some(Some(Envelope.Contracts.DeploymentKind.Container)),
+      ),
+      ~message=store.name,
+    )
+  }
+)
+
+test("migration 0007 keeps every release and deployment before it with no kinds", async () => {
+  let db = Sqlite.openSqlite(":memory:")
+  let migrations = fromRoot("code/products/control/migrations")
+  let applied = names =>
+    names->Array.forEach(name => db->Sqlite.exec(readText(join([migrations, name]))))
+  applied([
+    "0001-state.sql",
+    "0002-organizations.sql",
+    "0003-origin.sql",
+    "0004-app.sql",
+    "0005-address.sql",
+    "0006-bound.sql",
+  ])
+  db->Sqlite.exec(
+    `INSERT INTO organization (id, label) VALUES (1, 'first');
+    INSERT INTO binding (id, organization, secret) VALUES (2, 1, '${Envelope.Hex.encode(secret)}');
+    INSERT INTO release (hash, form, size) VALUES ('aa', 'modules', 3);
+    INSERT INTO app (id) VALUES (3), (4);
+    INSERT INTO deployment (app, binding, release, capacity)
+    VALUES (3, 2, 'aa', 1), (4, 2, 'aa', 0);`,
+  )
+  applied(["0007-kinds.sql"])
+  let state = State.ofDatabase(Sqlite.asDatabase(db), ~sealing=Sealing.ofKey(key))
+  let ran = async app => (await state.deployment(app))->Option.map(d => (d.kind, State.ran(d)))
+  deepEqual(
+    (
+      (await state.release("aa"))->Option.map(r => r.kinds),
+      await ran(3.),
+      await ran(4.),
+      await state.forgetApp(3.),
+      await state.forgetApp(4.),
+    ),
+    (Some(None), Some((None, true)), Some((None, false)), false, true),
+  )
+})

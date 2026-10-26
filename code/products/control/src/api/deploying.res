@@ -51,6 +51,28 @@ let planned = (described: Contracts.ManagementDescribed.t, ~credential) => {
   }
 }
 
+/** The kinds a release runs as, those it declares or its form's where it declares none, emgxf. */
+let runsAs = (~kinds, ~form: Contracts.DeploymentForm.t): array<Contracts.DeploymentKind.t> =>
+  switch (kinds, form) {
+  | (Some(kinds), _) => kinds
+  | (None, Modules | Component) => [Function]
+  | (None, Image) => [Container]
+  }
+
+/** The kinds a binding offers, function and container where its describe names none, emgxf. */
+let offered = (described: Contracts.ManagementDescribed.t): array<Contracts.ManagementKind.t> =>
+  described.kinds->Option.getOr([Function, Container])
+
+/** The first of a release's kinds the binding offers; never instance, which no deploy asks yet. */
+let chosen = (~runs, ~offered) =>
+  runs->Array.find((kind: Contracts.DeploymentKind.t) =>
+    switch kind {
+    | Function => offered->Array.includes(Contracts.ManagementKind.Function)
+    | Container => offered->Array.includes(Contracts.ManagementKind.Container)
+    | Instance => false
+    }
+  )
+
 let bucketSize = 1073741824.
 
 let bucketPlanned = (described: Contracts.ManagementDescribed.t, ~fresh) => {
@@ -84,7 +106,7 @@ let deploy = (
   ~address,
   ~secrets,
   ~network,
-  ~into,
+  ~into=?,
 ): Contracts.DeploymentDeploy.t => {
   runs: App({id: app}),
   version: hash,
@@ -95,7 +117,7 @@ let deploy = (
   footing: "https://footing.invalid",
   secrets,
   network,
-  into,
+  ?into,
 }
 
 let management = call => Contracts.Interface.Management.toJson({call, capabilities: []})
@@ -125,33 +147,47 @@ let rec made = async (host, into, ~wait, ~left=240) =>
     }
   }
 
-/** The binding's container for apps, asked for and made where none is. */
-let container = async (host, ~wait) =>
-  switch await describeList(host) {
-  | Error(refused) => Error(refused)
-  | Ok(described) =>
-    switch planned(described, ~credential=Web.random(32)) {
-    | Error(why) => Error(invalid(why))
-    | Ok(Held({into})) => (await made(host, into, ~wait))->Result.map(() => into)
-    | Ok(Apply({list, into})) =>
-      switch await Driver.call(host, management(Apply(list)), Contracts.ManagementHeld.fromJson) {
-      | Error(refused) => Error(refused)
-      | Ok(_) => (await made(host, into, ~wait))->Result.map(() => into)
-      }
+/** The binding's container for apps, asked for and made where the list described holds none. */
+let container = async (host, described, ~wait) =>
+  switch planned(described, ~credential=Web.random(32)) {
+  | Error(why) => Error(invalid(why))
+  | Ok(Held({into})) => (await made(host, into, ~wait))->Result.map(() => into)
+  | Ok(Apply({list, into})) =>
+    switch await Driver.call(host, management(Apply(list)), Contracts.ManagementHeld.fromJson) {
+    | Error(refused) => Error(refused)
+    | Ok(_) => (await made(host, into, ~wait))->Result.map(() => into)
     }
   }
 
-let deployed = async (host, ~app, ~hash, ~form, ~address, ~secrets, ~network, ~declared, ~wait) =>
-  switch await container(host, ~wait) {
+let deployed = async (
+  host,
+  ~described,
+  ~app,
+  ~hash,
+  ~form,
+  ~address,
+  ~secrets,
+  ~network,
+  ~declared,
+  ~wait,
+) => {
+  // Code is run in the binding's container where it offers one, and else in none, emgxf.
+  let into = if offered(described)->Array.includes(Contracts.ManagementKind.Container) {
+    (await container(host, described, ~wait))->Result.map(into => Some(into))
+  } else {
+    Ok(None)
+  }
+  switch into {
   | Error(refused) => Error(refused)
   | Ok(into) =>
-    await declared(into)
+    await declared(into->Option.getOr(0.))
     await Driver.call(
       host,
-      deployments(Deploy(deploy(~app, ~hash, ~form, ~address, ~secrets, ~network, ~into))),
+      deployments(Deploy(deploy(~app, ~hash, ~form, ~address, ~secrets, ~network, ~into?))),
       Contracts.DeploymentDescribed.fromJson,
     )
   }
+}
 
 let described = (host, ~app) =>
   Driver.call(

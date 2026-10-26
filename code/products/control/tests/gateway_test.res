@@ -133,7 +133,7 @@ test(
     ignore(await state.addressed(~binding, ~address="10.200.0.1"))
     await state.routed(~binding)
     ignore(await state.drawApp(~random=() => 16777220.))
-    await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
+    await state.deploy({app: 16777220., binding, release: "", capacity: 1., kind: None})
     let answer = await Gateway.passed(
       state,
       host.reach,
@@ -222,7 +222,7 @@ let deployed = async () => {
   ignore(await state.addressed(~binding, ~address="10.200.0.1"))
   await state.routed(~binding)
   ignore(await state.drawApp(~random=() => 16777220.))
-  await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
+  await state.deploy({app: 16777220., binding, release: "", capacity: 1., kind: None})
   state
 }
 
@@ -287,7 +287,7 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
   )
   ignore(await state.originated(~binding, ~origin="https://driver.example.com"))
   ignore(await state.drawApp(~random=() => 16777220.))
-  await state.deploy({app: 16777220., binding, release: "", capacity: 1.})
+  await state.deploy({app: 16777220., binding, release: "", capacity: 1., kind: None})
   let answer = await Gateway.passed(
     state,
     host.reach,

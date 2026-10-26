@@ -214,11 +214,11 @@ let kept = async (state: State.t) => {
   ignore(await state.addressed(~binding=storage, ~address="10.200.0.1"))
   await state.routed(~binding=storage)
   await state.tunneled(~binding=storage, ~tunnel="tunnel-1")
-  await state.putRelease({hash: "aa", form: Modules, size: 3.})
-  await state.putRelease({hash: "aa", form: Image, size: 9.})
-  await state.deploy({app: 4., binding: storage, release: "aa", capacity: 1.})
+  await state.putRelease({hash: "aa", form: Modules, size: 3., kinds: None})
+  await state.putRelease({hash: "aa", form: Image, size: 9., kinds: None})
+  await state.deploy({app: 4., binding: storage, release: "aa", capacity: 1., kind: None})
   let drawn = await state.drawApp(~random=() => 16777224.)
-  await state.deploy({app: drawn, binding: storage, release: "aa", capacity: 0.})
+  await state.deploy({app: drawn, binding: storage, release: "aa", capacity: 0., kind: None})
   let forgotten = (
     await state.forgetApp(4.),
     await state.forgetApp(drawn),
@@ -310,7 +310,7 @@ test("a retire over a control that does not delete, or keeps what it deleted, fa
     let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
     let state = State.ofObjects(Objects.through(~origin, ~token, old), ~sealing)
     let app = await state.drawApp(~random=() => 16777224.)
-    await state.deploy({app, binding: 2., release: "aa", capacity: 1.})
+    await state.deploy({app, binding: 2., release: "aa", capacity: 1., kind: None})
     let failed = switch await state.retireApp(app) {
     | () => false
     | exception JsExn(_) => true

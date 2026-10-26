@@ -478,7 +478,7 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
     let hash = await Web.sha256(input.artifact)
     let hex = Envelope.Hex.encode(hash)
     await parts.artifacts.put(hex, input.artifact)
-    await parts.state.putRelease({hash: hex, form: input.form, size})
+    await parts.state.putRelease({hash: hex, form: input.form, size, kinds: input.kinds})
     Output(
       Calls.output(
         ({hash, size}: Contracts.ReleaseHeld.t),
@@ -492,15 +492,32 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
 /** A refusal's message naming the app drawn for it, `app <8 hex>, ` before what it says. */
 let naming = (app, message) => `app ${Ids.text(app)}, ${message}`
 
-/** Thrown where a deploy's container is declared for an app removed since it began. */
+/** Why no kind of a release is deployed onto a binding, none declared, none shared, or only kinds
+ * shared that this control deploys nowhere yet, emgxf. */
+let unmatched = (~release, ~binding, ~runs: array<Contracts.DeploymentKind.t>, ~offered) => {
+  let runs = runs->Array.map(kind => (kind :> string))
+  let offers = offered->Array.map((kind: Contracts.ManagementKind.t) => (kind :> string))
+  let shared = runs->Array.filter(kind => offers->Array.includes(kind))
+  let (named, listed) = (Ids.text(binding), kinds => kinds->Array.join(", "))
+  refused(
+    "beyond_host",
+    switch (runs, shared) {
+    | ([], _) => `release ${release} declares no kind it runs as`
+    | (_, []) =>
+      `release ${release} runs as ${listed(runs)}, and binding ${named} offers ${listed(offers)}`
+    | (_, shared) =>
+      `release ${release} runs as ${listed(shared)}, which this control deploys onto no binding yet`
+    },
+  )
+}
+
+/** Thrown where a deploy's kind is declared for an app removed since it began. */
 exception Forgotten
 
 let undeployed = app => refused("not_found", `no app ${Ids.text(app)} is deployed`)
 
-/**
- * The release deployed as the app given, one the control deployed before, or as a new app whose
- * id the control draws, so no caller makes an id, RFC b8f35.
- */
+/** The release deployed as the app given or as a new one whose id the control draws, RFC b8f35,
+ * once its binding's describe shows it can run there, so a refusal draws nothing, emgxf. */
 let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
   let hex = Envelope.Hex.encode(input.release)
   let unknown = switch input.app {
@@ -514,44 +531,67 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
     | (Error(answer), _) => answer
     | (Ok(_), None) => refused("not_found", `no release ${hex} is kept`)
     | (Ok(host), Some(release)) =>
-      let (app, drawn) = switch input.app {
-      | Some(app) => (app, false)
-      | None =>
-        let app = await parts.state.drawApp(~random)
-        // Kept before the host is called, its container 0 for none yet, so a deploy that fails
-        // is retried under this id.
-        await parts.state.deploy({app, binding: input.binding, release: hex, capacity: 0.})
-        (app, true)
-      }
-      // A container declared for an app forgotten meanwhile is kept nowhere, so its host is not
-      // asked to run it.
-      let declared = async capacity => {
-        await parts.state.deploy({app, binding: input.binding, release: hex, capacity})
-        if (await parts.state.deployment(app))->Option.isNone {
-          throw(Forgotten)
+      switch await Deploying.describeList(host) {
+      | Error({reason, message}) => refused(reason, message)
+      | Ok(listed) =>
+        let runs = Deploying.runsAs(~kinds=release.kinds, ~form=release.form)
+        let offered = Deploying.offered(listed)
+        switch Deploying.chosen(~runs, ~offered) {
+        | None => unmatched(~release=hex, ~binding=input.binding, ~runs, ~offered)
+        | Some(kind) =>
+          let (app, drawn) = switch input.app {
+          | Some(app) => (app, false)
+          | None =>
+            let app = await parts.state.drawApp(~random)
+            // Kept before the host is asked to run it, its container 0 and its kind none for none
+            // yet, so a deploy that fails is retried under this id.
+            await parts.state.deploy({
+              app,
+              binding: input.binding,
+              release: hex,
+              capacity: 0.,
+              kind: None,
+            })
+            (app, true)
+          }
+          // A kind declared for an app forgotten meanwhile is kept nowhere, so its host is not
+          // asked to run it.
+          let declared = async capacity => {
+            await parts.state.deploy({
+              app,
+              binding: input.binding,
+              release: hex,
+              capacity,
+              kind: Some(kind),
+            })
+            if (await parts.state.deployment(app))->Option.isNone {
+              throw(Forgotten)
+            }
+          }
+          let answer = switch await Deploying.deployed(
+            host,
+            ~described=listed,
+            ~app,
+            ~hash=input.release,
+            ~form=release.form,
+            ~address=`${parts.origin}/artifacts/${hex}`,
+            ~secrets=input.secrets->Option.getOr(dict{}),
+            ~network=input.network->Option.getOr([]),
+            ~declared,
+            ~wait=parts.wait,
+          ) {
+          | answer => answer
+          | exception Forgotten =>
+            Error({
+              reason: "not_found",
+              message: `app ${Ids.text(app)} was removed as it was deployed`,
+            })
+          }
+          described(
+            drawn ? answer->Result.mapError(r => {...r, message: naming(app, r.message)}) : answer,
+          )
         }
       }
-      let answer = switch await Deploying.deployed(
-        host,
-        ~app,
-        ~hash=input.release,
-        ~form=release.form,
-        ~address=`${parts.origin}/artifacts/${hex}`,
-        ~secrets=input.secrets->Option.getOr(dict{}),
-        ~network=input.network->Option.getOr([]),
-        ~declared,
-        ~wait=parts.wait,
-      ) {
-      | answer => answer
-      | exception Forgotten =>
-        Error({
-          reason: "not_found",
-          message: `app ${Ids.text(app)} was removed as it was deployed`,
-        })
-      }
-      described(
-        drawn ? answer->Result.mapError(r => {...r, message: naming(app, r.message)}) : answer,
-      )
     }
   }
 }
@@ -573,7 +613,7 @@ let describe = async (parts, app) =>
 let forget = async (parts, app) => {
   let ran = () => refused("deployed", `app ${Ids.text(app)} has run, so it is removed by retire`)
   switch await parts.state.deployment(app) {
-  | Some({capacity}) if capacity != 0. => ran()
+  | Some(deployment) if State.ran(deployment) => ran()
   | Some(_) | None =>
     if await parts.state.forgetApp(app) {
       Output(
@@ -584,7 +624,7 @@ let forget = async (parts, app) => {
         ),
       )
     } else {
-      // A deploy may have declared its container since it was read.
+      // A deploy may have declared its kind or its container since it was read.
       switch await parts.state.deployment(app) {
       | Some(_) => ran()
       | None => refused("not_found", `no app ${Ids.text(app)} is held`)
@@ -601,7 +641,7 @@ let retire = async (parts, app) => {
   let named = Ids.text(app)
   let never = () => refused("not_deployed", `app ${named} never ran, so it is removed by forget`)
   switch await parts.state.deployment(app) {
-  | Some({capacity, binding}) if capacity != 0. =>
+  | Some({binding} as deployment) if State.ran(deployment) =>
     switch await hostOf(parts, binding) {
     // A binding not yet bound has no driver to reach, so the app is kept for a retry.
     | Error(Refused({reason: "unbound", message})) =>
@@ -619,7 +659,7 @@ let retire = async (parts, app) => {
       switch await Deploying.retired(host, ~app) {
       | Error({reason, message}) => refused(reason, message)
       | Ok() =>
-        // A deploy declaring its container after this asks no driver; one declared before it and
+        // A deploy declaring its kind after this asks no driver; one declared before it and
         // reaching its driver after the delete is the deferred item retire-deploy-race.
         await parts.state.retireApp(app)
         Output(
