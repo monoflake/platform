@@ -1,4 +1,4 @@
-/*** The stores each state keeps, D1 and objects, read and written beneath the state by its tests. */
+/*** The stores each state keeps, D1 and objects, read and written beneath it by its tests. */
 
 let key = Some(Envelope.Base64url.encode(Web.random(32)))
 let secret = Uint8Array.fromArray(Array.fromInitializer(~length=32, i => i))
