@@ -116,3 +116,37 @@ let tunnels = (~failing=false, ~unrouted=0) => {
   }
   (faked, made, routes)
 }
+
+/** The states the API keeps, each fresh, in memory, in D1 and over objects. */
+let kept = () => {
+  let sealing = Sealing.ofKey(Some(Envelope.Base64url.encode(Web.random(32))))
+  let held: dict<Uint8Array.t> = dict{}
+  let objects: Objects.t = {
+    write: async (name, bytes) => Ok(held->Dict.set(name, bytes)),
+    read: async name => Ok(held->Dict.get(name)),
+    list: async prefix => Ok(
+      held
+      ->Dict.keysToArray
+      ->Array.filter(n => n->String.startsWith(prefix))
+      ->Array.toSorted(String.compare),
+    ),
+    delete: async name => Ok(held->Dict.delete(name)),
+  }
+  [
+    ("memory", Memory.state()),
+    ("D1", State.ofDatabase(Sqlite.database(), ~sealing)),
+    ("objects", State.ofObjects(objects, ~sealing)),
+  ]
+}
+
+/** The paths asked of the host since a count of what it was asked. */
+let askedSince = (stood, seen) =>
+  stood.host.seen
+  ->Array.slice(~start=seen)
+  ->Array.map(s => Web.parts(s.url)->Web.pathname)
+
+/** A refusal's reason and message. */
+let refusal = ((_, answer)) => (
+  answer->reason,
+  answer->member("message")->JSON.Decode.string->Option.getOr(""),
+)
