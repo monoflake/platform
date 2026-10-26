@@ -117,7 +117,11 @@ type bundleConfig
 type bundled = {name: string, bytes: Uint8Array.t}
 type bundle = {
   config: string => result<bundleConfig, string>,
-  packed: (bundleConfig, array<bundled>) => result<Uint8Array.t, string>,
+  packed: (
+    ~kinds: array<Envelope.Contracts.DeploymentKind.t>=?,
+    bundleConfig,
+    array<bundled>,
+  ) => result<Uint8Array.t, string>,
 }
 
 /** deploy's bundle, read from its compiled module once deploy is built. */

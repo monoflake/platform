@@ -1,3 +1,5 @@
+module Contracts = Envelope.Contracts
+
 type config = {main: string, compatibilityDate: string, compatibilityFlags: array<string>}
 
 /** The index past the end of what starts at `from`, `ending` included, or the text's end. */
@@ -93,6 +95,40 @@ let config = text =>
     }
   }
 
+let declared = text =>
+  switch JSON.parseOrThrow(text) {
+  | exception JsExn(e) => Error(`is no JSON, ${e->JsExn.message->Option.getOr("not parsed")}`)
+  | json =>
+    switch json->JSON.Decode.object {
+    | None => Error("is no JSON object")
+    | Some(o) =>
+      switch (o->Dict.keysToArray->Array.find(key => key != "kinds"), o->Dict.get("kinds")) {
+      | (Some(other), _) => Error(`holds kinds alone, not ${other}`)
+      | (None, None) => Error("holds no kinds")
+      | (None, Some(listed)) =>
+        let strings = items => {
+          let named = items->Array.filterMap(JSON.Decode.string)
+          named->Array.length == items->Array.length ? Some(named) : None
+        }
+        switch listed->JSON.Decode.array->Option.flatMap(strings) {
+        | None => Error("declares kinds that are not an array of strings")
+        | Some([]) => Error("declares an empty list of kinds")
+        | Some(names) =>
+          let kind = name =>
+            Contracts.DeploymentKind.fromJson(JSON.String(name))->Result.mapOr(None, k => Some(k))
+          switch (
+            names->Array.find(name => kind(name) == None),
+            names->Array.findWithIndex((name, at) => names->Array.indexOf(name) != at),
+          ) {
+          | (Some(name), _) => Error(`declares kind ${name}, not function, instance or container`)
+          | (None, Some(name)) => Error(`declares kind ${name} twice`)
+          | (None, None) => Ok(names->Array.filterMap(kind))
+          }
+        }
+      }
+    }
+  }
+
 let mainModule = config => {
   let file = config.main->String.split("/")->Array.at(-1)->Option.getOr(config.main)
   switch file->String.lastIndexOf(".") {
@@ -103,7 +139,7 @@ let mainModule = config => {
 
 let isModule = name => name != "README.md" && !(name->String.endsWith(".map"))
 
-let metadata = config => {
+let metadata = (~kinds=?, config) => {
   let fields = dict{
     "main_module": JSON.String(mainModule(config)),
     "compatibility_date": JSON.String(config.compatibilityDate),
@@ -114,6 +150,10 @@ let metadata = config => {
       JSON.Array(config.compatibilityFlags->Array.map(f => JSON.String(f))),
     )
   }
+  // Kinds go last and only where declared, so an undeclared bundle is the same bytes, emgxf.
+  kinds->Option.forEach(kinds =>
+    fields->Dict.set("kinds", JSON.Array(kinds->Array.map(Contracts.DeploymentKind.toJson)))
+  )
   JSON.stringify(JSON.Object(fields))
 }
 
@@ -165,13 +205,13 @@ let tar = files =>
     Ok(archive)
   }
 
-let packed = (config, files) => {
+let packed = (~kinds=?, config, files) => {
   let modules =
     files
     ->Array.filter(f => isModule(f.name) && f.name != "metadata.json")
     ->Array.toSorted((a, b) => String.compare(a.name, b.name))
   let main = mainModule(config)
   modules->Array.some(f => f.name == main)
-    ? tar([{name: "metadata.json", bytes: Bytes.utf8(metadata(config))}, ...modules])
+    ? tar([{name: "metadata.json", bytes: Bytes.utf8(metadata(~kinds?, config))}, ...modules])
     : Error(`wrangler wrote no ${main}, the main module`)
 }

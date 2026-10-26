@@ -109,6 +109,28 @@ testAsync(
   },
 )
 
+testAsync("a put carries the kinds declared in order, and none where none are", async () => {
+  let held = `{"status": "success", "data": {"hash": "${String.repeat("ab", 32)}", "size": 3}}`
+  let (control, sent) = faked(dict{"/releases/put": (200, held)})
+  ignore(await Control.put(control, ~kinds=[Function], Uint8Array.fromArray([1, 2, 3])))
+  ignore(await Control.put(control, ~kinds=[Container, Function], Uint8Array.fromArray([1, 2, 3])))
+  ignore(await Control.put(control, Uint8Array.fromArray([1, 2, 3])))
+  deepEqual(
+    sent->Array.map(s => s.init.body->Option.map(b => JSON.parseOrThrow(b))),
+    [
+      Some(
+        JSON.parseOrThrow(`{"interface": "releases", "operation": "put", "input": {"form": "modules", "artifact": "AQID", "kinds": ["function"]}}`),
+      ),
+      Some(
+        JSON.parseOrThrow(`{"interface": "releases", "operation": "put", "input": {"form": "modules", "artifact": "AQID", "kinds": ["container", "function"]}}`),
+      ),
+      Some(
+        JSON.parseOrThrow(`{"interface": "releases", "operation": "put", "input": {"form": "modules", "artifact": "AQID"}}`),
+      ),
+    ],
+  )
+})
+
 testAsync("a deploy hands the control the secrets and network it is given", async () => {
   let (control, sent) = faked(dict{"/releases/deploy": (200, described)})
   ignore(

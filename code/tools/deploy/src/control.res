@@ -58,8 +58,8 @@ let call = async (control, envelope, data) =>
 
 let releases = call => Contracts.Interface.Releases.toJson({call, capabilities: []})
 
-let put = (control, artifact) =>
-  call(control, releases(Put({form: Modules, artifact})), Contracts.ReleaseHeld.fromJson)
+let put = (control, ~kinds=?, artifact) =>
+  call(control, releases(Put({form: Modules, artifact, ?kinds})), Contracts.ReleaseHeld.fromJson)
 
 let deploy = (control, ~binding, ~app, ~hash, ~secrets, ~network) =>
   call(

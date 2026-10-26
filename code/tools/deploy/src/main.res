@@ -60,31 +60,43 @@ let configOf = directory =>
   | None => Error(`${directory} holds no wrangler.json or wrangler.jsonc`)
   }
 
-/** wrangler's own bundle of the app, built into a directory of its own. */
-let built = (directory, into) => {
-  let wrangler = Host.join([directory, "node_modules", ".bin", "wrangler"])
-  if !Host.exists(wrangler) {
-    Error(`${wrangler} is not installed, so the app's own install comes first`)
-  } else {
-    let env = Dict.copy(Host.env)
-    env->Dict.set("WRANGLER_SEND_METRICS", "false")
-    ran(wrangler, ["deploy", "--dry-run", "--outdir", into], ~cwd=directory, ~env)
-    ->Result.flatMap(_ => configOf(directory))
-    ->Result.map(config => (config, into))
-  }
+/** The kinds the app's own `metadata.json` declares, RFC emgxf, or none where it holds none. */
+let kindsOf = directory => {
+  let path = Host.join([directory, "metadata.json"])
+  Host.exists(path)
+    ? Bundle.declared(Host.readText(path))
+      ->Result.map(kinds => Some(kinds))
+      ->Result.mapError(why => `${path} ${why}`)
+    : Ok(None)
 }
 
-/** What wrangler wrote packed as a bundle, its hash, and the archive written beside it. */
-let packed = ((config, outdir), scratch) => {
+/** wrangler's own bundle of the app, built into a directory of its own once its kinds are read. */
+let built = (directory, into) => {
+  let wrangler = Host.join([directory, "node_modules", ".bin", "wrangler"])
+  kindsOf(directory)->Result.flatMap(kinds =>
+    if !Host.exists(wrangler) {
+      Error(`${wrangler} is not installed, so the app's own install comes first`)
+    } else {
+      let env = Dict.copy(Host.env)
+      env->Dict.set("WRANGLER_SEND_METRICS", "false")
+      ran(wrangler, ["deploy", "--dry-run", "--outdir", into], ~cwd=directory, ~env)
+      ->Result.flatMap(_ => configOf(directory))
+      ->Result.map(config => (config, kinds, into))
+    }
+  )
+}
+
+/** What wrangler wrote packed as a bundle, its hash, the archive written beside it, its kinds. */
+let packed = ((config, kinds, outdir), scratch) => {
   let files =
     Host.list(outdir, {recursive: true})
     ->Array.filter(name => Host.stat(Host.join([outdir, name]))->Host.isFile)
     ->Array.map((name): Bundle.file => {name, bytes: Host.readBytes(Host.join([outdir, name]))})
-  Bundle.packed(config, files)->Result.map(archive => {
+  Bundle.packed(~kinds?, config, files)->Result.map(archive => {
     let hash = Host.sha256(archive)
     let path = Host.join([scratch, Deploying.fileName(hash)])
     Host.writeBytes(path, archive)
-    (hash, path, archive->TypedArray.length)
+    (hash, path, archive->TypedArray.length, kinds)
   })
 }
 
@@ -292,6 +304,7 @@ let throughControl = async (
   ~binding,
   ~hash,
   ~path,
+  ~kinds,
   ~secrets,
   ~network,
   ~dry,
@@ -309,7 +322,7 @@ let throughControl = async (
     | Failed(why) => Error(why)
     }
   let sent = async () =>
-    switch await Control.put(control, Host.readBytes(path)) {
+    switch await Control.put(control, ~kinds?, Host.readBytes(path)) {
     | Error(refused) => Error(refusal(refused))
     | Ok(held) if Envelope.Hex.encode(held.hash) != Envelope.Hex.encode(hash) =>
       Error(`the control kept ${Envelope.Hex.encode(held.hash)}, not the bundle packed`)
@@ -490,19 +503,22 @@ let main = async () => {
     let result = await timed(
       "build",
       async () => built(directory, Host.join([scratch, "out"])),
-      _ => "wrangler's bundle",
+      ((_, kinds, _)) =>
+        kinds->Option.mapOr("wrangler's bundle", kinds =>
+          `wrangler's bundle, declared ${kinds->Array.map(k => (k :> string))->Array.join(", ")}`
+        ),
     )
     ->after(built =>
       timed(
         "pack",
         async () => packed(built, scratch),
-        ((hash, _, size)) => `${Int.toString(size)} bytes, version ${Envelope.Hex.encode(hash)}`,
+        ((hash, _, size, _)) => `${Int.toString(size)} bytes, version ${Envelope.Hex.encode(hash)}`,
       )
     )
-    ->after(((hash, path, _)) =>
+    ->after(((hash, path, _, kinds)) =>
       switch deployingOf(named, binding) {
       | Some(Ok((control, binding))) =>
-        throughControl(control, ~app, ~binding, ~hash, ~path, ~secrets, ~network, ~dry)
+        throughControl(control, ~app, ~binding, ~hash, ~path, ~kinds, ~secrets, ~network, ~dry)
       | Some(Error(why)) => Promise.resolve(Error(why))
       | None =>
         timed(
