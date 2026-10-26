@@ -23,8 +23,12 @@ type t = {
   fetch: (string, Web.init) => promise<Web.response>,
 }
 
-/** The release put, its artifact the bundle's bytes. */
-let put: (t, Uint8Array.t) => promise<result<Contracts.ReleaseHeld.t, Machine.refused>>
+/** The release put, its artifact the bundle's bytes, with the kinds it declares where it does. */
+let put: (
+  t,
+  ~kinds: array<Contracts.DeploymentKind.t>=?,
+  Uint8Array.t,
+) => promise<result<Contracts.ReleaseHeld.t, Machine.refused>>
 
 /**
  * The release deployed onto a binding with its secrets and network, as its driver answered, under

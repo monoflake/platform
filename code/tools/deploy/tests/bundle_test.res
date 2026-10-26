@@ -149,3 +149,66 @@ test("a bundle is its metadata then its modules by name, the same files the same
   }
   ok(Bundle.packed(config, [file("other.js", "x")])->Result.isError)
 })
+
+test("a declaration of kinds is read in its order, and one not read whole is refused", () => {
+  deepEqual(Bundle.declared(`{"kinds": ["function"]}`), Ok([Function]))
+  deepEqual(Bundle.declared(`{"kinds": ["container", "function"]}`), Ok([Container, Function]))
+  deepEqual(Bundle.declared(`{"kinds": ["instance"]}`), Ok([Instance]))
+  ok(Bundle.declared(`{"kinds": ["function"],}`)->Result.isError)
+  deepEqual(Bundle.declared(`["function"]`), Error("is no JSON object"))
+  deepEqual(
+    Bundle.declared(`{"kinds": ["function"], "main": "src/index.js"}`),
+    Error("holds kinds alone, not main"),
+  )
+  deepEqual(Bundle.declared(`{}`), Error("holds no kinds"))
+  deepEqual(
+    Bundle.declared(`{"kinds": "function"}`),
+    Error("declares kinds that are not an array of strings"),
+  )
+  deepEqual(
+    Bundle.declared(`{"kinds": ["function", 1]}`),
+    Error("declares kinds that are not an array of strings"),
+  )
+  deepEqual(
+    Bundle.declared(`{"kinds": ["vm"]}`),
+    Error("declares kind vm, not function, instance or container"),
+  )
+  deepEqual(Bundle.declared(`{"kinds": []}`), Error("declares an empty list of kinds"))
+  deepEqual(
+    Bundle.declared(`{"kinds": ["function", "container", "function"]}`),
+    Error("declares kind function twice"),
+  )
+})
+
+test("kinds declared go last in the bundle's metadata, in the order declared", () => {
+  deepEqual(
+    Bundle.metadata(~kinds=[Function], config),
+    `{"main_module":"index.js","compatibility_date":"2026-10-21","kinds":["function"]}`,
+  )
+  switch Bundle.packed(~kinds=[Container, Function], config, [file("index.js", "x")]) {
+  | Error(why) => ok(false, ~message=why)
+  | Ok(archive) =>
+    deepEqual(
+      entries(archive)->Array.get(0),
+      Some((
+        "metadata.json",
+        `{"main_module":"index.js","compatibility_date":"2026-10-21","kinds":["container","function"]}`,
+      )),
+    )
+  }
+})
+
+test("an undeclared bundle is the bytes it was before kinds, its hash fixed", () => {
+  let config = {...config, compatibilityFlags: ["nodejs_compat"]}
+  let wrote = [file("index.js", "export default {}"), file("z.txt", "z")]
+  deepEqual(
+    Bundle.metadata(config),
+    `{"main_module":"index.js","compatibility_date":"2026-10-21","compatibility_flags":["nodejs_compat"]}`,
+  )
+  // The hash the base code packed these files to, before emgxf.
+  deepEqual(
+    Bundle.packed(config, wrote)->Result.map(archive => Envelope.Hex.encode(Host.sha256(archive))),
+    Ok("ce2cd032089790763f70d1bafb883d58d1e053dcb1272befde7cd06652587fe3"),
+  )
+  deepEqual(Bundle.packed(~kinds=?None, config, wrote), Bundle.packed(config, wrote))
+})
