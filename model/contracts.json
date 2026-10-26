@@ -3383,6 +3383,23 @@
 			],
 			"ordered": false
 		},
+		"deployment-kind": {
+			"enum": [
+				{
+					"name": "function",
+					"code": 1
+				},
+				{
+					"name": "instance",
+					"code": 2
+				},
+				{
+					"name": "container",
+					"code": 3
+				}
+			],
+			"ordered": false
+		},
 		"deployment-runtime": {
 			"enum": [
 				{
@@ -5873,6 +5890,16 @@
 					"shape": {
 						"prim": "bytes"
 					}
+				},
+				{
+					"name": "kinds",
+					"key": 3,
+					"shape": {
+						"list": {
+							"type": "deployment-kind"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -8142,7 +8169,7 @@
 			]
 		},
 		"releases": {
-			"version": 5,
+			"version": 6,
 			"bounds": {
 				"artifact": 33554432
 			},

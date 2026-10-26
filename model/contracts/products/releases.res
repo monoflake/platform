@@ -5,11 +5,16 @@
 open Subset
 
 let types: array<declared> = [
-  // The artifact whole, its hash the SHA-256 of these bytes, as the driver checks it, ge55b.
+  // The artifact whole, its hash the SHA-256 of these bytes, as the driver checks it, ge55b. Its
+  // kinds are what the code declares, in the order it prefers, none read by its form, emgxf.
   {
     name: "release-put",
-    def: Record([field("form", 1, Type("deployment-form")), field("artifact", 2, Prim(#bytes))]),
-    from: "rxmd9, ge55b",
+    def: Record([
+      field("form", 1, Type("deployment-form")),
+      field("artifact", 2, Prim(#bytes)),
+      optional("kinds", 3, List(Type("deployment-kind"))),
+    ]),
+    from: "rxmd9, ge55b, emgxf",
   },
   {
     name: "release-held",
@@ -36,7 +41,7 @@ let types: array<declared> = [
 /** A host that does not answer is `unreachable`, and the caller retries, rxmd9. */
 let interface_: interface_ = {
   name: "releases",
-  version: 5,
+  version: 6,
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [

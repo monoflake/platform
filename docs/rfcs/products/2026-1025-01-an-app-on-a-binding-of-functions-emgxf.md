@@ -18,24 +18,7 @@ what does `releases.deploy` ask of such a binding.
 
 ## Options
 
-What the decision below leaves open, each with the integrator's recommendation, proposed on
-2026-10-26 and open until settled:
-
-- **The key in `metadata.json` is `kinds`**, a JSON array of kind names in the order the code
-  prefers, as `"kinds": ["function"]`. A bundle's `metadata.json` is the deploy tool's own, written
-  from the app's wrangler configuration, so the app writes its declaration in a `metadata.json` of
-  its own beside that configuration, holding `kinds` alone. The tool reads that member only and
-  writes it into the bundle's `metadata.json` beside `main_module`, so the declaration is inside the
-  artifact's hash and one hash has one declaration. A component declares the same member of its
-  `metadata.json` once a builder for components lands.
-- **An image declares them in the label `monoflake.kinds`**, the names joined by commas in the
-  order the code prefers, as `container`. The label's key names no domain, since the platform's are
-  withheld from this repository, `model/names/withheld.res`, and `MONOFLAKE_` already names what
-  the platform hands a deployment, y2xd3.
-- **The tool refuses a declaration it cannot read whole**, before wrangler builds or anything is
-  put: a kind it does not know, an empty list, or a kind named twice, as `metadata.json declares
-  kind vm, not function, instance or container`. A kind dropped quietly would deploy the code where
-  it did not say. A declaration absent sends no `kinds`, read by its form below.
+Each point this RFC left open is settled in its decision below.
 
 ## Evidence
 
@@ -78,6 +61,24 @@ RFC vr5lw.
    in `model/contracts/products/releases.res`. The control keeps them with the release,
    `code/products/control/src/parts/state.res`'s release row and a migration, and never opens the
    artifact to learn them.
+   - **The key in `metadata.json` is `kinds`**, provisional, chosen by the advisor on 2026-10-26, a
+     JSON array of kind names in the order the code prefers, as `"kinds": ["function"]`. A
+     bundle's `metadata.json` is the deploy tool's own, written from the app's wrangler
+     configuration, so the app writes its declaration in a `metadata.json` of its own beside that
+     configuration, holding `kinds` alone, and wrangler warns at no field it does not know. The
+     tool copies that member alone into the bundle's `metadata.json` beside `main_module`, so the
+     declaration is inside the artifact's hash and one hash has one declaration. A component
+     declares the same member of its `metadata.json` once a builder for components lands.
+   - **An image declares them in the label `monoflake.kinds`**, provisional, chosen by the advisor
+     on 2026-10-26, the names joined by commas in the order the code prefers, as `container`. The
+     key names no domain, the platform's being withheld from this repository,
+     `model/names/withheld.res`, and `MONOFLAKE_` already names what the platform hands a
+     deployment, y2xd3.
+   - **The tool refuses a declaration it cannot read whole**, provisional, chosen by the advisor on
+     2026-10-26, before wrangler builds or anything is put: a kind it does not know, an empty list,
+     or a kind named twice, as `metadata.json declares kind vm, not function, instance or
+     container`. A kind dropped quietly would deploy the code where it never said it runs. A
+     declaration absent sends no `kinds`, read by its form, point 7.
 2. **The release's order is the preference**, provisional, chosen by the advisor on 2026-10-26:
    the first of its kinds the binding offers is chosen. The binding's kinds are a set,
    `management-kind` unordered, and only the code knows which way it runs best.

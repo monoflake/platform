@@ -12,6 +12,19 @@ let types: array<declared> = [
     def: Enum({choices: codes(["modules", "component", "image"]), ordered: false}),
     from: "vr5lw",
   },
+  // What code runs as, the compute kinds alone, coded as `management-kind` codes them, emgxf.
+  {
+    name: "deployment-kind",
+    def: Enum({
+      choices: [
+        {name: "function", code: 1},
+        {name: "instance", code: 2},
+        {name: "container", code: 3},
+      ],
+      ordered: false,
+    }),
+    from: "vr5lw, emgxf",
+  },
   // What runs a form, as `model/ground/drivers.res` asks of each driver.
   {
     name: "deployment-runtime",
