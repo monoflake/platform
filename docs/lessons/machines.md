@@ -153,6 +153,13 @@ login prompt and answered nothing on 22, and only the provider's console reached
 the GRUB menu shows on the VNC console alone, not the serial one. A new machine's first
 configuration opens SSH for its install, monoflake/cloud's `docs/upgrades.md`.
 
+**A small provider's virtual machine may offer no DHCP and no router advertisement**, seen on
+2026-10-26: a DHCP discover went unanswered three times, no router advertisement came in a minute
+nor to a solicitation, and the Debian it ran held its addresses only in netplan, written by
+cloud-init from the provider's NoCloud seed, an iso9660 disk labeled `cidata` left attached. A
+machine configured for DHCP alone would come up there with no network, so such a machine reads that
+seed at boot, monoflake/machine's `docs/network.md`.
+
 **U-Boot reads ext4 without replaying its journal**, seen on 2026-10-25 on a board booted from an
 extlinux `/boot`: power was lost right after a switch had rewritten `extlinux.conf`, Linux then
 read the new default, and U-Boot had booted the generation before it. So after a bootloader write
