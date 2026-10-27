@@ -89,6 +89,36 @@ block against it, and the whole is held by the integrator.
   naming a row of the checklist still open. One naming no row, or a row closed, fails the check,
   so closing a row lists the code that waited on it.
 
+## SQL cost
+
+**Every SQL statement the control's state runs has a rows-read budget**, named by
+`control-sql-rows-read` in [model/rules/control_sql.res](../model/rules/control_sql.res).
+The model holds each statement's bound and growth quantity. The written check inventories the
+state's SQL literals, and the control's state cost tests measure every registered statement through
+the pinned Miniflare's local D1 `meta.rows_read`, including secret write backs and error cleanup.
+Adding a statement without a budget fails the model check; leaving a budget without a measured
+fixture fails the state tests. The fixtures grow every table, exercise successful and missing
+lookups, collisions and writes, and fill the address range for allocation.
+The model's SQL cost test builds and runs these tests independently, so their failure refuses
+verify even while the control is marked in work.
+
+These rules follow the control's allocation reading **262,147 rows a call on 2026-10-27**, found
+in D1's insights after its tests and review passed. Node's SQLite VM steps and query plans remain
+useful diagnostics, but neither is D1's rows-read counter.
+
+- **Generate no range and filter it to find a free value.** Step over the values held. The
+  allocation reading 262,147 rows a call on 2026-10-27 generated its whole range.
+- **A CTE referenced twice is materialized.** The allocation reading 262,147 rows a call on
+  2026-10-27 let repeated references repeat work.
+- **Use no `ORDER BY` with `LIMIT` over a computed value on a hot path.** The allocation reading
+  262,147 rows a call on 2026-10-27 sorted computed candidates before choosing one.
+
+The bounds live in the model alone. A quantity counts stored rows, including unrelated
+organizations where the current schema scans them; it does not assume an index absent from the
+migrations. The binding cleanup includes the deployments its foreign key scans. Local workerd is
+the closest available measurement to D1's billed metric, but production versions and query plans
+can differ, so D1's own result and insights remain the production measurement.
+
 ## ReScript
 
 - **ReScript 12 and its Stdlib alone**: no `Js.*`, no `Belt`, no `@rescript/core`; `throw`,
