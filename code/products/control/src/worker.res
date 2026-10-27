@@ -4,10 +4,6 @@ module Calls = Serve.Calls
 let portOf = (given, default) =>
   given->Option.flatMap(text => Int.fromString(text))->Option.getOr(default)
 
-/** The driver's port and the entry's, as the driver names them. */
-let driverPort = 37483
-let entryPort = 36879
-
 /** No certificate is trusted yet, so a signed call is refused as denied. */
 let untrusted = (): Capability.Signed.trust => {
   root: Uint8Array.fromLength(32),
@@ -16,12 +12,7 @@ let untrusted = (): Capability.Signed.trust => {
 }
 
 /** Where every host is reached, the address put in place of each where one is configured. */
-let reachOf = (env: Stores.env) =>
-  switch (env.reach, env.hosts) {
-  | (Some(address), _) if address != "" => Some(Reach.local(address))
-  | (_, Some(hosts)) => Some(Reach.network(hosts))
-  | (_, None) => None
-  }
+let reachOf = Reach.configured
 
 let tunnelsOf = (env: Stores.env) =>
   switch (env.tunnelAccount, env.tunnelCredential) {
@@ -57,10 +48,7 @@ let stoodOf = (env: Stores.env) =>
     Ok({
       state: State.ofObjects(objects, ~sealing=Sealing.ofKey(env.sealingKey)),
       artifacts: Artifacts.ofObjects(objects),
-      reach: switch env.reach {
-      | Some(address) if address != "" => Reach.local(address)
-      | Some(_) | None => Reach.relayed(~origin, ~token, Web.fetch)
-      },
+      reach: reachOf(env)->Option.getOrThrow,
       tunnels: None,
       standing: Some(Standing.through(~origin, ~token, Web.fetch)),
       gives: false,
@@ -103,7 +91,7 @@ let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
     reach: stood.reach,
     tunnels: stood.tunnels,
     standing: stood.standing,
-    driverPort: portOf(env.driverPort, driverPort),
+    driverPort: portOf(env.driverPort, Reach.driverPort),
     // Called as a method, the global fetch would be given a receiver workerd refuses.
     direct: request => Web.fetch(request),
     origin,
@@ -129,65 +117,82 @@ let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
 /** An artifact's path, its hash in hex. */
 let artifact = /^\/artifacts\/([0-9a-f]{64})$/
 
+let called = path =>
+  switch path {
+  | "/organizations/open"
+  | "/bindings/open"
+  | "/bindings/bind"
+  | "/reaches/open"
+  | "/releases/put"
+  | "/releases/deploy"
+  | "/releases/describe"
+  | "/releases/forget"
+  | "/releases/retire" => true
+  | _ => false
+  }
+
 let fetch = async (request, env: Stores.env) => {
   let located = Web.parts(request->Web.url)
   let path = located->Web.pathname
-  switch stoodOf(env) {
-  | Error(why) => Web.answered(~status=500, why)
-  | Ok(stood) =>
-    let driverPort = portOf(env.driverPort, driverPort)
-    switch (Gateway.routed(path), artifact->RegExp.exec(path), request->Web.method_) {
-    | (Some(routed), _, _) =>
-      await Gateway.passed(
-        stood.state,
-        stood.reach,
-        ~port=portOf(env.entryPort, entryPort),
-        request,
-        routed,
-        ~search=located->Web.search,
-      )
-    | (None, Some(found), "GET") =>
-      switch found->RegExp.Result.matches {
-      | [Some(hash)] =>
-        switch await stood.artifacts.served(hash) {
-        | Some(served) => served
-        | None => Web.answered(~status=404, `no artifact ${hash} is kept`)
+  let method_ = request->Web.method_
+  if (
+    !(method_ == "POST" && called(path)) &&
+    !(method_ == "GET" && artifact->RegExp.test(path)) &&
+    Relay.routed(path) == None &&
+    !Relay.objected(path)
+  ) {
+    Web.answered(~status=404, "not found")
+  } else {
+    switch stoodOf(env) {
+    | Error(why) => Web.answered(~status=500, why)
+    | Ok(stood) =>
+      let driverPort = portOf(env.driverPort, Reach.driverPort)
+      switch (artifact->RegExp.exec(path), method_) {
+      | (Some(found), "GET") =>
+        switch found->RegExp.Result.matches {
+        | [Some(hash)] =>
+          switch await stood.artifacts.served(hash) {
+          | Some(served) => served
+          | None => Web.answered(~status=404, `no artifact ${hash} is kept`)
+          }
+        | _ => Web.answered(~status=404, "no artifact")
         }
-      | _ => Web.answered(~status=404, "no artifact")
-      }
-    | (None, _, _) =>
-      switch (stood.gives, Relay.routed(path), Relay.objected(path)) {
-      | (true, Some(relayed), _) =>
-        await Relay.passed(
-          stood.state,
-          stood.reach,
-          ~caller=await callerOf(stood.state, env, request, "proxy-authorization"),
-          ~ports=[driverPort, portOf(env.entryPort, entryPort)],
-          request,
-          relayed,
-          ~search=located->Web.search,
-        )
-      | (true, None, true) =>
-        await Relay.stored(
-          stood.state,
-          stood.reach,
-          ~caller=await callerOf(stood.state, env, request, "authorization"),
-          ~port=driverPort,
-          ~wait=() => Web.sleep(250),
-          request,
-          ~path,
-        )
-      | _ =>
-        // A host reaches the control by `ORIGIN` where one is set, as a container on the Mac does.
-        await api(
-          request,
-          env,
-          stood,
-          ~origin=env.origin
-          ->Option.filter(o => o != "")
-          ->Option.getOr(located->Web.origin),
-          ~path,
-        )
+      | (_, _) =>
+        switch (stood.gives, Relay.routed(path), Relay.objected(path)) {
+        | (true, Some(relayed), _) =>
+          await Relay.passed(
+            stood.state,
+            stood.reach,
+            ~caller=await callerOf(stood.state, env, request, "proxy-authorization"),
+            ~ports=[driverPort, portOf(env.entryPort, Reach.entryPort)],
+            request,
+            relayed,
+            ~search=located->Web.search,
+          )
+        | (true, None, true) =>
+          await Relay.stored(
+            stood.state,
+            stood.reach,
+            ~caller=await callerOf(stood.state, env, request, "authorization"),
+            ~port=driverPort,
+            ~wait=() => Web.sleep(250),
+            request,
+            ~path,
+          )
+        | _ if method_ == "POST" && called(path) =>
+          // A host reaches the control by `ORIGIN` where one is set,
+          // as a container on the Mac does.
+          await api(
+            request,
+            env,
+            stood,
+            ~origin=env.origin
+            ->Option.filter(o => o != "")
+            ->Option.getOr(located->Web.origin),
+            ~path,
+          )
+        | _ => Web.answered(~status=404, "not found")
+        }
       }
     }
   }

@@ -31,6 +31,15 @@ type deployment = {
 
 let ran = (d: deployment) => d.kind->Option.isSome || d.capacity != 0.
 
+/** The binding fields a gateway needs, with no secret or tunnel credential. */
+type reached = {address: option<string>, origin: option<string>, bound: option<float>}
+
+/** The gateway's state view offers only routing reads, RFC oomwh. */
+type reads = {
+  binding: float => promise<option<reached>>,
+  deployment: float => promise<option<deployment>>,
+}
+
 type t = {
   openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,
   hasOrganization: float => promise<bool>,
@@ -181,6 +190,38 @@ let appHeld = app =>
 /** The order a binding is given its address in, after every one given before, RFC rxmd9. */
 let followingBound = "(SELECT COALESCE(MAX(bound), 0) + 1 FROM binding)"
 
+let firstOf = async (database, sql, values) =>
+  (await database->Stores.prepare(sql)->Stores.bind(values)->Stores.first)->Nullable.toOption
+
+let bindingAt = (database, id): promise<option<bindingRow>> =>
+  firstOf(database, `SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)])
+
+let deploymentAt = async (database, app) =>
+  (
+    await firstOf(
+      database,
+      "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
+      [Number(app)],
+    )
+  )->Option.flatMap((row: deploymentRow) => {
+    let {app, binding, release, capacity} = row
+    switch row.kind->Nullable.toOption->Option.map(kindOf) {
+    | None => Some(({app, binding, release, capacity, kind: None}: deployment))
+    | Some(Some(kind)) => Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
+    | Some(None) => None
+    }
+  })
+
+let readsOfDatabase = (database): reads => {
+  binding: async id =>
+    (await bindingAt(database, id))->Option.map((row): reached => {
+      address: row.address->Nullable.toOption,
+      origin: row.origin->Nullable.toOption,
+      bound: row.bound->Nullable.toOption,
+    }),
+  deployment: app => deploymentAt(database, app),
+}
+
 let ofDatabase = (database, ~sealing) => {
   let statement = (sql, values) => database->Stores.prepare(sql)->Stores.bind(values)
   let first = async (sql, values) => (await statement(sql, values)->Stores.first)->Nullable.toOption
@@ -203,7 +244,7 @@ let ofDatabase = (database, ~sealing) => {
     relayed: row.relayed != 0.,
     bound: row.bound->Nullable.toOption,
   }
-  let bindingAt = async (sql, values) =>
+  let bindingFrom = async (sql, values) =>
     switch await first(sql, values) {
     | Some(row) => Some(await bindingOf(row))
     | None => None
@@ -276,16 +317,20 @@ let ofDatabase = (database, ~sealing) => {
         throw(JsExn(e))
       }
     },
-    binding: id => bindingAt(`SELECT ${bindingColumns} FROM binding WHERE id = ?`, [Number(id)]),
+    binding: async id =>
+      switch await bindingAt(database, id) {
+      | Some(row) => Some(await bindingOf(row))
+      | None => None
+      },
     storage: organization =>
-      bindingAt(
+      bindingFrom(
         `SELECT ${bindingColumns} FROM binding
         WHERE organization = ? AND relayed = 0 AND bound IS NOT NULL AND origin IS NULL
         ORDER BY bound LIMIT 1`,
         [Number(organization)],
       ),
     addressedAt: address =>
-      bindingAt(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)]),
+      bindingFrom(`SELECT ${bindingColumns} FROM binding WHERE address = ?`, [Text(address)]),
     tunneled: (~binding, ~tunnel) =>
       run("UPDATE binding SET tunnel = ? WHERE id = ?", [Text(tunnel), Number(binding)]),
     // Taken and written in one statement, so no two bindings are given one address.
@@ -377,22 +422,7 @@ let ofDatabase = (database, ~sealing) => {
           d.kind->Option.mapOr(Stores.Null, kind => Text(kindName(kind))),
         ],
       ),
-    // A kind kept that names no kind reads as no deployment, as an unknown form reads no release.
-    deployment: async app =>
-      (
-        await first(
-          "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
-          [Number(app)],
-        )
-      )->Option.flatMap((row: deploymentRow) => {
-        let {app, binding, release, capacity} = row
-        switch row.kind->Nullable.toOption->Option.map(kindOf) {
-        | None => Some(({app, binding, release, capacity, kind: None}: deployment))
-        | Some(Some(kind)) =>
-          Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
-        | Some(None) => None
-        }
-      }),
+    deployment: app => deploymentAt(database, app),
     // One statement, so no id of any kind can be taken between its check and its insert.
     drawApp: (~random) =>
       Ids.drawn(~random, ~kind="app", async id =>

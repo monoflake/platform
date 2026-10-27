@@ -1,0 +1,1 @@
+../../control/tests/rehearsal/rehearsal.res

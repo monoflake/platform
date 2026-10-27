@@ -60,6 +60,8 @@ type component = {
   language?: [#rust | #rescript],
   edges: array<edge>,
   uses: array<string>,
+  /** Other blocks of this tree whose modules it shares, RFC oomwh. */
+  blocks?: array<string>,
   /** What of others' its code may take, as a library's, `model/graph/libraries.res`. */
   takes?: array<Libraries.taken>,
   /** The samples its code is held to, as a library's. */
@@ -216,6 +218,31 @@ let own: dict<component> = dict{
       "codec*",
     ],
     // wrangler bundles it and runs it locally on workerd with D1 and R2, RFC rxmd9.
+    takes: [{language: #rescript, name: "wrangler", major: "4"}],
+  },
+  "gateway": {
+    language: #rescript,
+    layer: 0,
+    half: #organization,
+    edges: [
+      replaced,
+      e(
+        "footing(organization)",
+        #serve,
+        hard,
+        "an optional Worker reads the control's mounts and deployments without writing, oomwh",
+        ~contract=["footing", "bundle.gateway"],
+      ),
+      e(
+        "host",
+        #serve,
+        hard,
+        "passes a mounted request through the control's reach to the app's entry, oomwh",
+        ~contract=["wit"],
+      ),
+    ],
+    uses: ["envelope*"],
+    blocks: ["control-organization"],
     takes: [{language: #rescript, name: "wrangler", major: "4"}],
   },
   "storage": {

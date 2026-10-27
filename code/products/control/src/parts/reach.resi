@@ -3,6 +3,10 @@
  * the relay of the control stood on, or locally at one address for every host, RFC rxmd9; or a
  * binding's driver at a public `https` origin, RFC 8j7b0.
  */
+/** The driver's port and the entry's, as the driver names them. */
+let driverPort: int
+let entryPort: int
+
 type t = {
   /** The origin a port of a host's address is reached at. */
   origin: (~address: string, ~port: int) => string,
@@ -26,3 +30,6 @@ let relayed: (~origin: string, ~token: string, Web.fetch) => t
  * redirect answered as it is and never followed.
  */
 let direct: (string, Web.fetch) => t
+
+/** The reach selected from the Worker's bindings and variables. */
+let configured: Stores.env => option<t>

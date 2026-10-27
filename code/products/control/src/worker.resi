@@ -1,7 +1,4 @@
-/***
- * The control as a Worker, RFC rxmd9, a path under an app's scope passed to its host's entry, an
- * artifact fetched by its hash, and every other request a call of the API.
- */
+/*** The control answers calls, artifacts, relay and objects alone, RFC oomwh. */
 
 /** Where every host is reached, the local address configured or the hosts' binding. */
 let reachOf: Stores.env => option<Reach.t>

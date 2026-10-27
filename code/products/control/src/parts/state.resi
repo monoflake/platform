@@ -45,6 +45,18 @@ type deployment = {
 /** Whether an app ran, its kind declared, or its capacity not 0 where it holds no kind, emgxf. */
 let ran: deployment => bool
 
+/** The binding fields a gateway needs, with no secret or tunnel credential. */
+type reached = {address: option<string>, origin: option<string>, bound: option<float>}
+
+/** The gateway's state view offers only routing reads, RFC oomwh. */
+type reads = {
+  binding: float => promise<option<reached>>,
+  deployment: float => promise<option<deployment>>,
+}
+
+/** A database view that reads no secret and cannot write a record. */
+let readsOfDatabase: Stores.database => reads
+
 type t = {
   /** The organization holding a label, opened if none does, the secret given kept where none is. */
   openOrganization: (string, ~secret: Uint8Array.t) => promise<organization>,

@@ -1,0 +1,25 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "gateway",
+	"main": "src/entry.res.mjs",
+	"compatibility_date": "2026-10-21",
+	"workers_dev": false,
+	"preview_urls": false,
+	"placement": {
+		"mode": "targeted",
+		"region": "aws:us-west-1"
+	},
+	"d1_databases": [
+		{
+			"binding": "STATE",
+			"database_name": "control",
+			"database_id": "00000000-0000-0000-0000-000000000000"
+		}
+	],
+	"vpc_networks": [
+		{
+			"binding": "HOSTS",
+			"network_id": "cf1:network"
+		}
+	]
+}

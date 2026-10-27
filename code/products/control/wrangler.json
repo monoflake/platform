@@ -3,7 +3,7 @@
 	"name": "control",
 	"main": "src/worker.res.mjs",
 	"compatibility_date": "2026-10-21",
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": false,
 	"placement": { "mode": "targeted", "region": "aws:us-west-1" },
 	"d1_databases": [

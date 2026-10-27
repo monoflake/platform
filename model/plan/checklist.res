@@ -152,7 +152,7 @@ let own: array<item> = [
     group: #B,
     what: "the entry in v0: where the entry runs and how it routes a public request to an app's deployment, and the record of which organization holds a name, the platform half's; a machine's certificate is the certificate service's, vr5lw",
     from: "b8f35, 13ixj, vr5lw",
-    done: "vr5lw: an entry is a name bound to an app, served by its host, and a gateway is the organization's, never an app",
+    done: "vr5lw: an entry is a name bound to an app, served by its host; oomwh: the gateway is an optional Worker apart from the control",
   },
   {
     id: "B10",

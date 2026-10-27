@@ -1,3 +1,7 @@
+/** The driver's port and the entry's, as the driver names them. */
+let driverPort = 37483
+let entryPort = 36879
+
 type t = {
   origin: (~address: string, ~port: int) => string,
   fetch: Web.fetch,
@@ -37,3 +41,18 @@ let direct = (origin, fetch: Web.fetch) => {
   // A redirect could aim the binding's token at another host, so it is answered and not followed.
   fetch: request => fetch(Web.unredirected(request)),
 }
+
+/** Both Workers select the same local, network or relayed reach. */
+let configured = (env: Stores.env) =>
+  switch (env.standsOn, env.standsOnToken, env.reach, env.hosts) {
+  | (Some(origin), Some(token), given, _) if origin != "" && token != "" =>
+    Some(
+      switch given {
+      | Some(address) if address != "" => local(address)
+      | Some(_) | None => relayed(~origin, ~token, Web.fetch)
+      },
+    )
+  | (_, _, Some(address), _) if address != "" => Some(local(address))
+  | (_, _, _, Some(hosts)) => Some(network(hosts))
+  | (_, _, _, None) => None
+  }

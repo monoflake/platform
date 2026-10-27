@@ -114,6 +114,19 @@ importers:
         specifier: 4.151.3
         version: 4.151.3
 
+  code/products/gateway:
+    dependencies:
+      '@monoflake/control-organization':
+        specifier: workspace:*
+        version: link:../control
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
+    devDependencies:
+      wrangler:
+        specifier: 4.151.3
+        version: 4.151.3
+
   code/substrate/host:
     dependencies:
       '@monoflake/envelope':

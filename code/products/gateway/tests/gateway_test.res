@@ -1,5 +1,19 @@
+module Sealing = ControlOrganization.Sealing
+module Stores = ControlOrganization.Stores
+module State = ControlOrganization.State
+
 /*** `Gateway` held to RFCs vr5lw and rxmd9, an app's scope read and dropped, its host named. */
 open Node
+
+let reads = (state: State.t): State.reads => {
+  binding: async id =>
+    (await state.binding(id))->Option.map((b): State.reached => {
+      address: b.address,
+      origin: b.origin,
+      bound: b.bound,
+    }),
+  deployment: state.deployment,
+}
 
 test("a path under an app's scope hands the app what follows it, its root at least", async () =>
   deepEqual(
@@ -108,11 +122,11 @@ test(
     let state = Memory.state()
     let host = Host.make()
     let request = Web.request(
-      "https://control.test/v1/01000004/hello?x=1",
+      "https://gateway.example.com/v1/01000004/hello?x=1",
       {method: "GET", headers: dict{}},
     )
     let unknown = await Gateway.passed(
-      state,
+      reads(state),
       host.reach,
       ~port=36879,
       request,
@@ -135,7 +149,7 @@ test(
     ignore(await state.drawApp(~random=() => 16777220.))
     await state.deploy({app: 16777220., binding, release: "", capacity: 1., kind: None})
     let answer = await Gateway.passed(
-      state,
+      reads(state),
       host.reach,
       ~port=36879,
       request,
@@ -146,7 +160,7 @@ test(
     deepEqual(host.seen->Array.map(s => s.url), ["http://10.200.0.1:36879/hello?x=1"])
     host.gone := true
     let gone = await Gateway.passed(
-      state,
+      reads(state),
       host.reach,
       ~port=36879,
       request,
@@ -176,10 +190,10 @@ test(
     let state = State.ofDatabase(database, ~sealing=Sealing.ofKey(key))
     let host = Host.make()
     let answer = await Gateway.passed(
-      state,
+      State.readsOfDatabase(database),
       host.reach,
       ~port=36879,
-      Web.request("https://control.test/v1/00000004/", {method: "GET", headers: dict{}}),
+      Web.request("https://gateway.example.com/v1/00000004/", {method: "GET", headers: dict{}}),
       {app: 4., path: "/"},
       ~search="",
     )
@@ -227,7 +241,14 @@ let deployed = async () => {
 }
 
 let passing = (state, host: Host.t, request) =>
-  Gateway.passed(state, host.reach, ~port=36879, request, {app: 16777220., path: "/"}, ~search="")
+  Gateway.passed(
+    reads(state),
+    host.reach,
+    ~port=36879,
+    request,
+    {app: 16777220., path: "/"},
+    ~search="",
+  )
 
 test(
   "a request with no body that fails before any answer is sent once more, and answered",
@@ -236,7 +257,10 @@ test(
     let state = await deployed()
     let host = Host.make()
     host.drops := 1
-    let asked = Web.request("https://control.test/v1/01000004/", {method: "GET", headers: dict{}})
+    let asked = Web.request(
+      "https://gateway.example.com/v1/01000004/",
+      {method: "GET", headers: dict{}},
+    )
     let answer = await passing(state, host, asked)
     deepEqual((answer->Web.status, host.seen->Array.length), (200, 2))
     host.drops := 2
@@ -250,12 +274,15 @@ test("a request whose body a first send spent is not sent again", async () => {
   let host = Host.make()
   host.drops := 1
   let posted = Web.request(
-    "https://control.test/v1/01000004/",
+    "https://gateway.example.com/v1/01000004/",
     {method: "POST", headers: dict{}, body: Web.utf8("once")},
   )
   let answer = await passing(state, host, posted)
   deepEqual((answer->Web.status, host.seen->Array.length), (503, 1))
-  let empty = Web.request("https://control.test/v1/01000004/", {method: "POST", headers: dict{}})
+  let empty = Web.request(
+    "https://gateway.example.com/v1/01000004/",
+    {method: "POST", headers: dict{}},
+  )
   host.drops := 1
   deepEqual((await passing(state, host, empty))->Web.status, 200)
 })
@@ -289,10 +316,10 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
   ignore(await state.drawApp(~random=() => 16777220.))
   await state.deploy({app: 16777220., binding, release: "", capacity: 1., kind: None})
   let answer = await Gateway.passed(
-    state,
+    reads(state),
     host.reach,
     ~port=36879,
-    Web.request("https://control.test/v1/01000004/", {method: "GET", headers: dict{}}),
+    Web.request("https://gateway.example.com/v1/01000004/", {method: "GET", headers: dict{}}),
     {app: 16777220., path: "/"},
     ~search="",
   )

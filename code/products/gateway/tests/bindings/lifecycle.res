@@ -1,0 +1,1 @@
+../../../control/tests/bindings/lifecycle.res

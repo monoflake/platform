@@ -1,23 +1,13 @@
 /***
  * The control run by `wrangler dev` on workerd with local D1 and R2, a host and Cloudflare's API
- * faked on the loopback, and hello deployed through it and asked through the gateway, RFC rxmd9.
+ * faked on the loopback, and hello deployed through its API, RFCs rxmd9 and oomwh.
  */
 open Node
 module Contracts = Envelope.Contracts
 
 let block = fromRoot("code/products/control")
-let hello = fromRoot("../cloud/apps/hello")
+let hello = fromRoot("code/products/control/tests/fixtures")
 let wrangler = join([block, "node_modules", ".bin", "wrangler"])
-
-let quiet = () => {
-  let given = Dict.copy(env)
-  given->Dict.set("WRANGLER_SEND_METRICS", "false")
-  given->Dict.set("CI", "1")
-  // Miniflare would otherwise fetch the request's `cf` object from Cloudflare.
-  given->Dict.set("CLOUDFLARE_CF_FETCH_ENABLED", "false")
-  ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]->Array.forEach(k => given->Dict.delete(k))
-  given
-}
 
 let orThrow = result =>
   switch result {
@@ -25,22 +15,18 @@ let orThrow = result =>
   | Error(why) => JsError.throwWithMessage(why)
   }
 
-/** hello built by its own wrangler and packed by deploy's bundle, as `mise run deploy` packs it. */
-let helloArchive = async scratch => {
-  ran(fromRoot("node_modules/.bin/rescript"), ["build", "code/tools/deploy"], ~cwd=fromRoot(""))
-  ->orThrow
-  ->ignore
-  let out = join([scratch, "hello"])
-  ran(
-    join([hello, "node_modules", ".bin", "wrangler"]),
-    ["deploy", "--dry-run", "--outdir", out],
-    ~cwd=hello,
-    ~env=quiet(),
+// The local hello fixture is bundled and packed as an app would be.
+let helloArchive = async (scope, scratch) => {
+  await Rehearsal.ran(
+    scope,
+    fromRoot("node_modules/.bin/rescript"),
+    ["build", "code/tools/deploy"],
+    ~cwd=fromRoot(""),
   )
-  ->orThrow
-  ->ignore
+  let out = join([scratch, "hello"])
+  await Rehearsal.ran(scope, wrangler, ["deploy", "--dry-run", "--outdir", out], ~cwd=hello)
   let bundle = await bundle()
-  let config = bundle.config(readText(join([hello, "wrangler.jsonc"])))->orThrow
+  let config = bundle.config(readText(join([hello, "wrangler.json"])))->orThrow
   let files =
     list(out, {recursive: true})
     ->Array.filter(name => stat(join([out, name]))->isFile)
@@ -87,32 +73,17 @@ let api = calls =>
     )
   }
 
-let freePort = async () => {
-  let (server, port) = await listening((_, _) => ())
-  await shut(server)
-  port
-}
-
-/** Asked until it answers anything, a minute at most. */
-let rec answering = async (url, ~left=240) =>
-  switch await Web.fetch(Web.request(url, {method: "GET", headers: dict{}})) {
-  | _ => ()
-  | exception JsExn(_) if left > 0 =>
-    await Web.sleep(250)
-    await answering(url, ~left=left - 1)
-  | exception JsExn(e) => throw(JsExn(e))
-  }
-
 let operator = "the operator's secret"
 
-let call = async (origin, ~bearer, envelope) => {
+let call = async (scope, origin, ~bearer, envelope) => {
   let named = key =>
     envelope
     ->JSON.Decode.object
     ->Option.flatMap(o => o->Dict.get(key))
     ->Option.flatMap(JSON.Decode.string)
     ->Option.getOr("")
-  let answer = await Web.fetch(
+  let answer = await Rehearsal.fetch(
+    scope,
     Web.request(
       `${origin}/${named("interface")}/${named("operation")}`,
       {
@@ -139,69 +110,38 @@ let member = (json, name) =>
 let number = (json, name) => json->member(name)->JSON.Decode.float->Option.getOr(0.)
 let text = (json, name) => json->member(name)->JSON.Decode.string->Option.getOr("")
 
-test("hello opened, bound, put, deployed and asked through a control on workerd", async () => {
-  ok(exists(hello), ~message=`${hello} holds hello, the cloud repository cloned beside this one`)
-  let scratch = mkdtemp(join([tmpdir(), "control-"]))
-  let host = Host.make()
-  let calls = []
-  let (driver, driverPort) = await listening(served(host.reach.fetch))
-  let helloPort = await freePort()
-  let helloOrigin = `http://127.0.0.1:${Int.toString(helloPort)}`
-  // The entry hands the app's host to hello itself, once deployed, as the real entry would.
-  let binding = ref(0.)
-  let entered = async request => {
-    let named = request->Web.requestHeaders->Web.header("x-forwarded-host")->Nullable.toOption
-    let app = switch host.deployed.contents->Option.map(d => d.runs) {
-    | Some(App({id})) => Some(Gateway.host(~app=id, ~binding=binding.contents))
-    | Some(Component(_)) | None => None
-    }
-    switch (app, named) {
-    | (Some(app), Some(named)) if named == app =>
-      let at = Web.parts(request->Web.url)
-      await Web.fetch(Web.resent(`${helloOrigin}${at->Web.pathname}${at->Web.search}`, request))
-    | _ => await host.reach.fetch(request)
-    }
-  }
-  let (entry, entryPort) = await listening(served(entered))
-  let (cloudflare, apiPort) = await listening(served(api(calls)))
-  let port = await freePort()
-  let persisted = join([scratch, "state"])
-  let dev = ref(None)
-  let helloDev = ref(None)
-  let finished = async () => {
-    switch dev.contents {
-    | Some(child) => await stopped(child)
-    | None => ()
-    }
-    switch helloDev.contents {
-    | Some(child) => await stopped(child)
-    | None => ()
-    }
-    await shut(driver)
-    await shut(entry)
-    await shut(cloudflare)
-    rm(scratch, {recursive: true, force: true})
-  }
-  try {
-    let archive = await helloArchive(scratch)
-    helloDev :=
-      Some(
-        spawn(
-          join([hello, "node_modules", ".bin", "wrangler"]),
-          [
-            "dev",
-            "--ip",
-            "127.0.0.1",
-            "--port",
-            Int.toString(helloPort),
-            "--persist-to",
-            join([scratch, "hello-state"]),
-            "--show-interactive-dev-session=false",
-          ],
-          {cwd: hello, env: quiet(), stdio: ["ignore", "ignore", "ignore"]},
-        ),
-      )
-    ran(
+test("hello opened, bound, put and deployed through a control on workerd", async () => {
+  await Rehearsal.using(async scope => {
+    let scratch = Rehearsal.scratch(scope)
+    let host = Host.make()
+    let calls = []
+    let (_, driverPort) = await Rehearsal.listening(scope, served(host.reach.fetch))
+    let helloPort = await Rehearsal.freePort()
+    let helloOrigin = `http://127.0.0.1:${Int.toString(helloPort)}`
+    let binding = ref(0.)
+    let (_, apiPort) = await Rehearsal.listening(scope, served(api(calls)))
+    let port = await Rehearsal.freePort()
+    let persisted = join([scratch, "state"])
+    let archive = await helloArchive(scope, scratch)
+    await Rehearsal.dev(
+      scope,
+      ~name="hello",
+      ~program=wrangler,
+      ~args=[
+        "dev",
+        "--ip",
+        "127.0.0.1",
+        "--port",
+        Int.toString(helloPort),
+        "--persist-to",
+        join([scratch, "hello-state"]),
+        "--show-interactive-dev-session=false",
+      ],
+      ~cwd=hello,
+      ~url=helloOrigin,
+    )
+    await Rehearsal.ran(
+      scope,
       wrangler,
       [
         "d1",
@@ -215,53 +155,49 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
         persisted,
       ],
       ~cwd=block,
-      ~env=quiet(),
     )
-    ->orThrow
-    ->ignore
     let vars = [
       `OPERATOR:${operator}`,
       `SEALING_KEY:${Envelope.Base64url.encode(Web.random(32))}`,
       `DRIVER_PORT:${Int.toString(driverPort)}`,
-      `ENTRY_PORT:${Int.toString(entryPort)}`,
       `TUNNEL_API:http://127.0.0.1:${Int.toString(apiPort)}/client/v4`,
       "TUNNEL_ACCOUNT:account",
       "TUNNEL_CREDENTIAL:credential",
       "REACH:127.0.0.1",
       `ORIGIN:http://127.0.0.1:${Int.toString(port)}`,
     ]
-    dev :=
-      Some(
-        spawn(
-          wrangler,
-          Array.concat(
-            [
-              "dev",
-              "--env",
-              "local",
-              "--ip",
-              "127.0.0.1",
-              "--port",
-              Int.toString(port),
-              "--persist-to",
-              persisted,
-              "--show-interactive-dev-session=false",
-            ],
-            vars->Array.flatMap(v => ["--var", v]),
-          ),
-          {cwd: block, env: quiet(), stdio: ["ignore", "ignore", "ignore"]},
-        ),
-      )
+    await Rehearsal.dev(
+      scope,
+      ~name="control",
+      ~program=wrangler,
+      ~args=Array.concat(
+        [
+          "dev",
+          "--env",
+          "local",
+          "--ip",
+          "127.0.0.1",
+          "--port",
+          Int.toString(port),
+          "--persist-to",
+          persisted,
+          "--show-interactive-dev-session=false",
+        ],
+        vars->Array.flatMap(v => ["--var", v]),
+      ),
+      ~cwd=block,
+      ~url=`http://localhost:${Int.toString(port)}`,
+    )
     // Called by another name than ORIGIN, so the artifact's address shows which was taken.
     let origin = `http://localhost:${Int.toString(port)}`
-    await answering(`${origin}/`)
-    await answering(`${helloOrigin}/`)
     let organization = await call(
+      scope,
       origin,
       ~bearer=operator,
       Contracts.Interface.Organizations.toJson({call: Open({label: "first"}), capabilities: []}),
     )
     let opened = await call(
+      scope,
       origin,
       ~bearer=operator,
       Contracts.Interface.Bindings.toJson({
@@ -272,6 +208,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     binding := opened->number("binding")
     let token = `${Float.toString(binding.contents)}.${opened->text("secret")}`
     let bound = await call(
+      scope,
       origin,
       ~bearer=token,
       Contracts.Interface.Bindings.toJson({call: Bind({reach: Tunnel}), capabilities: []}),
@@ -296,6 +233,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
       ],
     )
     let held = await call(
+      scope,
       origin,
       ~bearer=operator,
       Contracts.Interface.Releases.toJson({
@@ -306,6 +244,7 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     let hash = held->text("hash")
     deepEqual(hash, Envelope.Hex.encode(await Web.sha256(archive)))
     let deployed = await call(
+      scope,
       origin,
       ~bearer=operator,
       Contracts.Interface.Releases.toJson({
@@ -322,26 +261,17 @@ test("hello opened, bound, put, deployed and asked through a control on workerd"
     // What the driver was handed is fetched from the control as the driver would fetch it.
     let address = host.deployed.contents->Option.mapOr("", d => d.artifact.address)
     deepEqual(address, `http://127.0.0.1:${Int.toString(port)}/artifacts/${hash}`)
-    let fetched = await Web.fetch(Web.request(address, {method: "GET", headers: dict{}}))
+    let fetched = await Rehearsal.fetch(
+      scope,
+      Web.request(address, {method: "GET", headers: dict{}}),
+    )
     deepEqual(Envelope.Hex.encode(await Web.sha256(await fetched->Web.responseBytes)), hash)
     let described = await call(
+      scope,
       origin,
       ~bearer=operator,
       Contracts.Interface.Releases.toJson({call: Describe({app: app}), capabilities: []}),
     )
     deepEqual(described, deployed)
-    let direct = await (
-      await Web.fetch(Web.request(`${helloOrigin}/`, {method: "GET", headers: dict{}}))
-    )->Web.text
-    ok(direct->String.startsWith("hello from "), ~message=`hello answered ${direct}`)
-    let asked = await Web.fetch(
-      Web.request(`${origin}/v1/${Ids.text(app)}/`, {method: "GET", headers: dict{}}),
-    )
-    deepEqual((asked->Web.status, await asked->Web.text), (200, direct))
-    await finished()
-  } catch {
-  | e =>
-    await finished()
-    throw(e)
-  }
+  })
 })

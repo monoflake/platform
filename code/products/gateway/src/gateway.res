@@ -1,3 +1,8 @@
+module Web = ControlOrganization.Web
+module Ids = ControlOrganization.Ids
+module State = ControlOrganization.State
+module Reach = ControlOrganization.Reach
+
 type routed = {app: float, path: string}
 
 /** A scope of an app until an organization's own scopes are kept, RFC vr5lw's `scope` rows. */
@@ -43,7 +48,7 @@ let beyondHost = message =>
     )->JSON.stringify,
   )
 
-let passed = async (state: State.t, reach: Reach.t, ~port, request, routed, ~search) =>
+let passed = async (state: State.reads, reach: Reach.t, ~port, request, routed, ~search) =>
   switch await state.deployment(routed.app) {
   | None => Web.answered(~status=404, `no app ${Ids.text(routed.app)} is deployed`)
   | Some(deployment) =>

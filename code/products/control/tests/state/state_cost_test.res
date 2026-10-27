@@ -53,6 +53,9 @@ let exercise = async session => {
   )
   ignore(await state.binding(4000000.))
   ignore(await state.binding(999999.))
+  let reads = State.readsOfDatabase(database)
+  ignore(await reads.binding(4000000.))
+  ignore(await reads.binding(999999.))
   ignore(await state.addressed(~binding))
   ignore(await state.addressed(~binding))
   ignore(await state.addressed(~binding=999999.))
@@ -87,6 +90,8 @@ let exercise = async session => {
   await state.deploy(deployment)
   await state.deploy(deployment)
   ignore(await state.deployment(app))
+  ignore(await reads.deployment(app))
+  ignore(await reads.deployment(999999.))
   ignore(await state.hasApp(app))
   ignore(await state.forgetApp(app))
   // A deployment kept without its app reaches the final held check during forget.
