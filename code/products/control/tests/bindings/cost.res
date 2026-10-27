@@ -43,7 +43,6 @@ let open_: unit => promise<session> = %raw(`async () => {
       for (const part of sql.split(';').filter(s => s.trim())) await db.prepare(part).run()
     }
     const seen = new Set()
-    const measured = []
     const quantity = async name => {
       const tables = model.tables
       let count = 0
@@ -60,11 +59,11 @@ let open_: unit => promise<session> = %raw(`async () => {
         const n = await quantity(budget.quantity)
         const result = await db.prepare(sql).bind(...values).all()
         const limit = budget.fixed + budget.perRow * n
-        const rows = result.meta.rows_read
+        const rows = result.meta?.rows_read
         seen.add(budget.name + normalize(sql))
-        measured.push({name: budget.name, quantity: n, rows, limit})
         if (!Number.isSafeInteger(rows) || rows < 0 || rows > limit) {
-          throw new Error(budget.name + ' read ' + rows + ' rows with budget ' + limit +
+          throw new Error('SQL rows read ' + budget.name + ' read ' + rows +
+            ' rows with budget ' + limit +
             ' for ' + n + ' ' + budget.quantity)
         }
         return result.results
@@ -72,7 +71,7 @@ let open_: unit => promise<session> = %raw(`async () => {
       return {first: async () => (await execute())[0] ?? null,
         run: async () => {await execute()}}
     }})}
-    return {database, db, runtime, seen, measured, patterns, sizes: model.fixtureSizes}
+    return {database, db, runtime, seen, patterns, sizes: model.fixtureSizes}
   } catch (error) {
     await runtime.dispose()
     throw error
@@ -88,11 +87,11 @@ let exec: (session, string) => promise<unit> = %raw(`async (session, sql) => {
 
 let complete: session => unit = %raw(`session => {
   const missing = session.patterns.filter(b => b.statements.some(sql =>
-    !session.seen.has(b.name + sql))).map(b => b.name)
-  if (missing.length) throw new Error('SQL budgets without a measured fixture ' + missing.join(', '))
-  console.log('SQL rows read ' + JSON.stringify(session.measured))
+    !session.seen.has(b.name + sql))).map(b => b.name + ' rows missing with budget ' +
+      b.fixed + ' + ' + b.perRow + ' per ' + b.quantity)
+  if (missing.length) throw new Error('SQL rows read budgets without a measured fixture ' +
+    missing.join(', '))
   session.seen.clear()
-  session.measured.length = 0
 }`)
 
 let close: session => promise<unit> = %raw(`session => session.runtime.dispose()`)
