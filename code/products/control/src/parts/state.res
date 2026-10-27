@@ -163,12 +163,13 @@ let following = table =>
   WHERE EXISTS (SELECT 1 FROM app WHERE id = v) OR EXISTS (SELECT 1 FROM deployment WHERE app = v)
   OR EXISTS (SELECT 1 FROM binding WHERE id = v))`
 
-/** The lowest address of the range no binding holds, as `a`'s one row. */
+/** The lowest free address, stepping over held ones and materialized once as `a`. */
 let unaddressed = `WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n
-  WHERE v < ${Int.toString(Addresses.count)}),
-  a(address) AS (SELECT '10.200.' || (v / 256) || '.' || (v % 256) FROM n
+  WHERE v < ${Int.toString(Addresses.count)} AND '10.200.' || (v / 256) || '.' || (v % 256)
+  IN (SELECT address FROM binding WHERE address IS NOT NULL)),
+  a(address) AS MATERIALIZED (SELECT '10.200.' || (v / 256) || '.' || (v % 256) FROM n
   WHERE '10.200.' || (v / 256) || '.' || (v % 256)
-  NOT IN (SELECT address FROM binding WHERE address IS NOT NULL) ORDER BY v LIMIT 1)`
+  NOT IN (SELECT address FROM binding WHERE address IS NOT NULL))`
 
 type addressRow = {address: Nullable.t<string>}
 

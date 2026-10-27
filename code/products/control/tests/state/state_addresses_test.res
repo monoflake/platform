@@ -43,6 +43,41 @@ test("a binding's address is the one given, else the lowest free, and once held 
   }
 )
 
+test("address allocation steps over held bindings and materializes its choice once", async () => {
+  let plans: array<Sqlite.plan> = []
+  let database = Sqlite.database(~plans, ())
+  let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+  let held = Array.fromInitializer(~length=384, i => Addresses.nth(i + 1))
+  await run("INSERT INTO organization (id, label) VALUES (1, 'first')")
+  for i in 0 to held->Array.length - 1 {
+    await run(
+      `INSERT INTO binding (id, organization, secret, address)
+      VALUES (${Int.toString(i + 1)}, 1, '', '${held->Array.getUnsafe(i)}')`,
+    )
+  }
+  let state = State.ofDatabase(database, ~sealing=Sealing.ofKey(key))
+  let binding = await state.openBinding(~organization=1., ~secret, ~relayed=false, ~random=() =>
+    4275878552.
+  )
+  let before = plans->Array.length
+  deepEqual(await state.addressed(~binding), Addresses.lowest(held))
+  deepEqual(plans->Array.length, before + 1)
+  let rows = (plans->Array.getUnsafe(before)).rows
+  let recursive = rows->Array.find(row => row.detail == "RECURSIVE STEP")
+  // A held address list gates recursion instead of enumerating and sorting the range.
+  ok(
+    recursive->Option.mapOr(false, step =>
+      rows->Array.some(
+        row => row.parent == step.id && row.detail->String.startsWith("LIST SUBQUERY"),
+      )
+    ),
+    ~message="the recursive step tests membership in the held addresses",
+  )
+  ok(rows->Array.every(row => !(row.detail->String.includes("ORDER BY"))))
+  deepEqual(rows->Array.filter(row => row.detail == "MATERIALIZE a")->Array.length, 1)
+  deepEqual(rows->Array.filter(row => row.detail == "SCAN a")->Array.length, 2)
+})
+
 test("a binding is given no address once every one of the range is held", async () => {
   let database = Sqlite.database()
   let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run

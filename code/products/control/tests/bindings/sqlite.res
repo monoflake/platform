@@ -3,9 +3,13 @@ type sqlite
 @module("node:sqlite") @new external openSqlite: string => sqlite = "DatabaseSync"
 @send external exec: (sqlite, string) => unit = "exec"
 
-let asDatabase: sqlite => Stores.database = %raw(`db => ({
+type planRow = {id: int, parent: int, detail: string}
+type plan = {sql: string, rows: array<planRow>}
+
+let asDatabase: (sqlite, ~plans: array<plan>=?) => Stores.database = %raw(`(db, plans) => ({
   prepare: sql => ({
     bind: (...values) => {
+      if (plans) plans.push({sql, rows: db.prepare("EXPLAIN QUERY PLAN " + sql).all(...values)})
       const statement = db.prepare(sql)
       return {
         first: async () => statement.get(...values) ?? null,
@@ -28,12 +32,12 @@ let refusing: (Stores.database, string) => Stores.database = %raw(`(db, prefix) 
 })`)
 
 /** A database in memory with the control's migrations applied in order. */
-let database = () => {
+let database = (~plans=?, ()) => {
   let db = openSqlite(":memory:")
   let migrations = Node.fromRoot("code/products/control/migrations")
   Node.list(migrations, {recursive: false})
   ->Array.filter(name => name->String.endsWith(".sql"))
   ->Array.toSorted(String.compare)
   ->Array.forEach(name => db->exec(Node.readText(Node.join([migrations, name]))))
-  asDatabase(db)
+  asDatabase(db, ~plans?)
 }
