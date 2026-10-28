@@ -68,6 +68,11 @@ is one or more of:
 - **the binding itself**: the name `{app}.b{binding}`, as `Gateway.host` builds it, given only when
   declared, provisional.
 
+Until driver's RFC 3txyw decides how the machine's entry tells the gateway's traffic from any other
+caller's, the entry admits `{app}.b{binding}` for every deployment, declared or not; it is reached
+only through a binding's private address, so nothing is newly exposed meanwhile, provisional,
+chosen by the advisor on 2026-10-27.
+
 Several may be declared at once. **An app declares its ingress in its release, beside the bindings
 it declares**, generated into `model/contracts.json` as every record is, provisional; vr5lw's
 warning of an app nothing reaches reads it. An app declaring none is reached only by another app
