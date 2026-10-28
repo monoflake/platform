@@ -43,6 +43,7 @@ let open_: unit => promise<session> = %raw(`async () => {
       for (const part of sql.split(';').filter(s => s.trim())) await db.prepare(part).run()
     }
     const seen = new Set()
+    const measured = new Map()
     const quantity = async name => {
       const tables = model.tables
       let count = 0
@@ -51,27 +52,39 @@ let open_: unit => promise<session> = %raw(`async () => {
       }
       return count
     }
-    const database = {prepare: sql => ({bind: (...values) => {
-      const execute = async () => {
-        const matches = patterns.filter(b => b.statements.includes(normalize(sql)))
-        if (matches.length !== 1) throw new Error('SQL has no unique rows read budget ' + sql)
-        const budget = matches[0]
-        const n = await quantity(budget.quantity)
-        const result = await db.prepare(sql).bind(...values).all()
+    const bound = (sql, values) => {
+      const matches = patterns.filter(b => b.statements.includes(normalize(sql)))
+      if (matches.length !== 1) throw new Error('SQL has no unique rows read budget ' + sql)
+      const budget = matches[0]
+      const prepared = db.prepare(sql).bind(...values)
+      const check = (result, n) => {
         const limit = budget.fixed + budget.perRow * n
         const rows = result.meta?.rows_read
         seen.add(budget.name + normalize(sql))
+        measured.set(budget.name, Math.max(measured.get(budget.name) ?? 0, rows))
         if (!Number.isSafeInteger(rows) || rows < 0 || rows > limit) {
           throw new Error('SQL rows read ' + budget.name + ' read ' + rows +
-            ' rows with budget ' + limit +
-            ' for ' + n + ' ' + budget.quantity)
+            ' rows with budget ' + limit + ' for ' + n + ' ' + budget.quantity)
         }
         return result.results
       }
-      return {first: async () => (await execute())[0] ?? null,
+      const execute = async () => {
+        const n = await quantity(budget.quantity)
+        return check(await prepared.all(), n)
+      }
+      return {prepared, budget, check,
+        first: async () => (await execute())[0] ?? null,
         run: async () => {await execute()}}
-    }})}
-    return {database, db, runtime, seen, patterns, sizes: model.fixtureSizes}
+    }
+    const database = {
+      batch: async statements => {
+        const counts = await Promise.all(statements.map(s => quantity(s.budget.quantity)))
+        const results = await db.batch(statements.map(s => s.prepared))
+        statements.forEach((s, i) => s.check(results[i], counts[i]))
+      },
+      prepare: sql => ({bind: (...values) => bound(sql, values)}),
+    }
+    return {database, db, runtime, seen, measured, patterns, sizes: model.fixtureSizes}
   } catch (error) {
     await runtime.dispose()
     throw error
@@ -91,6 +104,8 @@ let complete: session => unit = %raw(`session => {
       b.fixed + ' + ' + b.perRow + ' per ' + b.quantity)
   if (missing.length) throw new Error('SQL rows read budgets without a measured fixture ' +
     missing.join(', '))
+  console.log("SQL rows read maxima " + JSON.stringify(Object.fromEntries(session.measured)))
+  session.measured.clear()
   session.seen.clear()
 }`)
 

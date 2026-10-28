@@ -23,11 +23,11 @@ let deployed = async (~secret=String.repeat("ab", 32), ()) => {
 
 type secretRow = {secret: string}
 
-test("the database view offers two reads, no writes and no secret fields", async () => {
+test("the database view offers only routing reads, no writes and no secret fields", async () => {
   let database = await deployed()
   let seen = []
   let reads = State.readsOfDatabase(Reading.guarded(database, seen))
-  deepEqual(Reading.offered(reads), ["binding", "deployment"])
+  deepEqual(Reading.offered(reads), ["binding", "deployment", "domain"])
   let binding = (await reads.binding(2.))->Option.getOrThrow
   deepEqual(Reading.offered(binding), ["address", "bound", "origin"])
   deepEqual(binding, {address: Some("10.200.0.2"), origin: None, bound: Some(1.)})
@@ -37,9 +37,9 @@ test("the database view offers two reads, no writes and no secret fields", async
     seen,
     [
       "SELECT id, organization, secret, tunnel, address, origin, relayed, bound FROM binding WHERE id = ?",
-      "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
+      "SELECT app, binding, release, capacity, kind, ingress FROM deployment WHERE app = ?",
       "SELECT id, organization, secret, tunnel, address, origin, relayed, bound FROM binding WHERE id = ?",
-      "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
+      "SELECT app, binding, release, capacity, kind, ingress FROM deployment WHERE app = ?",
     ],
   )
   let kept: Nullable.t<secretRow> = await database
@@ -114,7 +114,7 @@ test(
       ),
       [Some("application/json"), Some("answer"), Some("kept=1")],
     )
-    deepEqual(seen->Array.length, 2)
+    deepEqual(seen->Array.length, 4)
   },
 )
 
@@ -142,7 +142,7 @@ test("a mount never opens or reseals a binding secret", async () => {
       hosts: Reading.fetcher(async _ => Web.answered(~status=200, "app")),
     }
     deepEqual((await Worker.default.fetch(request("/v1/01000004/"), env))->Web.status, 200)
-    deepEqual(seen->Array.length, 2)
+    deepEqual(seen->Array.length, 4)
   }
 })
 
@@ -232,3 +232,99 @@ test(
     deepEqual((gateway->Dict.get("routes"), gateway->Dict.get("route")), (None, None))
   },
 )
+
+test(
+  "declared exact and wildcard hosts carry the whole path and query to the binding",
+  async () => {
+    let database = await deployed()
+    let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+    await run("INSERT INTO app (id) VALUES (16777221)")
+    await run(
+      "INSERT INTO deployment (app, binding, release, capacity) VALUES (16777221, 2, 'aa', 1)",
+    )
+    await run(
+      "INSERT INTO domain (domain, app) VALUES ('example.com', 16777220), ('*.example.org', 16777220), ('api.example.org', 16777221)",
+    )
+    let seen = []
+    let sent = []
+    let env: Stores.env = {
+      state: Reading.guarded(database, seen),
+      hosts: Reading.fetcher(async request => {
+        sent->Array.push((
+          request->Web.url,
+          request->Web.method_,
+          request->Web.requestHeaders->Web.header("host")->Nullable.toOption,
+          request->Web.requestHeaders->Web.header("x-forwarded-host")->Nullable.toOption,
+          Web.fromUtf8(await request->Web.bytesOf),
+        ))
+        Web.answered(~status=201, "app")
+      }),
+      entryPort: "43210",
+    }
+    let path = "/v7/01000004/a%2Fb//c?x=%2f&x=+&empty="
+    let hosts = ["EXAMPLE.COM:443", "blog.example.org", "API.EXAMPLE.ORG:8443"]
+    for i in 0 to hosts->Array.length - 1 {
+      deepEqual(
+        (
+          await Worker.default.fetch(
+            request(
+              ~method="POST",
+              path,
+              ~headers=dict{"host": hosts->Array.getUnsafe(i)},
+              ~body=Web.utf8("body"),
+            ),
+            env,
+          )
+        )->Web.status,
+        201,
+      )
+    }
+    let expected = app => (`http://10.200.0.2:43210${path}`, "POST", Some(app), Some(app), "body")
+    deepEqual(
+      sent,
+      [
+        expected("01000004.b00000002"),
+        expected("01000004.b00000002"),
+        expected("01000005.b00000002"),
+      ],
+    )
+    deepEqual(seen->Array.length, 10)
+    let fallback = await Worker.default.fetch(
+      request("/v1/01000004/hello?x=1", ~headers=dict{"host": "unmatched.example.net"}),
+      env,
+    )
+    deepEqual(fallback->Web.status, 201)
+    deepEqual(
+      sent->Array.at(-1)->Option.map(((url, _, _, _, _)) => url),
+      Some("http://10.200.0.2:43210/hello?x=1"),
+    )
+    deepEqual(
+      (
+        await Worker.default.fetch(
+          request("/hello", ~headers=dict{"host": "unmatched.example.net"}),
+          env,
+        )
+      )->Web.status,
+      404,
+    )
+    deepEqual(
+      (
+        await Worker.default.fetch(request("/hello", ~headers=dict{"host": "a.b.example.org"}), env)
+      )->Web.status,
+      404,
+    )
+  },
+)
+
+test("a direct domain is read from the URL when no Host header is present", async () => {
+  let database = await deployed()
+  await database
+  ->Stores.prepare("INSERT INTO domain (domain, app) VALUES ('gateway.example.com', 16777220)")
+  ->Stores.bind([])
+  ->Stores.run
+  let env: Stores.env = {
+    state: database,
+    hosts: Reading.fetcher(async _ => Web.answered(~status=200, "app")),
+  }
+  deepEqual((await Worker.default.fetch(request("/"), env))->Web.status, 200)
+})

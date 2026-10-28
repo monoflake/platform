@@ -9,6 +9,16 @@ type planRow = {id: int, parent: int, detail: string}
 type plan = {sql: string, rows: array<planRow>}
 
 let asDatabase: (sqlite, ~plans: array<plan>=?) => Stores.database = %raw(`(db, plans) => ({
+  batch: async statements => {
+    db.exec('BEGIN')
+    try {
+      for (const statement of statements) await statement.run()
+      db.exec('COMMIT')
+    } catch (error) {
+      db.exec('ROLLBACK')
+      throw error
+    }
+  },
   prepare: sql => ({
     bind: (...values) => {
       if (plans) plans.push({sql, rows: db.prepare("EXPLAIN QUERY PLAN " + sql).all(...values)})
@@ -23,6 +33,7 @@ let asDatabase: (sqlite, ~plans: array<plan>=?) => Stores.database = %raw(`(db, 
 
 /** A database whose statements beginning with `prefix` throw as they are run. */
 let refusing: (Stores.database, string) => Stores.database = %raw(`(db, prefix) => ({
+  batch: statements => db.batch(statements),
   prepare: sql => sql.startsWith(prefix)
     ? {
         bind: () => {

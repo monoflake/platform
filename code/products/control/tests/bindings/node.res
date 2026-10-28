@@ -119,6 +119,7 @@ type bundle = {
   config: string => result<bundleConfig, string>,
   packed: (
     ~kinds: array<Envelope.Contracts.DeploymentKind.t>=?,
+    ~ingress: array<Envelope.Contracts.AppIngress.t>=?,
     bundleConfig,
     array<bundled>,
   ) => result<Uint8Array.t, string>,

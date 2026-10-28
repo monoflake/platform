@@ -102,8 +102,11 @@ let declared = text =>
     switch json->JSON.Decode.object {
     | None => Error("is no JSON object")
     | Some(o) =>
-      switch (o->Dict.keysToArray->Array.find(key => key != "kinds"), o->Dict.get("kinds")) {
-      | (Some(other), _) => Error(`holds kinds alone, not ${other}`)
+      switch (
+        o->Dict.keysToArray->Array.find(key => key != "kinds" && key != "ingress"),
+        o->Dict.get("kinds"),
+      ) {
+      | (Some(other), _) => Error(`holds kinds and ingress alone, not ${other}`)
       | (None, None) => Error("holds no kinds")
       | (None, Some(listed)) =>
         let strings = items => {
@@ -129,6 +132,52 @@ let declared = text =>
     }
   }
 
+type release = {
+  kinds: option<array<Contracts.DeploymentKind.t>>,
+  ingress: option<array<Contracts.AppIngress.t>>,
+}
+
+let release = text => {
+  let parsed = switch JSON.parseOrThrow(text) {
+  | json => Ok(json)
+  | exception JsExn(_) => Error("is no JSON")
+  }
+  parsed->Result.flatMap(json =>
+    switch json->JSON.Decode.object {
+    | None => Error("is no JSON object")
+    | Some(o) =>
+      let kinds = o->Dict.has("kinds") ? declared(text)->Result.map(k => Some(k)) : Ok(None)
+      let ingress = switch o->Dict.get("ingress") {
+      | None => Ok(None)
+      | Some(json) =>
+        switch json->JSON.Decode.array {
+        | None => Error("declares ingress that is not an array")
+        | Some(items) =>
+          items
+          ->Array.reduce(Ok([]), (all, item) =>
+            all->Result.flatMap(
+              all =>
+                Contracts.AppIngress.fromJson(item)
+                ->Result.mapError(_ => "declares malformed ingress")
+                ->Result.map(
+                  i => {
+                    all->Array.push(i)
+                    all
+                  },
+                ),
+            )
+          )
+          ->Result.map(items => Some(items))
+        }
+      }
+      switch o->Dict.keysToArray->Array.find(key => key != "kinds" && key != "ingress") {
+      | Some(other) => Error("holds kinds and ingress alone, not " ++ other)
+      | None => kinds->Result.flatMap(kinds => ingress->Result.map(ingress => {kinds, ingress}))
+      }
+    }
+  )
+}
+
 let mainModule = config => {
   let file = config.main->String.split("/")->Array.at(-1)->Option.getOr(config.main)
   switch file->String.lastIndexOf(".") {
@@ -139,7 +188,7 @@ let mainModule = config => {
 
 let isModule = name => name != "README.md" && !(name->String.endsWith(".map"))
 
-let metadata = (~kinds=?, config) => {
+let metadata = (~kinds=?, ~ingress=?, config) => {
   let fields = dict{
     "main_module": JSON.String(mainModule(config)),
     "compatibility_date": JSON.String(config.compatibilityDate),
@@ -151,6 +200,9 @@ let metadata = (~kinds=?, config) => {
     )
   }
   // Kinds go last and only where declared, so an undeclared bundle is the same bytes, emgxf.
+  ingress->Option.forEach(i =>
+    fields->Dict.set("ingress", JSON.Array(i->Array.map(Contracts.AppIngress.toJson)))
+  )
   kinds->Option.forEach(kinds =>
     fields->Dict.set("kinds", JSON.Array(kinds->Array.map(Contracts.DeploymentKind.toJson)))
   )
@@ -205,13 +257,18 @@ let tar = files =>
     Ok(archive)
   }
 
-let packed = (~kinds=?, config, files) => {
+let packed = (~kinds=?, ~ingress=?, config, files) => {
   let modules =
     files
     ->Array.filter(f => isModule(f.name) && f.name != "metadata.json")
     ->Array.toSorted((a, b) => String.compare(a.name, b.name))
   let main = mainModule(config)
   modules->Array.some(f => f.name == main)
-    ? tar([{name: "metadata.json", bytes: Bytes.utf8(metadata(~kinds?, config))}, ...modules])
+    ? tar(
+        [
+          {name: "metadata.json", bytes: Bytes.utf8(metadata(~kinds?, ~ingress?, config))},
+          ...modules,
+        ],
+      )
     : Error(`wrangler wrote no ${main}, the main module`)
 }

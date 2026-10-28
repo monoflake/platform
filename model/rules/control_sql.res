@@ -1,5 +1,5 @@
 /** The control's SQL costs, held by its state tests as docs/code.md describes. */
-type quantity = [#constant | #bindings | #deployments | #held_ids]
+type quantity = [#constant | #bindings | #deployments | #held_ids | #domains]
 
 type budget = {
   name: string,
@@ -20,6 +20,7 @@ let fixtureSizes = [0, 16, 384]
 
 let tables = dict{
   "constant": [],
+  "domains": ["domain"],
   "bindings": ["binding"],
   "deployments": ["deployment"],
   "held_ids": ["binding", "app", "deployment"],
@@ -33,6 +34,27 @@ let fragments = [
 ]
 
 let budgets: array<budget> = [
+  {
+    name: "domain",
+    template: "SELECT app FROM domain WHERE domain = ?",
+    quantity: #constant,
+    perRow: 0,
+    fixed: 8,
+  },
+  {
+    name: "clear_domains",
+    template: "DELETE FROM domain WHERE app = ?",
+    quantity: #domains,
+    perRow: 2,
+    fixed: 8,
+  },
+  {
+    name: "put_domain",
+    template: "INSERT INTO domain (domain, app) SELECT ?1, ?2 WHERE EXISTS (SELECT 1 FROM deployment WHERE app = ?2)",
+    quantity: #constant,
+    perRow: 0,
+    fixed: 8,
+  },
   {
     name: "reseal",
     template: "UPDATE ${kind} SET secret = ? WHERE id = ? AND secret = ?",
@@ -168,28 +190,28 @@ let budgets: array<budget> = [
   },
   {
     name: "put_release",
-    template: "INSERT INTO release (hash, form, size, kinds) VALUES (?, ?, ?, ?) ON CONFLICT (hash) DO NOTHING",
+    template: "INSERT INTO release (hash, form, size, kinds, ingress) VALUES (?, ?, ?, ?, ?) ON CONFLICT (hash) DO NOTHING",
     quantity: #constant,
     perRow: 0,
     fixed: 8,
   },
   {
     name: "release",
-    template: "SELECT hash, form, size, kinds FROM release WHERE hash = ?",
+    template: "SELECT hash, form, size, kinds, ingress FROM release WHERE hash = ?",
     quantity: #constant,
     perRow: 0,
     fixed: 8,
   },
   {
     name: "deploy",
-    template: "INSERT INTO deployment (app, binding, release, capacity, kind) SELECT ?1, ?2, ?3, ?4, ?5 WHERE ${appHeld(\"?1\")} ON CONFLICT (app) DO UPDATE SET binding = excluded.binding, release = excluded.release, capacity = excluded.capacity, kind = excluded.kind",
+    template: "INSERT INTO deployment (app, binding, release, capacity, kind, ingress) SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE ${appHeld(\"?1\")} ON CONFLICT (app) DO UPDATE SET binding = excluded.binding, release = excluded.release, capacity = excluded.capacity, kind = excluded.kind, ingress = excluded.ingress",
     quantity: #constant,
     perRow: 0,
     fixed: 8,
   },
   {
     name: "deployment",
-    template: "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
+    template: "SELECT app, binding, release, capacity, kind, ingress FROM deployment WHERE app = ?",
     quantity: #constant,
     perRow: 0,
     fixed: 8,
@@ -204,8 +226,8 @@ let budgets: array<budget> = [
   {
     name: "forget_deployment",
     template: "DELETE FROM deployment WHERE app = ? AND NOT ${ranRow} RETURNING app",
-    quantity: #constant,
-    perRow: 0,
+    quantity: #domains,
+    perRow: 4,
     fixed: 8,
   },
   {
@@ -239,8 +261,8 @@ let budgets: array<budget> = [
   {
     name: "retire_deployment",
     template: "DELETE FROM deployment WHERE app = ?",
-    quantity: #constant,
-    perRow: 0,
+    quantity: #domains,
+    perRow: 4,
     fixed: 8,
   },
 ]

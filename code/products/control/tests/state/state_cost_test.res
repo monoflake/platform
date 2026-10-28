@@ -29,12 +29,15 @@ let fixture = async (session, n) => {
       `${counted} INSERT INTO deployment (app, binding, release, capacity)
       SELECT v + 3000, v + 2000, 'release-' || v, 1 FROM n`,
     )
+    await exec(
+      `${counted} INSERT INTO domain (domain, app) SELECT 'fixture-' || v || '.example.org', v + 3000 FROM n`,
+    )
     // These ids make the next organization step past a dense run of held ids.
     await exec(`${counted} INSERT INTO app (id) SELECT v + ${Int.toString(n + 1000)} FROM n`)
   }
 }
 
-let exercise = async session => {
+let exercise = async (session, n) => {
   let database = session->Cost.database
   let state = State.ofDatabase(database, ~sealing=Sealing.ofKey(key))
   let exec = sql => Cost.exec(session, sql)
@@ -86,13 +89,47 @@ let exercise = async session => {
       ~random=scripted(list{binding, 16909060., app, 4275878556.}),
     ),
   )
-  let deployment: State.deployment = {app, binding, release: "aa", capacity: 0., kind: None}
+  let deployment: State.deployment = {
+    app,
+    binding,
+    release: "aa",
+    capacity: 0.,
+    kind: None,
+    ingress: [Domain({domain: "cost.example.com"})],
+  }
   await state.deploy(deployment)
+  let fillDomains = async prefix => {
+    if n > 0 {
+      await exec(
+        "WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n WHERE v < " ++
+        Int.toString(n) ++
+        ") INSERT INTO domain (domain, app) SELECT '" ++
+        prefix ++
+        "-' || v || '.example.org', " ++
+        Float.toString(app) ++ " FROM n",
+      )
+    }
+  }
+  await fillDomains("replaced")
   await state.deploy(deployment)
+  let other = await state.drawApp(~random=() => 4275878557.)
+  let conflict = switch await state.deploy({...deployment, app: other}) {
+  | () => false
+  | exception State.DomainHeld(_) => true
+  }
+  ok(conflict)
+  deepEqual(await state.domain("cost.example.com"), Some(app))
+  deepEqual(await state.deployment(other), None)
+  ignore(await state.forgetApp(other))
+  ignore(await state.domain("cost.example.com"))
+  ignore(await state.domain("missing.example.net"))
+  ignore(await reads.domain("cost.example.com"))
+  ignore(await reads.domain("missing.example.net"))
   ignore(await state.deployment(app))
   ignore(await reads.deployment(app))
   ignore(await reads.deployment(999999.))
   ignore(await state.hasApp(app))
+  await fillDomains("forgotten")
   ignore(await state.forgetApp(app))
   // A deployment kept without its app reaches the final held check during forget.
   await exec(
@@ -102,6 +139,7 @@ let exercise = async session => {
   ignore(await state.forgetApp(4000001.))
   ignore(await state.drawApp(~random=() => 4275878553.))
   await state.deploy({...deployment, capacity: 1.})
+  await fillDomains("retired")
   await state.retireApp(app)
   // A refused secret update reaches the binding cleanup statement.
   let refused = State.ofDatabase(
@@ -123,7 +161,7 @@ test("every state statement stays within its rows read budget", async () => {
     let sizes = session->Cost.sizes
     for i in 0 to sizes->Array.length - 1 {
       await fixture(session, sizes->Array.getUnsafe(i))
-      await exercise(session)
+      await exercise(session, sizes->Array.getUnsafe(i))
       session->Cost.complete
       await Cost.exec(session, "DELETE FROM deployment")
       await Cost.exec(session, "DELETE FROM binding")
@@ -155,6 +193,20 @@ test("the allocation budget holds when the whole address range is held", async (
       4275878552.
     )
     deepEqual(await state.addressed(~binding), None)
+    await Cost.close(session)
+  } catch {
+  | e =>
+    await Cost.close(session)
+    throw(e)
+  }
+})
+
+test("domain cleanup stays in budget when one app holds every domain", async () => {
+  let session = await Cost.open_()
+  try {
+    await fixture(session, 0)
+    await exercise(session, 384)
+    session->Cost.complete
     await Cost.close(session)
   } catch {
   | e =>

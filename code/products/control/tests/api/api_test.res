@@ -222,8 +222,15 @@ test(
     )
     let app = answer->ranAs->Option.getOr(0.)
     deepEqual(
-      await stood.parts.state.deployment(app),
-      Some({app, binding, release: hash, capacity: 1., kind: Some(Function)}),
+      (await stood.parts.state.deployment(app))->Option.map(d => (
+        d.app,
+        d.binding,
+        d.release,
+        d.capacity,
+        d.kind,
+        d.ingress,
+      )),
+      Some((app, binding, hash, 1., Some(Contracts.DeploymentKind.Function), None)),
     )
     deepEqual(
       stood.host.deployed.contents->Option.map(d => (d.artifact.address, d.into)),

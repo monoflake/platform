@@ -28,6 +28,18 @@ let routed = path =>
   | None => found(decimal, path, id => Float.fromString(id)->Option.filter(id => id <= 4294967295.))
   }
 
+let named = async (state: State.reads, host) => {
+  let host = host->String.toLowerCase->String.split(":")->Array.get(0)->Option.getOr("")
+  switch await state.domain(host) {
+  | Some(app) => Some(app)
+  | None =>
+    switch host->String.indexOf(".") {
+    | -1 => None
+    | at => await state.domain("*." ++ host->String.slice(~start=at + 1))
+    }
+  }
+}
+
 let host = (~app, ~binding) => `${Ids.text(app)}.b${Ids.text(binding)}`
 
 /** Whether a request can be sent again, its body none that a first send would have spent. */

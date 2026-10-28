@@ -2,6 +2,18 @@
 open Subset
 
 let types: array<declared> = [
+  {
+    name: "app-ingress",
+    def: Union({
+      tag: "name",
+      cases: [
+        {name: "domain", code: 1, fields: [field("domain", 1, Prim(#string))]},
+        {name: "mount", code: 2, fields: [field("scope", 1, Prim(#string))]},
+        {name: "binding", code: 3, fields: []},
+      ],
+    }),
+    from: "oomwh",
+  },
   // An env key's value, a config's as written or a secret's sealed under its control's key, v7v3w.
   {
     name: "app-env",

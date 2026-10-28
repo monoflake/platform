@@ -13,6 +13,7 @@ let reads = (state: State.t): State.reads => {
       bound: b.bound,
     }),
   deployment: state.deployment,
+  domain: state.domain,
 }
 
 test("a path under an app's scope hands the app what follows it, its root at least", async () =>
@@ -329,4 +330,46 @@ test("an app on a binding reached by its origin is beyond the gateway's host", a
     ->Option.flatMap(o => o->Dict.get("reason"))
     ->Option.flatMap(JSON.Decode.string)
   deepEqual((answer->Web.status, reason, host.seen), (400, Some("beyond_host"), []))
+})
+
+test("an exact host wins over its parent wildcard and at most two keys are read", async () => {
+  let keys = []
+  let held = dict{"api.example.org": 1., "*.example.org": 2.}
+  let state: State.reads = {
+    domain: async name => {
+      keys->Array.push(name)
+      held->Dict.get(name)
+    },
+    deployment: async _ => None,
+    binding: async _ => None,
+  }
+  deepEqual(await Gateway.named(state, "API.EXAMPLE.ORG:443"), Some(1.))
+  deepEqual(keys, ["api.example.org"])
+  deepEqual(await Gateway.named(state, "blog.example.org"), Some(2.))
+  deepEqual(keys, ["api.example.org", "blog.example.org", "*.example.org"])
+  deepEqual(await Gateway.named(state, "a.b.example.org"), None)
+  deepEqual(keys->Array.slice(~start=3), ["a.b.example.org", "*.b.example.org"])
+})
+
+test("the domain lookup uses the primary key even among unrelated domains", async () => {
+  let plans = []
+  let database = Sqlite.database(~plans, ())
+  let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+  await run("INSERT INTO organization (id, label) VALUES (1, 'first')")
+  await run("INSERT INTO binding (id, organization, secret) VALUES (2, 1, '')")
+  await run("INSERT INTO release (hash, form, size) VALUES ('aa', 'modules', 3)")
+  await run("INSERT INTO deployment (app, binding, release, capacity) VALUES (3, 2, 'aa', 1)")
+  await run(
+    "WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n WHERE v < 384) INSERT INTO domain (domain, app) SELECT 'host-' || v || '.example.org', 3 FROM n",
+  )
+  let reads = State.readsOfDatabase(database)
+  deepEqual(await reads.domain("host-1.example.org"), Some(3.))
+  deepEqual(await reads.domain("missing.example.net"), None)
+  let domainPlans = plans->Array.filter(p => p.sql == "SELECT app FROM domain WHERE domain = ?")
+  deepEqual(domainPlans->Array.length, 2)
+  ok(
+    domainPlans->Array.every(p =>
+      p.rows->Array.some(r => r.detail->String.includes("SEARCH domain USING INDEX"))
+    ),
+  )
 })

@@ -11,6 +11,7 @@ type value = Text(string) | Number(float) | @as(null) Null
 @send @variadic external bind: (statement, array<value>) => statement = "bind"
 /** The first row, its columns read as the caller's record names them. */
 @send external first: statement => promise<Nullable.t<'row>> = "first"
+@send external batch: (database, array<statement>) => promise<unit> = "batch"
 @send external run: statement => promise<unit> = "run"
 
 @notUndefined

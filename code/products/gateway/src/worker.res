@@ -7,13 +7,29 @@ let reachOf = Reach.configured
 
 let fetch = async (request, env: Stores.env) => {
   let located = Web.parts(request->Web.url)
-  switch Gateway.routed(located->Web.pathname) {
+  let state = env.state->Option.map(State.readsOfDatabase)
+  let domain = switch state {
+  | Some(state) =>
+    let host =
+      request
+      ->Web.requestHeaders
+      ->Web.header("host")
+      ->Nullable.toOption
+      ->Option.getOr(located->Web.hostname)
+    await Gateway.named(state, host)
+  | None => None
+  }
+  let routed = switch domain {
+  | Some(app) => Some(({app, path: located->Web.pathname}: Gateway.routed))
+  | None => Gateway.routed(located->Web.pathname)
+  }
+  switch routed {
   | None => Web.answered(~status=404, "not found")
   | Some(routed) =>
-    switch (env.state, reachOf(env)) {
-    | (Some(database), Some(reach)) =>
+    switch (state, reachOf(env)) {
+    | (Some(state), Some(reach)) =>
       await Gateway.passed(
-        State.readsOfDatabase(database),
+        state,
         reach,
         ~port=env.entryPort
         ->Option.flatMap(text => Int.fromString(text))

@@ -22,8 +22,12 @@ type binding = {
   bound: option<float>,
 }
 
-/** A release by its hash in hex, its form, its size in bytes and the kinds it declares, emgxf. */
+/** A declared domain already held by another deployment. */
+exception DomainHeld(string)
+
+/** A release with its kinds and ingress declarations kept beside its artifact hash. */
 type release = {
+  ingress?: array<Envelope.Contracts.AppIngress.t>,
   hash: string,
   form: Envelope.Contracts.DeploymentForm.t,
   size: float,
@@ -35,6 +39,7 @@ type release = {
  * and the kind it was declared to run as, none before it was, RFC emgxf.
  */
 type deployment = {
+  ingress?: array<Envelope.Contracts.AppIngress.t>,
   app: float,
   binding: float,
   release: string,
@@ -50,6 +55,7 @@ type reached = {address: option<string>, origin: option<string>, bound: option<f
 
 /** The gateway's state view offers only routing reads, RFC oomwh. */
 type reads = {
+  domain: string => promise<option<float>>,
   binding: float => promise<option<reached>>,
   deployment: float => promise<option<deployment>>,
 }
@@ -92,6 +98,7 @@ type t = {
    */
   originated: (~binding: float, ~origin: string) => promise<bool>,
   /** A release kept, a second put of one hash changing nothing. */
+  domain: string => promise<option<float>>,
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
   /**

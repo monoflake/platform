@@ -69,7 +69,7 @@ test("migration 0007 keeps every release and deployment before it with no kinds"
     INSERT INTO deployment (app, binding, release, capacity)
     VALUES (3, 2, 'aa', 1), (4, 2, 'aa', 0);`,
   )
-  applied(["0007-kinds.sql"])
+  applied(["0007-kinds.sql", "0008-ingress.sql"])
   let state = State.ofDatabase(Sqlite.asDatabase(db), ~sealing=Sealing.ofKey(key))
   let ran = async app => (await state.deployment(app))->Option.map(d => (d.kind, State.ran(d)))
   deepEqual(

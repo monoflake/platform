@@ -60,20 +60,18 @@ let configOf = directory =>
   | None => Error(`${directory} holds no wrangler.json or wrangler.jsonc`)
   }
 
-/** The kinds the app's own `metadata.json` declares, RFC emgxf, or none where it holds none. */
-let kindsOf = directory => {
+/** The release declarations read before the app is built. */
+let releaseOf = directory => {
   let path = Host.join([directory, "metadata.json"])
   Host.exists(path)
-    ? Bundle.declared(Host.readText(path))
-      ->Result.map(kinds => Some(kinds))
-      ->Result.mapError(why => `${path} ${why}`)
-    : Ok(None)
+    ? Bundle.release(Host.readText(path))->Result.mapError(why => `${path} ${why}`)
+    : Ok(({kinds: None, ingress: None}: Bundle.release))
 }
 
-/** wrangler's own bundle of the app, built into a directory of its own once its kinds are read. */
+/** The app built into a temporary directory after its release declarations are read. */
 let built = (directory, into) => {
   let wrangler = Host.join([directory, "node_modules", ".bin", "wrangler"])
-  kindsOf(directory)->Result.flatMap(kinds =>
+  releaseOf(directory)->Result.flatMap(release =>
     if !Host.exists(wrangler) {
       Error(`${wrangler} is not installed, so the app's own install comes first`)
     } else {
@@ -81,22 +79,27 @@ let built = (directory, into) => {
       env->Dict.set("WRANGLER_SEND_METRICS", "false")
       ran(wrangler, ["deploy", "--dry-run", "--outdir", into], ~cwd=directory, ~env)
       ->Result.flatMap(_ => configOf(directory))
-      ->Result.map(config => (config, kinds, into))
+      ->Result.map(config => (config, release, into))
     }
   )
 }
 
-/** What wrangler wrote packed as a bundle, its hash, the archive written beside it, its kinds. */
-let packed = ((config, kinds, outdir), scratch) => {
+/** The bundle and its release declarations, identified together by the archive hash. */
+let packed = ((config, release: Bundle.release, outdir), scratch) => {
   let files =
     Host.list(outdir, {recursive: true})
     ->Array.filter(name => Host.stat(Host.join([outdir, name]))->Host.isFile)
     ->Array.map((name): Bundle.file => {name, bytes: Host.readBytes(Host.join([outdir, name]))})
-  Bundle.packed(~kinds?, config, files)->Result.map(archive => {
+  Bundle.packed(
+    ~kinds=?release.kinds,
+    ~ingress=?release.ingress,
+    config,
+    files,
+  )->Result.map(archive => {
     let hash = Host.sha256(archive)
     let path = Host.join([scratch, Deploying.fileName(hash)])
     Host.writeBytes(path, archive)
-    (hash, path, archive->TypedArray.length, kinds)
+    (hash, path, archive->TypedArray.length, release)
   })
 }
 
@@ -304,7 +307,7 @@ let throughControl = async (
   ~binding,
   ~hash,
   ~path,
-  ~kinds,
+  ~release: Bundle.release,
   ~secrets,
   ~network,
   ~dry,
@@ -322,7 +325,12 @@ let throughControl = async (
     | Failed(why) => Error(why)
     }
   let sent = async () =>
-    switch await Control.put(control, ~kinds?, Host.readBytes(path)) {
+    switch await Control.put(
+      control,
+      ~kinds=?release.kinds,
+      ~ingress=?release.ingress,
+      Host.readBytes(path),
+    ) {
     | Error(refused) => Error(refusal(refused))
     | Ok(held) if Envelope.Hex.encode(held.hash) != Envelope.Hex.encode(hash) =>
       Error(`the control kept ${Envelope.Hex.encode(held.hash)}, not the bundle packed`)
@@ -380,7 +388,11 @@ let throughControl = async (
     switch app {
     | Some(app) if !dry =>
       (
-        await timed("answer", () => Control.asked(control, ~app), _ => "the gateway answered")
+        await timed(
+          "answer",
+          () => Control.asked(control, ~ingress=release.ingress),
+          _ => "the declared ingress checked",
+        )
       )->Result.map(answer => Some((app, answer)))
     | Some(_) | None => Ok(None)
     }
@@ -388,8 +400,7 @@ let throughControl = async (
   answered->Result.map(answer =>
     answer->Option.forEach(((app, answer)) => {
       Console.log(answer)
-      Console.log(`deploy: app ${Ids.Id.text(app)}`)
-      Console.log(`deploy: open ${Control.gateway(~origin=control.origin, ~app)}`)
+      Control.messages(~ingress=release.ingress, ~app, ~binding)->Array.forEach(Console.log)
     })
   )
 }
@@ -503,8 +514,8 @@ let main = async () => {
     let result = await timed(
       "build",
       async () => built(directory, Host.join([scratch, "out"])),
-      ((_, kinds, _)) =>
-        kinds->Option.mapOr("wrangler's bundle", kinds =>
+      ((_, release: Bundle.release, _)) =>
+        release.kinds->Option.mapOr("wrangler's bundle", kinds =>
           `wrangler's bundle, declared ${kinds->Array.map(k => (k :> string))->Array.join(", ")}`
         ),
     )
@@ -515,10 +526,10 @@ let main = async () => {
         ((hash, _, size, _)) => `${Int.toString(size)} bytes, version ${Envelope.Hex.encode(hash)}`,
       )
     )
-    ->after(((hash, path, _, kinds)) =>
+    ->after(((hash, path, _, release)) =>
       switch deployingOf(named, binding) {
       | Some(Ok((control, binding))) =>
-        throughControl(control, ~app, ~binding, ~hash, ~path, ~kinds, ~secrets, ~network, ~dry)
+        throughControl(control, ~app, ~binding, ~hash, ~path, ~release, ~secrets, ~network, ~dry)
       | Some(Error(why)) => Promise.resolve(Error(why))
       | None =>
         timed(

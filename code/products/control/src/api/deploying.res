@@ -106,6 +106,7 @@ let deploy = (
   ~address,
   ~secrets,
   ~network,
+  ~ingress=None,
   ~into=?,
 ): Contracts.DeploymentDeploy.t => {
   runs: App({id: app}),
@@ -118,6 +119,7 @@ let deploy = (
   secrets,
   network,
   ?into,
+  ?ingress,
 }
 
 let management = call => Contracts.Interface.Management.toJson({call, capabilities: []})
@@ -168,6 +170,7 @@ let deployed = async (
   ~address,
   ~secrets,
   ~network,
+  ~ingress=None,
   ~declared,
   ~wait,
 ) => {
@@ -183,7 +186,9 @@ let deployed = async (
     await declared(into->Option.getOr(0.))
     await Driver.call(
       host,
-      deployments(Deploy(deploy(~app, ~hash, ~form, ~address, ~secrets, ~network, ~into?))),
+      deployments(
+        Deploy(deploy(~app, ~hash, ~form, ~address, ~secrets, ~network, ~ingress, ~into?)),
+      ),
       Contracts.DeploymentDescribed.fromJson,
     )
   }

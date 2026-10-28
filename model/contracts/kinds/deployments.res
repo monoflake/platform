@@ -112,6 +112,7 @@ let types: array<declared> = [
       optional("port", 11, Prim(#uint32)),
       optional("handed", 12, List(Type("deployment-handed"))),
       optional("reaching", 13, List(Type("deployment-runs"))),
+      optional("ingress", 14, List(Type("app-ingress"))),
     ]),
     from: "vr5lw, v7v3w, 49qyg",
   },

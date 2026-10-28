@@ -158,7 +158,7 @@ test("a declaration of kinds is read in its order, and one not read whole is ref
   deepEqual(Bundle.declared(`["function"]`), Error("is no JSON object"))
   deepEqual(
     Bundle.declared(`{"kinds": ["function"], "main": "src/index.js"}`),
-    Error("holds kinds alone, not main"),
+    Error("holds kinds and ingress alone, not main"),
   )
   deepEqual(Bundle.declared(`{}`), Error("holds no kinds"))
   deepEqual(
@@ -211,4 +211,29 @@ test("an undeclared bundle is the bytes it was before kinds, its hash fixed", ()
     Ok("ce2cd032089790763f70d1bafb883d58d1e053dcb1272befde7cd06652587fe3"),
   )
   deepEqual(Bundle.packed(~kinds=?None, config, wrote), Bundle.packed(config, wrote))
+})
+
+test("metadata reads and packs ingress with or without kinds", () => {
+  let text = `{"kinds":["function"],"ingress":[{"name":"domain","domain":"example.com"},{"name":"mount","scope":"hello"},{"name":"binding"}]}`
+  let ingress: array<Bundle.Contracts.AppIngress.t> = [
+    Domain({domain: "example.com"}),
+    Mount({scope: "hello"}),
+    Binding,
+  ]
+  deepEqual(Bundle.release(text), Ok({kinds: Some([Function]), ingress: Some(ingress)}))
+  deepEqual(Bundle.release(`{"ingress":[]}`), Ok({kinds: None, ingress: Some([])}))
+  deepEqual(Bundle.release(`{}`), Ok({kinds: None, ingress: None}))
+  ok(Bundle.release(`{"ingress":"example.com"}`)->Result.isError)
+  ok(Bundle.release(`{"ingress":[{"name":"unknown"}]}`)->Result.isError)
+  ok(Bundle.release(`{"other":[]}`)->Result.isError)
+  deepEqual(Bundle.declared(text), Ok([Function]))
+  let metadata =
+    Bundle.metadata(~ingress, config)->JSON.parseOrThrow->JSON.Decode.object->Option.getOrThrow
+  deepEqual(
+    metadata->Dict.get("ingress"),
+    Some(
+      JSON.parseOrThrow(`[{"name":"domain","domain":"example.com"},{"name":"mount","scope":"hello"},{"name":"binding"}]`),
+    ),
+  )
+  ok(Bundle.packed(~ingress, config, [file("index.js", "x")])->Result.isOk)
 })

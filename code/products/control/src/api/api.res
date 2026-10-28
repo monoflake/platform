@@ -472,20 +472,34 @@ let hostOf = async (parts, id) =>
 
 let put = async (parts, input: Contracts.ReleasePut.t) => {
   let size = input.artifact->TypedArray.length->Int.toFloat
-  if size > artifactBound {
-    refused("too_large", `an artifact holds ${Float.toString(artifactBound)} bytes at most`)
-  } else {
-    let hash = await Web.sha256(input.artifact)
-    let hex = Envelope.Hex.encode(hash)
-    await parts.artifacts.put(hex, input.artifact)
-    await parts.state.putRelease({hash: hex, form: input.form, size, kinds: input.kinds})
-    Output(
-      Calls.output(
-        ({hash, size}: Contracts.ReleaseHeld.t),
-        ~toJson=Contracts.ReleaseHeld.toJson,
-        ~toCbor=Contracts.ReleaseHeld.toCbor,
-      ),
+  switch Ingress.invalid(input.ingress) {
+  | Some(domain) =>
+    refused(
+      "invalid",
+      `domain ${domain} is not a lowercase hostname with at most one leading wildcard`,
     )
+  | None =>
+    if size > artifactBound {
+      refused("too_large", `an artifact holds ${Float.toString(artifactBound)} bytes at most`)
+    } else {
+      let hash = await Web.sha256(input.artifact)
+      let hex = Envelope.Hex.encode(hash)
+      await parts.artifacts.put(hex, input.artifact)
+      await parts.state.putRelease({
+        hash: hex,
+        form: input.form,
+        size,
+        kinds: input.kinds,
+        ingress: ?input.ingress,
+      })
+      Output(
+        Calls.output(
+          ({hash, size}: Contracts.ReleaseHeld.t),
+          ~toJson=Contracts.ReleaseHeld.toJson,
+          ~toCbor=Contracts.ReleaseHeld.toCbor,
+        ),
+      )
+    }
   }
 }
 
@@ -563,6 +577,7 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
               release: hex,
               capacity,
               kind: Some(kind),
+              ingress: ?release.ingress,
             })
             if (await parts.state.deployment(app))->Option.isNone {
               throw(Forgotten)
@@ -574,6 +589,7 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
             ~app,
             ~hash=input.release,
             ~form=release.form,
+            ~ingress=release.ingress,
             ~address=`${parts.origin}/artifacts/${hex}`,
             ~secrets=input.secrets->Option.getOr(dict{}),
             ~network=input.network->Option.getOr([]),
@@ -581,6 +597,8 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
             ~wait=parts.wait,
           ) {
           | answer => answer
+          | exception State.DomainHeld(domain) =>
+            Error({reason: "conflict", message: `domain ${domain} is held by another app`})
           | exception Forgotten =>
             Error({
               reason: "not_found",

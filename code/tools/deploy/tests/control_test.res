@@ -1,6 +1,6 @@
 /***
  * `Control` held to RFC rxmd9, a target naming a control read, and the release put, deployed,
- * described and asked through the gateway against a fetch faked.
+ * described and probed at a declared domain against a fetch faked.
  */
 open Node
 module Contracts = Envelope.Contracts
@@ -47,17 +47,6 @@ test(
     deepEqual(Control.origin("local"), None)
   },
 )
-
-test("the gateway's address of an app is its scope under the control's origin, in hex", () => {
-  deepEqual(
-    Control.gateway(~origin="http://localhost:8787", ~app=3.),
-    "http://localhost:8787/v1/00000003/",
-  )
-  deepEqual(
-    Control.gateway(~origin="https://c.example", ~app=4275878552.),
-    "https://c.example/v1/fedcba98/",
-  )
-})
 
 testAsync(
   "a release is put, deployed and described as the operator, its secret the bearer",
@@ -188,25 +177,6 @@ testAsync(
     )
   },
 )
-
-testAsync("the app is asked at the gateway, and only a gateway's 502 to 504 fails", async () => {
-  let (control, sent) = faked(dict{"/v1/00000001/": (200, "hello from a machine\n")})
-  deepEqual(await Control.asked(control, ~app=1.), Ok("200, hello from a machine"))
-  deepEqual(
-    sent->Array.map(s => (s.url, s.init.method)),
-    [("http://localhost:8787/v1/00000001/", "GET")],
-  )
-  // The production control answers `/` with its own 400, which failed every deploy of it, rxmd9.
-  let (refusing, _) = faked(
-    dict{"/v1/00000002/": (400, "the path / is not /{interface}/{operation}")},
-  )
-  deepEqual(
-    await Control.asked(refusing, ~app=2.),
-    Ok("400, the path / is not /{interface}/{operation}"),
-  )
-  let (unbound, _) = faked(dict{"/v1/00000003/": (503, "the host of app 00000003 is not bound")})
-  ok((await Control.asked(unbound, ~app=3.))->Result.isError)
-})
 
 testAsync(
   "a deploy with no app names none, and the control's answer gives the id it drew",
@@ -340,5 +310,114 @@ test("a retire's dry run asks the control nothing, where the same retire asked f
     ),
     (Some(0), true, Some(1), true),
     ~message=`${dry.stdout}${dry.stderr}${asked.stdout}${asked.stderr}`,
+  )
+})
+
+test("the probe URL is the first declared domain that is not a wildcard", () => {
+  let ingress: array<Contracts.AppIngress.t> = [
+    Mount({scope: "hello"}),
+    Domain({domain: "*.example.org"}),
+    Binding,
+    Domain({domain: "example.com"}),
+    Domain({domain: "example.net"}),
+  ]
+  deepEqual(Control.gateway(Some(ingress)), Some("https://example.com/"))
+  deepEqual(Control.gateway(None), None)
+  deepEqual(Control.gateway(Some([])), None)
+  deepEqual(Control.gateway(Some([Domain({domain: "*.example.org"})])), None)
+})
+
+testAsync("a declared domain is probed and a gateway failure is reported", async () => {
+  let sent = []
+  let control: Control.t = {
+    origin: "https://control.example.net",
+    operator: "secret",
+    fetch: async (url, init) => {
+      sent->Array.push((url, init.method))
+      response("hello\nsecond line", {"status": 200})
+    },
+  }
+  deepEqual(
+    await Control.asked(control, ~ingress=Some([Domain({domain: "example.com"})])),
+    Ok("200, hello"),
+  )
+  deepEqual(sent, [("https://example.com/", "GET")])
+  let unbound = {...control, fetch: async (_, _) => response("no app", {"status": 503})}
+  ok(
+    (
+      await Control.asked(unbound, ~ingress=Some([Domain({domain: "example.com"})]))
+    )->Result.isError,
+  )
+})
+
+testAsync("mounts binding wildcards and no ingress are printed and never probed", async () => {
+  let sent = ref(0)
+  let control: Control.t = {
+    origin: "https://control.example.net",
+    operator: "secret",
+    fetch: async (_, _) => {
+      sent := sent.contents + 1
+      JsError.throwWithMessage("no probe expected")
+    },
+  }
+  let declarations: array<option<array<Contracts.AppIngress.t>>> = [
+    None,
+    Some([]),
+    Some([Mount({scope: "hello"})]),
+    Some([Binding]),
+    Some([Domain({domain: "*.example.org"})]),
+  ]
+  for i in 0 to declarations->Array.length - 1 {
+    let ingress = declarations->Array.getUnsafe(i)
+    deepEqual(
+      await Control.asked(control, ~ingress),
+      Ok("no direct domain to probe, nothing probed"),
+    )
+    deepEqual(
+      Control.messages(~ingress, ~app=1., ~binding=2.)->Array.at(-1),
+      Some("deploy: no direct domain to probe, nothing probed"),
+    )
+  }
+  deepEqual(sent.contents, 0)
+  deepEqual(
+    Control.messages(~ingress=Some([Mount({scope: "hello"}), Binding]), ~app=1., ~binding=2.),
+    [
+      "deploy: app 00000001",
+      "deploy: declared ingress mount hello, binding 00000001.b00000002",
+      "deploy: no direct domain to probe, nothing probed",
+    ],
+  )
+  deepEqual(
+    Control.messages(~ingress=None, ~app=1., ~binding=2.),
+    [
+      "deploy: app 00000001",
+      "deploy: declared ingress none",
+      "deploy: no direct domain to probe, nothing probed",
+    ],
+  )
+  deepEqual(
+    Control.messages(~ingress=Some([Domain({domain: "example.com"})]), ~app=1., ~binding=2.),
+    [
+      "deploy: app 00000001",
+      "deploy: declared ingress domain example.com",
+      "deploy: open https://example.com/",
+    ],
+  )
+})
+
+testAsync("put carries the release ingress beside its kinds", async () => {
+  let held = `{"status": "success", "data": {"hash": "${String.repeat("ab", 32)}", "size": 3}}`
+  let (control, sent) = faked(dict{"/releases/put": (200, held)})
+  let ingress: array<Contracts.AppIngress.t> = [
+    Domain({domain: "example.com"}),
+    Mount({scope: "hello"}),
+    Binding,
+  ]
+  ignore(await Control.put(control, ~kinds=[Function], ~ingress, Uint8Array.fromArray([1, 2, 3])))
+  deepEqual(
+    sent->Array.get(0)->Option.flatMap(s => s.init.body)->Option.map(b => JSON.parseOrThrow(b)),
+    Some(
+      JSON.parseOrThrow(`{"interface":"releases","operation":"put","input":{"form":"modules","artifact":"AQID","kinds":["function"],"ingress":[{"name":"domain","domain":"example.com"},{"name":"mount","scope":"hello"},{"name":"binding"}]}}`),
+    ),
   )
 })

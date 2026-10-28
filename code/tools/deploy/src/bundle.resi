@@ -19,6 +19,14 @@ let config: string => result<config, string>
  */
 let declared: string => result<array<Contracts.DeploymentKind.t>, string>
 
+type release = {
+  kinds: option<array<Contracts.DeploymentKind.t>>,
+  ingress: option<array<Contracts.AppIngress.t>>,
+}
+
+/** The app's release declarations read from metadata.json. */
+let release: string => result<release, string>
+
 /** The module wrangler writes for `main`, its file's name ending `.js`. */
 let mainModule: config => string
 
@@ -29,7 +37,11 @@ let isModule: string => bool
  * The metadata naming the main module, the compatibility date, any flags and any kinds declared,
  * as JSON.
  */
-let metadata: (~kinds: array<Contracts.DeploymentKind.t>=?, config) => string
+let metadata: (
+  ~kinds: array<Contracts.DeploymentKind.t>=?,
+  ~ingress: array<Contracts.AppIngress.t>=?,
+  config,
+) => string
 
 type file = {name: string, bytes: Uint8Array.t}
 
@@ -42,6 +54,7 @@ let tar: array<file> => result<Uint8Array.t, string>
 /** The bundle of the modules wrangler wrote, its metadata first and the rest by name. */
 let packed: (
   ~kinds: array<Contracts.DeploymentKind.t>=?,
+  ~ingress: array<Contracts.AppIngress.t>=?,
   config,
   array<file>,
 ) => result<Uint8Array.t, string>

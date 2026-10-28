@@ -14,7 +14,10 @@ type binding = {
 
 type organization = {id: float, secret: Uint8Array.t}
 
+exception DomainHeld(string)
+
 type release = {
+  ingress?: array<Envelope.Contracts.AppIngress.t>,
   hash: string,
   form: DeploymentForm.t,
   size: float,
@@ -22,6 +25,7 @@ type release = {
 }
 
 type deployment = {
+  ingress?: array<Envelope.Contracts.AppIngress.t>,
   app: float,
   binding: float,
   release: string,
@@ -36,6 +40,7 @@ type reached = {address: option<string>, origin: option<string>, bound: option<f
 
 /** The gateway's state view offers only routing reads, RFC oomwh. */
 type reads = {
+  domain: string => promise<option<float>>,
   binding: float => promise<option<reached>>,
   deployment: float => promise<option<deployment>>,
 }
@@ -58,6 +63,7 @@ type t = {
   unaddressed: (~binding: float, ~address: string) => promise<unit>,
   routed: (~binding: float) => promise<unit>,
   originated: (~binding: float, ~origin: string) => promise<bool>,
+  domain: string => promise<option<float>>,
   putRelease: release => promise<unit>,
   release: string => promise<option<release>>,
   drawApp: (~random: unit => float) => promise<float>,
@@ -115,8 +121,15 @@ type bindingRow = {
 
 let bindingColumns = "id, organization, secret, tunnel, address, origin, relayed, bound"
 
-type releaseRow = {hash: string, form: string, size: float, kinds: Nullable.t<string>}
+type releaseRow = {
+  hash: string,
+  form: string,
+  size: float,
+  kinds: Nullable.t<string>,
+  ingress: Nullable.t<string>,
+}
 type deploymentRow = {
+  ingress: Nullable.t<string>,
   app: float,
   binding: float,
   release: string,
@@ -200,19 +213,29 @@ let deploymentAt = async (database, app) =>
   (
     await firstOf(
       database,
-      "SELECT app, binding, release, capacity, kind FROM deployment WHERE app = ?",
+      "SELECT app, binding, release, capacity, kind, ingress FROM deployment WHERE app = ?",
       [Number(app)],
     )
   )->Option.flatMap((row: deploymentRow) => {
     let {app, binding, release, capacity} = row
+    let ingress = row.ingress->Nullable.toOption->Option.map(Ingress.ofText)
     switch row.kind->Nullable.toOption->Option.map(kindOf) {
-    | None => Some(({app, binding, release, capacity, kind: None}: deployment))
-    | Some(Some(kind)) => Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
+    | None => Some(({app, binding, release, capacity, ?ingress, kind: None}: deployment))
+    | Some(Some(kind)) =>
+      Some(({app, binding, release, capacity, ?ingress, kind: Some(kind)}: deployment))
     | Some(None) => None
     }
   })
 
+type domainRow = {app: float}
+
+let domainAt = async (database, domain) =>
+  (
+    await firstOf(database, "SELECT app FROM domain WHERE domain = ?", [Text(domain)])
+  )->Option.map((row: domainRow) => row.app)
+
 let readsOfDatabase = (database): reads => {
+  domain: name => domainAt(database, name),
   binding: async id =>
     (await bindingAt(database, id))->Option.map((row): reached => {
       address: row.address->Nullable.toOption,
@@ -381,47 +404,77 @@ let ofDatabase = (database, ~sealing) => {
       | Some(_: idRow) => true
       | None => false
       },
+    domain: name => domainAt(database, name),
     putRelease: release =>
       run(
-        "INSERT INTO release (hash, form, size, kinds) VALUES (?, ?, ?, ?)
+        "INSERT INTO release (hash, form, size, kinds, ingress) VALUES (?, ?, ?, ?, ?)
         ON CONFLICT (hash) DO NOTHING",
         [
           Text(release.hash),
           Text(formName(release.form)),
           Number(release.size),
           release.kinds->Option.mapOr(Stores.Null, kinds => Text(kindsText(kinds))),
+          release.ingress->Option.mapOr(Stores.Null, i => Text(Ingress.toText(i))),
         ],
       ),
     release: async hash =>
       (
-        await first("SELECT hash, form, size, kinds FROM release WHERE hash = ?", [Text(hash)])
-      )->Option.flatMap((row: releaseRow) =>
+        await first(
+          "SELECT hash, form, size, kinds, ingress FROM release WHERE hash = ?",
+          [Text(hash)],
+        )
+      )->Option.flatMap((row: releaseRow) => {
+        let ingress = row.ingress->Nullable.toOption->Option.map(Ingress.ofText)
         switch (formOf(row.form), row.kinds->Nullable.toOption) {
-        | (Some(form), None) => Some(({hash: row.hash, form, size: row.size, kinds: None}: release))
+        | (Some(form), None) =>
+          Some(({hash: row.hash, form, size: row.size, ?ingress, kinds: None}: release))
         | (Some(form), Some(text)) =>
           kindsOfText(text)->Option.map((kinds): release => {
             hash: row.hash,
             form,
             size: row.size,
+            ?ingress,
             kinds: Some(kinds),
           })
         | (None, _) => None
         }
-      ),
+      }),
     // Written only where the app is held, so a forgotten app's deploy never lands.
-    deploy: d =>
-      run(
-        `INSERT INTO deployment (app, binding, release, capacity, kind) SELECT ?1, ?2, ?3, ?4, ?5
+    deploy: async d => {
+      let deployed = statement(
+        `INSERT INTO deployment (app, binding, release, capacity, kind, ingress) SELECT ?1, ?2, ?3, ?4, ?5, ?6
         WHERE ${appHeld("?1")} ON CONFLICT (app) DO UPDATE SET binding = excluded.binding,
-        release = excluded.release, capacity = excluded.capacity, kind = excluded.kind`,
+        release = excluded.release, capacity = excluded.capacity, kind = excluded.kind, ingress = excluded.ingress`,
         [
           Number(d.app),
           Number(d.binding),
           Text(d.release),
           Number(d.capacity),
           d.kind->Option.mapOr(Stores.Null, kind => Text(kindName(kind))),
+          d.ingress->Option.mapOr(Stores.Null, i => Text(Ingress.toText(i))),
         ],
-      ),
+      )
+      let domains = Ingress.domains(d.ingress)
+      let cleared = statement("DELETE FROM domain WHERE app = ?", [Number(d.app)])
+      let added =
+        domains->Array.map(domain =>
+          statement(
+            "INSERT INTO domain (domain, app) SELECT ?1, ?2 WHERE EXISTS (SELECT 1 FROM deployment WHERE app = ?2)",
+            [Text(domain), Number(d.app)],
+          )
+        )
+      switch await database->Stores.batch([deployed, cleared, ...added]) {
+      | () => ()
+      | exception JsExn(e) =>
+        let holders = await Promise.all(domains->Array.map(domain => domainAt(database, domain)))
+        switch domains->Array.findWithIndex((_, i) =>
+          holders->Array.getUnsafe(i)->Option.mapOr(false, app => app != d.app)
+        ) {
+        | Some(domain) => throw(DomainHeld(domain))
+        | None => throw(JsExn(e))
+        }
+      }
+    },
     deployment: app => deploymentAt(database, app),
     // One statement, so no id of any kind can be taken between its check and its insert.
     drawApp: (~random) =>
@@ -742,6 +795,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | Some(_) | None => false
         }
       ),
+    domain: name => Ingress.domainOfObjects(objects, name),
     putRelease: async release => {
       let name = `state/releases/${release.hash}`
       if (await readJson(name))->Option.isNone {
@@ -750,6 +804,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           "form": String(formName(release.form)),
           "size": Number(release.size),
         }
+        release.ingress->Option.forEach(i => o->Dict.set("ingress", Ingress.toJson(i)))
         release.kinds->Option.forEach(kinds =>
           o->Dict.set("kinds", Array(kinds->Array.map(kind => JSON.String(kindName(kind)))))
         )
@@ -758,6 +813,7 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
     },
     release: async hash =>
       (await readJson(`state/releases/${hash}`))->Option.flatMap(json => {
+        let ingress = json->field("ingress")->Option.map(Ingress.ofJson)
         let kinds =
           json
           ->field("kinds")
@@ -772,9 +828,10 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
             )
           )
         switch (json->text("form")->Option.flatMap(formOf), json->number("size"), kinds) {
-        | (Some(form), Some(size), None) => Some(({hash, form, size, kinds: None}: release))
+        | (Some(form), Some(size), None) =>
+          Some(({hash, form, size, ?ingress, kinds: None}: release))
         | (Some(form), Some(size), Some(Some(kinds))) =>
-          Some(({hash, form, size, kinds: Some(kinds)}: release))
+          Some(({hash, form, size, ?ingress, kinds: Some(kinds)}: release))
         | _ => None
         }
       }),
@@ -787,18 +844,29 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | [None, Some(json)]
           if json->text("kind") == None && json->number("capacity")->Option.getOr(0.) == 0. => ()
         | _ =>
+          switch await Ingress.conflict(objects, ~app=d.app, ~ingress=d.ingress) {
+          | Some(domain) => throw(DomainHeld(domain))
+          | None => ()
+          }
+          let before =
+            (await readJson(at))
+            ->Option.flatMap(j => field(j, "ingress"))
+            ->Option.map(Ingress.ofJson)
+          await Ingress.replaceObjects(objects, ~app=d.app, ~before, ~after=d.ingress)
           let o = dict{
             "app": JSON.Number(d.app),
             "binding": Number(d.binding),
             "release": String(d.release),
             "capacity": Number(d.capacity),
           }
+          d.ingress->Option.forEach(i => o->Dict.set("ingress", Ingress.toJson(i)))
           d.kind->Option.forEach(kind => o->Dict.set("kind", String(kindName(kind))))
           await writeJson(at, JSON.Object(o))
         }
       }),
     deployment: async app =>
-      (await readJson(`state/deployments/${Float.toString(app)}`))->Option.flatMap(json =>
+      (await readJson(`state/deployments/${Float.toString(app)}`))->Option.flatMap(json => {
+        let ingress = json->field("ingress")->Option.map(Ingress.ofJson)
         switch (
           json->number("binding"),
           json->text("release"),
@@ -806,12 +874,12 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           json->text("kind")->Option.map(kindOf),
         ) {
         | (Some(binding), Some(release), Some(capacity), None) =>
-          Some(({app, binding, release, capacity, kind: None}: deployment))
+          Some(({app, binding, release, capacity, ?ingress, kind: None}: deployment))
         | (Some(binding), Some(release), Some(capacity), Some(Some(kind))) =>
-          Some(({app, binding, release, capacity, kind: Some(kind)}: deployment))
+          Some(({app, binding, release, capacity, ?ingress, kind: Some(kind)}: deployment))
         | _ => None
         }
-      ),
+      }),
     // Checked and written within the queue, as a binding's id is drawn.
     drawApp: (~random) =>
       serial(() =>
@@ -841,6 +909,11 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | [_, Some(json)]
           if json->text("kind") != None || json->number("capacity") != Some(0.) => false
         | _ =>
+          let before =
+            (await readJson(deploymentAt))
+            ->Option.flatMap(j => field(j, "ingress"))
+            ->Option.map(Ingress.ofJson)
+          await Ingress.replaceObjects(objects, ~app, ~before, ~after=None)
           held(await objects.delete(deploymentAt))
           held(await objects.delete(at))
           // A control stood on that answers a delete as done while keeping the object is a fault.
@@ -856,6 +929,11 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
       serial(async () => {
         let at = `state/apps/${Float.toString(app)}`
         let deploymentAt = `state/deployments/${Float.toString(app)}`
+        let before =
+          (await readJson(deploymentAt))
+          ->Option.flatMap(j => field(j, "ingress"))
+          ->Option.map(Ingress.ofJson)
+        await Ingress.replaceObjects(objects, ~app, ~before, ~after=None)
         held(await objects.delete(at))
         held(await objects.delete(deploymentAt))
         switch await Promise.all([readJson(at), readJson(deploymentAt)]) {

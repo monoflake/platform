@@ -99,8 +99,15 @@ test(
         ),
       )
       deepEqual(
-        await stood.parts.state.deployment(app),
-        Some({app, binding, release: hash, capacity: 1., kind: Some(Function)}),
+        (await stood.parts.state.deployment(app))->Option.map(d => (
+          d.app,
+          d.binding,
+          d.release,
+          d.capacity,
+          d.kind,
+          d.ingress,
+        )),
+        Some((app, binding, hash, 1., Some(Contracts.DeploymentKind.Function), None)),
       )
     }
   },
@@ -128,14 +135,21 @@ test(
           stood.host.seen->Array.map(s => Web.parts(s.url)->Web.pathname),
           stood.host.applied.contents,
           stood.host.deployed.contents->Option.map(d => d.into),
-          await state.deployment(app),
+          (await state.deployment(app))->Option.map(d => (
+            d.app,
+            d.binding,
+            d.release,
+            d.capacity,
+            d.kind,
+            d.ingress,
+          )),
         ),
         (
           200,
           ["/management/describe", "/deployments/deploy"],
           None,
           Some(None),
-          Some({app, binding, release: hash, capacity: 0., kind: Some(Function)}),
+          Some((app, binding, hash, 0., Some(Contracts.DeploymentKind.Function), None)),
         ),
         ~message=name,
       )
@@ -281,12 +295,19 @@ test(
     deepEqual(
       (
         status,
-        await stood.parts.state.deployment(app),
+        (await stood.parts.state.deployment(app))->Option.map(d => (
+          d.app,
+          d.binding,
+          d.release,
+          d.capacity,
+          d.kind,
+          d.ingress,
+        )),
         stood.host.deployed.contents->Option.map(d => d.into),
       ),
       (
         200,
-        Some({app, binding, release: hash, capacity: 1., kind: Some(Container)}),
+        Some((app, binding, hash, 1., Some(Contracts.DeploymentKind.Container), None)),
         Some(Some(1.)),
       ),
     )

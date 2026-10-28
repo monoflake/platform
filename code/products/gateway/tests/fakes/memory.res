@@ -20,6 +20,24 @@ let state = (): State.t => {
   let bindings: dict<State.binding> = dict{}
   let releases: dict<State.release> = dict{}
   let deployments: dict<State.deployment> = dict{}
+  let domains: dict<float> = dict{}
+  let domainsOf = (d: State.deployment) =>
+    d.ingress
+    ->Option.getOr([])
+    ->Array.filterMap(i =>
+      switch i {
+      | Domain({domain}) => Some(domain)
+      | Mount(_) | Binding => None
+      }
+    )
+  let clear = app =>
+    domains
+    ->Dict.toArray
+    ->Array.forEach(((domain, held)) => {
+      if held == app {
+        domains->Dict.delete(domain)
+      }
+    })
   let apps = []
   let key = Float.toString
   let change = (id, f) =>
@@ -107,17 +125,29 @@ let state = (): State.t => {
         true
       | Some(_) | None => false
       },
+    domain: async name => domains->Dict.get(name),
     putRelease: async release =>
       if releases->Dict.get(release.hash) == None {
-        releases->Dict.set(release.hash, release)
+        releases->Dict.set(release.hash, {...release, ingress: ?release.ingress})
       },
     release: async hash => releases->Dict.get(hash),
-    deploy: async d =>
+    deploy: async d => {
+      switch domainsOf(d)->Array.find(domain =>
+        domains->Dict.get(domain)->Option.mapOr(false, app => app != d.app)
+      ) {
+      | Some(domain) => throw(State.DomainHeld(domain))
+      | None => ()
+      }
       switch (apps->Array.includes(d.app), deployments->Dict.get(key(d.app))) {
-      | (true, _) => deployments->Dict.set(key(d.app), d)
+      | (true, _) => {
+          clear(d.app)
+          domainsOf(d)->Array.forEach(domain => domains->Dict.set(domain, d.app))
+          deployments->Dict.set(key(d.app), d)
+        }
       | (false, Some(held)) if State.ran(held) => deployments->Dict.set(key(d.app), d)
       | (false, Some(_) | None) => ()
-      },
+      }
+    },
     deployment: async app => deployments->Dict.get(key(app)),
     drawApp: (~random) =>
       Ids.drawn(~random, ~kind="app", async id => {
@@ -139,6 +169,7 @@ let state = (): State.t => {
         if at >= 0 {
           apps->Array.splice(~start=at, ~remove=1, ~insert=[])
         }
+        clear(app)
         deployments->Dict.delete(key(app))
         true
       },
@@ -148,6 +179,7 @@ let state = (): State.t => {
       | -1 => ()
       | at => apps->Array.splice(~start=at, ~remove=1, ~insert=[])
       }
+      clear(app)
       deployments->Dict.delete(key(app))
     },
   }

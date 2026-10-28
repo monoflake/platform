@@ -47,6 +47,7 @@ let deploy: (
   ~address: string,
   ~secrets: dict<Uint8Array.t>,
   ~network: array<Contracts.DeploymentNetwork.t>,
+  ~ingress: option<array<Contracts.AppIngress.t>>=?,
   ~into: float=?,
 ) => Contracts.DeploymentDeploy.t
 
@@ -64,6 +65,7 @@ let deployed: (
   ~address: string,
   ~secrets: dict<Uint8Array.t>,
   ~network: array<Contracts.DeploymentNetwork.t>,
+  ~ingress: option<array<Contracts.AppIngress.t>>=?,
   ~declared: float => promise<unit>,
   ~wait: unit => promise<unit>,
 ) => promise<result<Contracts.DeploymentDescribed.t, Driver.refused>>

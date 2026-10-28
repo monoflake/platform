@@ -13,8 +13,9 @@ let types: array<declared> = [
       field("form", 1, Type("deployment-form")),
       field("artifact", 2, Prim(#bytes)),
       optional("kinds", 3, List(Type("deployment-kind"))),
+      optional("ingress", 4, List(Type("app-ingress"))),
     ]),
-    from: "rxmd9, ge55b, emgxf",
+    from: "rxmd9, ge55b, emgxf, oomwh",
   },
   {
     name: "release-held",
@@ -45,7 +46,13 @@ let interface_: interface_ = {
   bounds: dict{"artifact": 33554432},
   from: "rxmd9",
   operations: [
-    op("put", "release-put", "release-held", [("too_large", #rejected)], ~callers=[#operator]),
+    op(
+      "put",
+      "release-put",
+      "release-held",
+      [("too_large", #rejected), ("invalid", #rejected)],
+      ~callers=[#operator],
+    ),
     op(
       "deploy",
       "release-deploy",
@@ -53,6 +60,7 @@ let interface_: interface_ = {
       [
         ("not_found", #rejected),
         ("unbound", #rejected),
+        ("conflict", #rejected),
         ("invalid", #rejected),
         ("beyond_host", #rejected),
         ("too_large", #rejected),

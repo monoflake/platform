@@ -33,6 +33,7 @@ let messages: dict<string> = dict{
   "beyond_window": "The moment asked for is outside the window kept",
   "call_cycle": "The calls the change declares form a cycle",
   "calls_unmatched": "A call the change declares matches no export",
+  "conflict": "The domain is held by another app",
   "constraint": "The statement breaks a constraint of the database",
   "depended_on": "Something else depends on what the change removes",
   "deployed": "The app has run; it is retired, not forgotten",

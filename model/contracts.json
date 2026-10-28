@@ -546,6 +546,44 @@
 				}
 			]
 		},
+		"app-ingress": {
+			"union": {
+				"tag": "name",
+				"cases": [
+					{
+						"name": "domain",
+						"code": 1,
+						"fields": [
+							{
+								"name": "domain",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "mount",
+						"code": 2,
+						"fields": [
+							{
+								"name": "scope",
+								"key": 1,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "binding",
+						"code": 3,
+						"fields": []
+					}
+				]
+			}
+		},
 		"app-env": {
 			"union": {
 				"tag": "name",
@@ -3716,6 +3754,16 @@
 						}
 					},
 					"optional": true
+				},
+				{
+					"name": "ingress",
+					"key": 14,
+					"shape": {
+						"list": {
+							"type": "app-ingress"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -5900,6 +5948,16 @@
 						}
 					},
 					"optional": true
+				},
+				{
+					"name": "ingress",
+					"key": 4,
+					"shape": {
+						"list": {
+							"type": "app-ingress"
+						}
+					},
+					"optional": true
 				}
 			]
 		},
@@ -7302,6 +7360,7 @@
 		"beyond_window": "The moment asked for is outside the window kept",
 		"call_cycle": "The calls the change declares form a cycle",
 		"calls_unmatched": "A call the change declares matches no export",
+		"conflict": "The domain is held by another app",
 		"constraint": "The statement breaks a constraint of the database",
 		"denied": "The call carries no credential, or one that does not allow it",
 		"depended_on": "Something else depends on what the change removes",
@@ -8183,6 +8242,10 @@
 						{
 							"name": "too_large",
 							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["operator"]
@@ -8198,6 +8261,10 @@
 						},
 						{
 							"name": "unbound",
+							"failure": "rejected"
+						},
+						{
+							"name": "conflict",
 							"failure": "rejected"
 						},
 						{
