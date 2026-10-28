@@ -12,6 +12,19 @@ let config: Bundle.config = {
   compatibilityFlags: [],
 }
 
+test("command line ingress keeps metadata kinds and refuses a second ingress declaration", () => {
+  let ingress: array<Bundle.Contracts.AppIngress.t> = [Domain({domain: "example.com"}), Binding]
+  deepEqual(
+    Bundle.release(~ingress, `{"kinds":["container","function"]}`),
+    Ok({kinds: Some([Container, Function]), ingress: Some(ingress)}),
+  )
+  deepEqual(Bundle.release(~ingress, `{}`), Ok({kinds: None, ingress: Some(ingress)}))
+  [`{"ingress":[]}`, `{"ingress":[{"name":"binding"}]}`, `{"ingress":null}`]->Array.forEach(text =>
+    deepEqual(Bundle.release(~ingress, text), Error("and --ingress both declare ingress"))
+  )
+  deepEqual(Bundle.release(`{"kinds":["function"]}`), Ok({kinds: Some([Function]), ingress: None}))
+})
+
 /** A field of a header, its text up to the first NUL. */
 let field = (archive, at, length) =>
   Bytes.text(archive->TypedArray.slice(~start=at, ~end=at + length))

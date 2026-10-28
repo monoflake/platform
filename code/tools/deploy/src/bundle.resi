@@ -24,8 +24,8 @@ type release = {
   ingress: option<array<Contracts.AppIngress.t>>,
 }
 
-/** The app's release declarations read from metadata.json. */
-let release: string => result<release, string>
+/** The release declarations with command line ingress unless metadata.json declares it too. */
+let release: (~ingress: array<Contracts.AppIngress.t>=?, string) => result<release, string>
 
 /** The module wrangler writes for `main`, its file's name ending `.js`. */
 let mainModule: config => string

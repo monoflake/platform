@@ -137,7 +137,7 @@ type release = {
   ingress: option<array<Contracts.AppIngress.t>>,
 }
 
-let release = text => {
+let release = (~ingress as given=?, text) => {
   let parsed = switch JSON.parseOrThrow(text) {
   | json => Ok(json)
   | exception JsExn(_) => Error("is no JSON")
@@ -145,10 +145,12 @@ let release = text => {
   parsed->Result.flatMap(json =>
     switch json->JSON.Decode.object {
     | None => Error("is no JSON object")
+    | Some(o) if given != None && o->Dict.has("ingress") =>
+      Error("and --ingress both declare ingress")
     | Some(o) =>
       let kinds = o->Dict.has("kinds") ? declared(text)->Result.map(k => Some(k)) : Ok(None)
       let ingress = switch o->Dict.get("ingress") {
-      | None => Ok(None)
+      | None => Ok(given)
       | Some(json) =>
         switch json->JSON.Decode.array {
         | None => Error("declares ingress that is not an array")

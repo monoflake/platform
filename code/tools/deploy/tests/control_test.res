@@ -32,6 +32,100 @@ let described = `{"status": "success", "data": {"runs": {"name": "app", "id": 1}
     32,
   )}", "state": {"name": "running", "address": "a", "runtime": "workerd", "isolation": ["isolate"]}}}`
 
+testAsync("command line ingress reaches bundle metadata and the release put in order", async () => {
+  let parsed =
+    Arguments.parse([
+      "apps/hello",
+      "control:https://control.example.net",
+      "--ingress",
+      "mount:hello",
+      "--ingress",
+      "domain:example.com",
+      "--ingress",
+      "binding",
+    ])->Result.getOrThrow
+  let release =
+    Bundle.release(~ingress=?parsed.ingress, `{"kinds":["function"]}`)->Result.getOrThrow
+  let config: Bundle.config = {
+    main: "index.js",
+    compatibilityDate: "2026-10-21",
+    compatibilityFlags: [],
+  }
+  let archive =
+    Bundle.packed(
+      ~kinds=?release.kinds,
+      ~ingress=?release.ingress,
+      config,
+      [{name: "index.js", bytes: Bytes.utf8("export default {}")}],
+    )->Result.getOrThrow
+  let size =
+    Bytes.text(archive->TypedArray.slice(~start=124, ~end=135))
+    ->Int.fromString(~radix=8)
+    ->Option.getOrThrow
+  let metadata = Bytes.text(archive->TypedArray.slice(~start=512, ~end=512 + size))
+  deepEqual(
+    metadata,
+    `{"main_module":"index.js","compatibility_date":"2026-10-21","ingress":[{"name":"mount","scope":"hello"},{"name":"domain","domain":"example.com"},{"name":"binding"}],"kinds":["function"]}`,
+  )
+  let held = `{"status":"success","data":{"hash":"${String.repeat("ab", 32)}","size":3}}`
+  let (control, sent) = faked(dict{"/releases/put": (200, held)})
+  ok(
+    (
+      await Control.put(control, ~kinds=?release.kinds, ~ingress=?release.ingress, archive)
+    )->Result.isOk,
+  )
+  let body = sent->Array.get(0)->Option.getOrThrow
+  let input =
+    body.init.body
+    ->Option.getOrThrow
+    ->JSON.parseOrThrow
+    ->JSON.Decode.object
+    ->Option.getOrThrow
+    ->Dict.get("input")
+    ->Option.getOrThrow
+    ->JSON.Decode.object
+    ->Option.getOrThrow
+  deepEqual(
+    input->Dict.get("ingress"),
+    Some(
+      JSON.parseOrThrow(`[{"name":"mount","scope":"hello"},{"name":"domain","domain":"example.com"},{"name":"binding"}]`),
+    ),
+  )
+  deepEqual(input->Dict.get("kinds"), Some(JSON.parseOrThrow(`["function"]`)))
+  deepEqual(Control.gateway(release.ingress), Some("https://example.com/"))
+  ok(
+    Control.messages(~ingress=release.ingress, ~app=1., ~binding=2.)->Array.includes(
+      "deploy: declared ingress mount hello, domain example.com, binding 00000001.b00000002",
+    ),
+  )
+})
+
+test("metadata and command line ingress conflict before wrangler is needed", () => {
+  let directory = Host.makeTemporary(Host.join([Host.temporary(), "deploy-ingress-"]))
+  Host.writeBytes(Host.join([directory, "metadata.json"]), Bytes.utf8(`{"ingress":[]}`))
+  let result = spawnSync(
+    "node",
+    ["src/main.res.mjs", directory, "local", "--ingress", "binding"],
+    {"env": env, "encoding": "utf8"},
+  )
+  Host.remove(directory, {recursive: true, force: true})
+  deepEqual(result.status->Nullable.toOption, Some(1))
+  ok(result.stderr->String.includes("metadata.json and --ingress both declare ingress"))
+  ok(!(result.stderr->String.includes("is not installed")))
+})
+
+test("malformed command line ingress is refused before the build phase", () => {
+  let result = spawnSync(
+    "node",
+    ["src/main.res.mjs", "apps/hello", "local", "--ingress", "domain:Example.com"],
+    {"env": env, "encoding": "utf8"},
+  )
+  deepEqual(result.status->Nullable.toOption, Some(2))
+  ok(result.stderr->String.includes("deploy: --ingress domain:Example.com is no domain:"))
+  ok(!(result.stdout->String.includes("deploy: build")))
+  ok(!(result.stderr->String.includes("deploy: build")))
+})
+
 test(
   "a control's target is its address, http or https with no query, and any other is ssh's",
   () => {

@@ -61,17 +61,17 @@ let configOf = directory =>
   }
 
 /** The release declarations read before the app is built. */
-let releaseOf = directory => {
+let releaseOf = (directory, ~ingress) => {
   let path = Host.join([directory, "metadata.json"])
   Host.exists(path)
-    ? Bundle.release(Host.readText(path))->Result.mapError(why => `${path} ${why}`)
-    : Ok(({kinds: None, ingress: None}: Bundle.release))
+    ? Bundle.release(~ingress?, Host.readText(path))->Result.mapError(why => `${path} ${why}`)
+    : Ok(({kinds: None, ingress}: Bundle.release))
 }
 
 /** The app built into a temporary directory after its release declarations are read. */
-let built = (directory, into) => {
+let built = (directory, into, ~ingress) => {
   let wrangler = Host.join([directory, "node_modules", ".bin", "wrangler"])
-  releaseOf(directory)->Result.flatMap(release =>
+  releaseOf(directory, ~ingress)->Result.flatMap(release =>
     if !Host.exists(wrangler) {
       Error(`${wrangler} is not installed, so the app's own install comes first`)
     } else {
@@ -507,13 +507,13 @@ let main = async () => {
       c->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     )
     Host.setExitCode(Host.process, 2)
-  | Ok({directory, target: named, app, binding, secrets, network, dry}) =>
+  | Ok({directory, target: named, app, binding, secrets, network, ingress, dry}) =>
     let secrets = secretsOf(secrets)->Result.getOr(dict{})
     let directory = Host.absolute(directory)
     let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-"]))
     let result = await timed(
       "build",
-      async () => built(directory, Host.join([scratch, "out"])),
+      async () => built(directory, Host.join([scratch, "out"]), ~ingress),
       ((_, release: Bundle.release, _)) =>
         release.kinds->Option.mapOr("wrangler's bundle", kinds =>
           `wrangler's bundle, declared ${kinds->Array.map(k => (k :> string))->Array.join(", ")}`

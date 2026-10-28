@@ -13,8 +13,84 @@ let deploy: Arguments.t = {
   retire: None,
   secrets: [],
   network: [],
+  ingress: None,
   dry: false,
 }
+
+test("ingress flags parse each kind and keep the order given", () => {
+  deepEqual(
+    Arguments.parse([
+      "apps/hello",
+      "local",
+      "--ingress",
+      "domain:example.com",
+      "--ingress",
+      "mount:hello",
+      "--dry-run",
+      "--ingress",
+      "binding",
+      "--ingress",
+      "domain:*.example.org",
+    ]),
+    Ok({
+      ...deploy,
+      target: "local",
+      ingress: Some([
+        Domain({domain: "example.com"}),
+        Mount({scope: "hello"}),
+        Binding,
+        Domain({domain: "*.example.org"}),
+      ]),
+      dry: true,
+    }),
+  )
+})
+
+test("malformed ingress is refused by name before a build", () => {
+  [
+    "",
+    "domain:",
+    "domain:Example.com",
+    "domain:example.com.",
+    "domain:example..com",
+    "domain:example.123",
+    "domain:*.example.*.org",
+    "domain:*.*.example.org",
+    "domain:example.com/path",
+    "domain:https://example.com",
+    "domain:-app.example.com",
+    "domain:app-.example.com",
+    "domain:app_name.example.com",
+    "domain:" ++ String.repeat("a", 64) ++ ".example.com",
+    "domain:" ++ String.repeat("a.", 122) ++ "example.com",
+    "mount:",
+    "mount: ",
+    "binding:",
+    "binding:hello",
+    "other:hello",
+  ]->Array.forEach(text =>
+    deepEqual(
+      Arguments.parse(["apps/hello", "local", "--ingress", text]),
+      Error(`--ingress ${text} is no domain:<name>, mount:<scope> or binding`),
+    )
+  )
+  ok(Arguments.parse(["apps/hello", "local", "--ingress"])->Result.isError)
+})
+
+test("forget and retire refuse ingress as they refuse other deploy flags", () =>
+  ["forget", "retire"]->Array.forEach(flag =>
+    deepEqual(
+      Arguments.parse([
+        "control:https://control.example.net",
+        "--" ++ flag,
+        "00000001",
+        "--ingress",
+        "binding",
+      ]),
+      Error(`--${flag} takes the control's target alone, and --dry-run`),
+    )
+  )
+)
 
 test("a deploy's app and binding are 8 lowercase hex digits, and nothing else", () => {
   deepEqual(

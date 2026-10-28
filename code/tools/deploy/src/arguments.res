@@ -1,7 +1,7 @@
 /*** The deploy tool's arguments read, each id 8 lowercase hex digits, RFC b8f35. */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <control target> --retire <8 hex> [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <control target> --retire <8 hex> [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
@@ -17,6 +17,7 @@ type t = {
   retire: option<float>,
   secrets: array<string>,
   network: array<Contracts.DeploymentNetwork.t>,
+  ingress: option<array<Contracts.AppIngress.t>>,
   dry: bool,
 }
 
@@ -35,9 +36,38 @@ let networkOf = name =>
   | _ => None
   }
 
+// Domain validation follows the control's releases.put in parts/ingress.res.
+let validDomain = domain => {
+  let name = domain->String.startsWith("*.") ? domain->String.slice(~start=2) : domain
+  let labels = name->String.split(".")
+  String.length(domain) <= 253 &&
+  labels->Array.length >= 2 &&
+  !(/^[0-9]+$/->RegExp.test(labels->Array.at(-1)->Option.getOr(""))) &&
+  labels->Array.every(label => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/->RegExp.test(label))
+}
+
+let ingressOf = text => {
+  let value = text->String.slice(~start=text->String.indexOf(":") + 1)
+  if text == "binding" {
+    Some(Contracts.AppIngress.Binding)
+  } else if text->String.startsWith("domain:") && validDomain(value) {
+    Some(Contracts.AppIngress.Domain({domain: value}))
+  } else if text->String.startsWith("mount:") && value->String.trim != "" {
+    Some(Contracts.AppIngress.Mount({scope: value}))
+  } else {
+    None
+  }
+}
+
 let rec read = (args, given) =>
   switch args {
   | list{"--dry-run", ...rest} => read(rest, {...given, dry: true})
+  | list{"--ingress", text, ...rest} =>
+    switch ingressOf(text) {
+    | None => Error(`--ingress ${text} is no domain:<name>, mount:<scope> or binding`)
+    | Some(ingress) =>
+      read(rest, {...given, ingress: Some([...given.ingress->Option.getOr([]), ingress])})
+    }
   | list{"--secrets", text, ...rest} =>
     switch listed(text)->Array.find(n => !(secretName->RegExp.test(n))) {
     | Some(bad) => Error(`--secrets ${bad} is no secret's name`)
@@ -67,7 +97,12 @@ let controlOnly = (given: t, ~flag) =>
     Error(`${more} is one argument too many, as --${flag} builds nothing`)
   | (named, _) if Control.origin(named) == None =>
     Error(`--${flag} asks a control, and ${named} is a machine ssh reaches`)
-  | _ if given.app != None || given.binding != None || given.secrets != [] || given.network != [] =>
+  | _
+    if given.app != None ||
+    given.binding != None ||
+    given.secrets != [] ||
+    given.network != [] ||
+    given.ingress != None =>
     Error(`--${flag} takes the control's target alone, and --dry-run`)
   | (named, _) => Ok({...given, directory: "", target: named})
   }
@@ -97,6 +132,7 @@ let parse = args => {
       retire,
       secrets: [],
       network: [],
+      ingress: None,
       dry: false,
     }
     switch (read(List.fromArray(rest), empty), forget, retire) {
