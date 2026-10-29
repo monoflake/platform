@@ -101,7 +101,7 @@ test(
     ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
     let (status, opened) = await called(stood, Organization(1.), reaches(Open({})))
     let id = opened->data->member("reach")->JSON.Decode.float->Option.getOr(0.)
-    let tunnel = `tunnel-${Api.tunnelName(id)}`
+    let tunnel = `tunnel-${Ids.text(id)}`
     deepEqual((status, opened->data->member("address")), (200, String("10.200.0.1")))
     deepEqual(
       opened
@@ -127,14 +127,19 @@ test(
   },
 )
 
-test("a host bound is made one tunnel and one route, and answered the tunnel's token", async () => {
+test("a host's tunnel is named by its bare hex binding id and made once", async () => {
   let (faked, made, routes) = tunnels()
   let stood = stand(~tunnels=faked)
   ignore(await called(stood, Operator, organizations(Open({label: "first"}))))
-  let id = await openBinding(stood, 1.)
+  let id = await stood.parts.state.openBinding(
+    ~organization=1.,
+    ~secret=Web.random(32),
+    ~relayed=false,
+    ~random=() => 40506736.,
+  )
   let (_, bound) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
   let (_, again) = await called(stood, Host(id), bindings(Bind({reach: Tunnel})))
-  let name = `tunnel-${Api.tunnelName(id)}`
+  let name = "tunnel-026a1570"
   let tunnel =
     bound
     ->data
@@ -157,7 +162,7 @@ test(
     let standing: Standing.t = {
       reach: async () => {
         asked := asked.contents + 1
-        Ok({address: "10.200.0.7", tunnel: Some("token of binding-7")})
+        Ok({address: "10.200.0.7", tunnel: Some("token of 00000007")})
       },
     }
     let stood = stand(~standing)
@@ -177,7 +182,7 @@ test(
       ->JSON.Decode.string
       ->Option.flatMap(Envelope.Base64url.decode)
       ->Option.map(Web.fromUtf8),
-      Some("token of binding-7"),
+      Some("token of 00000007"),
     )
     deepEqual((asked.contents, again->data), (1, bound->data))
   },

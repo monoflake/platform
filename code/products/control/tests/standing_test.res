@@ -96,7 +96,7 @@ let stoodOn = () => {
         Contracts.ReachOpened.toJson({
           reach: 7.,
           address: "10.200.0.7",
-          tunnel: Web.utf8("token of binding-7"),
+          tunnel: Web.utf8("token of 00000007"),
         }),
       )
     | path => Web.answered(~status=200, `relayed ${path}`)
@@ -137,7 +137,7 @@ test(
 test("a reach is opened of the control stood on, its tunnel's token as text", async () => {
   let (fetch, _, sent) = stoodOn()
   let standing = Standing.through(~origin, ~token, fetch)
-  deepEqual(await standing.reach(), Ok({address: "10.200.0.7", tunnel: Some("token of binding-7")}))
+  deepEqual(await standing.reach(), Ok({address: "10.200.0.7", tunnel: Some("token of 00000007")}))
   deepEqual(sent->Array.map(s => s.url), ["https://foundation.test/reaches/open"])
 })
 

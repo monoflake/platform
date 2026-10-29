@@ -16,7 +16,7 @@ type parts = {
 
 let artifactBound = 33554432.
 
-let tunnelName = id => `binding-${Float.toString(id)}`
+let tunnelName = id => Ids.text(id)
 
 /** An id drawn at random over 32 bits, 0 among them, which the state draws again, RFC b8f35. */
 let random = () => Ids.ofBytes(Web.random(4))

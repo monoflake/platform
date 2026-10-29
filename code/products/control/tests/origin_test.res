@@ -331,13 +331,7 @@ test(
       (
         (503, Some("unreachable"), Some((Some("10.200.0.1"), None))),
         (200, JSON.String("10.200.0.2")),
-        (
-          2,
-          [
-            (`tunnel-${Api.tunnelName(id)}`, "10.200.0.1"),
-            (`tunnel-${Api.tunnelName(next)}`, "10.200.0.2"),
-          ],
-        ),
+        (2, [(`tunnel-${Ids.text(id)}`, "10.200.0.1"), (`tunnel-${Ids.text(next)}`, "10.200.0.2")]),
         Some("unbound"),
         (200, JSON.String("origin")),
       ),

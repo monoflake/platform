@@ -30,11 +30,11 @@ test(
   "a tunnel is made by its name, routed to one address and its token asked, each by the credential",
   async () => {
     let (tunnels, sent) = faked([
-      (200, `{"success": true, "errors": [], "result": {"id": "t-1", "name": "binding-1"}}`),
+      (200, `{"success": true, "errors": [], "result": {"id": "t-1", "name": "00000001"}}`),
       (200, `{"success": true, "errors": [], "result": {"id": "r-1"}}`),
       (200, `{"success": true, "errors": [], "result": "the token"}`),
     ])
-    deepEqual(await tunnels.make("binding-1"), Ok("t-1"))
+    deepEqual(await tunnels.make("00000001"), Ok("t-1"))
     deepEqual(await tunnels.route(~tunnel="t-1", ~address="10.200.0.1"), Ok())
     deepEqual(await tunnels.token("t-1"), Ok("the token"))
     deepEqual(
@@ -52,7 +52,7 @@ test(
     deepEqual(
       sent->Array.slice(~start=0, ~end=2)->Array.map(s => JSON.parseOrThrow(s.body)),
       [
-        JSON.parseOrThrow(`{"name": "binding-1", "config_src": "cloudflare"}`),
+        JSON.parseOrThrow(`{"name": "00000001", "config_src": "cloudflare"}`),
         JSON.parseOrThrow(`{"network": "10.200.0.1/32", "tunnel_id": "t-1"}`),
       ],
     )
@@ -65,9 +65,9 @@ test("an answer the API marks failed, or no JSON, is its first error or its stat
     (502, "bad gateway"),
     (200, `{"success": true, "result": {"name": "no id"}}`),
   ])
-  deepEqual(await tunnels.make("binding-1"), Error("Authentication error"))
+  deepEqual(await tunnels.make("00000001"), Error("Authentication error"))
   deepEqual(await tunnels.token("t-1"), Error("the API answered 502 and no JSON"))
-  deepEqual(await tunnels.make("binding-1"), Error("the API answered a tunnel with no id"))
+  deepEqual(await tunnels.make("00000001"), Error("the API answered a tunnel with no id"))
 })
 
 test("a route refused is made already where the tunnel's routes hold its address", async () => {
