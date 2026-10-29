@@ -108,6 +108,16 @@ AppleDouble `._*` files beside each one, so a carried `/var/lib/tailscale` needs
 `COPYFILE_DISABLE=1` and `--uid 0 --gid 0`. `nixos-install` leaves its build behind in the store,
 900 MiB of the 5 GB ext4, which a garbage collection after the first boot frees.
 
+**Through a jump host, nixos-anywhere 1.13.0 can wait forever for the kexec to drop the machine**,
+found on 2026-10-29 installing an x86_64 virtual machine reached only through a host on its LAN.
+After the kexec it loops until an SSH probe fails, but the installer came back at the same address
+with the same host keys before any probe saw it gone, so every probe succeeded; killing the one
+probe in flight let it reconnect and go on through disko and the install. The machine reached over
+an overlay network alone is lost at the kexec, since the installer joins none, so the jump has to
+sit on the machine's own LAN. nixos-anywhere also sets `UserKnownHostsFile=/dev/null` and
+`StrictHostKeyChecking=no` ahead of any `--ssh-option`, and SSH keeps an option's first value, so
+the host key is checked by hand through the jump before and after.
+
 **A path unit watching the system profile's link never fires**, tried on 2026-10-21 with systemd
 260: Nix replaces `/nix/var/nix/profiles/system` by renaming a new link over it, and inotify
 follows the old link to its target, which does not change. `PathChanged=` on the directory fires
