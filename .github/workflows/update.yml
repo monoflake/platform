@@ -1,0 +1,21 @@
+# This repository's scheduled update, the workspace's reusable one, the workspace's docs/ci.md.
+name: update
+
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: update
+
+jobs:
+  update:
+    uses: canmi21/canmi/.github/workflows/update-repository.yml@main
+    with:
+      path: monoflake/platform
+      prepare: mise run prepare
