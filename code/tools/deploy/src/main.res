@@ -4,11 +4,11 @@
  */
 module Contracts = Envelope.Contracts
 
-/** A phase run and its time printed, beside what `said` makes of its value or why it failed. */
+/** Builder in monoflake/machine owns the duration format used here. */
 let timed = async (name, run, said) => {
   let started = Date.now()
   let result = await run()
-  let took = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=2)
+  let took = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
   switch result {
   | Ok(value) => Console.log(`deploy: ${name} ${took}s, ${said(value)}`)
   | Error(why) => Console.error(`deploy: ${name} failed after ${took}s, ${why}`)
@@ -543,7 +543,7 @@ let main = async () => {
       }
     )
     Host.remove(scratch, {recursive: true, force: true})
-    let took = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=2)
+    let took = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
     switch result {
     | Ok() => Console.log(`deploy: ${directory} on ${named}, ${took}s in all`)
     | Error(_) => Host.setExitCode(Host.process, 1)

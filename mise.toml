@@ -10,12 +10,10 @@ cargo-deny = "0.20"
 formatted = "'*.md' '*.json' 'docs/**/*.md' 'model/*.json' 'tests/**/*.json'"
 
 [tasks.fmt]
-description = "Format the model with ReScript's formatter and the prose, the product and the samples with oxfmt: `fmt [--dry-run]`"
+description = "Format ReScript, Rust, Markdown and JSON: `fmt [--dry-run]`"
 usage = 'flag "-n --dry-run" help="List what is not formatted and write nothing"'
-run = """
-if [ -z "${usage_dry_run:-}" ]; then rescript format && oxfmt {{vars.formatted}}; exit; fi
-rescript format --check; oxfmt --list-different {{vars.formatted}}; exit 0
-"""
+depends = ["//:build"]
+run = "node {{env.WORKSPACE}}/scripts/fmt.res.mjs --rescript --glob {{vars.formatted}}"
 
 [tasks.formatted]
 description = "Fail where anything is not formatted, as verify asks"
