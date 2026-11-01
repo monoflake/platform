@@ -18,8 +18,12 @@ let deployed = async (~secret=String.repeat("ab", 32), ()) => {
   await run("INSERT INTO app (id) VALUES (16777220)")
   await run("INSERT INTO deployment (app, binding, release, capacity)
     VALUES (16777220, 2, 'aa', 1)")
+  await run("INSERT INTO scope (organization, scope, app) VALUES (1, 'hello', 16777220)")
   database
 }
+
+/** The first organization's id as the gateway's configuration writes it. */
+let organization = "00000001"
 
 type secretRow = {secret: string}
 
@@ -27,7 +31,7 @@ test("the database view offers only routing reads, no writes and no secret field
   let database = await deployed()
   let seen = []
   let reads = State.readsOfDatabase(Reading.guarded(database, seen))
-  deepEqual(Reading.offered(reads), ["binding", "deployment", "domain"])
+  deepEqual(Reading.offered(reads), ["binding", "deployment", "domain", "mount"])
   let binding = (await reads.binding(2.))->Option.getOrThrow
   deepEqual(Reading.offered(binding), ["address", "bound", "origin"])
   deepEqual(binding, {address: Some("10.200.0.2"), origin: None, bound: Some(1.)})
@@ -53,7 +57,7 @@ test(
   "the bundled Worker exports fetch and passes a mount with its request and response intact",
   async () => {
     let worker = await Workerd.bundled()
-    deepEqual((await worker.fetch(request("/"), {}))->Web.status, 404)
+    deepEqual((await worker.fetch(request("/"), {}))->Web.status, 500)
     let database = await deployed()
     let seen = []
     let sent = []
@@ -84,11 +88,12 @@ test(
       state: Reading.guarded(database, seen),
       hosts: Reading.fetcher(reach),
       entryPort: "43210",
+      organization,
     }
     let answer = await worker.fetch(
       request(
         ~method="POST",
-        "/v7/01000004/hello?x=1",
+        "/v7/hello/hello?x=1",
         ~headers=dict{"x-client": "caller"},
         ~body=Web.utf8("body"),
       ),
@@ -114,7 +119,7 @@ test(
       ),
       [Some("application/json"), Some("answer"), Some("kept=1")],
     )
-    deepEqual(seen->Array.length, 4)
+    deepEqual(seen->Array.length, 5)
   },
 )
 
@@ -127,8 +132,9 @@ test("the gateway defaults to the shared entry port", async () => {
       sent->Array.push(request->Web.url)
       Web.answered(~status=200, "app")
     }),
+    organization,
   }
-  deepEqual((await Worker.default.fetch(request("/v1/01000004/"), env))->Web.status, 200)
+  deepEqual((await Worker.default.fetch(request("/v1/hello/"), env))->Web.status, 200)
   deepEqual(sent, [`http://10.200.0.2:${Int.toString(Reach.entryPort)}/`])
 })
 
@@ -140,13 +146,19 @@ test("a mount never opens or reseals a binding secret", async () => {
     let env: Stores.env = {
       state: Reading.guarded(database, seen),
       hosts: Reading.fetcher(async _ => Web.answered(~status=200, "app")),
+      organization,
     }
-    deepEqual((await Worker.default.fetch(request("/v1/01000004/"), env))->Web.status, 200)
-    deepEqual(seen->Array.length, 4)
+    deepEqual((await Worker.default.fetch(request("/v1/hello/"), env))->Web.status, 200)
+    deepEqual(seen->Array.length, 5)
   }
 })
 
-test("the gateway answers no control route, root or direct domain path", async () => {
+test("the gateway answers no control route, root, app id or undeclared scope", async () => {
+  let env: Stores.env = {
+    state: await deployed(),
+    hosts: Reading.fetcher(async _ => Web.answered(~status=200, "app")),
+    organization,
+  }
   let paths = [
     "/",
     "/organizations/open",
@@ -155,7 +167,10 @@ test("the gateway answers no control route, root or direct domain path", async (
     "/object/read",
     "/hello",
     "/v1/00000000/",
+    "/v1/01000004/",
     "/v1/01000004x/",
+    "/v1/app-16777220/",
+    "/v1/other/",
   ]
   for i in 0 to paths->Array.length - 1 {
     for j in 0 to 1 {
@@ -163,14 +178,41 @@ test("the gateway answers no control route, root or direct domain path", async (
         (
           await Worker.default.fetch(
             request(~method=j == 0 ? "GET" : "POST", paths->Array.getUnsafe(i)),
-            {},
+            env,
           )
         )->Web.status,
         404,
       )
     }
   }
-  deepEqual((await Worker.default.fetch(request("/v1/01000004/"), {}))->Web.status, 500)
+  deepEqual((await Worker.default.fetch(request("/v1/hello/"), {}))->Web.status, 500)
+})
+
+test("one gateway name reads one organization's mounts, refused where none is named", async () => {
+  let database = await deployed()
+  let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+  await run("INSERT INTO domain (domain, app) VALUES ('example.com', 16777220)")
+  let env: Stores.env = {
+    state: database,
+    hosts: Reading.fetcher(async _ => Web.answered(~status=200, "app")),
+  }
+  let asked = async (~organization=?, ~host="gateway.example.com", path) =>
+    (
+      await Worker.default.fetch(
+        request(path, ~headers=dict{"host": host}),
+        {...env, ?organization},
+      )
+    )->Web.status
+  deepEqual(await asked(~organization="00000001", "/v1/hello/"), 200)
+  deepEqual(await asked(~organization="00000002", "/v1/hello/"), 404)
+  let unnamed = ["", "1", "app-1", "00000000", "0000000G"]
+  for i in 0 to unnamed->Array.length - 1 {
+    let organization = unnamed->Array.getUnsafe(i)
+    deepEqual(await asked(~organization, "/v1/hello/"), 500, ~message=organization)
+  }
+  deepEqual(await asked("/v1/hello/"), 500)
+  // A direct domain names its app itself, with no organization to read.
+  deepEqual(await asked(~host="example.com", "/"), 200)
 })
 
 test("both Workers choose the same network, local and relayed reach", async () => {
@@ -230,6 +272,14 @@ test(
     deepEqual(gateway->Dict.get("workers_dev"), Some(JSON.Boolean(false)))
     deepEqual(gateway->Dict.get("preview_urls"), Some(JSON.Boolean(false)))
     deepEqual((gateway->Dict.get("routes"), gateway->Dict.get("route")), (None, None))
+    // Refused until a deployment fills it, so a gateway serves no organization by default.
+    deepEqual(
+      gateway
+      ->Dict.get("vars")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(vars => vars->Dict.get("ORGANIZATION")),
+      Some(JSON.String("")),
+    )
   },
 )
 
@@ -260,6 +310,7 @@ test(
         Web.answered(~status=201, "app")
       }),
       entryPort: "43210",
+      organization,
     }
     let path = "/v7/01000004/a%2Fb//c?x=%2f&x=+&empty="
     let hosts = ["EXAMPLE.COM:443", "blog.example.org", "API.EXAMPLE.ORG:8443"]
@@ -290,7 +341,7 @@ test(
     )
     deepEqual(seen->Array.length, 10)
     let fallback = await Worker.default.fetch(
-      request("/v1/01000004/hello?x=1", ~headers=dict{"host": "unmatched.example.net"}),
+      request("/v1/hello/hello?x=1", ~headers=dict{"host": "unmatched.example.net"}),
       env,
     )
     deepEqual(fallback->Web.status, 201)

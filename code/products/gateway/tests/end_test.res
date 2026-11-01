@@ -229,6 +229,9 @@ test("hello deployed through the control is reached through the gateway Worker a
         "REACH:localhost",
         "--var",
         `ENTRY_PORT:${Int.toString(entryPort)}`,
+        // The first organization opened below, its id counted from 1.
+        "--var",
+        "ORGANIZATION:00000001",
       ],
       ~cwd=gateway,
       ~url=`http://localhost:${Int.toString(gatewayPort)}`,
@@ -242,6 +245,7 @@ test("hello deployed through the control is reached through the gateway Worker a
       ~bearer=operator,
       Contracts.Interface.Organizations.toJson({call: Open({label: "first"}), capabilities: []}),
     )
+    deepEqual(organization->number("organization"), 1.)
     let opened = await call(
       scope,
       origin,
@@ -283,7 +287,7 @@ test("hello deployed through the control is reached through the gateway Worker a
       origin,
       ~bearer=operator,
       Contracts.Interface.Releases.toJson({
-        call: Put({form: Modules, artifact: archive}),
+        call: Put({form: Modules, artifact: archive, ingress: [Mount({scope: "hello"})]}),
         capabilities: [],
       }),
     )
@@ -325,12 +329,18 @@ test("hello deployed through the control is reached through the gateway Worker a
     ok(direct->String.startsWith("hello from "), ~message=`hello answered ${direct}`)
     let asked = await Rehearsal.fetch(
       scope,
-      Web.request(`${gatewayOrigin}/v1/${Ids.text(app)}/`, {method: "GET", headers: dict{}}),
+      Web.request(`${gatewayOrigin}/v1/hello/`, {method: "GET", headers: dict{}}),
     )
     deepEqual((asked->Web.status, await asked->Web.text), (200, direct))
+    // An app's id is no way in, on the gateway or on the control.
+    let byId = await Rehearsal.fetch(
+      scope,
+      Web.request(`${gatewayOrigin}/v1/${Ids.text(app)}/`, {method: "GET", headers: dict{}}),
+    )
+    deepEqual(byId->Web.status, 404)
     let refused = await Rehearsal.fetch(
       scope,
-      Web.request(`${origin}/v1/${Ids.text(app)}/`, {method: "GET", headers: dict{}}),
+      Web.request(`${origin}/v1/hello/`, {method: "GET", headers: dict{}}),
     )
     deepEqual(refused->Web.status, 404)
   })

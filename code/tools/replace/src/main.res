@@ -8,7 +8,7 @@ module Remote = Conform.Remote
 module Through = Conform.Through
 module Run = Lose.Run
 
-let usage = "replace <target> --app <id> [--control <origin>] [--no-build | --during <command>] [--dry-run]"
+let usage = "replace <target> --app <id> [--gateway <origin>] [--no-build | --during <command>] [--dry-run]"
 
 /** How long the load runs before the first action, and how long after each before the next. */
 let warm = 1000.
@@ -54,7 +54,7 @@ let marked = async (target, name) => {
   }
 }
 
-/** hello asked once through the tunnel or a control's gateway, from here. */
+/** hello asked once through the tunnel or a gateway's mount, from here. */
 let askedTunnel = async address => {
   let began = Date.now()
   let outcome = switch await Host.fetchWithin(address, 10000) {
@@ -240,12 +240,12 @@ let main = async () => {
   }
   let known = ["--dry-run", "--no-build"]
   switch hello(args)->Result.flatMap(((app, rest)) =>
-    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+    Through.flagged(rest)->Result.map(((gateway, rest)) => (app, gateway, rest))
   ) {
   | Error(why) =>
     Console.error(`replace: ${why}`)
     Host.setExitCode(Host.process, 2)
-  | Ok((app, control, rest)) =>
+  | Ok((app, gateway, rest)) =>
     let flags = rest->Array.filter(a => a->String.startsWith("--"))
     switch rest->Array.filter(a => !(a->String.startsWith("--"))) {
     | [named] if flags->Array.every(f => known->Array.includes(f)) =>
@@ -256,7 +256,7 @@ let main = async () => {
         say(`failed: the live binding of ${named} was not read, ${why}`)
         Host.setExitCode(Host.process, 1)
       | Ok(binding) =>
-        let tunnel = Through.chosen(~control, ~tunnel=await remote(target, Live.tunnel), ~app)
+        let tunnel = Through.chosen(~gateway, ~tunnel=await remote(target, Live.tunnel))
         let dev = Here("mise", ["run", "//repos/monoflake/driver:dev", named])
         let actions = switch during {
         | Some(command) => [(command, Here("sh", ["-c", command]))]

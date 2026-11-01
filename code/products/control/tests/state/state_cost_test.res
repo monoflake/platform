@@ -32,6 +32,10 @@ let fixture = async (session, n) => {
     await exec(
       `${counted} INSERT INTO domain (domain, app) SELECT 'fixture-' || v || '.example.org', v + 3000 FROM n`,
     )
+    await exec(
+      `${counted} INSERT INTO scope (organization, scope, app)
+      SELECT 1, 'fixture-' || v, v + 3000 FROM n`,
+    )
     // These ids make the next organization step past a dense run of held ids.
     await exec(`${counted} INSERT INTO app (id) SELECT v + ${Int.toString(n + 1000)} FROM n`)
   }
@@ -95,18 +99,23 @@ let exercise = async (session, n) => {
     release: "aa",
     capacity: 0.,
     kind: None,
-    ingress: [Domain({domain: "cost.example.com"})],
+    ingress: [Domain({domain: "cost.example.com"}), Mount({scope: "cost"})],
   }
   await state.deploy(deployment)
   let fillDomains = async prefix => {
     if n > 0 {
-      await exec(
+      let counted =
         "WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n WHERE v < " ++
-        Int.toString(n) ++
-        ") INSERT INTO domain (domain, app) SELECT '" ++
-        prefix ++
-        "-' || v || '.example.org', " ++
-        Float.toString(app) ++ " FROM n",
+        Int.toString(n) ++ ")"
+      await exec(
+        `${counted} INSERT INTO domain (domain, app) SELECT '${prefix}-' || v || '.example.org', ${Float.toString(
+            app,
+          )} FROM n`,
+      )
+      await exec(
+        `${counted} INSERT INTO scope (organization, scope, app) SELECT 1, '${prefix}-' || v, ${Float.toString(
+            app,
+          )} FROM n`,
       )
     }
   }
@@ -120,6 +129,18 @@ let exercise = async (session, n) => {
   ok(conflict)
   deepEqual(await state.domain("cost.example.com"), Some(app))
   deepEqual(await state.deployment(other), None)
+  // A scope alone held, so the refusal reads it past the domains it finds free.
+  let held = switch await state.deploy({
+    ...deployment,
+    app: other,
+    ingress: [Mount({scope: "cost"})],
+  }) {
+  | () => false
+  | exception Ingress.ScopeHeld(_) => true
+  }
+  ok(held)
+  deepEqual(await reads.mount(~organization=1., ~scope="cost"), Some(app))
+  deepEqual(await reads.mount(~organization=1., ~scope="missing"), None)
   ignore(await state.forgetApp(other))
   ignore(await state.domain("cost.example.com"))
   ignore(await state.domain("missing.example.net"))

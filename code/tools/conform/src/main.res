@@ -4,7 +4,7 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "conform <target> --app <id> [--control <origin>] [--dry-run]"
+let usage = "conform <target> --app <id> [--gateway <origin>] [--dry-run]"
 
 /** The kinds whose samples the machine's driver is held to, each a directory of `tests/kinds/`. */
 let kinds = ["management", "deployments", "objects", "databases"]
@@ -118,11 +118,11 @@ let samples = () =>
   })
 
 /** The live driver's list, its refusals and hello, each with what it showed or why it failed. */
-let asked = async (target, facts: Instance.facts, ~app, ~control) => {
+let asked = async (target, facts: Instance.facts, ~app, ~gateway) => {
   let ask = (command, read) =>
     remote(target, command)->Result.flatMap(Live.readAnswered)->Result.flatMap(read)
   let list = ask(Live.described, Live.list)
-  let through = switch Through.chosen(~control, ~tunnel=remote(target, Live.tunnel), ~app) {
+  let through = switch Through.chosen(~gateway, ~tunnel=remote(target, Live.tunnel)) {
   | None => None
   | Some({name, address}) =>
     Some((
@@ -324,9 +324,9 @@ let main = async () => {
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
   switch hello(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
-    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+    Through.flagged(rest)->Result.map(((gateway, rest)) => (app, gateway, rest))
   ) {
-  | Ok((app, control, [named])) if !(named->String.startsWith("--")) =>
+  | Ok((app, gateway, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let files = samples()
     let count = files->Array.reduce(0, (n, (_, cases)) => n + cases * 2)
@@ -340,7 +340,7 @@ let main = async () => {
         say(`failed: every subnet of its own overlaps a route of ${named}`)
         Host.setExitCode(Host.process, 1)
       | Some(subnet) =>
-        let (before, checks) = await asked(target, facts, ~app, ~control)
+        let (before, checks) = await asked(target, facts, ~app, ~gateway)
         let held = told("before", checks)
         say(
           `${Int.toString(files->Array.length)} behavior files, ${Int.toString(
@@ -405,7 +405,7 @@ let main = async () => {
           if nothingLeft {
             say("after, nothing the run made is left")
           }
-          let (after, checks) = await asked(target, facts, ~app, ~control)
+          let (after, checks) = await asked(target, facts, ~app, ~gateway)
           let still = told("after", checks)
           let same = switch (before, after) {
           | (Ok(b), Ok(a)) =>

@@ -14,67 +14,56 @@ let reads = (state: State.t): State.reads => {
     }),
   deployment: state.deployment,
   domain: state.domain,
+  mount: async (~organization as _, ~scope as _) => None,
 }
 
-test("a path under an app's scope hands the app what follows it, its root at least", async () =>
-  deepEqual(
-    [
-      "/v1/0a1b2c3d",
-      "/v1/0a1b2c3d/",
-      "/v2/fedcba98/a/b",
-      "/v1/00000000/",
-      "/v1/0A1B2C3D/",
-      "/v1/a1b2c3d/",
-      "/v1/0a1b2c3d0/",
-      "/v1/0a1b2c3dx/",
-      "/0a1b2c3d/",
-      "/v1/",
-      "/organizations/open",
-    ]->Array.map(Gateway.routed),
-    [
-      Some({app: 169552957., path: "/"}),
-      Some({app: 169552957., path: "/"}),
-      Some({app: 4275878552., path: "/a/b"}),
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-      None,
-    ],
-  )
-)
+/** The routing reads holding one mount, each scope asked of it kept in `asked`. */
+let holding = (~organization, ~scope, ~app, ~asked=[]): State.reads => {
+  binding: async _ => None,
+  deployment: async _ => None,
+  domain: async _ => None,
+  mount: async (~organization as given, ~scope as named) => {
+    asked->Array.push(named)
+    given == organization && named == scope ? Some(app) : None
+  },
+}
 
-test("an id deployed before hex is still routed by its decimal, to the same app", async () => {
-  deepEqual(
-    [
-      "/v1/app-2",
-      "/v1/app-2/",
-      "/v1/app-4294967295/a",
-      "/v1/app-0/",
-      "/v1/app-02/",
-      "/v1/app-1x/",
-      "/v1/app-4294967296/",
-      "/app-2/",
-    ]->Array.map(Gateway.routed),
-    [
-      Some({app: 2., path: "/"}),
-      Some({app: 2., path: "/"}),
-      Some({app: 4294967295., path: "/a"}),
-      None,
-      None,
-      None,
-      None,
-      None,
-    ],
-  )
-  deepEqual(Gateway.routed("/v1/app-2/x"), Gateway.routed("/v1/00000002/x"))
+test("a path under a mount hands the app what follows its scope, its root at least", async () => {
+  let reads = holding(~organization=1., ~scope="hello", ~app=16777220.)
+  let mounted = path => Gateway.mounted(reads, ~organization=1., path)
+  deepEqual(await mounted("/v1/hello"), Some({app: 16777220., path: "/"}))
+  deepEqual(await mounted("/v1/hello/"), Some({app: 16777220., path: "/"}))
+  deepEqual(await mounted("/v22/hello/a/b"), Some({app: 16777220., path: "/a/b"}))
+})
+
+test("only a declared mount is forwarded, an app's id and decimal no way in", async () => {
+  let asked = []
+  let reads = holding(~organization=1., ~scope="hello", ~app=16777220., ~asked)
+  let mounted = (~organization=1., path) => Gateway.mounted(reads, ~organization, path)
+  let refused = [
+    "/v1/01000004/",
+    "/v1/app-2/",
+    "/v1/other/",
+    "/hello/",
+    "/v1/",
+    "/v/hello/",
+    "/vx/hello/",
+    "/v1/Hello/",
+    "/v1/-hello/",
+    "/v1/hel%6co/",
+    "/organizations/open",
+  ]
+  for i in 0 to refused->Array.length - 1 {
+    let path = refused->Array.getUnsafe(i)
+    deepEqual(await mounted(path), None, ~message=path)
+  }
+  // A path no label writes is refused with no read.
+  deepEqual(asked, ["01000004", "app-2", "other"])
+  deepEqual(await mounted(~organization=2., "/v1/hello/"), None)
 })
 
 test(
-  "no path of the control's own is read as an app's, every interface's operation among them",
+  "no path of the control's own is read as a mount, every interface's operation among them",
   async () => {
     let contracts = JSON.parseOrThrow(readText(fromRoot("model/contracts.json")))
     let field = (json, name) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(name))
@@ -100,7 +89,11 @@ test(
       "/object/read",
       "/",
     ]
-    deepEqual(paths->Array.filter(p => Gateway.routed(p) != None), [])
+    let reads = holding(~organization=1., ~scope="releases", ~app=16777220.)
+    for i in 0 to paths->Array.length - 1 {
+      let path = paths->Array.getUnsafe(i)
+      deepEqual(await Gateway.mounted(reads, ~organization=1., path), None, ~message=path)
+    }
   },
 )
 
@@ -109,11 +102,6 @@ test(
   async () => {
     deepEqual(Gateway.host(~app=1., ~binding=3.), "00000001.b00000003")
     deepEqual(Gateway.host(~app=4275878552., ~binding=169552957.), "fedcba98.b0a1b2c3d")
-    // An app routed by its decimal is handed on by its hex form all the same.
-    deepEqual(
-      Gateway.routed("/v1/app-2/")->Option.map(r => Gateway.host(~app=r.app, ~binding=1.)),
-      Some("00000002.b00000001"),
-    )
   },
 )
 
@@ -342,6 +330,7 @@ test("an exact host wins over its parent wildcard and at most two keys are read"
     },
     deployment: async _ => None,
     binding: async _ => None,
+    mount: async (~organization as _, ~scope as _) => None,
   }
   deepEqual(await Gateway.named(state, "API.EXAMPLE.ORG:443"), Some(1.))
   deepEqual(keys, ["api.example.org"])
@@ -370,6 +359,30 @@ test("the domain lookup uses the primary key even among unrelated domains", asyn
   ok(
     domainPlans->Array.every(p =>
       p.rows->Array.some(r => r.detail->String.includes("SEARCH domain USING INDEX"))
+    ),
+  )
+})
+
+test("the mount lookup uses the primary key even among unrelated scopes", async () => {
+  let plans = []
+  let database = Sqlite.database(~plans, ())
+  let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+  await run("INSERT INTO organization (id, label) VALUES (1, 'first')")
+  await run("INSERT INTO binding (id, organization, secret) VALUES (2, 1, '')")
+  await run("INSERT INTO release (hash, form, size) VALUES ('aa', 'modules', 3)")
+  await run("INSERT INTO deployment (app, binding, release, capacity) VALUES (3, 2, 'aa', 1)")
+  await run(
+    "WITH RECURSIVE n(v) AS (SELECT 1 UNION ALL SELECT v + 1 FROM n WHERE v < 384) INSERT INTO scope (organization, scope, app) SELECT 1, 'scope-' || v, 3 FROM n",
+  )
+  let reads = State.readsOfDatabase(database)
+  deepEqual(await reads.mount(~organization=1., ~scope="scope-1"), Some(3.))
+  deepEqual(await reads.mount(~organization=1., ~scope="missing"), None)
+  let mountPlans =
+    plans->Array.filter(p => p.sql == "SELECT app FROM scope WHERE organization = ? AND scope = ?")
+  deepEqual(mountPlans->Array.length, 2)
+  ok(
+    mountPlans->Array.every(p =>
+      p.rows->Array.some(r => r.detail->String.includes("SEARCH scope USING INDEX"))
     ),
   )
 })

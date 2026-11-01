@@ -46,13 +46,18 @@ let validDomain = domain => {
   labels->Array.every(label => /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/->RegExp.test(label))
 }
 
+// Scope validation follows the control's releases.put in parts/ingress.res.
+let validScope = scope =>
+  /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/->RegExp.test(scope) &&
+    !(["compute", "storage", "database"]->Array.includes(scope))
+
 let ingressOf = text => {
   let value = text->String.slice(~start=text->String.indexOf(":") + 1)
   if text == "binding" {
     Some(Contracts.AppIngress.Binding)
   } else if text->String.startsWith("domain:") && validDomain(value) {
     Some(Contracts.AppIngress.Domain({domain: value}))
-  } else if text->String.startsWith("mount:") && value->String.trim != "" {
+  } else if text->String.startsWith("mount:") && validScope(value) {
     Some(Contracts.AppIngress.Mount({scope: value}))
   } else {
     None

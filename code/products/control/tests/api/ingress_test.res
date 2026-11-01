@@ -47,6 +47,44 @@ test("put refuses malformed domains before keeping an artifact", async () => {
   }
 })
 
+test("put refuses a scope no label writes and one the platform reserves", async () => {
+  let bad = ["Hello", "a/b", "-hello", "hello-", "", String.repeat("a", 64), "compute", "storage"]
+  let bad = [...bad, "database"]
+  for i in 0 to bad->Array.length - 1 {
+    let stood = stand()
+    let scope = bad->Array.getUnsafe(i)
+    let (status, answer, _) = await put(stood, "invalid", Some([Mount({scope: scope})]))
+    deepEqual(
+      (status, answer->reason, stood.artifacts->Dict.keysToArray),
+      (400, Some("invalid"), []),
+      ~message=scope,
+    )
+  }
+})
+
+test("deploy refuses a scope another app of the organization holds", async () => {
+  let states = kept()
+  for i in 0 to states->Array.length - 1 {
+    let (name, state) = states->Array.getUnsafe(i)
+    let stood = stand()
+    let stood = {...stood, parts: {...stood.parts, state}}
+    let (binding, _) = await opened(stood)
+    let (_, _, hash) = await put(stood, "mounted", Some([Mount({scope: "hello"})]))
+    let release = hash->Option.getOrThrow
+    let (status, _) = await called(stood, Operator, releases(Deploy({binding, release})))
+    deepEqual(status, 200, ~message=name)
+    let (status, refused) = await called(stood, Operator, releases(Deploy({binding, release})))
+    deepEqual((status, refused->reason), (400, Some("conflict")), ~message=name)
+    ok(
+      refused
+      ->member("message")
+      ->JSON.Decode.string
+      ->Option.mapOr(false, m => m->String.includes("scope hello is held by another app")),
+      ~message=name,
+    )
+  }
+})
+
 test(
   "deploy carries all ingress to the driver and refuses a domain held by another app",
   async () => {

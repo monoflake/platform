@@ -1,21 +1,36 @@
 module Declared = Envelope.Contracts.AppIngress
 
-let domains = ingress =>
+/** A declared mount already held by another app of its organization, RFC oomwh. */
+exception ScopeHeld(string)
+
+/** What `pick` reads of each declaration, sorted, each once. */
+let declared = (ingress, pick) =>
   ingress
   ->Option.getOr([])
-  ->Array.filterMap((i: Declared.t) =>
+  ->Array.filterMap(pick)
+  ->Array.toSorted(String.compare)
+  ->Array.reduce([], (all, name) => {
+    if all->Array.at(-1) != Some(name) {
+      all->Array.push(name)
+    }
+    all
+  })
+
+let domains = ingress =>
+  ingress->declared((i: Declared.t) =>
     switch i {
     | Domain({domain}) => Some(domain)
     | Mount(_) | Binding => None
     }
   )
-  ->Array.toSorted(String.compare)
-  ->Array.reduce([], (all, domain) => {
-    if all->Array.at(-1) != Some(domain) {
-      all->Array.push(domain)
+
+let scopes = ingress =>
+  ingress->declared((i: Declared.t) =>
+    switch i {
+    | Mount({scope}) => Some(scope)
+    | Domain(_) | Binding => None
     }
-    all
-  })
+  )
 
 let validDomain = domain => {
   let name = domain->String.startsWith("*.") ? domain->String.slice(~start=2) : domain
@@ -28,6 +43,15 @@ let validDomain = domain => {
 
 let invalid = ingress => domains(ingress)->Array.find(domain => !validDomain(domain))
 
+// RFC vr5lw has a scope written as a label is, never one the platform reserves.
+let reservedScopes = ["compute", "storage", "database"]
+
+let validScope = scope =>
+  /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/->RegExp.test(scope) &&
+    !(reservedScopes->Array.includes(scope))
+
+let invalidScope = ingress => scopes(ingress)->Array.find(scope => !validScope(scope))
+
 let toJson = ingress => JSON.Array(ingress->Array.map(Declared.toJson))
 let ofJson = json =>
   json
@@ -37,12 +61,14 @@ let ofJson = json =>
 let toText = ingress => JSON.stringify(toJson(ingress))
 let ofText = text => ofJson(JSON.parseOrThrow(text))
 
-let domainOfObjects = async (objects: Objects.t, domain) =>
-  switch await objects.read(`state/domains/${domain}`) {
+let heldAt = async (objects: Objects.t, name) =>
+  switch await objects.read(name) {
   | Ok(Some(bytes)) => JSON.parseOrThrow(Web.fromUtf8(bytes))->JSON.Decode.float
   | Ok(None) => None
   | Error(why) => JsError.throwWithMessage(why)
   }
+
+let domainOfObjects = (objects, domain) => heldAt(objects, `state/domains/${domain}`)
 
 let conflict = async (objects, ~app, ~ingress) => {
   let domains = domains(ingress)
@@ -67,5 +93,40 @@ let replaceObjects = async (objects: Objects.t, ~app, ~before, ~after) => {
   for i in 0 to next->Array.length - 1 {
     let domain = next->Array.getUnsafe(i)
     held(await objects.write(`state/domains/${domain}`, Web.utf8(JSON.stringify(Number(app)))))
+  }
+}
+
+let scopeAt = (~organization, scope) => `state/scopes/${Float.toString(organization)}/${scope}`
+
+let scopeConflict = async (objects, ~organization, ~app, ~ingress) => {
+  let scopes = scopes(ingress)
+  let holders = await Promise.all(
+    scopes->Array.map(scope => heldAt(objects, scopeAt(~organization, scope))),
+  )
+  scopes->Array.findWithIndex((_, i) =>
+    holders->Array.getUnsafe(i)->Option.mapOr(false, held => held != app)
+  )
+}
+
+let unmountObjects = async (objects: Objects.t, ~organization, ~ingress) => {
+  let old = scopes(ingress)
+  for i in 0 to old->Array.length - 1 {
+    switch await objects.delete(scopeAt(~organization, old->Array.getUnsafe(i))) {
+    | Ok() => ()
+    | Error(why) => JsError.throwWithMessage(why)
+    }
+  }
+}
+
+let mountObjects = async (objects: Objects.t, ~organization, ~app, ~ingress) => {
+  let next = scopes(ingress)
+  for i in 0 to next->Array.length - 1 {
+    switch await objects.write(
+      scopeAt(~organization, next->Array.getUnsafe(i)),
+      Web.utf8(JSON.stringify(Number(app))),
+    ) {
+    | Ok() => ()
+    | Error(why) => JsError.throwWithMessage(why)
+    }
   }
 }

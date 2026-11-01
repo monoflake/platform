@@ -41,6 +41,7 @@ type reached = {address: option<string>, origin: option<string>, bound: option<f
 /** The gateway's state view offers only routing reads, RFC oomwh. */
 type reads = {
   domain: string => promise<option<float>>,
+  mount: (~organization: float, ~scope: string) => promise<option<float>>,
   binding: float => promise<option<reached>>,
   deployment: float => promise<option<deployment>>,
 }
@@ -234,8 +235,18 @@ let domainAt = async (database, domain) =>
     await firstOf(database, "SELECT app FROM domain WHERE domain = ?", [Text(domain)])
   )->Option.map((row: domainRow) => row.app)
 
+let mountAt = async (database, ~organization, ~scope) =>
+  (
+    await firstOf(
+      database,
+      "SELECT app FROM scope WHERE organization = ? AND scope = ?",
+      [Number(organization), Text(scope)],
+    )
+  )->Option.map((row: domainRow) => row.app)
+
 let readsOfDatabase = (database): reads => {
   domain: name => domainAt(database, name),
+  mount: (~organization, ~scope) => mountAt(database, ~organization, ~scope),
   binding: async id =>
     (await bindingAt(database, id))->Option.map((row): reached => {
       address: row.address->Nullable.toOption,
@@ -463,15 +474,34 @@ let ofDatabase = (database, ~sealing) => {
             [Text(domain), Number(d.app)],
           )
         )
-      switch await database->Stores.batch([deployed, cleared, ...added]) {
+      let scopes = Ingress.scopes(d.ingress)
+      let unmounted = statement("DELETE FROM scope WHERE app = ?", [Number(d.app)])
+      let mounted =
+        scopes->Array.map(scope =>
+          statement(
+            "INSERT INTO scope (organization, scope, app) SELECT organization, ?1, ?2 FROM binding WHERE id = ?3 AND EXISTS (SELECT 1 FROM deployment WHERE app = ?2)",
+            [Text(scope), Number(d.app), Number(d.binding)],
+          )
+        )
+      switch await database->Stores.batch([deployed, cleared, unmounted, ...added, ...mounted]) {
       | () => ()
       | exception JsExn(e) =>
+        let other = holder => holder->Option.mapOr(false, app => app != d.app)
         let holders = await Promise.all(domains->Array.map(domain => domainAt(database, domain)))
-        switch domains->Array.findWithIndex((_, i) =>
-          holders->Array.getUnsafe(i)->Option.mapOr(false, app => app != d.app)
-        ) {
+        switch domains->Array.findWithIndex((_, i) => other(holders->Array.getUnsafe(i))) {
         | Some(domain) => throw(DomainHeld(domain))
-        | None => throw(JsExn(e))
+        | None =>
+          switch await bindingAt(database, d.binding) {
+          | None => throw(JsExn(e))
+          | Some({organization}) =>
+            let holders = await Promise.all(
+              scopes->Array.map(scope => mountAt(database, ~organization, ~scope)),
+            )
+            switch scopes->Array.findWithIndex((_, i) => other(holders->Array.getUnsafe(i))) {
+            | Some(scope) => throw(Ingress.ScopeHeld(scope))
+            | None => throw(JsExn(e))
+            }
+          }
         }
       }
     },
@@ -604,6 +634,20 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
   let next = all => past(all->Array.reduce(0., (most, (id, _)) => Math.max(most, id)) +. 1.)
   let organizationAt = id => `state/organizations/${Float.toString(id)}`
   let bindingAt = id => `state/bindings/${Float.toString(id)}`
+  let organizationOf = async binding =>
+    (await readJson(bindingAt(binding)))->Option.flatMap(json => json->number("organization"))
+  // A kept deployment's mounts given back, under the organization of the binding it names.
+  let unmounted = async kept =>
+    switch kept {
+    | None => ()
+    | Some(json) =>
+      switch await json->number("binding")->Option.mapOr(Promise.resolve(None), organizationOf) {
+      | None => ()
+      | Some(organization) =>
+        let ingress = field(json, "ingress")->Option.map(Ingress.ofJson)
+        await Ingress.unmountObjects(objects, ~organization, ~ingress)
+      }
+    }
   // An organization's plain secret is written back, since no write but its opening changes it.
   // A binding's is not, since worker.res builds a state per request and another may write it.
   // A binding's plain secret is sealed at the binding's next write, `changed` below.
@@ -848,11 +892,29 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
           | Some(domain) => throw(DomainHeld(domain))
           | None => ()
           }
-          let before =
-            (await readJson(at))
-            ->Option.flatMap(j => field(j, "ingress"))
-            ->Option.map(Ingress.ofJson)
+          let organization = await organizationOf(d.binding)
+          switch organization {
+          | None => ()
+          | Some(organization) =>
+            switch await Ingress.scopeConflict(
+              objects,
+              ~organization,
+              ~app=d.app,
+              ~ingress=d.ingress,
+            ) {
+            | Some(scope) => throw(Ingress.ScopeHeld(scope))
+            | None => ()
+            }
+          }
+          let kept = await readJson(at)
+          let before = kept->Option.flatMap(j => field(j, "ingress"))->Option.map(Ingress.ofJson)
           await Ingress.replaceObjects(objects, ~app=d.app, ~before, ~after=d.ingress)
+          await unmounted(kept)
+          switch organization {
+          | None => ()
+          | Some(organization) =>
+            await Ingress.mountObjects(objects, ~organization, ~app=d.app, ~ingress=d.ingress)
+          }
           let o = dict{
             "app": JSON.Number(d.app),
             "binding": Number(d.binding),
@@ -909,11 +971,10 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
         | [_, Some(json)]
           if json->text("kind") != None || json->number("capacity") != Some(0.) => false
         | _ =>
-          let before =
-            (await readJson(deploymentAt))
-            ->Option.flatMap(j => field(j, "ingress"))
-            ->Option.map(Ingress.ofJson)
+          let kept = await readJson(deploymentAt)
+          let before = kept->Option.flatMap(j => field(j, "ingress"))->Option.map(Ingress.ofJson)
           await Ingress.replaceObjects(objects, ~app, ~before, ~after=None)
+          await unmounted(kept)
           held(await objects.delete(deploymentAt))
           held(await objects.delete(at))
           // A control stood on that answers a delete as done while keeping the object is a fault.
@@ -929,11 +990,10 @@ let ofObjects = (objects: Objects.t, ~sealing) => {
       serial(async () => {
         let at = `state/apps/${Float.toString(app)}`
         let deploymentAt = `state/deployments/${Float.toString(app)}`
-        let before =
-          (await readJson(deploymentAt))
-          ->Option.flatMap(j => field(j, "ingress"))
-          ->Option.map(Ingress.ofJson)
+        let kept = await readJson(deploymentAt)
+        let before = kept->Option.flatMap(j => field(j, "ingress"))->Option.map(Ingress.ofJson)
         await Ingress.replaceObjects(objects, ~app, ~before, ~after=None)
+        await unmounted(kept)
         held(await objects.delete(at))
         held(await objects.delete(deploymentAt))
         switch await Promise.all([readJson(at), readJson(deploymentAt)]) {

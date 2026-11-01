@@ -24,16 +24,26 @@ let state = (): State.t => {
       | Mount(_) | Binding => None
       }
     )
-  let clear = app =>
-    domains
-    ->Dict.toArray
-    ->Array.forEach(((domain, held)) => {
-      if held == app {
-        domains->Dict.delete(domain)
-      }
-    })
-  let apps = []
+  let scopes: dict<float> = dict{}
   let key = Float.toString
+  // Each scope a deployment declares with its name under its binding's organization.
+  let scopesOf = (d: State.deployment) =>
+    Ingress.scopes(d.ingress)->Array.filterMap(scope =>
+      bindings
+      ->Dict.get(key(d.binding))
+      ->Option.map(b => (scope, `${key(b.organization)}/${scope}`))
+    )
+  let clear = app =>
+    [domains, scopes]->Array.forEach(held =>
+      held
+      ->Dict.toArray
+      ->Array.forEach(((name, holder)) => {
+        if holder == app {
+          held->Dict.delete(name)
+        }
+      })
+    )
+  let apps = []
   let change = (id, f) =>
     bindings->Dict.get(key(id))->Option.forEach(b => bindings->Dict.set(key(id), f(b)))
   {
@@ -132,10 +142,17 @@ let state = (): State.t => {
       | Some(domain) => throw(State.DomainHeld(domain))
       | None => ()
       }
+      switch scopesOf(d)->Array.find(((_, name)) =>
+        scopes->Dict.get(name)->Option.mapOr(false, app => app != d.app)
+      ) {
+      | Some((scope, _)) => throw(Ingress.ScopeHeld(scope))
+      | None => ()
+      }
       switch (apps->Array.includes(d.app), deployments->Dict.get(key(d.app))) {
       | (true, _) => {
           clear(d.app)
           domainsOf(d)->Array.forEach(domain => domains->Dict.set(domain, d.app))
+          scopesOf(d)->Array.forEach(((_, name)) => scopes->Dict.set(name, d.app))
           deployments->Dict.set(key(d.app), d)
         }
       | (false, Some(held)) if State.ran(held) => deployments->Dict.set(key(d.app), d)

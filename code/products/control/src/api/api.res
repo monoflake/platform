@@ -472,13 +472,15 @@ let hostOf = async (parts, id) =>
 
 let put = async (parts, input: Contracts.ReleasePut.t) => {
   let size = input.artifact->TypedArray.length->Int.toFloat
-  switch Ingress.invalid(input.ingress) {
-  | Some(domain) =>
+  switch (Ingress.invalid(input.ingress), Ingress.invalidScope(input.ingress)) {
+  | (Some(domain), _) =>
     refused(
       "invalid",
       `domain ${domain} is not a lowercase hostname with at most one leading wildcard`,
     )
-  | None =>
+  | (None, Some(scope)) =>
+    refused("invalid", `scope ${scope} is not a lowercase label, or is one the platform reserves`)
+  | (None, None) =>
     if size > artifactBound {
       refused("too_large", `an artifact holds ${Float.toString(artifactBound)} bytes at most`)
     } else {
@@ -599,6 +601,11 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
           | answer => answer
           | exception State.DomainHeld(domain) =>
             Error({reason: "conflict", message: `domain ${domain} is held by another app`})
+          | exception Ingress.ScopeHeld(scope) =>
+            Error({
+              reason: "conflict",
+              message: `scope ${scope} is held by another app of its organization`,
+            })
           | exception Forgotten =>
             Error({
               reason: "not_found",

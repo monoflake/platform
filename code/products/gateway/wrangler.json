@@ -21,5 +21,8 @@
 			"binding": "HOSTS",
 			"network_id": "cf1:network"
 		}
-	]
+	],
+	"vars": {
+		"ORGANIZATION": ""
+	}
 }

@@ -1,19 +1,22 @@
 /***
- * The path hello is asked through from here, the machine's tunnel, or a control's gateway where
- * one is named, RFC rxmd9. The driver and the entry are asked over ssh either way.
+ * The path hello is asked through from here, the machine's tunnel, or a gateway's mount where one
+ * is named, RFC oomwh. The driver and the entry are asked over ssh either way.
  */
 
 /** A path by the name a report gives it, and the address asked. */
 type t = {name: string, address: string}
 
-/** `--control <origin>` taken out of the arguments, the origin and what is left, or why not. */
-let control: array<string> => result<(option<string>, array<string>), string>
+/** `--gateway <origin>` taken out of the arguments, the origin and what is left, or why not. */
+let flagged: array<string> => result<(option<string>, array<string>), string>
 
-/** The gateway's address of an app, `<origin>/v1/<id in 8 hex>/`. */
-let gateway: (~origin: string, ~app: float) => string
+/** The scope hello mounts itself under, its `metadata.json`'s in monoflake/cloud. */
+let scope: string
+
+/** Hello's address on a gateway, `<origin>/v1/hello/`. */
+let gateway: (~origin: string) => string
 
 /**
- * The gateway where a control is named, or else the tunnel the machine printed, none where it
- * printed none.
+ * Hello's mount on the gateway at the origin `--gateway` gives, or else the tunnel the machine
+ * printed, none where it printed none.
  */
-let chosen: (~control: option<string>, ~tunnel: result<string, string>, ~app: float) => option<t>
+let chosen: (~gateway: option<string>, ~tunnel: result<string, string>) => option<t>

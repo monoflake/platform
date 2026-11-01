@@ -39,4 +39,5 @@ type env = {
   @as("TUNNEL_API") tunnelApi?: string,
   @as("TUNNEL_ACCOUNT") tunnelAccount?: string,
   @as("TUNNEL_CREDENTIAL") tunnelCredential?: string,
+  @as("ORGANIZATION") organization?: string,
 }

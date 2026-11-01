@@ -56,6 +56,7 @@ type reached = {address: option<string>, origin: option<string>, bound: option<f
 /** The gateway's state view offers only routing reads, RFC oomwh. */
 type reads = {
   domain: string => promise<option<float>>,
+  mount: (~organization: float, ~scope: string) => promise<option<float>>,
   binding: float => promise<option<reached>>,
   deployment: float => promise<option<deployment>>,
 }

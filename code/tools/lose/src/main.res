@@ -8,7 +8,7 @@ module Live = Conform.Live
 module Remote = Conform.Remote
 module Through = Conform.Through
 
-let usage = "lose <target> --app <id> [--control <origin>] [--dry-run]"
+let usage = "lose <target> --app <id> [--gateway <origin>] [--dry-run]"
 
 /** How long the driver is kept stopped, and how often each path is asked meanwhile. */
 let window = 20000.
@@ -43,7 +43,7 @@ let throughEntry = (target, ~app, ~binding) =>
     ->Result.flatMap(Live.readAnswered)
     ->Result.flatMap(Live.greeted)
 
-/** hello asked through the tunnel or a control's gateway, from here. */
+/** hello asked through the tunnel or a gateway's mount, from here. */
 let throughTunnel = address =>
   async () =>
     switch await Host.fetchWithin(address, 5000) {
@@ -184,9 +184,9 @@ let main = async () => {
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
   switch hello(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
-    Through.control(rest)->Result.map(((control, rest)) => (app, control, rest))
+    Through.flagged(rest)->Result.map(((gateway, rest)) => (app, gateway, rest))
   ) {
-  | Ok((app, control, [named])) if !(named->String.startsWith("--")) =>
+  | Ok((app, gateway, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
     let binding = (await remote(target, Live.binding))->Result.flatMap(text => tokenId(text))
     switch binding {
@@ -194,11 +194,7 @@ let main = async () => {
       say(`failed: the live binding of ${named} was not read, ${why}`)
       Host.setExitCode(Host.process, 1)
     | Ok(binding) =>
-      let tunnel = switch Through.chosen(
-        ~control,
-        ~tunnel=await remote(target, Live.tunnel),
-        ~app,
-      ) {
+      let tunnel = switch Through.chosen(~gateway, ~tunnel=await remote(target, Live.tunnel)) {
       | None => []
       | Some({name, address}) => [(name, throughTunnel(address))]
       }

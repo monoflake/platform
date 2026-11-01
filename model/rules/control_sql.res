@@ -1,5 +1,5 @@
 /** The control's SQL costs, held by its state tests as docs/code.md describes. */
-type quantity = [#constant | #bindings | #deployments | #held_ids | #domains]
+type quantity = [#constant | #bindings | #deployments | #held_ids | #domains | #scopes | #ingress]
 
 type budget = {
   name: string,
@@ -21,6 +21,8 @@ let fixtureSizes = [0, 16, 384]
 let tables = dict{
   "constant": [],
   "domains": ["domain"],
+  "scopes": ["scope"],
+  "ingress": ["domain", "scope"],
   "bindings": ["binding"],
   "deployments": ["deployment"],
   "held_ids": ["binding", "app", "deployment"],
@@ -34,6 +36,27 @@ let fragments = [
 ]
 
 let budgets: array<budget> = [
+  {
+    name: "mount",
+    template: "SELECT app FROM scope WHERE organization = ? AND scope = ?",
+    quantity: #constant,
+    perRow: 0,
+    fixed: 8,
+  },
+  {
+    name: "clear_scopes",
+    template: "DELETE FROM scope WHERE app = ?",
+    quantity: #scopes,
+    perRow: 2,
+    fixed: 8,
+  },
+  {
+    name: "put_scope",
+    template: "INSERT INTO scope (organization, scope, app) SELECT organization, ?1, ?2 FROM binding WHERE id = ?3 AND EXISTS (SELECT 1 FROM deployment WHERE app = ?2)",
+    quantity: #constant,
+    perRow: 0,
+    fixed: 8,
+  },
   {
     name: "domain",
     template: "SELECT app FROM domain WHERE domain = ?",
@@ -226,7 +249,7 @@ let budgets: array<budget> = [
   {
     name: "forget_deployment",
     template: "DELETE FROM deployment WHERE app = ? AND NOT ${ranRow} RETURNING app",
-    quantity: #domains,
+    quantity: #ingress,
     perRow: 4,
     fixed: 8,
   },
@@ -261,7 +284,7 @@ let budgets: array<budget> = [
   {
     name: "retire_deployment",
     template: "DELETE FROM deployment WHERE app = ?",
-    quantity: #domains,
+    quantity: #ingress,
     perRow: 4,
     fixed: 8,
   },

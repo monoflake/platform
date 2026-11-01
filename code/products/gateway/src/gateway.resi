@@ -6,9 +6,9 @@ module Reach = ControlOrganization.Reach
 /** The app a path's scope names and the path the app is handed, its scope dropped. */
 type routed = {app: float, path: string}
 
-/** The mount's id is 8 lowercase hex digits, with the decimal scaffold kept, RFCs b8f35 and 8yl4b.
+/** A mount `/v{n}/{scope}/...` read from the organization's scope rows, none where it has no row.
  * The app receives what follows its scope, or `/` where nothing follows. */
-let routed: string => option<routed>
+let mounted: (State.reads, ~organization: float, string) => promise<option<routed>>
 
 /** The host read exactly before its immediate parent wildcard, each an indexed point read. */
 let named: (State.reads, string) => promise<option<float>>

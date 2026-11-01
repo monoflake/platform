@@ -5,27 +5,21 @@ module Reach = ControlOrganization.Reach
 
 type routed = {app: float, path: string}
 
-/** A scope of an app until an organization's own scopes are kept, RFC vr5lw's `scope` rows. */
-let scoped = /^\/v[0-9]+\/([0-9a-f]{8})(\/.*)?$/
+/** A mount's path, its scope written as a label is, RFC vr5lw. */
+let scoped = /^\/v[0-9]+\/([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(\/.*)?$/
 
-// A scaffold for ids deployed before they were drawn in hex, retired with B at RFC 8yl4b.
-let decimal = /^\/v[0-9]+\/app-([1-9][0-9]{0,9})(\/.*)?$/
-
-/** The id and the rest a pattern found, the id read by `read`. */
-let found = (pattern, path, read) =>
-  switch pattern->RegExp.exec(path) {
+let mounted = async (state: State.reads, ~organization, path) =>
+  switch scoped->RegExp.exec(path) {
   | Some(found) =>
     switch found->RegExp.Result.matches {
-    | [Some(id), rest] => read(id)->Option.map(app => {app, path: rest->Option.getOr("/")})
+    | [Some(scope), rest] =>
+      (await state.mount(~organization, ~scope))->Option.map(app => {
+        app,
+        path: rest->Option.getOr("/"),
+      })
     | _ => None
     }
   | None => None
-  }
-
-let routed = path =>
-  switch found(scoped, path, Ids.ofText) {
-  | Some(routed) => Some(routed)
-  | None => found(decimal, path, id => Float.fromString(id)->Option.filter(id => id <= 4294967295.))
   }
 
 let named = async (state: State.reads, host) => {
