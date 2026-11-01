@@ -1,0 +1,36 @@
+# Runs verify on pushes to main so every pushed commit is held to the local checks.
+# The workspace supplies the tools and every preparation step runs without a secret.
+name: verify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: canmi21/canmi/.github/actions/workspace@main
+        with:
+          path: monoflake/platform
+          scripts: "true"
+      - name: Install platform
+        working-directory: repos/monoflake/platform
+        run: pnpm install --frozen-lockfile
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: repos/monoflake/platform -> target
+      - name: Compile the platform
+        working-directory: repos/monoflake/platform
+        run: pnpm exec rescript build
+      - name: Generate the libraries
+        working-directory: repos/monoflake/platform
+        run: mise run generate
+      - name: Verify
+        working-directory: repos/monoflake/platform
+        run: mise run verify
