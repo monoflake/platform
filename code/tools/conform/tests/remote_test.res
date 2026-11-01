@@ -12,6 +12,15 @@ test("local is localhost's port 2222, and any other name is ssh's own", () => {
   ok(!(machine.options->Array.includes("2222")))
 })
 
+test("a command apart runs on a connection shared with nothing", () => {
+  let args = Remote.apart(Remote.target("root@machine.example"), "wait")
+  deepEqual(
+    args->Array.slice(~start=0, ~end=4),
+    ["-o", "ControlMaster=no", "-o", "ControlPath=none"],
+  )
+  deepEqual(args->Array.slice(~start=-2), ["root@machine.example", "wait"])
+})
+
 test("a forward holds a port of the machine's loopback on a connection shared with nothing", () => {
   let args = Remote.forward(Remote.target("root@machine.example"), ~local=50000, ~remote=47483)
   // ssh takes an option's first value, so what comes first wins over the shared connection's.

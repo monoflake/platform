@@ -7,6 +7,7 @@ let first = 1000
 let bridge = "conform0"
 // Kept apart from `directory`, which a reboot empties while the bindings' namespaces stay.
 let recorded = "/var/lib/conform/made"
+let holding = `exec 9>/run/conform.lock && flock -n 9 && echo held && exec cat > /dev/null`
 // Its driver's runtime roots, apart from the live driver's so neither reconciles the other's.
 let roots = "/nix/var/nix/gcroots/conform"
 

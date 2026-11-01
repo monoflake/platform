@@ -14,3 +14,6 @@ let target: string => target
 
 /** ssh's arguments holding a port of the machine's loopback open at one of localhost's. */
 let forward: (target, ~local: int, ~remote: int) => array<string>
+
+/** ssh's arguments running a command on a connection of its own, which ends when this tool does. */
+let apart: (target, string) => array<string>

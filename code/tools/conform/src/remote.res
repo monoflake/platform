@@ -31,14 +31,12 @@ let target = name =>
       }
     : {host: name, options: kept}
 
-// Its own connection, so stopping it closes the forward alone; ssh takes an option's first value.
+// Its own connection, so stopping it ends that alone; ssh takes an option's first value.
+let alone = target => ["-o", "ControlMaster=no", "-o", "ControlPath=none", ...target.options]
+
 let forward = (target, ~local, ~remote) =>
   [
-    "-o",
-    "ControlMaster=no",
-    "-o",
-    "ControlPath=none",
-    ...target.options,
+    ...alone(target),
     "-o",
     "ExitOnForwardFailure=yes",
     "-N",
@@ -46,3 +44,5 @@ let forward = (target, ~local, ~remote) =>
     `${Int.toString(local)}:127.0.0.1:${Int.toString(remote)}`,
     target.host,
   ]
+
+let apart = (target, command) => [...alone(target), target.host, command]

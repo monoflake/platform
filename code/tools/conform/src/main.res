@@ -191,6 +191,20 @@ let rec reached = async (base, ~left=100) =>
 /** What runs beside the tool, the forward and the runner, stopped with it when it is stopped. */
 let children = []
 
+/** Whether this run holds the machine, its connection among `children` so it ends with them. */
+let holds = async (target: Remote.target) => {
+  let hold = Host.spawn(
+    "ssh",
+    Remote.apart(target, Instance.holding),
+    {stdio: ["pipe", "pipe", "inherit"]},
+  )
+  children->Array.push(hold)
+  await Promise.make((resolve, _) => {
+    hold->Host.stdout->Host.onData(_ => resolve(true))
+    hold->Host.onExit((_, _) => resolve(false))
+  })
+}
+
 /** The samples run by the runner on the instance through a forward, hello watched beside them. */
 let run = async (target: Remote.target, facts, tokens, files, ~app, ~scratch, ~served) => {
   let local = await Host.freePort()
@@ -352,8 +366,12 @@ let main = async () => {
         if dry {
           say(`nothing started, as --dry-run asks, ${took()}s`)
           Host.setExitCode(Host.process, held ? 0 : 1)
+        } else if !(await holds(target)) {
+          say(`failed: another run holds ${named}, so nothing starts and nothing is removed`)
+          Host.setExitCode(Host.process, 1)
         } else if !clean(target, facts, ~when_="from an earlier run") {
           say(`failed: what an earlier run left is still there, so nothing starts, ${took()}s`)
+          children->Array.forEach(child => child->Host.kill->ignore)
           Host.setExitCode(Host.process, 1)
         } else {
           let scratch = Host.mkdtemp(`${Host.tmpdir()}/conform-`)
@@ -419,6 +437,7 @@ let main = async () => {
                 ? "meets its contracts, but what waits"
                 : "does not meet its contracts"}, ${took()}s`,
           )
+          children->Array.forEach(child => child->Host.kill->ignore)
           Host.setExitCode(Host.process, met ? 0 : 1)
         }
       }

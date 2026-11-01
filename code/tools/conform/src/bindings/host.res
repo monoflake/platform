@@ -50,6 +50,9 @@ external onExit: (child, @as("exit") _, (Nullable.t<int>, Nullable.t<string>) =>
 type writable
 @get external stdin: child => writable = "stdin"
 @send external endWith: (writable, string) => unit = "end"
+type readable
+@get external stdout: child => readable = "stdout"
+@send external onData: (readable, @as("data") _, unknown => unit) => unit = "on"
 
 /** A child's exit code once it ends, 1 where a signal ended it. */
 let ended = child =>

@@ -12,6 +12,12 @@ let directory: string
 /** The file naming each binding a run opened, written before the first and kept by a reboot. */
 let recorded: string
 
+/**
+ * Prints a line once it holds the machine's one run and then waits on its input, so the hold ends
+ * with the connection however the run ends; it prints nothing where another run holds it.
+ */
+let holding: string
+
 /** Where its driver roots each container's runtime, where the live driver roots its own. */
 let roots: string
 
