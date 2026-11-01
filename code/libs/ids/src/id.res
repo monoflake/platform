@@ -7,6 +7,11 @@ let ofText = text =>
     ? Some(Float.parseInt(text, ~radix=16))->Option.filter(id => id > 0.)
     : None
 
+let ofTokenText = text =>
+  /^[1-9][0-9]{0,9}$/->RegExp.test(text)
+    ? Float.fromString(text)->Option.filter(id => id <= 4294967295.)
+    : None
+
 let ofBytes = (bytes: Uint8Array.t) =>
   [0, 1, 2, 3]->Array.reduce(0., (id, i) =>
     id *. 256. +. bytes->TypedArray.get(i)->Option.mapOr(0., Int.toFloat)

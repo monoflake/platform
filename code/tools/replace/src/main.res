@@ -223,14 +223,10 @@ let hello = args =>
   )
 
 /** The live binding's id as its token writes it before its dot, a decimal of 32 bits. */
-let tokenId = text =>
-  switch text->String.trim {
-  | id if /^[1-9][0-9]{0,9}$/->RegExp.test(id) =>
-    Float.fromString(id)
-    ->Option.filter(id => id <= 4294967295.)
-    ->Option.mapOr(Error(`${id} is no id`), id => Ok(id))
-  | id => Error(`${id} is no id`)
-  }
+let tokenId = text => {
+  let id = text->String.trim
+  Ids.Id.ofTokenText(id)->Option.mapOr(Error(`${id} is no id`), id => Ok(id))
+}
 
 let main = async () => {
   let started = Date.now()

@@ -27,6 +27,34 @@ test("no other text is an id, a decimal, a prefix, capitals, another width or 0"
   )
 )
 
+test("a token writes its binding's id in decimal through all 32 bits", () => {
+  deepEqual(Id.ofTokenText("1"), Some(1.))
+  deepEqual(Id.ofTokenText("2147483648"), Some(2147483648.))
+  deepEqual(Id.ofTokenText("4294967295"), Some(4294967295.))
+})
+
+test("a token id refuses zero, overflow and other spellings without trimming", () => {
+  [
+    "",
+    "0",
+    "01",
+    "4294967296",
+    "9999999999",
+    "10000000000",
+    "-1",
+    "+1",
+    "1.0",
+    "1e2",
+    "0x1",
+    "ffffffff",
+    "1.secret",
+    " 1",
+    "1 ",
+    "\t1",
+    "1\n2",
+  ]->Array.forEach(text => deepEqual(Id.ofTokenText(text), None))
+})
+
 test("4 bytes are read big-endian, in the order the hex digits write them", () => {
   deepEqual(Id.ofBytes(Uint8Array.fromArray([0x0a, 0x1b, 0x2c, 0x3d])), 169552957.)
   deepEqual(Id.ofBytes(Uint8Array.fromArray([0xff, 0xff, 0xff, 0xff])), 4294967295.)

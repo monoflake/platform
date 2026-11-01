@@ -9,6 +9,9 @@ let text: float => string
 /** The id 8 lowercase hex digits write, none for any other text or for 0, which no id is. */
 let ofText: string => option<float>
 
+/** A binding's id as its token writes it before its dot, a decimal of 32 bits, RFC 3d3nt. */
+let ofTokenText: string => option<float>
+
 /** The 32 bits of 4 bytes read big-endian, as an id is read from its bytes. */
 let ofBytes: Uint8Array.t => float
 

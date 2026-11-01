@@ -86,12 +86,6 @@ let said = text =>
 let valuesOf = (said, name) =>
   said->Array.filterMap(((key, value)) => key == name && value != "" ? Some(value) : None)
 
-/** A binding's id as its token writes it before its dot, a decimal of 32 bits, RFC 3d3nt. */
-let tokenId = text =>
-  /^[1-9][0-9]{0,9}$/->RegExp.test(text)
-    ? Float.fromString(text)->Option.filter(id => id <= 4294967295.)
-    : None
-
 let whole = text =>
   switch Int.fromString(text) {
   | Some(n) if Int.toString(n) == text => Some(n)
@@ -143,7 +137,10 @@ let readFacts = (text, ~count) => {
     valuesOf(said, "listening")
     ->Array.filter(address => !(ours->Array.includes(address)))
     ->Array.filterMap(portOf)
-  switch (one("binding")->Option.flatMap(tokenId), one("subvolumes")->Option.flatMap(whole)) {
+  switch (
+    one("binding")->Option.flatMap(Ids.Id.ofTokenText),
+    one("subvolumes")->Option.flatMap(whole),
+  ) {
   | (None, _) => Error("the live binding's token names no id before its dot")
   | (_, None) => Error("the subvolumes of the mount were not counted")
   | (Some(binding), _) if binding >= Int.toFloat(first) && binding < Int.toFloat(first + count) =>

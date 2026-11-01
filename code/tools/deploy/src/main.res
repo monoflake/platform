@@ -442,10 +442,9 @@ let deployingOf = (named, binding) =>
 
 /** The binding's id its token names before its dot, a decimal, as a token writes it. */
 let tokenBinding = (facts: Machine.facts) =>
-  switch Float.fromString(facts.binding) {
-  | Some(id) if /^[1-9][0-9]{0,9}$/->RegExp.test(facts.binding) && id <= 4294967295. =>
-    Ok((facts, id))
-  | Some(_) | None => Error(`the binding's token names ${facts.binding}, no binding's id`)
+  switch Ids.Id.ofTokenText(facts.binding) {
+  | Some(id) => Ok((facts, id))
+  | None => Error(`the binding's token names ${facts.binding}, no binding's id`)
   }
 
 /** The app a control drew and never ran, forgotten there, or what a dry run would ask. */
