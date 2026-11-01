@@ -53,3 +53,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
   resources to adopt; no warnings.
 - **Samples for each field go in `tests/kinds/`** with documentation values, provisional, chosen by
   the advisor on 2026-10-24.
+
+## State
+
+As of 2026-11-01 the contract fields are in use and function adoption is built. driver(cloudflare), `driver/cloudflare/src/driver.res`, reads and writes the `adopted` entries of kind `function`, keeps `delete_by_hand` warnings until the Worker is gone, and offers `kinds`. driver(machine), `driver/machine/src/listed.rs`, answers `kinds` and `revision`, leaves `adopted` and `warnings` out, and refuses a non-empty `adopted` as `beyond_host`. The line above that the fields are not yet pushed describes a past moment, and whether they are pushed was not checked. Adopting an `object` or a `database` is not built: `driver/cloudflare/management/src/management.res` refuses both as `beyond_host` until the D1 wiring exists.

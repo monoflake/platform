@@ -123,3 +123,9 @@ RFC vr5lw.
    naming a function's Worker by its app already; its RFC nrs5v gains a line that a function there
    is deployed with no `into`. monoflake/cloud takes the pin move and the run sheet deploying hello
    as a function. The gateway's placement is the work point 5 opens, proposed apart first.
+
+## State
+
+As of 2026-11-01 the function path is built. `model/contracts/products/releases.res` is at version 6 with an optional `kinds`, and `code/tools/deploy/src/bundle.res` reads `kinds` from the app's own `metadata.json`. `code/products/control/src/api/deploying.res` reads the release's kinds or its form's (`runsAs`), takes the first the binding offers (`chosen`), and sends no `into` where the binding holds no container. The image label `monoflake.kinds`, and a builder for components, were not found in the code, so those forms are not built; the deploy tool's entry is still a wrangler bundle.
+
+Point 5 is stale about the gateway. It is no longer one per organization inside the control: the gateway is a Worker of its own, `code/products/gateway`, optional, RFC oomwh, and the control's `/v1/<id>/` stand-in is gone from its routes.

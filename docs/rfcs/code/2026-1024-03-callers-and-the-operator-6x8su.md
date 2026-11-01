@@ -18,7 +18,7 @@ b8f35's, kept in `docs/signed.md`; the issuer is RFC vuanj's; the runner RFC p8e
 
 ## Decision
 
-Decided by the author on 2026-10-24, in RFC 6dheo. Nothing of it is built yet.
+Decided by the author on 2026-10-24, in RFC 6dheo. Little of it is built, see State below.
 
 **An interface stays in the inner call form**: `POST /{interface}/{operation}`, its body a call,
 answered by an `answer`, RFCs fhg6w and ge55b. The outer `/v{n}/{scope}/...` form stays for apps
@@ -98,3 +98,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 - **The `credential` key is 5**, provisional, chosen by the advisor on 2026-10-24, the next free key
   of the call, in `monoflake:call:2`.
+
+## State
+
+As of 2026-11-01 the declaration layer is built and the rest is not. `model/contracts/subset/subset.res` declares the eight kinds of caller and gives each operation its `callers`. Still to build: the call is `monoflake:call:1` and has no `credential` field. `model/contracts/signed/signed.res` has no `operator` role, and there is no single gate in order. `code/products/control/src/worker.res` trusts no certificate and refuses a signed call as denied. The issuer in `model/contracts/components/capabilities.res` declares `for_app` and `for_space` and no operation for a member. The runner's chain has no account or operator. The `fill.res` `interfaces` addition was not confirmed.

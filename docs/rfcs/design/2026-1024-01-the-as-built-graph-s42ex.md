@@ -128,3 +128,9 @@ removed once the as-built graph is built, and is derived from the graph from the
 **It is done when** the scaffolds of structure the as-built graph derives and the scaffolds of
 property the samples measure, a secret unsealed or a bearer's authentication, together reproduce
 the inventory in RFC vgvx6's Evidence.
+
+## State
+
+As of 2026-11-01 the as-built graph is built: `model/graph/provided.res` holds `provides`, extra edges and `carries`, and `model/checks/derived/derivations.res` derives the scaffolds from Rules, Roles and Crossing alone. D1 to D3 do not yet run on it, and `model/checks/derived/realized.res` still drops an edge internal to its block, which they wait on.
+
+The Pending line on the revision, that a release built by Nix from monoflake/machine's input gives that input's revision, no longer matches the fleet. A driver is now chosen by its own signed pointer, `pointer/driver/<machine>`, and installed by the updater under `/var/lib/driver` (monoflake/cloud, `docs/upgrades.md`), so the revision work follows that pointer route and not a Nix build from the machine input.

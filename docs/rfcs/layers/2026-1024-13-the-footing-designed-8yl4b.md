@@ -132,3 +132,9 @@ Choices made provisionally while the thread runs, read by the author at its end.
   providing `authority` writes what `authority` writes. An edge reading the platform's footing's
   rows carries the footing's contract, `footing`, as monoflake/cloud's RFC 6dheo strikes its own
   undeclared contract for the records.
+
+## State
+
+As of 2026-11-01 the design is in the model and the footing itself is not built. `model/graph/components.res` declares `footing(half)` as a component of its own, giving `footing(organization)` and `footing(platform)`. There is no footing product under `code/products/`, which holds compute, control, database, gateway and storage alone. `model/contracts/components/footings.res` still has `after` and `next` as `uint32`, where the Ledger asks for an opaque bytes cursor. `code/products/control/src/parts/state.res` still prepares SQL directly, so the `?tables` scaffold has not retired.
+
+The claim above that today's ids are sequential is stale. The control now draws an id at random over 32 bits (`code/products/control/src/api/api.res`, `random`). The fleet reset that began everything from nothing does not show that the footing is in place.

@@ -89,3 +89,7 @@ warning of an app nothing reaches reads it. An app declaring none is reached onl
 binding it, RFC 49qyg, and is warned of as vr5lw has it. **A declared domain is bound to the
 gateway's Worker by hand for now**: a driver binding the domains its apps declare by itself is
 work of its own.
+
+## State
+
+As of 2026-11-01 most of it is built. `code/products/control/src/worker.res` answers its listed paths and refuses the rest, and the gateway is a Worker of its own, `code/products/gateway`, which reads the control's database. A domain is a row of `domain` and a mount a row of `scope`, both written from the ingress a deployment declares (`code/products/control/src/parts/state.res`, `parts/ingress.res`), and `code/products/gateway/src/gateway.res` takes a mount by its scope label alone, so no path names an app's id and an app declaring no ingress has no domain or mount row. Not built: the binding's own name `{app}.b{binding}` is still admitted for every deployment, which waits on monoflake/driver's RFC 3txyw, and a declared domain is still bound to the gateway's Worker by hand.

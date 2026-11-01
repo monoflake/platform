@@ -165,3 +165,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
   `True-Client-IP`, `X-Real-IP`, `X-Client-IP`, `X-Cluster-Client-IP`, `Client-IP` and
   `Fastly-Client-IP`, each matched with `_` read as `-`, since some servers fold the two. A request
   from the subnet carrying `Host` more than once is answered 400, never judged by one of them.
+
+## State
+
+As of 2026-11-01 the contract and the driver half are built. `model/contracts/records/control.res` declares the `component` record with its name unique, `model/contracts/kinds/deployments.res` gives the `component` case of `deployment-runs` its `id`, and driver(machine), `driver/machine/src/served.rs`, `entry.rs`, `served/fence.rs` and `container/src/containers/handed.rs`, identifies a component by id, takes `handed` and `reaching`, and refuses a value handed twice. What is not built is the deployer's side: the control has no path that deploys a component and draws its id, and the component bench the Ledger has draw it, RFC 9bq0y, does not exist, so the line that the bench draws the id describes work still to do. The Linux rehearsal on the test machine, which the fence and the source-address checks wait on, was not run for this reading.

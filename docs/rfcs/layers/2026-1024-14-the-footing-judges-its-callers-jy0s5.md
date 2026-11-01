@@ -55,3 +55,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
 - **A writer of a kind may create, replace and delete its rows**, provisional, chosen by the advisor
   on 2026-10-24, the rights settled by the decision above. Reads, `bundle` and `lease` go by the
   caller's edges.
+
+## State
+
+As of 2026-11-01 the type change is built and the authorization is not. `model/contracts/signed/signed.res` no longer has the `records` case of `capability-target`, and `model/contracts/components/footings.res` declares every footing operation with `component` as its caller. There is no footing to verify a certificate and judge a caller by the model, since no footing product exists in `code/products/`. The control in `code/products/control/src/worker.res` trusts no certificate yet either, and the bench's footing stand-in, RFC 9bq0y, is not built. Removing the capability case is not a working certificate path.

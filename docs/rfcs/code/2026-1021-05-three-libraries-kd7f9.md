@@ -67,3 +67,7 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
   `flags` and `func` items, a `use` of an interface in the same file, and one `world` exporting
   those interfaces or functions; `resource`, `own`, `borrow`, `include` and a `use` or `import` of
   another package refused as the WIT is read, until the subset grows.
+
+## State
+
+As of 2026-11-01 the three libraries exist and hold most of the interfaces above. `code/libs/vocabulary/src/needs.resi` has `fits`, `meets` and `filled`. `code/libs/wit/src/world.resi` has `read`, `exports`, `imports` and `matches`. `code/libs/extensions/src/extension.resi` has `bind`, `grace`, `quota`, `compose`, `apply` (the `management-apply` a list of capacity becomes), `lend` and `borrow`. The interface of `extensions*` ends at `borrow`: the computation of the paths to each host, fewest jumps first, is not built there. Whether the libraries pass in both runtimes was not run for this reading.
