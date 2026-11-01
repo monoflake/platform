@@ -14,16 +14,15 @@ seconds.
 
 Nothing else is taken.
 
-| Signer         | Signs                                                                                                      |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| the root       | a certificate of `intermediate`                                                                            |
-| `intermediate` | a certificate of `authority`                                                                               |
-| `authority`    | a certificate of `organization`, `issuer`, `bundle` or `account`; an authority's record; a directory's row |
-| `organization` | a certificate of `component`, with its `sub`; a call                                                       |
-| `issuer`       | a capability                                                                                               |
-| `bundle`       | a bundle                                                                                                   |
-| `account`      | an account credential                                                                                      |
-| `component`    | a call                                                                                                     |
+- the root: a certificate of `intermediate`
+- `intermediate`: a certificate of `authority`
+- `authority`: a certificate of `organization`, `issuer`, `bundle` or `account`; an authority's
+  record; a directory's row
+- `organization`: a certificate of `component`, with its `sub`; a call
+- `issuer`: a capability
+- `bundle`: a bundle
+- `account`: an account credential
+- `component`: a call
 
 A signer holding a scope signs only what holds the same: a certificate's and a capability's `scope`,
 a bundle's. What carries `iat` and `exp` -- a certificate, a capability, an account credential -- is
@@ -38,10 +37,10 @@ chain as much as what it signs.
 - **The protected header holds `alg`, `kid` and `typ` alone**, `kid` of 16 bytes and `typ` text; the
   unprotected header is empty but for a call's, which holds `kcwt`, 13, a byte string, alone.
   Anything else is `Malformed`.
-- **A content is read as far as verifying reads it**: a map; `iat` and `exp` integers of 0 to
-  2^53 - 1; a scope an integer; a role a known code; `cnf` an Ed25519 `COSE_Key`, `x` of 32 bytes;
-  `sub` text, which a component's certificate holds; a bundle's scope at key 2; a capability's
-  rights not empty. The rest of each content is its reader's, by envelope.
+- **A content is read as far as verifying reads it**: a map; `iat` and `exp` integers of 0 to 2^53 -
+  1; a scope an integer; a role a known code; `cnf` an Ed25519 `COSE_Key`, `x` of 32 bytes; `sub`
+  text, which a component's certificate holds; a bundle's scope at key 2; a capability's rights not
+  empty. The rest of each content is its reader's, by envelope.
 - **Every certificate matching a `kid` is tried**, a call's `kcwt` first, then those given in their
   order, then the root, since a key renewed is certified twice while both certificates live: the
   first that verifies signs, and where none does, the refusal is the first candidate's. A

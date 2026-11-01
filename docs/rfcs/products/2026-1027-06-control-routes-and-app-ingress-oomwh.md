@@ -60,6 +60,16 @@ outside but a control's own routes, and an app is reached only by another app bi
 vr5lw's every organization holding a gateway always no longer holds; what a mount answers, and
 the rules every answer of a gateway carries, stand as vr5lw has them.
 
+**A mount is a row of the organization's `scope` table, and no path names an app's id**, decided by
+the author on 2026-11-01 after the gateway's `/v{n}/{8 hex}/` and `/v{n}/app-{decimal}/` were found
+forwarding to any deployment, declared or not: an id is unique only within its scope, RFC b8f35, so
+a bare id cannot address an app from outside, and no row means no way in. **One gateway name is
+bound to one organization**, set where the gateway is configured, so a request carries no
+organization. To build: the table and its migration, writing and deleting a row, the gateway
+reading it, both id routes removed, and conform, lose and replace going through a mount, hello's
+written at its deploy. It runs beside monoflake/cloud's RFC stc9g's inner loop, as C has no gateway,
+and must ship with its first candidate, before the platform keeps data.
+
 **An app has no way in from outside by default, and gains one only by declaring it.** Its ingress
 is one or more of:
 

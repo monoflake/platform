@@ -1,10 +1,13 @@
 # Lessons
 
-Facts taken from the old system, and from the vendors the model stands on, each answering a question
-the model asked, each with its source, one topic a file in `lessons/`. Facts only, never a structure to copy, `method.md`.
+Facts from existing systems and the vendors the model stands on, each answering a question the model
+asks, each with its source, one topic a file in `lessons/`. Facts only, never a structure to copy,
+`method.md`.
 
-- [Cloudflare](lessons/cloudflare.md): Cloudflare, its Workers, D1, Durable Objects' SQLite and its plans
-- [Certificates](lessons/certificates.md): the public certificate authorities a machine is certified by
+- [Cloudflare](lessons/cloudflare.md): Cloudflare, its Workers, D1, Durable Objects' SQLite and its
+  plans
+- [Certificates](lessons/certificates.md): the public certificate authorities a machine is certified
+  by
 - [Networks](lessons/networks.md): private networks between resources
 - [Building](lessons/building.md): where and how code is built
 - [SQLite](lessons/sqlite.md): SQLite at the sizes a tablet reaches

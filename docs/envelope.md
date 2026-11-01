@@ -1,8 +1,8 @@
 # What envelope-generator writes
 
 envelope-generator writes `model/contracts.json` into `envelope*` for each of its languages,
-`model/graph/tools.res`. Each type is written in one JSON and one CBOR, as RFC fhg6w's subset has
-them, and read back from them alone: a field a reader does not know is passed over, and anything
+`model/graph/tools.res`. Each type is written in one JSON and one CBOR, as the subset in RFC fhg6w
+has them, and read back from them alone: a field a reader does not know is passed over, and anything
 else not as its type writes it is `Malformed`. The two languages' lists below are one contract.
 
 ## Rust
@@ -59,7 +59,7 @@ committed.
   operation in upper camel case holding its input, `Write(Contracts.ObjectWrite.t)`, and `envelope`,
   `{call: call, capabilities: array<Uint8Array.t>}`, with `toJson`, `fromJson`, `toCbor` and
   `fromCbor` as a type's.
-- **A call**, every operation's body, `contracts.json`'s `call`, fhg6w, is an interface's
+- **A call**, every operation's body, `contracts.json`'s `call`, RFC fhg6w, is an interface's
   `envelope`: its operation and input, and the capabilities it carries, each a COSE Sign1 as it was
   signed, none written absent. Read, its `interface` is held to the module's, its `operation`
   chooses how its `input` is read, and an operation the interface has not is `t` at `operation`. A
@@ -68,7 +68,7 @@ committed.
   apps adds are `Contracts.calling`, each an `array<Contracts.reason>`, a reason `{name: string,
   failure: Contracts.Failure.t, message: string}`, its message its default; and
   `Contracts.messages`, a `dict<string>`, gives any reason's default message by its name, RFC ge55b.
-- **An answer**, every operation's, `contracts.json`'s `answer`, ge55b, is `Contracts.Answer`,
+- **An answer**, every operation's, `contracts.json`'s `answer`, RFC ge55b, is `Contracts.Answer`,
   holding `type t<'output> = Success('output) | Error(Contracts.Error.t)`, told apart by `status`
   alone, with `toJson: (t<'o>, 'o => JSON.t) => JSON.t`, `fromJson: (JSON.t, JSON.t => result<'o,
   Malformed.t>) => result<t<'o>, Malformed.t>`, and `toCbor` and `fromCbor` the same over
