@@ -151,6 +151,12 @@ let types: array<declared> = [
     ]),
     from: "vr5lw",
   },
+  // The interface versions a driver reads, its lowest to its highest, both read, wnqvu.
+  {
+    name: "management-range",
+    def: Record([field("lowest", 1, Prim(#uint53)), field("highest", 2, Prim(#uint53))]),
+    from: "wnqvu",
+  },
   // What the driver holds and the git revision it was built from, absent where it was given none,
   // wnqvu. Use reported is open [C18]. `kinds` absent is every kind the model gives that driver.
   {
@@ -164,6 +170,7 @@ let types: array<declared> = [
       optional("kinds", 6, List(Type("management-kind"))),
       optional("adopted", 7, List(Type("management-adopted"))),
       optional("warnings", 8, List(Type("management-warning"))),
+      optional("versions", 9, Map(Type("management-range"))),
     ]),
     from: "vr5lw, vbg0u",
   },

@@ -103,6 +103,9 @@ importers:
       '@monoflake/codec':
         specifier: workspace:*
         version: link:../../libs/codec
+      '@monoflake/compat':
+        specifier: workspace:*
+        version: link:../../libs/compat
       '@monoflake/envelope':
         specifier: workspace:*
         version: link:../../libs/envelope

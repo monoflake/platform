@@ -8,6 +8,7 @@
 	"dependencies": [
 		"@monoflake/envelope",
 		"@monoflake/codec",
+		"@monoflake/compat",
 		"@monoflake/capability",
 		"@monoflake/serve"
 	],

@@ -21,6 +21,7 @@ type t = {
   cut: ref<option<string>>,
   /** The kinds the driver's describe answers it offers, none where it names none. */
   kinds: ref<option<array<Contracts.ManagementKind.t>>>,
+  versions: ref<option<JSON.t>>,
   /** The last list applied. */
   applied: ref<option<Contracts.ManagementApply.t>>,
   /** The last deploy sent. */
@@ -44,6 +45,7 @@ let make = (): t => {
   let drops = ref(0)
   let cut = ref(None)
   let kinds = ref(None)
+  let versions = ref(None)
   let applied = ref(None)
   let deployed = ref(None)
   let lost = ref(false)
@@ -94,7 +96,12 @@ let make = (): t => {
             | Made(_) | Failed(_) | Unasked(_) => ()
             }
           )
-          success(Contracts.ManagementDescribed.toJson(described))
+          let data = Contracts.ManagementDescribed.toJson(described)
+          switch (data->JSON.Decode.object, versions.contents) {
+          | (Some(data), Some(versions)) => data->Dict.set("versions", versions)
+          | (Some(_), None) | (None, _) => ()
+          }
+          success(data)
         | "/management/apply" =>
           switch Contracts.ManagementApply.fromJson(await input()) {
           | Ok(list) =>
@@ -185,6 +192,7 @@ let make = (): t => {
     drops,
     cut,
     kinds,
+    versions,
     applied,
     deployed,
     lost,

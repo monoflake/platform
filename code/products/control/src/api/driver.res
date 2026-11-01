@@ -39,7 +39,17 @@ let call = async (host, envelope, data) => {
       unreachable(`the host's driver answered ${Int.toString(response->Web.status)} and no JSON`)
     | json =>
       switch Contracts.Answer.fromJson(json, data) {
-      | Ok(Success(output)) => Ok(output)
+      | Ok(Success(output)) =>
+        if path == "/management/describe" {
+          Compatibility.answer(
+            json,
+            ~driver=host.reach.origin(~address=host.address, ~port=host.port),
+          )
+          ->Result.map(() => output)
+          ->Result.mapError(message => {reason: "invalid", message})
+        } else {
+          Ok(output)
+        }
       | Ok(Error({reason, message})) => Error({reason, message})
       | Error({expected}) =>
         unreachable(`the host's driver answered what its type does not write, ${expected}`)

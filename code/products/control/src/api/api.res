@@ -271,7 +271,7 @@ let callBackDeadline = 10000
 /** What Cloudflare's edge answers for an origin it could not reach, as the issuer reads them. */
 let unreached = [521, 522, 523, 524, 530]
 
-type proof = Proven | NotProven | Unreached | Unbuilt
+type proof = Proven | NotProven | Unreached | Unbuilt | Incompatible(string)
 
 /** Whether an origin answers its management's describe as the driver holding the token's hash. */
 let proven = async (parts, ~origin, ~token) => {
@@ -307,7 +307,11 @@ let proven = async (parts, ~origin, ~token) => {
         | exception JsExn(_) => NotProven
         | json =>
           switch Contracts.Answer.fromJson(json, Contracts.ManagementDescribed.fromJson) {
-          | Ok(Success(_)) => Proven
+          | Ok(Success(_)) =>
+            switch Compatibility.answer(json, ~driver=origin) {
+            | Ok() => Proven
+            | Error(message) => Incompatible(message)
+            }
           | Ok(Error(_)) | Error(_) => NotProven
           }
         }
@@ -336,6 +340,7 @@ let originBound = async (parts, binding: State.binding, given) => {
         }
       }
     | NotProven => refused("not_proven", `${origin} answered, and not as binding ${named}'s driver`)
+    | Incompatible(message) => refused("invalid", message)
     | Unreached => refused("unreachable", `${origin} did not answer binding ${named}'s call back`)
     | Unbuilt => refused("malformed", "the origin is no URL a request is sent to")
     }

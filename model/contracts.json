@@ -3318,6 +3318,24 @@
 				}
 			]
 		},
+		"management-range": {
+			"record": [
+				{
+					"name": "lowest",
+					"key": 1,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "highest",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
 		"management-described": {
 			"record": [
 				{
@@ -3384,6 +3402,16 @@
 					"shape": {
 						"list": {
 							"type": "management-warning"
+						}
+					},
+					"optional": true
+				},
+				{
+					"name": "versions",
+					"key": 9,
+					"shape": {
+						"map": {
+							"type": "management-range"
 						}
 					},
 					"optional": true
