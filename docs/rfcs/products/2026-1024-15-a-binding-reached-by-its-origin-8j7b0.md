@@ -1,10 +1,12 @@
 ---
 name: 'A binding reached by its origin'
 title: "A Cloudflare binding binds by its Worker's public origin, which the control proves by calling it back, beside a machine's tunnel"
-status: accepted
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@20947d1a
+  - monoflake/driver@ffc398cb
 references: []
 ---
 

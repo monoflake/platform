@@ -1,10 +1,12 @@
 ---
 name: 'A Name Filled From Beneath'
 title: "A deployment says a name is filled by the platform beneath it, which the check follows into that deployment's column and holds to RFC 94y0d's one way down"
-status: accepted
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@2f51b58f
+  - monoflake/platform@29528287
 references: []
 ---
 

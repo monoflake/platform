@@ -1,10 +1,12 @@
 ---
 name: 'A Host Bound Joins the Roster'
 title: "Binding a host is adding a place to the roster: the driver's edge goes to `?roster`, and `bindings` is the roster's interface for a host added and reporting itself"
-status: accepted
+status: landed
 supersedes: []
 blocked-by: []
-commits: []
+commits:
+  - monoflake/platform@29528287
+  - monoflake/driver@e9db5b74
 references: []
 ---
 

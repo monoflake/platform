@@ -1,7 +1,7 @@
 ---
 name: 'Gateways an Organization Makes'
 title: "Where an organization's gateways run, how many it makes, and how a name and a mount reach each"
-status: accepted
+status: declined
 supersedes: []
 blocked-by: []
 commits: []
@@ -79,6 +79,8 @@ reaching a Worker of another account".
   none of it.
 
 ## Decision
+
+**Superseded by RFC oomwh**, an optional gateway Worker apart from the control, so nothing below was built as it stands.
 
 Decided by the author on 2026-10-26. vr5lw's "every organization has one, part of what the
 platform gives it" is amended to this; vr5lw is landed and stays as written, so this RFC
