@@ -1,6 +1,6 @@
 [package]
 name = "envelope"
-version = "0.0.0"
+version = "0.1.0"
 description = "The contracts' types, their JSON and CBOR and each interface's operations, written from model/contracts.json, RFC fhg6w"
 edition.workspace = true
 publish.workspace = true

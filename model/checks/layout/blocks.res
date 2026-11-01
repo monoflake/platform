@@ -23,8 +23,6 @@ type held = {
   writtenBy?: string,
   /** Other blocks of its own tree it may depend on, by their package names. */
   blocks?: array<string>,
-  /** Whether it is released, its version then its own rather than `unpublished`. */
-  released?: bool,
 }
 
 /** The directory each layer's components lie in. */
@@ -155,11 +153,8 @@ let rescriptWarnings = ("+4", "+a-110")
 /** What every ReScript package writes beside its sources, an ES module by this suffix. */
 let rescriptOutput = ("esmodule", ".res.mjs")
 
-/** The version every package holds while none is published, decided by the author on 2026-10-20. */
-let unpublished = "0.0.0"
-
-/** The form a released block's own version takes, `MAJOR.MINOR.PATCH`, as RFC 8c0rg's program. */
-let releasedVersion = /^\d+\.\d+\.\d+$/
+/** The form every package's version takes, `MAJOR.MINOR.PATCH`. */
+let versionForm = /^\d+\.\d+\.\d+$/
 
 /**
  * The lints the root's `Cargo.toml` sets for every crate, Rust's and Clippy's, each denied or

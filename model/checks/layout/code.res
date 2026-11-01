@@ -231,18 +231,13 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
       | _ => found->Array.push(`${path}: uses the block ${b}, which is no other block of this tree`)
       }
     )
-    let released = h.released == Some(true)
-    // A released block's version is its own, and every other one's is `unpublished`.
+    // The workspace's versions part holds which version, this holds its form alone.
     let versioned = version =>
       switch version {
-      | Some(v) if released => releasedVersion->RegExp.test(v)
-      | Some(v) => v == unpublished
+      | Some(v) => versionForm->RegExp.test(v)
       | None => false
       }
-    let unversioned = manifest =>
-      released
-        ? `${manifest}: no version MAJOR.MINOR.PATCH of its own, as ${h.name} is released`
-        : `${manifest}: no version ${unpublished}, as nothing is published`
+    let unversioned = manifest => `${manifest}: no version MAJOR.MINOR.PATCH`
     let allowed = (l: lang) =>
       Array.concatMany(
         [],

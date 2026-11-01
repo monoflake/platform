@@ -59,11 +59,9 @@ integrator, RFC fhg6w.
 - **A package links the root's two licenses beside its manifests**, `LICENSE-MIT` and
   `LICENSE-APACHE`, each a link to the root's own: a package is read apart from its tree, by a
   registry or a reader, and carries its terms with it while the texts stay one.
-- **A package's version is `0.0.0` while nothing is published**, `Blocks.unpublished`: a version is
-  a promise to whoever takes a release, and none is made yet. A block the model marks `released`,
-  once the author opens its releases, keeps a version of its own from `0.1.0`, as
-  `monoflake/driver`'s program will, RFC 8c0rg; until then every block of the author's own is
-  `0.0.0`, a packaging of others' work keeping theirs.
+- **A package's version is `MAJOR.MINOR.PATCH`**, `Blocks.versionForm`, the form alone held here:
+  which version it holds is the workspace's `versions-rolled`, rolled at landing and never in a lane,
+  a packaging of others' work keeping theirs.
 - **A block's tests read its samples as they stand**, each language the same files, the model's
   `samples`; a sample is never copied into a test, and accept refuses one no test of a language
   names, as it refuses an interface left unimplemented.

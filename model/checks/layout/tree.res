@@ -61,9 +61,7 @@ let lines = (tree: tree, path, h: held) => {
     ...generation,
     `Languages: ${h.languages->Array.map(languageName)->Array.join(", ")}`,
     `Packages: ${packages->Array.join("; ")}; license ${h.license}`,
-    ...h.released == Some(true)
-      ? ["Version: its own, MAJOR.MINOR.PATCH, as it is released"]
-      : [`Version: ${unpublished}, as nothing is published`],
+    "Version: MAJOR.MINOR.PATCH, rolled at landing and never in a lane",
     "",
     "Uses, the platform's libraries it may depend on:",
     ...uses == [] ? ["  none"] : uses->Array.map(u => `  ${u}`),
