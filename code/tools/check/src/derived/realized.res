@@ -244,7 +244,7 @@ let blocksIn = (d: Provided.deployed) =>
     d.fills->Array.filterMap(((_, f)) =>
       switch f {
       | Block(main) => Some(main)
-      | Vendor(_) | Workload(_) | Beneath(_) => None
+      | Vendor(_) | Workload(_) | Beneath(_) | Import(_) => None
       }
     ),
   ])->Array.toSorted(byText)
@@ -254,7 +254,7 @@ let filledBeneath = (d: Provided.deployed) =>
   d.fills->Array.filterMap(((filled, f)) =>
     switch f {
     | Beneath({deployment, name}) => Some({filled, deployment, name})
-    | Block(_) | Vendor(_) | Workload(_) => None
+    | Block(_) | Vendor(_) | Workload(_) | Import(_) => None
     }
   )
 
@@ -278,5 +278,7 @@ let filledApart = (d: Provided.deployed) =>
     | Block(_) | Beneath(_) => None
     | Vendor({vendor, resource}) => Some((name, `${resource}, a resource of ${vendor}`))
     | Workload(what) => Some((name, `${what}, a workload`))
+    | Import({deployment, name: exported}) =>
+      Some((name, `${exported}, an export imported from ${deployment}`))
     }
   )

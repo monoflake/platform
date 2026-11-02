@@ -69,16 +69,26 @@ let all = Dict.fromArray(Array.concat(blocks->Dict.toArray, elsewhere->Dict.toAr
 
 /**
  * What fills a name in one deployment, RFC vgvx6, a block by its main name, a vendor's resource, a
- * user's workload, whose code the model never holds, or a name another deployment provides, btzlt.
+ * user's workload, a name another deployment provides, btzlt, or a public export imported, nge39.
  */
 type filler =
   | Block(string)
   | Vendor({vendor: string, resource: string})
   | Workload(string)
   | Beneath({deployment: string, name: string})
+  | Import({deployment: string, name: string})
+
+/** An app's public capability, cut at its HTTPS endpoint, RFCs 94y0d and nge39. */
+type exported = {name: string, app: string, endpoint: string, contracts: array<string>}
 
 /** One deployment, each name with what fills it as it runs now, and the targets bound to it. */
-type deployed = {fills: array<(string, filler)>, targets: array<string>}
+type deployed = {
+  fills: array<(string, filler)>,
+  targets: array<string>,
+  /** Absent in the older model's view of one organization alone. */
+  organization?: string,
+  exports?: array<exported>,
+}
 
 /** Each deployment by its name, given in the fill; none where no fill gives them. */
 let deployments: dict<deployed> = Fill.part(Fill.deployments)->Option.getOr(dict{})

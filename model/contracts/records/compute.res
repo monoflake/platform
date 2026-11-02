@@ -3,6 +3,25 @@ open Subset
 
 let types: array<declared> = [
   {
+    name: "export",
+    def: Record([
+      field("name", 1, Prim(#string)),
+      field("app", 2, Id("app")),
+      field("endpoint", 3, Prim(#string)),
+      field("contracts", 4, List(Prim(#string))),
+    ]),
+    from: "94y0d, nge39",
+  },
+  {
+    name: "import",
+    def: Record([
+      field("name", 1, Prim(#string)),
+      field("endpoint", 2, Prim(#string)),
+      field("export", 3, Prim(#string)),
+    ]),
+    from: "94y0d, nge39",
+  },
+  {
     name: "app-ingress",
     def: Union({
       tag: "name",
@@ -183,4 +202,8 @@ let types: array<declared> = [
   },
 ]
 
-let contents: array<content> = [{half: #organization, kind: "app", version: 2, content: "app"}]
+let contents: array<content> = [
+  {half: #organization, kind: "app", version: 2, content: "app"},
+  {half: #organization, kind: "export", version: 1, content: "export", unique: [["name"]]},
+  {half: #organization, kind: "import", version: 1, content: "import", unique: [["name"]]},
+]

@@ -307,7 +307,7 @@ let rec followed = (~deployments: dict<Provided.deployed>, passed, deployment, n
       switch there.fills->Array.find(((n, _)) => n == name) {
       | Some((_, Beneath({deployment: next, name: taken}))) =>
         followed(~deployments, passed->Array.concat([deployment]), next, taken)
-      | Some((_, Block(_) | Vendor(_) | Workload(_))) => Reached
+      | Some((_, Block(_) | Vendor(_) | Workload(_) | Import(_))) => Reached
       | None => providedThere(there, name) ? Reached : NotThere(deployment, name)
       }
     }
@@ -451,7 +451,7 @@ let providedLines = (~deployments=Provided.deployments, column, v: view, d: Prov
             ? []
             : [`${n} is filled by ${main}, which declares providing it not`],
         )
-      | Vendor(_) | Workload(_) | Beneath(_) => []
+      | Vendor(_) | Workload(_) | Beneath(_) | Import(_) => []
       },
     )
   )

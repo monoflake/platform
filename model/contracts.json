@@ -546,6 +546,81 @@
 				}
 			]
 		},
+		"export": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "app",
+					"key": 2,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "endpoint",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "contracts",
+					"key": 4,
+					"shape": {
+						"list": {
+							"prim": "string"
+						}
+					}
+				}
+			]
+		},
+		"import": {
+			"record": [
+				{
+					"name": "description",
+					"key": 0,
+					"shape": {
+						"prim": "string"
+					},
+					"optional": true
+				},
+				{
+					"name": "name",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "endpoint",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "export",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
 		"app-ingress": {
 			"union": {
 				"tag": "name",
@@ -4947,6 +5022,82 @@
 								"optional": true
 							}
 						]
+					},
+					{
+						"name": "export",
+						"code": 13,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "export"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "export"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "import",
+						"code": 14,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "import"
+								},
+								"optional": true
+							},
+							{
+								"name": "handle",
+								"key": 2,
+								"shape": {
+									"prim": "string"
+								},
+								"optional": true
+							},
+							{
+								"name": "read",
+								"key": 3,
+								"shape": {
+									"prim": "uint53"
+								},
+								"optional": true
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "import"
+								},
+								"optional": true
+							}
+						]
 					}
 				]
 			}
@@ -5510,6 +5661,76 @@
 								"key": 4,
 								"shape": {
 									"type": "component"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "export",
+						"code": 13,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "export"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "export"
+								},
+								"optional": true
+							}
+						]
+					},
+					{
+						"name": "import",
+						"code": 14,
+						"fields": [
+							{
+								"name": "id",
+								"key": 1,
+								"shape": {
+									"id": "import"
+								}
+							},
+							{
+								"name": "generation",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							},
+							{
+								"name": "version",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "content",
+								"key": 4,
+								"shape": {
+									"type": "import"
 								},
 								"optional": true
 							}
@@ -8081,7 +8302,7 @@
 			]
 		},
 		"configuration": {
-			"version": 2,
+			"version": 3,
 			"bounds": {},
 			"declared": [],
 			"operations": [
@@ -8905,6 +9126,22 @@
 			"version": 2,
 			"content": "app",
 			"unique": []
+		},
+		{
+			"kind": "export",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "export",
+			"unique": [["name"]]
+		},
+		{
+			"kind": "import",
+			"half": "organization",
+			"writes": ["control(organization)"],
+			"version": 1,
+			"content": "import",
+			"unique": [["name"]]
 		},
 		{
 			"kind": "organization",

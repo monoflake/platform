@@ -52,6 +52,8 @@ let own: array<held> = [
    * nothing, vuanj.
    */
   {half: #organization, kind: "lease", writes: ["compute"], from: "b8f35, v7v3w"},
+  {half: #organization, kind: "export", writes: ["control(organization)"], from: "94y0d, nge39"},
+  {half: #organization, kind: "import", writes: ["control(organization)"], from: "94y0d, nge39"},
 ]
 
 /** Every kind with each writer named as the whole graph names it. */

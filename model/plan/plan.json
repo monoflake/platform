@@ -137,7 +137,7 @@
 			"id": "clock-contract",
 			"says": "The clock contract, `set` and `describe`, is declared in the model with samples before code is cut, RFCs p6fg3 and fhg6w",
 			"holds": {
-				"owes": "the contract and samples written with the author's four decisions stand in lanes/clock, unlanded: registered, the samples check refuses its rows' field constraints and five codec refusals as read, and finds invalid and quota_exceeded met by no sample, so the runner needs field-constraint and clock-fixture support first"
+				"owes": "the contract and samples written with the author's four decisions stand in lanes/clock, unlanded: registered, the samples check refuses its rows' field constraints and five codec refusals as read, and finds invalid and quota_exceeded met by no sample, so the runner needs field-constraint and clock-fixture support first: code/tools/runner/src/target/holding.res's kindOf (lines 11 to 17) maps no clock, its capacity (19 to 32) turns no row bound into fixture configuration and its given (63 to 70) answers Unoffered, and the model's management-capacity has no clock variant, which the samples checker reads at cases.res 294 to 298; then the four value limits become set's invalid behavior cases and the five codec refusals go"
 			}
 		},
 		{
