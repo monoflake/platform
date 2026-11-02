@@ -102,7 +102,7 @@ the platform.
 
 ## A task is an entry, a script an order, a tool a program
 
-A task is the workspace's entry, its lines limited there -- the workspace's `docs/toolchain.md`.
+A task is the workspace's entry, its lines limited there -- the workspace's `docs/toolchain/scripts.md`.
 Past that it is a script in `scripts/`, at the top, since it drives the model, the code and the
 documents alike. **A script decides only order**: what runs, with which arguments, and where it
 stops on a failure. **What computes is a tool**, a program in `code/tools/` with its tests: once a

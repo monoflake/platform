@@ -5,7 +5,8 @@ base = "https://github.com/canmi21/canmi.git"
 [push]
 visibility = "public"
 
-# What the workspace's update moves here besides this repository's own task, its docs/toolchain.md.
+# What the workspace's update moves here besides this repository's own task, its
+# docs/toolchain/dependencies.md.
 # What this repository exports and what it depends on, RFC 8q1af.
 [boundary]
 exports = ["contracts", "crates", "operator-tasks", "interface-overlap", "control-deploy-grant"]
@@ -18,7 +19,8 @@ packages = true
 [rfcs]
 ids = "monoflake"
 
-# Suffixes this repository alone tracks, formatted by nothing, the workspace's docs/lint-format.md.
+# Suffixes this repository alone tracks, formatted by nothing, the workspace's
+# docs/toolchain/lint-format.md.
 [format]
 unformatted = [".sql", ".wit"]
 

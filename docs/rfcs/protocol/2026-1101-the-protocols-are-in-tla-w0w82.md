@@ -30,4 +30,4 @@ The author's, on 2026-11-01, taking TLA+ as the industry's standard for this, wi
   written twice.
 - **A specification and the code are tied together, or it decays.** TLC's traces become tests of the
   code's decisions; a specification with no such tie is a document.
-- **The tools come through mise**, as each layer pins only the layer beneath it, docs/toolchain.md.
+- **The tools come through mise**, as each layer pins only the layer beneath it, docs/toolchain/versions.md.

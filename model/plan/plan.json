@@ -89,7 +89,9 @@
 			"id": "extension-paths",
 			"says": "`extensions*` returns the paths to each host, fewest jumps first, for the bundle, RFC kd7f9",
 			"holds": {
-				"owes": "the paths in `extension.resi`"
+				"committed": {
+					"commit": "58a6ec79"
+				}
 			}
 		},
 		{
@@ -135,7 +137,7 @@
 			"id": "clock-contract",
 			"says": "The clock contract, `set` and `describe`, is declared in the model with samples before code is cut, RFCs p6fg3 and fhg6w",
 			"holds": {
-				"owes": "the contract and its samples"
+				"owes": "the contract and samples written with the author's four decisions stand in lanes/clock, unlanded: registered, the samples check refuses its rows' field constraints and five codec refusals as read, and finds invalid and quota_exceeded met by no sample, so the runner needs field-constraint and clock-fixture support first"
 			}
 		},
 		{
@@ -202,6 +204,20 @@
 			"delivers": ["control-deploy-grant"],
 			"holds": {
 				"owes": "the grants' contract and samples, then the mint, the revocation, the scoped operations, the health operation and the deploy tool's support"
+			}
+		},
+		{
+			"id": "bad-answer",
+			"says": "A driver's answer that does not decode is answered `bad_answer`, failure `unavailable`, on every control operation that calls a driver, apart from `unreachable`, which keeps meaning the host did not answer",
+			"holds": {
+				"owes": "the reason in the contract, its samples and the control's mapping"
+			}
+		},
+		{
+			"id": "window-in-envelope",
+			"says": "The interface's version window is generated into the Envelope from model/protocol/window.res, and the control reads it there, holding no copy of its own",
+			"holds": {
+				"owes": "the generator's output and the control reading it"
 			}
 		}
 	]
