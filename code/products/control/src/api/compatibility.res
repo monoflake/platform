@@ -20,7 +20,10 @@ let member = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dic
 let number = (object, key) =>
   object->Dict.get(key)->Option.flatMap(JSON.Decode.float)->Option.flatMap(Version.make)
 
-/** Only the names control supports are read; any other name is passed over, whatever its value. */
+/**
+ * Only the names control supports are read; any other name is passed over. A value that is no
+ * range under any name is refused before this, by the generated reader of the describe answer.
+ */
 let read = json =>
   switch member(json, "versions") {
   | None => Ok({versions: None})

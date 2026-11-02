@@ -48,7 +48,8 @@ let accepts = (reported, ~driver) =>
 test("overlapping ranges pass deployment and origin binding", async () => {
   let stood = stand()
   let reported = versions()
-  reported->Dict.set("future", JSON.String("not a range"))
+  // A name control does not know carries a range like the others, as a driver writes it.
+  reported->Dict.set("future", range(7, 9))
   deepEqual(accepts(reported, ~driver="matching"), Ok())
   stood.host.versions := Some(JSON.Object(reported))
   let (status, _) = await deploy(stood)
@@ -56,6 +57,37 @@ test("overlapping ranges pass deployment and origin binding", async () => {
   ok(stood.host.deployed.contents->Option.isSome)
   let (_, _, (status, _)) = await bindOrigin(stood.host)
   deepEqual(status, 200)
+})
+
+test("a malformed value under any name is refused with a reason, never bound empty", async () => {
+  let values = [JSON.String("not a range"), JSON.Number(3.), JSON.Null]
+  let names = ["management", "future"]
+  for i in 0 to names->Array.length - 1 {
+    for j in 0 to values->Array.length - 1 {
+      let reported = versions()
+      reported->Dict.set(names->Array.getUnsafe(i), values->Array.getUnsafe(j))
+      let stood = stand()
+      stood.host.versions := Some(JSON.Object(reported))
+      // The generated reader refuses the whole describe answer at the bad value, whichever name
+      // holds it, so nothing is applied, deployed or bound.
+      let (status, answer) = await deploy(stood)
+      deepEqual(
+        (status, (status, answer)->refusal),
+        (
+          503,
+          (
+            Some("unreachable"),
+            "the host's driver answered what its type does not write, an object",
+          ),
+        ),
+      )
+      deepEqual(stood.host.deployed.contents, None)
+      let (stood, id, (status, answer)) = await bindOrigin(stood.host)
+      let (reason, _) = (status, answer)->refusal
+      deepEqual((status, reason), (400, Some("not_proven")))
+      deepEqual((await stood.parts.state.binding(id))->Option.flatMap(b => b.origin), None)
+    }
+  }
 })
 
 test("a roll in either order, and a rollback, overlap", async () => {
