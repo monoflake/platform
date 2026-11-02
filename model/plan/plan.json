@@ -204,7 +204,10 @@
 			"id": "env-kept-by-runner",
 			"says": "A deployment's env is held by whoever runs it, a vendor or the machine driver, never a control: `secrets` in a deploy is optional, absent keeps what the runner holds, and a name given sets that name alone; a control sends no secretless deploy to a driver too old to keep them",
 			"holds": {
-				"owes": "the contract, the machine driver and the Cloudflare driver keeping secrets, proved on the test platform before it reaches A"
+				"observed": {
+					"at": "2026-11-02",
+					"what": "on the test platform, driver 41754c4c on okra kept a modules app's secrets across a redeploy naming none and one naming a second, a throwaway Worker on the test account kept them under keep_bindings secret_text, and a driver of version 3 refused a secretless deploy as malformed"
+				}
 			}
 		},
 		{
