@@ -4,6 +4,8 @@ _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
 cargo-deny = "0.20"
+# What runs TLC over model/protocol, RFC w0w82.
+java = "temurin-25"
 
 # What oxfmt formats here; ReScript's formatter takes its sources from rescript.json.
 [vars]
@@ -157,3 +159,9 @@ run = [
 	"mise run blocks",
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]
+
+# TLC over model/protocol, each defect's switch breaking its property, RFC w0w82.
+[tasks.protocol]
+description = "Run TLC over each specification and hold the table it exports: `protocol [--write]`"
+usage = 'flag "--write" help="Write the table TLC exports"'
+run = 'rescript build > /dev/null && node model/protocol/protocol_run.res.mjs ${usage_write:+--write}'
