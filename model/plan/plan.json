@@ -195,6 +195,7 @@
 		{
 			"id": "control-deploy-grant",
 			"says": "A's control mints, by an operator-only operation, a revocable deployment grant with a finite expiry bound to one production app, which allows only uploading a bounded Modules artifact for that app, deploying it with the app's secrets kept, and reading that app's status, and is refused at every operator operation; the platform's deploy tool deploys with it, so the second platform's control is deployed from CI without the operator credential; its contract and its allow and deny samples are reviewed by the author before code, RFC 6dheo",
+			"delivers": ["control-deploy-grant"],
 			"holds": {
 				"owes": "the grant's contract and samples, then the mint, the revocation, the scoped operations and the deploy tool's support"
 			}
