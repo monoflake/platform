@@ -20,6 +20,20 @@
 				"checks": ["Table"],
 				"inputs": ["model/protocol/overlap_table.res.mjs"]
 			}
+		},
+		{
+			"name": "footing",
+			"module": "footing.tla",
+			"quick": "footing.cfg",
+			"inputs": ["model/protocol/footing.tla", "model/protocol/footing.cfg"],
+			"switches": [
+				{ "name": "TAKE_BEFORE_PASSED", "breaks": "OneHolder" },
+				{ "name": "CHECK_BEFORE_BATCH", "breaks": "PassedLeaseRefused" },
+				{ "name": "STATEMENT_AT_A_TIME", "breaks": "AllOrNone" },
+				{ "name": "PAGES_UNPINNED", "breaks": "WholeBatches" },
+				{ "name": "NO_EXPIRY", "breaks": "TakenOver" }
+			],
+			"temporal": ["TakenOver"]
 		}
 	]
 }
