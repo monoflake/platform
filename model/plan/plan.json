@@ -227,12 +227,31 @@
 			}
 		},
 		{
+			"id": "grant-mint-command",
+			"says": "The operator mints and revokes a deployment grant by a tool or task of its own, the bearer shown once and never in a log, as the first real mint on A needs",
+			"after": ["control-deploy-grant"],
+			"holds": {
+				"owes": "the command; the test platform's proof used a script kept outside the repository"
+			}
+		},
+		{
+			"id": "grant-review-lows",
+			"says": "The low findings of the deployment grants' review are fixed or declined one by one",
+			"after": ["control-deploy-grant"],
+			"holds": {
+				"owes": "a retry inside an open intent answering stale rather than overloaded, a restored intent cleared by a late holder, a driver success naming another digest settling with no log, status after a definite operator refusal, bytes orphaned between put and stage, a raced stage deleting named bytes, the sweep only on later calls, the put check racing its write, kinds None against Function, a reconcile holding a request for its deadline, the health rate per isolate, and a slow driver at the five minute reconcile; and an operator retire on a fully dead driver, which still answers unreachable"
+			}
+		},
+		{
 			"id": "control-deploy-grant",
 			"says": "A's control mints, by an operator-only operation, a revocable deployment grant with a finite expiry bound to one production app, which allows only uploading a bounded Modules artifact for that app, deploying it with the app's secrets kept, and reading that app's status, and is refused at every operator operation; the platform's deploy tool deploys with it, so the second platform's control is deployed from CI without the operator credential; the same mint gives a health-read grant answering one new health operation of A's control with ready or unavailable, so the third platform's install is checked from CI without it; its contract and its allow and deny samples are reviewed by the author before code, RFC 6dheo",
 			"after": ["env-kept-by-runner"],
 			"delivers": ["control-deploy-grant"],
 			"holds": {
-				"owes": "the deploy proved end to end on the test platform; then the review's low findings: a retry inside an open intent answering stale rather than overloaded, a restored intent cleared by a late holder, a driver success naming another digest settling with no log, status after a definite operator refusal, bytes orphaned between put and stage, a raced stage deleting named bytes, the sweep only on later calls, the put check racing its write, kinds None against Function, a reconcile holding a request for its deadline, the health rate per isolate, and a slow driver at the five minute reconcile; and an operator retire on a fully dead driver, which still answers unreachable"
+				"observed": {
+					"at": "2026-11-02",
+					"what": "on the test platform with real D1, R2 and okra, a minted grant deployed through the tool with no operator credential, the secret kept, version, digest, candidate and audit recorded; refused at every operator operation and another app; a health grant answered ready alone; revocation refused the next call; retire removed its rows and staged bytes"
+				}
 			}
 		},
 		{
