@@ -1,0 +1,32 @@
+# TLC's full model and temporal properties, weekly and by hand, off the Mac.
+# Java comes from mise.toml and the jar is kept between runs under the home cache.
+name: protocol
+
+on:
+  schedule:
+    - cron: "0 3 * * 6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  protocol:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: canmi21/canmi/.github/actions/workspace@main
+        with:
+          path: monoflake/platform
+          scripts: "true"
+      - name: Install platform
+        working-directory: repos/monoflake/platform
+        run: pnpm install --frozen-lockfile
+      - name: Keep the TLC jar
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/tlaplus
+          key: tlaplus-v1.7.4
+      - name: Run the full protocol check
+        working-directory: repos/monoflake/platform
+        run: mise run protocol --full
