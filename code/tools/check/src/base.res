@@ -161,8 +161,15 @@ let inWork: array<string> = []
 @val @scope(("process", "env")) external noColor: Nullable.t<string> = "NO_COLOR"
 let red = text => noColor->Nullable.toOption != None ? text : `\u001b[31m${text}\u001b[0m`
 
+@val @scope(("process", "env")) external inWorkFile: Nullable.t<string> = "IN_WORK_FILE"
+@module("node:fs") external appendFile: (string, string) => unit = "appendFileSync"
+
 let shownInWork = () =>
   if inWork->Array.length > 0 {
+    // The workspace's check ends by naming these, whichever process listed them.
+    inWorkFile
+    ->Nullable.toOption
+    ->Option.forEach(file => appendFile(file, inWork->Array.join("\n") ++ "\n"))
     Console.log(
       red(
         `\n# In work, failing nothing until accepted\n${inWork
