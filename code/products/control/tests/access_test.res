@@ -3,6 +3,35 @@ open Node
 
 let secret = Uint8Array.fromArray(Array.make(~length=32, 7))
 
+test("grant bearers never fall through to an operator or identity proof", async () => {
+  let checked =
+    [
+      `dg1.sample-grant.${Envelope.Base64url.encode(secret)}`,
+      "dg1.sample-grant.invalid",
+      "dg1.",
+      "dg1.12.extra.parts",
+    ]
+    ->Array.map(async given => {
+      let lookups = ref(0)
+      let held = async _ => {
+        lookups := lookups.contents + 1
+        Some(secret)
+      }
+      deepEqual(
+        await Access.caller(
+          Some(`Bearer ${given}`),
+          ~operator=Some(given),
+          ~secret=held,
+          ~organizationSecret=held,
+        ),
+        Nobody,
+      )
+      deepEqual(lookups.contents, 0)
+    })
+    ->Promise.all
+  ignore(await checked)
+})
+
 test("a bearer is the credential after its scheme, the scheme's case passed over", async () =>
   deepEqual(
     [Some("Bearer abc"), Some("bearer  abc "), Some("Basic abc"), Some("Bearer"), None]->Array.map(

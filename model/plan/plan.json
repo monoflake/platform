@@ -232,7 +232,7 @@
 			"after": ["env-kept-by-runner"],
 			"delivers": ["control-deploy-grant"],
 			"holds": {
-				"owes": "the mint, the revocation, the scoped operations, the health operation and the deploy tool's support, against the contract in model/contracts/roles/deployment_grants.res; mint and revoke take the present operator bearer until caller-gate moves them to the signature"
+				"owes": "the deploy proved end to end on the test platform; then the review's low findings: a retry inside an open intent answering stale rather than overloaded, a restored intent cleared by a late holder, a driver success naming another digest settling with no log, status after a definite operator refusal, bytes orphaned between put and stage, a raced stage deleting named bytes, the sweep only on later calls, the put check racing its write, kinds None against Function, a reconcile holding a request for its deadline, the health rate per isolate, and a slow driver at the five minute reconcile; and an operator retire on a fully dead driver, which still answers unreachable"
 			}
 		},
 		{

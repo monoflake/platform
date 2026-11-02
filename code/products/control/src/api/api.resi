@@ -28,4 +28,9 @@ let artifactBound: float
 let tunnelName: float => string
 
 /** The interfaces served to a caller. */
-let routes: (parts, Access.caller) => array<Serve.Calls.route>
+let routes: (
+  parts,
+  Access.caller,
+  ~grants: Grant_context.t=?,
+  ~grantCaller: unit => promise<Access.caller>=?,
+) => array<Serve.Calls.route>

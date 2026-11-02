@@ -191,6 +191,7 @@ let artifacts = (): (Artifacts.t, dict<Uint8Array.t>) => {
   (
     {
       put: async (hash, bytes) => held->Dict.set(hash, bytes),
+      delete: async hash => held->Dict.delete(hash),
       served: async hash =>
         held
         ->Dict.get(hash)

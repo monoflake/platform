@@ -150,3 +150,60 @@ let parse = args => {
     }
   }
 }
+
+let grant = args => {
+  let values = dict{}
+  let flags = ["expected-version", "platform", "cloud", "driver", "machine"]
+  let rec take = (args, rest) =>
+    switch args {
+    | list{flag, value, ...tail} if flags->Array.includes(flag->String.slice(~start=2)) =>
+      let name = flag->String.slice(~start=2)
+      if !(flag->String.startsWith("--")) || values->Dict.has(name) {
+        Error("grant deployment options are malformed or repeated")
+      } else {
+        values->Dict.set(name, value)
+        take(tail, rest)
+      }
+    | list{flag, ..._}
+      if [
+        "--secrets",
+        "--binding",
+        "--app",
+        "--forget",
+        "--retire",
+        "--network",
+        "--ingress",
+      ]->Array.includes(flag) =>
+      Error("grant deployment takes no policy or operator options")
+    | list{value, ...tail} => take(tail, [...rest, value])
+    | list{} => Ok(rest)
+    }
+  take(List.fromArray(args), [])
+  ->Result.flatMap(rest =>
+    parse(rest)->Result.mapError(_ => "grant deployment arguments are invalid")
+  )
+  ->Result.flatMap(given => {
+    let value = name => values->Dict.get(name)->Option.getOr("")
+    let expected = value("expected-version")
+    let commits = ["platform", "cloud", "driver", "machine"]
+    if Control.origin(given.target) == None {
+      Error("grant deployment requires a control target")
+    } else if !(commits->Array.every(name => /^[a-f0-9]{40}$/->RegExp.test(value(name)))) {
+      Error("grant deployment requires --platform --cloud --driver --machine full lowercase SHAs")
+    } else if !(/^(0|[1-9][0-9]*)$/->RegExp.test(expected)) {
+      Error("grant deployment requires --expected-version as an unsigned safe integer")
+    } else {
+      switch Float.fromString(expected) {
+      | Some(expected) if expected < 9007199254740991. =>
+        let candidate: Contracts.DeploymentCandidate.t = {
+          platform: value("platform"),
+          cloud: value("cloud"),
+          driver: value("driver"),
+          machine: value("machine"),
+        }
+        Ok((given, expected, candidate))
+      | Some(_) | None => Error("grant deployment expected version cannot be incremented safely")
+      }
+    }
+  })
+}

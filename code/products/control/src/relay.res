@@ -56,7 +56,8 @@ let passed = async (state: State.t, reach: Reach.t, ~caller, ~ports, request, re
           )} is relayed for the organization`,
       )
     }
-  | Operator | Host(_) | Nobody => Web.answered(~status=403, "a relay is an organization's alone")
+  | Operator | Host(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody =>
+    Web.answered(~status=403, "a relay is an organization's alone")
   }
 
 /** Whether an answer is the error a write gets for a full bucket, or for none. */
@@ -111,5 +112,6 @@ let stored = async (state: State.t, reach: Reach.t, ~caller, ~port, ~wait, reque
     | Some(_) | None =>
       Web.answered(~status=409, "the organization holds no binding its host bound here")
     }
-  | Operator | Host(_) | Nobody => Web.answered(~status=403, "an object is an organization's alone")
+  | Operator | Host(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody =>
+    Web.answered(~status=403, "an object is an organization's alone")
   }

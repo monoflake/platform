@@ -9499,7 +9499,7 @@
 			]
 		},
 		"deployment_grants": {
-			"version": 2,
+			"version": 1,
 			"bounds": {
 				"artifact": 33554432,
 				"staging_ms": 3600000,

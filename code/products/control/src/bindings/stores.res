@@ -12,12 +12,15 @@ type value = Text(string) | Number(float) | @as(null) Null
 /** The first row, its columns read as the caller's record names them. */
 @send external first: statement => promise<Nullable.t<'row>> = "first"
 @send external batch: (database, array<statement>) => promise<unit> = "batch"
+type rows<'row> = {results: array<'row>}
+@send external all: statement => promise<rows<'row>> = "all"
 @send external run: statement => promise<unit> = "run"
 
 @notUndefined
 type bucket
 type held = {size: float, body: Web.body}
 @send external put: (bucket, string, Uint8Array.t) => promise<unit> = "put"
+@send external delete: (bucket, string) => promise<unit> = "delete"
 @send external get: (bucket, string) => promise<Nullable.t<held>> = "get"
 
 /**

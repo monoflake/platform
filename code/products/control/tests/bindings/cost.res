@@ -40,7 +40,8 @@ let open_: unit => promise<session> = %raw(`async () => {
     const migrations = new URL('../../migrations/', import.meta.url)
     for (const name of readdirSync(migrations).sort()) {
       const sql = readFileSync(new URL(name, migrations), 'utf8').replace(/--[^\n]*/g, '')
-      for (const part of sql.split(';').filter(s => s.trim())) await db.prepare(part).run()
+      const parts = sql.matchAll(/\s*(CREATE TRIGGER\b[\s\S]*?\bEND;|[^;]+;)/g)
+      for (const [, part] of parts) await db.prepare(part).run()
     }
     const seen = new Set()
     const measured = new Map()

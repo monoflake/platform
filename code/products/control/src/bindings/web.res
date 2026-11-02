@@ -21,12 +21,38 @@ type body
 /** A request whole. */
 let bytesOf = async request => Uint8Array.fromBuffer(await request->requestBytes)
 
+let limitedBytes: (
+  request,
+  int,
+) => promise<option<Uint8Array.t>> = %raw(`async (request, bound) => {
+  if (!request.body) return new Uint8Array()
+  const reader = request.body.getReader()
+  const chunks = []
+  let size = 0
+  try {
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) break
+      size += value.length
+      if (size > bound) { await reader.cancel(); return undefined }
+      chunks.push(value)
+    }
+  } finally { reader.releaseLock() }
+  const bytes = new Uint8Array(size)
+  let at = 0
+  for (const chunk of chunks) { bytes.set(chunk, at); at += chunk.length }
+  return bytes
+}`)
+
 /** What ends a request at a deadline. */
 type signal
 @val @scope("AbortSignal") external deadline: int => signal = "timeout"
 
 type requestInit = {method: string, headers: dict<string>, body?: Uint8Array.t, signal?: signal}
 @new external request: (string, requestInit) => request = "Request"
+type signalInit = {signal: signal}
+@new external withSignal: (request, signalInit) => request = "Request"
+
 type redirectInit = {redirect: string}
 @new external withRedirect: (request, redirectInit) => request = "Request"
 /** A request as it is, its redirect answered rather than followed. */

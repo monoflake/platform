@@ -2,7 +2,14 @@
  * Who calls the control at its thinnest, RFC rxmd9, the operator by the Worker's secret, a host by
  * its binding's token, RFC 3d3nt, an organization's own control by its own, and nobody else.
  */
-type caller = Operator | Host(float) | Organization(float) | Nobody
+type proof = {grant: string, verifier: Uint8Array.t}
+type caller =
+  | Operator
+  | Host(float)
+  | Organization(float)
+  | DeploymentGrant(proof)
+  | HealthGrant(proof)
+  | Nobody
 
 /** The credential an `Authorization: Bearer` header carries. */
 let bearer: option<string> => option<string>
@@ -31,4 +38,5 @@ let caller: (
   ~operator: option<string>,
   ~secret: float => promise<option<Uint8Array.t>>,
   ~organizationSecret: float => promise<option<Uint8Array.t>>,
+  ~grant: proof => promise<caller>=?,
 ) => promise<caller>

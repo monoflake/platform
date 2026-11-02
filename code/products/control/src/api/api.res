@@ -46,7 +46,7 @@ let organizations = (parts, caller: Access.caller) =>
         )
       | (Operator, Open(_)) =>
         refused("invalid", "a label is lowercase letters, digits and hyphens")
-      | (Host(_) | Organization(_) | Nobody, _) => denied
+      | (Host(_) | Organization(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody, _) => denied
       },
   })
 
@@ -383,8 +383,11 @@ let bindings = (parts, caller: Access.caller) =>
         | (Some(binding), Tunnel) => await tunnelBound(parts, binding)
         | (Some(binding), Origin({origin})) => await originBound(parts, binding, origin)
         }
-      | (Operator | Organization(_) | Nobody, Bind(_))
-      | (Host(_) | Organization(_) | Nobody, Open(_)) => denied
+      | (Operator | Organization(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody, Bind(_))
+      | (
+        Host(_) | Organization(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody,
+        Open(_),
+      ) => denied
       },
   })
 
@@ -428,7 +431,7 @@ let reaches = (parts, caller: Access.caller) =>
             refused("unreachable", `the reach's tunnel could not be made, ${why}`)
           }
         }
-      | (Operator | Host(_) | Nobody, _) => denied
+      | (Operator | Host(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody, _) => denied
       },
   })
 
@@ -491,21 +494,27 @@ let put = async (parts, input: Contracts.ReleasePut.t) => {
     } else {
       let hash = await Web.sha256(input.artifact)
       let hex = Envelope.Hex.encode(hash)
-      await parts.artifacts.put(hex, input.artifact)
-      await parts.state.putRelease({
+      let release: State.release = {
         hash: hex,
         form: input.form,
         size,
         kinds: input.kinds,
         ingress: ?input.ingress,
-      })
-      Output(
-        Calls.output(
-          ({hash, size}: Contracts.ReleaseHeld.t),
-          ~toJson=Contracts.ReleaseHeld.toJson,
-          ~toCbor=Contracts.ReleaseHeld.toCbor,
-        ),
-      )
+      }
+      switch await parts.state.release(hex) {
+      | Some(kept) if !Grant_lease.same(kept, release) =>
+        refused("invalid", `release ${hex} is kept with another ingress, form or kinds`)
+      | Some(_) | None =>
+        await parts.artifacts.put(hex, input.artifact)
+        await parts.state.putRelease(release)
+        Output(
+          Calls.output(
+            ({hash, size}: Contracts.ReleaseHeld.t),
+            ~toJson=Contracts.ReleaseHeld.toJson,
+            ~toCbor=Contracts.ReleaseHeld.toCbor,
+          ),
+        )
+      }
     }
   }
 }
@@ -667,7 +676,7 @@ let forget = async (parts, app) => {
  * An app that ran stopped and deleted by its binding's driver, and its rows removed only once the
  * driver answers it gone; one that never ran is `not_deployed`, an id not held `not_found`.
  */
-let retire = async (parts, app) => {
+let retire = async (parts, app, ~mutate) => {
   let named = Ids.text(app)
   let never = () => refused("not_deployed", `app ${named} never ran, so it is removed by forget`)
   switch await parts.state.deployment(app) {
@@ -686,6 +695,7 @@ let retire = async (parts, app) => {
       )
     | Error((Refused(_) | Output(_)) as answer) => answer
     | Ok(host) =>
+      await mutate()
       switch await Deploying.retired(host, ~app) {
       | Error({reason, message}) => refused(reason, message)
       | Ok() =>
@@ -707,7 +717,13 @@ let retire = async (parts, app) => {
   }
 }
 
-let releases = (parts, caller: Access.caller) =>
+/** The parts with every driver call under one deadline, shorter than a grant's lease. */
+let bounded = parts => {
+  let (reach, direct) = Grant_operator.bounded(parts.reach, parts.direct)
+  {...parts, reach, direct}
+}
+
+let releases = (parts, caller: Access.caller, ~grants) =>
   Calls.route({
     name: "releases",
     fromJson: Interface.Releases.fromJson,
@@ -722,17 +738,53 @@ let releases = (parts, caller: Access.caller) =>
     handle: async (_, {call}) =>
       switch (caller, call) {
       | (Operator, Put(input)) => await put(parts, input)
-      | (Operator, Deploy(input)) => await deploy(parts, input)
+      | (Operator, Deploy(input)) =>
+        await Grant_operator.run(
+          ~context=grants,
+          ~app=input.app,
+          ~digest=Envelope.Hex.encode(input.release),
+          async (~mutate, ~held) => {
+            let state = parts.state
+            let tracked = {
+              ...held ? bounded(parts) : parts,
+              state: {
+                ...state,
+                deploy: async deployment => {
+                  await state.deploy(deployment)
+                  await mutate()
+                },
+              },
+            }
+            await deploy(tracked, input)
+          },
+        )
       | (Operator, Describe({app})) => await describe(parts, app)
-      | (Operator, Forget({app})) => await forget(parts, app)
-      | (Operator, Retire({app})) => await retire(parts, app)
-      | (Host(_) | Organization(_) | Nobody, _) => denied
+      | (Operator, Forget({app})) =>
+        await Grant_operator.run(~context=grants, ~app=Some(app), async (
+          ~mutate as _,
+          ~held as _,
+        ) => await forget(parts, app))
+      | (Operator, Retire({app})) =>
+        let answer = await Grant_operator.run(~context=grants, ~app=Some(app), async (
+          ~mutate,
+          ~held,
+        ) => await retire(held ? bounded(parts) : parts, app, ~mutate))
+        switch (answer, grants) {
+        | (Output(_), Some(t)) => await Grant_staging.retired(t, app)
+        | (Output(_) | Refused(_), _) => ()
+        }
+        answer
+      | (Host(_) | Organization(_) | DeploymentGrant(_) | HealthGrant(_) | Nobody, _) => denied
       },
   })
 
-let routes = (parts, caller) => [
-  organizations(parts, caller),
-  bindings(parts, caller),
-  reaches(parts, caller),
-  releases(parts, caller),
-]
+let routes = (parts, caller, ~grants=?, ~grantCaller=?) =>
+  Array.concat(
+    [
+      organizations(parts, caller),
+      bindings(parts, caller),
+      reaches(parts, caller),
+      releases(parts, caller, ~grants),
+    ],
+    grants->Option.mapOr([], t => [Grant_api.route(t, caller, ~authenticate=?grantCaller)]),
+  )

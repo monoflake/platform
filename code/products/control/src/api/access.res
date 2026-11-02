@@ -1,4 +1,11 @@
-type caller = Operator | Host(float) | Organization(float) | Nobody
+type proof = {grant: string, verifier: Uint8Array.t}
+type caller =
+  | Operator
+  | Host(float)
+  | Organization(float)
+  | DeploymentGrant(proof)
+  | HealthGrant(proof)
+  | Nobody
 
 let bearer = header =>
   header->Option.flatMap(text =>
@@ -48,9 +55,23 @@ let presented = async (kept, presented, called) =>
   | Some(_) | None => Nobody
   }
 
-let caller = async (header, ~operator, ~secret, ~organizationSecret) =>
+let caller = async (header, ~operator, ~secret, ~organizationSecret, ~grant=async _ => Nobody) =>
   switch bearer(header) {
   | None => Nobody
+  | Some(given) if given->String.startsWith("dg1.") =>
+    switch given->String.split(".") {
+    | ["dg1", id, secret] if id != "" =>
+      switch Envelope.Base64url.decode(secret) {
+      | Some(bytes)
+        if bytes->TypedArray.length == 32 && Envelope.Base64url.encode(bytes) == secret =>
+        switch await grant({grant: id, verifier: await Web.sha256(Web.utf8(given))}) {
+        | (DeploymentGrant(_) | HealthGrant(_)) as caller => caller
+        | Operator | Host(_) | Organization(_) | Nobody => Nobody
+        }
+      | Some(_) | None => Nobody
+      }
+    | _ => Nobody
+    }
   | Some(given) =>
     switch (token(given), organizationToken(given)) {
     | (Some((id, bytes)), _) => await presented(secret(id), bytes, Host(id))

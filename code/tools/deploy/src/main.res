@@ -69,13 +69,16 @@ let releaseOf = (directory, ~ingress) => {
 }
 
 /** The app built into a temporary directory after its release declarations are read. */
-let built = (directory, into, ~ingress) => {
+let built = (directory, into, ~ingress, ~environment=?) => {
   let wrangler = Host.join([directory, "node_modules", ".bin", "wrangler"])
   releaseOf(directory, ~ingress)->Result.flatMap(release =>
     if !Host.exists(wrangler) {
       Error(`${wrangler} is not installed, so the app's own install comes first`)
     } else {
-      let env = Dict.copy(Host.env)
+      let env = switch environment {
+      | Some(env) => env
+      | None => Dict.copy(Host.env)
+      }
       env->Dict.set("WRANGLER_SEND_METRICS", "false")
       ran(wrangler, ["deploy", "--dry-run", "--outdir", into], ~cwd=directory, ~env)
       ->Result.flatMap(_ => configOf(directory))
@@ -550,4 +553,67 @@ let main = async () => {
   }
 }
 
-await main()
+let grantMain = async bearer => {
+  let parsed =
+    bearer == ""
+      ? Error("CONTROL_PRODUCTION_DEPLOY is empty")
+      : Arguments.grant(Host.argv->Array.slice(~start=2))
+  switch parsed {
+  | Error(why) =>
+    Console.error(`deploy: ${why}`)
+    Host.setExitCode(Host.process, 2)
+  | Ok((given, expected, candidate)) =>
+    switch Control.origin(given.target)->Option.getOr(Error("grant target is invalid")) {
+    | Error(_) =>
+      Console.error("deploy: grant target is invalid")
+      Host.setExitCode(Host.process, 2)
+    | Ok(origin) =>
+      let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-grant-"]))
+      let environment = dict{}
+      ["PATH", "HOME", "TMPDIR"]->Array.forEach(name =>
+        Host.env->Dict.get(name)->Option.forEach(value => environment->Dict.set(name, value))
+      )
+      let run = async () => {
+        let bundled =
+          built(
+            Host.absolute(given.directory),
+            Host.join([scratch, "out"]),
+            ~ingress=None,
+            ~environment,
+          )->Result.flatMap(built => packed(built, scratch))
+        switch bundled {
+        | Error(_) => Error("grant local bundle failed")
+        | Ok(_) if given.dry => Ok()
+        | Ok((_, path, _, _)) =>
+          await Grant.deploy(
+            {origin, bearer, fetch: Web.fetch},
+            ~artifact=Host.readBytes(path),
+            ~expected,
+            ~candidate,
+          )
+        }
+      }
+      let result = switch await run() {
+      | exception JsExn(_) => Error("grant deployment failed")
+      | result => result
+      }
+      Host.remove(scratch, {recursive: true, force: true})
+      switch result {
+      | Ok() =>
+        Console.log(
+          given.dry
+            ? "deploy: grant bundle built, nothing sent"
+            : "deploy: grant deployment digest version and candidate confirmed",
+        )
+      | Error(why) =>
+        Console.error(`deploy: ${why}`)
+        Host.setExitCode(Host.process, 1)
+      }
+    }
+  }
+}
+
+switch Host.env->Dict.get(Grant.variable) {
+| Some(bearer) => await grantMain(bearer)
+| None => await main()
+}

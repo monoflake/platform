@@ -1,9 +1,11 @@
 type t = {
+  delete: string => promise<unit>,
   put: (string, Uint8Array.t) => promise<unit>,
   served: string => promise<option<Web.response>>,
 }
 
 let ofBucket = bucket => {
+  delete: hash => bucket->Stores.delete(hash),
   put: (hash, bytes) => bucket->Stores.put(hash, bytes),
   served: async hash =>
     (await bucket->Stores.get(hash))
@@ -30,6 +32,7 @@ let held = result =>
   }
 
 let ofObjects = (objects: Objects.t) => {
+  delete: async hash => held(await objects.delete(`artifacts/${hash}`)),
   put: async (hash, bytes) => held(await objects.write(`artifacts/${hash}`, bytes)),
   served: async hash =>
     held(await objects.read(`artifacts/${hash}`))->Option.map(bytes =>

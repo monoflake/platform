@@ -23,6 +23,7 @@ let asDatabase: (sqlite, ~plans: array<plan>=?) => Stores.database = %raw(`(db, 
       const statement = db.prepare(sql)
       return {
         first: async () => statement.get(...values) ?? null,
+        all: async () => ({results: statement.all(...values)}),
         run: async () => { statement.run(...values) },
       }
     },

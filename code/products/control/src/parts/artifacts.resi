@@ -3,6 +3,7 @@
  * the control runs, RFC rxmd9.
  */
 type t = {
+  delete: string => promise<unit>,
   put: (string, Uint8Array.t) => promise<unit>,
   /** The artifact as an answer to its fetch, none where no artifact has the hash. */
   served: string => promise<option<Web.response>>,

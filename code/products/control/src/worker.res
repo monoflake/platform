@@ -84,7 +84,6 @@ let callerOf = (state: State.t, env: Stores.env, request, name) =>
 let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
   let headers = request->Web.requestHeaders
   let header = name => headers->Web.header(name)->Nullable.toOption
-  let caller = await callerOf(stood.state, env, request, "authorization")
   let parts: Api.parts = {
     state: stood.state,
     artifacts: stood.artifacts,
@@ -97,25 +96,98 @@ let api = async (request, env: Stores.env, stood, ~origin, ~path) => {
     origin,
     wait: () => Web.sleep(250),
   }
-  let answer = await Calls.serve(
-    Api.routes(parts, caller),
-    ~trust=untrusted,
-    {
-      method_: request->Web.method_,
-      path,
-      contentType: header("content-type"),
-      accept: header("accept"),
-      body: await request->Web.bytesOf,
-    },
-  )
+  let grants = env.state->Option.map(database => {
+    let store: Grant_store.t = {database, now: Date.now}
+
+    (
+      {
+        store,
+        state: stood.state,
+        artifacts: stood.artifacts,
+        reach: stood.reach,
+        direct: parts.direct,
+        driverPort: parts.driverPort,
+        origin,
+        random: Web.random,
+        initialized: () => stood.gives,
+        ready: () => Grant_store.readable(store),
+      }: Grant_context.t
+    )
+  })
+  let authenticate = async () =>
+    await Access.caller(
+      header("authorization"),
+      ~operator=env.operator,
+      ~secret=async id =>
+        switch await stood.state.binding(id) {
+        | Some({relayed: false, secret}) => Some(secret)
+        | Some({relayed: true}) | None => None
+        },
+      ~organizationSecret=stood.state.organizationSecret,
+      ~grant=proof =>
+        grants->Option.mapOr(Promise.resolve(Access.Nobody), t => Grant_context.caller(t, proof)),
+    )
+  let caller = path->String.startsWith("/deployment_grants/") ? Access.Nobody : await authenticate()
+  let body =
+    path->String.startsWith("/deployment_grants/")
+      ? await Web.limitedBytes(request, path == "/deployment_grants/upload" ? 47185920 : 8192)
+      : Some(await Web.bytesOf(request))
+  let answer = switch body {
+  | None =>
+    (
+      {
+        status: 413,
+        contentType: "application/json",
+        body: Web.utf8(
+          JSON.stringify(
+            Envelope.Contracts.Answer.toJson(
+              Error({failure: Rejected, reason: "too_large", message: "request exceeds its bound"}),
+              _ => JSON.Null,
+            ),
+          ),
+        ),
+      }: Calls.response
+    )
+
+  | Some(body) =>
+    await Calls.serve(
+      Api.routes(parts, caller, ~grants?, ~grantCaller=authenticate),
+      ~trust=untrusted,
+      {
+        method_: request->Web.method_,
+        path,
+        contentType: header("content-type"),
+        accept: header("accept"),
+        body,
+      },
+    )
+  }
   Web.response(
     answer.body,
-    {status: answer.status, headers: dict{"content-type": answer.contentType}},
+    {
+      status: answer.status,
+      headers: dict{"content-type": answer.contentType, "cache-control": "no-store"},
+    },
   )
 }
 
 /** An artifact's path, its hash in hex. */
 let artifact = /^\/artifacts\/([0-9a-f]{64})$/
+
+/** A staged artifact's path, its grant, its hash in hex and its fetch token. */
+let staging = /^\/artifacts\/staging\/([A-Za-z0-9_-]+)\/([0-9a-f]{64})\/([A-Za-z0-9_-]+)$/
+
+let stagedAnswer = async (stood, env: Stores.env, found) =>
+  switch (found->RegExp.Result.matches, env.state) {
+  | ([Some(grant), Some(digest), Some(token)], Some(database)) =>
+    let store: Grant_store.t = {database, now: Date.now}
+    switch await Grant_staging.served(store, stood.artifacts, ~grant, ~digest, ~token) {
+    | Some(served) => served
+    | None => Web.answered(~status=404, "no artifact")
+    | exception JsExn(_) => Web.answered(~status=503, "no artifact is read now")
+    }
+  | _ => Web.answered(~status=404, "no artifact")
+  }
 
 let called = path =>
   switch path {
@@ -127,28 +199,72 @@ let called = path =>
   | "/releases/deploy"
   | "/releases/describe"
   | "/releases/forget"
-  | "/releases/retire" => true
+  | "/releases/retire"
+  | "/deployment_grants/mint"
+  | "/deployment_grants/revoke"
+  | "/deployment_grants/upload"
+  | "/deployment_grants/deploy"
+  | "/deployment_grants/status"
+  | "/deployment_grants/health" => true
   | _ => false
   }
 
-let fetch = async (request, env: Stores.env) => {
+let healthFallback = (env: Stores.env): option<stood> =>
+  env.state->Option.map(database => {
+    state: State.ofDatabase(database, ~sealing=Sealing.ofKey(env.sealingKey)),
+    artifacts: {
+      put: async (_, _) => JsError.throwWithMessage("unavailable"),
+      delete: async _ => JsError.throwWithMessage("unavailable"),
+      served: async _ => None,
+    },
+    reach: {
+      origin: (~address as _, ~port as _) => "https://unavailable.invalid",
+      fetch: async _ => JsError.throwWithMessage("unavailable"),
+    },
+    tunnels: None,
+    standing: None,
+    gives: false,
+  })
+
+let answered = async (request, env: Stores.env) => {
   let located = Web.parts(request->Web.url)
   let path = located->Web.pathname
   let method_ = request->Web.method_
   if (
     !(method_ == "POST" && called(path)) &&
-    !(method_ == "GET" && artifact->RegExp.test(path)) &&
+    !(method_ == "GET" && (artifact->RegExp.test(path) || staging->RegExp.test(path))) &&
     Relay.routed(path) == None &&
     !Relay.objected(path)
   ) {
     Web.answered(~status=404, "not found")
   } else {
     switch stoodOf(env) {
-    | Error(why) => Web.answered(~status=500, why)
+    | Error(why) =>
+      if path == "/deployment_grants/health" {
+        switch healthFallback(env) {
+        | Some(stood) =>
+          await api(
+            request,
+            env,
+            stood,
+            ~origin=env.origin->Option.getOr(located->Web.origin),
+            ~path,
+          )
+        | None =>
+          Web.answered(
+            ~status=403,
+            ~contentType="application/json",
+            "{\"status\":\"error\",\"failure\":\"rejected\",\"reason\":\"denied\",\"message\":\"denied\"}",
+          )
+        }
+      } else {
+        Web.answered(~status=500, why)
+      }
     | Ok(stood) =>
       let driverPort = portOf(env.driverPort, Reach.driverPort)
-      switch (artifact->RegExp.exec(path), method_) {
-      | (Some(found), "GET") =>
+      switch (artifact->RegExp.exec(path), staging->RegExp.exec(path), method_) {
+      | (_, Some(found), "GET") => await stagedAnswer(stood, env, found)
+      | (Some(found), _, "GET") =>
         switch found->RegExp.Result.matches {
         | [Some(hash)] =>
           switch await stood.artifacts.served(hash) {
@@ -157,7 +273,7 @@ let fetch = async (request, env: Stores.env) => {
           }
         | _ => Web.answered(~status=404, "no artifact")
         }
-      | (_, _) =>
+      | (_, _, _) =>
         switch (stood.gives, Relay.routed(path), Relay.objected(path)) {
         | (true, Some(relayed), _) =>
           await Relay.passed(
@@ -200,4 +316,16 @@ let fetch = async (request, env: Stores.env) => {
 
 type worker = {fetch: (Web.request, Stores.env) => promise<Web.response>}
 
-let default = {fetch: fetch}
+let default = {
+  fetch: async (request, env) => {
+    let response = await answered(request, env)
+    let path = Web.parts(Web.url(request))->Web.pathname
+    if (
+      path->String.startsWith("/deployment_grants/") ||
+        path->String.startsWith("/artifacts/staging/")
+    ) {
+      response->Web.responseHeaders->Web.setHeader("cache-control", "no-store")
+    }
+    response
+  },
+}

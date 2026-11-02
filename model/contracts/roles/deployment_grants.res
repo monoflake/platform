@@ -134,7 +134,7 @@ let mintLifetimeDays = 180
 
 let interface_: interface_ = {
   name: "deployment_grants",
-  version: 2,
+  version: 1,
   from: "control-deploy-grant",
   bounds: dict{"artifact": 33554432, "staging_ms": 3600000, "lifetime_days": mintLifetimeDays},
   operations: [

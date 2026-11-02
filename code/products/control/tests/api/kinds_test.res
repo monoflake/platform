@@ -314,7 +314,7 @@ test(
 )
 
 test(
-  "a release keeps the kinds it was put with, a second put of its hash changing nothing",
+  "a release keeps the kinds it was put with, a second put of its hash with others refused",
   async () => {
     let states = kept()
     for i in 0 to states->Array.length - 1 {
@@ -322,14 +322,22 @@ test(
       let stood = stand()
       let stood = {...stood, parts: {...stood.parts, state}}
       let ordered = await putKinds(stood, "ordered", Some([Container, Function]))
-      let again = await putKinds(stood, "ordered", None)
+      let again = await putKinds(stood, "ordered", Some([Container, Function]))
+      let other = await putKinds(stood, "ordered", None)
       let empty = await putKinds(stood, "empty", Some([]))
       let none = await putKinds(stood, "none", None)
       let kindsOf = async hash => (await state.release(hash))->Option.map(r => r.kinds)
       deepEqual(
-        (again == ordered, await kindsOf(ordered), await kindsOf(empty), await kindsOf(none)),
+        (
+          again == ordered,
+          other,
+          await kindsOf(ordered),
+          await kindsOf(empty),
+          await kindsOf(none),
+        ),
         (
           true,
+          "",
           Some(Some([Contracts.DeploymentKind.Container, Function])),
           Some(Some([])),
           Some(None),

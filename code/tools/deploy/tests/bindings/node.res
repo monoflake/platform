@@ -15,3 +15,7 @@ type spawned = {status: Nullable.t<int>, stdout: string, stderr: string}
 external spawnSync: (string, array<string>, {"env": dict<string>, "encoding": string}) => spawned =
   "spawnSync"
 @val external env: dict<string> = "process.env"
+@val external executable: string = "process.execPath"
+
+@module("node:fs") external mkdir: (string, {"recursive": bool}) => unit = "mkdirSync"
+@module("node:fs") external chmod: (string, int) => unit = "chmodSync"

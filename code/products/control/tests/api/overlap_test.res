@@ -1,16 +1,8 @@
 /*** Compatibility held to the table monoflake/platform's overlap.tla exports, RFC w0w82. */
 open Node
 
-type row = {
-  control: int,
-  lowest: int,
-  @as("driver_lowest") driverLowest: int,
-  @as("driver_highest") driverHighest: int,
-  overlaps: bool,
-}
-external rowsOf: JSON.t => array<row> = "%identity"
-
-let rows = () => readText(fromRoot("model/protocol/overlap-table.json"))->JSON.parseOrThrow->rowsOf
+let rows = () =>
+  readText(fromRoot("model/protocol/overlap-table.json"))->JSON.parseOrThrow->Grants.overlapRows
 
 let range = (lowest, highest) => JSON.Object(
   dict{"lowest": JSON.Number(Int.toFloat(lowest)), "highest": JSON.Number(Int.toFloat(highest))},
