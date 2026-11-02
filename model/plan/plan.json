@@ -201,8 +201,32 @@
 			}
 		},
 		{
+			"id": "env-kept-by-runner",
+			"says": "A deployment's env is held by whoever runs it, a vendor or the machine driver, never a control: `secrets` in a deploy is optional, absent keeps what the runner holds, and a name given sets that name alone; a control sends no secretless deploy to a driver too old to keep them",
+			"holds": {
+				"owes": "the contract, the machine driver and the Cloudflare driver keeping secrets, proved on the test platform before it reaches A"
+			}
+		},
+		{
+			"id": "vendor-builds-repository",
+			"says": "On a vendor that builds, the vendor builds and deploys a connected repository, and the platform through its driver only configures the project and syncs its env, without an artifact of ours",
+			"waits": "author",
+			"holds": {
+				"owes": "the driver's connected deployment and an operation setting env without a deploy"
+			}
+		},
+		{
+			"id": "github-app-deploys",
+			"says": "On our own machines a GitHub App takes over what a workflow does now, deploying a repository on its webhooks as a vendor's integration does; what it does first stays open in the canmi/rfcs draft rpkku",
+			"waits": "author",
+			"holds": {
+				"owes": "the App and where its key is kept, after call-v2-credential and caller-gate"
+			}
+		},
+		{
 			"id": "control-deploy-grant",
 			"says": "A's control mints, by an operator-only operation, a revocable deployment grant with a finite expiry bound to one production app, which allows only uploading a bounded Modules artifact for that app, deploying it with the app's secrets kept, and reading that app's status, and is refused at every operator operation; the platform's deploy tool deploys with it, so the second platform's control is deployed from CI without the operator credential; the same mint gives a health-read grant answering one new health operation of A's control with ready or unavailable, so the third platform's install is checked from CI without it; its contract and its allow and deny samples are reviewed by the author before code, RFC 6dheo",
+			"after": ["env-kept-by-runner"],
 			"delivers": ["control-deploy-grant"],
 			"holds": {
 				"owes": "the mint, the revocation, the scoped operations, the health operation and the deploy tool's support, against the contract in model/contracts/roles/deployment_grants.res; mint and revoke take the present operator bearer until caller-gate moves them to the signature"
