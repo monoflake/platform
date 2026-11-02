@@ -22,9 +22,8 @@ let types: array<declared> = [
     def: Record([field("hash", 1, Prim(#hash)), field("size", 2, Prim(#uint53))]),
     from: "rxmd9",
   },
-  // An app runs on one binding at a time, so deploying it onto another moves it there. Its secrets
-  // and network are handed to the driver and kept by no control. With no app the control draws
-  // one by b8f35 and answers it, so no caller makes an id.
+  // Secrets stay with the runner. Absent keeps them, each name given sets that name alone.
+  // An app moves to its binding. With no app the control draws one by b8f35 and answers it.
   {
     name: "release-deploy",
     def: Record([

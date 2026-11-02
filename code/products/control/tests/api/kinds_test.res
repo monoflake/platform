@@ -79,7 +79,6 @@ test(
               isolation: [Isolate],
               artifact: {address: `https://control.test/artifacts/${hash}`, hash: release},
               footing: "https://footing.invalid",
-              secrets: dict{},
               network: [],
               into: 1.,
             }),

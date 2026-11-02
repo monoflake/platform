@@ -116,7 +116,7 @@ let deploy = (
   artifact: {address, hash},
   // No footing is built yet, so the address is one that answers nothing.
   footing: "https://footing.invalid",
-  secrets,
+  ?secrets,
   network,
   ?into,
   ?ingress,

@@ -3811,7 +3811,8 @@
 						"map": {
 							"prim": "secret"
 						}
-					}
+					},
+					"optional": true
 				},
 				{
 					"name": "network",
@@ -8308,7 +8309,7 @@
 			]
 		},
 		"deployments": {
-			"version": 3,
+			"version": 4,
 			"bounds": {},
 			"declared": ["artifact"],
 			"operations": [

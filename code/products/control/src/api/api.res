@@ -598,7 +598,7 @@ let deploy = async (parts, input: Contracts.ReleaseDeploy.t) => {
             ~form=release.form,
             ~ingress=release.ingress,
             ~address=`${parts.origin}/artifacts/${hex}`,
-            ~secrets=input.secrets->Option.getOr(dict{}),
+            ~secrets=input.secrets,
             ~network=input.network->Option.getOr([]),
             ~declared,
             ~wait=parts.wait,

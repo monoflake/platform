@@ -265,15 +265,15 @@ test(
 )
 
 test(
-  "a deploy hands the driver the secrets and network it is given, and none where none",
+  "a deploy passes secrets through as given and preserves their absence on redeploy",
   async () => {
     let stood = stand()
     let (binding, hash) = await opened(stood)
     let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(32))
     let (_, first) = await called(stood, Operator, releases(Deploy({binding, release})))
     deepEqual(
-      stood.host.deployed.contents->Option.map(d => (d.secrets->Dict.keysToArray, d.network)),
-      Some(([], [])),
+      stood.host.deployed.contents->Option.map(d => (d.secrets, d.network)),
+      Some((None, [])),
     )
     ignore(
       await called(
@@ -292,11 +292,21 @@ test(
     )
     deepEqual(
       stood.host.deployed.contents->Option.map(d => (
-        d.secrets->Dict.get("OPERATOR")->Option.map(Web.fromUtf8),
+        d.secrets->Option.map(
+          secrets =>
+            secrets->Dict.toArray->Array.map(((name, value)) => (name, Web.fromUtf8(value))),
+        ),
         d.network,
       )),
-      Some((Some("kept"), [Contracts.DeploymentNetwork.Http])),
+      Some((Some([("OPERATOR", "kept")]), [Contracts.DeploymentNetwork.Http])),
     )
+    let (status, _) = await called(
+      stood,
+      Operator,
+      releases(Deploy({binding, app: ?(first->ranAs), release})),
+    )
+    deepEqual(status, 200)
+    deepEqual(stood.host.deployed.contents->Option.flatMap(d => d.secrets), None)
   },
 )
 
