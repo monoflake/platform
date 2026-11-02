@@ -106,3 +106,27 @@ let borrow: (
   ~token: Uint8Array.t,
   ~relays: Contracts.ExtensionRelays.t,
 ) => result<Contracts.Extension.t, array<unbound>>
+
+/** A network a host is in, the public one or a private one by a name its caller gives, vr5lw. */
+type network =
+  | Public
+  | Private(string)
+
+/** A host by its extension's id and the networks it is in, within a host never among them. */
+type joined = {id: float, networks: array<network>}
+
+/** A path to a host, the jumps it crosses by their extensions' ids in order. */
+type path = {
+  jumps: array<float>,
+  /** Whether a network it crosses is the public one. */
+  public: bool,
+}
+
+/** A host by its extension's id and every path to it. */
+type reached = {host: float, paths: array<path>}
+
+/**
+ * The paths from a caller's host to each host given, in their order, for the bundle, RFC 4y5g0.
+ * Its own host is reached by no jump and off the public network, an unreachable host by no path.
+ */
+let paths: (array<joined>, ~from: float) => array<reached>

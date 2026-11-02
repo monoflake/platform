@@ -175,7 +175,9 @@
 			"says": "D1 to D3 run on the as-built graph, finding a block that needs a name it provides itself, RFC s42ex",
 			"after": ["realized-internal-edges"],
 			"holds": {
-				"owes": "the three rules on the as-built graph"
+				"committed": {
+					"commit": "dd7c38f4"
+				}
 			}
 		},
 		{

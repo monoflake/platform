@@ -266,3 +266,66 @@ let borrow = (loan: Contracts.AuthorityLoan.t, ~lender, ~token, ~relays) =>
     {host: loan.host, levels: loan.levels, place: loan.place, address: loan.address},
     {endpoint: loan.endpoint, token, relays, quota: loan.quota},
   )->Result.map(extension => {...extension, lender})
+
+type network =
+  | Public
+  | Private(string)
+
+type joined = {id: float, networks: array<network>}
+
+type path = {
+  jumps: array<float>,
+  public: bool,
+}
+
+type reached = {host: float, paths: array<path>}
+
+/** Fewer jumps first, then off the public network, then by the jumps' ids in turn. */
+let order = (a, b) =>
+  switch Int.compare(a.jumps->Array.length, b.jumps->Array.length) {
+  | 0. if a.public != b.public => a.public ? 1. : -1.
+  | 0. =>
+    a.jumps
+    ->Array.mapWithIndex((jump, at) => Float.compare(jump, b.jumps->Array.getUnsafe(at)))
+    ->Array.find(compared => compared != 0.)
+    ->Option.getOr(0.)
+  | other => other
+  }
+
+/**
+ * Every simple path from the caller, no host or network crossed twice, each host entered by one
+ * network and left by another, so a jump lies between two.
+ */
+let paths = (hosts: array<joined>, ~from) => {
+  let found: Dict.t<array<path>> = Dict.make()
+  let networksOf = id => hosts->Array.find(h => h.id == id)->Option.mapOr([], h => h.networks)
+  let rec walk = (at, ~passed, ~crossed, ~jumps, ~public) =>
+    networksOf(at)->Array.forEach(network =>
+      if !(crossed->Array.some(n => n == network)) {
+        let public = public || network == Public
+        hosts->Array.forEach(h =>
+          if !(passed->Array.includes(h.id)) && h.networks->Array.some(n => n == network) {
+            let key = h.id->Float.toString
+            let known = found->Dict.get(key)->Option.getOr([])
+            if !(known->Array.some(p => p.public == public && p.jumps == jumps)) {
+              found->Dict.set(key, known->Array.concat([{jumps, public}]))
+            }
+            walk(
+              h.id,
+              ~passed=passed->Array.concat([h.id]),
+              ~crossed=crossed->Array.concat([network]),
+              ~jumps=jumps->Array.concat([h.id]),
+              ~public,
+            )
+          }
+        )
+      }
+    )
+  walk(from, ~passed=[from], ~crossed=[], ~jumps=[], ~public=false)
+  hosts->Array.map(h => {
+    host: h.id,
+    paths: h.id == from
+      ? [{jumps: [], public: false}]
+      : found->Dict.get(h.id->Float.toString)->Option.getOr([])->Array.toSorted(order),
+  })
+}

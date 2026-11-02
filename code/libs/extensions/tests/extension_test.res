@@ -105,3 +105,67 @@ test("the borrower's binding of a loan as its sample says", () =>
     deepEqual(got, expected(case, "borrowed", "unbound", unbound), ~message)
   })
 )
+
+/** The paths from host 1 to every host, each host by its id and the networks it is in. */
+let reached = (hosts, ~from=1.) =>
+  Extension.paths(hosts->Array.map(((id, networks)): Extension.joined => {id, networks}), ~from)
+
+test("a host reached directly, and the caller's own within it", () =>
+  deepEqual(
+    reached([(1., [Private("tailnet")]), (2., [Private("tailnet")])]),
+    [
+      {host: 1., paths: [{jumps: [], public: false}]},
+      {host: 2., paths: [{jumps: [], public: false}]},
+    ],
+  )
+)
+
+test("a host reached by two paths, the shorter first", () =>
+  deepEqual(
+    reached([
+      (1., [Private("x")]),
+      (4., [Private("x"), Private("z")]),
+      (5., [Private("z"), Private("w")]),
+      (3., [Private("x"), Private("y")]),
+      (2., [Private("y"), Private("w")]),
+    ])->Array.find(r => r.host == 2.),
+    Some({host: 2., paths: [{jumps: [3.], public: false}, {jumps: [4., 5.], public: false}]}),
+  )
+)
+
+test("paths of as many jumps, off the public network first, then by their jumps' ids", () => {
+  deepEqual(
+    reached([
+      (1., [Private("x")]),
+      (6., [Private("x"), Public]),
+      (7., [Private("x"), Private("y")]),
+      (2., [Private("y"), Public]),
+    ])->Array.find(r => r.host == 2.),
+    Some({host: 2., paths: [{jumps: [7.], public: false}, {jumps: [6.], public: true}]}),
+    ~message="a public path past a private one of a lower id",
+  )
+  deepEqual(
+    reached([
+      (1., [Private("x")]),
+      (7., [Private("x"), Private("y")]),
+      (3., [Private("x"), Private("y")]),
+      (2., [Private("y")]),
+    ])->Array.find(r => r.host == 2.),
+    Some({host: 2., paths: [{jumps: [3.], public: false}, {jumps: [7.], public: false}]}),
+    ~message="as many jumps, by their ids",
+  )
+  deepEqual(
+    reached([(2., [Public, Private("x")]), (1., [Public, Private("x")])])->Array.find(r =>
+      r.host == 2.
+    ),
+    Some({host: 2., paths: [{jumps: [], public: false}, {jumps: [], public: true}]}),
+    ~message="no jumps, off the public network first",
+  )
+})
+
+test("an unreachable host reached by no path", () =>
+  deepEqual(
+    reached([(1., [Public]), (2., [Private("lone")]), (3., [])]),
+    [{host: 1., paths: [{jumps: [], public: false}]}, {host: 2., paths: []}, {host: 3., paths: []}],
+  )
+)

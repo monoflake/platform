@@ -51,8 +51,4 @@ Open, for the discussion that follows:
   host chooses nothing and takes `vocabulary*` only to state its offer. Proposed: the executor
   keeps the hosts of the app's set whose offers meet the call's need, and of a pool takes the first
   in the order its placement compiled that answers. [C44]
-- **The paths in the bundle**, RFC ot812's, which waited for the host. Proposed: `bundle-host` gains
-  `paths`, from each caller's extension by its id to the paths from it, each the jumps it crosses
-  in order by their extensions' ids and whether it crosses the public network, fewest jumps first
-  and then one off the public network first, as RFC vr5lw orders them; no jump is within a host;
-  `extensions*` computes them. The lender's own record of a loan stays RFC 87lwb's. [C44]
+- **The paths in the bundle**, RFC ot812's, which waited for the host, are decided in RFC 4y5g0. [C44]
