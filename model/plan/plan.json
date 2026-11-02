@@ -183,6 +183,14 @@
 			"holds": {
 				"owes": "the route, once monoflake/cloud's updater serves it"
 			}
+		},
+		{
+			"id": "footing-sql-generated",
+			"says": "The footing's tables are defined once in the model, and a generator beside the envelope generator writes Drizzle's schema, the ReScript row types and the D1 migration SQL from it; Drizzle queries inside the footing alone, RFC 8dm81",
+			"after": ["footing-product"],
+			"holds": {
+				"owes": "the generator and the footing's tables in the model"
+			}
 		}
 	]
 }
