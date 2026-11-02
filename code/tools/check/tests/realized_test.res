@@ -2,7 +2,8 @@
 open Testing
 
 let node = (layer, edges): Components.component => {layer, edges, uses: []}
-let to = (to_, ~contract=?) => Components.e(to_, #serve, Components.hard, "made here", ~contract?)
+let to = (to_, ~when_=#serve, ~contract=?) =>
+  Components.e(to_, when_, Components.hard, "made here", ~contract?)
 
 let nodes = dict{
   "a": node(0, [to("b"), to("?x")]),
@@ -139,4 +140,56 @@ test("a block named for a driver role is the drivers given filling it, no compon
     }),
     ["host"],
   )
+})
+
+/** A block `a` and a name `b` it needs by `edge`, each replaced by an edge to the ground `r`. */
+let needing = (edge: Components.edge) => {
+  let replacedBy = to_ => {
+    ...Components.e(to_, #deploy, Components.hard, "made here"),
+    replaces: true,
+  }
+  dict{
+    "a": node(0, [edge, replacedBy("r")]),
+    "b": node(-1, [replacedBy("r")]),
+    "r": ({layer: Components.vendor, kind: #ground, edges: [], uses: []}: Components.component),
+  }
+}
+
+/** The as-built graph of `nodes`, `a` providing `b` where `inside`, else each its own block. */
+let builtOf = (~inside, nodes) =>
+  Realized.graphIn(
+    inside
+      ? {mains: ["a"], declared: dict{"a": {provides: ["b"], extra: []}}}
+      : {mains: ["a", "b"], declared: dict{}},
+    ~nodes,
+    ~own=nodes,
+  )
+
+let textsOf = (found: Dimensions.found) => found.violations->Array.map(v => v.text)
+
+test("D1 finds a block that needs to come up a name it provides itself, none without", () => {
+  let nodes = needing(to("b", ~when_=#deploy))
+  deepEqual(
+    textsOf(Dimensions.bootstrap(builtOf(~inside=true, nodes))),
+    ["a: coming up needs b, which it provides itself, by a -> b deploy/hard: made here"],
+  )
+  deepEqual(textsOf(Dimensions.bootstrap(builtOf(~inside=false, nodes))), [])
+})
+
+test("D2 finds a block that needs to restart a name it provides itself, none without", () => {
+  let nodes = needing(to("b", ~when_=#start))
+  deepEqual(
+    textsOf(Dimensions.restart(builtOf(~inside=true, nodes))),
+    ["a: restarting needs b, which it provides itself, by a -> b start/hard: made here"],
+  )
+  deepEqual(textsOf(Dimensions.restart(builtOf(~inside=false, nodes))), [])
+})
+
+test("D3 finds a block replaced by a name it provides itself, none without", () => {
+  let nodes = needing({...to("b", ~when_=#deploy), replaces: true})
+  deepEqual(
+    textsOf(Dimensions.upgrade(builtOf(~inside=true, nodes))),
+    ["a: replacing it needs b, which it provides itself, by a -> b deploy/hard: made here"],
+  )
+  deepEqual(textsOf(Dimensions.upgrade(builtOf(~inside=false, nodes))), [])
 })

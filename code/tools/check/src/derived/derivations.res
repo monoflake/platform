@@ -152,10 +152,13 @@ let sampled = () => {
 /** Every violation on an as-built graph, by the dimension finding it, RFC s42ex. */
 let scaffoldsOf = g =>
   [
-    ("Rules", Rules.check(g)),
-    ("Roles", Roles.check(g)),
-    ("Crossing", Crossing.check(g)),
-  ]->Array.flatMap(((title, c)) => c.violations->Array.map(v => (title, v)))
+    ("Rules", Rules.check(g).violations),
+    ("Roles", Roles.check(g).violations),
+    ("Crossing", Crossing.check(g).violations),
+    ("D1 Bootstrap", Dimensions.bootstrap(g).violations),
+    ("D2 Restart", Dimensions.restart(g).violations),
+    ("D3 Upgrade", Dimensions.upgrade(g).violations),
+  ]->Array.flatMap(((title, found)) => found->Array.map(v => (title, v)))
 
 /**
  * One as-built graph as the frontier reads it, the blocks running, the names provided apart from

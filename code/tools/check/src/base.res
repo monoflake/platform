@@ -108,42 +108,43 @@ let foundAt = (nodes, text) => {at: nodes, text}
 /** What a check finds over one graph, and what it notes. */
 type checked = {violations: array<finding>, notes: array<string>}
 
-/** The order the edges `when_` selects allow, the ground first. */
-let order = (when_: Components.edge => bool): array<string> => {
+/** The order the edges `when_` selects allow over one graph, the ground first. */
+let order = (g: graph, when_: Components.edge => bool): array<string> => {
   let out = []
   let seen = Set.make()
+  let layerIn = n => componentIn(g, n)->Option.mapOr(0, p => p.layer)
   let rec visit = n =>
     if !(seen->Set.has(n)) {
       seen->Set.add(n)
-      edgesOf(n)->Array.forEach(x =>
+      edgesIn(g, n)->Array.forEach(x =>
         if when_(x) && known(x.to_) {
           visit(x.to_)
         }
       )
       out->Array.push(n)
     }
-  components
+  g.components
   ->Dict.keysToArray
   // By layer, then by name, so the order is the graph's and not where each part was declared.
   ->Array.toSorted((a, b) =>
-    layerOf(a) == layerOf(b) ? byText(a, b) : Int.toFloat(layerOf(a) - layerOf(b))
+    layerIn(a) == layerIn(b) ? byText(a, b) : Int.toFloat(layerIn(a) - layerIn(b))
   )
   ->Array.forEach(visit)
   out
 }
 
-type split = {violations: array<string>, assumed: array<string>}
+type split = {violations: array<finding>, assumed: array<string>}
 
 /** The edges `when_` selects that end at a boundary, split by whether its contract is written. */
-let atBoundaries = (when_: Components.edge => bool): split => {
+let atBoundaries = (g: graph, when_: Components.edge => bool): split => {
   let hits =
-    designed->Array.flatMap(((n, p)) =>
+    designedIn(g)->Array.flatMap(((n, p)) =>
       p.edges->Array.filter(x => when_(x) && !known(x.to_))->Array.map(x => (n, x))
     )
   {
     violations: hits
     ->Array.filter(((_, x)) => !contracted(x.to_))
-    ->Array.map(((n, x)) => `no contract: ${line(n, x)}`),
+    ->Array.map(((n, x)) => foundAt([n], `no contract: ${line(n, x)}`)),
     assumed: hits
     ->Array.filter(((_, x)) => contracted(x.to_))
     ->Array.map(((n, x)) =>

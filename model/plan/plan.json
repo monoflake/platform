@@ -165,7 +165,9 @@
 			"id": "realized-internal-edges",
 			"says": "`realized.res` keeps the edges internal to a block, which D1 to D3 on the as-built graph wait on, RFC s42ex",
 			"holds": {
-				"owes": "the kept edges"
+				"committed": {
+					"commit": "7451d701"
+				}
 			}
 		},
 		{
