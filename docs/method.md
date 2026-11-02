@@ -69,10 +69,10 @@ they have not confirmed, and anything not discussed, is a draft of its own, with
 question decided in part is split: what is decided is `accepted`, or `landed` once built, and what
 is open is a new draft beside it, RFC 1dj2c.
 
-## A block's decisions in one round, the most urgent block first
+## A block's decisions gathered, the most urgent block first
 
-A block's questions are brought together, as the workspace's `docs/agents/agent-protocol.md` has it,
-"The questions of one block are asked together".
+A block's questions are gathered together and reach the author one at a time, as the workspace's
+`docs/agents/agent-protocol.md` has it, "The questions of one block are asked together".
 
 The most urgent block is chosen in this order: a contradiction in the core the model passes, since
 that is a false proof; then what the most other questions wait on; then the rest. A detail -- a
