@@ -1,7 +1,7 @@
 ---
 name: 'A Thin Clock on a Machine'
 title: "`?clock` at its thinnest: one-shot ticks kept in a table on the machine with driver(machine)'s state, a sleeper firing each at its time or late, delivered at least once"
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []

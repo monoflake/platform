@@ -1,7 +1,7 @@
 ---
 name: 'What a Binding Offers and Adopts'
 title: "A driver's management says which kinds its binding offers, takes the resources an organization's admin lists as the driver's own, and warns of what a person should act on"
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -31,7 +31,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 - **The fields go in management's interface, optional fields only**, provisional, chosen by the
   advisor on 2026-10-24; the interface is raised to 3 with the component's id, RFC y2xd3, in one
-  change, these fields not yet pushed.
+  change.
 - **`management-described` gains three**, provisional, chosen by the advisor on 2026-10-24:
   - `kinds`, key 6, optional: the kinds this binding offers. Absent means every kind the model gives
     that driver.
@@ -56,4 +56,4 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 ## State
 
-As of 2026-11-01 the contract fields are in use and function adoption is built. driver(cloudflare), `driver/cloudflare/src/driver.res`, reads and writes the `adopted` entries of kind `function`, keeps `delete_by_hand` warnings until the Worker is gone, and offers `kinds`. driver(machine), `driver/machine/src/listed.rs`, answers `kinds` and `revision`, leaves `adopted` and `warnings` out, and refuses a non-empty `adopted` as `beyond_host`. The line above that the fields are not yet pushed describes a past moment, and whether they are pushed was not checked. Adopting an `object` or a `database` is not built: `driver/cloudflare/management/src/management.res` refuses both as `beyond_host` until the D1 wiring exists.
+As of 2026-11-01 the contract fields are in use and function adoption is built. driver(cloudflare), `driver/cloudflare/src/driver.res`, reads and writes the `adopted` entries of kind `function`, keeps `delete_by_hand` warnings until the Worker is gone, and offers `kinds`. driver(machine), `driver/machine/src/listed.rs`, answers `kinds` and `revision`, leaves `adopted` and `warnings` out, and refuses a non-empty `adopted` as `beyond_host`.

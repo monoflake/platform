@@ -1,7 +1,7 @@
 ---
 name: 'Three Libraries'
 title: 'The interfaces of vocabulary*, wit* and extensions*: what each computes, pure, of what its caller hands it'
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -70,4 +70,4 @@ they differed from it. The interfaces are the libraries' own `.resi` files, whic
 
 ## State
 
-As of 2026-11-01 the three libraries exist and hold most of the interfaces above. `code/libs/vocabulary/src/needs.resi` has `fits`, `meets` and `filled`. `code/libs/wit/src/world.resi` has `read`, `exports`, `imports` and `matches`. `code/libs/extensions/src/extension.resi` has `bind`, `grace`, `quota`, `compose`, `apply` (the `management-apply` a list of capacity becomes), `lend` and `borrow`. The interface of `extensions*` ends at `borrow`: the computation of the paths to each host, fewest jumps first, is not built there. Whether the libraries pass in both runtimes was not run for this reading.
+As of 2026-11-01 the three libraries exist. `code/libs/vocabulary/src/needs.resi` has `fits`, `meets` and `filled`. `code/libs/wit/src/world.resi` has `read`, `exports`, `imports` and `matches`. `code/libs/extensions/src/extension.resi` has `bind`, `grace`, `quota`, `compose`, `apply` (the `management-apply` a list of capacity becomes), `lend` and `borrow`.

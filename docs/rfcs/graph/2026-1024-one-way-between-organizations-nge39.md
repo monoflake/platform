@@ -1,7 +1,7 @@
 ---
 name: 'One Way Between Organizations'
 title: 'The only boundary between organizations, and between platforms, is the public network over HTTPS: nothing is inlined across it, and the one way over is an export imported'
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -44,16 +44,6 @@ exactly the internal shortcut this forbids, which RFC btzlt's check already repo
 **What the model holds of it.** Between platforms, RFC btzlt's checks: a name a column takes from
 beneath must be a product at layer 0 answering every contract of the name it fills, and an edge
 marked `beneath` is judged by the products alone. Between organizations nothing is held yet, since
-the model reads one organization at a time; the check waits on the model holding an import, a
-deployment's name filled by another organization's export, and is Pending until then. **What lands
-this RFC** is that check: the model holding an import, a deployment's name filled by another
-organization's export, starting from RFC 94y0d's `export` record kind.
-
-### Ledger
-
-Choices made provisionally while the thread runs, read by the author at its end.
-
-- **Where the organization-boundary check's Pending is seen: nowhere else**, provisional, chosen by
-  the advisor on 2026-10-24. This RFC stays `accepted`, never `landed`, until that check exists, so
-  `mise run plan` keeps listing it as decided work, the platform's record of what is left,
-  docs/planning.md. A second entry in checklist.res would say the same thing twice.
+the model reads one organization at a time; a check needs the model to hold an import, a
+deployment's name filled by another organization's export, starting from RFC 94y0d's `export`
+record kind.

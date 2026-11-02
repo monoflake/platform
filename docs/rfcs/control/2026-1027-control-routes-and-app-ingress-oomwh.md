@@ -1,7 +1,7 @@
 ---
 name: 'Control Routes and App Ingress'
 title: 'A control answers its interfaces, artifacts, relay and objects alone; a gateway Worker of its own, optional, carries a declared domain or a mount to an app; and an app has no way in from outside until it declares one'
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -65,10 +65,7 @@ the author on 2026-11-01 after the gateway's `/v{n}/{8 hex}/` and `/v{n}/app-{de
 forwarding to any deployment, declared or not: an id is unique only within its scope, RFC b8f35, so
 a bare id cannot address an app from outside, and no row means no way in. **One gateway name is
 bound to one organization**, set where the gateway is configured, so a request carries no
-organization. To build: the table and its migration, writing and deleting a row, the gateway
-reading it, both id routes removed, and conform, lose and replace going through a mount, hello's
-written at its deploy. It runs beside monoflake/cloud's RFC stc9g's inner loop, as C has no gateway,
-and must ship with its first candidate, before the platform keeps data.
+organization.
 
 **An app has no way in from outside by default, and gains one only by declaring it.** Its ingress
 is one or more of:
@@ -92,4 +89,4 @@ work of its own.
 
 ## State
 
-As of 2026-11-01 most of it is built. `code/products/control/src/worker.res` answers its listed paths and refuses the rest, and the gateway is a Worker of its own, `code/products/gateway`, which reads the control's database. A domain is a row of `domain` and a mount a row of `scope`, both written from the ingress a deployment declares (`code/products/control/src/parts/state.res`, `parts/ingress.res`), and `code/products/gateway/src/gateway.res` takes a mount by its scope label alone, so no path names an app's id and an app declaring no ingress has no domain or mount row. Not built: the binding's own name `{app}.b{binding}` is still admitted for every deployment, which waits on monoflake/driver's RFC 3txyw, and a declared domain is still bound to the gateway's Worker by hand.
+As of 2026-11-01 `code/products/control/src/worker.res` answers its listed paths and refuses the rest, and the gateway is a Worker of its own, `code/products/gateway`, which reads the control's database. A domain is a row of `domain` and a mount a row of `scope`, both written from the ingress a deployment declares (`code/products/control/src/parts/state.res`, `parts/ingress.res`), and `code/products/gateway/src/gateway.res` takes a mount by its scope label alone, so no path names an app's id and an app declaring no ingress has no domain or mount row.

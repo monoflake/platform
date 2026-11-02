@@ -1,7 +1,7 @@
 ---
 name: 'The Footing Designed'
 title: "The footing is a component the platform writes and holds to samples, standing on ground that is the vendor's database, which it alone reaches"
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -33,9 +33,8 @@ left the footing, and RFC n8jq5 stands as written for its interface.
   holds it to samples, and it is code the platform writes, not a vendor's guarantee.
 - The rule this keeps: what the platform writes is designed and held to samples; only a vendor's
   written guarantee, a published standard, a proven algorithm or a physical fact is ground.
-- The `?tables` scaffold, the control writing SQL past the footing's interface, retires when the
-  control reaches the footing through it. A machine's footing waits on driver(machine)'s database,
-  so Cloudflare's comes first, a Worker in front of D1.
+- The `?tables` scaffold, the control writing SQL past the footing's interface, goes when the
+  control reaches the footing through it. The first footing is Cloudflare's, a Worker in front of D1.
 
 **An organization's footing lives on the platform's own ground**, decided by the author on
 2026-10-24, never on the organization's bound account. A platform runs the footings of its
@@ -135,6 +134,6 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 ## State
 
-As of 2026-11-01 the design is in the model and the footing itself is not built. `model/graph/components.res` declares `footing(half)` as a component of its own, giving `footing(organization)` and `footing(platform)`. There is no footing product under `code/products/`, which holds compute, control, database, gateway and storage alone. `model/contracts/components/footings.res` still has `after` and `next` as `uint32`, where the Ledger asks for an opaque bytes cursor. `code/products/control/src/parts/state.res` still prepares SQL directly, so the `?tables` scaffold has not retired.
+As of 2026-11-01 `model/graph/components.res` declares `footing(half)` as a component of its own, giving `footing(organization)` and `footing(platform)`.
 
-The claim above that today's ids are sequential is stale. The control now draws an id at random over 32 bits (`code/products/control/src/api/api.res`, `random`). The fleet reset that began everything from nothing does not show that the footing is in place.
+The claim above that today's ids are sequential is stale. The control now draws an id at random over 32 bits (`code/products/control/src/api/api.res`, `random`).

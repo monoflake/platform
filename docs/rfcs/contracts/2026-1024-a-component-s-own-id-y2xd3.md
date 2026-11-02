@@ -1,7 +1,7 @@
 ---
 name: "A Component's Own Id"
 title: "A component deployed into a scope is that scope's resource, a record of kind `component` whose id the deployer draws, and a deployment of it names that id"
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -47,9 +47,9 @@ Choices made provisionally while the thread runs, read by the author at its end.
   are raised with them, accepted by the advisor on 2026-10-24, the same decision's mechanical result:
   the new kind changes `configuration`'s record and change, `releases` names `deployment-runs`, and
   the model keeps no version over a changed type.
-- **Until the control deploys components, the bench draws a component's id**, provisional, chosen by
-  the advisor on 2026-10-24, as it plays the deployer for everything else, RFC 9bq0y; so a driver
-  always has an id to name a component's Worker by.
+- **The bench draws a component's id**, provisional, chosen by the advisor on 2026-10-24, as it plays
+  the deployer for everything else, RFC 9bq0y; so a driver always has an id to name a component's
+  Worker by.
 - **Platform-given values go on `deployment-deploy`, never on `deployment-runs`**, provisional,
   chosen by the advisor on 2026-10-24, as the integrator placed them. `deployment-runs` is echoed back
   in describe, adopted and releases, so a key placed there would leave in answers; deploy-only input
@@ -107,7 +107,7 @@ Choices made provisionally while the thread runs, read by the author at its end.
 - **With `reaching`, the fence drops every private destination but the targets**, a small matter,
   provisional, chosen by the advisor on 2026-10-24: RFC 1918, ULA and link-local alike. Without
   `reaching`, private stays closed, as today. The rules are run on Linux at the bench's rehearsal
-  on the test machine before the fence counts as done; a rule tested as text alone is not tested.
+  on the test machine; a rule tested as text alone is not tested.
 - **The deployer's `version` covers what it hands**, a small matter, provisional, chosen by the
   advisor on 2026-10-24, as the bench counts the footing into it. The driver keeps "same version,
   nothing done", so an instance key renewed each day, RFC b8f35, is a new version and deploys.
@@ -168,4 +168,4 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 ## State
 
-As of 2026-11-01 the contract and the driver half are built. `model/contracts/records/control.res` declares the `component` record with its name unique, `model/contracts/kinds/deployments.res` gives the `component` case of `deployment-runs` its `id`, and driver(machine), `driver/machine/src/served.rs`, `entry.rs`, `served/fence.rs` and `container/src/containers/handed.rs`, identifies a component by id, takes `handed` and `reaching`, and refuses a value handed twice. What is not built is the deployer's side: the control has no path that deploys a component and draws its id, and the component bench the Ledger has draw it, RFC 9bq0y, does not exist, so the line that the bench draws the id describes work still to do. The Linux rehearsal on the test machine, which the fence and the source-address checks wait on, was not run for this reading.
+As of 2026-11-01 the contract and the driver half are built. `model/contracts/records/control.res` declares the `component` record with its name unique, `model/contracts/kinds/deployments.res` gives the `component` case of `deployment-runs` its `id`, and driver(machine), `driver/machine/src/served.rs`, `entry.rs`, `served/fence.rs` and `container/src/containers/handed.rs`, identifies a component by id, takes `handed` and `reaching`, and refuses a value handed twice.

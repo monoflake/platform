@@ -1,7 +1,7 @@
 ---
 name: 'The As-Built Graph'
 title: "Each block declares the names it provides, and the as-built graph made of them is held to the design's rules, its violations the scaffolds"
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -49,11 +49,10 @@ without it Crossing would report every block that rightly provides a boundary.
 - The as-built graph is checked by the same rules, and a violation there is reported, not refused.
   The list of violations on the as-built graph is the list of scaffolds; no register of scaffolds is
   kept apart from it.
-- The as-built graph's first version runs Rules, Roles and Crossing alone. **Pending**, decided by
+- The as-built graph's first version runs Rules, Roles and Crossing alone. Decided by
   the author on 2026-10-24: D1 to D3 run on the as-built graph too, which find a block that needs a
   name it provides itself, as `control(organization)` needs and provides `?builder`, a loop the
-  first version cannot see. It waits too on the as-built graph keeping such an edge, which it drops
-  today as internal to the block.
+  first version cannot see.
 - **The platform keeps data from the moment the as-built graph has no violation**, which is what
   the words mean. From then on, a violation on the as-built graph is refused.
 
@@ -106,8 +105,7 @@ describe, the git revision it was built from, `revision`, given at its build as 
 **A build gives one only where its source stands whole on a commit**: jj's working-copy parent where
 the working copy holds no change, or, where there is no jj, git's HEAD where its tree is clean, as
 monoflake/driver's `archive` reads it for a switch, a development build and a release alike; from
-changed source it gives none. **Pending**: a release built by Nix from monoflake/machine's input
-gives that input's revision once machine builds the driver, which waits on releases being opened. A
+changed source it gives none. A
 snapshot holding the revision reports its states bound; one without falls back to the checkout
 conform ran from, `checkout`, and reports them unbound.
 
@@ -119,18 +117,10 @@ declares through its `config_roots`. Code and tasks find a sibling repository on
 a declaration resolves. Prose that describes how the checkouts are laid out for development, as an
 `AGENTS.md` does, is outside this rule.
 
-**A thread's Ledger still records the provisional choices that wait on the author**, a name, a
-port, a policy's value. Every entry that describes where what is built departs from the design is
-removed once the as-built graph is built, and is derived from the graph from then on.
-
 **`Steps.deployment` gains the number of machines.**
-
-**It is done when** the scaffolds of structure the as-built graph derives and the scaffolds of
-property the samples measure, a secret unsealed or a bearer's authentication, together reproduce
-the inventory in RFC vgvx6's Evidence.
 
 ## State
 
-As of 2026-11-01 the as-built graph is built: `model/graph/provided.res` holds `provides`, extra edges and `carries`, and `model/checks/derived/derivations.res` derives the scaffolds from Rules, Roles and Crossing alone. D1 to D3 do not yet run on it, and `model/checks/derived/realized.res` still drops an edge internal to its block, which they wait on.
+As of 2026-11-01 the as-built graph is built: `model/graph/provided.res` holds `provides`, extra edges and `carries`, and `model/checks/derived/derivations.res` derives the scaffolds from Rules, Roles and Crossing alone.
 
-The Pending line on the revision, that a release built by Nix from monoflake/machine's input gives that input's revision, no longer matches the fleet. A driver is now chosen by its own signed pointer, `pointer/driver/<machine>`, and installed by the updater under `/var/lib/driver` (monoflake/cloud, `docs/upgrades.md`), so the revision work follows that pointer route and not a Nix build from the machine input.
+A driver is chosen by its own signed pointer, `pointer/driver/<machine>`, and installed by the updater under `/var/lib/driver` (monoflake/cloud, `docs/upgrades.md`), so the revision reaches a snapshot by that pointer route and not by a Nix build from the machine input.

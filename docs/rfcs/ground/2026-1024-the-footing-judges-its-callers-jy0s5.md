@@ -1,7 +1,7 @@
 ---
 name: 'The footing judges its callers'
 title: 'The footing judges each caller by its certificate against the model, never by a capability, and the `records` target goes'
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -41,7 +41,7 @@ stand.
 - **Capabilities stay what they are for**: an app's access to data, which an app, holding no
   component certificate, takes from the issuer by its grants.
 - **The bench's footing stand-in checks callers the same way once the real footing lands**, RFC
-  9bq0y; until then it checks nothing, as now.
+  9bq0y.
 - Rejected: keeping the `records` capability, issued by the issuer, with a certificate path carved
   out for the issuer's own reads. That is two mechanisms, and the cycle only stepped around.
 
@@ -58,4 +58,4 @@ Choices made provisionally while the thread runs, read by the author at its end.
 
 ## State
 
-As of 2026-11-01 the type change is built and the authorization is not. `model/contracts/signed/signed.res` no longer has the `records` case of `capability-target`, and `model/contracts/components/footings.res` declares every footing operation with `component` as its caller. There is no footing to verify a certificate and judge a caller by the model, since no footing product exists in `code/products/`. The control in `code/products/control/src/worker.res` trusts no certificate yet either, and the bench's footing stand-in, RFC 9bq0y, is not built. Removing the capability case is not a working certificate path.
+As of 2026-11-01 `model/contracts/signed/signed.res` no longer has the `records` case of `capability-target`, and `model/contracts/components/footings.res` declares every footing operation with `component` as its caller.

@@ -1,7 +1,7 @@
 ---
 name: 'An App on a Binding of Functions'
 title: 'What an app is on a binding whose driver offers functions and objects and no container'
-status: accepted
+status: decided
 supersedes: []
 blocked-by: []
 commits: []
@@ -101,14 +101,10 @@ RFC vr5lw.
    answering `/v{n}/{scope}/...`, an app mounted by a row of the scope table. It runs on a binding
    the organization chooses, its traffic leaves through it, and the platform recommends placing it
    on Cloudflare, where a Cloudflare app's path from the gateway is inline inside Cloudflare, the
-   workspace's deferred item inline-data-path. Until it lands the control's `/v1/<id>/` keeps
-   answering `beyond_host` for a function on a binding reached by its origin,
-   `code/products/control/src/gateway.res`. Meanwhile, provisional, chosen by the advisor on
-   2026-10-26, a check reaches such a function at the address describe answers, a test and never
-   the path published.
+   workspace's deferred item inline-data-path.
 6. **instance stays a named kind no driver offers yet**, provisional, chosen by the advisor on
    2026-10-26: it is matched as the others are, and a release declaring it alone is refused by
-   point 3 until dg903 and nrs5v give it, as a Durable Object class its bundle names.
+   point 3.
 7. **A release with no kinds is read by its form**, provisional, chosen by the advisor on
    2026-10-26, the form being a fact of the code too: modules and component as function, image as
    container. Every release kept is modules, so each reads as function and, on a machine binding
@@ -126,6 +122,6 @@ RFC vr5lw.
 
 ## State
 
-As of 2026-11-01 the function path is built. `model/contracts/products/releases.res` is at version 6 with an optional `kinds`, and `code/tools/deploy/src/bundle.res` reads `kinds` from the app's own `metadata.json`. `code/products/control/src/api/deploying.res` reads the release's kinds or its form's (`runsAs`), takes the first the binding offers (`chosen`), and sends no `into` where the binding holds no container. The image label `monoflake.kinds`, and a builder for components, were not found in the code, so those forms are not built; the deploy tool's entry is still a wrangler bundle.
+As of 2026-11-01 the function path is built. `model/contracts/products/releases.res` is at version 6 with an optional `kinds`, and `code/tools/deploy/src/bundle.res` reads `kinds` from the app's own `metadata.json`. `code/products/control/src/api/deploying.res` reads the release's kinds or its form's (`runsAs`), takes the first the binding offers (`chosen`), and sends no `into` where the binding holds no container.
 
 Point 5 is stale about the gateway. It is no longer one per organization inside the control: the gateway is a Worker of its own, `code/products/gateway`, optional, RFC oomwh, and the control's `/v1/<id>/` stand-in is gone from its routes.

@@ -1,0 +1,188 @@
+{
+	"items": [
+		{
+			"id": "call-v2-credential",
+			"says": "The call envelope's version 2 carries an optional `credential` at key 5, generated as a bump made once, RFC 6x8su",
+			"holds": {
+				"owes": "the new call form and its generated bump"
+			}
+		},
+		{
+			"id": "operator-role",
+			"says": "`signed.res` gains an `operator` role certified by the root and held offline beside the root's, and docs/signed.md gains the two signatures, RFC 6x8su",
+			"holds": {
+				"owes": "the role and the table rows"
+			}
+		},
+		{
+			"id": "caller-gate",
+			"says": "One gate in the control runs the fixed order of RFC 6x8su and answers `denied` on a missing or bad proof, never falling through to a weaker check",
+			"after": ["call-v2-credential", "operator-role"],
+			"holds": {
+				"owes": "the gate"
+			}
+		},
+		{
+			"id": "issuer-member-operation",
+			"says": "The issuer gains a member operation beside `for_app`, exchanging an account credential taken once at an organization's control for that member's capabilities, RFC 6x8su",
+			"after": ["call-v2-credential"],
+			"holds": {
+				"owes": "the operation and its samples"
+			}
+		},
+		{
+			"id": "fill-interfaces",
+			"says": "`fill.res` gains `interfaces`, held by the subset check and left out of `contracts.json`, and the runner's chain gains an account and the operator, RFCs 6x8su and p8e8k",
+			"after": ["operator-role"],
+			"holds": {
+				"owes": "the field, its check and the chain roles"
+			}
+		},
+		{
+			"id": "component-bench",
+			"says": "A bench run starts a second driver from the driver's binary, deploys the component through `deployments.deploy`, runs the samples and removes everything the run made, RFC 9bq0y",
+			"holds": {
+				"owes": "the bench"
+			}
+		},
+		{
+			"id": "bench-chain-roles",
+			"says": "The bench's run chain has the roles `issuer` and `bundle`, and the bench answers a bundle read from the case's grants, RFC 9bq0y",
+			"after": ["component-bench"],
+			"holds": {
+				"owes": "the roles and the answer"
+			}
+		},
+		{
+			"id": "component-deploy-path",
+			"says": "The control has a path that deploys a component into a scope, drawing the id of a record of kind `component`, RFC y2xd3",
+			"after": ["component-bench"],
+			"holds": {
+				"owes": "the deploy path"
+			}
+		},
+		{
+			"id": "component-rehearsal",
+			"says": "The Linux rehearsal of the machine fence, the container source-address check and the 60 second containerd outage runs on the test machine, RFC y2xd3",
+			"waits": "author",
+			"holds": {
+				"owes": "a rehearsal on the test machine"
+			}
+		},
+		{
+			"id": "kinds-label-and-components",
+			"says": "An image declares its kinds in an image label and a component in its `metadata.json` once a builder for components lands, RFC emgxf",
+			"waits": "author",
+			"holds": {
+				"owes": "the label and the component declaration"
+			}
+		},
+		{
+			"id": "domain-binding",
+			"says": "A driver binds the domains its apps declare to the gateway's Worker by itself, replacing the hand-made binding, RFC oomwh",
+			"waits": "author",
+			"holds": {
+				"owes": "the driver's binding of declared domains"
+			}
+		},
+		{
+			"id": "extension-paths",
+			"says": "`extensions*` returns the paths to each host, fewest jumps first, for the bundle, RFC kd7f9",
+			"holds": {
+				"owes": "the paths in `extension.resi`"
+			}
+		},
+		{
+			"id": "footing-product",
+			"says": "A footing product exists under `code/products/`, one instance per half, and no control writes SQL, the `?tables` scaffold gone, RFC 8yl4b",
+			"holds": {
+				"owes": "the product and the control reaching it"
+			}
+		},
+		{
+			"id": "footing-cursors",
+			"says": "`footings.res` cursors `after` and `next` are opaque bytes, RFC 8yl4b",
+			"after": ["footing-product"],
+			"holds": {
+				"owes": "the contract change"
+			}
+		},
+		{
+			"id": "footing-instances",
+			"says": "The platform's footing instance is built in monoflake/cloud from this repository's code, and an organization's on the platform's own ground, RFC 8yl4b",
+			"after": ["footing-product"],
+			"holds": {
+				"owes": "both instances"
+			}
+		},
+		{
+			"id": "footing-judges-callers",
+			"says": "The footing verifies the caller's chain, takes `sub`, and allows or refuses by the writers of `records.res` and the edges of `components.res`, answering `denied` otherwise, RFC jy0s5",
+			"after": ["footing-product"],
+			"holds": {
+				"owes": "the authorization"
+			}
+		},
+		{
+			"id": "bench-judges-callers",
+			"says": "The bench's footing stand-in checks callers the same way as the footing, RFCs jy0s5 and 9bq0y",
+			"after": ["component-bench", "footing-judges-callers"],
+			"holds": {
+				"owes": "the stand-in's check"
+			}
+		},
+		{
+			"id": "clock-contract",
+			"says": "The clock contract, `set` and `describe`, is declared in the model with samples before code is cut, RFCs p6fg3 and fhg6w",
+			"holds": {
+				"owes": "the contract and its samples"
+			}
+		},
+		{
+			"id": "machine-clock",
+			"says": "driver(machine) answers `clock` with `set` and `describe`: a persisted table, due rows fired on start, a row deleted after a 2xx, RFC p6fg3",
+			"after": ["clock-contract"],
+			"holds": {
+				"owes": "the clock in monoflake/driver"
+			}
+		},
+		{
+			"id": "platform-clock",
+			"says": "The platform above gets `?clock` through the compute product's delayed submit, which the control beneath fulfils on its binding's clock, RFCs p6fg3 and 49qyg",
+			"after": ["machine-clock"],
+			"holds": {
+				"owes": "the submit and the fill"
+			}
+		},
+		{
+			"id": "organization-import",
+			"says": "The model holds an import, a deployment's name filled by another organization's export, and a check refuses any internal path between organizations, RFC nge39",
+			"holds": {
+				"owes": "the import, starting from RFC 94y0d's `export` record kind, and the check"
+			}
+		},
+		{
+			"id": "realized-internal-edges",
+			"says": "`realized.res` keeps the edges internal to a block, which D1 to D3 on the as-built graph wait on, RFC s42ex",
+			"holds": {
+				"owes": "the kept edges"
+			}
+		},
+		{
+			"id": "asbuilt-d1-d3",
+			"says": "D1 to D3 run on the as-built graph, finding a block that needs a name it provides itself, RFC s42ex",
+			"after": ["realized-internal-edges"],
+			"holds": {
+				"owes": "the three rules on the as-built graph"
+			}
+		},
+		{
+			"id": "revision-by-pointer",
+			"says": "A driver's `revision` reaches a conform snapshot through the signed pointer route, RFC s42ex",
+			"waits": "author",
+			"holds": {
+				"owes": "the route, once monoflake/cloud's updater serves it"
+			}
+		}
+	]
+}
