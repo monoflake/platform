@@ -169,6 +169,7 @@ let interface_: interface_ = {
         ("stale", #rejected),
         ("unbound", #rejected),
         ("unreachable", #unavailable),
+        ("bad_answer", #unavailable),
       ],
       ~callers=[#deployment_grant],
     ),

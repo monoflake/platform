@@ -1,0 +1,16 @@
+{
+	"interface": "releases",
+	"operation": "deploy",
+	"cases": [
+		{
+			"description": "a driver answering non-JSON text is refused as bad_answer",
+			"body": "not JSON",
+			"expect": { "failure": "unavailable", "reason": "bad_answer" }
+		},
+		{
+			"description": "a driver answering JSON outside its output type is refused as bad_answer",
+			"body": "{\"status\":\"success\",\"data\":{\"generation\":\"not a number\"}}",
+			"expect": { "failure": "unavailable", "reason": "bad_answer" }
+		}
+	]
+}

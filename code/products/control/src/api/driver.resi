@@ -3,7 +3,7 @@
  * binding's token its bearer, RFCs vr5lw and 3d3nt.
  */
 
-/** Why a call answered no output, its reason and message; `unreachable` where nothing answered. */
+/** Why a call failed, `unreachable` with no answer and `bad_answer` with an unreadable answer. */
 type refused = {reason: string, message: string}
 
 /** Where the driver is and the token it takes. */

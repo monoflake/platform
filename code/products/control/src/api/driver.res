@@ -12,6 +12,7 @@ let named = (envelope, key) =>
   ->Option.getOr("")
 
 let unreachable = message => Error({reason: "unreachable", message})
+let badAnswer = message => Error({reason: "bad_answer", message})
 
 // A step of where a value was unread, a name after a dot and an index in brackets.
 let step = (s: Envelope.Malformed.step) =>
@@ -43,7 +44,7 @@ let call = async (host, envelope, data) => {
     let text = await response->Web.text
     switch JSON.parseOrThrow(text) {
     | exception JsExn(_) =>
-      unreachable(`the host's driver answered ${Int.toString(response->Web.status)} and no JSON`)
+      badAnswer(`the host's driver answered ${Int.toString(response->Web.status)} and no JSON`)
     | json =>
       switch Contracts.Answer.fromJson(json, data) {
       | Ok(Success(output)) =>
@@ -60,7 +61,7 @@ let call = async (host, envelope, data) => {
       | Ok(Error({reason, message})) => Error({reason, message})
       | Error({at, expected}) =>
         let where = at->Array.length == 0 ? "the answer" : at->Array.map(step)->Array.join("")
-        unreachable(
+        badAnswer(
           `the host's driver answered what its type does not write at ${where}, ${expected}`,
         )
       }

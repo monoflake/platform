@@ -1,6 +1,53 @@
 open Node
 open Called
 
+let badAnswers = JSON.parseOrThrow(
+  readText(fromRoot("code/products/control/tests/api/bad-answers.json")),
+)
+
+badAnswers
+->member("cases")
+->JSON.Decode.array
+->Option.getOr([])
+->Array.forEach(sample => {
+  let description = sample->member("description")->JSON.Decode.string->Option.getOr("")
+  test(description, async () => {
+    let stood = stand()
+    let (binding, hash) = await opened(stood)
+    let release = Envelope.Hex.decode(hash)->Option.getOr(Uint8Array.fromLength(0))
+    let failing = ref(true)
+    let stood = {
+      ...stood,
+      parts: {
+        ...stood.parts,
+        reach: {
+          ...stood.host.reach,
+          fetch: async request =>
+            if failing.contents {
+              Web.answered(
+                ~status=200,
+                ~contentType="application/json",
+                sample->member("body")->JSON.Decode.string->Option.getOr(""),
+              )
+            } else {
+              await stood.host.reach.fetch(request)
+            },
+        },
+      },
+    }
+    let (status, answer) = await called(stood, Operator, releases(Deploy({binding, release})))
+    let expected = sample->member("expect")
+    deepEqual(
+      (status, answer->member("failure"), answer->member("reason"), answer->named),
+      (503, expected->member("failure"), expected->member("reason"), None),
+    )
+    deepEqual((stood.host.applied.contents, stood.host.deployed.contents), (None, None))
+    failing := false
+    let (status, _) = await called(stood, Operator, releases(Deploy({binding, release})))
+    deepEqual(status, 200)
+  })
+})
+
 let range = (lowest, highest) => JSON.Object(
   dict{"lowest": JSON.Number(Int.toFloat(lowest)), "highest": JSON.Number(Int.toFloat(highest))},
 )
@@ -77,7 +124,7 @@ test("a malformed value under any name is refused with a reason, never bound emp
         (
           503,
           (
-            Some("unreachable"),
+            Some("bad_answer"),
             `the host's driver answered what its type does not write at .data.versions.${name}, an object`,
           ),
         ),

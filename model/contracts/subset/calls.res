@@ -69,6 +69,7 @@ let messages: dict<string> = dict{
   "unfetchable": "The artifact could not be fetched",
   "unplaceable": "No store meets the placement asked for",
   "unreachable": "A host or service the call needs could not be reached",
+  "bad_answer": "A host or service answered what its type does not write",
   "unresolved": "A handle in the change resolves to nothing",
   "wrong_offset": "The write does not start where the upload ends",
   "wrong_type": "The bucket is not of the type the call needs",

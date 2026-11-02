@@ -8022,6 +8022,7 @@
 	],
 	"messages": {
 		"ahead": "The generation asked for is ahead of the one held",
+		"bad_answer": "A host or service answered what its type does not write",
 		"behind": "No generation as new as the one asked for is held yet",
 		"beyond_allowance": "The change asks for more than the allowance gives",
 		"beyond_host": "The host cannot give what is asked",
@@ -8960,6 +8961,10 @@
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
+						},
+						{
+							"name": "bad_answer",
+							"failure": "unavailable"
 						}
 					],
 					"callers": ["operator"]
@@ -8975,6 +8980,10 @@
 						},
 						{
 							"name": "unreachable",
+							"failure": "unavailable"
+						},
+						{
+							"name": "bad_answer",
 							"failure": "unavailable"
 						}
 					],
@@ -9020,6 +9029,10 @@
 						{
 							"name": "unreachable",
 							"failure": "unavailable"
+						},
+						{
+							"name": "bad_answer",
+							"failure": "unavailable"
 						}
 					],
 					"callers": ["operator"]
@@ -9038,6 +9051,10 @@
 					"reasons": [
 						{
 							"name": "unreachable",
+							"failure": "unavailable"
+						},
+						{
+							"name": "bad_answer",
 							"failure": "unavailable"
 						},
 						{
@@ -9564,6 +9581,10 @@
 						},
 						{
 							"name": "unreachable",
+							"failure": "unavailable"
+						},
+						{
+							"name": "bad_answer",
 							"failure": "unavailable"
 						}
 					],
