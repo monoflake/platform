@@ -55,7 +55,7 @@ NoStuckDeploy == Overlap(control, driver)
 Word(b) == IF b THEN "true" ELSE "false"
 Row(c, l, h) ==
 	"row {\"control\":" \o ToString(c) \o ",\"lowest\":" \o ToString(Lowest(c))
-		\o ",\"driverLowest\":" \o ToString(l) \o ",\"driverHighest\":" \o ToString(h)
+		\o ",\"driver_lowest\":" \o ToString(l) \o ",\"driver_highest\":" \o ToString(h)
 		\o ",\"overlaps\":" \o Word(Ranges(Lowest(c), c, l, h)) \o "}"
 Table ==
 	\/ control /= 1

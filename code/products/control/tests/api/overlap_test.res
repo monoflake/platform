@@ -4,8 +4,8 @@ open Node
 type row = {
   control: int,
   lowest: int,
-  driverLowest: int,
-  driverHighest: int,
+  @as("driver_lowest") driverLowest: int,
+  @as("driver_highest") driverHighest: int,
   overlaps: bool,
 }
 external rowsOf: JSON.t => array<row> = "%identity"
