@@ -65,11 +65,12 @@ test("a malformed value under any name is refused with a reason, never bound emp
   for i in 0 to names->Array.length - 1 {
     for j in 0 to values->Array.length - 1 {
       let reported = versions()
-      reported->Dict.set(names->Array.getUnsafe(i), values->Array.getUnsafe(j))
+      let name = names->Array.getUnsafe(i)
+      reported->Dict.set(name, values->Array.getUnsafe(j))
       let stood = stand()
       stood.host.versions := Some(JSON.Object(reported))
       // The generated reader refuses the whole describe answer at the bad value, whichever name
-      // holds it, so nothing is applied, deployed or bound.
+      // holds it, so nothing is applied, deployed or bound, and the refusal names that key.
       let (status, answer) = await deploy(stood)
       deepEqual(
         (status, (status, answer)->refusal),
@@ -77,7 +78,7 @@ test("a malformed value under any name is refused with a reason, never bound emp
           503,
           (
             Some("unreachable"),
-            "the host's driver answered what its type does not write, an object",
+            `the host's driver answered what its type does not write at .data.versions.${name}, an object`,
           ),
         ),
       )

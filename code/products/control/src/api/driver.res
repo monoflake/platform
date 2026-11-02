@@ -13,6 +13,13 @@ let named = (envelope, key) =>
 
 let unreachable = message => Error({reason: "unreachable", message})
 
+// A step of where a value was unread, a name after a dot and an index in brackets.
+let step = (s: Envelope.Malformed.step) =>
+  switch s {
+  | Field(name) | Key(name) => `.${name}`
+  | Index(i) => `[${Int.toString(i)}]`
+  }
+
 let call = async (host, envelope, data) => {
   let path = `/${named(envelope, "interface")}/${named(envelope, "operation")}`
   let request = Web.request(
@@ -51,8 +58,11 @@ let call = async (host, envelope, data) => {
           Ok(output)
         }
       | Ok(Error({reason, message})) => Error({reason, message})
-      | Error({expected}) =>
-        unreachable(`the host's driver answered what its type does not write, ${expected}`)
+      | Error({at, expected}) =>
+        let where = at->Array.length == 0 ? "the answer" : at->Array.map(step)->Array.join("")
+        unreachable(
+          `the host's driver answered what its type does not write at ${where}, ${expected}`,
+        )
       }
     }
   }
