@@ -1,0 +1,171 @@
+{
+	"interface": "releases",
+	"cases": [
+		{
+			"description": "a deployment grant is denied at releases.put",
+			"steps": [
+				{
+					"call": "put",
+					"as": "deployment_grant",
+					"input": {
+						"form": "modules",
+						"artifact": "AA"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a deployment grant is denied at releases.deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"binding": 1,
+						"app": 1,
+						"release": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a deployment grant is denied at releases.describe",
+			"steps": [
+				{
+					"call": "describe",
+					"as": "deployment_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a deployment grant is denied at releases.forget",
+			"steps": [
+				{
+					"call": "forget",
+					"as": "deployment_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a deployment grant is denied at releases.retire",
+			"steps": [
+				{
+					"call": "retire",
+					"as": "deployment_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at releases.put",
+			"steps": [
+				{
+					"call": "put",
+					"as": "health_grant",
+					"input": {
+						"form": "modules",
+						"artifact": "AA"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at releases.deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "health_grant",
+					"input": {
+						"binding": 1,
+						"app": 1,
+						"release": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at releases.describe",
+			"steps": [
+				{
+					"call": "describe",
+					"as": "health_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at releases.forget",
+			"steps": [
+				{
+					"call": "forget",
+					"as": "health_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at releases.retire",
+			"steps": [
+				{
+					"call": "retire",
+					"as": "health_grant",
+					"input": {
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,286 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "a expired grant cannot upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"now": 2000
+			}
+		},
+		{
+			"description": "a revoked grant cannot upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revoked": true
+			}
+		},
+		{
+			"description": "a unknown grant cannot upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"grantExists": false
+			}
+		},
+		{
+			"description": "a expired grant cannot deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"now": 2000
+			}
+		},
+		{
+			"description": "a revoked grant cannot deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revoked": true
+			}
+		},
+		{
+			"description": "a unknown grant cannot deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"grantExists": false
+			}
+		},
+		{
+			"description": "a expired grant cannot status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "deployment_grant",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"now": 2000
+			}
+		},
+		{
+			"description": "a revoked grant cannot status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "deployment_grant",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revoked": true
+			}
+		},
+		{
+			"description": "a unknown grant cannot status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "deployment_grant",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"grantExists": false
+			}
+		},
+		{
+			"description": "expiry during upload is checked again at commit",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"commit": 2000
+			}
+		},
+		{
+			"description": "revocation during upload is checked again at commit",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revokedAtCommit": true
+			}
+		},
+		{
+			"description": "expiry during deploy is checked again at commit",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"commit": 2000
+			}
+		},
+		{
+			"description": "revocation during deploy is checked again at commit",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revokedAtCommit": true
+			}
+		}
+	]
+}

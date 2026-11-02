@@ -1,0 +1,109 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "deploy mint allows expiry at exactly 180 days",
+			"given": {
+				"now": 1730000000000
+			},
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 1745552000000
+						}
+					},
+					"expect": {
+						"output": {
+							"grant": {
+								"$any": null
+							},
+							"bearer": {
+								"$any": null
+							},
+							"expires": 1745552000000
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "deploy mint refuses expiry at 180 days plus one millisecond",
+			"given": {
+				"now": 1730000000000
+			},
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 1745552000001
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		},
+		{
+			"description": "health mint allows expiry at exactly 180 days",
+			"given": {
+				"now": 1730000000000
+			},
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "health",
+							"expires": 1745552000000
+						}
+					},
+					"expect": {
+						"output": {
+							"grant": {
+								"$any": null
+							},
+							"bearer": {
+								"$any": null
+							},
+							"expires": 1745552000000
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "health mint refuses expiry at 180 days plus one millisecond",
+			"given": {
+				"now": 1730000000000
+			},
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "health",
+							"expires": 1745552000001
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,497 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "a live health grant answers ready",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+							"state": "ready"
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant answers unavailable when initialization is incomplete",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+							"state": "unavailable"
+						}
+					}
+				}
+			],
+			"given": {
+				"initialized": false
+			}
+		},
+		{
+			"description": "a health grant answers unavailable when the read-only store check fails",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+							"state": "unavailable"
+						}
+					}
+				}
+			],
+			"given": {
+				"storeReadable": false
+			}
+		},
+		{
+			"description": "a repeated nonce is allowed and answered afresh without replay state",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+							"state": "ready"
+						}
+					}
+				},
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+							"state": "ready"
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses a expired grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"now": 2000
+			}
+		},
+		{
+			"description": "health refuses a revoked grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"revoked": true
+			}
+		},
+		{
+			"description": "health refuses a unknown grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"grantExists": false
+			}
+		},
+		{
+			"description": "health refuses a wrong control grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"controlMatches": false
+			}
+		},
+		{
+			"description": "health refuses a wrong policy grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"policyMatches": false
+			}
+		},
+		{
+			"description": "health refuses a wrong verifier grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"verifierMatches": false
+			}
+		},
+		{
+			"description": "health refuses deployment_grant",
+			"steps": [
+				{
+					"call": "health",
+					"as": "deployment_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses operator",
+			"steps": [
+				{
+					"call": "health",
+					"as": "operator",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses organization",
+			"steps": [
+				{
+					"call": "health",
+					"as": "organization",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses host",
+			"steps": [
+				{
+					"call": "health",
+					"as": "host",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses selectors or an unbounded nonce {'nonce': '00'}",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "00"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses selectors or an unbounded nonce {'nonce': '0000000000000000000000000000000000000000000000000000000000000000', 'app': 1}",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+						"app": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses selectors or an unbounded nonce {'nonce': '0000000000000000000000000000000000000000000000000000000000000000', 'control': '1111111111111111111111111111111111111111111111111111111111111111'}",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+						"control": "1111111111111111111111111111111111111111111111111111111111111111"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "health refuses selectors or an unbounded nonce {'nonce': '0000000000000000000000000000000000000000000000000000000000000000', 'url': 'https://other.example.com'}",
+			"steps": [
+				{
+					"call": "health",
+					"as": "health_grant",
+					"input": {
+						"nonce": "0000000000000000000000000000000000000000000000000000000000000000",
+						"url": "https://other.example.com"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at mint",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "health_grant",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at revoke",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "health_grant",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "health_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "health_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "health_grant",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "the shared operator mint mints health without an app selector",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "health",
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"output": {
+							"grant": {
+								"$any": null
+							},
+							"bearer": {
+								"$any": null
+							},
+							"expires": 2000
+						}
+					}
+				}
+			],
+			"given": {
+				"appExists": false,
+				"initialized": false
+			}
+		},
+		{
+			"description": "the shared operator mint refuses expired health without an app selector",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "health",
+							"expires": 1000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		},
+		{
+			"description": "the shared operator revokes a health grant by id",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "operator",
+					"input": {
+						"grant": "sample-health"
+					},
+					"expect": {
+						"output": {
+							"grant": "sample-health"
+						}
+					}
+				}
+			]
+		}
+	]
+}

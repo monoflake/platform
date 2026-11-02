@@ -1,0 +1,37 @@
+{
+	"interface": "organizations",
+	"cases": [
+		{
+			"description": "a deployment grant is denied at organizations.open",
+			"steps": [
+				{
+					"call": "open",
+					"as": "deployment_grant",
+					"input": {
+						"label": "sample"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at organizations.open",
+			"steps": [
+				{
+					"call": "open",
+					"as": "health_grant",
+					"input": {
+						"label": "sample"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		}
+	]
+}

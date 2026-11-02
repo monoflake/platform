@@ -105,6 +105,8 @@ type caller = [
   | #authority
   | #host
   | #capability
+  | #deployment_grant
+  | #health_grant
 ]
 
 /**

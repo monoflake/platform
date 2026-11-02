@@ -30,6 +30,8 @@ let ownTypes: array<declared> = Array.flat([
   Footings.types,
   Authorities.types,
   Directories.types,
+  Deployment_grants.types,
+  Health_grants.types,
 ])
 let ownContents: array<content> = Array.flat([
   Storage.contents,
@@ -62,6 +64,7 @@ let interfaces: array<interface_> = [
   Authorities.interface_,
   Authorities.notices,
   Directories.interface_,
+  Deployment_grants.interface_,
 ]
 
 /** The members of a declared enumeration, by its name, none where it is no enumeration. */

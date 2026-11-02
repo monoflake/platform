@@ -1,0 +1,37 @@
+{
+	"interface": "bindings",
+	"cases": [
+		{
+			"description": "a deployment grant is denied at bindings.open",
+			"steps": [
+				{
+					"call": "open",
+					"as": "deployment_grant",
+					"input": {
+						"organization": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a health grant is denied at bindings.open",
+			"steps": [
+				{
+					"call": "open",
+					"as": "health_grant",
+					"input": {
+						"organization": 1
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		}
+	]
+}

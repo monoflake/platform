@@ -1,0 +1,393 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "the operator mints a grant for an existing app",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"output": {
+							"grant": {
+								"$any": null
+							},
+							"bearer": {
+								"$any": null
+							},
+							"expires": 2000
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "the operator revokes a grant immediately",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "operator",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"output": {
+							"grant": "sample-grant"
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant uploads its bounded Modules artifact",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"output": {
+							"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+							"expires": 2000
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant deploys its own app retaining server-held secrets",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"output": {
+							"app": 1,
+							"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+							"version": 2,
+							"candidate": {
+								"platform": "1111111111111111111111111111111111111111",
+								"cloud": "1111111111111111111111111111111111111111",
+								"driver": "1111111111111111111111111111111111111111",
+								"machine": "1111111111111111111111111111111111111111"
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant reads only its own deployment status without secrets",
+			"steps": [
+				{
+					"call": "status",
+					"as": "deployment_grant",
+					"input": {},
+					"expect": {
+						"output": {
+							"app": 1,
+							"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+							"version": 1,
+							"candidate": {
+								"platform": "1111111111111111111111111111111111111111",
+								"cloud": "1111111111111111111111111111111111111111",
+								"driver": "1111111111111111111111111111111111111111",
+								"machine": "1111111111111111111111111111111111111111"
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a organization credential cannot call grant mint",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "organization",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a organization credential cannot call grant revoke",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "organization",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a organization credential cannot call grant upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "organization",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a organization credential cannot call grant deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "organization",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a organization credential cannot call grant status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "organization",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a host credential cannot call grant mint",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "host",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a host credential cannot call grant revoke",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "host",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a host credential cannot call grant upload",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "host",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a host credential cannot call grant deploy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "host",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a host credential cannot call grant status",
+			"steps": [
+				{
+					"call": "status",
+					"as": "host",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant cannot mint grants",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "deployment_grant",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant cannot revoke grants",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "deployment_grant",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "the operator uses no delegated upload operation",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "operator",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "the operator uses no delegated deploy operation",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "operator",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		},
+		{
+			"description": "the operator uses no delegated status operation",
+			"steps": [
+				{
+					"call": "status",
+					"as": "operator",
+					"input": {},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			]
+		}
+	]
+}

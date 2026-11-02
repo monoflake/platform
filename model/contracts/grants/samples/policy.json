@@ -1,0 +1,399 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "a grant naming another app is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"app": 2
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another binding is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"binding": 2
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another organization is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"organization": 2
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another ingress is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"ingress": "other.example.com"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another secrets is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"secrets": {
+							"KEY": "AA"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another network is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"network": ["tcp"]
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another kind is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"kind": "container"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "a grant naming another url is refused before authorization",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						},
+						"url": "https://artifact.example.com"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		},
+		{
+			"description": "upload refuses a changed app binding or organization policy",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"policyMatches": false
+			}
+		},
+		{
+			"description": "upload validates and refuses archive ingress overrides",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"archiveValid": false
+			}
+		},
+		{
+			"description": "upload validates and refuses archive kind overrides",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"archiveValid": false
+			}
+		},
+		{
+			"description": "upload refuses a non-Modules artifact",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"modules": false
+			}
+		},
+		{
+			"description": "deploy refuses a changed app binding or organization policy",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "denied"
+					}
+				}
+			],
+			"given": {
+				"policyMatches": false
+			}
+		},
+		{
+			"description": "deploy validates and refuses archive ingress overrides",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"archiveValid": false
+			}
+		},
+		{
+			"description": "deploy validates and refuses archive kind overrides",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"archiveValid": false
+			}
+		},
+		{
+			"description": "deploy refuses a non-Modules artifact",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"modules": false
+			}
+		},
+		{
+			"description": "status cannot select another app",
+			"steps": [
+				{
+					"call": "status",
+					"as": "deployment_grant",
+					"input": {
+						"app": 2
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "malformed"
+					}
+				}
+			]
+		}
+	]
+}

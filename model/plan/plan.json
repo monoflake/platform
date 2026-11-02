@@ -16,7 +16,7 @@
 		},
 		{
 			"id": "caller-gate",
-			"says": "One gate in the control runs the fixed order of RFC 6x8su and answers `denied` on a missing or bad proof, never falling through to a weaker check",
+			"says": "One gate in the control runs the fixed order of RFC 6x8su and answers `denied` on a missing or bad proof, never falling through to a weaker check, and moves the deployment grants' mint and revoke from the operator bearer to the signature",
 			"after": ["call-v2-credential", "operator-role"],
 			"holds": {
 				"owes": "the gate"
@@ -205,7 +205,7 @@
 			"says": "A's control mints, by an operator-only operation, a revocable deployment grant with a finite expiry bound to one production app, which allows only uploading a bounded Modules artifact for that app, deploying it with the app's secrets kept, and reading that app's status, and is refused at every operator operation; the platform's deploy tool deploys with it, so the second platform's control is deployed from CI without the operator credential; the same mint gives a health-read grant answering one new health operation of A's control with ready or unavailable, so the third platform's install is checked from CI without it; its contract and its allow and deny samples are reviewed by the author before code, RFC 6dheo",
 			"delivers": ["control-deploy-grant"],
 			"holds": {
-				"owes": "the grants' contract and samples the author reviewed stand in lanes/grant, unlanded: platform's wire check refuses deployment-grants.mint because its input deployment-grant-mint is a union of the deploy and health policies where an operation's input must be a record, so the union moves inside a record field and the samples under model/contracts/grants/samples follow; then the mint, the revocation, the scoped operations, the health operation and the deploy tool's support"
+				"owes": "the mint, the revocation, the scoped operations, the health operation and the deploy tool's support, against the contract in model/contracts/roles/deployment_grants.res; mint and revoke take the present operator bearer until caller-gate moves them to the signature"
 			}
 		},
 		{

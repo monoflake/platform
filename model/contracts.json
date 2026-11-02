@@ -7552,6 +7552,427 @@
 					}
 				}
 			]
+		},
+		"deployment-grant-mint": {
+			"record": [
+				{
+					"name": "policy",
+					"key": 1,
+					"shape": {
+						"type": "deployment-grant-mint-policy"
+					}
+				}
+			]
+		},
+		"deployment-grant-mint-policy": {
+			"union": {
+				"tag": "policy",
+				"cases": [
+					{
+						"name": "deploy",
+						"code": 1,
+						"fields": [
+							{
+								"name": "app",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							},
+							{
+								"name": "expires",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					},
+					{
+						"name": "health",
+						"code": 2,
+						"fields": [
+							{
+								"name": "expires",
+								"key": 2,
+								"shape": {
+									"prim": "uint53"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"deployment-grant-id": {
+			"record": [
+				{
+					"name": "grant",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"deployment-grant-minted": {
+			"record": [
+				{
+					"name": "grant",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "bearer",
+					"key": 2,
+					"shape": {
+						"prim": "secret"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"deployment-grant-policy": {
+			"union": {
+				"tag": "policy",
+				"cases": [
+					{
+						"name": "deploy",
+						"code": 1,
+						"fields": [
+							{
+								"name": "app",
+								"key": 1,
+								"shape": {
+									"id": "app"
+								}
+							},
+							{
+								"name": "organization",
+								"key": 2,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "binding",
+								"key": 3,
+								"shape": {
+									"prim": "uint32"
+								}
+							},
+							{
+								"name": "ingress",
+								"key": 4,
+								"shape": {
+									"prim": "string"
+								}
+							}
+						]
+					},
+					{
+						"name": "health",
+						"code": 2,
+						"fields": [
+							{
+								"name": "control",
+								"key": 1,
+								"shape": {
+									"prim": "hash"
+								}
+							}
+						]
+					}
+				]
+			}
+		},
+		"deployment-grant-verifier": {
+			"record": [
+				{
+					"name": "grant",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "verifier",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "revoked",
+					"key": 4,
+					"shape": {
+						"prim": "bool"
+					}
+				},
+				{
+					"name": "policy",
+					"key": 5,
+					"shape": {
+						"type": "deployment-grant-policy"
+					}
+				}
+			]
+		},
+		"deployment-grant-upload": {
+			"record": [
+				{
+					"name": "artifact",
+					"key": 1,
+					"shape": {
+						"prim": "bytes"
+					}
+				},
+				{
+					"name": "digest",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"deployment-grant-artifact": {
+			"record": [
+				{
+					"name": "digest",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"deployment-candidate": {
+			"record": [
+				{
+					"name": "platform",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "cloud",
+					"key": 2,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "driver",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "machine",
+					"key": 4,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"deployment-grant-staging": {
+			"record": [
+				{
+					"name": "grant",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "digest",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "size",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				}
+			]
+		},
+		"deployment-grant-audit": {
+			"record": [
+				{
+					"name": "grant",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "digest",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "previous",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "version",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "candidate",
+					"key": 5,
+					"shape": {
+						"type": "deployment-candidate"
+					}
+				}
+			]
+		},
+		"deployment-grant-deploy": {
+			"record": [
+				{
+					"name": "digest",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "expected",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "candidate",
+					"key": 3,
+					"shape": {
+						"type": "deployment-candidate"
+					}
+				}
+			]
+		},
+		"deployment-grant-status": {
+			"record": []
+		},
+		"deployment-grant-described": {
+			"record": [
+				{
+					"name": "app",
+					"key": 1,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "digest",
+					"key": 2,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "version",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "candidate",
+					"key": 4,
+					"shape": {
+						"type": "deployment-candidate"
+					}
+				}
+			]
+		},
+		"health-request": {
+			"record": [
+				{
+					"name": "nonce",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				}
+			]
+		},
+		"health-state": {
+			"enum": [
+				{
+					"name": "ready",
+					"code": 1
+				},
+				{
+					"name": "unavailable",
+					"code": 2
+				}
+			],
+			"ordered": false
+		},
+		"health-answer": {
+			"record": [
+				{
+					"name": "nonce",
+					"key": 1,
+					"shape": {
+						"prim": "hash"
+					}
+				},
+				{
+					"name": "state",
+					"key": 2,
+					"shape": {
+						"type": "health-state"
+					}
+				}
+			]
 		}
 	},
 	"answer": {
@@ -9056,6 +9477,111 @@
 						}
 					],
 					"callers": ["component"]
+				}
+			]
+		},
+		"deployment_grants": {
+			"version": 2,
+			"bounds": {
+				"artifact": 33554432,
+				"staging_ms": 3600000,
+				"lifetime_days": 180
+			},
+			"declared": [],
+			"operations": [
+				{
+					"name": "mint",
+					"input": "deployment-grant-mint",
+					"output": "deployment-grant-minted",
+					"reasons": [
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "unbound",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["operator"]
+				},
+				{
+					"name": "revoke",
+					"input": "deployment-grant-id",
+					"output": "deployment-grant-id",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["operator"]
+				},
+				{
+					"name": "upload",
+					"input": "deployment-grant-upload",
+					"output": "deployment-grant-artifact",
+					"reasons": [
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "too_large",
+							"failure": "rejected"
+						},
+						{
+							"name": "hash_mismatch",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["deployment_grant"]
+				},
+				{
+					"name": "deploy",
+					"input": "deployment-grant-deploy",
+					"output": "deployment-grant-described",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "invalid",
+							"failure": "rejected"
+						},
+						{
+							"name": "stale",
+							"failure": "rejected"
+						},
+						{
+							"name": "unbound",
+							"failure": "rejected"
+						},
+						{
+							"name": "unreachable",
+							"failure": "unavailable"
+						}
+					],
+					"callers": ["deployment_grant"]
+				},
+				{
+					"name": "status",
+					"input": "deployment-grant-status",
+					"output": "deployment-grant-described",
+					"reasons": [],
+					"callers": ["deployment_grant"]
+				},
+				{
+					"name": "health",
+					"input": "health-request",
+					"output": "health-answer",
+					"reasons": [],
+					"callers": ["health_grant"]
 				}
 			]
 		}

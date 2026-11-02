@@ -1,0 +1,312 @@
+{
+	"interface": "deployment_grants",
+	"cases": [
+		{
+			"description": "mint refuses invalid with observations {}",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 1000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			]
+		},
+		{
+			"description": "mint refuses not_found with observations {'appExists': False}",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			],
+			"given": {
+				"appExists": false
+			}
+		},
+		{
+			"description": "mint refuses unbound with observations {'initialized': False}",
+			"steps": [
+				{
+					"call": "mint",
+					"as": "operator",
+					"input": {
+						"policy": {
+							"policy": "deploy",
+							"app": 1,
+							"expires": 2000
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unbound"
+					}
+				}
+			],
+			"given": {
+				"initialized": false
+			}
+		},
+		{
+			"description": "revoke refuses not_found with observations {'grantExists': False}",
+			"steps": [
+				{
+					"call": "revoke",
+					"as": "operator",
+					"input": {
+						"grant": "sample-grant"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			],
+			"given": {
+				"grantExists": false
+			}
+		},
+		{
+			"description": "upload refuses too_large with observations {'size': 33554433}",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "too_large"
+					}
+				}
+			],
+			"given": {
+				"size": 33554433
+			}
+		},
+		{
+			"description": "upload refuses hash_mismatch with observations {'digestMatches': False}",
+			"steps": [
+				{
+					"call": "upload",
+					"as": "deployment_grant",
+					"input": {
+						"artifact": "AA",
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "hash_mismatch"
+					}
+				}
+			],
+			"given": {
+				"digestMatches": false
+			}
+		},
+		{
+			"description": "deploy refuses not_found with observations {'artifactOwned': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			],
+			"given": {
+				"artifactOwned": false
+			}
+		},
+		{
+			"description": "deploy refuses not_found with observations {'artifactExpires': 1000}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			],
+			"given": {
+				"artifactExpires": 1000
+			}
+		},
+		{
+			"description": "deploy refuses stale with observations {'expectedMatches': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "stale"
+					}
+				}
+			],
+			"given": {
+				"expectedMatches": false
+			}
+		},
+		{
+			"description": "deploy refuses stale with observations {'serialized': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "stale"
+					}
+				}
+			],
+			"given": {
+				"serialized": false
+			}
+		},
+		{
+			"description": "deploy refuses unbound with observations {'initialized': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "unbound"
+					}
+				}
+			],
+			"given": {
+				"initialized": false
+			}
+		},
+		{
+			"description": "deploy refuses unreachable with observations {'reachable': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "unreachable"
+					}
+				}
+			],
+			"given": {
+				"reachable": false
+			}
+		},
+		{
+			"description": "deploy refuses invalid with observations {'candidateValid': False}",
+			"steps": [
+				{
+					"call": "deploy",
+					"as": "deployment_grant",
+					"input": {
+						"digest": "0000000000000000000000000000000000000000000000000000000000000000",
+						"expected": 1,
+						"candidate": {
+							"platform": "1111111111111111111111111111111111111111",
+							"cloud": "1111111111111111111111111111111111111111",
+							"driver": "1111111111111111111111111111111111111111",
+							"machine": "1111111111111111111111111111111111111111"
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "invalid"
+					}
+				}
+			],
+			"given": {
+				"candidateValid": false
+			}
+		}
+	]
+}
