@@ -127,4 +127,6 @@ let interface_: interface_ = {
     ),
     op("lease", "footing-lease", "footing-leased", [("held", #rejected)], ~callers=[#component]),
   ],
+  // The footing's lease and change bounds, RFC 8yl4b.
+  bounds: dict{"lease_seconds_default": 30, "lease_seconds_most": 300, "change_rows": 100},
 }

@@ -160,7 +160,9 @@
 			"id": "organization-import",
 			"says": "The model holds an import, a deployment's name filled by another organization's export, and a check refuses any internal path between organizations, RFC nge39",
 			"holds": {
-				"owes": "the import, starting from RFC 94y0d's `export` record kind, and the check"
+				"committed": {
+					"commit": "5af30323"
+				}
 			}
 		},
 		{

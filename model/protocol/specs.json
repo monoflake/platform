@@ -26,6 +26,13 @@
 			"module": "footing.tla",
 			"quick": "footing.cfg",
 			"inputs": ["model/protocol/footing.tla", "model/protocol/footing.cfg"],
+			"constants": {
+				"command": ["node", "model/protocol/footing_constants.res.mjs"],
+				"inputs": [
+					"model/protocol/footing_constants.res.mjs",
+					"model/contracts/components/footings.res.mjs"
+				]
+			},
 			"switches": [
 				{ "name": "TAKE_BEFORE_PASSED", "breaks": "OneHolder" },
 				{ "name": "CHECK_BEFORE_BATCH", "breaks": "PassedLeaseRefused" },

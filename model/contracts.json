@@ -8926,7 +8926,11 @@
 		},
 		"footing": {
 			"version": 1,
-			"bounds": {},
+			"bounds": {
+				"lease_seconds_default": 30,
+				"lease_seconds_most": 300,
+				"change_rows": 100
+			},
 			"declared": [],
 			"operations": [
 				{
