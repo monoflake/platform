@@ -212,7 +212,7 @@
 			"id": "bad-answer",
 			"says": "A driver's answer that does not decode is answered `bad_answer`, failure `unavailable`, on every control operation that calls a driver, apart from `unreachable`, which keeps meaning the host did not answer",
 			"holds": {
-				"owes": "the reason in the contract, its samples and the control's mapping"
+				"committed": { "commit": "76f5347b" }
 			}
 		},
 		{
