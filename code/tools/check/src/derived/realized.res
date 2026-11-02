@@ -136,8 +136,15 @@ let union = (lists: array<array<string>>) => {
 let interfacesOf = n =>
   Boundaries.boundaries->Dict.get(n)->Option.flatMap(b => b.interfaces)->Option.getOr([])
 
-/** An as-built graph's nodes, and the boundary each edge retargeted to its provider pointed to. */
-type derived = {nodes: dict<Components.component>, pointed: Map.t<Components.edge, string>}
+/**
+ * An as-built graph's nodes, the boundary each edge retargeted to its provider pointed to, and each
+ * running block's edges internal to it, by its main name.
+ */
+type derived = {
+  nodes: dict<Components.component>,
+  pointed: Map.t<Components.edge, string>,
+  internal: dict<array<internal>>,
+}
 
 /**
  * The as-built graph of `nodes` with the blocks `r` running, a block merged from every name it
@@ -145,19 +152,29 @@ type derived = {nodes: dict<Components.component>, pointed: Map.t<Components.edg
  */
 let derived = (r: running, nodes: dict<Components.component>): derived => {
   let pointed = Map.make()
+  let internal = Dict.make()
   let merged = r.mains->Array.filterMap(m =>
     nodes
     ->Dict.get(m)
     ->Option.map((main: Components.component) => {
       let names = provides(r, m)
-      let edges =
+      let all =
         names
         ->Array.flatMap(
           n =>
-            nodes->Dict.get(n)->Option.mapOr([], c => c.edges->Array.map(e => carry(r, m, n, e))),
+            nodes
+            ->Dict.get(n)
+            ->Option.mapOr([], c => c.edges->Array.map(e => {from: n, edge: carry(r, m, n, e)})),
         )
-        ->Array.concat(declaredOf(r, m)->Option.mapOr([], b => b.extra))
-        ->Array.flatMap(e => retarget(~pointed, r, names, e))
+        ->Array.concat(
+          declaredOf(r, m)->Option.mapOr([], b => b.extra->Array.map(e => {from: m, edge: e})),
+        )
+      let inside = x => x.edge.beneath != Some(true) && names->Array.includes(x.edge.to_)
+      internal->Dict.set(m, all->Array.filter(inside))
+      let edges =
+        all
+        ->Array.filter(x => !inside(x))
+        ->Array.flatMap(x => retarget(~pointed, r, names, x.edge))
       let answers = union(
         names
         ->Array.map(n => nodes->Dict.get(n)->Option.flatMap(c => c.answers)->Option.getOr([]))
@@ -180,6 +197,7 @@ let derived = (r: running, nodes: dict<Components.component>): derived => {
     ->Array.toSorted(((a, _), (b, _)) => byText(a, b))
     ->Dict.fromArray,
     pointed,
+    internal,
   }
 }
 
@@ -191,7 +209,7 @@ let derive = (r, nodes) => derived(r, nodes).nodes
  * each writer's providers, each name filled from beneath marked.
  */
 let graphIn = (r: running, ~nodes=components, ~own=Components.own) => {
-  let {nodes, pointed} = derived(r, nodes)
+  let {nodes, pointed, internal} = derived(r, nodes)
   {
     components: nodes,
     own: derive(r, own),
@@ -211,6 +229,7 @@ let graphIn = (r: running, ~nodes=components, ~own=Components.own) => {
     below: belowOf(r)->Array.map(b => b.filled),
     // A boundary's interfaces answer an edge that pointed to it, never one to its provider.
     answering: x => pointed->Map.get(x)->Option.mapOr([], interfacesOf),
+    internal,
   }
 }
 

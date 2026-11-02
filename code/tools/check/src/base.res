@@ -61,6 +61,9 @@ let cycles = (next: string => array<string>, names: array<string>): array<string
 
 let layerOf = n => component(n)->Option.mapOr(0, p => p.layer)
 
+/** A design edge from a name a block provides to another it provides, its target kept, s42ex. */
+type internal = {from: string, edge: Components.edge}
+
 /** A graph the design's rules run over, the design's own or the as-built one, RFC s42ex. */
 type graph = {
   /** Its nodes by name, each edge ending at a node or at a boundary. */
@@ -75,6 +78,8 @@ type graph = {
   below?: array<string>,
   /** What an edge's target answers that edge alone, the interfaces of the boundary it named. */
   answering?: Components.edge => array<string>,
+  /** Each block's edges internal to it, by its main name, kept out of `components` for D1 to D3. */
+  internal?: dict<array<internal>>,
 }
 
 /** A node as a line names it, marked where it is provided from beneath, RFC btzlt. */

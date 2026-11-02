@@ -26,6 +26,28 @@ test("a block keeps its names' edges and none internal to it", () => {
   deepEqual(g->Dict.get("a")->Option.flatMap(c => c.answers), Some(["?x"]))
 })
 
+let insideOf = (d: Realized.derived, m) =>
+  d.internal->Dict.get(m)->Option.map(l => l->Array.map(x => (x.from, x.edge.to_)))
+
+test("a block keeps the edges internal to it apart, and one with none has none", () => {
+  let d = Realized.derived({...running, mains: ["a", "d"]}, nodes)
+  deepEqual(insideOf(d, "a"), Some([("a", "?x")]))
+  deepEqual(insideOf(d, "d"), Some([]))
+  let other = Realized.derived(
+    {
+      mains: ["c", "d"],
+      declared: dict{
+        "c": {provides: ["b"], extra: []},
+        "d": {provides: ["?y"], extra: [to("?y")]},
+      },
+    },
+    nodes,
+  )
+  deepEqual(insideOf(other, "c"), Some([("b", "c")]))
+  deepEqual(insideOf(other, "d"), Some([("d", "?y")]))
+  deepEqual(edgesOf(other.nodes, "c"), [])
+})
+
 test("a name no block provides keeps its node and none of its edges", () => {
   let g = Realized.derive(running, nodes)
   deepEqual(edgesOf(g, "b"), [])
