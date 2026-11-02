@@ -16,21 +16,20 @@ let run = () => {
   let env = Dict.copy(environment)
   env->Dict.delete("NODE_TEST_CONTEXT")
   let options = {cwd: root, stdio: "inherit", env}
-  let build = spawn(
-    `${root}node_modules/.bin/rescript`,
-    ["build", "code/products/control"],
-    options,
-  )
-  switch build.status->Nullable.toOption {
-  | Some(0) =>
-    spawn(
-      executable,
-      ["--test", "code/products/control/tests/state/state_cost_test.res.mjs"],
-      options,
-    ).status
-    ->Nullable.toOption
-    ->Option.getOr(1)
-  | Some(code) => code
-  | None => 1
+  let step = (command, arguments) =>
+    spawn(command, arguments, options).status->Nullable.toOption->Option.getOr(1)
+  let rescript = `${root}node_modules/.bin/rescript`
+  // The control builds against libraries a tool writes, so they are written first.
+  let written = switch step(rescript, ["build"]) {
+  | 0 => step(executable, ["model/generate.res.mjs"])
+  | code => code
+  }
+  switch written {
+  | 0 =>
+    switch step(rescript, ["build", "code/products/control"]) {
+    | 0 => step(executable, ["--test", "code/products/control/tests/state/state_cost_test.res.mjs"])
+    | code => code
+    }
+  | code => code
   }
 }
