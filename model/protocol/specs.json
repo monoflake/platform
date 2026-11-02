@@ -5,6 +5,10 @@
 			"module": "overlap.tla",
 			"quick": "overlap.cfg",
 			"inputs": ["model/protocol/overlap.tla", "model/protocol/overlap.cfg"],
+			"constants": {
+				"command": ["node", "model/protocol/overlap_constants.res.mjs"],
+				"inputs": ["model/protocol/overlap_constants.res.mjs", "model/protocol/window.res.mjs"]
+			},
 			"switches": [
 				{ "name": "EXACT_RANGE", "breaks": "NoStuckDeploy" },
 				{ "name": "DRIVER_OWN_VERSION_ONLY", "breaks": "NoStuckDeploy" },

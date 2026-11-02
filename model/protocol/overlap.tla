@@ -5,7 +5,7 @@ EXTENDS Naturals, Sequences, TLC
 
 CONSTANTS
 	Top,                      \* The highest interface version modeled.
-	Reach,                    \* How many interface steps apart the export promises they overlap.
+	Reach,                    \* The steps below its current one each side reads, how far apart they overlap.
 	EXACT_RANGE,              \* Control takes a driver at its own interface version alone.
 	DRIVER_OWN_VERSION_ONLY,  \* A driver reports its own interface version as its whole range.
 	TWO_BEHIND                \* The two are let drift one step past Reach.
@@ -15,7 +15,7 @@ VARIABLES control, driver
 vars == <<control, driver>>
 
 Max(a, b) == IF a > b THEN a ELSE b
-Lowest(i) == Max(1, i - 1)
+Lowest(i) == Max(1, i - Reach)
 DriverLowest(i) == IF DRIVER_OWN_VERSION_ONLY THEN i ELSE Lowest(i)
 
 \* Two ranges overlap where the lowest highest is no lower than either lowest.
