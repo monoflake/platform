@@ -48,7 +48,7 @@ run = "pnpm install && rescript build && mise run generate"
 [tasks.generate]
 description = "Write again the ReScript a tool writes of a library, or of one: `generate [<package>]`"
 usage = 'arg "[package]" help="The library, by its package name"'
-run = 'node model/generate.res.mjs ${usage_package:-}'
+run = 'rescript build > /dev/null && node model/generate.res.mjs ${usage_package:-}'
 
 [tasks.built]
 description = "Build, format, lint and test one block alone, as accept and verify each ask: `built <package>`"
