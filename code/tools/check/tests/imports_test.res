@@ -29,10 +29,10 @@ test("another organization's public export fills a deployment name", () => {
   deepEqual(Realized.filledBeneath(d), [])
   deepEqual(Realized.runningIn(d).under, Some(Nothing))
   deepEqual(
-    Derivations.providedLines(
+    Deployment_print.providedLines(
       ~deployments=dict{"supplier": supplier},
       "customer",
-      Derivations.viewOf("customer", d),
+      Deployment_print.viewOf("customer", d),
       d,
     )->Array.filter(l => l->String.startsWith("database:")),
     ["database: database, an export imported from supplier"],

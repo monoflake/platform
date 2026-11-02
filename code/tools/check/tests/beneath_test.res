@@ -149,12 +149,12 @@ let lookup = n =>
   }->Dict.get(n)
 
 test("a product at layer 0 passes check two by its own name or any of its answers", () => {
-  deepEqual(Derivations.throughProduct(~lookup, "database"), true)
-  deepEqual(Derivations.throughProduct(~lookup, "runs"), true)
-  deepEqual(Derivations.throughProduct(~lookup, "keeps"), false)
-  deepEqual(Derivations.throughProduct(~lookup, "storage"), false)
-  deepEqual(Derivations.throughProduct(~lookup, "nothing"), false)
-  deepEqual(Derivations.throughProduct("compute"), true)
+  deepEqual(Downward.throughProduct(~lookup, "database"), true)
+  deepEqual(Downward.throughProduct(~lookup, "runs"), true)
+  deepEqual(Downward.throughProduct(~lookup, "keeps"), false)
+  deepEqual(Downward.throughProduct(~lookup, "storage"), false)
+  deepEqual(Downward.throughProduct(~lookup, "nothing"), false)
+  deepEqual(Downward.throughProduct("compute"), true)
 })
 
 test(
@@ -166,7 +166,7 @@ test(
       ("app", Beneath({deployment: "lower", name: "compute"})),
     ])
     deepEqual(
-      Derivations.downward("upper", d)->Array.map(((title, f)) => (title, f.at, f.text)),
+      Downward.downward("upper", d)->Array.map(((title, f)) => (title, f.at, f.text)),
       [
         (
           "Beneath",
@@ -186,13 +186,13 @@ let lower = column([
 test(
   "a name taken down is provided where a block there provides it or a fill there fills it",
   () => {
-    deepEqual(Derivations.providedThere(lower, "app"), true)
-    deepEqual(Derivations.providedThere(lower, "?roster"), true)
-    deepEqual(Derivations.providedThere(lower, "database"), false)
+    deepEqual(Downward.providedThere(lower, "app"), true)
+    deepEqual(Downward.providedThere(lower, "?roster"), true)
+    deepEqual(Downward.providedThere(lower, "database"), false)
     let unbuilt = column([("u", Block("u"))])
     let declared = dict{"u": ({provides: ["?thing"], extra: []}: Provided.block)}
-    deepEqual(Derivations.providedThere(~declared, unbuilt, "?thing"), true)
-    deepEqual(Derivations.providedThere(~declared, unbuilt, "?other"), false)
+    deepEqual(Downward.providedThere(~declared, unbuilt, "?thing"), true)
+    deepEqual(Downward.providedThere(~declared, unbuilt, "?other"), false)
   },
 )
 
@@ -200,7 +200,7 @@ test(
 let bare = _ => None
 
 let mistaken = (~lookup=bare, ~deployments, column_, fills) =>
-  Derivations.mistakenBeneath(~deployments, ~lookup, column_, column(fills))->Array.map(f => (
+  Downward.mistakenBeneath(~deployments, ~lookup, column_, column(fills))->Array.map(f => (
     f.at,
     f.text,
   ))
@@ -329,7 +329,7 @@ test("every contract the filled name answers must be answered by the name taken"
     )
   deepEqual(by("keeps"), [])
   let d = column([("footing(organization)", Beneath({deployment: "lower", name: "database"}))])
-  let v = Derivations.viewOf(~deployments, "upper", d)
+  let v = Deployment_print.viewOf(~deployments, "upper", d)
   deepEqual(v.wrongBelow("footing(organization)"), true)
   deepEqual(
     by("partial"),
@@ -340,7 +340,7 @@ test("every contract the filled name answers must be answered by the name taken"
       ),
     ],
   )
-  deepEqual(Derivations.unanswered(~lookup, "footing(organization)", "footing(organization)"), [])
+  deepEqual(Downward.unanswered(~lookup, "footing(organization)", "footing(organization)"), [])
 })
 
 test("a column's report names a contract left unanswered beside what else it finds", () => {
@@ -368,7 +368,7 @@ test("a column's report names a contract left unanswered beside what else it fin
 /** The Frontier's waiting line over a column filling `storage` by `name` in the column beneath. */
 let waiting = (name, beneath) => {
   let d = column([("storage", Beneath({deployment: "lower", name}))])
-  Derivations.frontierLines(Derivations.viewOf(~deployments=dict{"lower": beneath}, "upper", d))
+  Frontiers.frontierLines(Deployment_print.viewOf(~deployments=dict{"lower": beneath}, "upper", d))
   ->Array.filter(l => l->String.startsWith("waiting: "))
   ->Array.some(l => l->String.includes("storage on"))
 }
@@ -385,7 +385,7 @@ test("a column's view and Provided report carry what its Beneath fills find", ()
   let wrong = upper([
     ("footing(organization)", Beneath({deployment: "lower", name: "control(organization)"})),
   ])
-  let v = Derivations.viewOf(~deployments, "upper", wrong)
+  let v = Deployment_print.viewOf(~deployments, "upper", wrong)
   deepEqual(
     v.scaffolds
     ->Array.filter(((title, _)) => title == "Beneath")
@@ -397,10 +397,10 @@ test("a column's view and Provided report carry what its Beneath fills find", ()
   deepEqual(v.wrongBelow("footing(organization)"), true)
   deepEqual(v.wrongBelow("storage"), false)
   let lines = (d: Provided.deployed) =>
-    Derivations.providedLines(
+    Deployment_print.providedLines(
       ~deployments,
       "upper",
-      Derivations.viewOf(~deployments, "upper", d),
+      Deployment_print.viewOf(~deployments, "upper", d),
       d,
     )
   deepEqual(
@@ -427,10 +427,10 @@ test("the Provided report lists every name a column fills, a trusted one too", (
     ("footing(organization)", Vendor({vendor: "cloud", resource: "a table"})),
     ("app", Workload("hello")),
   ])
-  let lines = Derivations.providedLines(
+  let lines = Deployment_print.providedLines(
     ~deployments=dict{},
     "upper",
-    Derivations.viewOf(~deployments=dict{}, "upper", d),
+    Deployment_print.viewOf(~deployments=dict{}, "upper", d),
     d,
   )
   deepEqual(
