@@ -202,7 +202,7 @@ let serve = (x: Components.edge) => x.when_ == #serve
 let ons = (d: Steps.deployment, f) => d.on->Array.includes(f)
 
 /** The repository's root, which every path a check reads is taken from. */
-let root = url("../../", importMetaUrl)
+let root = url("../../../../", importMetaUrl)
 
 type dirent
 type listing = {withFileTypes: bool}

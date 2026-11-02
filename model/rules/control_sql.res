@@ -13,7 +13,7 @@ let rule = {
   "name": "control-sql-rows-read",
   "says": "Every state statement has a measured rows read bound and a growth quantity",
   "doc": "docs/code.md#sql-cost",
-  "heldBy": "model/tests/sql_cost_test.res",
+  "heldBy": "code/tools/check/tests/sql_cost_test.res",
 }
 
 let fixtureSizes = [0, 16, 384]

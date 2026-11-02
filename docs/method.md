@@ -11,7 +11,7 @@ two words are kept apart.
 - Theory: Drafts in `docs/rfcs/`, and the model in `model/`; Done when: `mise run check --ready`
   passes, `docs/scope.md`
 - Simulation: The model run through scenarios: a cold start, a component lost, a component upgraded,
-  a contract changed; Done when: The same, since `check.res` runs them
+  a contract changed; Done when: The same, since `code/tools/check/src/main.res` runs them
 - Comparison: The design diffed against the code and designs that exist; Done when: Every component
   that exists has a fate
 - Construction: Built from the ground up, in the order the bootstrap check gives, a thread at a

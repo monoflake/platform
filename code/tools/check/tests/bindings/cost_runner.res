@@ -12,7 +12,7 @@ type spawned = {status: Nullable.t<int>}
 external spawn: (string, array<string>, options) => spawned = "spawnSync"
 
 let run = () => {
-  let root = url("../../../", importMetaUrl)->pathOf
+  let root = url("../../../../../", importMetaUrl)->pathOf
   let env = Dict.copy(environment)
   env->Dict.delete("NODE_TEST_CONTEXT")
   let options = {cwd: root, stdio: "inherit", env}

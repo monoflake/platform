@@ -8,7 +8,7 @@ integrator, RFC fhg6w.
 ## A block is written alone, against what the model asks
 
 - **A block is one directory of what the model asks code of**: a component or a library,
-  `model/checks/layout/blocks.res`; a driver's are `monoflake/driver`'s, held by `tree.res`, RFC
+  `code/tools/check/src/layout/blocks.res`; a driver's are `monoflake/driver`'s, held by `tree.res`, RFC
   7ykg6. `mise run brief <package>` prints what it holds, read from the model; no brief is written
   by hand. A block depends on another of its own tree only where the model names it by its package,
   `blocks`, as a driver's program does its kinds.

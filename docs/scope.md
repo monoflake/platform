@@ -42,7 +42,7 @@ plane returns, it takes over again.
 lies beneath it only when something changes or fails, never polling it while all is well -- a
 tablet's copies keep their primary's lease among themselves, and reach the footing only to take one
 over, RFC vuanj. So a platform at rest writes no row of any footing, which
-`model/checks/design/load.res` holds.
+`code/tools/check/src/design/load.res` holds.
 
 **What a problem is.** A rule of a dimension broken, within the failure model of the version in
 force. What lies outside the failure model is out of the model, written down and not designed for;
@@ -101,8 +101,8 @@ of the storage and `footing` of `footing(organization)`. A part is answered with
 another defines, the edge names them in `reads` and its target answers none of it. A boundary
 `?name` may stand as a contract, the one it writes, and an edge to a boundary that a block provides
 carries it so as built, RFC s42ex. The platform beneath answers only its products' contracts at
-layer 0, RFC 94y0d. Crossing holds this, `model/checks/design/crossing.res`, over the as-built graph
-`model/checks/derived/realized.res` draws.
+layer 0, RFC 94y0d. Crossing holds this, `code/tools/check/src/design/crossing.res`, over the as-built graph
+`code/tools/check/src/derived/realized.res` draws.
 
 **A format carried unread is exempt from the contract.** A tablet holding the function product's
 rows runs SQL, whose rules are its own, and reads nothing of what the rows mean: a renamed column

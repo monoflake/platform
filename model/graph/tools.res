@@ -16,6 +16,10 @@ type tool = {
 }
 
 let tools: dict<tool> = dict{
+  "check": {
+    what: "the model's decidable rules run over it, the graph, the code and the documents, each a dimension that prints what it finds and fails the run, the same package as the model, fhg6w",
+    languages: [#rescript],
+  },
   "envelope-generator": {
     what: "envelope*'s types, their JSON and CBOR and each interface's operations, written in each language from model/contracts.json, fhg6w",
     languages: [#rust, #rescript],

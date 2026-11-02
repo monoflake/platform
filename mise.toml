@@ -23,7 +23,7 @@ run = "rescript format --check && oxfmt --check {{vars.formatted}}"
 
 [tasks.check]
 description = "Compile the model and run its check: `check [--ready[=N]] [--s1] [--write]`"
-run = "rescript build && node model/check.res.mjs"
+run = "rescript build && node code/tools/check/src/main.res.mjs"
 
 [tasks.brief]
 description = "Print one block's brief, read from the model: `brief <package> [--path]`"
@@ -155,7 +155,7 @@ description = "What a commit has to pass: everything formatted, the check, the m
 run = [
 	"mise run formatted",
 	"mise run check",
-	"node --test 'model/tests/**/*_test.res.mjs'",
+	"node --test 'code/tools/check/tests/**/*_test.res.mjs'",
 	"mise run blocks",
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]

@@ -219,7 +219,9 @@ let held = (tree: tree, path, h: held): option<array<string>> => {
       ->Array.filter(e => !(e->isDirectory && tree.blocks->Map.has(`${path}/${e->entryName}`)))
       ->Array.map(entryName)
     : []
-  if files->Array.length == 0 {
+
+  // The check is the package these rules compile in, so it answers to them as the model does.
+  if files->Array.length == 0 || path == "code/tools/check" {
     None
   } else {
     let found = []

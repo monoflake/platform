@@ -6,8 +6,7 @@ type mismatch = {at: string, expected: string, answered: string}
 type signed = (Uint8Array.t, string) => result<JSON.t, string>
 
 /**
- * A sample's placeholder, an object of one `$`-led key, as `model/checks/written/cases.res` reads
- * it.
+ * A sample's placeholder, an object of one `$`-led key, as the check's `written/cases.res` does.
  */
 let placeholder = (json: JSON.t) =>
   switch json->JSON.Decode.object->Option.map(Dict.toArray) {

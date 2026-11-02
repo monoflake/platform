@@ -1,6 +1,9 @@
 {
 	"name": "@monoflake/platform",
-	"sources": [{ "dir": "model", "subdirs": true }],
+	"sources": [
+		{ "dir": "model", "subdirs": true },
+		{ "dir": "code/tools/check", "subdirs": true }
+	],
 	"dependencies": [],
 	"package-specs": [{ "module": "esmodule", "in-source": true }],
 	"suffix": ".res.mjs",
