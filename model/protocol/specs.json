@@ -1,0 +1,21 @@
+{
+	"specs": [
+		{
+			"name": "overlap",
+			"module": "overlap.tla",
+			"quick": "overlap.cfg",
+			"inputs": ["model/protocol/overlap.tla", "model/protocol/overlap.cfg"],
+			"switches": [
+				{ "name": "EXACT_RANGE", "breaks": "NoStuckDeploy" },
+				{ "name": "DRIVER_OWN_VERSION_ONLY", "breaks": "NoStuckDeploy" },
+				{ "name": "TWO_BEHIND", "breaks": "NoStuckDeploy" }
+			],
+			"export": {
+				"command": ["node", "model/protocol/overlap_table.res.mjs", "{output}"],
+				"file": "model/protocol/overlap-table.json",
+				"checks": ["Table"],
+				"inputs": ["model/protocol/overlap_table.res.mjs"]
+			}
+		}
+	]
+}
