@@ -61,7 +61,10 @@ what a `soft` edge costs -- slower, staler, more garbage -- is a cost, not a pro
 **The footing is two layers: a component the platform designs, on ground that is the vendor's
 database**, RFC 8yl4b. The footing component answers RFC n8jq5's interface to every component and is
 held to samples; it alone stands on the vendor's database, trusted and never designed, and every
-other component reaches it through the footing's interface, so no component writes SQL. A footing is
+other component reaches it through the footing's interface, so no component writes SQL, and the
+footing's Drizzle schema and migration SQL are generated from the model, never written by hand,
+RFC 8dm81; both are `footing-alone-writes-sql` and `footing-schema-generated` in
+`model/rules/rules.json`, pending until their checks land. A footing is
 what an owner stands on from beneath it: one compute, which keeps nothing; one storage; and one
 database, each meeting one kind of its class at least, RFC vr5lw: the platform half's, under its own
 control; and each organization's, which the platform gives it, under that organization's own

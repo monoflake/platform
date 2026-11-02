@@ -1,0 +1,18 @@
+[
+	{
+		"name": "footing-alone-writes-sql",
+		"says": "Only the footing's code writes SQL or imports Drizzle; every other component reaches the database through the footing's interface",
+		"doc": "docs/scope.md",
+		"held": {
+			"pending": "a check that scans every component's source outside the footing for SQL string literals and for imports of drizzle-orm, naming each; the control's ?tables scaffold is the known exception until the footing replaces it"
+		}
+	},
+	{
+		"name": "footing-schema-generated",
+		"says": "The footing's Drizzle schema and migration SQL are generated from the model and never written by hand",
+		"doc": "docs/scope.md",
+		"held": {
+			"pending": "a check that regenerates the schema and migrations from the model and fails on any difference, and refuses a migration file the generator did not write; the control's hand-written migrations are the known exception until the footing replaces them"
+		}
+	}
+]
