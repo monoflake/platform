@@ -41,6 +41,30 @@ let sizeOf = bytes => {
   Float.fromString(text.contents)
 }
 
+/** The reasons `object_write` may answer, its own and every operation's, RFC ge55b. */
+let declared = Array.concat(
+  Contracts.Interface.Storage.objectWrite.reasons,
+  Contracts.reasons,
+)->Array.map(reason => reason.name)
+
+/** Said where the name's write threw, so whether it landed cannot be told. */
+let untold = "Whether the object's name was written cannot be told now"
+
+/**
+ * The name's write, the call's second step, classified by RFC 49qyg's outcomes; the error's `call`
+ * waits on the author and is never set.
+ */
+let named = (answer: Contracts.Answer.t<Contracts.ObjectWritten.t>, object) =>
+  switch answer {
+  | Success(_) => Contracts.Answer.Success(object)
+  // Certainly not written: a declared reason keeps its declared failure, any other is unavailable.
+  | Error({failure: (Rejected | Unavailable) as failure, reason, message}) =>
+    declared->Array.includes(reason)
+      ? Error({failure, reason, message})
+      : Error({failure: Unavailable, reason: "unavailable", message})
+  | Error({failure: Unknown, message}) => Error({failure: Unknown, reason: "unknown", message})
+  }
+
 /** Takes a prefix off a name the kind listed under it, none for a name outside it. */
 let unprefixed = (name, prefix) =>
   name->String.startsWith(prefix)
@@ -77,10 +101,15 @@ let write = async (context, input: Contracts.BucketObjectWrite.t) =>
         let object = Names.object(~hash, ~extension)
         let marker = Names.marker(~bucket=input.bucket, object)
         let size = TypedArray.length(input.content)->Int.toFloat
-        switch await context.objects.write({name: marker, content: recorded(size)}) {
-        | Error(error) => passed(error)
-        | Success(_) => Success({Contracts.BucketObject.object, hash, size})
+        // A write thrown after it was sent may have landed, so it is told as unknown.
+        let answer = try await context.objects.write({
+          name: marker,
+          content: recorded(size),
+          call: ?input.call,
+        }) catch {
+        | _ => refused(Unknown, "unknown", ~message=untold)
         }
+        named(answer, {Contracts.BucketObject.object, hash, size})
       }
     }
   }

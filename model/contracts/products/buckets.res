@@ -165,8 +165,10 @@ let types: array<declared> = [
       field("bucket", 1, Id("bucket")),
       field("content", 2, Prim(#bytes)),
       optional("extension", 3, Prim(#string)),
+      // The call's step the driver adds outside the app, passed on to the name's write, 49qyg.
+      optional("call", 4, Type("call-step")),
     ]),
-    from: "13ixj",
+    from: "13ixj, 49qyg",
   },
   {
     name: "bucket-object",

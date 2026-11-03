@@ -4572,6 +4572,14 @@
 						"prim": "string"
 					},
 					"optional": true
+				},
+				{
+					"name": "call",
+					"key": 4,
+					"shape": {
+						"type": "call-step"
+					},
+					"optional": true
 				}
 			]
 		},

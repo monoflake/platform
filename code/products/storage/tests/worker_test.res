@@ -300,3 +300,47 @@ testAsync("a call on the data socket is answered 200 with the operation's answer
     Some(2.),
   )
 })
+
+testAsync(
+  "a call's step read from the input reaches the kind on the name's write alone",
+  async () => {
+    let kind = Kind.make()
+    let step: Contracts.CallStep.t = {
+      id: "0123456789abcdef",
+      sequence: 1.,
+      expires: 1767225600000.,
+      last: false,
+    }
+    let written = await Worker.call(
+      context(kind),
+      ~operation="object_write",
+      Contracts.BucketObjectWrite.toJson({
+        bucket,
+        content: Uint8Array.fromArray([104, 105]),
+        call: step,
+      }),
+    )
+    deepEqual(
+      Contracts.Answer.fromJson(written, Contracts.BucketObject.fromJson)
+      ->succeeded
+      ->Option.map(object => object.size),
+      Some(2.),
+    )
+    let steps =
+      kind.sent
+      ->Array.filter(sent => sent.url == "http://object/object/write")
+      ->Array.map(sent =>
+        sent.body
+        ->JSON.Decode.object
+        ->Option.flatMap(call => call->Dict.get("input"))
+        ->Option.flatMap(
+          input =>
+            switch Contracts.ObjectWrite.fromJson(input) {
+            | Ok(input) => input.call
+            | Error(_) => None
+            },
+        )
+      )
+    deepEqual(steps, [None, Some(step)])
+  },
+)
