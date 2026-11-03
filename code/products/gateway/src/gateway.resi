@@ -28,3 +28,27 @@ let passed: (
   routed,
   ~search: string,
 ) => promise<Web.response>
+
+/** The scope the gateway reserves for its organization's storage, RFC vr5lw. */
+let storageScope: string
+
+/**
+ * The configured storage's app and binding for a path in its reserved scope, from `{id}.b{binding}`
+ * as the gateway is deployed with it, until a control deploys storage; none for any other path.
+ */
+let stored: (~configured: string, string) => option<(float, float)>
+
+/** A request passed to an app on a binding, the path given whole, as `passed` does for a mount. */
+let reached: (
+  State.reads,
+  Reach.t,
+  ~port: int,
+  Web.request,
+  ~app: float,
+  ~binding: float,
+  ~path: string,
+  ~search: string,
+) => promise<Web.response>
+
+/** An answer made again with `X-Content-Type-Options: nosniff` and, but for a PDF, the sandbox. */
+let guarded: Web.response => Web.response

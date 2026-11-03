@@ -17,6 +17,8 @@ type requestInit = {method: string, headers: dict<string>, body?: string}
 
 type responseInit = {status: int, headers: dict<string>}
 @new external response: (string, responseInit) => response = "Response"
+@new external bytesResponse: (Uint8Array.t, responseInit) => response = "Response"
+@new external emptyResponse: (Null.t<string>, responseInit) => response = "Response"
 @get external status: response => int = "status"
 @get external responseHeaders: response => headers = "headers"
 @send external text: response => promise<string> = "text"

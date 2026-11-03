@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/gateway",
-	"version": "0.1.11",
+	"version": "0.1.12",
 	"private": true,
 	"license": "MIT OR Apache-2.0",
 	"type": "module",

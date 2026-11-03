@@ -1,7 +1,7 @@
 open Envelope
 
-@new external bytesResponse: (Uint8Array.t, Web.responseInit) => Web.response = "Response"
-@new external emptyResponse: (Null.t<string>, Web.responseInit) => Web.response = "Response"
+let bytesResponse = Web.bytesResponse
+let emptyResponse = Web.emptyResponse
 
 let bucketPattern = /^[0-9a-f]{8}$/
 

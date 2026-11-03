@@ -379,3 +379,57 @@ test("a direct domain is read from the URL when no Host header is present", asyn
   }
   deepEqual((await Worker.default.fetch(request("/"), env))->Web.status, 200)
 })
+
+test("the reserved scope reaches the configured storage with its whole path, guarded", async () => {
+  let database = await deployed()
+  let sent = []
+  let reach = async request => {
+    sent->Array.push((
+      request->Web.url,
+      request->Web.requestHeaders->Web.header("host")->Nullable.toOption,
+    ))
+    Web.response(Web.utf8("hello"), {status: 200, headers: dict{"content-type": "text/plain"}})
+  }
+  let env: Stores.env = {
+    state: Reading.guarded(database, []),
+    hosts: Reading.fetcher(reach),
+    entryPort: "43210",
+    organization,
+  }
+  env->Configured.setStorage("0a0b0c0d.b00000002")
+  let object = `/v1/storage/00000001/${String.repeat("ab", 32)}.txt`
+  let answer = await Worker.default.fetch(request(object), env)
+  deepEqual((answer->Web.status, await answer->Web.text), (200, "hello"))
+  deepEqual(sent, [(`http://10.200.0.2:43210${object}`, Some("0a0b0c0d.b00000002"))])
+  deepEqual(
+    ["x-content-type-options", "content-security-policy"]->Array.map(name =>
+      answer->Web.responseHeaders->Web.header(name)->Nullable.toOption
+    ),
+    [Some("nosniff"), Some("sandbox")],
+  )
+})
+
+test("every answer is guarded, a PDF opened unsandboxed alone", async () => {
+  let pdf = Gateway.guarded(
+    Web.response(Web.utf8("%PDF"), {status: 200, headers: dict{"content-type": "application/pdf"}}),
+  )
+  deepEqual(
+    (
+      pdf->Web.responseHeaders->Web.header("x-content-type-options")->Nullable.toOption,
+      pdf->Web.responseHeaders->Web.header("content-security-policy")->Nullable.toOption,
+    ),
+    (Some("nosniff"), None),
+  )
+  let missing = await Worker.default.fetch(request("/nothing"), {})
+  deepEqual(
+    missing->Web.responseHeaders->Web.header("content-security-policy")->Nullable.toOption,
+    Some("sandbox"),
+  )
+})
+
+test("a scope other than storage, or no configured storage, routes as a mount", async () => {
+  let object = `/v1/storage/00000001/${String.repeat("ab", 32)}.txt`
+  deepEqual(Gateway.stored(~configured="0a0b0c0d.b00000002", object), Some((168496141., 2.)))
+  deepEqual(Gateway.stored(~configured="0a0b0c0d.b00000002", "/v1/hello/x"), None)
+  deepEqual(Gateway.stored(~configured="not a host", object), None)
+})
