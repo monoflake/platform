@@ -160,10 +160,10 @@ let fetch = async (request, env) => {
       Web.json(~status=200, answer)
     | _ => forbidden("Only a call carrying Caller is taken on the data socket")
     }
-  | (Some("public"), Some(_), Some(_)) =>
+  | (Some("public"), Some(salt), Some(fetcher)) =>
     called(path)
       ? forbidden("A call is never taken on the public socket")
-      : Web.response("not found", {status: 404, headers: dict{"content-type": "text/plain"}})
+      : await Serving.fetch({salt, objects: objects(fetcher)}, request)
   | _ => Web.json(~status=500, errorJson(fault()))
   }
 }
