@@ -28,6 +28,147 @@ let described = (generation, items): Contracts.ManagementDescribed.t => {
 
 let volume: Contracts.ManagementCapacity.t = Volume({size: 1024.})
 
+let applied = planned =>
+  switch planned {
+  | Ok(Listing.Apply({list, database})) => (list, database)
+  | Ok(Held(_)) | Error(_) => JsExn.throw("no list planned")
+  }
+
+let completed = (list: Contracts.ManagementApply.t) =>
+  described(
+    list.generation,
+    list.items->Array.map(i => holding(i.id, i.capacity, Made({address: "made"}))),
+  )
+
+// The list, the apps' database and compute's records item a planned Apply names.
+let computed = planned =>
+  switch planned {
+  | Ok(Listing.Apply({list, database, records})) => (list, database, records)
+  | Ok(Held(_)) | Error(_) => JsExn.throw("no list planned")
+  }
+
+test(
+  "compute first lists the apps' database and its own records, and an app reuses the first",
+  () => {
+    let compute = 305419896.
+    let records = Listing.computeId(compute)
+    let (first, database, own) =
+      Listing.planned(described(0., []), ~fresh=counting(), ~database=true, ~compute)->computed
+    deepEqual((database, own), (Some(2.), Some(records)))
+    deepEqual(first.items->Array.map(i => i.id), [1., 2., records])
+    deepEqual(
+      Listing.planned(completed(first), ~fresh=counting(), ~database=true),
+      Ok(Held({into: 1., database: Some(2.), records: None, object: None})),
+    )
+    deepEqual(
+      Listing.planned(completed(first), ~fresh=counting(), ~database=true, ~compute),
+      Ok(Held({into: 1., database: Some(2.), records: Some(records), object: None})),
+    )
+  },
+)
+
+test("an app first keeps its database when compute lists its derived records item", () => {
+  let compute = 4294967295.
+  let records = Listing.computeId(compute)
+  let (first, _) = Listing.planned(described(0., []), ~fresh=counting(), ~database=true)->applied
+  let (second, database, own) =
+    Listing.planned(completed(first), ~fresh=counting(), ~database=true, ~compute)->computed
+  deepEqual((database, own), (Some(2.), Some(records)))
+  deepEqual(second.items->Array.map(i => i.id), [1., 2., records])
+  deepEqual(
+    Listing.planned(completed(second), ~fresh=counting(), ~database=true, ~compute),
+    Ok(Held({into: 1., database: Some(2.), records: Some(records), object: None})),
+  )
+  deepEqual(
+    Listing.planned(completed(second), ~fresh=counting(), ~database=true),
+    Ok(Held({into: 1., database: Some(2.), records: None, object: None})),
+  )
+  deepEqual(
+    Contracts.ManagementApply.fromJson(Contracts.ManagementApply.toJson(second)),
+    Ok(second),
+  )
+})
+
+test("compute's database is the apps' item an app deploy gets, the lowest Made id", () => {
+  let compute = 9.
+  let records = Listing.computeId(compute)
+  let held = described(
+    1.,
+    [
+      holding(1., Listing.capacity, Made({address: "a"})),
+      holding(5., Listing.databaseCapacity, Made({address: "d"})),
+      holding(3., Listing.databaseCapacity, Made({address: "e"})),
+      holding(records, Listing.databaseCapacity, Made({address: "r"})),
+    ],
+  )
+  deepEqual(
+    Listing.planned(held, ~fresh=counting(), ~database=true),
+    Ok(Held({into: 1., database: Some(3.), records: None, object: None})),
+  )
+  deepEqual(
+    Listing.planned(held, ~fresh=counting(), ~database=true, ~compute),
+    Ok(Held({into: 1., database: Some(3.), records: Some(records), object: None})),
+  )
+})
+
+test("ordinary ids ignore compute items and refuse exhaustion before entering their range", () => {
+  let records = Listing.computeId(1.)
+  let (list, database) =
+    Listing.planned(
+      described(0., [holding(records, Listing.databaseCapacity, Made({address: "records"}))]),
+      ~fresh=counting(),
+      ~database=true,
+      ~bucket=true,
+    )->applied
+  deepEqual(database, Some(2.))
+  deepEqual(list.items->Array.map(i => i.id), [records, 1., 2., 3.])
+  ok(
+    Listing.planned(
+      described(0., [holding(2147483647., Listing.capacity, Making)]),
+      ~fresh=counting(),
+      ~database=true,
+    )->Result.isError,
+  )
+})
+
+test("a non-database at compute's derived id is refused with its cause", () => {
+  let compute = 1.
+  let records = Listing.computeId(compute)
+  deepEqual(
+    Listing.planned(
+      described(0., [holding(records, volume, Unasked({since: 0.}))]),
+      ~fresh=counting(),
+      ~database=true,
+      ~compute,
+    ),
+    Error(`compute records id ${Float.toString(records)} is held by a non-database item`),
+  )
+})
+
+test("compute reuses an existing records item while it is making or failed", () => {
+  let compute = 1.
+  let records = Listing.computeId(compute)
+  [Contracts.ManagementState.Making, Failed({reason: "beyond_host"})]->Array.forEach(state => {
+    let held = [
+      holding(1., Listing.capacity, Making),
+      holding(records, Listing.databaseCapacity, state),
+    ]
+    let (list, database, own) =
+      Listing.planned(described(0., held), ~fresh=counting(), ~database=true, ~compute)->computed
+    deepEqual((database, own), (Some(2.), Some(records)))
+    deepEqual(list.items->Array.map(i => i.id), [1., records, 2.])
+    deepEqual(
+      Listing.planned(
+        described(0., [...held, holding(2., Listing.databaseCapacity, Made({address: "d"}))]),
+        ~fresh=counting(),
+        ~database=true,
+        ~compute,
+      ),
+      Ok(Held({into: 1., database: Some(2.), records: Some(records), object: None})),
+    )
+  })
+})
+
 test("an empty list is sent again with one container, at the next generation", () =>
   deepEqual(
     Listing.planned(described(4., []), ~fresh=counting()),
@@ -39,6 +180,7 @@ test("an empty list is sent again with one container, at the next generation", (
         },
         into: 1.,
         database: None,
+        records: None,
         object: None,
       }),
     ),
@@ -51,11 +193,11 @@ test("a container already asked is held, and nothing is sent", () => {
       described(1., [holding(3., Listing.capacity, Made({address: "a"}))]),
       ~fresh=counting(),
     ),
-    Ok(Held({into: 3., database: None, object: None})),
+    Ok(Held({into: 3., database: None, records: None, object: None})),
   )
   deepEqual(
     Listing.planned(described(1., [holding(2., Listing.capacity, Making)]), ~fresh=counting()),
-    Ok(Held({into: 2., database: None, object: None})),
+    Ok(Held({into: 2., database: None, records: None, object: None})),
   )
 })
 
@@ -123,6 +265,7 @@ test("a database slot adds a database of 268435456 bytes beside the container", 
         },
         into: 1.,
         database: Some(2.),
+        records: None,
         object: None,
       }),
     ),
@@ -144,14 +287,14 @@ test("a Made database fills the slot, the lowest id among the Made, and nothing 
       ~fresh=counting(),
       ~database=true,
     ),
-    Ok(Held({into: 1., database: Some(3.), object: None})),
+    Ok(Held({into: 1., database: Some(3.), records: None, object: None})),
   )
   deepEqual(
     Listing.planned(
       described(1., [holding(1., Listing.capacity, Making), holding(2., databased, Making)]),
       ~fresh=counting(),
     ),
-    Ok(Held({into: 1., database: None, object: None})),
+    Ok(Held({into: 1., database: None, records: None, object: None})),
   )
 })
 
@@ -169,7 +312,7 @@ test("a Made database beside a Failed one with a lower id fills the slot", () =>
       ~fresh=counting(),
       ~database=true,
     ),
-    Ok(Held({into: 1., database: Some(5.), object: None})),
+    Ok(Held({into: 1., database: Some(5.), records: None, object: None})),
   )
 )
 
@@ -285,6 +428,7 @@ test("an object bucket slot adds an object item of 268435456 bytes beside the co
         },
         into: 1.,
         database: None,
+        records: None,
         object: Some(2.),
       }),
     ),
@@ -306,6 +450,7 @@ test("a build declaring a database and an object bucket gets both items", () =>
         },
         into: 1.,
         database: Some(2.),
+        records: None,
         object: Some(3.),
       }),
     ),
@@ -327,7 +472,7 @@ test("a Made object item fills the slot, the lowest id among the Made, and nothi
       ~fresh=counting(),
       ~bucket=true,
     ),
-    Ok(Held({into: 1., database: None, object: Some(3.)})),
+    Ok(Held({into: 1., database: None, records: None, object: Some(3.)})),
   )
 )
 
@@ -383,6 +528,7 @@ test("a build declaring no bucket leaves the object items it finds alone", () =>
         },
         into: 1.,
         database: Some(3.),
+        records: None,
         object: None,
       }),
     ),

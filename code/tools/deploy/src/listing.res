@@ -6,12 +6,18 @@ let databaseCapacity: Contracts.ManagementCapacity.t = Database({size: 268435456
 
 let objectCapacity: Contracts.ManagementCapacity.t = Object({size: 268435456.})
 
+let computeId = component =>
+  2147483648. +. component -. Math.floor(component /. 2147483648.) *. 2147483648.
+
+let isComputeId = id => id >= 2147483648. && id <= 4294967295.
+
 type planned =
-  | Held({into: float, database: option<float>, object: option<float>})
+  | Held({into: float, database: option<float>, records: option<float>, object: option<float>})
   | Apply({
       list: Contracts.ManagementApply.t,
       into: float,
       database: option<float>,
+      records: option<float>,
       object: option<float>,
     })
 
@@ -58,7 +64,9 @@ let firstMade = (asked: array<Contracts.ManagementHolding.t>, ~kind) =>
 
 /** An id past every one the binding holds, an unasked one's too, so none is taken again. */
 let nextId = (described: Contracts.ManagementDescribed.t) =>
-  described.items->Array.reduce(0., (most, i) => Math.max(most, i.id)) +. 1.
+  described.items
+  ->Array.filter(i => !isComputeId(i.id))
+  ->Array.reduce(0., (most, i) => Math.max(most, i.id)) +. 1.
 
 /** `fresh` makes a new credential on every call, so no two items share one. */
 let planned = (
@@ -66,73 +74,93 @@ let planned = (
   ~fresh,
   ~database=false,
   ~bucket=false,
+  ~compute=?,
 ) => {
   let asked = described.items->Array.filter(i => isAsked(i.state))
+  let ordinary = asked->Array.filter(i => !isComputeId(i.id))
+  let records = compute->Option.map(computeId)
+  let collision =
+    records->Option.flatMap(id =>
+      described.items->Array.find(i => i.id == id && !isDatabase(i.capacity))
+    )
+  let recordsHeld = database
+    ? records->Option.flatMap(id => asked->Array.find(i => i.id == id))
+    : None
+  let madeDatabase = database ? firstMade(ordinary, ~kind=isDatabase) : None
+  let madeObject = bucket ? firstMade(asked, ~kind=isObject) : None
   let item = (id, capacity): Contracts.ManagementItem.t => {id, capacity, credentials: [fresh()]}
-  // The ids of what is added, in order, from the first past every id held.
-  let added = (first, ~needed) => {
+  // What is added, the apps' database then compute's records then the object item, in list order.
+  let added = first => {
     let at = ref(first)
-    needed->Array.map(capacity => {
+    let next = capacity => {
       let id = at.contents
       at := id +. 1.
       item(id, capacity)
-    })
-  }
-  let idOf = (items: array<Contracts.ManagementItem.t>, ~kind) =>
-    items->Array.find(i => kind(i.capacity))->Option.map(i => i.id)
-  switch asked->Array.find(i => isContainer(i.capacity)) {
-  | Some(held) =>
-    let madeDatabase = database ? firstMade(asked, ~kind=isDatabase) : None
-    let madeObject = bucket ? firstMade(asked, ~kind=isObject) : None
-    let needed = Array.concat(
-      database && Option.isNone(madeDatabase) ? [databaseCapacity] : [],
-      bucket && Option.isNone(madeObject) ? [objectCapacity] : [],
-    )
-    switch needed {
-    | [] =>
-      Ok(
-        Held({
-          into: held.id,
-          database: madeDatabase->Option.map(i => i.id),
-          object: madeObject->Option.map(i => i.id),
-        }),
-      )
-    | _ =>
-      // What it asks is sent again under new credentials, which a machine holds and reads not.
-      let dropped = capacity =>
-        (database && Option.isNone(madeDatabase) && isDatabase(capacity)) ||
-          (bucket && Option.isNone(madeObject) && isObject(capacity))
-      let kept =
-        asked->Array.filter(i => !dropped(i.capacity))->Array.map(i => item(i.id, i.capacity))
-      let extra = added(nextId(described), ~needed)
-      let items = [...kept, ...extra]
-      Ok(
-        Apply({
-          list: {generation: described.generation +. 1., items},
-          into: held.id,
-          database: madeDatabase
-          ->Option.map(i => i.id)
-          ->Option.orElse(idOf(extra, ~kind=isDatabase)),
-          object: madeObject->Option.map(i => i.id)->Option.orElse(idOf(extra, ~kind=isObject)),
-        }),
-      )
     }
-  | None =>
-    switch asked {
+    let apps = database && Option.isNone(madeDatabase) ? [next(databaseCapacity)] : []
+    let own =
+      database && Option.isNone(recordsHeld)
+        ? records->Option.mapOr([], id => [item(id, databaseCapacity)])
+        : []
+    let object = bucket && Option.isNone(madeObject) ? [next(objectCapacity)] : []
+    (
+      [...apps, ...own, ...object],
+      madeDatabase->Option.map(i => i.id)->Option.orElse(apps[0]->Option.map(i => i.id)),
+      recordsHeld->Option.map(i => i.id)->Option.orElse(own[0]->Option.map(i => i.id)),
+      madeObject->Option.map(i => i.id)->Option.orElse(object[0]->Option.map(i => i.id)),
+    )
+  }
+  let ownHeld = Option.isNone(records) || Option.isSome(recordsHeld)
+  let complete =
+    (!database || (Option.isSome(madeDatabase) && ownHeld)) &&
+      (!bucket || Option.isSome(madeObject))
+  switch (collision, asked->Array.find(i => isContainer(i.capacity))) {
+  | (Some(i), _) =>
+    Error(`compute records id ${Float.toString(i.id)} is held by a non-database item`)
+  | (None, _) if nextId(described) +. 2. >= 2147483648. =>
+    Error("the binding has no ordinary capacity ids left")
+  | (None, Some(held)) if complete =>
+    Ok(
+      Held({
+        into: held.id,
+        database: madeDatabase->Option.map(i => i.id),
+        records: recordsHeld->Option.map(i => i.id),
+        object: madeObject->Option.map(i => i.id),
+      }),
+    )
+  | (None, Some(held)) =>
+    // What it asks is sent again under new credentials, which a machine holds and reads not.
+    let dropped = (i: Contracts.ManagementHolding.t) =>
+      (database && Option.isNone(madeDatabase) && isDatabase(i.capacity) && !isComputeId(i.id)) ||
+        (bucket && Option.isNone(madeObject) && isObject(i.capacity))
+    let kept = asked->Array.filter(i => !dropped(i))->Array.map(i => item(i.id, i.capacity))
+    let (extra, database, records, object) = added(nextId(described))
+    Ok(
+      Apply({
+        list: {generation: described.generation +. 1., items: [...kept, ...extra]},
+        into: held.id,
+        database,
+        records,
+        object,
+      }),
+    )
+  | (None, None) =>
+    switch ordinary {
     | [] =>
       let into = nextId(described)
-      let needed = Array.concat(database ? [databaseCapacity] : [], bucket ? [objectCapacity] : [])
+      let kept = asked->Array.map(i => item(i.id, i.capacity))
       let container = item(into, capacity)
-      let more = added(into +. 1., ~needed)
+      let (more, database, records, object) = added(into +. 1.)
       Ok(
         Apply({
           list: {
             generation: described.generation +. 1.,
-            items: [container, ...more],
+            items: [...kept, container, ...more],
           },
           into,
-          database: idOf(more, ~kind=isDatabase),
-          object: idOf(more, ~kind=isObject),
+          database,
+          records,
+          object,
         }),
       )
     | others =>

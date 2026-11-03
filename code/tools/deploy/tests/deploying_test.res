@@ -107,6 +107,33 @@ test("each database slot is filled with the one item, and a build with none carr
   deepEqual(Deploying.bindings([{name: "peer", type_: App}], ~app=1., ~database=3.), None)
 })
 
+test("a compute deploy fills records with its own item and database with the apps' one", () => {
+  let slots: array<Contracts.ManifestSlot.t> = [
+    {name: "records", type_: Database},
+    {name: "database", type_: Database},
+  ]
+  let records = Listing.computeId(1.)
+  deepEqual(
+    Deploying.bindings(slots, ~app=1., ~database=3., ~records),
+    Some({database: dict{"records": records, "database": 3.}}),
+  )
+  deepEqual(
+    Deploying.bindings(slots, ~app=1., ~records),
+    Some({database: dict{"records": records}}),
+  )
+})
+
+test("an app deploy fills every database slot with the one item, a slot named records too", () =>
+  deepEqual(
+    Deploying.bindings(
+      [{name: "records", type_: Database}, {name: "database", type_: Database}],
+      ~app=1.,
+      ~database=3.,
+    ),
+    Some({database: dict{"records": 3., "database": 3.}}),
+  )
+)
+
 test("a bucket's id is BLAKE3 of the app's id and the slot's name, the same on every call", () => {
   deepEqual(Deploying.bucketId(~app=1., ~slot="files"), 1195018073.)
   deepEqual(Deploying.bucketId(~app=1., ~slot="files"), 1195018073.)

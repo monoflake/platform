@@ -32,12 +32,14 @@ let bucketId: (~app: float, ~slot: string) => float
 /**
  * What fills a build's declared slots on a machine, each `database` slot the id given and each
  * `object_bucket` slot its `bucketId`, or none where the build declares neither, so a deploy of it
- * carries no `bindings`.
+ * carries no `bindings`. Given `records`, a compute deploy, the slot named `records` takes that id
+ * and every other `database` slot the apps' one.
  */
 let bindings: (
   array<Contracts.ManifestSlot.t>,
   ~app: float,
   ~database: float=?,
+  ~records: float=?,
 ) => option<Contracts.AppBindings.t>
 
 /** The app's deployment, as describe asks it. */

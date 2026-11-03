@@ -35,23 +35,23 @@ let bucketId = (~app, ~slot) => {
   )
 }
 
-let bindings = (slots: array<Contracts.ManifestSlot.t>, ~app, ~database=?) => {
+let bindings = (slots: array<Contracts.ManifestSlot.t>, ~app, ~database=?, ~records=?) => {
   let named = type_ => slots->Array.filter(s => s.type_ == type_)
-  let filled = (slots, id) => {
-    let filled = Dict.make()
-    slots->Array.forEach((s: Contracts.ManifestSlot.t) => filled->Dict.set(s.name, id(s.name)))
-    filled
-  }
-  let databases = database->Option.flatMap(database =>
-    switch named(Database) {
+  let filled = (slots, id) =>
+    switch slots->Array.filterMap((s: Contracts.ManifestSlot.t) =>
+      id(s.name)->Option.map(id => (s.name, id))
+    ) {
     | [] => None
-    | slots => Some(filled(slots, _ => database))
+    | pairs => Some(Dict.fromArray(pairs))
     }
-  )
-  let buckets = switch named(ObjectBucket) {
-  | [] => None
-  | slots => Some(filled(slots, slot => bucketId(~app, ~slot)))
-  }
+  // Records given is a compute deploy, its `records` slot its own item and the rest the apps' one.
+  let databaseOf = slot =>
+    switch records {
+    | Some(records) if slot == "records" => Some(records)
+    | Some(_) | None => database
+    }
+  let databases = filled(named(Database), databaseOf)
+  let buckets = filled(named(ObjectBucket), slot => Some(bucketId(~app, ~slot)))
   switch (databases, buckets) {
   | (None, None) => None
   | (Some(database), None) => Some(({database: database}: Contracts.AppBindings.t))

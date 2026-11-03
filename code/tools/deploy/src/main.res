@@ -152,27 +152,30 @@ let after = async (phase, next) =>
 
 /**
  * The list sent with a container for the app if it holds none, and a database beside it where the
- * build declares a database or an object bucket slot and the list holds none, and those made.
+ * build declares a database or an object bucket slot and the list holds none, compute's records
+ * item too for a compute component, and those made.
  */
-let listed = async (target, ~database, ~bucket, ~dry) =>
+let listed = async (target, ~database, ~bucket, ~compute=?, ~dry) =>
   switch describeList(target) {
   | Error(refused) => Error(refusal(refused))
   | Ok(described) =>
     let fresh = () => Host.fillRandom(Uint8Array.fromLength(32))
-    let items = (into, database, object) =>
-      `container ${Float.toString(into)}${database->Option.mapOr("", id =>
-          ` and database ${Float.toString(id)}`
-        )}${object->Option.mapOr("", id => ` and object ${Float.toString(id)}`)}`
-    switch Listing.planned(described, ~fresh, ~database, ~bucket) {
+    let also = (what, id) => id->Option.mapOr("", id => ` and ${what} ${Float.toString(id)}`)
+    let items = (into, database, records, object) =>
+      `container ${Float.toString(into)}` ++
+      also("database", database) ++
+      also("records", records) ++
+      also("object", object)
+    switch Listing.planned(described, ~fresh, ~database, ~bucket, ~compute?) {
     | Error(why) => Error(why)
-    | Ok(Held({into, database, object})) =>
-      Ok((into, database, `${items(into, database, object)} held already`))
-    | Ok(Apply({list, into, database, object})) =>
-      let named = `${items(into, database, object)} at generation ${Float.toString(
+    | Ok(Held({into, database, records, object})) =>
+      Ok((into, database, records, `${items(into, database, records, object)} held already`))
+    | Ok(Apply({list, into, database, records, object})) =>
+      let named = `${items(into, database, records, object)} at generation ${Float.toString(
           list.generation,
         )}`
       if dry {
-        Ok((into, database, `${named} would be sent`))
+        Ok((into, database, records, `${named} would be sent`))
       } else {
         switch called(target, management(Apply(list)), Contracts.ManagementHeld.fromJson) {
         | Error(refused) => Error(refusal(refused))
@@ -181,7 +184,7 @@ let listed = async (target, ~database, ~bucket, ~dry) =>
             await waited(
               () => describeList(target)->Result.mapError(refusal),
               described =>
-                [Some(into), database, object]
+                [Some(into), database, records, object]
                 ->Array.filterMap(id => id)
                 ->Array.reduce(Ok(Some()), (all, id) =>
                   all->Result.flatMap(all =>
@@ -193,7 +196,7 @@ let listed = async (target, ~database, ~bucket, ~dry) =>
                   )
                 ),
             )
-          )->Result.map(() => (into, database, `${named} made`))
+          )->Result.map(() => (into, database, records, `${named} made`))
         }
       }
     }
@@ -317,9 +320,16 @@ let sent = async (
       ~deploy=() =>
         timed(
           "list",
-          () => listed(target, ~database=wantsDatabase, ~bucket=wantsBucket, ~dry),
-          ((_, _, said)) => said,
-        )->after(((into, database, _)) =>
+          () =>
+            listed(
+              target,
+              ~database=wantsDatabase,
+              ~bucket=wantsBucket,
+              ~compute=?component == Some("compute") ? Some(app) : None,
+              ~dry,
+            ),
+          ((_, _, _, said)) => said,
+        )->after(((into, database, records, _)) =>
           timed(
             "deploy",
             () =>
@@ -329,7 +339,7 @@ let sent = async (
                 ~hash,
                 ~address,
                 ~into,
-                ~bindings=?Deploying.bindings(slots, ~app, ~database?),
+                ~bindings=?Deploying.bindings(slots, ~app, ~database?, ~records?),
                 ~component,
                 ~salt,
                 ~dry,

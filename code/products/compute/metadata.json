@@ -1,4 +1,7 @@
 {
-	"slots": [{ "name": "records", "type": "database" }],
+	"slots": [
+		{ "name": "records", "type": "database" },
+		{ "name": "database", "type": "database" }
+	],
 	"functions": [{ "name": "fetch", "kind": "effect" }]
 }
