@@ -13,15 +13,24 @@ type response
 /** The `database` contract's execute over its JSON, as the deploy fills a slot, RFC rt6gi. */
 type records = {execute: JSON.t => promise<JSON.t>}
 
+/** The apps' database item's status by a call's id, its `call-steps` or a throw with the reason. */
+type database = {status: string => promise<JSON.t>}
+
+/** A service binding, as `STORAGE` reaches the storage product. */
+type service = {fetch: request => promise<response>}
+
 /**
  * What it is bound, each absent where it is not given: `ENTRY`, the origin its binding's apps are
- * reached at, the driver's; `records`, the database slot its metadata declares, the deploy's; and
- * in milliseconds an id's life, the lookup's deadline and status's retention, which the deploy
- * writes from model/protocol/calls.json, never a literal here.
+ * reached at, the driver's; `records`, the database slot its metadata declares, the deploy's;
+ * `database` and `STORAGE`, the stores Lookup asks, the driver's; and in milliseconds an id's
+ * life, the lookup's deadline and status's retention, which the deploy writes from
+ * model/protocol/calls.json, never a literal here.
  */
 type env = {
   @as("ENTRY") entry?: string,
   records?: records,
+  database?: database,
+  @as("STORAGE") storage?: service,
   @as("LIFE") life?: string,
   @as("DEADLINE") deadline?: string,
   @as("RETENTION") retention?: string,
@@ -35,6 +44,18 @@ let target: string => option<(float, float)>
  * `Host` and `X-Forwarded-Host` the app's `{app}.b{binding}`, and `target` removed.
  */
 let passed: (request, ~entry: string, ~app: float, ~binding: float) => promise<response>
+
+/**
+ * What the stores say of call `id` of `app`, the database's and storage's committed sequences
+ * unioned and sorted, finished where either says so. A store answering not_found has none
+ * committed, one refused or unbound none known, and both so is an error.
+ */
+let steps: (
+  ~database: option<database>,
+  ~storage: option<service>,
+  ~app: float,
+  ~id: string,
+) => promise<result<Lookup.steps, string>>
 
 /**
  * A call whose `target` names an app is passed to it as above; its answer returned as it came with

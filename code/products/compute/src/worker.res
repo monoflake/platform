@@ -3,9 +3,13 @@ module Ids = Ids.Id
 type request = Web.request
 type response = Web.response
 type records = {execute: JSON.t => promise<JSON.t>}
+type database = {status: string => promise<JSON.t>}
+type service = {fetch: request => promise<response>}
 type env = {
   @as("ENTRY") entry?: string,
   records?: records,
+  database?: database,
+  @as("STORAGE") storage?: service,
   @as("LIFE") life?: string,
   @as("DEADLINE") deadline?: string,
   @as("RETENTION") retention?: string,
@@ -91,7 +95,87 @@ let status = async (request, ~execute, ~retention) => {
   }
 }
 
-let sent = async (request, ~entry, ~app, ~binding, ~execute, ~life, ~deadline) => {
+module Contracts = Envelope.Contracts
+
+let none: Lookup.steps = {committed: [], finished: false}
+
+let known = (steps: Contracts.CallSteps.t): Lookup.steps => {
+  committed: steps.committed->Array.map(Float.toInt),
+  finished: steps.finished,
+}
+
+let fromDatabase = async (database: option<database>, ~id) =>
+  switch database {
+  | None => Error("the database is not bound")
+  | Some(database) =>
+    try {
+      switch Contracts.CallSteps.fromJson(await database.status(id)) {
+      | Ok(steps) => Ok(known(steps))
+      | Error(_) => Error("the database answered malformed steps")
+      }
+    } catch {
+    | JsExn(error) if error->JsExn.message->Option.getOr("")->String.startsWith("not_found:") =>
+      Ok(none)
+    | _ => Error("the database refused the status")
+    }
+  }
+
+let fromStorage = async (storage: option<service>, ~app, ~id) =>
+  switch storage {
+  | None => Error("the storage is not bound")
+  | Some(storage) =>
+    try {
+      let asked = Web.request(
+        "http://storage/storage/status",
+        {
+          method: "POST",
+          headers: dict{"content-type": "application/json", "caller": Ids.text(app)},
+          body: JSON.stringify(JSON.Object(dict{"id": JSON.String(id)})),
+        },
+      )
+      let answer = await storage.fetch(asked)
+      switch Contracts.Answer.fromJson(
+        await answer->Web.responseJson,
+        Contracts.CallSteps.fromJson,
+      ) {
+      | Ok(Success(steps)) => Ok(known(steps))
+      | Ok(Error(error)) if error.reason == "not_found" => Ok(none)
+      | Ok(Error(error)) => Error(`the storage answered ${error.reason}`)
+      | Error(_) => Error("the storage answered malformed steps")
+      }
+    } catch {
+    | _ => Error("the storage refused the status")
+    }
+  }
+
+let merged = (one: Lookup.steps, other: Lookup.steps): Lookup.steps => {
+  let sorted = one.committed->Array.concat(other.committed)->Array.toSorted(Int.compare)
+  {
+    committed: sorted->Array.filterWithIndex((sequence, index) =>
+      index == 0 || sorted->Array.getUnsafe(index - 1) != sequence
+    ),
+    finished: one.finished || other.finished,
+  }
+}
+
+let steps = async (~database, ~storage, ~app, ~id) =>
+  switch await Promise.all2((fromDatabase(database, ~id), fromStorage(storage, ~app, ~id))) {
+  | (Error(one), Error(other)) => Error(`${one}; ${other}`)
+  | (Ok(steps), Error(_)) | (Error(_), Ok(steps)) => Ok(merged(steps, none))
+  | (Ok(one), Ok(other)) => Ok(merged(one, other))
+  }
+
+let sent = async (
+  request,
+  ~entry,
+  ~app,
+  ~binding,
+  ~execute,
+  ~database,
+  ~storage,
+  ~life,
+  ~deadline,
+) => {
   switch Calls.issued(issuer, ~now=Web.now()) {
   | None => refused("unavailable")
   | Some(id) =>
@@ -141,7 +225,7 @@ let sent = async (request, ~entry, ~app, ~binding, ~execute, ~life, ~deadline) =
       | Told(outcome) => (outcome, answer->Option.getOr(refused("unavailable")))
       | Look =>
         let (found, _looked) = await Lookup.looked(
-          ~steps=async () => Error("no store status yet"),
+          ~steps=() => steps(~database, ~storage, ~app, ~id),
           ~expires,
           ~deadline,
           ~now=Web.now,
@@ -186,7 +270,17 @@ let fetch = async (request, env) => {
       ->Option.flatMap(target) {
       | None => Web.answered(~status=400, "the call names no target")
       | Some((app, binding)) =>
-        await sent(request, ~entry, ~app, ~binding, ~execute=records.execute, ~life, ~deadline)
+        await sent(
+          request,
+          ~entry,
+          ~app,
+          ~binding,
+          ~execute=records.execute,
+          ~database=env.database,
+          ~storage=env.storage,
+          ~life,
+          ~deadline,
+        )
       }
     }
   | _ =>

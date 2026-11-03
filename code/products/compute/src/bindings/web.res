@@ -8,6 +8,8 @@ type headers
 @send external setHeader: (headers, string, string) => unit = "set"
 @send external deleteHeader: (headers, string) => unit = "delete"
 @new external resent: (string, request) => request = "Request"
+type requestInit = {method: string, headers: dict<string>, body: string}
+@new external request: (string, requestInit) => request = "Request"
 external fetch: request => promise<response> = "fetch"
 
 type responseInit = {status: int, headers?: dict<string>}

@@ -255,3 +255,106 @@ testAsync("fetch tells unavailable after an unheard call expires before DEADLINE
     deepEqual(outcome(records), [Some("unavailable")])
   })
 })
+
+let looked = (records, stores: Stores.t) => {
+  ...configured(records),
+  database: stores.database,
+  storage: stores.storage,
+}
+let failure = async answer =>
+  (await body(answer))->value("Error")->Option.flatMap(error => error->value("failure"))
+
+testAsync("fetch tells success where the database alone says the call finished", async () => {
+  let records = Records.make()
+  let stores = Stores.make(~database=Steps([1, 2], true), ~storage=NotFound)
+  let entry = Origin.make(~fails=true, ())
+  await using(entry, async () => {
+    let answer = await Worker.fetch(appRequest(), looked(records, stores))
+    deepEqual(answer->status, 200)
+    deepEqual(await body(answer), JSON.Object(dict{"Ok": JSON.Null}))
+    deepEqual(outcome(records), [Some("success")])
+    let id = records.rows->Dict.keysToArray->Array.getUnsafe(0)
+    deepEqual(stores.ids, [id])
+    let asked = stores.asked->Array.getUnsafe(0)
+    deepEqual(asked->url, "http://storage/storage/status")
+    deepEqual(asked->method_, "POST")
+    deepEqual(asked->headers->Web.header("caller")->Nullable.toOption, Some("0000002a"))
+    deepEqual(JSON.parseOrThrow(await asked->requestText), JSON.Object(dict{"id": JSON.String(id)}))
+  })
+})
+
+testAsync("fetch tells success where storage alone says the call finished", async () => {
+  let records = Records.make()
+  let stores = Stores.make(~database=Refused, ~storage=Steps([3], true))
+  let entry = Origin.make(~fails=true, ())
+  await using(entry, async () => {
+    let answer = await Worker.fetch(appRequest(), looked(records, stores))
+    deepEqual(answer->status, 200)
+    deepEqual(outcome(records), [Some("success")])
+  })
+})
+
+testAsync("steps unions both stores' sequences sorted and finished by either", async () => {
+  let asked = (database, storage) => {
+    let stores = Stores.make(~database, ~storage)
+    Worker.steps(
+      ~database=Some(stores.database),
+      ~storage=Some(stores.storage),
+      ~app=42.,
+      ~id="7fffffffffff0011",
+    )
+  }
+  deepEqual(
+    await asked(Steps([3, 1], false), Steps([2, 3], false)),
+    Ok({Lookup.committed: [1, 2, 3], finished: false}),
+  )
+  deepEqual(
+    await asked(Steps([5], false), Steps([4], true)),
+    Ok({Lookup.committed: [4, 5], finished: true}),
+  )
+})
+
+testAsync("steps counts a store answering not_found as none committed there", async () => {
+  let stores = Stores.make(~database=NotFound, ~storage=Steps([4], false))
+  let asked = (~database, ~storage) =>
+    Worker.steps(~database, ~storage, ~app=42., ~id="7fffffffffff0011")
+  deepEqual(
+    await asked(~database=Some(stores.database), ~storage=Some(stores.storage)),
+    Ok({Lookup.committed: [4], finished: false}),
+  )
+  let empty = Stores.make(~database=Steps([], false), ~storage=NotFound)
+  deepEqual(
+    await asked(~database=Some(empty.database), ~storage=Some(empty.storage)),
+    Ok({Lookup.committed: [], finished: false}),
+  )
+  deepEqual(
+    await asked(~database=Some(stores.database), ~storage=None),
+    Ok({Lookup.committed: [], finished: false}),
+  )
+  deepEqual((await asked(~database=None, ~storage=Some(empty.storage)))->Result.isOk, true)
+})
+
+testAsync("both stores failing leaves the lookup to its deadline and unknown", async () => {
+  let failed = Stores.make(~database=Refused, ~storage=Forgotten)
+  let refused = Stores.make(~database=Forgotten, ~storage=Refused)
+  let asked = (~database, ~storage) =>
+    Worker.steps(~database, ~storage, ~app=42., ~id="7fffffffffff0011")
+  deepEqual(
+    (await asked(~database=Some(failed.database), ~storage=Some(failed.storage)))->Result.isError,
+    true,
+  )
+  deepEqual(
+    (await asked(~database=Some(refused.database), ~storage=Some(refused.storage)))->Result.isError,
+    true,
+  )
+  deepEqual((await asked(~database=None, ~storage=None))->Result.isError, true)
+  let records = Records.make()
+  let entry = Origin.make(~fails=true, ())
+  await using(entry, async () => {
+    let answer = await Worker.fetch(appRequest(), looked(records, failed))
+    deepEqual(answer->status, 503)
+    deepEqual(await failure(answer), Some(JSON.String("unknown")))
+    deepEqual(outcome(records), [Some("unknown")])
+    deepEqual(failed.asked->Array.length > 0, true)
+  })
+})
