@@ -21,6 +21,9 @@ let copying: (target, ~path: string, ~into: string) => array<string>
 /** The shell giving a copy its name once it is whole. */
 let whole: string => string
 
+/** The shell removing the copied archive, its path quoted and absence accepted. */
+let removeArchive: (~directory: string, ~version: Uint8Array.t) => string
+
 /** driver-machine's port on the machine, as driver's `dev` asks it. */
 let port: int
 

@@ -71,7 +71,7 @@ usage = '''
 arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed; or the control target for --forget or --retire"
 arg "[target]" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
 flag "--forget <id>" help="Remove an app that never ran, its id in 8 lowercase hex digits, taking only a control target"
-flag "--retire <id>" help="Stop, delete and remove an app that ran, its id in 8 lowercase hex digits, taking only a control target"
+flag "--retire <id>" help="Stop, delete and remove an app that ran, its id in 8 lowercase hex digits, on a control or a machine target"
 flag "--app <id>" help="The app's id in 8 lowercase hex digits, to deploy it again; a new app, its id drawn and printed, unless given"
 flag "--binding <id>" help="The binding a control deploys the app onto, its id in 8 lowercase hex digits, asked with a control: target"
 flag "--secrets <names>" help="The secrets a control hands the driver, by name, each its environment variable's value"
@@ -99,11 +99,11 @@ run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/sr
 
 # An app that ran removed through releases' retire, its driver asked to stop and delete it first.
 [tasks.retire]
-description = "Remove an app that ran, its deployment stopped and deleted by its binding's driver, through the control's releases.retire: `retire <target> --app <id> [--dry-run]`"
+description = "Remove an app that ran, its deployment stopped and deleted by its binding's driver, through a control's releases.retire or on a machine itself: `retire <target> --app <id> [--dry-run]`"
 usage = '''
-arg "<target>" help="control:<origin>, the control holding the app, its operator's secret in CONTROL_OPERATOR"
+arg "<target>" help="control:<origin>, the control holding the app, its operator's secret in CONTROL_OPERATOR, or a machine as ssh reaches it, root@machine.example"
 flag "--app <id>" help="The app's id in 8 lowercase hex digits" required=#true
-flag "-n --dry-run" help="Ask the control nothing and say what would be retired"
+flag "-n --dry-run" help="Change nothing and say what would be retired"
 '''
 run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/src/main.res.mjs "$usage_target" --retire "$usage_app" ${usage_dry_run:+--dry-run}'
 

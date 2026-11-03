@@ -191,7 +191,11 @@ test(
     )
     deepEqual(
       Arguments.parse(["root@machine.example", "--retire", "0a1b2c3d"]),
-      Error("--retire asks a control, and root@machine.example is a machine ssh reaches"),
+      Ok({...deploy, directory: "", target: "root@machine.example", retire: Some(169552957.)}),
+    )
+    deepEqual(
+      Arguments.parse(["local", "--retire", "00000001", "--dry-run"]),
+      Ok({...deploy, directory: "", target: "local", retire: Some(1.), dry: true}),
     )
     deepEqual(
       Arguments.parse([

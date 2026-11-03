@@ -48,6 +48,12 @@ let copying = (target, ~path, ~into) =>
 
 let whole = into => `mv ${partial(into)} ${into}`
 
+let removeArchive = (~directory, ~version) => {
+  let path = `${directory}/${Deploying.fileName(version)}`
+  let quoted = "'" ++ path->String.replaceAll("'", "'\\''") ++ "'"
+  `rm -f -- ${quoted}`
+}
+
 let port = 37483
 
 /** The driver's command line, and `o` printing the first value of one of its flags. */

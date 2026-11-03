@@ -494,7 +494,20 @@ let main = async () => {
   | Ok({target: named, forget: Some(app), dry}) =>
     await onControl(named, "forget", control => forgotten(control, ~app, ~dry))
   | Ok({target: named, retire: Some(app), dry}) =>
-    await onControl(named, "retire", control => retired(control, ~app, ~dry))
+    if Control.origin(named) != None {
+      await onControl(named, "retire", control => retired(control, ~app, ~dry))
+    } else {
+      let target = Machine.target(named)
+      switch Retiring.run(
+        ~app,
+        ~dry,
+        ~ask=envelope => remote(target, Machine.call(envelope), ~input=JSON.stringify(envelope)),
+        ~shell=command => remote(target, command),
+      ) {
+      | Ok() => ()
+      | Error(_) => Host.setExitCode(Host.process, 1)
+      }
+    }
   | Ok({target: named, secrets, network})
     if Control.origin(named) == None && (secrets != [] || network != []) =>
     Console.error(`deploy: --secrets and --network are a control's, and ${named} is a machine`)

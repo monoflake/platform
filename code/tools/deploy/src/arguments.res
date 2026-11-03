@@ -1,7 +1,7 @@
 /*** The deploy tool's arguments read, each id 8 lowercase hex digits, RFC b8f35. */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <control target> --retire <8 hex> [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <target> --retire <8 hex> [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
@@ -100,7 +100,7 @@ let controlOnly = (given: t, ~flag) =>
   | ("", _) => Error(usage)
   | (_, more) if more != "" =>
     Error(`${more} is one argument too many, as --${flag} builds nothing`)
-  | (named, _) if Control.origin(named) == None =>
+  | (named, _) if flag == "forget" && Control.origin(named) == None =>
     Error(`--${flag} asks a control, and ${named} is a machine ssh reaches`)
   | _
     if given.app != None ||
