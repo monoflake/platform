@@ -69,6 +69,8 @@ alone.
 - `mise run blocks`: every written block built alone, as verify asks
 - `mise run deploy <app> <target>`: an app built by wrangler and run on a test machine, RFC n0o4l
 - `mise run conform <target>`: the kinds' samples run on a test machine's driver, RFC n0o4l
+- `mise run reference <target>`: the reference app driven on a test machine, stopping at its first
+  failing step, RFC dg903
 - `mise run lose <target>`: a test machine's driver stopped while hello is asked, RFC rmll5
 - `mise run replace <target>`: a test machine's driver and entry replaced under load, RFC ehm48
 

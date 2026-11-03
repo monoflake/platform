@@ -126,7 +126,7 @@ usage = '''
 arg "<target>" help="The machine as ssh reaches it, root@machine.example"
 flag "-n --dry-run" help="Build and ask the machine, and deploy nothing"
 '''
-run = 'rescript build code/tools/reference > /dev/null && node code/tools/reference/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
+run = 'rescript build code/tools/deploy > /dev/null && rescript build code/tools/reference > /dev/null && node code/tools/reference/src/main.res.mjs "$usage_target" ${usage_dry_run:+--dry-run}'
 
 # The control plane lost on a test machine while hello is asked, RFC rmll5.
 [tasks.lose]

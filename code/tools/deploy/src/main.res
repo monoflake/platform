@@ -112,10 +112,9 @@ let copied = (target: Machine.target, path, facts: Machine.facts, name) => {
   switch remote(target, `test -f ${into} && echo held || true`) {
   | Ok("held") => Ok("already there")
   | Ok(_) =>
-    ran(
-      "rsync",
-      ["-z", "-e", ["ssh", ...target.options]->Array.join(" "), path, `${target.host}:${into}`],
-    )->Result.map(_ => `to ${into}`)
+    ran("scp", ["-q", ...target.options, path, `${target.host}:${into}`])->Result.map(_ =>
+      `to ${into}`
+    )
   | Error(why) => Error(why)
   }
 }
