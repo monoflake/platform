@@ -313,6 +313,7 @@ let main = async () => {
               switch files->Array.get(n) {
               | None => ()
               | Some((path, file)) =>
+                let file = Waiting.file(rules, file)
                 let started = Date.now()
                 let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
                 let bounds = Dict.assign(own->Dict.copy, given)

@@ -39,6 +39,38 @@ let read = text =>
 /** What a case's outcome in a form is reported as, waiting on what a rule says or as it ran. */
 type reported = Ran(Run.outcome) | Waiting(string)
 
+/** Drop a case's waits where it calls an operation named by a rule for its interface. */
+let file = (rules, file: Sample.file): Sample.file => {
+  ...file,
+  cases: file.cases->Array.map(case => {
+    let named = rules->Array.some((rule: rule) =>
+      rule.interface->Option.mapOr(true, interface => interface == file.interface) &&
+        rule.operation->Option.mapOr(
+          false,
+          operation =>
+            case.steps->Array.some(
+              step =>
+                switch step {
+                | Call(call) => call.operation == operation
+                | Send(_) | Lose(_) | Wait(_) => false
+                },
+            ),
+        )
+    )
+    named
+      ? {
+          ...case,
+          steps: case.steps->Array.filter(step =>
+            switch step {
+            | Wait(_) => false
+            | Call(_) | Send(_) | Lose(_) => true
+            }
+          ),
+        }
+      : case
+  }),
+}
+
 let reported = (rules, ~interface, ~case: Sample.case, outcome: Run.outcome) =>
   switch outcome {
   | Passed | Skipped(_) => Ran(outcome)

@@ -82,3 +82,134 @@ test("a case passed or skipped is reported as it ran", () => {
     Ran(Skipped("a fixture")),
   )
 })
+
+let waiting = switch Waiting.read(readFileSync(fromRoot("code/tools/conform/waiting.json"))) {
+| Ok(rules) => rules
+| Error(why) => JsError.throwWithMessage(why)
+}
+
+let rewinds = switch Sample.read(readFileSync(fromRoot("tests/kinds/databases/rewinds.json"))) {
+| Ok(file) => file
+| Error(why) => JsError.throwWithMessage(why)
+}
+
+let hasWait = (case: Sample.case) =>
+  case.steps->Array.some(step =>
+    switch step {
+    | Wait(_) => true
+    | Call(_) | Send(_) | Lose(_) => false
+    }
+  )
+
+test("conform's waiting rules drop rewinds.json waits and preserve every other step", () => {
+  ok(rewinds.cases->Array.some(hasWait))
+  let prepared = Waiting.file(waiting, rewinds)
+  ok(!(prepared.cases->Array.some(hasWait)))
+  deepEqual(
+    prepared.cases->Array.flatMap(c => c.steps),
+    rewinds.cases
+    ->Array.flatMap(c => c.steps)
+    ->Array.filter(step =>
+      switch step {
+      | Wait(_) => false
+      | Call(_) | Send(_) | Lose(_) => true
+      }
+    ),
+  )
+})
+
+test("a case calling no named operation and another interface keep their waits", () => {
+  let unnamed: Sample.file = {
+    ...rewinds,
+    cases: [
+      {...case, steps: [Sample.Wait(10)]->Array.concat(case.steps)->Array.concat([Wait(20)])},
+    ],
+  }
+  deepEqual(Waiting.file(waiting, unnamed), unnamed)
+  let other = {...rewinds, interface: "other"}
+  deepEqual(Waiting.file(waiting, other), other)
+})
+
+test("a rule naming no operation drops nothing, and an unnamed interface matches", () => {
+  let rule: Waiting.rule = {
+    interface: None,
+    operation: None,
+    naming: "anything",
+    on: "later",
+  }
+  deepEqual(Waiting.file([rule], rewinds), rewinds)
+  deepEqual(Waiting.file([], rewinds), rewinds)
+  ok(!(Waiting.file([{...rule, operation: Some("rewind")}], rewinds).cases->Array.some(hasWait)))
+})
+
+testAsync(
+  "a dropped wait keeps the executed failure's operation and words for reporting",
+  async () => {
+    let file = Waiting.file(waiting, rewinds)
+    let case = file.cases->Array.getUnsafe(0)
+    let calls = []
+    let waits = []
+    let position = ref(0)
+    let failure = ref("machine-rewind-by-wal")
+    let target: Run.target = {
+      call: async (
+        ~interface as _,
+        ~operation,
+        ~input as _,
+        ~form as _,
+        ~as_ as _,
+        ~bearer as _,
+      ) => {
+        calls->Array.push(operation)
+        let step = case.steps->Array.get(position.contents)
+        position := position.contents + 1
+        switch step {
+        | Some(Call({expect: Output(output)})) =>
+          operation == "rewind" ? Error(failure.contents) : Ok(Run.Answered(output))
+        | Some(Call({expect: Answer(_) | Failure(_)}))
+        | Some(Send(_) | Lose(_) | Wait(_))
+        | None =>
+          Error(failure.contents)
+        }
+      },
+      send: async (~to as _, ~export as _, ~key as _, ~body as _, ~form as _) => Error("no send"),
+      given: async (~interface as _, ~form as _, _) => {
+        position := 0
+        Ok()
+      },
+      lose: async _ => Ok(),
+      bound: _ => None,
+      fixture: _ => Error("no fixture"),
+      signed: (_, _) => Error("no signature"),
+      now: () => 0.,
+      wait: async ms => waits->Array.push(ms),
+      network: false,
+      tunnel: false,
+      captured: dict{},
+    }
+    let file = {...file, cases: [case]}
+    let results = await Run.file(file, target)
+    let why = "expected an answer, answered nothing: machine-rewind-by-wal"
+    let outcome: Run.outcome = Failed({step: 2, why})
+    deepEqual(
+      results,
+      [{description: case.description, outcomes: [(Cbor, outcome), (Json, outcome)]}],
+    )
+    deepEqual(calls, ["execute", "execute", "rewind", "execute", "execute", "rewind"])
+    deepEqual(waits, [])
+    ok(Waiting.reported(waiting, ~interface=file.interface, ~case, outcome) != Ran(outcome))
+    failure := "rewind now serves but fails otherwise"
+    let results = await Run.file(file, target)
+    results->Array.forEach(result =>
+      result.outcomes->Array.forEach(
+        ((_, outcome)) => {
+          ok(outcome != Passed)
+          deepEqual(
+            Waiting.reported(waiting, ~interface=file.interface, ~case, outcome),
+            Ran(outcome),
+          )
+        },
+      )
+    )
+  },
+)
