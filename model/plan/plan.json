@@ -8,6 +8,48 @@
 			}
 		},
 		{
+			"id": "slot-socket-table",
+			"says": "monoflake/driver's `machine/src/served/slot.rs` keeps each binding's socket task in a static table checked only by `is_finished`: a socket file deleted while its task runs is not bound again until the driver restarts, an aborted task leaves workerd's open connections served, to that binding alone, and each task holds the `Driver`, so a second one in one process serves nothing of its own; found by thread fifth's step 2 review",
+			"holds": {
+				"owes": "a socket bound again when its file is gone, its connections ended with its item, and the table owned by the driver"
+			}
+		},
+		{
+			"id": "slots-one-database",
+			"says": "On a machine every `database` slot of a build, and every app of the binding, is filled with the binding's one database, and the slot's name never reaches the driver, so a build declaring two database slots has their tables in one database; the charter of thread fifth holds one database per binding, RFC rt6gi",
+			"holds": {
+				"owes": "a decision whether a binding holds a database per slot"
+			}
+		},
+		{
+			"id": "slot-database-contract",
+			"says": "`env.database` on a machine, monoflake/driver's `machine/function/src/config/database.mjs`, offers `execute` alone, with no `rewind`, and a refusal reaches the function as the contract's reason in an error's message text; RFC rt6gi has it speak the kind's own contract, held to `execute` by thread fifth's bounds",
+			"holds": {
+				"owes": "every operation of the database contract and its refusal as a value the function reads"
+			}
+		},
+		{
+			"id": "bundle-bindings-checked",
+			"says": "The control's and the gateway's tests, `code/products/control/tests/bindings/node.res` and `code/products/gateway/tests/bindings/node.res`, copy deploy's `Bundle.packed` signature by hand behind a raw import, so a labeled argument added or reordered there passes a config as `slots` with nothing failing",
+			"holds": {
+				"owes": "the copies typed from `code/tools/deploy/src/bundle.resi`"
+			}
+		},
+		{
+			"id": "bundle-slots-hash-test",
+			"says": "deploy's `tests/bundle_test.res` case \"slots and functions leave the bundle's bytes as they were\" packs no slots or functions, while `bundle.resi` says the hash changes with the slots",
+			"holds": {
+				"owes": "a case packing slots and functions and seeing the hash change"
+			}
+		},
+		{
+			"id": "database-unasked-grace",
+			"says": "A binding whose database is unasked and still in its grace, a week, cannot be given a new one: the driver fails a second database, `machine/src/listed.rs` \"the binding holds one database\", so deploy cannot fill a slot until the old one is swept; whether a list asks the same id again to take it back is a question of the management contract",
+			"holds": {
+				"owes": "a decision of the management contract on asking an unasked item again"
+			}
+		},
+		{
 			"id": "call-v2-credential",
 			"says": "The call envelope's version 2 carries an optional `credential` at key 5, generated as a bump made once, RFC 6x8su",
 			"holds": {

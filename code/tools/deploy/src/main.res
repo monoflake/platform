@@ -147,13 +147,12 @@ let listed = async (target, ~database, ~dry) =>
   switch describeList(target) {
   | Error(refused) => Error(refusal(refused))
   | Ok(described) =>
-    let credential = Host.fillRandom(Uint8Array.fromLength(32))
-    let databaseCredential = database ? Some(Host.fillRandom(Uint8Array.fromLength(32))) : None
+    let fresh = () => Host.fillRandom(Uint8Array.fromLength(32))
     let items = (into, database) =>
       `container ${Float.toString(into)}${database->Option.mapOr("", id =>
           ` and database ${Float.toString(id)}`
         )}`
-    switch Listing.planned(described, ~credential, ~database=?databaseCredential) {
+    switch Listing.planned(described, ~fresh, ~slot=database) {
     | Error(why) => Error(why)
     | Ok(Held({into, database})) => Ok((into, database, `${items(into, database)} held already`))
     | Ok(Apply({list, into, database})) =>

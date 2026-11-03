@@ -1,7 +1,7 @@
 let greeting = stamp => `reference ${stamp}\n`
 
 let unreached = (Reach.Unreached(kind)) =>
-  Web.response(`no binding reaches ${kind}, RFC dg903's question 3`, {status: 501})
+  Web.response(`no binding reaches ${kind}, RFC rt6gi`, {status: 501})
 
 let table = "reference_rows"
 

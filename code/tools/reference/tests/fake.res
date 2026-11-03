@@ -41,7 +41,7 @@ let machine = (~fail=None, ~wrong=None, ~status=501, ~stale=false, ~otherApp=fal
       ->Option.getOr("unexpected request")
     asks := asks.contents + 1
     if fail == Some(name) {
-      ({status, body: "no binding reaches database, RFC dg903's question 3"}: Steps.observation)
+      ({status, body: "no binding reaches database, RFC rt6gi"}: Steps.observation)
     } else {
       let body = switch (request.method, request.path) {
       | ("GET", "/") => Handler.greeting(stamp.contents)

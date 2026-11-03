@@ -20,7 +20,7 @@ test("the plain Worker answers the fixed text and supplied build stamp", async (
       request("https://reference.invalid/object/key", {method: method}),
     )
     equal(status(answer), 501)
-    equal(await text(answer), "no binding reaches object, RFC dg903's question 3")
+    equal(await text(answer), "no binding reaches object, RFC rt6gi")
   })
 )
 
@@ -32,7 +32,7 @@ test("the plain Worker answers the fixed text and supplied build stamp", async (
       request("https://reference.invalid/row/key", {method: method}),
     )
     equal(status(answer), 501)
-    equal(await text(answer), "no binding reaches database, RFC dg903's question 3")
+    equal(await text(answer), "no binding reaches database, RFC rt6gi")
   })
 )
 

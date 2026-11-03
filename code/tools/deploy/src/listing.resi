@@ -19,15 +19,16 @@ type planned =
   | Apply({list: Contracts.ManagementApply.t, into: float, database: option<float>})
 
 /**
- * The list with a container added at the next generation if none is asked, its credential the one
- * given, and a database beside it, its credential `database`, where that is given and none is
- * asked, what it asks sent again under that credential; one asking other items and no container is
- * refused, as describe gives no credentials to keep them by.
+ * The list with a container added at the next generation if none is asked, and a database beside it
+ * where `slot` says the build declares one. Where a container is asked and `slot` is set but no
+ * database is Made, the list is sent again without the asked databases and with a new one. Every
+ * item sent takes a credential from `fresh`, called once for each, as describe gives none to keep;
+ * one asking other items and no container is refused.
  */
 let planned: (
   Contracts.ManagementDescribed.t,
-  ~credential: Uint8Array.t,
-  ~database: Uint8Array.t=?,
+  ~fresh: unit => Uint8Array.t,
+  ~slot: bool=?,
 ) => result<planned, string>
 
 /** How far an item has been made. */
