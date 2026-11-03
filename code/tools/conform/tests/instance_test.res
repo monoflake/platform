@@ -159,7 +159,7 @@ test("what cleaning said is read as removed and left", () => {
   let shell = Instance.cleaned(~mount="/data", ~subvolumes=16, ~served=Some("/srv/a/conform"))
   ok(shell->String.includes("-le 16"))
   ok(shell->String.includes("v='/srv/a/conform'"))
-  ok(shell->String.includes("for u2 in volumes buckets"))
+  ok(shell->String.includes("for u2 in volumes buckets databases"))
   // What the lists made on the mount goes before the qgroups, each emptied of its members.
   let at = text => shell->String.indexOf(text)
   ok(at("btrfs subvolume delete") < at("btrfs qgroup destroy"))

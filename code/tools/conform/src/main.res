@@ -16,6 +16,9 @@ let holding = `{
   "database": {"size": 268435456}
 }`
 
+/** A statement's most in bytes, both homes' as driver's RFC nrs5v writes it. */
+let statement = 100000.
+
 let say = line => Console.log(`conform: ${line}`)
 
 /** A program run, what it wrote, or why it failed with what it wrote to stderr. */
@@ -63,7 +66,11 @@ let fixtures = (target, facts: Instance.facts, ~scratch, ~local) => {
   Host.writeText(
     bounds,
     JSON.stringify(
-      JSON.Object(facts.largest->Option.mapOr(dict{}, n => dict{"artifact": JSON.Number(n)})),
+      JSON.Object(
+        facts.largest->Option.mapOr(dict{"statement": JSON.Number(statement)}, n =>
+          dict{"statement": JSON.Number(statement), "artifact": JSON.Number(n)}
+        ),
+      ),
     ),
   )
   let directory = Instance.served(local)

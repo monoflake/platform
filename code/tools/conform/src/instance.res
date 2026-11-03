@@ -45,7 +45,7 @@ if n=$(ctr --address "\${c:-/run/containerd/containerd.sock}" namespaces ls -q);
 else
   echo "namespaces=unread"
 fi
-for u2 in volumes buckets; do for h in "$m/$u2"/*; do [ -d "$h" ] && echo "held=\${h##*/}"; done; done
+for u2 in volumes buckets databases; do for h in "$m/$u2"/*; do [ -d "$h" ] && echo "held=\${h##*/}"; done; done
 btrfs qgroup show --raw "$m" 2> /dev/null | awk '$1 ~ /^1\\// { print "held=" substr($1, 3) }'
 [ ! -f ${recorded} ] || awk '{ print "recorded=" $1 }' ${recorded}
 `
@@ -414,7 +414,7 @@ for ns in $(ctr namespaces ls -q); do
   ctr -n "$ns" content ls -q | xargs -r ctr -n "$ns" content rm
   ctr namespaces rm "$ns" > /dev/null && echo "removed the namespace $ns"
 done
-for u2 in volumes buckets; do
+for u2 in volumes buckets databases; do
   for b in "$m/$u2"/*; do
     [ -d "$b" ] && numbered "\${b##*/}" || continue
     for sv in "$b"/*; do [ -d "$sv" ] && btrfs subvolume delete "$sv" > /dev/null && echo "removed the subvolume $sv"; done
@@ -460,7 +460,7 @@ for n in $(ip netns list | awk '{ print $1 }'); do mine "$n" && echo "left the n
 fenced | while read -r el; do echo "left the fence element $el"; done
 ip link show "$br" > /dev/null 2>&1 && echo "left the bridge $br"
 for c in /sys/fs/cgroup/b*; do [ -d "$c" ] && mine "\${c##*/}" && echo "left the cgroup $c" && keep "$k"; done
-for u2 in volumes buckets; do
+for u2 in volumes buckets databases; do
   for b in "$m/$u2"/*; do [ -d "$b" ] && numbered "\${b##*/}" && echo "left $b" && keep "\${b##*/}"; done
 done
 [ -e "$d" ] && echo "left $d"
