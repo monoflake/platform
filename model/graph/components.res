@@ -366,7 +366,7 @@ let own: dict<component> = dict{
       e("?clock", #serve, hard, "schedule fires at set times, queue retries wait between tries"),
       e("?clock", #deploy, hard, "writes an app's schedules, in the clock's format"),
     ],
-    uses: ["capability*", "scope*", "vocabulary*", "wit*", "compat*", "ids*"],
+    uses: ["capability*", "scope*", "vocabulary*", "wit*", "compat*", "ids*", "envelope*"],
     // deploy bundles it with wrangler, as it does every Worker, n0o4l.
     takes: [{language: #rescript, name: "wrangler", major: "4"}],
   },

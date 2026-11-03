@@ -8,6 +8,7 @@ type requestInit = {method: string, headers: dict<string>, body?: string}
 @get external headers: Worker.request => Web.headers = "headers"
 @send external requestText: Worker.request => promise<string> = "text"
 @get external status: Worker.response => int = "status"
+@get external answerHeaders: Worker.response => Web.headers = "headers"
 @send external text: Worker.response => promise<string> = "text"
 
 type fetch = Worker.request => promise<Worker.response>

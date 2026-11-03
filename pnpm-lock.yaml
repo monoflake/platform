@@ -97,6 +97,9 @@ importers:
 
   code/products/compute:
     dependencies:
+      '@monoflake/envelope':
+        specifier: workspace:*
+        version: link:../../libs/envelope
       '@monoflake/ids':
         specifier: workspace:*
         version: link:../../libs/ids

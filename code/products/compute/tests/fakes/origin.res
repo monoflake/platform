@@ -4,10 +4,10 @@ type t = {
   restore: unit => unit,
 }
 
-let make = (~fails=false, ()) => {
+let make = (~fails=false, ~status=202, ~body="app answer", ~headers=dict{}, ()) => {
   let original = Node.currentFetch
   let sent = []
-  let answer = Node.response("app answer", {status: 202})
+  let answer = Node.response(body, {status, headers})
   Node.setFetch(async request => {
     sent->Array.push(request)
     if fails {

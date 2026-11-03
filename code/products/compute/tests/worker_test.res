@@ -72,44 +72,186 @@ testAsync("passed preserves the call and returns the entry answer unchanged", as
   entry.restore()
 })
 
-testAsync("fetch refuses an absent or malformed target before checking ENTRY", async () => {
-  deepEqual(await fetched(request(), {}), (400, "the call names no target"))
-  deepEqual(
-    await fetched(request(~headers=dict{"target": "bad"}, ()), {entry: "http://entry"}),
-    (400, "the call names no target"),
-  )
-  deepEqual(
-    await fetched(request(~headers=dict{"target": named}, ()), {}),
-    (500, "compute has no ENTRY"),
-  )
+let configured = records => {
+  let env: Worker.env = {
+    entry: "http://entry",
+    records: records.Records.binding,
+    life: "60000",
+    deadline: "2",
+    retention: "86400000",
+  }
+  env
+}
+let appRequest = () => request(~headers=dict{"target": named, "Call": "caller-forged"}, ())
+let body = async response => JSON.parseOrThrow(await response->text)
+let value = (json, key) => json->JSON.Decode.object->Option.flatMap(o => o->Dict.get(key))
+let outcome = records =>
+  records.Records.rows->Dict.toArray->Array.map(((_, row)) => row.Calls.outcome)
+let using = async (entry, run) => {
+  try {await run()} catch {
+  | error =>
+    entry.Origin.restore()
+    throw(error)
+  }
+  entry.restore()
+}
+
+testAsync(
+  "fetch requires every binding, and a bound given must be a positive integer",
+  async () => {
+    let env = configured(Records.make())
+    let invalid: array<Worker.env> = [
+      {},
+      {...env, entry: ?None},
+      {...env, records: ?None},
+      {...env, life: "0"},
+      {...env, deadline: "-1"},
+      {...env, retention: "1.5"},
+      {...env, life: "NaN"},
+      {...env, deadline: "1ms"},
+      {...env, retention: ""},
+    ]
+    for index in 0 to invalid->Array.length - 1 {
+      deepEqual((await Worker.fetch(appRequest(), invalid->Array.getUnsafe(index)))->status, 500)
+    }
+    deepEqual((await Worker.fetch(request(), env))->status, 400)
+    deepEqual((await Worker.fetch(request(~headers=dict{"target": "bad"}, ()), env))->status, 400)
+  },
+)
+
+testAsync("fetch replaces caller Call and records and tells a 200 success", async () => {
+  let records = Records.make()
+  let entry = Origin.make(~status=200, ())
+  await using(entry, async () => {
+    let answer = await Worker.default.fetch(appRequest(), configured(records))
+    deepEqual(answer->status, 200)
+    deepEqual(await answer->text, "app answer")
+    deepEqual(entry.sent->Array.length, 1)
+    let id =
+      entry.sent
+      ->Array.getUnsafe(0)
+      ->headers
+      ->Web.header("Call")
+      ->Nullable.toOption
+      ->Option.getOr("")
+    deepEqual(id == "caller-forged", false)
+    deepEqual(Calls.issuedAt(id)->Option.isSome, true)
+    deepEqual(records.rows->Dict.get(id)->Option.map(row => row.outcome), Some(Some("success")))
+    deepEqual(records.statements->Array.length, 3)
+  })
 })
 
-testAsync("fetch passes a target to its app and reports an unanswered app", async () => {
-  let entry = Origin.make()
-  try {
-    deepEqual(
-      await Worker.default.fetch(
-        request(~headers=dict{"target": named}, ()),
-        {entry: "http://entry"},
-      ),
-      entry.answer,
-    )
-  } catch {
-  | error =>
-    entry.restore()
-    throw(error)
-  }
-  entry.restore()
+testAsync("fetch reads JSON failure from a clone and tells rejected", async () => {
+  let records = Records.make()
+  let content = `{"Error":{"failure":"rejected","reason":"conflict"}}`
+  let entry = Origin.make(
+    ~status=409,
+    ~body=content,
+    ~headers=dict{"content-type": "application/json; charset=utf-8"},
+    (),
+  )
+  await using(entry, async () => {
+    let answer = await Worker.fetch(appRequest(), configured(records))
+    deepEqual(answer->status, 409)
+    deepEqual(await answer->text, content)
+    deepEqual(outcome(records), [Some("rejected")])
+  })
+})
+
+testAsync("fetch looks up a thrown fetch to unknown through env DEADLINE", async () => {
+  let records = Records.make()
   let entry = Origin.make(~fails=true, ())
-  try {
-    deepEqual(
-      await fetched(request(~headers=dict{"target": named}, ()), {entry: "http://entry"}),
-      (503, "the host running app 0000002a did not answer, entry unavailable"),
-    )
-  } catch {
-  | error =>
-    entry.restore()
-    throw(error)
+  await using(entry, async () => {
+    let answer = await Worker.fetch(appRequest(), configured(records))
+    deepEqual(answer->status, 503)
+    let error = (await body(answer))->value("Error")->Option.getOr(JSON.Null)
+    deepEqual(error->value("failure"), Some(JSON.String("unknown")))
+    let id =
+      entry.sent
+      ->Array.getUnsafe(0)
+      ->headers
+      ->Web.header("Call")
+      ->Nullable.toOption
+      ->Option.getOr("")
+    deepEqual(answer->answerHeaders->Web.header("Call")->Nullable.toOption, Some(id))
+    deepEqual(outcome(records), [Some("unknown")])
+  })
+})
+
+testAsync("fetch does not send when records refuses creation or insertion", async () => {
+  for index in 0 to 1 {
+    let records = Records.make(~refuse=index == 0 ? "CREATE" : "INSERT", ())
+    let entry = Origin.make()
+    await using(entry, async () => {
+      let answer = await Worker.fetch(appRequest(), configured(records))
+      deepEqual(answer->status, 503)
+      deepEqual(
+        (await body(answer))->value("Error")->Option.flatMap(error => error->value("failure")),
+        Some(JSON.String("unavailable")),
+      )
+      deepEqual(entry.sent->Array.length, 0)
+    })
   }
-  entry.restore()
+})
+
+let statusRequest = id =>
+  Node.request(
+    "http://compute/compute/status",
+    {
+      method: "POST",
+      headers: dict{"content-type": "application/json"},
+      body: JSON.stringify(JSON.Object(dict{"id": JSON.String(id)})),
+    },
+  )
+
+testAsync("status finds a recorded outcome and reports an unrecorded id", async () => {
+  let records = Records.make()
+  let entry = Origin.make(~status=200, ())
+  await using(entry, async () => {
+    let _ = await Worker.fetch(appRequest(), configured(records))
+    let id = records.rows->Dict.keysToArray->Array.getUnsafe(0)
+    let answer = await Worker.fetch(statusRequest(id), configured(records))
+    deepEqual(answer->status, 200)
+    let known = (await body(answer))->value("Ok")->Option.getOr(JSON.Null)
+    deepEqual(known->value("id"), Some(JSON.String(id)))
+    deepEqual(known->value("outcome"), Some(JSON.String("success")))
+    deepEqual(known->value("committed"), Some(JSON.Array([])))
+    let unknown = Calls.issued(Calls.issuer(), ~now=Web.now() +. 1.)->Option.getOr("")
+    let answer = await Worker.fetch(statusRequest(unknown), configured(records))
+    deepEqual(answer->status, 200)
+    deepEqual(
+      (await body(answer))->value("Error")->Option.flatMap(error => error->value("reason")),
+      Some(JSON.String("not_found")),
+    )
+    deepEqual(entry.sent->Array.length, 1)
+    deepEqual(records.rows->Dict.keysToArray->Array.length, 1)
+  })
+})
+
+testAsync("response Call replaces an app header and preserves status and body", async () => {
+  let id = Calls.issued(Calls.issuer(), ~now=Web.now())->Option.getOr("")
+  let original = Web.response(`{"kept":true}`, {status: 201, headers: dict{"Call": "app-forged"}})
+  let answer = Web.withCall(original, id)
+  deepEqual(answer->Web.responseHeaders->Web.header("Call")->Nullable.toOption, Some(id))
+  deepEqual(
+    original->Web.responseHeaders->Web.header("Call")->Nullable.toOption,
+    Some("app-forged"),
+  )
+  deepEqual(answer->Web.status, 201)
+  deepEqual(await answer->Web.responseJson, JSON.Object(dict{"kept": JSON.Boolean(true)}))
+})
+
+testAsync("fetch tells unavailable after an unheard call expires before DEADLINE", async () => {
+  let records = Records.make()
+  let entry = Origin.make(~fails=true, ())
+  await using(entry, async () => {
+    let env = {...configured(records), life: "1", deadline: "50"}
+    let answer = await Worker.fetch(appRequest(), env)
+    deepEqual(answer->status, 503)
+    deepEqual(
+      (await body(answer))->value("Error")->Option.flatMap(error => error->value("failure")),
+      Some(JSON.String("unavailable")),
+    )
+    deepEqual(outcome(records), [Some("unavailable")])
+  })
 })

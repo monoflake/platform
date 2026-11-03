@@ -12,7 +12,7 @@
 			"type": "dev"
 		}
 	],
-	"dependencies": ["@monoflake/ids"],
+	"dependencies": ["@monoflake/envelope", "@monoflake/ids"],
 	"package-specs": [
 		{
 			"module": "esmodule",
