@@ -114,8 +114,10 @@ let types: array<declared> = [
       optional("handed", 12, List(Type("deployment-handed"))),
       optional("reaching", 13, List(Type("deployment-runs"))),
       optional("ingress", 14, List(Type("app-ingress"))),
+      // What fills the slots its build declares, each reached as `env.<slot name>`, rt6gi.
+      optional("bindings", 15, Type("app-bindings")),
     ]),
-    from: "vr5lw, v7v3w, 49qyg",
+    from: "vr5lw, v7v3w, 49qyg, rt6gi",
   },
   {name: "deployment-of", def: Record([field("runs", 1, Type("deployment-runs"))]), from: "vr5lw"},
   // `running` names the runtime chosen and every isolation it stands on.

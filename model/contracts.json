@@ -3868,6 +3868,14 @@
 						}
 					},
 					"optional": true
+				},
+				{
+					"name": "bindings",
+					"key": 15,
+					"shape": {
+						"type": "app-bindings"
+					},
+					"optional": true
 				}
 			]
 		},
