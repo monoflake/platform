@@ -365,6 +365,69 @@
 			"holds": {
 				"owes": "the generator's output and the control reading it"
 			}
+		},
+		{
+			"id": "storage-private-buckets",
+			"says": "A private bucket and who may read one, the author's C10: today storage serves public buckets alone, every object under `/v1/storage/{bucket}/...` readable by anyone holding its address; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "a bucket declared private, its reads refused without the reader's right, and the rule of who holds that right decided"
+			}
+		},
+		{
+			"id": "storage-file-bucket",
+			"says": "The file bucket beside the object bucket: uploads past 16 MiB, `publish`, and the S3 bridge, none of which the object bucket's five data operations give; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "the file bucket's contract decided and an upload past 16 MiB stored and read back"
+			}
+		},
+		{
+			"id": "storage-content-collection",
+			"says": "Content no name holds is kept for good: deleting a name never deletes content, by the author's C9 answer for this slice, so storage grows by every replaced or deleted object; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "a collection of content no name holds, safe against a write racing it, its order in storage.tla"
+			}
+		},
+		{
+			"id": "storage-copies-placement",
+			"says": "Storage keeps one copy of each content on the one machine it runs on, with no copies, placement across machines or repair of a lost copy; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "content held on more than one machine, placed by a rule, and a lost copy repaired from another"
+			}
+		},
+		{
+			"id": "storage-packed-sealed",
+			"says": "Storage writes each content as it came: no `packed` bucket, no compression, and no sealing of content at rest; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "packing, compression and sealing decided and written, each with its read path"
+			}
+		},
+		{
+			"id": "storage-bucket-quotas",
+			"says": "A bucket's size is bounded only by its binding's `object` item, 256 MiB, with no quota of its own per bucket or per app; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "a quota per bucket or app decided and refused past, beside the binding's item"
+			}
+		},
+		{
+			"id": "storage-bucket-control",
+			"says": "A bucket is made by deploy on a machine, its id from the app and slot, never through a control, which keeps no bucket of an organization; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "the control making and listing an organization's buckets, deploy asking it"
+			}
+		},
+		{
+			"id": "storage-caller-capability",
+			"says": "Storage trusts the forwarder's `Caller` header, the binding's identity standing for the caller's right to its bucket, where a capability the caller presents would prove it; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "a capability presented by the caller and checked by storage, the forwarder's header no longer the proof"
+			}
+		},
+		{
+			"id": "storage-cloudflare",
+			"says": "Storage runs on a machine alone; driver(cloudflare) has no storage product and an app's object_bucket slot is filled only on a machine; thread fifth's second slice, not done",
+			"holds": {
+				"owes": "storage deployed on Cloudflare and an app's slot reaching it there"
+			}
 		}
 	]
 }

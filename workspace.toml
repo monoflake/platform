@@ -85,3 +85,8 @@ spelled = ["MONOFLAKE_"]
 [[names.data]]
 file = "code/tools/runner/fixtures/reach-modules/reach.js"
 spelled = ["env.MONOFLAKE_REACHING", "MONOFLAKE_REACHING"]
+
+# The files the workspace's bump writes beside a package's own, which its check reads as touching
+# nothing where a change only raises this repository's own versions, scripts/workspace/touched.
+[land]
+bumped = ["package.json", "Cargo.lock"]
