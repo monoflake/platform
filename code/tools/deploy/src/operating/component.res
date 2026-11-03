@@ -5,7 +5,7 @@
 module Contracts = Envelope.Contracts
 
 /** The environment variable the salt master is read from. */
-let masterVariable = "salt-master"
+let masterVariable = "SALT_MASTER"
 
 /** The secret the deployment is handed the salt as. */
 let secretName = "SALT"

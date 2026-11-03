@@ -75,7 +75,7 @@ flag "--retire <id>" help="Stop, delete and remove an app that ran, its id in 8 
 flag "--app <id>" help="The app's id in 8 lowercase hex digits, to deploy it again; a new app, its id drawn and printed, unless given"
 flag "--binding <id>" help="The binding a control deploys the app onto, its id in 8 lowercase hex digits, asked with a control: target"
 flag "--component <name>" help="Deploy the directory as a platform component on a machine target, storage alone, its id as an app's"
-flag "--organization <id>" help="The organization whose salt the storage component is handed, its id in 8 lowercase hex digits, the salt master in the environment variable salt-master"
+flag "--organization <id>" help="The organization whose salt the storage component is handed, its id in 8 lowercase hex digits, the salt master in the environment variable SALT_MASTER"
 flag "--secrets <names>" help="The secrets a control hands the driver, by name, each its environment variable's value"
 flag "--network <kinds>" help="The network a control lets the app reach, http, tcp, udp or icmp, by commas"
 flag "--ingress <declaration>" var=#true help="Repeat for each domain:<name>, mount:<scope> or binding; refused when metadata.json declares ingress"
