@@ -23,7 +23,7 @@
 		},
 		{
 			"id": "slot-database-contract",
-			"says": "`env.database` on a machine, monoflake/driver's `machine/function/src/config/database.mjs`, offers `execute` alone, with no `rewind`, and a refusal reaches the function as the contract's reason in an error's message text; RFC rt6gi has it speak the kind's own contract, held to `execute` by thread fifth's bounds",
+			"says": "`env.database` on a machine, monoflake/driver's `machine/function/src/config/database.mjs`, offers `execute` alone, with no `rewind`, and a refusal reaches the function as the contract's reason in an error's message text; RFC ahcrp has it speak the database product's contract, one with the kind's, held to `execute` by thread fifth's bounds",
 			"holds": {
 				"owes": "every operation of the database contract and its refusal as a value the function reads"
 			}
