@@ -8,6 +8,20 @@
 			}
 		},
 		{
+			"id": "labels-before-made",
+			"says": "A container made before a label it is read by was written carries none, as monoflake/driver's `driver.component` and `driver.sockets` from e13e6eb3: an old storage is not admitted by the entry and keeps a stale data.sock across a reboot until it is made again, and deploy sends nothing for a version already running, so a person retires and redeploys it; thread fifth's verification, finding a",
+			"holds": {
+				"owes": "a driver start or a deploy of the same version making again a container missing a label its kind writes, with a test of one made before it"
+			}
+		},
+		{
+			"id": "handover-reboot-both-start",
+			"says": "A reboot during a handover, before the old container is removed, starts both storage containers, and the second one's prepare removes the first one's data.sock, so which serves depends on the order they are listed; the ground of the next slice's handover spec, monoflake/driver's model/protocol/handover.tla from thread fifth's step 10; thread fifth's verification, finding b",
+			"holds": {
+				"owes": "handover.tla modeling a crash between the new container's start and the old one's removal, and the restart keeping one storage serving, with a test"
+			}
+		},
+		{
 			"id": "storage-scope-row",
 			"says": "The gateway reads the organization's storage as `{id}.b{binding}` from a value it is deployed with, as storage on a machine is deployed past the control, which holds no deployment or scope row of it; the control writes the reserved scope `storage` as the storage deployment's mount row once storage is deployed through a control, ending the gateway's value and the entry's admission",
 			"holds": {
