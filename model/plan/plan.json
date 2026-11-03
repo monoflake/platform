@@ -9,7 +9,7 @@
 		},
 		{
 			"id": "slot-socket-table",
-			"says": "monoflake/driver's `machine/src/served/slot.rs` keeps each binding's socket task in a static table checked only by `is_finished`: a socket file deleted while its task runs is not bound again until the driver restarts, an aborted task leaves workerd's open connections served, to that binding alone, and each task holds the `Driver`, so a second one in one process serves nothing of its own; found by thread fifth's step 2 review",
+			"says": "monoflake/driver's `machine/src/served/slot.rs` keeps each binding's socket task in a static table checked only by `is_finished`: a socket file deleted while its task runs is not bound again until the driver restarts, an aborted task leaves workerd's open connections served, to that binding alone, and each task holds the `Driver`, so a second one in one process serves nothing of its own; and a binding still on a decimal namespace whose last container is swept while its database stays gets a second socket at the hex path, the decimal one served until the driver restarts; found by thread fifth's step 2 review and its verification",
 			"holds": {
 				"owes": "a socket bound again when its file is gone, its connections ended with its item, and the table owned by the driver"
 			}
