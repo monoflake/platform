@@ -1,0 +1,4 @@
+{
+	"slots": [{ "name": "records", "type": "database" }],
+	"functions": [{ "name": "fetch", "kind": "effect" }]
+}

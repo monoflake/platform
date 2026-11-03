@@ -95,6 +95,16 @@ importers:
 
   code/libs/wit: {}
 
+  code/products/compute:
+    dependencies:
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
+    devDependencies:
+      wrangler:
+        specifier: ^4.156.1
+        version: 4.156.1
+
   code/products/control:
     dependencies:
       '@monoflake/capability':

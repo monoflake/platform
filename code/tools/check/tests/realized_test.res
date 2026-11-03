@@ -99,7 +99,7 @@ test("a name not filled is provided by none, though a block with code provides i
 })
 
 test("a block filling a name runs only where its code is written", () =>
-  deepEqual(Realized.runningIn({fills: [("compute", Block("compute"))], targets: []}).mains, [])
+  deepEqual(Realized.runningIn({fills: [("database", Block("database"))], targets: []}).mains, [])
 )
 
 let over = (components): Base.graph => {
