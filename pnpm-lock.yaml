@@ -168,6 +168,18 @@ importers:
         specifier: workspace:*
         version: link:../../libs/ids
 
+  code/tools/reference:
+    dependencies:
+      '@monoflake/conform':
+        specifier: workspace:*
+        version: link:../conform
+      '@monoflake/ids':
+        specifier: workspace:*
+        version: link:../../libs/ids
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.156.0
+
   code/tools/replace:
     dependencies:
       '@monoflake/conform':
