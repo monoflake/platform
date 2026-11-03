@@ -50,5 +50,27 @@ let reached: (
   ~search: string,
 ) => promise<Web.response>
 
+/**
+ * The configured compute's app and binding from `{id}.b{binding}` as the gateway is deployed with
+ * it, until a control deploys compute; none for any other text, RFC vuanj.
+ */
+let computed: string => option<(float, float)>
+
+/**
+ * A routed call sent to compute in place of its app, as `reached` sends it but to compute's host,
+ * the app's own `{app}.b{binding}` in `target`. The gateway cannot read a function's kind, so every
+ * routed call goes this way while compute is configured; compute passes one that is not an
+ * `effect` to its app untouched and unclassified, RFC 49qyg. 404 where the app is not deployed.
+ */
+let through: (
+  State.reads,
+  Reach.t,
+  ~port: int,
+  Web.request,
+  routed,
+  ~compute: (float, float),
+  ~search: string,
+) => promise<Web.response>
+
 /** An answer made again with `X-Content-Type-Options: nosniff` and, but for a PDF, the sandbox. */
 let guarded: Web.response => Web.response

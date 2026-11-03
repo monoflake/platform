@@ -64,13 +64,6 @@
 			}
 		},
 		{
-			"id": "slots-one-database",
-			"says": "On a machine every `database` slot of a build, and every app of the binding, is filled with the binding's one database, and the slot's name never reaches the driver, so a build declaring two database slots has their tables in one database; the charter of thread fifth holds one database per binding, RFC rt6gi",
-			"holds": {
-				"owes": "a decision whether a binding holds a database per slot"
-			}
-		},
-		{
 			"id": "slot-database-contract",
 			"says": "`env.database` on a machine, monoflake/driver's `machine/function/src/config/database.mjs`, offers `execute` alone, with no `rewind`, and a refusal reaches the function as the contract's reason in an error's message text; RFC ahcrp has it speak the database product's contract, one with the kind's, held to `execute` by thread fifth's bounds",
 			"holds": {

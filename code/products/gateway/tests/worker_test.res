@@ -138,6 +138,54 @@ test("the gateway defaults to the shared entry port", async () => {
   deepEqual(sent, [`http://10.200.0.2:${Int.toString(Reach.entryPort)}/`])
 })
 
+test("routed calls use configured compute and otherwise pass to their app", async () => {
+  let database = await deployed()
+  let run = sql => database->Stores.prepare(sql)->Stores.bind([])->Stores.run
+  await run(
+    "INSERT INTO binding (id, organization, secret, address, bound) VALUES (3, 1, '', '10.200.0.3', 1)",
+  )
+  await run("INSERT INTO domain (domain, app) VALUES ('app.example.com', 16777220)")
+  let sent = []
+  let env: Stores.env = {
+    state: database,
+    hosts: Reading.fetcher(async request => {
+      let header = name => request->Web.requestHeaders->Web.header(name)->Nullable.toOption
+      sent->Array.push((
+        request->Web.url,
+        header("host"),
+        header("x-forwarded-host"),
+        header("target"),
+      ))
+      Web.answered(~status=200, "app")
+    }),
+    organization,
+  }
+  let ask = async (~host="gateway.example.com", path) =>
+    deepEqual(
+      (await Worker.default.fetch(request(path, ~headers=dict{"host": host}), env))->Web.status,
+      200,
+    )
+  await ask("/v1/hello/a?x=1")
+  env->Answers.setCompute("0a0b0c0d.b00000003")
+  await ask("/v1/hello/a?x=1")
+  await ask(~host="app.example.com", "/whole/a%2Fb?x=+")
+  env->Answers.setCompute("invalid")
+  await ask("/v1/hello/a?x=1")
+  let app = (
+    "http://10.200.0.2:36879/a?x=1",
+    Some("01000004.b00000002"),
+    Some("01000004.b00000002"),
+    None,
+  )
+  let compute = path => (
+    `http://10.200.0.3:36879${path}`,
+    Some("0a0b0c0d.b00000003"),
+    Some("0a0b0c0d.b00000003"),
+    Some("01000004.b00000002"),
+  )
+  deepEqual(sent, [app, compute("/a?x=1"), compute("/whole/a%2Fb?x=+"), app])
+})
+
 test("a mount never opens or reseals a binding secret", async () => {
   let secrets = [String.repeat("ab", 32), "01unreadable", ""]
   for i in 0 to secrets->Array.length - 1 {

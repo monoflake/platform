@@ -42,6 +42,20 @@ let storageScope = "storage"
 /** The organization's storage as configured, `{id}.b{binding}`, until a control deploys it. */
 let configuredStorage = /^([0-9a-f]{8})\.b([0-9a-f]{1,16})$/
 
+let computed = configured =>
+  switch configuredStorage->RegExp.exec(configured) {
+  | Some(found) if configured->String.length == 18 =>
+    switch found->RegExp.Result.matches {
+    | [Some(app), Some(binding)] =>
+      switch (Ids.ofText(app), Ids.ofText(binding)) {
+      | (Some(app), Some(binding)) => Some((app, binding))
+      | _ => None
+      }
+    | _ => None
+    }
+  | Some(_) | None => None
+  }
+
 let stored = (~configured, path) =>
   switch (scoped->RegExp.exec(path), configuredStorage->RegExp.exec(configured)) {
   | (Some(found), Some(named)) =>
@@ -137,6 +151,26 @@ let passed = async (state: State.reads, reach: Reach.t, ~port, request, routed, 
       ~path=routed.path,
       ~search,
     )
+  }
+
+let through = async (
+  state: State.reads,
+  reach: Reach.t,
+  ~port,
+  request,
+  routed,
+  ~compute,
+  ~search,
+) =>
+  switch await state.deployment(routed.app) {
+  | None => Web.answered(~status=404, `no app ${Ids.text(routed.app)} is deployed`)
+  | Some(deployment) =>
+    let made = Web.resent(request->Web.url, request)
+    made
+    ->Web.requestHeaders
+    ->Web.setHeader("target", host(~app=routed.app, ~binding=deployment.binding))
+    let (app, binding) = compute
+    await reached(state, reach, ~port, made, ~app, ~binding, ~path=routed.path, ~search)
   }
 
 /** Every answer guarded, never sniffed and opened sandboxed but a PDF, RFCs vr5lw and 13ixj. */

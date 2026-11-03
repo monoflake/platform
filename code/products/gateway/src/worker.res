@@ -50,7 +50,20 @@ let routedFetch = async (request, env: Stores.env) =>
       | Error() => Web.answered(~status=500, "the gateway's ORGANIZATION names no organization")
       | Ok(None) => Web.answered(~status=404, "not found")
       | Ok(Some(routed)) =>
-        await Gateway.passed(state, reach, ~port, request, routed, ~search=located->Web.search)
+        switch env->Answers.computeOf->Nullable.toOption->Option.flatMap(Gateway.computed) {
+        | Some(compute) =>
+          await Gateway.through(
+            state,
+            reach,
+            ~port,
+            request,
+            routed,
+            ~compute,
+            ~search=located->Web.search,
+          )
+        | None =>
+          await Gateway.passed(state, reach, ~port, request, routed, ~search=located->Web.search)
+        }
       }
     }
   | _ => Web.answered(~status=500, "the gateway has no state database or host reach")

@@ -10,3 +10,9 @@ module Web = ControlOrganization.Web
 
 /** The organization's storage as the gateway is configured with it, `{id}.b{binding}`. */
 @get external storageOf: ControlOrganization.Stores.env => Nullable.t<string> = "STORAGE"
+
+/** The organization's compute as the gateway is configured with it, `{id}.b{binding}`. */
+@get external computeOf: ControlOrganization.Stores.env => Nullable.t<string> = "COMPUTE"
+
+/** A configured compute supplied to the gateway's environment. */
+@set external setCompute: (ControlOrganization.Stores.env, string) => unit = "COMPUTE"

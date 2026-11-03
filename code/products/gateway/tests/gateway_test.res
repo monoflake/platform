@@ -239,6 +239,73 @@ let passing = (state, host: Host.t, request) =>
     ~search="",
   )
 
+test("compute reads only a configured app and binding", async () => {
+  deepEqual(Gateway.computed("0a0b0c0d.b00000002"), Some((168496141., 2.)))
+  let refused = [
+    "",
+    "not a host",
+    "0A0B0C0D.b00000002",
+    "0a0b0c0d.b00000000",
+    "0a0b0c0d.b00000002/path",
+    "0a0b0c0d.b00000002\n",
+  ]
+  refused->Array.forEach(text => deepEqual(Gateway.computed(text), None, ~message=text))
+})
+
+test("compute receives the whole routed path and the deployed app as target", async () => {
+  let state = await deployed()
+  let deployment = (await state.deployment(16777220.))->Option.getOrThrow
+  let binding = deployment.binding
+  let host = Host.make()
+  let sent = []
+  let reach: ControlOrganization.Reach.t = {
+    ...host.reach,
+    fetch: async request => {
+      let header = name => request->Web.requestHeaders->Web.header(name)->Nullable.toOption
+      sent->Array.push((
+        header("target"),
+        header("x-forwarded-host"),
+        request->Web.method_,
+        Web.fromUtf8(await request->Web.bytesOf),
+      ))
+      await host.reach.fetch(request)
+    },
+  }
+  let request = Web.request(
+    "https://gateway.example.com/a%2Fb//c?x=%2f&x=+",
+    {method: "POST", headers: dict{"target": "untrusted"}, body: Web.utf8("body")},
+  )
+  let through = routed =>
+    Gateway.through(
+      reads(state),
+      reach,
+      ~port=36879,
+      request,
+      routed,
+      ~compute=(168496141., binding),
+      ~search="?x=%2f&x=+",
+    )
+  deepEqual((await through({app: 99., path: "/a%2Fb//c"}))->Web.status, 404)
+  deepEqual(host.seen, [])
+  let answer = await through({app: 16777220., path: "/a%2Fb//c"})
+  deepEqual(answer->Web.status, 200)
+  deepEqual(
+    host.seen->Array.map(s => (s.url, s.host)),
+    [("http://10.200.0.1:36879/a%2Fb//c?x=%2f&x=+", Some(Gateway.host(~app=168496141., ~binding)))],
+  )
+  deepEqual(
+    sent,
+    [
+      (
+        Some(Gateway.host(~app=16777220., ~binding)),
+        Some(Gateway.host(~app=168496141., ~binding)),
+        "POST",
+        "body",
+      ),
+    ],
+  )
+})
+
 test(
   "a request with no body that fails before any answer is sent once more, and answered",
   async () => {
