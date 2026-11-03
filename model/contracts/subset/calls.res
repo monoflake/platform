@@ -65,6 +65,7 @@ let messages: dict<string> = dict{
   "storage_full": "No store has room for the write now",
   "suspended": "The organization is suspended",
   "too_large": "The input is larger than its bound",
+  "unavailable": "What the name holds cannot be given now",
   "unbound": "The binding has not been bound by its host yet",
   "unfetchable": "The artifact could not be fetched",
   "unplaceable": "No store meets the placement asked for",

@@ -694,6 +694,105 @@
 			]
 		},
 		{
+			"description": "an object whose content is lost is listed by its name, and read and described as unavailable",
+			"copies": 1,
+			"given": {
+				"records": [
+					{
+						"kind": "bucket",
+						"handle": "objects",
+						"content": {
+							"type": "object",
+							"kind": {
+								"name": "packed"
+							},
+							"placement": {
+								"availability": "best_effort",
+								"durability": "persistent",
+								"custody": "false"
+							},
+							"spread": {
+								"copies": 1,
+								"distinct": {}
+							},
+							"access": "private"
+						}
+					}
+				]
+			},
+			"steps": [
+				{
+					"call": "object_write",
+					"input": {
+						"bucket": "objects",
+						"content": "aGVsbG8",
+						"extension": "txt"
+					},
+					"expect": {
+						"output": {
+							"object": {
+								"$capture": "o"
+							},
+							"hash": {
+								"$capture": "h"
+							},
+							"size": 5
+						}
+					}
+				},
+				{
+					"lose": 1
+				},
+				{
+					"call": "object_list",
+					"input": {
+						"bucket": "objects"
+					},
+					"expect": {
+						"output": {
+							"objects": [
+								{
+									"object": {
+										"$use": "o"
+									},
+									"hash": {
+										"$use": "h"
+									},
+									"size": 5
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "object_read",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "unavailable"
+					}
+				},
+				{
+					"call": "object_describe",
+					"input": {
+						"bucket": "objects",
+						"object": {
+							"$use": "o"
+						}
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "unavailable"
+					}
+				}
+			]
+		},
+		{
 			"description": "an object past an opaque bucket's bound is refused",
 			"given": {
 				"records": [

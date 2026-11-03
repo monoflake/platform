@@ -32,7 +32,7 @@ let written = async (context, ~content=hello, ~extension=?) =>
 let gone: Contracts.Answer.t<'a> = Error({
   failure: Unavailable,
   reason: "unavailable",
-  message: "The object's content is gone",
+  message: "What the name holds cannot be given now",
 })
 
 let absent: Contracts.Answer.t<Contracts.ObjectDescribed.t> = Success({})
@@ -53,7 +53,7 @@ testAsync("an object written is read and described by its name", async () => {
     fake.calls,
     [`describe ${contentOf(hello)}`, `write ${contentOf(hello)}`, `write ${markerOf(object)}`],
   )
-  deepEqual(fake.held->Dict.get(markerOf(object)), Some(Uint8Array.fromLength(0)))
+  deepEqual(fake.held->Dict.get(markerOf(object)), Some(Uint8Array.fromArray([53])))
   deepEqual(
     await Operations.read(context, {bucket: 1., object}),
     Success({content: hello, size: 5.}),
@@ -114,16 +114,16 @@ testAsync("an object never written is not found, absent, and deleted as absent",
   deepEqual(await Operations.delete(context, {bucket: 1., object}), deleted)
 })
 
-testAsync("content removed under a name answers unavailable", async () => {
+testAsync("a lost content's object is listed by its name, then read as unavailable", async () => {
   let (fake, context) = fresh()
-  let {object} = await written(context, ~extension="txt")
+  let {object, hash} = await written(context, ~extension="txt")
   fake.held->Dict.delete(contentOf(hello))
-  deepEqual(await Operations.read(context, {bucket: 1., object}), gone)
-  deepEqual(await Operations.describe(context, {bucket: 1., object}), gone)
   deepEqual(
     await Operations.list(context, {bucket: 1.}),
-    Success({Contracts.BucketObjectListed.objects: []}),
+    Success({Contracts.BucketObjectListed.objects: [{object, hash, size: 5.}]}),
   )
+  deepEqual(await Operations.read(context, {bucket: 1., object}), gone)
+  deepEqual(await Operations.describe(context, {bucket: 1., object}), gone)
 })
 
 testAsync("content past 16 MiB is too large and reaches no kind", async () => {

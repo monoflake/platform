@@ -25,8 +25,20 @@ let refused = (failure, reason, ~message=?): Contracts.Answer.t<'a> => Error({
 /** An error the kind answered, passed on as it came. */
 let passed = (error): Contracts.Answer.t<'a> => Error(error)
 
-/** A name held whose content is gone, RFC 13ixj. */
-let gone = () => refused(Unavailable, "unavailable", ~message="The object's content is gone")
+/** A name held whose content cannot be given, RFC 13ixj, the author's C20. */
+let gone = () => refused(Unavailable, "unavailable")
+
+/** A name records its object's size as decimal text, so a listing needs no content. */
+let recorded = size =>
+  Float.toString(size)
+  ->String.split("")
+  ->Array.map(digit => digit->String.charCodeAt(0)->Option.getOr(0))
+  ->Uint8Array.fromArray
+let sizeOf = bytes => {
+  let text = ref("")
+  bytes->TypedArray.forEach(byte => text := text.contents ++ String.fromCharCode(byte))
+  Float.fromString(text.contents)
+}
 
 /** Takes a prefix off a name the kind listed under it, none for a name outside it. */
 let unprefixed = (name, prefix) =>
@@ -63,14 +75,10 @@ let write = async (context, input: Contracts.BucketObjectWrite.t) =>
       | Ok() =>
         let object = Names.object(~hash, ~extension)
         let marker = Names.marker(~bucket=input.bucket, object)
-        switch await context.objects.write({name: marker, content: Uint8Array.fromLength(0)}) {
+        let size = TypedArray.length(input.content)->Int.toFloat
+        switch await context.objects.write({name: marker, content: recorded(size)}) {
         | Error(error) => passed(error)
-        | Success(_) =>
-          Success({
-            Contracts.BucketObject.object,
-            hash,
-            size: TypedArray.length(input.content)->Int.toFloat,
-          })
+        | Success(_) => Success({Contracts.BucketObject.object, hash, size})
         }
       }
     }
@@ -123,7 +131,7 @@ let list = async (context, input: Contracts.BucketObjectList.t) => {
   switch await context.objects.list({prefix, ?after, limit: ?input.limit}) {
   | Error(error) => passed(error)
   | Success(listed) =>
-    // Each content is described in the order listed, one call after another.
+    // Each name's recorded size is read in the order listed, its content never asked.
     let found: array<Contracts.BucketObject.t> = []
     let failed: ref<option<Contracts.Error.t>> = ref(None)
     let names = listed.objects
@@ -136,10 +144,11 @@ let list = async (context, input: Contracts.BucketObjectList.t) => {
       ) {
       | None => ()
       | Some((object, {hash})) =>
-        switch await context.objects.describe({name: Names.content(hash)}) {
+        switch await context.objects.read({name: one.name}) {
+        | Error({reason: "not_found"}) => ()
         | Error(error) => failed := Some(error)
-        | Success({size: ?None}) => ()
-        | Success({size: ?Some(size)}) => found->Array.push({object, hash, size})
+        | Success({content}) =>
+          sizeOf(content)->Option.forEach(size => found->Array.push({object, hash, size}))
         }
       }
     }

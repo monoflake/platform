@@ -8078,6 +8078,7 @@
 		"storage_full": "No store has room for the write now",
 		"suspended": "The organization is suspended",
 		"too_large": "The input is larger than its bound",
+		"unavailable": "What the name holds cannot be given now",
 		"unbound": "The binding has not been bound by its host yet",
 		"unfetchable": "The artifact could not be fetched",
 		"unplaceable": "No store meets the placement asked for",
@@ -8654,6 +8655,10 @@
 						{
 							"name": "not_found",
 							"failure": "rejected"
+						},
+						{
+							"name": "unavailable",
+							"failure": "unavailable"
 						}
 					],
 					"callers": ["capability"]
@@ -8670,6 +8675,10 @@
 						{
 							"name": "wrong_type",
 							"failure": "rejected"
+						},
+						{
+							"name": "unavailable",
+							"failure": "unavailable"
 						}
 					],
 					"callers": ["capability"]
