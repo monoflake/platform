@@ -249,7 +249,7 @@ testAsync("a name's write answered unknown may have landed, and is unknown", asy
     call: {id: step.id, looked: 5.},
   }))
   let answer = await Operations.write(context, {bucket: 1., content: hello, call: step})
-  deepEqual(answer, Error({failure: Unknown, reason: "unknown", message}))
+  deepEqual(answer, Error({failure: Unknown, reason: "fault", message}))
   deepEqual(callOf(answer), None)
 })
 
@@ -258,8 +258,8 @@ testAsync("a name's write thrown after it was sent may have landed, and is unkno
   let (writes, context) = named(fake, async _ => throw(Failure("the connection closed")))
   let answer = await Operations.write(context, {bucket: 1., content: hello, call: step})
   switch answer {
-  | Error({failure, reason}) => deepEqual((failure, reason), (Unknown, "unknown"))
-  | Success(_) => deepEqual(answer, Error({failure: Unknown, reason: "unknown", message: ""}))
+  | Error({failure, reason}) => deepEqual((failure, reason), (Unknown, "fault"))
+  | Success(_) => deepEqual(answer, Error({failure: Unknown, reason: "fault", message: ""}))
   }
   deepEqual(callOf(answer), None)
   deepEqual(Array.length(writes), 2)

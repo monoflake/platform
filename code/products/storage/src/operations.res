@@ -62,7 +62,7 @@ let named = (answer: Contracts.Answer.t<Contracts.ObjectWritten.t>, object) =>
     declared->Array.includes(reason)
       ? Error({failure, reason, message})
       : Error({failure: Unavailable, reason: "unavailable", message})
-  | Error({failure: Unknown, message}) => Error({failure: Unknown, reason: "unknown", message})
+  | Error({failure: Unknown, message}) => Error({failure: Unknown, reason: "fault", message})
   }
 
 /** Takes a prefix off a name the kind listed under it, none for a name outside it. */
@@ -107,7 +107,7 @@ let write = async (context, input: Contracts.BucketObjectWrite.t) =>
           content: recorded(size),
           call: ?input.call,
         }) catch {
-        | _ => refused(Unknown, "unknown", ~message=untold)
+        | _ => refused(Unknown, "fault", ~message=untold)
         }
         named(answer, {Contracts.BucketObject.object, hash, size})
       }
