@@ -6,8 +6,11 @@
 			"quick": "overlap.cfg",
 			"inputs": ["model/protocol/overlap.tla", "model/protocol/overlap.cfg"],
 			"constants": {
-				"command": ["node", "model/protocol/overlap_constants.res.mjs"],
-				"inputs": ["model/protocol/overlap_constants.res.mjs", "model/protocol/window.res.mjs"]
+				"command": ["node", "model/protocol/constants/overlap_constants.res.mjs"],
+				"inputs": [
+					"model/protocol/constants/overlap_constants.res.mjs",
+					"model/protocol/window.res.mjs"
+				]
 			},
 			"switches": [
 				{ "name": "EXACT_RANGE", "breaks": "NoStuckDeploy" },
@@ -27,9 +30,9 @@
 			"quick": "footing.cfg",
 			"inputs": ["model/protocol/footing.tla", "model/protocol/footing.cfg"],
 			"constants": {
-				"command": ["node", "model/protocol/footing_constants.res.mjs"],
+				"command": ["node", "model/protocol/constants/footing_constants.res.mjs"],
 				"inputs": [
-					"model/protocol/footing_constants.res.mjs",
+					"model/protocol/constants/footing_constants.res.mjs",
 					"model/contracts/components/footings.res.mjs"
 				]
 			},
@@ -58,6 +61,27 @@
 				"checks": ["Runs"],
 				"inputs": ["model/protocol/storage_runs.res.mjs"]
 			}
+		},
+		{
+			"name": "effect",
+			"module": "effect.tla",
+			"quick": "effect.cfg",
+			"inputs": ["model/protocol/effect.tla", "model/protocol/effect.cfg"],
+			"constants": {
+				"command": ["node", "model/protocol/constants/effect_constants.res.mjs"],
+				"inputs": ["model/protocol/constants/effect_constants.res.mjs", "model/protocol/calls.json"]
+			},
+			"switches": [
+				{ "name": "TIMEOUT_AS_UNAVAILABLE", "breaks": "Truthful" },
+				{ "name": "APPLY_AFTER_EXPIRY", "breaks": "NeverAfterExpiry" },
+				{ "name": "RETRY_ON_UNAVAILABLE", "breaks": "NeverRetried" },
+				{ "name": "SKIP_LOOKUP", "breaks": "UnknownOnlyAfterLookup" },
+				{ "name": "SECOND_BATCH_SUCCESS", "breaks": "TwoBatchesUnknown" },
+				{ "name": "UNBOUNDED_LOCK_WAIT", "breaks": "Ends" },
+				{ "name": "RECORD_SWEPT_AT_EXPIRY", "breaks": "StatusAgrees" },
+				{ "name": "ID_NEVER_EXPIRES", "breaks": "Settles" }
+			],
+			"temporal": ["Ends", "Settles"]
 		}
 	]
 }
