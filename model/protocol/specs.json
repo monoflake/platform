@@ -41,6 +41,22 @@
 				{ "name": "NO_EXPIRY", "breaks": "TakenOver" }
 			],
 			"temporal": ["TakenOver"]
+		},
+		{
+			"name": "storage",
+			"module": "storage.tla",
+			"quick": "storage.cfg",
+			"inputs": ["model/protocol/storage.tla", "model/protocol/storage.cfg"],
+			"switches": [
+				{ "name": "NAME_BEFORE_CONTENT", "breaks": "NoNameWithoutContent" },
+				{ "name": "DELETE_CONTENT", "breaks": "ContentHeld" }
+			],
+			"export": {
+				"command": ["node", "model/protocol/storage_runs.res.mjs", "{output}"],
+				"file": "model/protocol/storage-runs.jsonl",
+				"checks": ["Runs"],
+				"inputs": ["model/protocol/storage_runs.res.mjs"]
+			}
 		}
 	]
 }

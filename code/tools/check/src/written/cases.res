@@ -300,15 +300,19 @@ let run = () => {
             | Some({def: Record(_) | Enum(_) | Flags(_)}) | None => ()
             }
           }
-          // The copies a database's case is held on, which a step may then lose, vuanj.
+          // The copies a database's or a storage bucket's case is held on, which a step may then
+          // lose, vuanj.
           let copies = switch (c->member("copies"), numeric(c->member("copies"))) {
           | (None, _) => None
           | (Some(_), Some(n))
-            if name == "database" && isInteger(n, 1., Int.toFloat(Database.copiesMost)) =>
+            if (name == "database" || name == "storage") &&
+              isInteger(n, 1., Int.toFloat(Database.copiesMost)) =>
             Some(n)
           | (Some(_), _) =>
             found->Array.push(
-              `${at}: copies, from 1 to ${int(Database.copiesMost)} and a database's alone`,
+              `${at}: copies, from 1 to ${int(
+                  Database.copiesMost,
+                )} and a database's or storage's alone`,
             )
             None
           }
