@@ -4,10 +4,7 @@
  */
 module Contracts = Envelope.Contracts
 
-let usage = "conform <target> --app <id> [--gateway <origin>] [--dry-run]"
-
-/** The kinds whose samples the machine's driver is held to, each a directory of `tests/kinds/`. */
-let kinds = ["management", "deployments", "objects", "databases"]
+let usage = "conform <target> --app <id> [--kind <kind>] [--gateway <origin>] [--dry-run]"
 
 /** What a case of each kind is held where it gives none, a container as deploy holds hello's. */
 let holding = `{
@@ -104,25 +101,6 @@ let fixtures = (target, facts: Instance.facts, ~scratch, ~local) => {
     ->Result.map(_ => (built, directory))
   )
 }
-
-/** Every behavior file of the kinds by its path from the root, and how many cases each holds. */
-let samples = () =>
-  kinds->Array.flatMap(kind => {
-    let directory = `tests/kinds/${kind}`
-    Host.list(Host.fromRoot(directory))
-    ->Array.filter(name => name->String.endsWith(".json"))
-    ->Array.toSorted(String.compare)
-    ->Array.map(name => {
-      let path = `${directory}/${name}`
-      let cases =
-        JSON.parseOrThrow(Host.readText(Host.fromRoot(path)))
-        ->JSON.Decode.object
-        ->Option.flatMap(o => o->Dict.get("cases"))
-        ->Option.flatMap(JSON.Decode.array)
-        ->Option.mapOr(0, Array.length)
-      (path, cases)
-    })
-  })
 
 /** The live driver's list, its refusals and hello, each with what it showed or why it failed. */
 let asked = async (target, facts: Instance.facts, ~app, ~gateway) => {
@@ -345,12 +323,16 @@ let main = async () => {
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
   switch hello(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
-    Through.flagged(rest)->Result.map(((gateway, rest)) => (app, gateway, rest))
+    Through.flagged(rest)->Result.flatMap(((gateway, rest)) =>
+      Selection.flagged(rest)
+      ->Result.mapError(why => `${why}\nconform: ${usage}`)
+      ->Result.map(((kind, rest)) => (app, gateway, kind, rest))
+    )
   ) {
-  | Ok((app, gateway, [named])) if !(named->String.startsWith("--")) =>
+  | Ok((app, gateway, kind, [named])) if !(named->String.startsWith("--")) =>
     let target = Remote.target(named)
-    let files = samples()
-    let count = files->Array.reduce(0, (n, (_, cases)) => n + cases * 2)
+    let files = Selection.samples(kind)
+    let count = Selection.count(files)
     switch remote(target, Instance.facts)->Result.flatMap(Instance.readFacts(_, ~count)) {
     | Error(why) =>
       say(`failed: ${named} cannot hold a second driver, ${why}`)
@@ -424,7 +406,7 @@ let main = async () => {
             )
           }
           let revision = before->Result.mapOr(None, described => described.revision)
-          let snapshot = snapshotted(named, ~revision, ~scratch)
+          let snapshot = Selection.snapshotted(kind, () => snapshotted(named, ~revision, ~scratch))
           forget()
           let nothingLeft = clean(target, facts, ~when_="after")
           if nothingLeft {
@@ -439,11 +421,7 @@ let main = async () => {
           }
           say(same ? "after, the live list is as it was" : "failed: the live list changed")
           let met = code == 0 && held && still && same && nothingLeft && snapshot
-          say(
-            `${named} ${met
-                ? "meets its contracts, but what waits"
-                : "does not meet its contracts"}, ${took()}s`,
-          )
+          say(`${Selection.finished(kind, ~target=named, ~met)}, ${took()}s`)
           children->Array.forEach(child => child->Host.kill->ignore)
           Host.setExitCode(Host.process, met ? 0 : 1)
         }
