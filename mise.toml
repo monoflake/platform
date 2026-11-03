@@ -22,7 +22,7 @@ description = "Fail where anything is not formatted, as verify asks"
 run = "rescript format --check && oxfmt --check {{vars.formatted}}"
 
 [tasks.check]
-description = "Compile the model and run its check: `check [--ready[=N]] [--s1] [--write]`"
+description = "Compile the model and run its check, its assumes shown with --notes: `check [--ready[=N]] [--s1] [--write] [--notes]`"
 run = "rescript build && node code/tools/check/src/main.res.mjs"
 
 [tasks.brief]
@@ -61,8 +61,9 @@ d=$(node model/brief.res.mjs "$usage_package" --path) && p="$usage_package" || e
 """
 
 [tasks.blocks]
-description = "Build, format, lint and test every written block alone; one in work fails nothing"
-run = "rescript build > /dev/null && node model/built.res.mjs"
+description = "Build, format, lint and test every written block alone, or those named; one in work fails nothing: `blocks [--blocks <a,b>]`"
+usage = 'flag "--blocks <names>" help="Only these blocks, by package name without @monoflake/, comma-separated"'
+run = 'rescript build > /dev/null && node model/built.res.mjs ${usage_blocks:+--blocks "$usage_blocks"}'
 
 # What a user runs to deploy an app of their own, from wherever it lives, RFC n0o4l.
 [tasks.deploy]
@@ -163,12 +164,13 @@ depends = ["//:build"]
 run = "node {{env.WORKSPACE}}/scripts/clean.res.mjs code/libs/envelope/generated"
 
 [tasks.verify]
-description = "What a commit has to pass: everything formatted, the check, the model's tests, every block alone, and the crates' dependencies once there are crates"
+description = "What a commit has to pass: everything formatted, the check, the model's tests, every block alone or those named, and the crates' dependencies once there are crates: `verify [--blocks <a,b>]`"
+usage = 'flag "--blocks <names>" help="Only these blocks, by package name without @monoflake/, comma-separated"'
 run = [
 	"mise run formatted",
 	"mise run check",
 	"node --test 'code/tools/check/tests/**/*_test.res.mjs'",
-	"mise run blocks",
+	'mise run blocks ${usage_blocks:+--blocks "$usage_blocks"}',
 	"grep -q '^members = \\[\\]' Cargo.toml || cargo deny check",
 ]
 

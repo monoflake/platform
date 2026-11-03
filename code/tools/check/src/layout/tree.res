@@ -334,17 +334,28 @@ let check = (tree: tree, ~title="Blocks held", ~work=?, ~provided=[]) => {
 }
 
 /** Every written block built alone by `mise run built <package>` at the tree's root. */
-let built = (tree: tree) => {
+let built = (tree: tree, ~packages=[], ~run=show) => {
   let found = []
-  tree.blocks->Map.forEachWithKey((h, path) =>
+  let written = []
+  tree.blocks->Map.forEachWithKey((h, path) => {
     if Code.held(tree, path, h) != None {
+      written->Array.push(h)
+    }
+  })
+  packages->Array.forEach(package => {
+    if !(written->Array.some(h => h.package == package)) {
+      found->Array.push(`${package}: no written block has this package name`)
+    }
+  })
+  written->Array.forEach(h =>
+    if packages == [] || packages->Array.includes(h.package) {
       Console.log(`\n# Built ${h.package}`)
-      let run = show(
+      let result = run(
         "mise",
         ["run", "built", h.package],
         {cwd: tree.root->pathname, stdio: "inherit"},
       )
-      if run.status->Nullable.toOption != Some(0) {
+      if result.status->Nullable.toOption != Some(0) {
         let failing = `${h.package}: mise run built ${h.package} fails`
         tree.work->Dict.get(h.package) == Some(InWork)
           ? inWork->Array.push(failing)

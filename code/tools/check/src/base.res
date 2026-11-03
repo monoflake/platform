@@ -185,7 +185,11 @@ let dimension = (title, question, violations, ~notes=[], ~assumed=[], ()) => {
       ? violations->Array.map(v => `  x ${v}`)->Array.join("\n")
       : "  no violation",
   )
-  assumed->Array.forEach(a => Console.log(`  ~ ${a}`))
+  if args->Array.includes("--notes") {
+    assumed->Array.forEach(a => Console.log(`  ~ ${a}`))
+  } else if assumed->Array.length > 0 {
+    Console.log(`  ~ ${assumed->Array.length->Int.toString} assumes, shown with --notes`)
+  }
   notes->Array.forEach(n => Console.log(`  ${n}`))
   if violations->Array.length > 0 {
     failed := true
