@@ -1,6 +1,13 @@
 {
 	"items": [
 		{
+			"id": "runner-within-backoff",
+			"says": "The local conform's samples take 30.5 s, about 25 s of it the deployments kind, whose 10 `within` steps retry from 100 ms doubling to 2 s in `code/tools/runner/src/run.res`, so each may overshoot readiness by up to about 2 s in both forms; a reading, not measured. First look when the runner is next touched: each step's time and tries in the runner's output, or one local run with a shorter longest delay",
+			"holds": {
+				"owes": "a measurement of where the deployments kind's time goes"
+			}
+		},
+		{
 			"id": "call-v2-credential",
 			"says": "The call envelope's version 2 carries an optional `credential` at key 5, generated as a bump made once, RFC 6x8su",
 			"holds": {
