@@ -18,6 +18,7 @@ let calling: array<reason> = [{name: "stopped", failure: #unavailable}]
 
 /** Each reason's default message by its name, one objective line of English, RFC ge55b. */
 let messages: dict<string> = dict{
+  "aborted": "The batch was rolled back and changed nothing",
   "denied": "The call carries no credential, or one that does not allow it",
   "malformed": "The call is not as its interface writes it",
   "overloaded": "The implementation is busy for a moment; try again",
@@ -38,7 +39,9 @@ let messages: dict<string> = dict{
   "depended_on": "Something else depends on what the change removes",
   "deployed": "The app has run; it is retired, not forgotten",
   "expectation_failed": "What is held is not what the call expected",
+  "expired": "The call's id is past its expiry, so it is never applied",
   "extension_invalid": "The extension named is not valid here",
+  "forgotten": "The call is older than its status is kept, so what became of it is not told",
   "gap": "The frames asked for are no longer all held",
   "hash_mismatch": "What was fetched does not match its hash",
   "held": "The lease is held by another until it ends",
@@ -77,6 +80,29 @@ let messages: dict<string> = dict{
 }
 
 let types: array<declared> = [
+  // A call's step as a kind records it beside what it writes: the id, 16 lowercase hex digits the
+  // compute component issues; the step's place in the call; when the id expires, in milliseconds.
+  {
+    name: "call-step",
+    def: Record([
+      field("id", 1, Prim(#string)),
+      field("sequence", 2, Prim(#uint32)),
+      field("expires", 3, Prim(#uint53)),
+      field("last", 4, Prim(#bool)),
+    ]),
+    from: "49qyg",
+  },
+  // A kind's answer to a call's status, each step it committed by its sequence, the expiry, and
+  // whether the step marked last committed.
+  {
+    name: "call-steps",
+    def: Record([
+      field("committed", 1, List(Prim(#uint32))),
+      field("expires", 2, Prim(#uint53)),
+      field("finished", 3, Prim(#bool)),
+    ]),
+    from: "49qyg",
+  },
   {
     name: "failure",
     def: Enum({choices: codes(["rejected", "unavailable", "unknown"]), ordered: false}),

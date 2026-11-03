@@ -1,6 +1,6 @@
 /***
- * The storage product deployed as a component on a machine, the organization's salt handed to it
- * as a secret derived from a master that never leaves the deploy, RFC b8f35 and RFC ahcrp.
+ * Products deployed as components on a machine, storage handed the organization's salt from a
+ * master that never leaves the deploy, RFC b8f35 and RFC ahcrp.
  */
 module Contracts = Envelope.Contracts
 
@@ -33,14 +33,14 @@ let secrets = (~master, ~organization) =>
   }
 
 /** The deployment's `runs` for the component with this id. */
-let runs = (id): Contracts.DeploymentRuns.t => Component({component: "storage", id})
+let runs = (~component="storage", id): Contracts.DeploymentRuns.t => Component({component, id})
 
 /** The component's deployment, as describe asks it. */
-let of_ = (id): Contracts.DeploymentOf.t => {runs: runs(id)}
+let of_ = (~component="storage", id): Contracts.DeploymentOf.t => {runs: runs(~component, id)}
 
-/** A deploy of the bundle as the storage component, the secrets handed it. */
-let deploy = (~app, ~hash, ~address, ~into, ~bindings=?, ~secrets) => {
+/** A deploy of the bundle as the named component, with its secrets where needed. */
+let deploy = (~component="storage", ~app, ~hash, ~address, ~into, ~bindings=?, ~secrets=?) => {
   ...Deploying.deploy(~app, ~hash, ~address, ~into, ~bindings?),
-  runs: runs(app),
-  secrets,
+  runs: runs(~component, app),
+  ?secrets,
 }

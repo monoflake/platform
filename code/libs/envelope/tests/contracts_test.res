@@ -102,10 +102,12 @@ test("a call is its interface's operation, holding that operation's input", () =
   }
   let json = parse(`{"interface": "object", "operation": "write", "input": {"name": "a", "content": "AQI"}}`)
   deepEqual(Contracts.Interface.Object.toJson(call), json)
-  deepEqual(Contracts.Interface.Object.fromJson(json), Ok(call))
+  // An absent option decodes as a key of none, so the call is compared as it is written.
+  let written = read => read->Result.map(Contracts.Interface.Object.toJson)
+  deepEqual(written(Contracts.Interface.Object.fromJson(json)), Ok(json))
   // Capabilities none are written absent, and read as none when given empty.
   let empty = parse(`{"interface": "object", "operation": "write", "input": {"name": "a", "content": "AQI"}, "capabilities": []}`)
-  deepEqual(Contracts.Interface.Object.fromJson(empty), Ok(call))
+  deepEqual(written(Contracts.Interface.Object.fromJson(empty)), Ok(json))
   ok(Contracts.callJsonToCbor("no-such-interface", json)->Option.isNone)
   ok(Contracts.callCborToJson("no-such-interface", Cbor.Null)->Option.isNone)
 })
@@ -115,7 +117,7 @@ test("a call not as its interface writes it is malformed where it stands", () =>
   let input = `"input": {"name": "a", "content": "AQI"}`
   deepEqual(
     call(`{"interface": "object", "operation": "fly", ${input}}`),
-    malformed([Field("operation")], "one of write, read, describe, delete, list"),
+    malformed([Field("operation")], "one of write, status, read, describe, delete, list"),
   )
   deepEqual(
     call(`{"interface": "database", "operation": "write", ${input}}`),
@@ -143,6 +145,6 @@ test("a call not as its interface writes it is malformed where it stands", () =>
       "object",
       decoded(hex("a301666f626a6563740263666c7903a0")),
     )->Option.map(r => r->Result.map(_ => Cbor.Null)),
-    malformed([Field("operation")], "one of write, read, describe, delete, list"),
+    malformed([Field("operation")], "one of write, status, read, describe, delete, list"),
   )
 })

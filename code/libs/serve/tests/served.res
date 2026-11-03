@@ -49,6 +49,7 @@ let answerObject = (caller, envelope: Objects.envelope) =>
   | Write(_) => Promise.resolve(refused("too_large", ~message="over its bound of 1 MiB"))
   | Delete(_) => Promise.resolve(refused("overloaded"))
   | List(_) => Promise.resolve(refused("stopped"))
+  | Status(_) => Promise.resolve(refused("not_found"))
   }
 
 let object = Calls.route({

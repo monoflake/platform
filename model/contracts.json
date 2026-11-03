@@ -75,6 +75,65 @@
 		"typ": "monoflake:call:1"
 	},
 	"types": {
+		"call-step": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "sequence",
+					"key": 2,
+					"shape": {
+						"prim": "uint32"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 3,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "last",
+					"key": 4,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"call-steps": {
+			"record": [
+				{
+					"name": "committed",
+					"key": 1,
+					"shape": {
+						"list": {
+							"prim": "uint32"
+						}
+					}
+				},
+				{
+					"name": "expires",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "finished",
+					"key": 3,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
 		"failure": {
 			"enum": [
 				{
@@ -2693,11 +2752,30 @@
 					"shape": {
 						"prim": "bytes"
 					}
+				},
+				{
+					"name": "call",
+					"key": 3,
+					"shape": {
+						"type": "call-step"
+					},
+					"optional": true
 				}
 			]
 		},
 		"object-written": {
 			"record": []
+		},
+		"object-status": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
 		},
 		"object-range": {
 			"record": [
@@ -2929,6 +3007,25 @@
 						"list": {
 							"type": "database-statement"
 						}
+					}
+				},
+				{
+					"name": "call",
+					"key": 2,
+					"shape": {
+						"type": "call-step"
+					},
+					"optional": true
+				}
+			]
+		},
+		"database-status": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
 					}
 				}
 			]
@@ -8030,6 +8127,7 @@
 		}
 	],
 	"messages": {
+		"aborted": "The batch was rolled back and changed nothing",
 		"ahead": "The generation asked for is ahead of the one held",
 		"bad_answer": "A host or service answered what its type does not write",
 		"behind": "No generation as new as the one asked for is held yet",
@@ -8046,8 +8144,10 @@
 		"depended_on": "Something else depends on what the change removes",
 		"deployed": "The app has run; it is retired, not forgotten",
 		"expectation_failed": "What is held is not what the call expected",
+		"expired": "The call's id is past its expiry, so it is never applied",
 		"extension_invalid": "The extension named is not valid here",
 		"fault": "The implementation failed while answering",
+		"forgotten": "The call is older than its status is kept, so what became of it is not told",
 		"gap": "The frames asked for are no longer all held",
 		"hash_mismatch": "What was fetched does not match its hash",
 		"held": "The lease is held by another until it ends",
@@ -8173,6 +8273,26 @@
 						{
 							"name": "storage_full",
 							"failure": "unavailable"
+						},
+						{
+							"name": "expired",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["organization", "component"]
+				},
+				{
+					"name": "status",
+					"input": "object-status",
+					"output": "call-steps",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "forgotten",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["organization", "component"]
@@ -8245,6 +8365,30 @@
 						{
 							"name": "read_only",
 							"failure": "unavailable"
+						},
+						{
+							"name": "expired",
+							"failure": "rejected"
+						},
+						{
+							"name": "aborted",
+							"failure": "unavailable"
+						}
+					],
+					"callers": ["organization", "component"]
+				},
+				{
+					"name": "status",
+					"input": "database-status",
+					"output": "call-steps",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "forgotten",
+							"failure": "rejected"
 						}
 					],
 					"callers": ["organization", "component"]

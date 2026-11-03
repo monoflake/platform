@@ -1,0 +1,96 @@
+{
+	"interface": "object",
+	"cases": [
+		{
+			"description": "a name written with a call's step is answered by the call's status",
+			"steps": [
+				{
+					"call": "write",
+					"input": {
+						"name": "called",
+						"content": "aGVsbG8",
+						"call": {
+							"id": "7fffffffffff0011",
+							"sequence": 2,
+							"expires": 253402300799000,
+							"last": false
+						}
+					},
+					"expect": {
+						"output": {}
+					}
+				},
+				{
+					"call": "status",
+					"input": {
+						"id": "7fffffffffff0011"
+					},
+					"expect": {
+						"output": {
+							"committed": [2],
+							"expires": 253402300799000,
+							"finished": false
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a name written past its call's expiry is refused and not written",
+			"steps": [
+				{
+					"call": "write",
+					"input": {
+						"name": "late",
+						"content": "aGVsbG8",
+						"call": {
+							"id": "7fffffffffff0012",
+							"sequence": 2,
+							"expires": 1,
+							"last": false
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expired"
+					}
+				},
+				{
+					"call": "read",
+					"input": {
+						"name": "late"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "status of an id never seen is not found, and of one older than its keeping forgotten",
+			"steps": [
+				{
+					"call": "status",
+					"input": {
+						"id": "7fffffffffff00ff"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "status",
+					"input": {
+						"id": "0000000000010000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "forgotten"
+					}
+				}
+			]
+		}
+	]
+}

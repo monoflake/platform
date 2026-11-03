@@ -137,7 +137,8 @@ let handle = (objectsOf: dict<string> => option<dict<Uint8Array.t>>, bodies, aut
               Contracts.ObjectDeleted.toJson,
               Contracts.ObjectDeleted.toCbor,
             )
-          | List(_) => Refused(500, {failure: Unknown, reason: "unknown", message: "unreachable"})
+          | List(_) | Status(_) =>
+            Refused(500, {failure: Unknown, reason: "unknown", message: "unreachable"})
           }
         }
         respond(response, ~cbor, answer)

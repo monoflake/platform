@@ -30,9 +30,14 @@ let types: array<declared> = [
   },
   {
     name: "database-execute",
-    def: Record([field("statements", 1, List(Type("database-statement")))]),
-    from: "zn3u5",
+    def: Record([
+      field("statements", 1, List(Type("database-statement"))),
+      optional("call", 2, Type("call-step")),
+    ]),
+    from: "zn3u5, 49qyg",
   },
+  // What became of a call's batches, each one committed by its sequence, as `status(id)` asks.
+  {name: "database-status", def: Record([field("id", 1, Prim(#string))]), from: "49qyg"},
   // A statement's rows, each its values in its columns' order, and how many rows it changed.
   {
     name: "database-result",
@@ -83,7 +88,16 @@ let interface_: interface_ = {
         ("beyond_range", #rejected),
         ("storage_full", #unavailable),
         ("read_only", #unavailable),
+        ("expired", #rejected),
+        ("aborted", #unavailable),
       ],
+      ~callers=[#organization, #component],
+    ),
+    op(
+      "status",
+      "database-status",
+      "call-steps",
+      [("not_found", #rejected), ("forgotten", #rejected)],
       ~callers=[#organization, #component],
     ),
     op(

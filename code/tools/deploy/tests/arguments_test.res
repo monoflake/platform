@@ -203,6 +203,54 @@ test("a retire takes its target alone, its app 8 hex digits, and never with a fo
   )
 })
 
+test(
+  "compute parses its organization and optional app, and unknown components name both choices",
+  () => {
+    [None, Some(1.)]->Array.forEach(app =>
+      deepEqual(
+        Arguments.parse(
+          [
+            "apps/compute",
+            "local",
+            "--component",
+            "compute",
+            "--organization",
+            "0000000a",
+            ...app == None ? [] : ["--app", "00000001"],
+          ],
+        ),
+        Ok({
+          ...deploy,
+          directory: "apps/compute",
+          target: "local",
+          component: Some("compute"),
+          organization: Some(10.),
+          app,
+        }),
+      )
+    )
+    deepEqual(
+      Arguments.parse(["apps/compute", "local", "--component", "other"]),
+      Error("--component other is not storage or compute"),
+    )
+    deepEqual(
+      Arguments.parse(["apps/compute", "local", "--component", "compute"]),
+      Error("--component compute asks --organization"),
+    )
+    deepEqual(
+      Arguments.parse([
+        "apps/compute",
+        "control:https://c.example",
+        "--component",
+        "compute",
+        "--organization",
+        "0000000a",
+      ]),
+      Error("--component compute is deployed to a machine, and a control target is not one"),
+    )
+  },
+)
+
 test("a storage component asks its organization, 8 lowercase hex, and a machine target", () => {
   deepEqual(
     Arguments.parse([

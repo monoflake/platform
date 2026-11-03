@@ -12,10 +12,16 @@ let types: array<declared> = [
   {name: "object-name", def: Record([field("name", 1, Prim(#string))]), from: "vr5lw"},
   {
     name: "object-write",
-    def: Record([field("name", 1, Prim(#string)), field("content", 2, Prim(#bytes))]),
-    from: "vr5lw",
+    def: Record([
+      field("name", 1, Prim(#string)),
+      field("content", 2, Prim(#bytes)),
+      optional("call", 3, Type("call-step")),
+    ]),
+    from: "vr5lw, 49qyg",
   },
   {name: "object-written", def: Record([]), from: "vr5lw"},
+  // What became of a call's name writes, as `status(id)` asks, RFC 49qyg.
+  {name: "object-status", def: Record([field("id", 1, Prim(#string))]), from: "49qyg"},
   // A range is its first byte and how many after it; one running past the end is cut there.
   {
     name: "object-range",
@@ -73,7 +79,14 @@ let interface_: interface_ = {
       "write",
       "object-write",
       "object-written",
-      [("too_large", #rejected), ("storage_full", #unavailable)],
+      [("too_large", #rejected), ("storage_full", #unavailable), ("expired", #rejected)],
+      ~callers=[#organization, #component],
+    ),
+    op(
+      "status",
+      "object-status",
+      "call-steps",
+      [("not_found", #rejected), ("forgotten", #rejected)],
       ~callers=[#organization, #component],
     ),
     op(

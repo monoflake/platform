@@ -1,7 +1,7 @@
 /*** The deploy tool's arguments read, each id 8 lowercase hex digits, RFC b8f35. */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--component storage --organization <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <target> --retire <8 hex> [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--component storage|compute --organization <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <target> --retire <8 hex> [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
@@ -75,8 +75,9 @@ let rec read = (args, given) =>
     | Some(ingress) =>
       read(rest, {...given, ingress: Some([...given.ingress->Option.getOr([]), ingress])})
     }
-  | list{"--component", "storage", ...rest} => read(rest, {...given, component: Some("storage")})
-  | list{"--component", text, ..._} => Error(`--component ${text} is not storage`)
+  | list{"--component", ("storage" | "compute") as component, ...rest} =>
+    read(rest, {...given, component: Some(component)})
+  | list{"--component", text, ..._} => Error(`--component ${text} is not storage or compute`)
   | list{"--secrets", text, ...rest} =>
     switch listed(text)->Array.find(n => !(secretName->RegExp.test(n))) {
     | Some(bad) => Error(`--secrets ${bad} is no secret's name`)
@@ -159,11 +160,12 @@ let parse = args => {
     | (Ok(given), None, Some(_)) => controlOnly(given, ~flag="retire")
     | (Ok({target: ""}), None, None) => Error(usage)
     | (Ok({organization: Some(_), component: None}), None, None) =>
-      Error("--organization is the storage component's, and asks --component storage")
-    | (Ok({component: Some(_), organization: None}), None, None) =>
-      Error("--component storage asks --organization, the organization whose salt it is handed")
-    | (Ok({component: Some(_), app: _, target}), None, None) if Control.origin(target) != None =>
-      Error("--component storage is deployed to a machine, and a control target is not one")
+      Error("--organization asks --component storage or --component compute")
+    | (Ok({component: Some(component), organization: None}), None, None) =>
+      Error(`--component ${component} asks --organization`)
+    | (Ok({component: Some(component), app: _, target}), None, None)
+      if Control.origin(target) != None =>
+      Error(`--component ${component} is deployed to a machine, and a control target is not one`)
     | (Ok(given), None, None) => Ok(given)
     }
   }

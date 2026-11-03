@@ -176,10 +176,11 @@ run = [
 
 # TLC over model/protocol, each defect's switch breaking its property, RFC w0w82.
 [tasks.protocol]
-description = "Run TLC over each specification and hold the table it exports: `protocol [--write] [--full]`"
+description = "Run TLC over each specification and hold the table it exports: `protocol [--write] [--full] [<spec>...]`"
 usage = '''
 flag "--write" help="Write the table TLC exports"
 flag "--full" help="Run the full model, never cached"
+arg "[spec]..." help="The specs to run alone, every spec where none is named" var=#true
 '''
 depends = ["//:build"]
-run = 'rescript build > /dev/null && node {{env.WORKSPACE}}/scripts/protocol/protocol.res.mjs ${usage_write:+--write} ${usage_full:+--full}'
+run = 'rescript build > /dev/null && node {{env.WORKSPACE}}/scripts/protocol/protocol.res.mjs ${usage_write:+--write} ${usage_full:+--full} ${usage_spec:-}'

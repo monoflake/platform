@@ -37,6 +37,14 @@ test("a storage deploy runs as the component, its id the one given, and hands it
   )
 })
 
+test("a compute deploy names its component and carries no secrets of its own", () => {
+  let address = Deploying.address(~directory="/d", ~hash)
+  let deploy = Component.deploy(~component="compute", ~app=1., ~hash, ~address, ~into=2.)
+  deepEqual(deploy.runs, Component({component: "compute", id: 1.}))
+  deepEqual(deploy.secrets, None)
+  deepEqual(Component.of_(~component="compute", 1.), {runs: deploy.runs})
+})
+
 test("the salt handed is keys' salt of the master and organization, 64 lowercase hex", () => {
   let expected =
     Keys.Derive.salt(

@@ -1,0 +1,7 @@
+{
+	"lockWait": 1000,
+	"lockHold": 5000,
+	"lookupDeadline": 10000,
+	"idLife": 60000,
+	"statusRetention": 86400000
+}

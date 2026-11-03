@@ -1,0 +1,180 @@
+{
+	"interface": "database",
+	"cases": [
+		{
+			"description": "a call's batches commit with their sequences, and status answers each committed",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "CREATE TABLE t (i INTEGER)"
+							}
+						],
+						"call": {
+							"id": "7fffffffffff0001",
+							"sequence": 0,
+							"expires": 253402300799000,
+							"last": false
+						}
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{
+									"columns": [],
+									"rows": [],
+									"changed": 0
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "INSERT INTO t VALUES (1)"
+							}
+						],
+						"call": {
+							"id": "7fffffffffff0001",
+							"sequence": 1,
+							"expires": 253402300799000,
+							"last": true
+						}
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{
+									"columns": [],
+									"rows": [],
+									"changed": 1
+								}
+							]
+						}
+					}
+				},
+				{
+					"call": "status",
+					"input": {
+						"id": "7fffffffffff0001"
+					},
+					"expect": {
+						"output": {
+							"committed": [0, 1],
+							"expires": 253402300799000,
+							"finished": true
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "a call past its expiry is refused and changes nothing",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "CREATE TABLE late (i INTEGER)"
+							}
+						],
+						"call": {
+							"id": "7fffffffffff0002",
+							"sequence": 0,
+							"expires": 1,
+							"last": false
+						}
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "expired"
+					}
+				},
+				{
+					"call": "status",
+					"input": {
+						"id": "7fffffffffff0002"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				}
+			]
+		},
+		{
+			"description": "status of an id never seen is not found, and of one older than its keeping forgotten",
+			"steps": [
+				{
+					"call": "status",
+					"input": {
+						"id": "7fffffffffff00ff"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "not_found"
+					}
+				},
+				{
+					"call": "status",
+					"input": {
+						"id": "0000000000010000"
+					},
+					"expect": {
+						"failure": "rejected",
+						"reason": "forgotten"
+					}
+				}
+			]
+		},
+		{
+			"description": "a batch held past its 5 s is aborted and changes nothing",
+			"steps": [
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "CREATE TABLE held (i INTEGER)"
+							},
+							{
+								"sql": "WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c) SELECT count(*) FROM c"
+							}
+						]
+					},
+					"expect": {
+						"failure": "unavailable",
+						"reason": "aborted"
+					}
+				},
+				{
+					"call": "execute",
+					"input": {
+						"statements": [
+							{
+								"sql": "SELECT name FROM sqlite_master WHERE name = 'held'"
+							}
+						]
+					},
+					"expect": {
+						"output": {
+							"results": [
+								{
+									"columns": ["name"],
+									"rows": [],
+									"changed": 0
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

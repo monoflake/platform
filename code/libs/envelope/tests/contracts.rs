@@ -99,7 +99,7 @@ fn bytes_are_base64url_unpadded_with_their_unused_bits_zero_and_nothing_else() {
 		(b"hello", "aGVsbG8"),
 	];
 	for (bytes, text) in cases {
-		let write = ObjectWrite { name: "a".into(), content: bytes.to_vec() };
+		let write = ObjectWrite { name: "a".into(), content: bytes.to_vec(), call: None };
 		assert_eq!(write.to_json(), json!({ "name": "a", "content": text }));
 		assert_eq!(ObjectWrite::from_json(&json!({ "name": "a", "content": text })), Ok(write));
 	}
@@ -307,7 +307,14 @@ fn an_operation_is_named_as_its_interface_names_it() {
 	);
 	let reasons: Vec<_> =
 		interface::object::Write::REASONS.iter().map(|r| (r.name, r.failure)).collect();
-	assert_eq!(reasons, [("too_large", Failure::Rejected), ("storage_full", Failure::Unavailable)]);
+	assert_eq!(
+		reasons,
+		[
+			("too_large", Failure::Rejected),
+			("storage_full", Failure::Unavailable),
+			("expired", Failure::Rejected),
+		]
+	);
 	assert!(interface::object::Describe::REASONS.is_empty());
 	assert_eq!(interface::storage::FileWrite::NAME, "file_write");
 	assert_eq!(interface::database::Execute::VERSION, 3);
@@ -340,7 +347,11 @@ fn a_name_no_type_has_is_none() {
 type ObjectCall = Envelope<interface::object::Call>;
 
 fn write() -> interface::object::Call {
-	interface::object::Call::Write(ObjectWrite { name: "a".into(), content: b"hello".to_vec() })
+	interface::object::Call::Write(ObjectWrite {
+		name: "a".into(),
+		content: b"hello".to_vec(),
+		call: None,
+	})
 }
 
 #[test]
@@ -393,7 +404,7 @@ fn a_call_not_as_its_interface_writes_it_says_where() {
 			}
 			ObjectCall::from_json(&call)
 		};
-	let operations = "one of write, read, describe, delete, list";
+	let operations = "one of write, status, read, describe, delete, list";
 	let cases = [
 		(
 			call(json!("database"), json!("write"), input.clone()),
