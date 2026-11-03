@@ -99,6 +99,47 @@ let objectOf = (written: JSON.t) =>
 let refused = (error, fallback) =>
   Web.response(error->JsExn.message->Option.getOr(fallback), {status: 500})
 
+/** An object's extension, the name's suffix after its last dot, `txt` where there is none. */
+let extensionOf = name =>
+  switch name->String.lastIndexOf(".") {
+  | -1 => "txt"
+  | at if at == name->String.length - 1 => "txt"
+  | at => name->String.slice(~start=at + 1, ~end=name->String.length)
+  }
+
+/** The names one page of a listing holds, and the cursor of the next page where there is one. */
+let listed = (page: JSON.t) => {
+  let fields = page->JSON.Decode.object->Option.getOr(Dict.make())
+  let names =
+    fields
+    ->Dict.get("objects")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.filterMap(entry => objectOf(entry))
+  (names, fields->Dict.get("next")->Option.flatMap(JSON.Decode.string))
+}
+
+/** Every object the bucket holds, one name a line, each page read in turn. */
+let listing = async env =>
+  switch env->Reach.objects {
+  | Error(reached) => unreached(reached)
+  | Ok(objects) =>
+    let rec pages = async (after, names) =>
+      switch await objects.list(after, None) {
+      | page =>
+        switch listed(page) {
+        | (more, Some(next)) => await pages(Some(next), names->Array.concat(more))
+        | (more, None) => Ok(names->Array.concat(more))
+        }
+      | exception JsExn(error) => Error(error)
+      }
+    switch await pages(None, []) {
+    | Ok(names) =>
+      Web.response(names->Array.map(name => `${name}\n`)->Array.join(""), {status: 200})
+    | Error(error) => refused(error, "the bucket refused the call")
+    }
+  }
+
 /** An object stored under a name or read back by it, the name kept in a row of the database. */
 let stored = async (env, ~method, ~name, request) =>
   switch (env->Reach.objects, env->Reach.database) {
@@ -106,15 +147,15 @@ let stored = async (env, ~method, ~name, request) =>
   | (Ok(objects), Ok(database)) =>
     switch method {
     | "PUT" =>
-      let body = await request->Web.text
-      switch await objects.write(body, "txt") {
+      let body = Uint8Array.fromBuffer(await request->Web.arrayBuffer)
+      switch await objects.write(body, extensionOf(name)) {
       | exception JsExn(error) => refused(error, "the bucket refused the call")
       | written =>
         switch objectOf(written) {
         | None => Web.response("the bucket named no object", {status: 500})
         | Some(object) =>
           await called(database, recording(name, object), _ =>
-            Web.response("stored", {status: 200})
+            Web.response(`stored ${object}`, {status: 200})
           )
         }
       }
@@ -142,6 +183,7 @@ let fetch = async (~stamp, ~env, request) => {
   | ("PUT" | "GET", ["", "row", key]) if key != "" => await row(env, ~method, ~key, request)
   | ("PUT" | "GET", ["", "object", name]) if name != "" =>
     await stored(env, ~method, ~name, request)
+  | ("GET", ["", "objects"]) => await listing(env)
   | _ => Web.response("not found", {status: 404})
   }
 }

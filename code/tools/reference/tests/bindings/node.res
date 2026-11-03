@@ -9,3 +9,6 @@ type init = {method: string, body?: string}
 type encoder
 @new external textEncoder: unit => encoder = "TextEncoder"
 @send external encode: (encoder, string) => Uint8Array.t = "encode"
+type decoder
+@new external textDecoder: unit => decoder = "TextDecoder"
+@send external decode: (decoder, Uint8Array.t) => string = "decode"

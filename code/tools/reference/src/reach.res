@@ -9,7 +9,7 @@ type database = {execute: JSON.t => promise<JSON.t>}
  * `write` answers the `bucket-object` record as JSON and `read` answers the content as bytes.
  */
 type objects = {
-  write: (string, string) => promise<JSON.t>,
+  write: (Uint8Array.t, string) => promise<JSON.t>,
   read: (string, option<JSON.t>) => promise<Uint8Array.t>,
   describe: string => promise<JSON.t>,
   list: (option<string>, option<int>) => promise<JSON.t>,

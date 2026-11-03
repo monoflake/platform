@@ -194,12 +194,13 @@ test(
 let bucket = (~refuse=?) => {
   let calls = []
   let held = Dict.make()
-  let write = async (content, extension) => {
+  let write = async (bytes, extension) => {
     calls->Array.push(`write ${extension}`)
     switch refuse {
     | Some(reason) => JsError.throwWithMessage(reason)
     | None => ()
     }
+    let content = decode(textDecoder(), bytes)
     let object = `h${Int.toString(content->String.length)}${content->String.slice(
         ~start=0,
         ~end=3,
@@ -215,7 +216,19 @@ let bucket = (~refuse=?) => {
     }
   }
   let unused = async _ => JSON.Null
-  let listing = async (_, _) => JSON.Null
+  // Two pages, one name each, so a listing must follow the cursor.
+  let listing = async (after, _) => {
+    calls->Array.push(`list ${after->Option.getOr("first")}`)
+    let names = held->Dict.keysToArray->Array.toSorted(String.compare)
+    let at = after->Option.mapOr(0, after => names->Array.indexOf(after) + 1)
+    let page = names->Array.slice(~start=at, ~end=at + 1)
+    let entries = page->Array.map(name => JSON.Object(dict{"object": JSON.String(name)}))
+    let fields = dict{"objects": JSON.Array(entries)}
+    if at + 1 < names->Array.length {
+      fields->Dict.set("next", JSON.String(page->Array.getUnsafe(0)))
+    }
+    JSON.Object(fields)
+  }
   (({write, read, describe: unused, list: listing, delete: unused}: Reach.objects), calls)
 }
 
@@ -255,6 +268,39 @@ test("an object is written as txt and its name recorded against the object it ma
   equal(
     JSON.stringify(statements->Array.getUnsafe(1)),
     `{"sql":"INSERT OR REPLACE INTO reference_objects (object_name, object) VALUES (?, ?)","parameters":[{"kind":"text","value":"reference"},{"kind":"text","value":"h11obj.txt"}]}`,
+  )
+})
+
+test(
+  "an object takes its extension from the name's suffix and answers the object it made",
+  async () => {
+    let (fakeDatabase, _) = database()
+    let (fakeBucket, bucketCalls) = bucket()
+    let env: Reach.env = {database: fakeDatabase, objects: fakeBucket}
+    let answer = await stowed(env, "PUT", "photo.png", ~body="png bytes")
+    equal(status(answer), 200)
+    equal(await text(answer), "stored h9png.png")
+    ignore(await stowed(env, "PUT", "trailing.", ~body="dot"))
+    equal(bucketCalls, ["write png", "write txt"])
+  },
+)
+
+test("the bucket is listed one name a line, every page followed", async () => {
+  let (fakeDatabase, _) = database()
+  let (fakeBucket, bucketCalls) = bucket()
+  let env: Reach.env = {database: fakeDatabase, objects: fakeBucket}
+  ignore(await stowed(env, "PUT", "a.txt", ~body="first"))
+  ignore(await stowed(env, "PUT", "b.md", ~body="second"))
+  let answer = await Handler.fetch(
+    ~stamp="build",
+    ~env,
+    request("https://reference.invalid/objects", {method: "GET"}),
+  )
+  equal(status(answer), 200)
+  equal(await text(answer), "h5fir.txt\nh6sec.md\n")
+  equal(
+    bucketCalls->Array.filter(call => call->String.startsWith("list")),
+    ["list first", "list h5fir.txt"],
   )
 })
 
