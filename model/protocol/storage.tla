@@ -8,7 +8,8 @@ EXTENDS Naturals, Sequences, TLC
 CONSTANTS
 	Crashes,             \* A bound of the search, the actors that may stop for good in a run.
 	NAME_BEFORE_CONTENT, \* A write takes write-name before write-content.
-	DELETE_CONTENT       \* A delete removes the content with the name.
+	DELETE_CONTENT,      \* A delete removes the content with the name.
+	REPOINT_NAME         \* A write points a held name at a second content D.
 
 Actors == {"w1", "w2", "d1"}
 Names == {"N1", "N2"}
@@ -19,7 +20,7 @@ Stopped == {"done", "crashed", "absent"}
 VARIABLES
 	jobs,    \* What each actor does in this run, "absent" where the run has no such actor.
 	content, \* Whether the content C is held.
-	named,   \* What each name holds, "C" or "none".
+	named,   \* What each name holds, "C", "D" or "none".
 	lost,    \* Whether the content was lost once.
 	pc,      \* Each actor's next call, or why it makes none.
 	sized,   \* Whether each writer's describe-content found C with a size.
@@ -30,10 +31,10 @@ vars == <<jobs, content, named, lost, pc, sized, steps, crashes>>
 
 Writes(a) == jobs[a] \in {"write N1", "write N2"}
 Target(a) == IF jobs[a] = "write N2" THEN "N2" ELSE "N1"
-Held(n) == named[n] = "C"
+Held(n) == named[n] /= "none"
 Read(n) ==
 	IF ~Held(n) THEN "not_found"
-	ELSE IF content THEN "found"
+	ELSE IF named[n] = "D" \/ content THEN "found"
 	ELSE "unavailable"
 
 Init ==
@@ -72,7 +73,8 @@ WriteContent(a) ==
 
 WriteName(a) ==
 	/\ pc[a] = "write-name"
-	/\ named' = [named EXCEPT ![Target(a)] = "C"]
+	/\ named' = [named EXCEPT ![Target(a)] =
+		IF REPOINT_NAME /\ Held(Target(a)) THEN "D" ELSE "C"]
 	/\ Goes(a, IF NAME_BEFORE_CONTENT /\ ~sized[a] THEN "write-content" ELSE "done")
 	/\ Take(a, "write-name")
 	/\ UNCHANGED <<jobs, content, lost, sized, crashes>>
@@ -118,23 +120,23 @@ Spec == Init /\ [][Next]_vars
 TypeOK ==
 	/\ jobs \in [Actors -> Jobs]
 	/\ content \in BOOLEAN
-	/\ named \in [Names -> {"C", "none"}]
+	/\ named \in [Names -> {"C", "D", "none"}]
 	/\ lost \in BOOLEAN
 	/\ pc \in [Actors -> Calls \cup Stopped]
 	/\ sized \in [Actors -> BOOLEAN]
 	/\ crashes \in 0..Crashes
 
-\* A name held means C held, unless C was lost, after which a read of it answers unavailable.
+\* A held name reads found unless its content was lost, after which it reads unavailable.
 NoNameWithoutContent ==
 	\A n \in Names : Held(n) => Read(n) = "found" \/ (lost /\ Read(n) = "unavailable")
 
 \* C is never removed while a name holds it, but by its loss.
 ContentHeld ==
-	[][(content /\ ~content' /\ \E n \in Names : Held(n)) => (~lost /\ lost')]_vars
+	[][(content /\ ~content' /\ \E n \in Names : named[n] = "C") => (~lost /\ lost')]_vars
 
-\* A name once held always names C, held or deleted, never another content.
+\* A name once held keeps its content or is deleted, never naming another content.
 ObjectFixed ==
-	[][\A n \in Names : Held(n) => named'[n] \in {"C", "none"}]_vars
+	[][\A n \in Names : Held(n) => named'[n] \in {named[n], "none"}]_vars
 
 \* Rows for the runner to gather into the fixture, each run once every actor has stopped.
 Ended == \A a \in Actors : pc[a] \in Stopped

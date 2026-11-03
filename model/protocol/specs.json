@@ -49,7 +49,8 @@
 			"inputs": ["model/protocol/storage.tla", "model/protocol/storage.cfg"],
 			"switches": [
 				{ "name": "NAME_BEFORE_CONTENT", "breaks": "NoNameWithoutContent" },
-				{ "name": "DELETE_CONTENT", "breaks": "ContentHeld" }
+				{ "name": "DELETE_CONTENT", "breaks": "ContentHeld" },
+				{ "name": "REPOINT_NAME", "breaks": "ObjectFixed" }
 			],
 			"export": {
 				"command": ["node", "model/protocol/storage_runs.res.mjs", "{output}"],

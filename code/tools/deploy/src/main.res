@@ -566,6 +566,9 @@ let onControl = async (named, name, run) =>
   }
 
 let main = async () => {
+  // The salt master is read once and taken out of the environment, so no child process inherits it.
+  let master = Host.env->Dict.get(Component.masterVariable)
+  Host.env->Dict.delete(Component.masterVariable)
   let started = Date.now()
   switch Arguments.parse(Host.argv->Array.slice(~start=2)) {
   | Error(why) =>
@@ -599,11 +602,8 @@ let main = async () => {
     )
     Host.setExitCode(Host.process, 2)
   | Ok({component: Some(_), organization})
-    if Component.secrets(
-      ~master=Host.env->Dict.get(Component.masterVariable),
-      ~organization,
-    )->Result.isError =>
-    Component.secrets(~master=Host.env->Dict.get(Component.masterVariable), ~organization)
+    if Component.secrets(~master, ~organization)->Result.isError =>
+    Component.secrets(~master, ~organization)
     ->Result.mapError(why => Console.error(`deploy: ${why}`))
     ->ignore
     Host.setExitCode(Host.process, 2)
@@ -624,10 +624,7 @@ let main = async () => {
     let salt = switch component {
     | None => None
     | Some(_) =>
-      switch Component.secrets(
-        ~master=Host.env->Dict.get(Component.masterVariable),
-        ~organization,
-      ) {
+      switch Component.secrets(~master, ~organization) {
       | Ok(held) => Some(held)
       | Error(_) => None
       }

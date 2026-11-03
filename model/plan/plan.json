@@ -1,6 +1,41 @@
 {
 	"items": [
 		{
+			"id": "entry-storage-admission",
+			"says": "monoflake/driver's entry admits the storage component from outside a binding's subnet on an app's provisional path, `Host {id}.b{binding}`, storage alone among components, so the organization's gateway reaches `/v1/storage/...`; provisional until monoflake/driver's draft RFC 3txyw decides how the entry tells the gateway's traffic from another's, thread fifth's step 4",
+			"holds": {
+				"owes": "monoflake/driver's RFC 3txyw decided, and the admission replaced by what it decides"
+			}
+		},
+		{
+			"id": "storage-scope-row",
+			"says": "The gateway reads the organization's storage as `{id}.b{binding}` from a value it is deployed with, as storage on a machine is deployed past the control, which holds no deployment or scope row of it; the control writes the reserved scope `storage` as the storage deployment's mount row once storage is deployed through a control, ending the gateway's value and the entry's admission",
+			"holds": {
+				"owes": "storage deployed through a control, its scope row written there"
+			}
+		},
+		{
+			"id": "slot-sockets-released",
+			"says": "monoflake/driver keeps each deployment's object bucket slot sockets and fill.json until a deploy's delete reaches them; a released machine item or an ended binding leaves them, served again at the next start, and fill.json is written in place, so a crash mid-write leaves a slot unserved until a redeploy; found by thread fifth's second slice review",
+			"holds": {
+				"owes": "the sockets removed with a released item or an ended binding, and fill.json written by rename"
+			}
+		},
+		{
+			"id": "bucket-id-collision",
+			"says": "deploy makes a bucket's id as the first 32 bits of BLAKE3 over the app id and the slot name, `code/tools/deploy/src/deploying.res`, with no check for another slot holding it, so two slots of one organization may share a bucket; about 1 percent near 9,300 buckets; found by thread fifth's second slice review",
+			"holds": {
+				"owes": "a deploy refused where another slot holds its bucket id, or a wider id"
+			}
+		},
+		{
+			"id": "storage-salt-rotation",
+			"says": "deploy sends nothing to a storage already running its version, `running this version already`, so a rotated salt master never reaches a running storage until its bundle changes; found by thread fifth's second slice review",
+			"holds": {
+				"owes": "a storage deploy that compares or always hands its secrets"
+			}
+		},
+		{
 			"id": "runner-within-backoff",
 			"says": "The local conform's samples take 30.5 s, about 25 s of it the deployments kind, whose 10 `within` steps retry from 100 ms doubling to 2 s in `code/tools/runner/src/run.res`, so each may overshoot readiness by up to about 2 s in both forms; a reading, not measured. First look when the runner is next touched: each step's time and tries in the runner's output, or one local run with a shorter longest delay",
 			"holds": {
