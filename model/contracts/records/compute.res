@@ -194,6 +194,19 @@ let types: array<declared> = [
     ]),
     from: "49qyg, vr5lw",
   },
+  // A call compute recorded as it issued the id, in its own `records` database: the app and the
+  // function called, when the id expires, and the outcome once told, 49qyg.
+  {
+    name: "call",
+    def: Record([
+      field("id", 1, Prim(#string)),
+      field("app", 2, Id("app")),
+      field("function", 3, Prim(#string)),
+      field("expires", 4, Prim(#uint53)),
+      optional("outcome", 5, Type("call-outcome")),
+    ]),
+    from: "49qyg",
+  },
   // The compute's section of a bundle, each app by its id.
   {
     name: "bundle-compute",

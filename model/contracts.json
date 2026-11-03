@@ -1211,6 +1211,46 @@
 				}
 			]
 		},
+		"call": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "app",
+					"key": 2,
+					"shape": {
+						"id": "app"
+					}
+				},
+				{
+					"name": "function",
+					"key": 3,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "expires",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "outcome",
+					"key": 5,
+					"shape": {
+						"type": "call-outcome"
+					},
+					"optional": true
+				}
+			]
+		},
 		"bundle-compute": {
 			"record": [
 				{
@@ -4666,6 +4706,106 @@
 					"shape": {
 						"id": "bucket"
 					}
+				}
+			]
+		},
+		"call-id": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				}
+			]
+		},
+		"call-outcome": {
+			"enum": [
+				{
+					"name": "success",
+					"code": 1
+				},
+				{
+					"name": "rejected",
+					"code": 2
+				},
+				{
+					"name": "unavailable",
+					"code": 3
+				},
+				{
+					"name": "unknown",
+					"code": 4
+				}
+			],
+			"ordered": false
+		},
+		"call-status": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "outcome",
+					"key": 2,
+					"shape": {
+						"type": "call-outcome"
+					},
+					"optional": true
+				},
+				{
+					"name": "committed",
+					"key": 3,
+					"shape": {
+						"list": {
+							"prim": "uint32"
+						}
+					}
+				},
+				{
+					"name": "expires",
+					"key": 4,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "finished",
+					"key": 5,
+					"shape": {
+						"prim": "bool"
+					}
+				}
+			]
+		},
+		"call-unknown": {
+			"record": [
+				{
+					"name": "id",
+					"key": 1,
+					"shape": {
+						"prim": "string"
+					}
+				},
+				{
+					"name": "looked",
+					"key": 2,
+					"shape": {
+						"prim": "uint53"
+					}
+				},
+				{
+					"name": "step",
+					"key": 3,
+					"shape": {
+						"prim": "uint32"
+					},
+					"optional": true
 				}
 			]
 		},
@@ -8878,6 +9018,29 @@
 						},
 						{
 							"name": "quota_exceeded",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["capability"]
+				}
+			]
+		},
+		"compute": {
+			"version": 1,
+			"bounds": {},
+			"declared": [],
+			"operations": [
+				{
+					"name": "status",
+					"input": "call-id",
+					"output": "call-status",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "forgotten",
 							"failure": "rejected"
 						}
 					],
