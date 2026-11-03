@@ -138,6 +138,10 @@ importers:
       '@monoflake/keys':
         specifier: workspace:*
         version: link:../../libs/keys
+    devDependencies:
+      wrangler:
+        specifier: ^4.156.1
+        version: 4.156.1
 
   code/substrate/host:
     dependencies:

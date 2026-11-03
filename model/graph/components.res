@@ -292,6 +292,8 @@ let own: dict<component> = dict{
       ),
     ],
     uses: ["capability*", "scope*", "compat*", "envelope*", "keys*"],
+    // deploy bundles it with wrangler, as it does every Worker, n0o4l.
+    takes: [{language: #rescript, name: "wrangler", major: "4"}],
   },
   "database": {
     language: #rescript,
