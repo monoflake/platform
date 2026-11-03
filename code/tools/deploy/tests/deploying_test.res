@@ -70,7 +70,11 @@ test("a deployment is running, waiting, elsewhere or failed, by its version and 
 
 test("a deploy carries bindings only where given, and the contract reads them back", () => {
   let address = Deploying.address(~directory="/d", ~hash)
-  let bound = switch Deploying.bindings([{name: "database", type_: Database}], ~database=7.) {
+  let bound = switch Deploying.bindings(
+    [{name: "database", type_: Database}],
+    ~app=1.,
+    ~database=7.,
+  ) {
   | Some(bindings) => bindings
   | None => JsExn.throw("no bindings made")
   }
@@ -94,10 +98,37 @@ test("each database slot is filled with the one item, and a build with none carr
   deepEqual(
     Deploying.bindings(
       [{name: "database", type_: Database}, {name: "archive", type_: Database}],
+      ~app=1.,
       ~database=3.,
     ),
     Some({database: dict{"database": 3., "archive": 3.}}),
   )
-  deepEqual(Deploying.bindings([], ~database=3.), None)
-  deepEqual(Deploying.bindings([{name: "peer", type_: App}], ~database=3.), None)
+  deepEqual(Deploying.bindings([], ~app=1., ~database=3.), None)
+  deepEqual(Deploying.bindings([{name: "peer", type_: App}], ~app=1., ~database=3.), None)
+})
+
+test("a bucket's id is BLAKE3 of the app's id and the slot's name, the same on every call", () => {
+  deepEqual(Deploying.bucketId(~app=1., ~slot="files"), 1195018073.)
+  deepEqual(Deploying.bucketId(~app=1., ~slot="files"), 1195018073.)
+  deepEqual(Deploying.bucketId(~app=4275878552., ~slot="files"), 3940802388.)
+})
+
+test("a bucket's id differs for another slot or another app", () => {
+  deepEqual(Deploying.bucketId(~app=1., ~slot="other"), 3802056418.)
+  deepEqual(Deploying.bucketId(~app=2., ~slot="files"), 729273978.)
+})
+
+test("each object bucket slot is filled with its own id beside the database slots", () => {
+  deepEqual(
+    Deploying.bindings(
+      [{name: "files", type_: ObjectBucket}, {name: "database", type_: Database}],
+      ~app=1.,
+      ~database=3.,
+    ),
+    Some({database: dict{"database": 3.}, bucket: dict{"files": 1195018073.}}),
+  )
+  deepEqual(
+    Deploying.bindings([{name: "files", type_: ObjectBucket}], ~app=1.),
+    Some({bucket: dict{"files": 1195018073.}}),
+  )
 })

@@ -21,7 +21,7 @@ let declared: string => result<array<Contracts.DeploymentKind.t>, string>
 
 /**
  * What metadata.json declares beside the kinds and ingress, the slots a build asks to be filled,
- * database alone for now, and the functions it holds, RFC 49qyg and RFC rt6gi.
+ * database and object_bucket for now, and the functions it holds, RFC 49qyg and RFC rt6gi.
  */
 type release = {
   kinds: option<array<Contracts.DeploymentKind.t>>,
@@ -32,7 +32,7 @@ type release = {
 
 /**
  * The release declarations with command line ingress unless metadata.json declares it too, a slot
- * of another type than database or one named twice refused.
+ * of file_bucket or app, or one named twice refused.
  */
 let release: (~ingress: array<Contracts.AppIngress.t>=?, string) => result<release, string>
 

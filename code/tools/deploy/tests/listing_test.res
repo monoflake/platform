@@ -39,6 +39,7 @@ test("an empty list is sent again with one container, at the next generation", (
         },
         into: 1.,
         database: None,
+        object: None,
       }),
     ),
   )
@@ -50,11 +51,11 @@ test("a container already asked is held, and nothing is sent", () => {
       described(1., [holding(3., Listing.capacity, Made({address: "a"}))]),
       ~fresh=counting(),
     ),
-    Ok(Held({into: 3., database: None})),
+    Ok(Held({into: 3., database: None, object: None})),
   )
   deepEqual(
     Listing.planned(described(1., [holding(2., Listing.capacity, Making)]), ~fresh=counting()),
-    Ok(Held({into: 2., database: None})),
+    Ok(Held({into: 2., database: None, object: None})),
   )
 })
 
@@ -110,7 +111,7 @@ let newDatabase: Contracts.ManagementCapacity.t = Database({size: 268435456.})
 
 test("a database slot adds a database of 268435456 bytes beside the container", () =>
   deepEqual(
-    Listing.planned(described(4., []), ~fresh=counting(), ~slot=true),
+    Listing.planned(described(4., []), ~fresh=counting(), ~database=true),
     Ok(
       Apply({
         list: {
@@ -122,6 +123,7 @@ test("a database slot adds a database of 268435456 bytes beside the container", 
         },
         into: 1.,
         database: Some(2.),
+        object: None,
       }),
     ),
   )
@@ -140,16 +142,16 @@ test("a Made database fills the slot, the lowest id among the Made, and nothing 
         ],
       ),
       ~fresh=counting(),
-      ~slot=true,
+      ~database=true,
     ),
-    Ok(Held({into: 1., database: Some(3.)})),
+    Ok(Held({into: 1., database: Some(3.), object: None})),
   )
   deepEqual(
     Listing.planned(
       described(1., [holding(1., Listing.capacity, Making), holding(2., databased, Making)]),
       ~fresh=counting(),
     ),
-    Ok(Held({into: 1., database: None})),
+    Ok(Held({into: 1., database: None, object: None})),
   )
 })
 
@@ -165,9 +167,9 @@ test("a Made database beside a Failed one with a lower id fills the slot", () =>
         ],
       ),
       ~fresh=counting(),
-      ~slot=true,
+      ~database=true,
     ),
-    Ok(Held({into: 1., database: Some(5.)})),
+    Ok(Held({into: 1., database: Some(5.), object: None})),
   )
 )
 
@@ -175,9 +177,9 @@ test("a database unasked is no database, and its id is taken by none", () =>
   switch Listing.planned(
     described(2., [holding(7., databased, Unasked({since: 1.}))]),
     ~fresh=counting(),
-    ~slot=true,
+    ~database=true,
   ) {
-  | Ok(Apply({list, into, database})) =>
+  | Ok(Apply({list, into, database, object: _})) =>
     deepEqual((into, database), (8., Some(9.)))
     deepEqual(list.items->Array.map(i => i.id), [8., 9.])
   | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
@@ -188,18 +190,18 @@ test("a container held and no database sends both again, and a database alone is
   switch Listing.planned(
     described(1., [holding(1., Listing.capacity, Made({address: "a"}))]),
     ~fresh=counting(),
-    ~slot=true,
+    ~database=true,
   ) {
-  | Ok(Apply({list, into, database: Some(filled)})) =>
+  | Ok(Apply({list, into, database: Some(filled), object: _})) =>
     deepEqual((into, filled, list.generation), (1., 2., 2.))
     deepEqual(list.items->Array.map(i => i.id), [1., 2.])
-  | Ok(Apply({database: None})) | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
+  | Ok(Apply({database: None, _})) | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
   }
   ok(
     Listing.planned(
       described(1., [holding(2., databased, Made({address: "d"}))]),
       ~fresh=counting(),
-      ~slot=true,
+      ~database=true,
     )->Result.isError,
   )
 })
@@ -217,9 +219,9 @@ test("Failed or Making databases and no Made one send the list again with a new 
         ],
       ),
       ~fresh=counting(),
-      ~slot=true,
+      ~database=true,
     ) {
-    | Ok(Apply({list, into, database})) =>
+    | Ok(Apply({list, into, database, object: _})) =>
       deepEqual((into, database, list.generation), (1., Some(10.), 4.))
       deepEqual(
         list.items->Array.map(i => (i.id, i.capacity)),
@@ -241,7 +243,7 @@ test("every item sent again carries a credential no other carries", () =>
       ],
     ),
     ~fresh=counting(),
-    ~slot=true,
+    ~database=true,
   ) {
   | Ok(Apply({list})) =>
     let credentials =
@@ -255,7 +257,7 @@ test("every item sent again carries a credential no other carries", () =>
 )
 
 test("a container and a database made together carry credentials of their own", () =>
-  switch Listing.planned(described(1., []), ~fresh=counting(), ~slot=true) {
+  switch Listing.planned(described(1., []), ~fresh=counting(), ~database=true) {
   | Ok(Apply({list})) =>
     let credentials =
       list.items->Array.flatMap(i =>
@@ -264,4 +266,125 @@ test("a container and a database made together carry credentials of their own", 
     deepEqual(Set.fromArray(credentials)->Set.size, 2)
   | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
   }
+)
+
+let objectItem: Contracts.ManagementCapacity.t = Object({size: 1024.})
+let newObject: Contracts.ManagementCapacity.t = Object({size: 268435456.})
+
+test("an object bucket slot adds an object item of 268435456 bytes beside the container", () =>
+  deepEqual(
+    Listing.planned(described(4., []), ~fresh=counting(), ~bucket=true),
+    Ok(
+      Apply({
+        list: {
+          generation: 5.,
+          items: [
+            {id: 1., capacity: Listing.capacity, credentials: [credentialOf(1)]},
+            {id: 2., capacity: newObject, credentials: [credentialOf(2)]},
+          ],
+        },
+        into: 1.,
+        database: None,
+        object: Some(2.),
+      }),
+    ),
+  )
+)
+
+test("a build declaring a database and an object bucket gets both items", () =>
+  deepEqual(
+    Listing.planned(described(0., []), ~fresh=counting(), ~database=true, ~bucket=true),
+    Ok(
+      Apply({
+        list: {
+          generation: 1.,
+          items: [
+            {id: 1., capacity: Listing.capacity, credentials: [credentialOf(1)]},
+            {id: 2., capacity: newDatabase, credentials: [credentialOf(2)]},
+            {id: 3., capacity: newObject, credentials: [credentialOf(3)]},
+          ],
+        },
+        into: 1.,
+        database: Some(2.),
+        object: Some(3.),
+      }),
+    ),
+  )
+)
+
+test("a Made object item fills the slot, the lowest id among the Made, and nothing is sent", () =>
+  deepEqual(
+    Listing.planned(
+      described(
+        1.,
+        [
+          holding(1., Listing.capacity, Made({address: "a"})),
+          holding(5., objectItem, Made({address: "o"})),
+          holding(3., objectItem, Made({address: "p"})),
+          holding(2., objectItem, Making),
+        ],
+      ),
+      ~fresh=counting(),
+      ~bucket=true,
+    ),
+    Ok(Held({into: 1., database: None, object: Some(3.)})),
+  )
+)
+
+test("a container held and no object item sends the list again with a new one", () =>
+  switch Listing.planned(
+    described(
+      3.,
+      [
+        holding(1., Listing.capacity, Made({address: "a"})),
+        holding(2., databased, Made({address: "d"})),
+        holding(4., objectItem, Failed({reason: "beyond_host"})),
+      ],
+    ),
+    ~fresh=counting(),
+    ~database=true,
+    ~bucket=true,
+  ) {
+  | Ok(Apply({list, into, database, object})) =>
+    deepEqual((into, database, object, list.generation), (1., Some(2.), Some(5.), 4.))
+    deepEqual(
+      list.items->Array.map(i => (i.id, i.capacity)),
+      [(1., Listing.capacity), (2., databased), (5., newObject)],
+    )
+    let credentials =
+      list.items->Array.flatMap(i => i.credentials->Array.map(c => c->TypedArray.get(0)))
+    deepEqual(Set.fromArray(credentials)->Set.size, 3)
+  | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
+  }
+)
+
+test("a build declaring no bucket leaves the object items it finds alone", () =>
+  deepEqual(
+    Listing.planned(
+      described(
+        1.,
+        [
+          holding(1., Listing.capacity, Made({address: "a"})),
+          holding(2., objectItem, Made({address: "o"})),
+        ],
+      ),
+      ~fresh=counting(),
+      ~database=true,
+    ),
+    Ok(
+      Apply({
+        list: {
+          generation: 2.,
+          items: [
+            {id: 1., capacity: Listing.capacity, credentials: [credentialOf(1)]},
+            {id: 2., capacity: objectItem, credentials: [credentialOf(2)]},
+            {id: 3., capacity: newDatabase, credentials: [credentialOf(3)]},
+          ],
+        },
+        into: 1.,
+        database: Some(3.),
+        object: None,
+      }),
+    ),
+  )
 )

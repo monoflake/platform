@@ -1,11 +1,12 @@
 {
 	"name": "@monoflake/deploy",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"private": true,
 	"license": "MIT OR Apache-2.0",
 	"type": "module",
 	"dependencies": {
 		"@monoflake/envelope": "workspace:*",
-		"@monoflake/ids": "workspace:*"
+		"@monoflake/ids": "workspace:*",
+		"@monoflake/keys": "workspace:*"
 	}
 }

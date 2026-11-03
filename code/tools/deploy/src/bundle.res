@@ -171,20 +171,20 @@ let listed = (o, key, singular, decode) =>
 /** The first name an array of declared names holds twice. */
 let repeated = names => names->Array.findWithIndex((name, at) => names->Array.indexOf(name) != at)
 
-/** The slots declared, each named once and of a type deploy fills, which is database alone. */
+/** The slots declared, each named once and of a type deploy fills, database and object_bucket. */
 let slotsOf = o =>
   listed(o, "slots", "slot", Contracts.ManifestSlot.fromJson)->Result.flatMap(slots =>
     switch slots {
     | None => Ok(None)
     | Some(slots) =>
       switch (
-        slots->Array.find(s => s.type_ != Database),
+        slots->Array.find(s => s.type_ == FileBucket || s.type_ == App),
         repeated(slots->Array.map(s => s.name)),
       ) {
       | (Some({name, type_}), _) =>
         let named = Contracts.SlotType.toJson(type_)->JSON.Decode.string->Option.getOr("another")
         Error(
-          `declares slot ${name} of type ${named}, and deploy fills database slots alone for now`,
+          `declares slot ${name} of type ${named}, and deploy fills database and object_bucket slots alone for now`,
         )
       | (None, Some(name)) => Error(`declares slot ${name} twice`)
       | (None, None) => Ok(Some(slots))

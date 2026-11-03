@@ -141,22 +141,25 @@ let after = async (phase, next) =>
 
 /**
  * The list sent with a container for the app if it holds none, and a database beside it where the
- * build declares a database slot and the list holds none, and those made.
+ * build declares a database or an object bucket slot and the list holds none, and those made.
  */
-let listed = async (target, ~database, ~dry) =>
+let listed = async (target, ~database, ~bucket, ~dry) =>
   switch describeList(target) {
   | Error(refused) => Error(refusal(refused))
   | Ok(described) =>
     let fresh = () => Host.fillRandom(Uint8Array.fromLength(32))
-    let items = (into, database) =>
+    let items = (into, database, object) =>
       `container ${Float.toString(into)}${database->Option.mapOr("", id =>
           ` and database ${Float.toString(id)}`
-        )}`
-    switch Listing.planned(described, ~fresh, ~slot=database) {
+        )}${object->Option.mapOr("", id => ` and object ${Float.toString(id)}`)}`
+    switch Listing.planned(described, ~fresh, ~database, ~bucket) {
     | Error(why) => Error(why)
-    | Ok(Held({into, database})) => Ok((into, database, `${items(into, database)} held already`))
-    | Ok(Apply({list, into, database})) =>
-      let named = `${items(into, database)} at generation ${Float.toString(list.generation)}`
+    | Ok(Held({into, database, object})) =>
+      Ok((into, database, `${items(into, database, object)} held already`))
+    | Ok(Apply({list, into, database, object})) =>
+      let named = `${items(into, database, object)} at generation ${Float.toString(
+          list.generation,
+        )}`
       if dry {
         Ok((into, database, `${named} would be sent`))
       } else {
@@ -167,7 +170,7 @@ let listed = async (target, ~database, ~dry) =>
             await waited(
               () => describeList(target)->Result.mapError(refusal),
               described =>
-                [Some(into), database]
+                [Some(into), database, object]
                 ->Array.filterMap(id => id)
                 ->Array.reduce(Ok(Some()), (all, id) =>
                   all->Result.flatMap(all =>
@@ -203,14 +206,17 @@ let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~dry) =
   | Error(why) => Error(why)
   | Ok(Running) => Ok("running this version already, nothing sent")
   | Ok(Waiting | Elsewhere | Failed(_)) if dry =>
-    let filled = bindings->Option.mapOr("", (bindings: Contracts.AppBindings.t) =>
-      bindings.database->Option.mapOr("", slots =>
+    let filling = (slots, ~what) =>
+      slots->Option.mapOr("", slots =>
         slots
         ->Dict.toArray
-        ->Array.map(((slot, id)) => ` filling slot ${slot} with database ${Float.toString(id)}`)
+        ->Array.map(((slot, id)) => ` filling slot ${slot} with ${what} ${Float.toString(id)}`)
         ->Array.join(",")
       )
-    )
+    let filled =
+      bindings->Option.mapOr("", (bindings: Contracts.AppBindings.t) =>
+        filling(bindings.database, ~what="database") ++ filling(bindings.bucket, ~what="bucket")
+      )
     Ok(`${address} would be deployed${filled}`)
   | Ok(Waiting | Elsewhere | Failed(_)) =>
     switch called(
@@ -264,6 +270,7 @@ let sent = async (
   let target = Machine.target(named)
   let address = Deploying.address(~directory=facts.directory, ~hash)
   let wantsDatabase = slots->Array.some(s => s.type_ == Database)
+  let wantsBucket = slots->Array.some(s => s.type_ == ObjectBucket)
   let copy = dry
     ? async () => Ok("nothing copied, as --dry-run asks")
     : async () => copied(target, path, facts, Deploying.fileName(hash))
@@ -278,7 +285,7 @@ let sent = async (
       ~deploy=() =>
         timed(
           "list",
-          () => listed(target, ~database=wantsDatabase, ~dry),
+          () => listed(target, ~database=wantsDatabase, ~bucket=wantsBucket, ~dry),
           ((_, _, said)) => said,
         )->after(((into, database, _)) =>
           timed(
@@ -290,9 +297,7 @@ let sent = async (
                 ~hash,
                 ~address,
                 ~into,
-                ~bindings=?database->Option.flatMap(
-                  database => Deploying.bindings(slots, ~database),
-                ),
+                ~bindings=?Deploying.bindings(slots, ~app, ~database?),
                 ~dry,
               ),
             said => said,

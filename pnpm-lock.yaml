@@ -153,6 +153,9 @@ importers:
       '@monoflake/ids':
         specifier: workspace:*
         version: link:../../libs/ids
+      '@monoflake/keys':
+        specifier: workspace:*
+        version: link:../../libs/keys
 
   code/tools/envelope-generator: {}
 

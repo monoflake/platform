@@ -24,10 +24,21 @@ let deploy: (
 ) => Contracts.DeploymentDeploy.t
 
 /**
- * What fills a build's declared slots on a machine, each `database` slot the id given, or none
- * where the build declares no database slot, so a deploy of it carries no `bindings`.
+ * The bucket id for an app's slot, the same on every deploy: the first four bytes, big-endian, of
+ * BLAKE3 over the app's id in 4 bytes big-endian then the slot's name in UTF-8, as a uint32.
  */
-let bindings: (array<Contracts.ManifestSlot.t>, ~database: float) => option<Contracts.AppBindings.t>
+let bucketId: (~app: float, ~slot: string) => float
+
+/**
+ * What fills a build's declared slots on a machine, each `database` slot the id given and each
+ * `object_bucket` slot its `bucketId`, or none where the build declares neither, so a deploy of it
+ * carries no `bindings`.
+ */
+let bindings: (
+  array<Contracts.ManifestSlot.t>,
+  ~app: float,
+  ~database: float=?,
+) => option<Contracts.AppBindings.t>
 
 /** The app's deployment, as describe asks it. */
 let of_: float => Contracts.DeploymentOf.t

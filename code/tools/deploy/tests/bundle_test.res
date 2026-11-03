@@ -287,16 +287,27 @@ test("metadata declares slots and functions, read as the manifest's types", () =
   )
 })
 
-test("a slot of another type than database, or named twice, or a malformed one, is refused", () => {
+test("a slot of file_bucket or app, or named twice, or a malformed one, is refused", () => {
   deepEqual(
-    Bundle.release(`{"slots":[{"name":"files","type":"object_bucket"}]}`),
+    Bundle.release(`{"slots":[{"name":"files","type":"file_bucket"}]}`),
     Error(
-      "declares slot files of type object_bucket, and deploy fills database slots alone for now",
+      "declares slot files of type file_bucket, and deploy fills database and object_bucket slots alone for now",
     ),
   )
   deepEqual(
+    Bundle.release(`{"slots":[{"name":"files","type":"object_bucket"}]}`),
+    Ok({
+      kinds: None,
+      ingress: None,
+      slots: Some([{name: "files", type_: ObjectBucket}]),
+      functions: None,
+    }),
+  )
+  deepEqual(
     Bundle.release(`{"slots":[{"name":"peer","type":"app"}]}`),
-    Error("declares slot peer of type app, and deploy fills database slots alone for now"),
+    Error(
+      "declares slot peer of type app, and deploy fills database and object_bucket slots alone for now",
+    ),
   )
   deepEqual(
     Bundle.release(`{"slots":[{"name":"database","type":"database"},{"name":"database","type":"database"}]}`),

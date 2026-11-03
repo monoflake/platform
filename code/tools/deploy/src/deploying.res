@@ -18,14 +18,45 @@ let deploy = (~app, ~hash, ~address, ~into, ~bindings=?): Contracts.DeploymentDe
   ?bindings,
 }
 
-let bindings = (slots: array<Contracts.ManifestSlot.t>, ~database) => {
-  let databases = slots->Array.filter(s => s.type_ == Database)
-  switch databases {
-  | [] => None
-  | _ =>
+let bucketId = (~app, ~slot) => {
+  let name = Bytes.utf8(slot)
+  let input = Uint8Array.fromLength(4 + TypedArray.length(name))
+  // Big-endian bytes by float arithmetic, as a uint32 does not fit the language's int.
+  let byte = place =>
+    Float.toInt(Math.floor(app /. place) -. Math.floor(app /. place /. 256.) *. 256.)
+  input->Bytes.copyInto(
+    Uint8Array.fromArray([byte(16777216.), byte(65536.), byte(256.), byte(1.)]),
+    0,
+  )
+  input->Bytes.copyInto(name, 4)
+  let hash = Keys.Hash.plain(input)
+  [0, 1, 2, 3]->Array.reduce(0., (sum, at) =>
+    sum *. 256. +. Int.toFloat(hash->TypedArray.get(at)->Option.getOr(0))
+  )
+}
+
+let bindings = (slots: array<Contracts.ManifestSlot.t>, ~app, ~database=?) => {
+  let named = type_ => slots->Array.filter(s => s.type_ == type_)
+  let filled = (slots, id) => {
     let filled = Dict.make()
-    databases->Array.forEach(s => filled->Dict.set(s.name, database))
-    Some(({database: filled}: Contracts.AppBindings.t))
+    slots->Array.forEach((s: Contracts.ManifestSlot.t) => filled->Dict.set(s.name, id(s.name)))
+    filled
+  }
+  let databases = database->Option.flatMap(database =>
+    switch named(Database) {
+    | [] => None
+    | slots => Some(filled(slots, _ => database))
+    }
+  )
+  let buckets = switch named(ObjectBucket) {
+  | [] => None
+  | slots => Some(filled(slots, slot => bucketId(~app, ~slot)))
+  }
+  switch (databases, buckets) {
+  | (None, None) => None
+  | (Some(database), None) => Some(({database: database}: Contracts.AppBindings.t))
+  | (None, Some(bucket)) => Some(({bucket: bucket}: Contracts.AppBindings.t))
+  | (Some(database), Some(bucket)) => Some(({database, bucket}: Contracts.AppBindings.t))
   }
 }
 

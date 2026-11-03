@@ -29,7 +29,7 @@ let tools: dict<tool> = dict{
   "deploy": {
     what: "a Worker's bundle, built by wrangler, packed as the function kind takes it and sent to a test machine as a list and a deployment, what a user runs to deploy an app of their own, n0o4l",
     languages: [#rescript],
-    uses: ["envelope*", "ids*"],
+    uses: ["envelope*", "ids*", "keys*"],
   },
   "conform": {
     what: "the kinds' samples run by the runner against the driver a test machine runs, on a second driver started from its binary with bindings of its own, the live one asked beside it and everything the run made removed after, n0o4l",

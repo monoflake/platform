@@ -10,25 +10,35 @@ let capacity: Contracts.ManagementCapacity.t
 /** What a build's database slot is filled from, a database of this many bytes, RFC rt6gi. */
 let databaseCapacity: Contracts.ManagementCapacity.t
 
-/**
- * What is sent to the binding for the app's container, and its database where the build declares a
- * slot, or nothing when the list holds them. `database` is the id of the item filling the slots.
- */
-type planned =
-  | Held({into: float, database: option<float>})
-  | Apply({list: Contracts.ManagementApply.t, into: float, database: option<float>})
+/** What a build's object bucket slot is filled from, an object item of this many bytes. */
+let objectCapacity: Contracts.ManagementCapacity.t
 
 /**
- * The list with a container added at the next generation if none is asked, and a database beside it
- * where `slot` says the build declares one. Where a container is asked and `slot` is set but no
- * database is Made, the list is sent again without the asked databases and with a new one. Every
- * item sent takes a credential from `fresh`, called once for each, as describe gives none to keep;
- * one asking other items and no container is refused.
+ * What is sent to the binding for the app's container, and its database and object item where the
+ * build declares slots for them, or nothing when the list holds them. `database` and `object` are
+ * the ids of the items filling the slots.
+ */
+type planned =
+  | Held({into: float, database: option<float>, object: option<float>})
+  | Apply({
+      list: Contracts.ManagementApply.t,
+      into: float,
+      database: option<float>,
+      object: option<float>,
+    })
+
+/**
+ * The list with a container added at the next generation if none is asked, and a database and an
+ * object item beside it where `database` and `bucket` say the build declares slots for them. Where
+ * a container is asked and a wanted kind has no Made item, the list is sent again without that
+ * kind's asked items and with a new one. Every item sent takes a credential from `fresh`, called
+ * once for each, as describe gives none to keep; other items and no container are refused.
  */
 let planned: (
   Contracts.ManagementDescribed.t,
   ~fresh: unit => Uint8Array.t,
-  ~slot: bool=?,
+  ~database: bool=?,
+  ~bucket: bool=?,
 ) => result<planned, string>
 
 /** How far an item has been made. */
