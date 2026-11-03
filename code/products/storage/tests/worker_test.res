@@ -90,9 +90,15 @@ testAsync("each operation is a POST of its input's JSON to the kind at its path"
   deepEqual(
     kind.sent->Array.slice(~start=0, ~end=2)->Array.map(sent => sent.body),
     [
-      Contracts.ObjectWrite.toJson({name: "content/aa", content: bytes}),
-      Contracts.ObjectRead.toJson({name: "content/aa"}),
-    ],
+      ("write", Contracts.ObjectWrite.toJson({name: "content/aa", content: bytes})),
+      ("read", Contracts.ObjectRead.toJson({name: "content/aa"})),
+    ]->Array.map(((operation, input)) => JSON.Object(
+      dict{
+        "interface": JSON.String("object"),
+        "operation": JSON.String(operation),
+        "input": input,
+      },
+    )),
   )
 })
 

@@ -33,7 +33,16 @@ let asked = async (fetcher, operation, input, fromJson) =>
         {
           method: "POST",
           headers: dict{"content-type": "application/json"},
-          body: JSON.stringify(input),
+          // The envelope's call form, as every driver call is sent.
+          body: JSON.stringify(
+            JSON.Object(
+              dict{
+                "interface": JSON.String("object"),
+                "operation": JSON.String(operation),
+                "input": input,
+              },
+            ),
+          ),
         },
       ),
     )

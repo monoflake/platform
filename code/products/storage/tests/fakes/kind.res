@@ -119,7 +119,13 @@ let make = (): t => {
     | Some((status, text)) => Web.response(text, {status, headers: dict{}})
     | None =>
       let operation = url->String.split("/")->Array.at(-1)->Option.getOr("")
-      Web.json(~status=200, answer(operation, body))
+      // A driver reads the input out of the envelope's call form.
+      let input =
+        body
+        ->JSON.Decode.object
+        ->Option.flatMap(call => call->Dict.get("input"))
+        ->Option.getOr(JSON.Null)
+      Web.json(~status=200, answer(operation, input))
     }
   }
   {fetcher: asFetcher(fetch), held, sent, replaced}
