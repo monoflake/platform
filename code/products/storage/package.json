@@ -1,0 +1,11 @@
+{
+	"name": "@monoflake/storage",
+	"version": "0.1.0",
+	"private": true,
+	"license": "MIT OR Apache-2.0",
+	"type": "module",
+	"dependencies": {
+		"@monoflake/envelope": "workspace:*",
+		"@monoflake/keys": "workspace:*"
+	}
+}

@@ -1,0 +1,27 @@
+{
+	"name": "@monoflake/storage",
+	"namespace": "Storage",
+	"sources": [
+		{
+			"dir": "src",
+			"subdirs": true
+		},
+		{
+			"dir": "tests",
+			"subdirs": true,
+			"type": "dev"
+		}
+	],
+	"dependencies": ["@monoflake/envelope", "@monoflake/keys"],
+	"package-specs": [
+		{
+			"module": "esmodule",
+			"in-source": true
+		}
+	],
+	"suffix": ".res.mjs",
+	"warnings": {
+		"number": "+4",
+		"error": "+a-110"
+	}
+}

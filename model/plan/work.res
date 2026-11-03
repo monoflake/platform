@@ -26,6 +26,7 @@ let blocks: dict<state> = dict{
   "scope": Accepted,
   "runner": Accepted,
   "serve": Accepted,
+  "storage": InWork,
   "vocabulary": Accepted,
   "wit": Accepted,
 }

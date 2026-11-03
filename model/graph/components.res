@@ -291,7 +291,7 @@ let own: dict<component> = dict{
         ~open_="who checks a private reader is open, 13ixj [C10]",
       ),
     ],
-    uses: ["capability*", "scope*", "compat*"],
+    uses: ["capability*", "scope*", "compat*", "envelope*", "keys*"],
   },
   "database": {
     language: #rescript,
