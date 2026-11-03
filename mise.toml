@@ -66,9 +66,9 @@ run = "rescript build > /dev/null && node model/built.res.mjs"
 
 # What a user runs to deploy an app of their own, from wherever it lives, RFC n0o4l.
 [tasks.deploy]
-description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver or a control: `deploy <directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run]`, or `deploy <control target> --forget <id>|--retire <id> [--dry-run]`"
+description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver or a control: `deploy <directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run]`, or `deploy <control target> --forget <id> [--dry-run], or deploy <target> --retire <id> [--dry-run]`"
 usage = '''
-arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed; or the control target for --forget or --retire"
+arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed; or the target for --forget or --retire"
 arg "[target]" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
 flag "--forget <id>" help="Remove an app that never ran, its id in 8 lowercase hex digits, taking only a control target"
 flag "--retire <id>" help="Stop, delete and remove an app that ran, its id in 8 lowercase hex digits, on a control or a machine target"
@@ -97,7 +97,7 @@ flag "-n --dry-run" help="Ask the control nothing and say what would be forgotte
 '''
 run = 'rescript build code/tools/deploy > /dev/null && node code/tools/deploy/src/main.res.mjs "$usage_target" --forget "$usage_app" ${usage_dry_run:+--dry-run}'
 
-# An app that ran removed through releases' retire, its driver asked to stop and delete it first.
+# An app that ran removed, through a control's releases.retire or from a machine's driver itself.
 [tasks.retire]
 description = "Remove an app that ran, its deployment stopped and deleted by its binding's driver, through a control's releases.retire or on a machine itself: `retire <target> --app <id> [--dry-run]`"
 usage = '''

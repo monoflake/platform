@@ -28,17 +28,11 @@ child.spawnSync = (program, args, options) => {
     output = scenario === 'absent' ? refused('not_found')
       : scenario === operation ? refused('fault')
       : operation === 'delete' ? success({}) : success(described);
-  } else if (shell.includes('directory=')) {
-    operation = 'facts';
-    output = ["directory=/held apps/it's", 'binding=1', 'tunnel=', ''].join(String.fromCharCode(10));
   } else {
-    operation = 'archive';
-    assert.equal(shell, "rm -f -- '/held apps/it'" + String.fromCharCode(92) + "''s/" + version + ".tar'");
-    output = '';
+    assert.fail('retire asks only deployments, not ' + shell);
   }
   operations.push(operation);
-  return { status: scenario === operation && ['facts', 'archive'].includes(operation) ? 1 : 0,
-    stdout: output, stderr: 'fixture failure' };
+  return { status: 0, stdout: output, stderr: 'fixture failure' };
 };
 syncBuiltinESMExports();
 globalThis.fetch = async (url, init) => {
@@ -52,11 +46,10 @@ globalThis.fetch = async (url, init) => {
 };
 process.on('exit', () => {
   const expected = {
-    success: ['describe', 'facts', 'stop', 'delete', 'archive'],
-    absent: ['describe'], dry: ['describe', 'facts'],
-    describe: ['describe'], facts: ['describe', 'facts'],
-    stop: ['describe', 'facts', 'stop'], delete: ['describe', 'facts', 'stop', 'delete'],
-    archive: ['describe', 'facts', 'stop', 'delete', 'archive'],
+    success: ['describe', 'stop', 'delete'],
+    absent: ['describe'], dry: ['describe'],
+    describe: ['describe'],
+    stop: ['describe', 'stop'], delete: ['describe', 'stop', 'delete'],
     control: ['retire'], 'control-dry': []
   };
   assert.deepEqual(operations, expected[scenario]);
@@ -73,10 +66,8 @@ test("retire routes machine and control targets and stops at the first failed ph
       "absent",
       "dry",
       "describe",
-      "facts",
       "stop",
       "delete",
-      "archive",
       "control",
       "control-dry",
     ]->Array.forEach(scenario => {
@@ -98,7 +89,7 @@ test("retire routes machine and control targets and stops at the first failed ph
           "encoding": "utf8",
         },
       )
-      let failed = ["describe", "facts", "stop", "delete", "archive"]->Array.includes(scenario)
+      let failed = ["describe", "stop", "delete"]->Array.includes(scenario)
       deepEqual(result.status->Nullable.toOption, Some(failed ? 1 : 0), ~message=result.stderr)
       if failed {
         ok(result.stderr->String.includes("failed after"))
@@ -107,8 +98,8 @@ test("retire routes machine and control targets and stops at the first failed ph
         | "absent" => "is not there"
         | "control" => "app 00000001 retired"
         | "control-dry" => "would be stopped, deleted by its driver and removed"
-        | "dry" => "would be removed"
-        | _ => ".tar removed"
+        | "dry" => "would be deleted"
+        | _ => "deleted"
         }
         ok(result.stdout->String.includes(expected), ~message=result.stdout)
       }

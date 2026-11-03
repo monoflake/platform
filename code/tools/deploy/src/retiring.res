@@ -11,7 +11,7 @@ let phase = (name, run, said) => {
   result
 }
 
-let run = (~app, ~dry, ~ask, ~shell) => {
+let run = (~app, ~dry, ~ask) => {
   let call = (call, data) =>
     ask(Contracts.Interface.Deployments.toJson({call, capabilities: []}))
     ->Result.mapError((message): Machine.refused => {reason: "unreached", message})
@@ -34,39 +34,21 @@ let run = (~app, ~dry, ~ask, ~shell) => {
   )->Result.flatMap(version =>
     switch version {
     | None => Ok()
-    | Some(version) =>
-      phase(
-        "ask",
-        () => shell(Machine.facts)->Result.flatMap(Machine.readFacts),
-        facts => `archive directory ${facts.directory}`,
-      )->Result.flatMap(facts => {
-        let step = (name, call_, data, said) =>
-          phase(
-            name,
-            () => dry ? Ok() : call(call_, data)->Result.mapError(refusal)->Result.map(_ => ()),
-            () => `app ${Ids.Id.text(app)} ${dry ? "would be " : ""}${said}`,
-          )
-        step("stop", Stop(of_), Contracts.DeploymentDescribed.fromJson, "stopped")
-        ->Result.flatMap(
-          () => step("delete", Delete(of_), Contracts.DeploymentDeleted.fromJson, "deleted"),
+    | Some(_) =>
+      let step = (name, call_, data, said) =>
+        phase(
+          name,
+          () => dry ? Ok() : call(call_, data)->Result.mapError(refusal)->Result.map(_ => ()),
+          () => `app ${Ids.Id.text(app)} ${dry ? "would be " : ""}${said}`,
         )
-        ->Result.flatMap(
-          () =>
-            phase(
-              "archive",
-              () =>
-                dry
-                  ? Ok()
-                  : shell(Machine.removeArchive(~directory=facts.directory, ~version))->Result.map(
-                      _ => (),
-                    ),
-              () =>
-                `${facts.directory}/${Deploying.fileName(version)} ${dry
-                    ? "would be "
-                    : ""}removed`,
-            ),
-        )
-      })
+      step(
+        "stop",
+        Stop(of_),
+        Contracts.DeploymentDescribed.fromJson,
+        "stopped",
+      )->Result.flatMap(() =>
+        step("delete", Delete(of_), Contracts.DeploymentDeleted.fromJson, "deleted")
+      )
     }
   )
 }

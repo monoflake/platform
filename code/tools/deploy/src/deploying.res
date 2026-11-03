@@ -34,3 +34,14 @@ let progress = (described: Contracts.DeploymentDescribed.t, version) =>
     | Failed({reason, ?message}) => Failed(message->Option.mapOr(reason, m => `${reason}, ${m}`))
     }
   }
+
+/** An archive held on the machine only while a deployment is made of it, kept if that fails. */
+let held = async (~copy, ~deploy, ~remove) =>
+  switch await copy() {
+  | Error(why) => Error(why)
+  | Ok(_) =>
+    switch await deploy() {
+    | Error(why) => Error(why)
+    | Ok(_) => (await remove())->Result.map(_ => ())
+    }
+  }

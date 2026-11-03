@@ -35,3 +35,10 @@ type progress = Running | Waiting | Elsewhere | Failed(string)
  * or failed with why, stopped among it.
  */
 let progress: (Contracts.DeploymentDescribed.t, Uint8Array.t) => progress
+
+/** An archive held on the machine only while a deployment is made of it, kept if that fails. */
+let held: (
+  ~copy: unit => promise<result<'a, string>>,
+  ~deploy: unit => promise<result<'b, string>>,
+  ~remove: unit => promise<result<'c, string>>,
+) => promise<result<unit, string>>

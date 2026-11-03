@@ -241,18 +241,24 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~binding, ~d
     ((app, how)) => `${Ids.Id.text(app)}, ${how}`,
   )
   ->after(((app, _)) =>
-    timed("copy", copy, said => said)->Promise.thenResolve(r => r->Result.map(_ => app))
-  )
-  ->after(app =>
-    timed("list", () => listed(target, ~dry), ((_, said)) => said)->Promise.thenResolve(r =>
-      r->Result.map(((into, _)) => (app, into))
-    )
-  )
-  ->after(((app, into)) =>
-    timed(
-      "deploy",
-      () => deployed(target, ~app, ~hash, ~address, ~into, ~dry),
-      said => said,
+    Deploying.held(
+      ~copy=() => timed("copy", copy, said => said),
+      ~deploy=() =>
+        timed("list", () => listed(target, ~dry), ((_, said)) => said)->after(((into, _)) =>
+          timed("deploy", () => deployed(target, ~app, ~hash, ~address, ~into, ~dry), said => said)
+        ),
+      ~remove=() =>
+        timed(
+          "archive",
+          async () =>
+            dry
+              ? Ok("nothing removed, as --dry-run asks")
+              : remote(
+                  target,
+                  Machine.removeArchive(~directory=facts.directory, ~version=hash),
+                )->Result.map(_ => "removed, the deployment holding its own"),
+          said => said,
+        ),
     )->Promise.thenResolve(r => r->Result.map(_ => app))
   )
   ->after(async app => {
@@ -498,11 +504,8 @@ let main = async () => {
       await onControl(named, "retire", control => retired(control, ~app, ~dry))
     } else {
       let target = Machine.target(named)
-      switch Retiring.run(
-        ~app,
-        ~dry,
-        ~ask=envelope => remote(target, Machine.call(envelope), ~input=JSON.stringify(envelope)),
-        ~shell=command => remote(target, command),
+      switch Retiring.run(~app, ~dry, ~ask=envelope =>
+        remote(target, Machine.call(envelope), ~input=JSON.stringify(envelope))
       ) {
       | Ok() => ()
       | Error(_) => Host.setExitCode(Host.process, 1)

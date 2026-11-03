@@ -108,7 +108,7 @@ let controlOnly = (given: t, ~flag) =>
     given.secrets != [] ||
     given.network != [] ||
     given.ingress != None =>
-    Error(`--${flag} takes the control's target alone, and --dry-run`)
+    Error(`--${flag} takes its target alone, and --dry-run`)
   | (named, _) => Ok({...given, directory: "", target: named})
   }
 

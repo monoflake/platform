@@ -93,7 +93,7 @@ test("forget and retire refuse ingress as they refuse other deploy flags", () =>
         "--ingress",
         "binding",
       ]),
-      Error(`--${flag} takes the control's target alone, and --dry-run`),
+      Error(`--${flag} takes its target alone, and --dry-run`),
     )
   )
 )
@@ -163,49 +163,40 @@ test("a forget is refused to a machine ssh reaches, as only a control drew the i
   ok(Arguments.parse(["local", "--forget", "0a1b2c3d"])->Result.isError)
 })
 
-test(
-  "a retire takes a control's target alone, its app 8 hex digits, and never with a forget",
-  () => {
-    deepEqual(
-      Arguments.parse(["control:https://c.example", "--retire", "00000001"]),
-      Ok({...deploy, directory: "", retire: Some(1.)}),
-    )
-    deepEqual(
-      Arguments.parse(["--retire", "0a1b2c3d", "control:https://c.example", "--dry-run"]),
-      Ok({...deploy, directory: "", retire: Some(169552957.), dry: true}),
-    )
-    ok(Arguments.parse(["control:https://c.example", "--retire", "1"])->Result.isError)
-    ok(Arguments.parse(["control:https://c.example", "--retire"])->Result.isError)
-    ok(Arguments.parse(["--retire", "0a1b2c3d"])->Result.isError)
-    ok(
-      Arguments.parse([
-        "apps/hello",
-        "control:https://c.example",
-        "--retire",
-        "0a1b2c3d",
-      ])->Result.isError,
-    )
-    deepEqual(
-      Arguments.parse(["control:https://c.example", "--retire", "0a1b2c3d", "--app", "00000002"]),
-      Error("--retire takes the control's target alone, and --dry-run"),
-    )
-    deepEqual(
-      Arguments.parse(["root@machine.example", "--retire", "0a1b2c3d"]),
-      Ok({...deploy, directory: "", target: "root@machine.example", retire: Some(169552957.)}),
-    )
-    deepEqual(
-      Arguments.parse(["local", "--retire", "00000001", "--dry-run"]),
-      Ok({...deploy, directory: "", target: "local", retire: Some(1.), dry: true}),
-    )
-    deepEqual(
-      Arguments.parse([
-        "control:https://c.example",
-        "--retire",
-        "0a1b2c3d",
-        "--forget",
-        "0a1b2c3e",
-      ]),
-      Error("--forget and --retire are two calls, made one at a time"),
-    )
-  },
-)
+test("a retire takes its target alone, its app 8 hex digits, and never with a forget", () => {
+  deepEqual(
+    Arguments.parse(["control:https://c.example", "--retire", "00000001"]),
+    Ok({...deploy, directory: "", retire: Some(1.)}),
+  )
+  deepEqual(
+    Arguments.parse(["--retire", "0a1b2c3d", "control:https://c.example", "--dry-run"]),
+    Ok({...deploy, directory: "", retire: Some(169552957.), dry: true}),
+  )
+  ok(Arguments.parse(["control:https://c.example", "--retire", "1"])->Result.isError)
+  ok(Arguments.parse(["control:https://c.example", "--retire"])->Result.isError)
+  ok(Arguments.parse(["--retire", "0a1b2c3d"])->Result.isError)
+  ok(
+    Arguments.parse([
+      "apps/hello",
+      "control:https://c.example",
+      "--retire",
+      "0a1b2c3d",
+    ])->Result.isError,
+  )
+  deepEqual(
+    Arguments.parse(["control:https://c.example", "--retire", "0a1b2c3d", "--app", "00000002"]),
+    Error("--retire takes its target alone, and --dry-run"),
+  )
+  deepEqual(
+    Arguments.parse(["root@machine.example", "--retire", "0a1b2c3d"]),
+    Ok({...deploy, directory: "", target: "root@machine.example", retire: Some(169552957.)}),
+  )
+  deepEqual(
+    Arguments.parse(["local", "--retire", "00000001", "--dry-run"]),
+    Ok({...deploy, directory: "", target: "local", retire: Some(1.), dry: true}),
+  )
+  deepEqual(
+    Arguments.parse(["control:https://c.example", "--retire", "0a1b2c3d", "--forget", "0a1b2c3e"]),
+    Error("--forget and --retire are two calls, made one at a time"),
+  )
+})
