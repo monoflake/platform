@@ -66,7 +66,7 @@ run = "rescript build > /dev/null && node model/built.res.mjs"
 
 # What a user runs to deploy an app of their own, from wherever it lives, RFC n0o4l.
 [tasks.deploy]
-description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver or a control: `deploy <directory> <target> [--app <id>] [--binding <id>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run]`, or `deploy <control target> --forget <id> [--dry-run], or deploy <target> --retire <id> [--dry-run]`"
+description = "Build an app's Worker with wrangler and deploy it to a test machine through its driver or a control: `deploy <directory> <target> [--app <id>] [--binding <id>] [--component storage --organization <id>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run]`, or `deploy <control target> --forget <id> [--dry-run], or deploy <target> --retire <id> [--dry-run]`"
 usage = '''
 arg "<directory>" help="The app's directory, its wrangler configuration and its packages installed; or the target for --forget or --retire"
 arg "[target]" help="The machine as ssh reaches it, root@machine.example, or local for monoflake/machine's local machine; or control:<origin>, a control, its operator's secret in CONTROL_OPERATOR"
@@ -74,6 +74,8 @@ flag "--forget <id>" help="Remove an app that never ran, its id in 8 lowercase h
 flag "--retire <id>" help="Stop, delete and remove an app that ran, its id in 8 lowercase hex digits, on a control or a machine target"
 flag "--app <id>" help="The app's id in 8 lowercase hex digits, to deploy it again; a new app, its id drawn and printed, unless given"
 flag "--binding <id>" help="The binding a control deploys the app onto, its id in 8 lowercase hex digits, asked with a control: target"
+flag "--component <name>" help="Deploy the directory as a platform component on a machine target, storage alone, its id as an app's"
+flag "--organization <id>" help="The organization whose salt the storage component is handed, its id in 8 lowercase hex digits, the salt master in the environment variable salt-master"
 flag "--secrets <names>" help="The secrets a control hands the driver, by name, each its environment variable's value"
 flag "--network <kinds>" help="The network a control lets the app reach, http, tcp, udp or icmp, by commas"
 flag "--ingress <declaration>" var=#true help="Repeat for each domain:<name>, mount:<scope> or binding; refused when metadata.json declares ingress"
@@ -84,7 +86,7 @@ run = '''
 rescript build code/tools/deploy > /dev/null || exit 1
 args=(); eval "ingress=(${usage_ingress:-})"
 for value in "${ingress[@]}"; do args+=(--ingress "$value"); done
-node code/tools/deploy/src/main.res.mjs "$usage_directory" ${usage_target:+"$usage_target"} ${usage_forget:+--forget "$usage_forget"} ${usage_retire:+--retire "$usage_retire"} ${usage_app:+--app "$usage_app"} ${usage_binding:+--binding "$usage_binding"} ${usage_secrets:+--secrets "$usage_secrets"} ${usage_network:+--network "$usage_network"} "${args[@]}" ${usage_dry_run:+--dry-run}
+node code/tools/deploy/src/main.res.mjs "$usage_directory" ${usage_target:+"$usage_target"} ${usage_forget:+--forget "$usage_forget"} ${usage_retire:+--retire "$usage_retire"} ${usage_app:+--app "$usage_app"} ${usage_binding:+--binding "$usage_binding"} ${usage_component:+--component "$usage_component"} ${usage_organization:+--organization "$usage_organization"} ${usage_secrets:+--secrets "$usage_secrets"} ${usage_network:+--network "$usage_network"} "${args[@]}" ${usage_dry_run:+--dry-run}
 '''
 
 # An app a control drew an id for and that never ran, removed through releases' forget.

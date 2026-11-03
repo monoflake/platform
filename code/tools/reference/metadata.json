@@ -1,5 +1,8 @@
 {
 	"ingress": [{ "name": "binding" }],
-	"slots": [{ "name": "database", "type": "database" }],
+	"slots": [
+		{ "name": "database", "type": "database" },
+		{ "name": "objects", "type": "object_bucket" }
+	],
 	"functions": [{ "name": "fetch", "kind": "effect" }]
 }

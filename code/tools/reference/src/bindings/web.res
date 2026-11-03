@@ -7,4 +7,5 @@ type url
 @new external url: string => url = "URL"
 @get external pathname: url => string = "pathname"
 type init = {status: int}
+@new external bytes: (Uint8Array.t, init) => response = "Response"
 @new external response: (string, init) => response = "Response"

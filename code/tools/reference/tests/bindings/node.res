@@ -6,3 +6,6 @@ type init = {method: string, body?: string}
 @get external status: Web.response => int = "status"
 @send external text: Web.response => promise<string> = "text"
 @module("node:fs") external readFileSync: (string, string) => string = "readFileSync"
+type encoder
+@new external textEncoder: unit => encoder = "TextEncoder"
+@send external encode: (encoder, string) => Uint8Array.t = "encode"

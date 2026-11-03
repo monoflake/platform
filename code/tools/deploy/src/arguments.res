@@ -1,7 +1,7 @@
 /*** The deploy tool's arguments read, each id 8 lowercase hex digits, RFC b8f35. */
 module Contracts = Envelope.Contracts
 
-let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <target> --retire <8 hex> [--dry-run]"
+let usage = "deploy <app directory> <target> [--app <8 hex>] [--binding <8 hex>] [--component storage --organization <8 hex>] [--secrets <A,B>] [--network <http,tcp>] [--ingress <domain:name|mount:scope|binding>]... [--dry-run], or deploy <control target> --forget <8 hex> [--dry-run], or deploy <target> --retire <8 hex> [--dry-run]"
 
 /**
  * The arguments, the app's directory, the target, the app redeployed, the binding a control deploys
@@ -18,6 +18,8 @@ type t = {
   secrets: array<string>,
   network: array<Contracts.DeploymentNetwork.t>,
   ingress: option<array<Contracts.AppIngress.t>>,
+  component: option<string>,
+  organization: option<float>,
   dry: bool,
 }
 
@@ -73,6 +75,8 @@ let rec read = (args, given) =>
     | Some(ingress) =>
       read(rest, {...given, ingress: Some([...given.ingress->Option.getOr([]), ingress])})
     }
+  | list{"--component", "storage", ...rest} => read(rest, {...given, component: Some("storage")})
+  | list{"--component", text, ..._} => Error(`--component ${text} is not storage`)
   | list{"--secrets", text, ...rest} =>
     switch listed(text)->Array.find(n => !(secretName->RegExp.test(n))) {
     | Some(bad) => Error(`--secrets ${bad} is no secret's name`)
@@ -107,6 +111,8 @@ let controlOnly = (given: t, ~flag) =>
     given.binding != None ||
     given.secrets != [] ||
     given.network != [] ||
+    given.component != None ||
+    given.organization != None ||
     given.ingress != None =>
     Error(`--${flag} takes its target alone, and --dry-run`)
   | (named, _) => Ok({...given, directory: "", target: named})
@@ -119,15 +125,18 @@ let parse = args => {
       Ids.Id.taken(rest, ~flag="binding")->Result.flatMap(((binding, rest)) =>
         Ids.Id.taken(rest, ~flag="forget")->Result.flatMap(
           ((forget, rest)) =>
-            Ids.Id.taken(rest, ~flag="retire")->Result.map(
-              ((retire, rest)) => (app, binding, forget, retire, rest),
+            Ids.Id.taken(rest, ~flag="retire")->Result.flatMap(
+              ((retire, rest)) =>
+                Ids.Id.taken(rest, ~flag="organization")->Result.map(
+                  ((organization, rest)) => (app, binding, forget, retire, organization, rest),
+                ),
             ),
         )
       )
     )
   switch ids {
   | Error(why) => Error(why)
-  | Ok((app, binding, forget, retire, rest)) =>
+  | Ok((app, binding, forget, retire, organization, rest)) =>
     let empty = {
       directory: "",
       target: "",
@@ -138,14 +147,23 @@ let parse = args => {
       secrets: [],
       network: [],
       ingress: None,
+      component: None,
+      organization: None,
       dry: false,
     }
+    let empty = {...empty, organization}
     switch (read(List.fromArray(rest), empty), forget, retire) {
     | (Error(why), _, _) => Error(why)
     | (Ok(_), Some(_), Some(_)) => Error("--forget and --retire are two calls, made one at a time")
     | (Ok(given), Some(_), None) => controlOnly(given, ~flag="forget")
     | (Ok(given), None, Some(_)) => controlOnly(given, ~flag="retire")
     | (Ok({target: ""}), None, None) => Error(usage)
+    | (Ok({organization: Some(_), component: None}), None, None) =>
+      Error("--organization is the storage component's, and asks --component storage")
+    | (Ok({component: Some(_), organization: None}), None, None) =>
+      Error("--component storage asks --organization, the organization whose salt it is handed")
+    | (Ok({component: Some(_), app: _, target}), None, None) if Control.origin(target) != None =>
+      Error("--component storage is deployed to a machine, and a control target is not one")
     | (Ok(given), None, None) => Ok(given)
     }
   }
@@ -173,6 +191,8 @@ let grant = args => {
         "--retire",
         "--network",
         "--ingress",
+        "--component",
+        "--organization",
       ]->Array.includes(flag) =>
       Error("grant deployment takes no policy or operator options")
     | list{value, ...tail} => take(tail, [...rest, value])

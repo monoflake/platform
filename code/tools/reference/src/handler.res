@@ -72,13 +72,76 @@ let row = async (env, ~method, ~key, request) =>
     }
   }
 
+let objectTable = "reference_objects"
+
+/** The batch recording a name against its object, its table made where none is. */
+let recording = (name, object) =>
+  execute([
+    statement(
+      `CREATE TABLE IF NOT EXISTS ${objectTable} (object_name TEXT PRIMARY KEY, object TEXT NOT NULL)`,
+      [],
+    ),
+    statement(
+      `INSERT OR REPLACE INTO ${objectTable} (object_name, object) VALUES (?, ?)`,
+      [text(name), text(object)],
+    ),
+  ])
+
+let finding = name =>
+  execute([statement(`SELECT object FROM ${objectTable} WHERE object_name = ?`, [text(name)])])
+
+let objectOf = (written: JSON.t) =>
+  written
+  ->JSON.Decode.object
+  ->Option.flatMap(o => o->Dict.get("object"))
+  ->Option.flatMap(JSON.Decode.string)
+
+let refused = (error, fallback) =>
+  Web.response(error->JsExn.message->Option.getOr(fallback), {status: 500})
+
+/** An object stored under a name or read back by it, the name kept in a row of the database. */
+let stored = async (env, ~method, ~name, request) =>
+  switch (env->Reach.objects, env->Reach.database) {
+  | (Error(reached), _) | (_, Error(reached)) => unreached(reached)
+  | (Ok(objects), Ok(database)) =>
+    switch method {
+    | "PUT" =>
+      let body = await request->Web.text
+      switch await objects.write(body, "txt") {
+      | exception JsExn(error) => refused(error, "the bucket refused the call")
+      | written =>
+        switch objectOf(written) {
+        | None => Web.response("the bucket named no object", {status: 500})
+        | Some(object) =>
+          await called(database, recording(name, object), _ =>
+            Web.response("stored", {status: 200})
+          )
+        }
+      }
+    | _ =>
+      switch await database.execute(finding(name)) {
+      | exception JsExn(error) => refused(error, "the database refused the call")
+      | executed =>
+        switch bodyOf(executed) {
+        | None => Web.response("not found", {status: 404})
+        | Some(object) =>
+          switch await objects.read(object, None) {
+          | exception JsExn(error) => refused(error, "the bucket refused the call")
+          | content => Web.bytes(content, {status: 200})
+          }
+        }
+      }
+    }
+  }
+
 let fetch = async (~stamp, ~env, request) => {
   let path = request->Web.address->Web.url->Web.pathname
   let method = request->Web.method
   switch (method, path->String.split("/")) {
   | ("GET", ["", ""]) => Web.response(greeting(stamp), {status: 200})
   | ("PUT" | "GET", ["", "row", key]) if key != "" => await row(env, ~method, ~key, request)
-  | ("PUT" | "GET", ["", "object", name]) if name != "" => unreached(Reach.object())
+  | ("PUT" | "GET", ["", "object", name]) if name != "" =>
+    await stored(env, ~method, ~name, request)
   | _ => Web.response("not found", {status: 404})
   }
 }

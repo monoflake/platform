@@ -14,6 +14,8 @@ let deploy: Arguments.t = {
   secrets: [],
   network: [],
   ingress: None,
+  component: None,
+  organization: None,
   dry: false,
 }
 
@@ -199,4 +201,40 @@ test("a retire takes its target alone, its app 8 hex digits, and never with a fo
     Arguments.parse(["control:https://c.example", "--retire", "0a1b2c3d", "--forget", "0a1b2c3e"]),
     Error("--forget and --retire are two calls, made one at a time"),
   )
+})
+
+test("a storage component asks its organization, 8 lowercase hex, and a machine target", () => {
+  deepEqual(
+    Arguments.parse([
+      "apps/storage",
+      "local",
+      "--component",
+      "storage",
+      "--organization",
+      "0a1b2c3d",
+    ]),
+    Ok({
+      ...deploy,
+      directory: "apps/storage",
+      target: "local",
+      component: Some("storage"),
+      organization: Some(169552957.),
+    }),
+  )
+  [
+    ["apps/storage", "local", "--component", "storage"],
+    ["apps/storage", "local", "--organization", "0a1b2c3d"],
+    ["apps/storage", "local", "--component", "storage", "--organization", "1"],
+    ["apps/storage", "local", "--component", "other", "--organization", "0a1b2c3d"],
+    [
+      "apps/storage",
+      "control:https://c.example",
+      "--component",
+      "storage",
+      "--organization",
+      "0a1b2c3d",
+    ],
+    ["control:https://c.example", "--forget", "0a1b2c3d", "--component", "storage"],
+    ["local", "--retire", "0a1b2c3d", "--organization", "0a1b2c3d"],
+  ]->Array.forEach(args => ok(Arguments.parse(args)->Result.isError))
 })

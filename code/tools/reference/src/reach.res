@@ -4,8 +4,20 @@
  */
 type database = {execute: JSON.t => promise<JSON.t>}
 
+/**
+ * The storage product's bucket the deploy filled, RFC ahcrp. An object is named by its content,
+ * `write` answers the `bucket-object` record as JSON and `read` answers the content as bytes.
+ */
+type objects = {
+  write: (string, string) => promise<JSON.t>,
+  read: (string, option<JSON.t>) => promise<Uint8Array.t>,
+  describe: string => promise<JSON.t>,
+  list: (option<string>, option<int>) => promise<JSON.t>,
+  delete: string => promise<JSON.t>,
+}
+
 /** The environment the runtime hands the Worker, a slot there only where the deploy filled it. */
-type env = {database?: database}
+type env = {database?: database, objects?: objects}
 
 type t = Unreached(string)
 
@@ -15,4 +27,8 @@ let database = (env: env) =>
   | None => Error(Unreached("database"))
   }
 
-let object = () => Unreached("object")
+let objects = (env: env) =>
+  switch env.objects {
+  | Some(objects) => Ok(objects)
+  | None => Error(Unreached("object"))
+  }

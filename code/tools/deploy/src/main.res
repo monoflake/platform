@@ -48,8 +48,16 @@ let refusal = ({reason, message}: Machine.refused) => `${reason}: ${message}`
 let describeList = target =>
   called(target, management(Describe({})), Contracts.ManagementDescribed.fromJson)
 
-let describeDeployment = (target, app) =>
-  called(target, deployments(Describe(Deploying.of_(app))), Contracts.DeploymentDescribed.fromJson)
+/** Which deployment an id names, an app's or, with a salt handed, the storage component's. */
+let deploymentOf = (~salt: option<dict<Uint8Array.t>>, id) =>
+  salt->Option.isSome ? Component.of_(id) : Deploying.of_(id)
+
+let describeDeployment = (target, ~salt, app) =>
+  called(
+    target,
+    deployments(Describe(deploymentOf(~salt, app))),
+    Contracts.DeploymentDescribed.fromJson,
+  )
 
 /** The wrangler configuration wrangler itself would read first, its JSON forms alone. */
 let configOf = directory =>
@@ -189,9 +197,9 @@ let listed = async (target, ~database, ~bucket, ~dry) =>
   }
 
 /** The app deployed at the bundle's version, unless it already runs it, and running. */
-let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~dry) => {
+let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~salt, ~dry) => {
   let progress = () =>
-    switch describeDeployment(target, app) {
+    switch describeDeployment(target, ~salt, app) {
     | Ok(described) => Ok(Deploying.progress(described, hash))
     | Error({reason: "not_found"}) => Ok(Deploying.Elsewhere)
     | Error(refused) => Error(refusal(refused))
@@ -217,11 +225,19 @@ let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~dry) =
       bindings->Option.mapOr("", (bindings: Contracts.AppBindings.t) =>
         filling(bindings.database, ~what="database") ++ filling(bindings.bucket, ~what="bucket")
       )
-    Ok(`${address} would be deployed${filled}`)
+    let handed = salt->Option.isSome ? ", the organization's salt handed as a secret" : ""
+    Ok(`${address} would be deployed${filled}${handed}`)
   | Ok(Waiting | Elsewhere | Failed(_)) =>
     switch called(
       target,
-      deployments(Deploy(Deploying.deploy(~app, ~hash, ~address, ~into, ~bindings?))),
+      deployments(
+        Deploy(
+          switch salt {
+          | Some(secrets) => Component.deploy(~app, ~hash, ~address, ~into, ~bindings?, ~secrets)
+          | None => Deploying.deploy(~app, ~hash, ~address, ~into, ~bindings?)
+          },
+        ),
+      ),
       Contracts.DeploymentDescribed.fromJson,
     ) {
     | Error(refused) => Error(refusal(refused))
@@ -234,7 +250,7 @@ let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~dry) =
  * The app's id, the one given, or one drawn where none is that neither the machine's list nor its
  * deployments hold, as no control is there to draw it.
  */
-let appOf = (target, app) =>
+let appOf = (target, ~salt, app) =>
   switch app {
   | Some(app) => Ok((app, "given"))
   | None =>
@@ -247,7 +263,7 @@ let appOf = (target, app) =>
         ~held=id =>
           listed->Array.includes(id)
             ? Ok(true)
-            : switch describeDeployment(target, id) {
+            : switch describeDeployment(target, ~salt, id) {
               | Error({reason: "not_found"}) => Ok(false)
               | Ok(_) => Ok(true)
               | Error(refused) => Error(refusal(refused))
@@ -265,6 +281,7 @@ let sent = async (
   ~facts: Machine.facts,
   ~binding,
   ~slots: array<Contracts.ManifestSlot.t>,
+  ~salt,
   ~dry,
 ) => {
   let target = Machine.target(named)
@@ -276,7 +293,7 @@ let sent = async (
     : async () => copied(target, path, facts, Deploying.fileName(hash))
   let answered = await timed(
     "app",
-    async () => appOf(target, app),
+    async () => appOf(target, ~salt, app),
     ((app, how)) => `${Ids.Id.text(app)}, ${how}`,
   )
   ->after(((app, _)) =>
@@ -298,6 +315,7 @@ let sent = async (
                 ~address,
                 ~into,
                 ~bindings=?Deploying.bindings(slots, ~app, ~database?),
+                ~salt,
                 ~dry,
               ),
             said => said,
@@ -580,8 +598,40 @@ let main = async () => {
       c->Result.mapError(why => Console.error(`deploy: ${why}`))->ignore
     )
     Host.setExitCode(Host.process, 2)
-  | Ok({directory, target: named, app, binding, secrets, network, ingress, dry}) =>
+  | Ok({component: Some(_), organization})
+    if Component.secrets(
+      ~master=Host.env->Dict.get(Component.masterVariable),
+      ~organization,
+    )->Result.isError =>
+    Component.secrets(~master=Host.env->Dict.get(Component.masterVariable), ~organization)
+    ->Result.mapError(why => Console.error(`deploy: ${why}`))
+    ->ignore
+    Host.setExitCode(Host.process, 2)
+  | Ok({
+      directory,
+      target: named,
+      app,
+      binding,
+      secrets,
+      network,
+      ingress,
+      component,
+      organization,
+      dry,
+    }) =>
     let secrets = secretsOf(secrets)->Result.getOr(dict{})
+    // A component's salt is derived once, its master read here and kept no further.
+    let salt = switch component {
+    | None => None
+    | Some(_) =>
+      switch Component.secrets(
+        ~master=Host.env->Dict.get(Component.masterVariable),
+        ~organization,
+      ) {
+      | Ok(held) => Some(held)
+      | Error(_) => None
+      }
+    }
     let directory = Host.absolute(directory)
     let scratch = Host.makeTemporary(Host.join([Host.temporary(), "deploy-"]))
     let result = await timed(
@@ -643,6 +693,7 @@ let main = async () => {
             ~facts,
             ~binding,
             ~slots=release.slots->Option.getOr([]),
+            ~salt,
             ~dry,
           )
         )
