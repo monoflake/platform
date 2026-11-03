@@ -2,8 +2,8 @@ type request
 type response
 type fetcher
 type env = {
-  @as("MONOFLAKE_SOCKET") socket?: string,
-  @as("MONOFLAKE_SALT") salt?: string,
+  @as("SOCKET") socket?: string,
+  @as("SALT") salt?: string,
   @as("OBJECT") objects?: fetcher,
 }
 let objects = _ => failwith("worker seat")

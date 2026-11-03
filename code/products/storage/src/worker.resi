@@ -1,6 +1,6 @@
 /***
  * The storage product's Worker, one module set run as two workerd workers told apart by
- * `MONOFLAKE_SOCKET`, `public` serving objects and `data` taking the driver's calls. The model's
+ * `SOCKET`, `public` serving objects and `data` taking the driver's calls. The model's
  * interface, `docs/code.md`.
  */
 
@@ -13,8 +13,8 @@ type fetcher
 
 /** What the function kind binds, each absent where it is not given. */
 type env = {
-  @as("MONOFLAKE_SOCKET") socket?: string,
-  @as("MONOFLAKE_SALT") salt?: string,
+  @as("SOCKET") socket?: string,
+  @as("SALT") salt?: string,
   @as("OBJECT") objects?: fetcher,
 }
 
@@ -31,7 +31,7 @@ let salt: string => option<Uint8Array.t>
 let call: (Operations.context, ~operation: string, JSON.t) => promise<JSON.t>
 
 /**
- * On `data`, `POST /storage/{operation}` carrying `Monoflake-Caller` is called, and anything else
+ * On `data`, `POST /storage/{operation}` carrying `Caller` is called, and anything else
  * there answers `forbidden`. On `public`, a call answers `forbidden` and every other path 404.
  */
 let fetch: (request, env) => promise<response>
