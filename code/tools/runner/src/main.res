@@ -313,6 +313,7 @@ let main = async () => {
               switch files->Array.get(n) {
               | None => ()
               | Some((path, file)) =>
+                let started = Date.now()
                 let own = bounds->Dict.get(file.interface)->Option.getOr(dict{})
                 let bounds = Dict.assign(own->Dict.copy, given)
                 Console.log(`${path}, ${file.interface}:`)
@@ -341,7 +342,8 @@ let main = async () => {
                     )
                   )
                 )
-                Console.log(`  ${counted(tally)}`)
+                let seconds = ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
+                Console.log(`  ${counted(tally)}, ${seconds}s`)
                 byInterface->Counts.add(
                   ~interface=file.interface,
                   {

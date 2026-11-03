@@ -320,6 +320,13 @@ let hello = args =>
 let main = async () => {
   let started = Date.now()
   let took = () => ((Date.now() -. started) /. 1000.)->Float.toFixed(~digits=1)
+  let timing = Timing.make()
+  let timed = (name, action) => Timing.run(timing, name, action)
+  let timedAsync = (name, action) => Timing.runAsync(timing, name, action)
+  let finished = line => {
+    Timing.lines(timing)->Array.forEach(Console.log)
+    say(line)
+  }
   let args = Host.argv->Array.slice(~start=2)
   let dry = args->Array.includes("--dry-run")
   switch hello(args->Array.filter(a => a != "--dry-run"))->Result.flatMap(((app, rest)) =>
@@ -333,17 +340,21 @@ let main = async () => {
     let target = Remote.target(named)
     let files = Selection.samples(kind)
     let count = Selection.count(files)
-    switch remote(target, Instance.facts)->Result.flatMap(Instance.readFacts(_, ~count)) {
+    switch timed("the machine asked", () =>
+      remote(target, Instance.facts)->Result.flatMap(Instance.readFacts(_, ~count))
+    ) {
     | Error(why) =>
-      say(`failed: ${named} cannot hold a second driver, ${why}`)
+      finished(`failed: ${named} cannot hold a second driver, ${why}`)
       Host.setExitCode(Host.process, 1)
     | Ok(facts) =>
       switch Instance.subnet(facts.routes) {
       | None =>
-        say(`failed: every subnet of its own overlaps a route of ${named}`)
+        finished(`failed: every subnet of its own overlaps a route of ${named}`)
         Host.setExitCode(Host.process, 1)
       | Some(subnet) =>
-        let (before, checks) = await asked(target, facts, ~app, ~gateway)
+        let (before, checks) = await timedAsync("the live driver checked before", () =>
+          asked(target, facts, ~app, ~gateway)
+        )
         let held = told("before", checks)
         say(
           `${Int.toString(files->Array.length)} behavior files, ${Int.toString(
@@ -353,13 +364,15 @@ let main = async () => {
             )}, one for each case in each form, on ${Instance.unit}, its bridge ${Instance.bridge}`,
         )
         if dry {
-          say(`nothing started, as --dry-run asks, ${took()}s`)
+          finished(`nothing started, as --dry-run asks, ${took()}s`)
           Host.setExitCode(Host.process, held ? 0 : 1)
         } else if !(await holds(target)) {
-          say(`failed: another run holds ${named}, so nothing starts and nothing is removed`)
+          finished(`failed: another run holds ${named}, so nothing starts and nothing is removed`)
           Host.setExitCode(Host.process, 1)
-        } else if !clean(target, facts, ~when_="from an earlier run") {
-          say(`failed: what an earlier run left is still there, so nothing starts, ${took()}s`)
+        } else if (
+          !timed("an earlier run cleaned", () => clean(target, facts, ~when_="from an earlier run"))
+        ) {
+          finished(`failed: what an earlier run left is still there, so nothing starts, ${took()}s`)
           children->Array.forEach(child => child->Host.kill->ignore)
           Host.setExitCode(Host.process, 1)
         } else {
@@ -371,7 +384,9 @@ let main = async () => {
             say("the live driver names no --local directory, so no fixture is served")
             None
           | Some(local) =>
-            switch fixtures(target, facts, ~scratch, ~local) {
+            switch timed("fixtures built and copied", () =>
+              fixtures(target, facts, ~scratch, ~local)
+            ) {
             | Ok((built, directory)) =>
               say(`fixtures copied to ${directory}, ${took()}s`)
               Some((built, directory))
@@ -380,10 +395,11 @@ let main = async () => {
               None
             }
           }
-          let code = switch remote(
-            target,
-            Instance.started(~count, ~subnet),
-          )->Result.flatMap(text => Instance.readTokens(text, ~count)) {
+          let code = switch timed("the second driver started", () =>
+            remote(target, Instance.started(~count, ~subnet))->Result.flatMap(text =>
+              Instance.readTokens(text, ~count)
+            )
+          ) {
           | Error(why) =>
             say(`failed: the second driver did not start, ${why}`)
             1
@@ -395,24 +411,30 @@ let main = async () => {
               forget()
               Host.exit(Host.process, 130)
             })
-            await run(
-              target,
-              facts,
-              tokens,
-              files->Array.map(((path, _)) => path),
-              ~app,
-              ~scratch,
-              ~served,
+            await timedAsync("the samples run", () =>
+              run(
+                target,
+                facts,
+                tokens,
+                files->Array.map(((path, _)) => path),
+                ~app,
+                ~scratch,
+                ~served,
+              )
             )
           }
           let revision = before->Result.mapOr(None, described => described.revision)
-          let snapshot = Selection.snapshotted(kind, () => snapshotted(named, ~revision, ~scratch))
+          let snapshot = Selection.snapshotted(kind, () =>
+            timed("the snapshot", () => snapshotted(named, ~revision, ~scratch))
+          )
           forget()
-          let nothingLeft = clean(target, facts, ~when_="after")
+          let nothingLeft = timed("the run cleaned", () => clean(target, facts, ~when_="after"))
           if nothingLeft {
             say("after, nothing the run made is left")
           }
-          let (after, checks) = await asked(target, facts, ~app, ~gateway)
+          let (after, checks) = await timedAsync("the live driver checked after", () =>
+            asked(target, facts, ~app, ~gateway)
+          )
           let still = told("after", checks)
           let same = switch (before, after) {
           | (Ok(b), Ok(a)) =>
@@ -421,7 +443,7 @@ let main = async () => {
           }
           say(same ? "after, the live list is as it was" : "failed: the live list changed")
           let met = code == 0 && held && still && same && nothingLeft && snapshot
-          say(`${Selection.finished(kind, ~target=named, ~met)}, ${took()}s`)
+          finished(`${Selection.finished(kind, ~target=named, ~met)}, ${took()}s`)
           children->Array.forEach(child => child->Host.kill->ignore)
           Host.setExitCode(Host.process, met ? 0 : 1)
         }
