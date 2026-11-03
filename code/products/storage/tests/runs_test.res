@@ -24,6 +24,7 @@ let size = held => held->TypedArray.length->Int.toFloat
 
 /** The `object` kind over `store`, each call passed through `gate` before its effect lands. */
 let fake = (store: Dict.t<Uint8Array.t>, gate: gate): Operations.objects => {
+  status: _ => refuse("a replayed run asks no call status"),
   write: call =>
     gated(gate, ~kind="write", ~name=call.name, () => {
       store->Dict.set(call.name, call.content)

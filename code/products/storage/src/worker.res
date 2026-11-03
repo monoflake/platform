@@ -55,6 +55,8 @@ let asked = async (fetcher, operation, input, fromJson) =>
   }
 
 let objects = (fetcher): Operations.objects => {
+  status: input =>
+    asked(fetcher, "status", Contracts.ObjectStatus.toJson(input), Contracts.CallSteps.fromJson),
   write: input =>
     asked(fetcher, "write", Contracts.ObjectWrite.toJson(input), Contracts.ObjectWritten.fromJson),
   read: input =>
@@ -83,8 +85,21 @@ let ran = async (input, fromJson, run, toJson) =>
     }
   }
 
-let call = (context, ~operation, input) =>
+let call = (context: Operations.context, ~operation, input) =>
   switch operation {
+  | "status" =>
+    let hasBucket =
+      input
+      ->JSON.Decode.object
+      ->Option.mapOr(false, fields => fields->Dict.keysToArray->Array.includes("bucket"))
+    hasBucket
+      ? Promise.resolve(errorJson(refused("malformed")))
+      : ran(
+          input,
+          Contracts.ObjectStatus.fromJson,
+          context.objects.status,
+          Contracts.CallSteps.toJson,
+        )
   | "object_write" =>
     ran(
       input,

@@ -9008,6 +9008,22 @@
 					"callers": ["capability"]
 				},
 				{
+					"name": "status",
+					"input": "object-status",
+					"output": "call-steps",
+					"reasons": [
+						{
+							"name": "not_found",
+							"failure": "rejected"
+						},
+						{
+							"name": "forgotten",
+							"failure": "rejected"
+						}
+					],
+					"callers": ["component"]
+				},
+				{
 					"name": "publish",
 					"input": "publish",
 					"output": "bucket-object",

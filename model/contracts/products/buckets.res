@@ -342,6 +342,15 @@ let interface_: interface_ = {
       onBucket,
       ~callers=[#capability],
     ),
+    // What became of a call's name writes across the organization's buckets, asked by its compute
+    // component alone through the forwarder, which gives it no bucket, 49qyg.
+    op(
+      "status",
+      "object-status",
+      "call-steps",
+      [("not_found", #rejected), ("forgotten", #rejected)],
+      ~callers=[#component],
+    ),
     op(
       "publish",
       "publish",

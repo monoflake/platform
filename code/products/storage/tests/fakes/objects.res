@@ -14,6 +14,10 @@ let make = (): t => {
   let calls = []
   let size = bytes => TypedArray.length(bytes)->Int.toFloat
   let objects: Operations.objects = {
+    status: async ({id}) => {
+      calls->Array.push(`status ${id}`)
+      Error({failure: Rejected, reason: "not_found", message: "Nothing of that name or id exists"})
+    },
     write: async ({name, content}) => {
       calls->Array.push(`write ${name}`)
       if TypedArray.length(content) > most {

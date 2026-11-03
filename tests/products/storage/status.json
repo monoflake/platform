@@ -1,0 +1,41 @@
+{
+	"interface": "storage",
+	"cases": [
+		{
+			"description": "status returns the call's committed name writes without a bucket",
+			"steps": [
+				{
+					"call": "status",
+					"input": { "id": "7fffffffffff0011" },
+					"expect": {
+						"output": {
+							"committed": [2],
+							"expires": 253402300799000,
+							"finished": false
+						}
+					}
+				}
+			]
+		},
+		{
+			"description": "status of a call the kind never saw is not found",
+			"steps": [
+				{
+					"call": "status",
+					"input": { "id": "7fffffffffff00ff" },
+					"expect": { "failure": "rejected", "reason": "not_found" }
+				}
+			]
+		},
+		{
+			"description": "status older than the kind keeps is forgotten",
+			"steps": [
+				{
+					"call": "status",
+					"input": { "id": "0000000000010000" },
+					"expect": { "failure": "rejected", "reason": "forgotten" }
+				}
+			]
+		}
+	]
+}

@@ -1,6 +1,7 @@
 open Envelope
 
 type objects = {
+  status: Contracts.ObjectStatus.t => promise<Contracts.Answer.t<Contracts.CallSteps.t>>,
   write: Contracts.ObjectWrite.t => promise<Contracts.Answer.t<Contracts.ObjectWritten.t>>,
   read: Contracts.ObjectRead.t => promise<Contracts.Answer.t<Contracts.ObjectContent.t>>,
   describe: Contracts.ObjectName.t => promise<Contracts.Answer.t<Contracts.ObjectDescribed.t>>,
