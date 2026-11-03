@@ -6,7 +6,8 @@ type database = {execute: JSON.t => promise<JSON.t>}
 
 /**
  * The storage product's bucket the deploy filled, RFC ahcrp. An object is named by its content,
- * `write` answers the `bucket-object` record as JSON and `read` answers the content as bytes.
+ * `write` takes the content's bytes and its extension and answers the `bucket-object` record as
+ * JSON, and `read` answers the content as bytes.
  */
 type objects = {
   write: (Uint8Array.t, string) => promise<JSON.t>,
