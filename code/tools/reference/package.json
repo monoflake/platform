@@ -1,12 +1,12 @@
 {
 	"name": "@monoflake/reference",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"private": true,
 	"license": "MIT OR Apache-2.0",
 	"type": "module",
 	"dependencies": {
 		"@monoflake/conform": "workspace:*",
 		"@monoflake/ids": "workspace:*",
-		"wrangler": "^4.0.0"
+		"wrangler": "^4.156.1"
 	}
 }
