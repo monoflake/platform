@@ -48,6 +48,13 @@ let tools: dict<tool> = dict{
     uses: ["envelope*", "ids*"],
     blocks: ["conform", "lose"],
   },
+  "reference": {
+    what: "a reference app, one Worker written for the runtime both drivers give, deployed by deploy to a home on the test platform and driven end to end, a request, one row, one object, both read back and still there after a redeploy, stopping at its first failing step, RFC dg903's question 3",
+    languages: [#rescript],
+    uses: ["envelope*", "ids*"],
+    blocks: ["conform", "deploy"],
+    takes: [{language: #rescript, name: "wrangler", major: "4"}],
+  },
   "runner": {
     what: "the samples in tests/ run against an implementation: each case's calls made over HTTP as vr5lw writes them, each answer matched as expected, ge55b, p8e8k",
     languages: [#rescript],

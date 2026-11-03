@@ -21,6 +21,7 @@ let blocks: dict<state> = dict{
   "layout": Accepted,
   "lose": InWork,
   "placement": Accepted,
+  "reference": InWork,
   "replace": InWork,
   "scope": Accepted,
   "runner": Accepted,
