@@ -29,6 +29,7 @@ test("an empty list is sent again with one container, at the next generation", (
           items: [{id: 1., capacity: Listing.capacity, credentials: [credential]}],
         },
         into: 1.,
+        database: None,
       }),
     ),
   )
@@ -40,11 +41,11 @@ test("a container already asked is held, and nothing is sent", () => {
       described(1., [holding(3., Listing.capacity, Made({address: "a"}))]),
       ~credential,
     ),
-    Ok(Held({into: 3.})),
+    Ok(Held({into: 3., database: None})),
   )
   deepEqual(
     Listing.planned(described(1., [holding(2., Listing.capacity, Making)]), ~credential),
-    Ok(Held({into: 2.})),
+    Ok(Held({into: 2., database: None})),
   )
 })
 
@@ -92,5 +93,88 @@ test("an item's state is read by its id", () => {
       1.,
     ),
     Failed("beyond_host, full"),
+  )
+})
+
+let database = Uint8Array.fromArray(Array.make(~length=32, 7))
+let databased: Contracts.ManagementCapacity.t = Database({size: 1024.})
+
+test("a database slot adds a database of 268435456 bytes beside the container", () =>
+  deepEqual(
+    Listing.planned(described(4., []), ~credential, ~database),
+    Ok(
+      Apply({
+        list: {
+          generation: 5.,
+          items: [
+            {id: 1., capacity: Listing.capacity, credentials: [credential]},
+            {id: 2., capacity: Database({size: 268435456.}), credentials: [database]},
+          ],
+        },
+        into: 1.,
+        database: Some(2.),
+      }),
+    ),
+  )
+)
+
+test(
+  "a database already asked fills the slot, the lowest id when several, and nothing is sent",
+  () => {
+    deepEqual(
+      Listing.planned(
+        described(
+          1.,
+          [
+            holding(1., Listing.capacity, Made({address: "a"})),
+            holding(5., databased, Made({address: "d"})),
+            holding(3., databased, Making),
+          ],
+        ),
+        ~credential,
+        ~database,
+      ),
+      Ok(Held({into: 1., database: Some(3.)})),
+    )
+    deepEqual(
+      Listing.planned(
+        described(1., [holding(1., Listing.capacity, Making), holding(2., databased, Making)]),
+        ~credential,
+      ),
+      Ok(Held({into: 1., database: None})),
+    )
+  },
+)
+
+test("a database unasked is no database, and its id is taken by none", () =>
+  switch Listing.planned(
+    described(2., [holding(7., databased, Unasked({since: 1.}))]),
+    ~credential,
+    ~database,
+  ) {
+  | Ok(Apply({list, into, database})) =>
+    deepEqual((into, database), (8., Some(9.)))
+    deepEqual(list.items->Array.map(i => i.id), [8., 9.])
+  | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
+  }
+)
+
+test("a container held and no database sends both again, and a database alone is refused", () => {
+  switch Listing.planned(
+    described(1., [holding(1., Listing.capacity, Made({address: "a"}))]),
+    ~credential,
+    ~database,
+  ) {
+  | Ok(Apply({list, into, database: Some(filled)})) =>
+    deepEqual((into, filled, list.generation), (1., 2., 2.))
+    deepEqual(list.items->Array.map(i => i.id), [1., 2.])
+  | Ok(Apply({database: None})) | Ok(Held(_)) | Error(_) => ok(false, ~message="no list planned")
+  }
+  ok(
+    Listing.planned(
+      described(1., [holding(2., databased, Made({address: "d"}))]),
+      ~credential,
+      ~database,
+    )->Result.isError,
   )
 })

@@ -22,3 +22,11 @@ of falling back to the operator path. Grant responses and transport errors are m
 grant and operator credentials are excluded from the local builder's environment.
 
 The tests replace fetch and the local builder. They mint no credential and open no connection.
+
+## Slots
+
+A build's `metadata.json` may declare `slots` and `functions` beside `kinds` and `ingress`, RFC
+rt6gi. On a machine target a declared `database` slot is filled with the binding's one `database`
+item, 268435456 bytes added to the list beside the container where none is held, and the deploy
+carries `bindings` naming that item under the slot's name. A slot of another type is refused, and
+a control target fills none yet.

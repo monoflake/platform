@@ -4,7 +4,7 @@ let fileName = hash => `${Envelope.Hex.encode(hash)}.tar`
 
 let address = (~directory, ~hash) => `file://${directory}/${fileName(hash)}`
 
-let deploy = (~app, ~hash, ~address, ~into): Contracts.DeploymentDeploy.t => {
+let deploy = (~app, ~hash, ~address, ~into, ~bindings=?): Contracts.DeploymentDeploy.t => {
   runs: App({id: app}),
   version: hash,
   form: Modules,
@@ -15,6 +15,18 @@ let deploy = (~app, ~hash, ~address, ~into): Contracts.DeploymentDeploy.t => {
   secrets: dict{},
   network: [],
   into,
+  ?bindings,
+}
+
+let bindings = (slots: array<Contracts.ManifestSlot.t>, ~database) => {
+  let databases = slots->Array.filter(s => s.type_ == Database)
+  switch databases {
+  | [] => None
+  | _ =>
+    let filled = Dict.make()
+    databases->Array.forEach(s => filled->Dict.set(s.name, database))
+    Some(({database: filled}: Contracts.AppBindings.t))
+  }
 }
 
 let of_ = (app): Contracts.DeploymentOf.t => {runs: App({id: app})}

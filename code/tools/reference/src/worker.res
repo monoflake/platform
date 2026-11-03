@@ -1,1 +1,1 @@
-let default = {"fetch": request => Handler.fetch(~stamp=Stamp.value, request)}
+let default = {"fetch": (request, env) => Handler.fetch(~stamp=Stamp.value, ~env, request)}

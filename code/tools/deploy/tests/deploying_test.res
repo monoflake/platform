@@ -67,3 +67,37 @@ test("a deployment is running, waiting, elsewhere or failed, by its version and 
     },
   )
 })
+
+test("a deploy carries bindings only where given, and the contract reads them back", () => {
+  let address = Deploying.address(~directory="/d", ~hash)
+  let bound = switch Deploying.bindings([{name: "database", type_: Database}], ~database=7.) {
+  | Some(bindings) => bindings
+  | None => JsExn.throw("no bindings made")
+  }
+  let written = Contracts.DeploymentDeploy.toJson(
+    Deploying.deploy(~app=1., ~hash, ~address, ~into=2., ~bindings=bound),
+  )
+  deepEqual(
+    written->JSON.Decode.object->Option.flatMap(o => o->Dict.get("bindings")),
+    Some(JSON.parseOrThrow(`{"database": {"database": 7}}`)),
+  )
+  ok(Contracts.DeploymentDeploy.fromJson(written)->Result.isOk)
+  deepEqual(
+    Contracts.DeploymentDeploy.toJson(Deploying.deploy(~app=1., ~hash, ~address, ~into=2.))
+    ->JSON.Decode.object
+    ->Option.flatMap(o => o->Dict.get("bindings")),
+    None,
+  )
+})
+
+test("each database slot is filled with the one item, and a build with none carries none", () => {
+  deepEqual(
+    Deploying.bindings(
+      [{name: "database", type_: Database}, {name: "archive", type_: Database}],
+      ~database=3.,
+    ),
+    Some({database: dict{"database": 3., "archive": 3.}}),
+  )
+  deepEqual(Deploying.bindings([], ~database=3.), None)
+  deepEqual(Deploying.bindings([{name: "peer", type_: App}], ~database=3.), None)
+})

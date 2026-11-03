@@ -16,13 +16,19 @@ test("command line ingress keeps metadata kinds and refuses a second ingress dec
   let ingress: array<Bundle.Contracts.AppIngress.t> = [Domain({domain: "example.com"}), Binding]
   deepEqual(
     Bundle.release(~ingress, `{"kinds":["container","function"]}`),
-    Ok({kinds: Some([Container, Function]), ingress: Some(ingress)}),
+    Ok({kinds: Some([Container, Function]), ingress: Some(ingress), slots: None, functions: None}),
   )
-  deepEqual(Bundle.release(~ingress, `{}`), Ok({kinds: None, ingress: Some(ingress)}))
+  deepEqual(
+    Bundle.release(~ingress, `{}`),
+    Ok({kinds: None, ingress: Some(ingress), slots: None, functions: None}),
+  )
   [`{"ingress":[]}`, `{"ingress":[{"name":"binding"}]}`, `{"ingress":null}`]->Array.forEach(text =>
     deepEqual(Bundle.release(~ingress, text), Error("and --ingress both declare ingress"))
   )
-  deepEqual(Bundle.release(`{"kinds":["function"]}`), Ok({kinds: Some([Function]), ingress: None}))
+  deepEqual(
+    Bundle.release(`{"kinds":["function"]}`),
+    Ok({kinds: Some([Function]), ingress: None, slots: None, functions: None}),
+  )
 })
 
 /** A field of a header, its text up to the first NUL. */
@@ -171,7 +177,7 @@ test("a declaration of kinds is read in its order, and one not read whole is ref
   deepEqual(Bundle.declared(`["function"]`), Error("is no JSON object"))
   deepEqual(
     Bundle.declared(`{"kinds": ["function"], "main": "src/index.js"}`),
-    Error("holds kinds and ingress alone, not main"),
+    Error("holds kinds, ingress, slots and functions alone, not main"),
   )
   deepEqual(Bundle.declared(`{}`), Error("holds no kinds"))
   deepEqual(
@@ -233,9 +239,15 @@ test("metadata reads and packs ingress with or without kinds", () => {
     Mount({scope: "hello"}),
     Binding,
   ]
-  deepEqual(Bundle.release(text), Ok({kinds: Some([Function]), ingress: Some(ingress)}))
-  deepEqual(Bundle.release(`{"ingress":[]}`), Ok({kinds: None, ingress: Some([])}))
-  deepEqual(Bundle.release(`{}`), Ok({kinds: None, ingress: None}))
+  deepEqual(
+    Bundle.release(text),
+    Ok({kinds: Some([Function]), ingress: Some(ingress), slots: None, functions: None}),
+  )
+  deepEqual(
+    Bundle.release(`{"ingress":[]}`),
+    Ok({kinds: None, ingress: Some([]), slots: None, functions: None}),
+  )
+  deepEqual(Bundle.release(`{}`), Ok({kinds: None, ingress: None, slots: None, functions: None}))
   ok(Bundle.release(`{"ingress":"example.com"}`)->Result.isError)
   ok(Bundle.release(`{"ingress":[{"name":"unknown"}]}`)->Result.isError)
   ok(Bundle.release(`{"other":[]}`)->Result.isError)
@@ -249,4 +261,68 @@ test("metadata reads and packs ingress with or without kinds", () => {
     ),
   )
   ok(Bundle.packed(~ingress, config, [file("index.js", "x")])->Result.isOk)
+})
+
+test("metadata declares slots and functions, read as the manifest's types", () => {
+  let text = `{"ingress":[{"name":"binding"}],"slots":[{"name":"database","type":"database"}],"functions":[{"name":"fetch","kind":"effect"}]}`
+  switch Bundle.release(text) {
+  | Error(why) => ok(false, ~message=why)
+  | Ok(release) =>
+    deepEqual(release.kinds, None)
+    deepEqual(release.ingress, Some([Binding]))
+    deepEqual(release.slots, Some([{name: "database", type_: Database}]))
+    deepEqual(
+      release.functions->Option.map(f => f->Array.map(f => (f.name, f.kind))),
+      Some([("fetch", Effect)]),
+    )
+  }
+  deepEqual(
+    Bundle.release(`{"kinds":["function"],"slots":[]}`),
+    Ok({kinds: Some([Function]), ingress: None, slots: Some([]), functions: None}),
+  )
+  deepEqual(Bundle.declared(text), Error("holds no kinds"))
+  deepEqual(
+    Bundle.declared(`{"kinds":["function"],"slots":[{"name":"database","type":"database"}]}`),
+    Ok([Function]),
+  )
+})
+
+test("a slot of another type than database, or named twice, or a malformed one, is refused", () => {
+  deepEqual(
+    Bundle.release(`{"slots":[{"name":"files","type":"object_bucket"}]}`),
+    Error(
+      "declares slot files of type object_bucket, and deploy fills database slots alone for now",
+    ),
+  )
+  deepEqual(
+    Bundle.release(`{"slots":[{"name":"peer","type":"app"}]}`),
+    Error("declares slot peer of type app, and deploy fills database slots alone for now"),
+  )
+  deepEqual(
+    Bundle.release(`{"slots":[{"name":"database","type":"database"},{"name":"database","type":"database"}]}`),
+    Error("declares slot database twice"),
+  )
+  deepEqual(
+    Bundle.release(`{"slots":[{"name":"database","type":"cat"}]}`),
+    Error("declares a malformed slot"),
+  )
+  deepEqual(Bundle.release(`{"slots":[{"name":"database"}]}`), Error("declares a malformed slot"))
+  deepEqual(Bundle.release(`{"slots":"database"}`), Error("declares slots that are not an array"))
+  deepEqual(
+    Bundle.release(`{"functions":[{"name":"fetch","kind":"cat"}]}`),
+    Error("declares a malformed function"),
+  )
+  deepEqual(
+    Bundle.release(`{"functions":[{"name":"fetch","kind":"effect"},{"name":"fetch","kind":"derive"}]}`),
+    Error("declares function fetch twice"),
+  )
+})
+
+test("slots and functions leave the bundle's bytes as they were", () => {
+  let wrote = [file("index.js", "export default {}")]
+  deepEqual(Bundle.packed(config, wrote), Bundle.packed(config, wrote))
+  deepEqual(
+    JSON.parseOrThrow(Bundle.metadata(config)),
+    JSON.parseOrThrow(`{"main_module": "index.js", "compatibility_date": "2026-10-21"}`),
+  )
 })

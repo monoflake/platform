@@ -65,7 +65,7 @@ let releaseOf = (directory, ~ingress) => {
   let path = Host.join([directory, "metadata.json"])
   Host.exists(path)
     ? Bundle.release(~ingress?, Host.readText(path))->Result.mapError(why => `${path} ${why}`)
-    : Ok(({kinds: None, ingress}: Bundle.release))
+    : Ok(({kinds: None, ingress, slots: None, functions: None}: Bundle.release))
 }
 
 /** The app built into a temporary directory after its release declarations are read. */
@@ -96,6 +96,8 @@ let packed = ((config, release: Bundle.release, outdir), scratch) => {
   Bundle.packed(
     ~kinds=?release.kinds,
     ~ingress=?release.ingress,
+    ~slots=?release.slots,
+    ~functions=?release.functions,
     config,
     files,
   )->Result.map(archive => {
@@ -137,21 +139,27 @@ let after = async (phase, next) =>
   | Error(why) => Error(why)
   }
 
-/** The list sent with a container for the app if it holds none, and that container made. */
-let listed = async (target, ~dry) =>
+/**
+ * The list sent with a container for the app if it holds none, and a database beside it where the
+ * build declares a database slot and the list holds none, and those made.
+ */
+let listed = async (target, ~database, ~dry) =>
   switch describeList(target) {
   | Error(refused) => Error(refusal(refused))
   | Ok(described) =>
     let credential = Host.fillRandom(Uint8Array.fromLength(32))
-    switch Listing.planned(described, ~credential) {
-    | Error(why) => Error(why)
-    | Ok(Held({into})) => Ok((into, `container ${Float.toString(into)} held already`))
-    | Ok(Apply({list, into})) =>
-      let named = `container ${Float.toString(into)} at generation ${Float.toString(
-          list.generation,
+    let databaseCredential = database ? Some(Host.fillRandom(Uint8Array.fromLength(32))) : None
+    let items = (into, database) =>
+      `container ${Float.toString(into)}${database->Option.mapOr("", id =>
+          ` and database ${Float.toString(id)}`
         )}`
+    switch Listing.planned(described, ~credential, ~database=?databaseCredential) {
+    | Error(why) => Error(why)
+    | Ok(Held({into, database})) => Ok((into, database, `${items(into, database)} held already`))
+    | Ok(Apply({list, into, database})) =>
+      let named = `${items(into, database)} at generation ${Float.toString(list.generation)}`
       if dry {
-        Ok((into, `${named} would be sent`))
+        Ok((into, database, `${named} would be sent`))
       } else {
         switch called(target, management(Apply(list)), Contracts.ManagementHeld.fromJson) {
         | Error(refused) => Error(refusal(refused))
@@ -160,20 +168,26 @@ let listed = async (target, ~dry) =>
             await waited(
               () => describeList(target)->Result.mapError(refusal),
               described =>
-                switch Listing.madeOf(described, into) {
-                | Making => Ok(None)
-                | Made => Ok(Some())
-                | Failed(why) => Error(why)
-                },
+                [Some(into), database]
+                ->Array.filterMap(id => id)
+                ->Array.reduce(Ok(Some()), (all, id) =>
+                  all->Result.flatMap(all =>
+                    switch Listing.madeOf(described, id) {
+                    | Making => Ok(None)
+                    | Made => Ok(all)
+                    | Failed(why) => Error(why)
+                    }
+                  )
+                ),
             )
-          )->Result.map(() => (into, `${named} made`))
+          )->Result.map(() => (into, database, `${named} made`))
         }
       }
     }
   }
 
 /** The app deployed at the bundle's version, unless it already runs it, and running. */
-let deployed = async (target, ~app, ~hash, ~address, ~into, ~dry) => {
+let deployed = async (target, ~app, ~hash, ~address, ~into, ~bindings=?, ~dry) => {
   let progress = () =>
     switch describeDeployment(target, app) {
     | Ok(described) => Ok(Deploying.progress(described, hash))
@@ -189,11 +203,20 @@ let deployed = async (target, ~app, ~hash, ~address, ~into, ~dry) => {
   switch progress() {
   | Error(why) => Error(why)
   | Ok(Running) => Ok("running this version already, nothing sent")
-  | Ok(Waiting | Elsewhere | Failed(_)) if dry => Ok(`${address} would be deployed`)
+  | Ok(Waiting | Elsewhere | Failed(_)) if dry =>
+    let filled = bindings->Option.mapOr("", (bindings: Contracts.AppBindings.t) =>
+      bindings.database->Option.mapOr("", slots =>
+        slots
+        ->Dict.toArray
+        ->Array.map(((slot, id)) => ` filling slot ${slot} with database ${Float.toString(id)}`)
+        ->Array.join(",")
+      )
+    )
+    Ok(`${address} would be deployed${filled}`)
   | Ok(Waiting | Elsewhere | Failed(_)) =>
     switch called(
       target,
-      deployments(Deploy(Deploying.deploy(~app, ~hash, ~address, ~into))),
+      deployments(Deploy(Deploying.deploy(~app, ~hash, ~address, ~into, ~bindings?))),
       Contracts.DeploymentDescribed.fromJson,
     ) {
     | Error(refused) => Error(refusal(refused))
@@ -229,9 +252,19 @@ let appOf = (target, app) =>
   }
 
 /** The archive sent to the machine and deployed there, then the entry asked for the app. */
-let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~binding, ~dry) => {
+let sent = async (
+  named,
+  ~app,
+  ~hash,
+  ~path,
+  ~facts: Machine.facts,
+  ~binding,
+  ~slots: array<Contracts.ManifestSlot.t>,
+  ~dry,
+) => {
   let target = Machine.target(named)
   let address = Deploying.address(~directory=facts.directory, ~hash)
+  let wantsDatabase = slots->Array.some(s => s.type_ == Database)
   let copy = dry
     ? async () => Ok("nothing copied, as --dry-run asks")
     : async () => copied(target, path, facts, Deploying.fileName(hash))
@@ -244,8 +277,27 @@ let sent = async (named, ~app, ~hash, ~path, ~facts: Machine.facts, ~binding, ~d
     Deploying.held(
       ~copy=() => timed("copy", copy, said => said),
       ~deploy=() =>
-        timed("list", () => listed(target, ~dry), ((_, said)) => said)->after(((into, _)) =>
-          timed("deploy", () => deployed(target, ~app, ~hash, ~address, ~into, ~dry), said => said)
+        timed(
+          "list",
+          () => listed(target, ~database=wantsDatabase, ~dry),
+          ((_, _, said)) => said,
+        )->after(((into, database, _)) =>
+          timed(
+            "deploy",
+            () =>
+              deployed(
+                target,
+                ~app,
+                ~hash,
+                ~address,
+                ~into,
+                ~bindings=?database->Option.flatMap(
+                  database => Deploying.bindings(slots, ~database),
+                ),
+                ~dry,
+              ),
+            said => said,
+          )
         ),
       ~remove=() =>
         timed(
@@ -540,11 +592,33 @@ let main = async () => {
       timed(
         "pack",
         async () => packed(built, scratch),
-        ((hash, _, size, _)) => `${Int.toString(size)} bytes, version ${Envelope.Hex.encode(hash)}`,
+        ((hash, _, size, release: Bundle.release)) => {
+          let declared = [
+            ...release.functions
+            ->Option.getOr([])
+            ->Array.map(f =>
+              `function ${f.name} ${JSON.stringify(Contracts.FunctionKind.toJson(f.kind))}`
+            ),
+            ...release.slots
+            ->Option.getOr([])
+            ->Array.map(s =>
+              `slot ${s.name} ${JSON.stringify(Contracts.SlotType.toJson(s.type_))}`
+            ),
+          ]->Array.join(", ")
+          `${Int.toString(size)} bytes, version ${Envelope.Hex.encode(hash)}${declared == ""
+              ? ""
+              : `, declaring ${declared}`}`
+        },
       )
     )
     ->after(((hash, path, _, release)) =>
       switch deployingOf(named, binding) {
+      | Some(Ok(_)) if release.slots->Option.getOr([])->Array.length > 0 =>
+        timed(
+          "slots",
+          async () => Error(`a control fills no slot yet, and ${named} is one`),
+          _ => "",
+        )
       | Some(Ok((control, binding))) =>
         throughControl(control, ~app, ~binding, ~hash, ~path, ~release, ~secrets, ~network, ~dry)
       | Some(Error(why)) => Promise.resolve(Error(why))
@@ -556,7 +630,18 @@ let main = async () => {
             ->Result.flatMap(Machine.readFacts)
             ->Result.flatMap(tokenBinding),
           ((_, binding)) => `binding ${Ids.Id.text(binding)}`,
-        )->after(((facts, binding)) => sent(named, ~app, ~hash, ~path, ~facts, ~binding, ~dry))
+        )->after(((facts, binding)) =>
+          sent(
+            named,
+            ~app,
+            ~hash,
+            ~path,
+            ~facts,
+            ~binding,
+            ~slots=release.slots->Option.getOr([]),
+            ~dry,
+          )
+        )
       }
     )
     Host.remove(scratch, {recursive: true, force: true})

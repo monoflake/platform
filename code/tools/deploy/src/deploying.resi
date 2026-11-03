@@ -12,14 +12,22 @@ let fileName: Uint8Array.t => string
 
 /**
  * A deploy of the bundle for the app, its version the artifact's hash, into the container given,
- * an isolate with no secrets or networks, as hello's first deploy was.
+ * an isolate with no secrets or networks, as hello's first deploy was, carrying `bindings` where
+ * a build's slots are filled, RFC rt6gi.
  */
 let deploy: (
   ~app: float,
   ~hash: Uint8Array.t,
   ~address: string,
   ~into: float,
+  ~bindings: Contracts.AppBindings.t=?,
 ) => Contracts.DeploymentDeploy.t
+
+/**
+ * What fills a build's declared slots on a machine, each `database` slot the id given, or none
+ * where the build declares no database slot, so a deploy of it carries no `bindings`.
+ */
+let bindings: (array<Contracts.ManifestSlot.t>, ~database: float) => option<Contracts.AppBindings.t>
 
 /** The app's deployment, as describe asks it. */
 let of_: float => Contracts.DeploymentOf.t

@@ -19,12 +19,21 @@ let config: string => result<config, string>
  */
 let declared: string => result<array<Contracts.DeploymentKind.t>, string>
 
+/**
+ * What metadata.json declares beside the kinds and ingress, the slots a build asks to be filled,
+ * database alone for now, and the functions it holds, RFC 49qyg and RFC rt6gi.
+ */
 type release = {
   kinds: option<array<Contracts.DeploymentKind.t>>,
   ingress: option<array<Contracts.AppIngress.t>>,
+  slots: option<array<Contracts.ManifestSlot.t>>,
+  functions: option<array<Contracts.ManifestFunction.t>>,
 }
 
-/** The release declarations with command line ingress unless metadata.json declares it too. */
+/**
+ * The release declarations with command line ingress unless metadata.json declares it too, a slot
+ * of another type than database or one named twice refused.
+ */
 let release: (~ingress: array<Contracts.AppIngress.t>=?, string) => result<release, string>
 
 /** The module wrangler writes for `main`, its file's name ending `.js`. */
@@ -34,12 +43,14 @@ let mainModule: config => string
 let isModule: string => bool
 
 /**
- * The metadata naming the main module, the compatibility date, any flags and any kinds declared,
- * as JSON.
+ * The metadata naming the main module, the compatibility date, any flags, and the kinds, slots and
+ * functions declared, as JSON, so a bundle's hash changes with its slots, RFC rt6gi.
  */
 let metadata: (
   ~kinds: array<Contracts.DeploymentKind.t>=?,
   ~ingress: array<Contracts.AppIngress.t>=?,
+  ~slots: array<Contracts.ManifestSlot.t>=?,
+  ~functions: array<Contracts.ManifestFunction.t>=?,
   config,
 ) => string
 
@@ -55,6 +66,8 @@ let tar: array<file> => result<Uint8Array.t, string>
 let packed: (
   ~kinds: array<Contracts.DeploymentKind.t>=?,
   ~ingress: array<Contracts.AppIngress.t>=?,
+  ~slots: array<Contracts.ManifestSlot.t>=?,
+  ~functions: array<Contracts.ManifestFunction.t>=?,
   config,
   array<file>,
 ) => result<Uint8Array.t, string>

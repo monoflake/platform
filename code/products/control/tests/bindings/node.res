@@ -120,6 +120,8 @@ type bundle = {
   packed: (
     ~kinds: array<Envelope.Contracts.DeploymentKind.t>=?,
     ~ingress: array<Envelope.Contracts.AppIngress.t>=?,
+    ~slots: array<Envelope.Contracts.ManifestSlot.t>=?,
+    ~functions: array<Envelope.Contracts.ManifestFunction.t>=?,
     bundleConfig,
     array<bundled>,
   ) => result<Uint8Array.t, string>,

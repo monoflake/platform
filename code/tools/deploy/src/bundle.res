@@ -95,6 +95,10 @@ let config = text =>
     }
   }
 
+/** The keys a build's metadata.json holds, its release's and its manifest's. */
+let declarable = ["kinds", "ingress", "slots", "functions"]
+let declarableText = "kinds, ingress, slots and functions"
+
 let declared = text =>
   switch JSON.parseOrThrow(text) {
   | exception JsExn(e) => Error(`is no JSON, ${e->JsExn.message->Option.getOr("not parsed")}`)
@@ -103,10 +107,10 @@ let declared = text =>
     | None => Error("is no JSON object")
     | Some(o) =>
       switch (
-        o->Dict.keysToArray->Array.find(key => key != "kinds" && key != "ingress"),
+        o->Dict.keysToArray->Array.find(key => !(declarable->Array.includes(key))),
         o->Dict.get("kinds"),
       ) {
-      | (Some(other), _) => Error(`holds kinds and ingress alone, not ${other}`)
+      | (Some(other), _) => Error(`holds ${declarableText} alone, not ${other}`)
       | (None, None) => Error("holds no kinds")
       | (None, Some(listed)) =>
         let strings = items => {
@@ -135,7 +139,72 @@ let declared = text =>
 type release = {
   kinds: option<array<Contracts.DeploymentKind.t>>,
   ingress: option<array<Contracts.AppIngress.t>>,
+  slots: option<array<Contracts.ManifestSlot.t>>,
+  functions: option<array<Contracts.ManifestFunction.t>>,
 }
+
+/** The items of an array declared under a key, each read by `decode`, none declared when absent. */
+let listed = (o, key, singular, decode) =>
+  switch o->Dict.get(key) {
+  | None => Ok(None)
+  | Some(json) =>
+    switch json->JSON.Decode.array {
+    | None => Error(`declares ${key} that are not an array`)
+    | Some(items) =>
+      items
+      ->Array.reduce(Ok([]), (all, item) =>
+        all->Result.flatMap(all =>
+          decode(item)
+          ->Result.mapError(_ => `declares a malformed ${singular}`)
+          ->Result.map(
+            read => {
+              all->Array.push(read)
+              all
+            },
+          )
+        )
+      )
+      ->Result.map(items => Some(items))
+    }
+  }
+
+/** The first name an array of declared names holds twice. */
+let repeated = names => names->Array.findWithIndex((name, at) => names->Array.indexOf(name) != at)
+
+/** The slots declared, each named once and of a type deploy fills, which is database alone. */
+let slotsOf = o =>
+  listed(o, "slots", "slot", Contracts.ManifestSlot.fromJson)->Result.flatMap(slots =>
+    switch slots {
+    | None => Ok(None)
+    | Some(slots) =>
+      switch (
+        slots->Array.find(s => s.type_ != Database),
+        repeated(slots->Array.map(s => s.name)),
+      ) {
+      | (Some({name, type_}), _) =>
+        let named = Contracts.SlotType.toJson(type_)->JSON.Decode.string->Option.getOr("another")
+        Error(
+          `declares slot ${name} of type ${named}, and deploy fills database slots alone for now`,
+        )
+      | (None, Some(name)) => Error(`declares slot ${name} twice`)
+      | (None, None) => Ok(Some(slots))
+      }
+    }
+  )
+
+/** The functions declared, each named once. */
+let functionsOf = o =>
+  listed(
+    o,
+    "functions",
+    "function",
+    Contracts.ManifestFunction.fromJson,
+  )->Result.flatMap(functions =>
+    switch functions->Option.flatMap(f => repeated(f->Array.map(f => f.name))) {
+    | Some(name) => Error(`declares function ${name} twice`)
+    | None => Ok(functions)
+    }
+  )
 
 let release = (~ingress as given=?, text) => {
   let parsed = switch JSON.parseOrThrow(text) {
@@ -172,9 +241,18 @@ let release = (~ingress as given=?, text) => {
           ->Result.map(items => Some(items))
         }
       }
-      switch o->Dict.keysToArray->Array.find(key => key != "kinds" && key != "ingress") {
-      | Some(other) => Error("holds kinds and ingress alone, not " ++ other)
-      | None => kinds->Result.flatMap(kinds => ingress->Result.map(ingress => {kinds, ingress}))
+      switch o->Dict.keysToArray->Array.find(key => !(declarable->Array.includes(key))) {
+      | Some(other) => Error(`holds ${declarableText} alone, not ${other}`)
+      | None =>
+        kinds->Result.flatMap(kinds =>
+          ingress->Result.flatMap(
+            ingress =>
+              slotsOf(o)->Result.flatMap(
+                slots =>
+                  functionsOf(o)->Result.map(functions => {kinds, ingress, slots, functions}),
+              ),
+          )
+        )
       }
     }
   )
@@ -190,7 +268,7 @@ let mainModule = config => {
 
 let isModule = name => name != "README.md" && !(name->String.endsWith(".map"))
 
-let metadata = (~kinds=?, ~ingress=?, config) => {
+let metadata = (~kinds=?, ~ingress=?, ~slots=?, ~functions=?, config) => {
   let fields = dict{
     "main_module": JSON.String(mainModule(config)),
     "compatibility_date": JSON.String(config.compatibilityDate),
@@ -207,6 +285,15 @@ let metadata = (~kinds=?, ~ingress=?, config) => {
   )
   kinds->Option.forEach(kinds =>
     fields->Dict.set("kinds", JSON.Array(kinds->Array.map(Contracts.DeploymentKind.toJson)))
+  )
+  slots->Option.forEach(slots =>
+    fields->Dict.set("slots", JSON.Array(slots->Array.map(Contracts.ManifestSlot.toJson)))
+  )
+  functions->Option.forEach(functions =>
+    fields->Dict.set(
+      "functions",
+      JSON.Array(functions->Array.map(Contracts.ManifestFunction.toJson)),
+    )
   )
   JSON.stringify(JSON.Object(fields))
 }
@@ -259,7 +346,7 @@ let tar = files =>
     Ok(archive)
   }
 
-let packed = (~kinds=?, ~ingress=?, config, files) => {
+let packed = (~kinds=?, ~ingress=?, ~slots=?, ~functions=?, config, files) => {
   let modules =
     files
     ->Array.filter(f => isModule(f.name) && f.name != "metadata.json")
@@ -268,7 +355,10 @@ let packed = (~kinds=?, ~ingress=?, config, files) => {
   modules->Array.some(f => f.name == main)
     ? tar(
         [
-          {name: "metadata.json", bytes: Bytes.utf8(metadata(~kinds?, ~ingress?, config))},
+          {
+            name: "metadata.json",
+            bytes: Bytes.utf8(metadata(~kinds?, ~ingress?, ~slots?, ~functions?, config)),
+          },
           ...modules,
         ],
       )
