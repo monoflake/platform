@@ -15,6 +15,18 @@ test("local is localhost's port 2222, and any other name is ssh's own", () => {
   ok(!(machine.options->Array.includes("2222")))
 })
 
+test("a copy takes scp's port flag, and its name only once whole", () => {
+  let local = Machine.copying(Machine.target("local"), ~path="a.tar", ~into="/held/a.tar")
+  ok(local->Array.includes("-P"))
+  ok(!(local->Array.includes("-p")))
+  ok(local->Array.includes("2222"))
+  deepEqual(local->Array.at(-1), Some("root@localhost:/held/a.tar.partial"))
+  deepEqual(Machine.whole("/held/a.tar"), "mv /held/a.tar.partial /held/a.tar")
+  let machine = Machine.copying(Machine.target("root@m"), ~path="a.tar", ~into="/held/a.tar")
+  ok(!(machine->Array.includes("-P")))
+  deepEqual(machine->Array.at(-1), Some("root@m:/held/a.tar.partial"))
+})
+
 test("the facts give the directory, the binding and a tunnel only where one answers", () => {
   deepEqual(
     Machine.readFacts(

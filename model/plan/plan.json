@@ -1,6 +1,13 @@
 {
 	"items": [
 		{
+			"id": "machine-app-removal",
+			"says": "An app deployed straight to a machine is removed by a tool, `deploy --retire` taking a control target alone, so each `reference` run leaves one app on the test platform, removed by hand through the driver's stop and delete",
+			"holds": {
+				"owes": "a retire for a machine target in deploy, and `reference` naming it"
+			}
+		},
+		{
 			"id": "call-v2-credential",
 			"says": "The call envelope's version 2 carries an optional `credential` at key 5, generated as a bump made once, RFC 6x8su",
 			"holds": {

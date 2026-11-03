@@ -14,7 +14,7 @@ let main = async () =>
       report.app->Option.forEach(id => {
         Console.log(`reference: app ${Ids.Id.text(id)} left in place`)
         Console.error(
-          "reference: removal command waits on conform exposing authenticated deployments stop and delete",
+          "reference: no tool removes an app from a machine yet, plan item machine-app-removal",
         )
       })
     }

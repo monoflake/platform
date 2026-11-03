@@ -35,6 +35,19 @@ let target = name =>
       }
     : {host: name, options: kept}
 
+/** Where a copy lies until it is whole, beside the name it takes. */
+let partial = into => `${into}.partial`
+
+let copying = (target, ~path, ~into) =>
+  [
+    "-q",
+    ...target.options->Array.map(option => option == "-p" ? "-P" : option),
+    path,
+    `${target.host}:${partial(into)}`,
+  ]
+
+let whole = into => `mv ${partial(into)} ${into}`
+
 let port = 37483
 
 /** The driver's command line, and `o` printing the first value of one of its flags. */

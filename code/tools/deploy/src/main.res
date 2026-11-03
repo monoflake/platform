@@ -106,15 +106,15 @@ let packed = ((config, release: Bundle.release, outdir), scratch) => {
   })
 }
 
-/** The archive copied in by its hash, a file already there of that name being the same. */
+/** The archive copied in by its hash, named only once whole, so a file of that name is the same. */
 let copied = (target: Machine.target, path, facts: Machine.facts, name) => {
   let into = `${facts.directory}/${name}`
   switch remote(target, `test -f ${into} && echo held || true`) {
   | Ok("held") => Ok("already there")
   | Ok(_) =>
-    ran("scp", ["-q", ...target.options, path, `${target.host}:${into}`])->Result.map(_ =>
-      `to ${into}`
-    )
+    ran("scp", Machine.copying(target, ~path, ~into))
+    ->Result.flatMap(_ => remote(target, Machine.whole(into)))
+    ->Result.map(_ => `to ${into}`)
   | Error(why) => Error(why)
   }
 }

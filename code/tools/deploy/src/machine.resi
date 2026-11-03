@@ -15,6 +15,12 @@ let target: string => target
 /** Whether the target is the local machine, its entry on port 8080 of localhost. */
 let isLocal: string => bool
 
+/** scp's arguments copying a file to a temporary name beside `into`, ssh's `-p` as its `-P`. */
+let copying: (target, ~path: string, ~into: string) => array<string>
+
+/** The shell giving a copy its name once it is whole. */
+let whole: string => string
+
 /** driver-machine's port on the machine, as driver's `dev` asks it. */
 let port: int
 

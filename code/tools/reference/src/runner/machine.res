@@ -19,15 +19,15 @@ let make = target => {
     switch facts.contents {
     | Some(binding) => Ok(binding)
     | None =>
-      let ran = await ssh(target, Conform.Instance.facts)
+      let ran = await ssh(target, Conform.Live.binding)
       if ran.status != 0 {
         Error(({status: ran.status, body: ran.stderr ++ ran.stdout}: Steps.observation))
       } else {
-        switch Conform.Instance.readFacts(ran.stdout, ~count=0) {
-        | Ok({binding}) =>
+        switch Ids.Id.ofTokenText(ran.stdout->String.trim) {
+        | Some(binding) =>
           facts := Some(binding)
           Ok(binding)
-        | Error(why) => Error({status: 0, body: why})
+        | None => Error({status: 0, body: "the live binding's token names no id before its dot"})
         }
       }
     }
