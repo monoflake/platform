@@ -173,6 +173,14 @@
 					"shape": {
 						"prim": "string"
 					}
+				},
+				{
+					"name": "call",
+					"key": 4,
+					"shape": {
+						"type": "call-unknown"
+					},
+					"optional": true
 				}
 			]
 		},

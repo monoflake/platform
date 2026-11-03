@@ -32,6 +32,7 @@ fn gone() -> Named {
 		failure: Failure::Rejected,
 		reason: "not_found".into(),
 		message: "gone".into(),
+		call: None,
 	})
 }
 

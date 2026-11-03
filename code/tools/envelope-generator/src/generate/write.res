@@ -133,6 +133,35 @@ let reads = (names, side, fields) =>
   })
   ->Array.join(", ")
 
+/** A record built with only the optional fields that were present. */
+let record = (names, side, fields, typ) => {
+  let required = fields->Array.filter(((f: field, _, _)) => !f.optional)
+  let optional = fields->Array.filter(((f: field, _, _)) => f.optional)
+  let literal = required->Array.length == 0 ? "{}" : `{${reads(names, side, required)}}`
+  if optional->Array.length == 0 {
+    `(${literal}: ${typ})`
+  } else {
+    let additions =
+      optional
+      ->Array.map(((f: field, label, at)) => {
+        let present =
+          fields->Array.length == 1 ? `{${label}: field}` : `{...value, ${label}: field}`
+        let key = switch side {
+        | ToJson | FromJson => ""
+        | ToCbor | FromCbor => `${Int.toString(f.key)}, `
+        }
+        `let value = switch Wire.${sideName(side)}.optional(o, ${key}${quote(f.name)}, ${coder(
+            names,
+            side,
+            f.shape,
+            [...at, "shape"],
+          )}) { | None => value | Some(field) => ${present} };`
+      })
+      ->Array.join(" ")
+    `{ let value: ${typ} = ${literal}; ${additions} value }`
+  }
+}
+
 /** A type's definition and its four functions, the definition apart, as a recursive module's
  * signature repeats it. */
 let typeModule = (names, def, at) =>
@@ -142,8 +171,8 @@ let typeModule = (names, def, at) =>
     let empty = fields->Array.length == 0
     let v = empty ? "_" : "v"
     let o = empty ? "_" : "o"
-    let literal = empty ? "({}: t)" : `{${reads(names, FromJson, fields)}}`
-    let literalCbor = empty ? "({}: t)" : `{${reads(names, FromCbor, fields)}}`
+    let literal = record(names, FromJson, fields, "t")
+    let literalCbor = record(names, FromCbor, fields, "t")
     (
       [`type t = {${fieldTypes(names, fields)}}`],
       [
@@ -425,7 +454,7 @@ let answerModule = (names, contracts: contracts) => {
     fail(["answer", "cases", "1", "code"], "a code other than success's")
   }
   let t = quote(tag)
-  let built = side => `{${reads(names, side, fields)}}`
+  let built = side => record(names, side, fields, `${errorModule}.t`)
   let parts = [
     `type t<'output> = Success('output) | Error(${errorModule}.t)`,
     `let toJson = (v, data) => switch v { | Success(d) => Wire.ToJson.case(${t}, "success", [Wire.ToJson.field(${quote(

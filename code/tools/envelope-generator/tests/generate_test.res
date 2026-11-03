@@ -104,6 +104,57 @@ test("a keyword names its field followed by an underscore, under @as", () => {
   ok(written->String.includes(`v.type_`))
 })
 
+test("a record reader adds an optional field only when present", () => {
+  let written = source(
+    contracts(
+      ~types=`"optional": {"record": [
+        {"name": "required", "key": 1, "shape": {"prim": "string"}},
+        {"name": "type", "key": 2, "shape": {"prim": "string"}, "optional": true},
+        {"name": "enabled", "key": 3, "shape": {"prim": "bool"}, "optional": true}]}`,
+    ),
+  )
+  ok(
+    written->String.includes(`let value: t = {required: Wire.FromJson.field(o, "required", Wire.FromJson.string)}`),
+  )
+  ok(
+    written->String.includes(`switch Wire.FromJson.optional(o, "type", Wire.FromJson.string) { | None => value | Some(field) => {...value, type_: field} }`),
+  )
+  ok(
+    written->String.includes(`switch Wire.FromJson.optional(o, "enabled", Wire.FromJson.bool) { | None => value | Some(field) => {...value, enabled: field} }`),
+  )
+  ok(
+    written->String.includes(`switch Wire.FromCbor.optional(o, 2, "type", Wire.FromCbor.string) { | None => value | Some(field) => {...value, type_: field} }`),
+  )
+  ok(!(written->String.includes(`type_: ?Wire.FromJson.optional`)))
+})
+
+test("a record with only optional fields starts empty", () => {
+  let written = source(
+    contracts(
+      ~types=`"optional": {"record": [{"name": "value", "key": 1, "shape": {"prim": "string"}, "optional": true}]}`,
+    ),
+  )
+  ok(
+    written->String.includes(`let value: t = {}; let value = switch Wire.FromJson.optional(o, "value", Wire.FromJson.string)`),
+  )
+  ok(written->String.includes(`| None => value | Some(field) => {value: field}`))
+  ok(!(written->String.includes(`{...value, value: field}`)))
+})
+
+test("an answer error omits its absent optional fields", () => {
+  let written = source(
+    contracts(
+      ~error=error(
+        ~message=`{"name": "message", "key": 3, "shape": {"prim": "string"}, "optional": true}`,
+      ),
+    ),
+  )
+  ok(written->String.includes(`| "error" => Error({ let value: Error.t = {failure:`))
+  ok(
+    written->String.includes(`switch Wire.FromJson.optional(o, "message", Wire.FromJson.string) { | None => value | Some(field) => {...value, message: field} }`),
+  )
+})
+
 test("an interface holds a call of each operation and the envelope it travels in", () => {
   let written = source(
     contracts(

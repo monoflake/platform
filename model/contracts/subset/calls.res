@@ -116,7 +116,9 @@ let types: array<declared> = [
       field("failure", 1, Type("failure")),
       field("reason", 2, Prim(#string)),
       field("message", 3, Prim(#string)),
+      // An `unknown` effect call carries its id, how long it was looked up and its last step.
+      optional("call", 4, Type("call-unknown")),
     ]),
-    from: "vr5lw",
+    from: "vr5lw, 49qyg",
   },
 ]
