@@ -14,8 +14,8 @@ two words are kept apart.
   a contract changed; Done when: The same, since `code/tools/check/src/main.res` runs them
 - Comparison: The design diffed against the code and designs that exist; Done when: Every component
   that exists has a fate
-- Construction: Built from the ground up, in the order the bootstrap check gives, a thread at a
-  time; Done when: The cold start is walked through once for real
+- Construction: Built a thread at a time, each pulled by what is asked of it, "Construction is
+  pulled" below; Done when: The cold start is walked through once for real
 - Hardening: The error paths, the irreversible first; Done when: Never
 
 **One gate stands before the platform keeps data, `--ready`**: every row blocking step 0 crossed off
@@ -54,6 +54,13 @@ Design and construction are worked together.
   give, so it runs on Cloudflare as it is and on the platform unchanged. When the platform fails,
   its name is turned back to Cloudflare; a difference between the two is the platform's to fix,
   never the app's.
+
+## Construction is pulled
+
+What is built next is the line the author names and the contracts handed down for it, by the
+three tiers of the workspace's `docs/planning.md`. The bootstrap check still says what a thread
+stands on, never which thread comes next, and the checklist's other rows wait at a lower priority
+until a contract or the line reaches them.
 
 ## A layer at a time
 
