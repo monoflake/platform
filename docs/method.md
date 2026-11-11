@@ -57,10 +57,10 @@ Design and construction are worked together.
 
 ## Construction is pulled
 
-What is built next is the line the author names and the contracts handed down for it, by the
-three tiers of the workspace's `docs/planning.md`. The bootstrap check still says what a thread
-stands on, never which thread comes next, and the checklist's other rows wait at a lower priority
-until a contract or the line reaches them.
+What is built next is worked back from the contracts handed down to it, by the three tiers of the
+workspace's `docs/planning.md`, the direction the author's. The bootstrap check still says what a
+thread stands on, never which thread comes next, and the checklist's other rows wait at a lower
+priority until a contract reaches them.
 
 ## A layer at a time
 
@@ -81,7 +81,8 @@ is open is a new draft beside it, RFC 1dj2c.
 A block's questions are gathered together and reach the author one at a time, as the workspace's
 `docs/agents/agent-protocol.md` has it, "The questions of one block are asked together".
 
-The most urgent block is chosen in this order: a contradiction in the core the model passes, since
+The most urgent block is chosen in this order: what a contract handed down waits on, since work is
+pulled, "Construction is pulled" above; then a contradiction in the core the model passes, since
 that is a false proof; then what the most other questions wait on; then the rest. A detail -- a
 name, a constant, a command -- waits until the structure it sits in is settled, however long the
 checklist lists it. When the model passes what is a contradiction, the dimension or record that
