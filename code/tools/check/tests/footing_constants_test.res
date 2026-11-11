@@ -29,7 +29,7 @@ test("footing design facts retain their real units and lease range", () => {
 test("the footing command scales the model facts to the existing TLC search", () => {
   let ran = spawn(
     executable,
-    ["model/protocol/footing_constants.res.mjs"],
+    ["model/protocol/constants/footing_constants.res.mjs"],
     {cwd: root, encoding: "utf8"},
   )
   deepEqual(ran.status->Nullable.toOption, Some(0))

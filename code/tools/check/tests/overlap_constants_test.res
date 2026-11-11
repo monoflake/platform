@@ -18,7 +18,7 @@ let root = url("../../../../", importMetaUrl)->pathOf
 test("the command prints Reach from the model, a constant overlap.cfg declares", () => {
   let ran = spawn(
     executable,
-    ["model/protocol/overlap_constants.res.mjs"],
+    ["model/protocol/constants/overlap_constants.res.mjs"],
     {cwd: root, encoding: "utf8"},
   )
   deepEqual(ran.status->Nullable.toOption, Some(0))
