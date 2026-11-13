@@ -105,8 +105,8 @@ importers:
         version: link:../../libs/ids
     devDependencies:
       wrangler:
-        specifier: ^4.160.0
-        version: 4.160.0
+        specifier: ^4.160.1
+        version: 4.160.1
 
   code/products/control:
     dependencies:
@@ -153,8 +153,8 @@ importers:
         version: link:../../libs/keys
     devDependencies:
       wrangler:
-        specifier: ^4.160.0
-        version: 4.160.0
+        specifier: ^4.160.1
+        version: 4.160.1
 
   code/substrate/host:
     dependencies:
@@ -206,8 +206,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/ids
       wrangler:
-        specifier: ^4.160.0
-        version: 4.160.0
+        specifier: ^4.160.1
+        version: 4.160.1
 
   code/tools/replace:
     dependencies:
@@ -744,8 +744,8 @@ packages:
     resolution: {integrity: sha512-thdXzlktu5GE1o/BlmMAPeJ0Cu6Tu5LpMbRlyfRrpVvMRrhd6p52TMqcITCZZLVzt1UO92VGBkLDhLOpryUAyQ==}
     engines: {node: '>=22.0.0'}
 
-  miniflare@5.20261110.0-beta:
-    resolution: {integrity: sha512-UiJRL6D4pNkHxgZ3QXDCaz/N27FFuuHRRgOmD/SucEZIwDOfWwX7s/n8ZrFemFlURRfnQpBfAdWy8ixsW0yJWA==}
+  miniflare@5.20261110.1-beta:
+    resolution: {integrity: sha512-CO8T1DO3/JFxEWvJ7yaHiPx5Ph/5FhRzYKve6cM8O2frHmY7yWudV5p8FU11bfGRAerChGpuK+l0HoxOCw2nFw==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
       kerberos: ^2.0.0
@@ -812,8 +812,8 @@ packages:
       '@cloudflare/workers-types':
         optional: true
 
-  wrangler@4.160.0:
-    resolution: {integrity: sha512-nwzmpu7Hd5Csax02twpCNRAloC+kduXKw9rjfq+oEuo8RnjWRaahSV+qk+p0w88EgafMcDE0XnZRSfOM3lKEKg==}
+  wrangler@4.160.1:
+    resolution: {integrity: sha512-gM8daj5geYTEw+038dV5OQAmrSIo/9e97FoJuNf+r9PllWR0ZnqMI2LXZZDSHpGsMez3mKKFYH5o/hBsf1ZTHg==}
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -1182,7 +1182,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  miniflare@5.20261110.0-beta:
+  miniflare@5.20261110.1-beta:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.35.5
@@ -1287,14 +1287,14 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  wrangler@4.160.0:
+  wrangler@4.160.1:
     dependencies:
       '@cloudflare/kv-asset-handler': 0.5.0
       '@cloudflare/unenv-preset': 2.16.2(unenv@2.0.0-rc.24)(workerd@1.20261110.1)
       '@cspotcode/source-map-support': 0.8.1
       blake3-wasm: 2.1.5
       esbuild: 0.28.2
-      miniflare: 5.20261110.0-beta
+      miniflare: 5.20261110.1-beta
       path-to-regexp: 6.3.0
       unenv: 2.0.0-rc.24
       workerd: 1.20261110.1
