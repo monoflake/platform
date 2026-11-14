@@ -1,6 +1,6 @@
 {
 	"name": "@monoflake/compute",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"private": true,
 	"license": "MIT OR Apache-2.0",
 	"type": "module",
@@ -9,6 +9,6 @@
 		"@monoflake/ids": "workspace:*"
 	},
 	"devDependencies": {
-		"wrangler": "^4.160.1"
+		"wrangler": "^4.161.0"
 	}
 }
