@@ -3,7 +3,7 @@
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
-cargo-deny = "0.20"
+cargo-deny = "0.21"
 # What runs TLC over model/protocol, RFC w0w82.
 java = "temurin-25"
 
